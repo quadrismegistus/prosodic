@@ -69,3 +69,6 @@ class Phoneme(entity):
 		else:
 			return "C"
 			
+
+	def __eq__(self,other):
+		return self.feats == other.feats

@@ -272,24 +272,24 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def onsets(self):
 		"""Returns a list of this object's Onsets in order of their appearance."""
 		
-		return self.ents('SyllableOnset')
+		return self.ents('Onset')
 
 
 	def nuclei(self):
 		"""Returns a list of this object's Nuclei in order of their appearance."""
-		return self.ents('SyllableNucleus')
+		return self.ents('Nucleus')
 		
 		
 	def codae(self):
 		"""Returns a list of this object's Codae in order of their appearance."""
 				
-		return self.ents('SyllableCoda')
+		return self.ents('Coda')
 
 
 	def rimes(self):
 		"""Returns a list of this object's Rimes in order of their appearance."""
 		
-		return self.ents('SyllableRime')
+		return self.ents('Rime')
 
 
 	def syllables(self):

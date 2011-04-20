@@ -3,9 +3,11 @@ from entity import entity,being
 from tools import *
 import Meter
 class Word(entity):
-	def __init__(self,token,syllables=None,sylls_text=[],broken=False):
+	def __init__(self,token,syllables=None,sylls_text=[],broken=False,lang=None):
 		if syllables==None:
-			w=prosodic.dict[prosodic.lang].get(token)[0]
+			if lang==None:
+				lang=prosodic.lang
+			w=prosodic.dict[lang].get(token)[0]
 			if not len(w.__dict__):
 				self.broken=True
 			else:

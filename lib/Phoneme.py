@@ -30,7 +30,7 @@ class Phoneme(entity):
 			else:
 				self.len=1
 	def str_cmu(self):
-		strself=str(repr(self))
+		strself=str(self)
 		if strself in ipa2cmu:
 			return ipa2cmu[strself].lower()
 		else:

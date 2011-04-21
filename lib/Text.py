@@ -189,6 +189,8 @@ class Text(entity):
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
 	
+		self.scansion_prepare()
+		self.scansion()
 	
 	def allParses(self,meter=None):
 		if not meter:

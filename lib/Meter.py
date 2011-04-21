@@ -63,7 +63,11 @@ class Meter:
 
 
 	def genWordMatrix(self,wordlist):
-		return list(product(*wordlist))	# [ [on, the1, ..], [on, the2, etc]
+		import prosodic
+		if prosodic.config['resolve_optionality']:
+			return list(product(*wordlist))	# [ [on, the1, ..], [on, the2, etc]
+		else:
+			return [ [ w[0] for w in wordlist ] ]
 	
 	def genSlotMatrix(self,words):
 		matrix=[]

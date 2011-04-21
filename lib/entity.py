@@ -9,7 +9,7 @@ class being:
 	om=''
 	omm=''
 	#omms=bool(int(prosodic.config['print_to_screen']))
-	linelen=50
+	linelen=40
 	lang=False
 	printout=True
 	pointsofcomparison=[]
@@ -234,22 +234,23 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns a list of entities of the classname specified the second argument. For instance. to call a Word-object's ents('Phoneme') would return a list of the word's Phoneme objects sequentially. This method recursively searches the self-object's children for the type of object specified."""
 		
 		ents = []
-		if self.classname()[0:len(cls)] == cls:
+		if self.classname() == cls:
 			return [self]
 		else:
 			for child in self.children:
 				if type(child)==type([]):
-					if not flattenList:
+					if flattenList:
+						ents+=child[0].ents(cls=cls,flattenList=flattenList)
+					else:
 						ents_list2ndlevel=[]
 						for chld in child:
 							if chld:
-								ents_list2ndlevel+=chld.ents(cls)
+								ents_list2ndlevel+=chld.ents(cls=cls,flattenList=flattenList)
 						ents+=[ents_list2ndlevel]
-					else:
-						ents+=child[0].ents(cls)
+						
 				else:
 					if child:
-						ents += child.ents(cls)
+						ents += child.ents(cls=cls,flattenList=flattenList)
 		return ents
 	
 	## helper functions of ents()
@@ -344,7 +345,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		else:
 			words=self.words()
 			for i in range(len(words)):
-				word=words[i][0]
+				word=words[i]
 				word.om(str(i+1).zfill(6)+"\t"+str(word.output_minform()))
 	
 	def dir(self):
@@ -464,14 +465,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 			self.parses=init.meter.parse(words,numSyll)
 			self.numparses=len(self.parses)
-			self.bestparse=self.parses[0]
+			self.__bestparse=self.parses[0]
 			
 			if hasattr(being,'line_headedness'):
 				for parse in self.parses:
 					if parse.str_meter().startswith(str(being.line_headedness)):
-						self.bestparse=parse
+						self.__bestparse=parse
 						break
-			init.bestparses.append(self.bestparse)
+			init.bestparses.append(self.__bestparse)
 
 
 			if being.omms:
@@ -492,15 +493,15 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				init.meter_stats['_ot'][textname]=makeminlength("line",being.linelen)+"\tmeter\t"+init.ckeys+"\n"
 			
 			parsedat=[]
-			for k,v in sorted(self.bestparse.constraintScores.items()):
+			for k,v in sorted(self.__bestparse.constraintScores.items()):
 				if (not k in init.meter_stats['texts'][textname]):
 					init.meter_stats['texts'][textname][k]=[]
 				init.meter_stats['texts'][textname][k].append(v)
 				
-				#parsedat.append(v/len(self.bestparse.positions))	#???
+				#parsedat.append(v/len(self.__bestparse.positions))	#???
 				parsedat.append(v)
 				
-			linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.bestparse.posString())
+			linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.__bestparse.posString())
 			init.meter_stats['lines'][textname][linekey]=parsedat
 			
 			## OT stats
@@ -511,8 +512,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				
 			
 			
-			for posn in range(len(self.bestparse.positions)):
-				pos=self.bestparse.positions[posn]
+			for posn in range(len(self.__bestparse.positions)):
+				pos=self.__bestparse.positions[posn]
 				(posdat,ckeys)=pos.formatConstraints(normalize=True,getKeys=True)
 				
 				for cnum in range(len(ckeys)):
@@ -527,7 +528,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if self==init:
 			init.maxparselen=0
 			init.minparselen=None
-			for parse in self.bestparses:
+			for parse in self.__bestparses:
 				if not init.maxparselen:
 					init.maxparselen=len(parse.positions)
 					init.minparselen=len(parse.positions)
@@ -688,7 +689,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if type(child)==type([]): return None
 				child.getFeatValDict(init)
 		else:
-			for parse in self.bestparses:
+			for parse in self.__bestparses:
 				print parse
 				for pos in parse.positions:
 					posfeats=pos.posfeats()
@@ -816,7 +817,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			#if not hasattr(self,'minparselen'): return None
 			for posnum in range(self.minparselen):
 				posdict[posnum]={'x':[],'y':[]}
-				for parse in self.bestparses:
+				for parse in self.__bestparses:
 					posfeats=parse.positions[posnum].posfeats()
 					
 					for a in ['x','y']:
@@ -979,7 +980,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				posdict[posnum]={}
 
 				
-				for parse in self.bestparses:
+				for parse in self.__bestparses:
 					posfeats=parse.positions[posnum].posfeats()
 				
 					for domainfeat,domainfeatvals in stats.items():
@@ -1136,7 +1137,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				sumweight={}
 				nodetypes=[]
 				linelens=[]
-				for parse in self.bestparses:
+				for parse in self.__bestparses:
 					node1=None
 					node2=None
 				
@@ -1297,17 +1298,29 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			if child.isParsed():
 				return True
 
-	def scansion_prepare(self):
+	def _scansion_prepare(self):
 		from Meter import Meter
 		meter=Meter(config['constraints'].split(),(config['maxS'],config['maxW']),self.findattr('dict'))
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
 		self.om("\t".join([makeminlength(str("text"),being.linelen),makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
 		
+	def scansion_prepare(self,meter=None):
+		if not meter:
+			if not hasattr(self,'_Text__bestparses'): return
+			x=getattr(self,'_Text__bestparses')
+			if not x.keys(): return
+			meter=x.keys()[0]
+		
+		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
+		self.om("\t".join([makeminlength(str("text"),being.linelen), makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
+		
 
-	def scansion(self):
-		if (hasattr(self,'parses')):
-			lowestScore=self.bestparse.score()
-			self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(self.bestparse), being.linelen),len(self.parses),lowestScore,self.bestparse.str_ot()] ] ))
+	def scansion(self,meter=None):
+		if (hasattr(self,'bestParse')):
+			bp=self.bestParse(meter)
+			if not bp: return
+			lowestScore=bp.score()
+			self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ))
 			
 		else:
 			if not self.children:

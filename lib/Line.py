@@ -16,7 +16,7 @@ class Line(entity):
 			from Meter import Meter,genDefault
 			meter = genDefault()
 
-		words=self.words()
+		words=self.ents(cls='Word',flattenList=False)
 		numSyll=0
 		if not words: return None
 		for word in words:
@@ -31,23 +31,35 @@ class Line(entity):
 					return None
 				numSyll+=word.getNumSyll()
 		
-		self.__parses[meter]=meter.parse(self.words(),numSyll)
+		self.__parses[meter]=meter.parse(words,numSyll)
 		try:
 			self.__bestparse[meter]=self.__parses[meter][0]
 		except KeyError:
 			self.__bestparse[meter]=None
 	
 	def allParses(self,meter=None):
+		if not meter:
+			itms=self.__parses.items()
+			if not len(itms): return
+			for mtr,parses in itms:
+				return parses
+
 		try:
 			return self.__parses[meter]
 		except KeyError:
 			return None
 		
 	def bestParse(self,meter=None):
+		if not meter:
+			itms=self.__bestparse.items()
+			if not len(itms): return
+			for mtr,parses in itms:
+				return parses
+		
 		try:
 			return self.__bestparse[meter]
 		except KeyError:
-			return None
+			return
 	
 	
 	def finish(self):

@@ -364,33 +364,49 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	def more(self):
 		"""Show this object's attributes and methods."""
-		self.dir(methods=True)
+		self.dir(methods=True,showall=False)
 	
 	
-	def dir(self,methods=True):
+	def dir(self,methods=True,showall=True):
 		"""Show this object's attributes and methods."""
-		
+		import inspect
 		#print "[attributes]"
 		for k,v in sorted(self.__dict__.items()):
 			if k.startswith("_"): continue
-			print "."+k,"\t",v
+			print makeminlength("."+k,being.linelen),"\t",v
 		
 		if not methods:
 			return
-			
+		
+		entmethods=dir(entity)
+		
 		print
 		#print "[methods]" 		
 		for x in [x for x in dir(self) if ("bound method "+self.classname() in str(getattr(self,x))) and not x.startswith("_")]:
+			if (not showall) and (x in entmethods): continue
+			
 			attr=getattr(self,x)
-			doc=attr.__doc__
+			
+			#print attr.__dict__
+			#print dir(attr)
+	
+			#doc=inspect.getdoc(attr)
+			doc = attr.__doc__
 			if not doc:
 				doc=""
+			#else:
+			#	docsplit=[z for z in doc.replace("\r","\n").split("\n") if z]
+			#	if len(docsplit)>1:
+			#		doc = docsplit[0] + "\n" + makeminlength(" ",being.linelen) + "\n".join( makeminlength(" ",being.linelen)+"\t"+z for z in docsplit[1:])
+			#	else:
+			#		doc = docsplit[0]
 			y=describe_func(attr)
 			if not y:
 				y=""
 			else:
 				y=", ".join(a+"="+str(b) for (a,b) in y)
-			print "."+x+"("+y+")","\t",doc
+			print makeminlength("."+x+"("+y+")",being.linelen),"\t", doc
+			if showall: print
 	
 	
 	## outputs
@@ -1361,7 +1377,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if type(child)==type([]): continue
 				child.report()
 	
-	def getcorr_prepkey(self,key):
+	def _getcorr_prepkey(self,key):
 		(newkey,etc)=(key.split(":")[0],key.split(":")[1:])
 		newkey=newkey.strip()
 		

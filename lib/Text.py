@@ -177,6 +177,8 @@ class Text(entity):
 	
 	## def parse
 	def parse(self,meter=None,arbiter='Line'):
+		"""Parse this text metrically."""
+		
 		if not meter:
 			from Meter import Meter,genDefault
 			meter = genDefault()
@@ -193,6 +195,8 @@ class Text(entity):
 		self.scansion(meter=meter,conscious=True)
 	
 	def scansion(self,meter=None,conscious=False):
+		"""Print out the parses and their violations in scansion format."""
+		
 		if not meter:
 			try:
 				meter=self.__bestparses.keys()[0]
@@ -206,6 +210,8 @@ class Text(entity):
 	
 	
 	def allParses(self,meter=None):
+		"""Return a list of lists of parses."""
+		
 		if not meter:
 			itms=self.__parses.items()
 			if not len(itms): return []
@@ -219,6 +225,8 @@ class Text(entity):
 	
 	
 	def bestParses(self,meter=None):
+		"""Return a list of the best parse per line."""
+		
 		if not meter:
 			itms=self.__bestparses.items()
 			if not len(itms): return []
@@ -235,26 +243,30 @@ class Text(entity):
 	
 	## children	
 	def givebirth(self):
+		"""Return an empty Stanza."""
+		
                 stanza=Stanza()
                 #stanza.parent=self
 		return stanza
 	
 	def validlines(self):
+		"""Return all lines within which Prosodic understood all words."""
+		
 		return [ln for ln in self.lines() if (not ln.isBroken() and not ln.ignoreMe)]
 	
-	def stats(self):
-		o="\t"+makeminlength(" ",16)+"\t#tokens\t#types\t\t%typ/tok\n"
-		dict=self.dict
-		stats=self.getStats()
-		
-		for k,v in sorted(stats.items(),key=itemgetter(0)):
-			numtok=v[0]
-			numtyp=v[1]
-			typovertok=v[2]
-			
-			o+="\t"+makeminlength(str(k),16)+"\t"+str(numtok)+"\t"+str(numtyp)+"\t"+str(typovertok)+"\n"
-			
-		return o
+	#def stats(self):
+	#	o="\t"+makeminlength(" ",16)+"\t#tokens\t#types\t\t%typ/tok\n"
+	#	dict=self.dict
+	#	stats=self.getStats()
+	#	
+	#	for k,v in sorted(stats.items(),key=itemgetter(0)):
+	#		numtok=v[0]
+	#		numtyp=v[1]
+	#		typovertok=v[2]
+	#		
+	#		o+="\t"+makeminlength(str(k),16)+"\t"+str(numtok)+"\t"+str(numtyp)+"\t"+str(typovertok)+"\n"
+	#		
+	#	return o
 	
 	def __repr__(self):
 		return str(self.name)

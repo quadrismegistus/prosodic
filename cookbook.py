@@ -1,6 +1,6 @@
 import prosodic as p
 t = p.Text('have you reckoned a thousand acres much?')
-
+t.more()
 
 print
 print t.feature('prom.weight',True)

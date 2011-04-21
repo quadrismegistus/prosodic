@@ -37,6 +37,13 @@ class Line(entity):
 		except KeyError:
 			self.__bestparse[meter]=None
 	
+	def scansion(self,meter=None,conscious=False):
+		bp=self.bestParse(meter)
+		lowestScore=bp.score()
+		from tools import makeminlength
+		self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)
+	
+	
 	def allParses(self,meter=None):
 		if not meter:
 			itms=self.__parses.items()

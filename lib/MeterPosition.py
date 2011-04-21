@@ -25,7 +25,7 @@ class MeterPosition(Parse):
 	
 	def append(self,slot):
 		self.token = ""
-		self.slots.append(slot)	
+		self.slots.append(slot)
 	
 	
 	def posfeats(self):

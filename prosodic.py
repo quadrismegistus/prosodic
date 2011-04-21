@@ -33,7 +33,7 @@ del lng
 ## load config
 if __name__ != "__main__":
 	being.printout=False
-	config['print_to_screen']=0
+	#config['print_to_screen']=0
 else:	## if not imported, go into interactive mode
 	skip=False
 	
@@ -164,7 +164,6 @@ else:	## if not imported, go into interactive mode
 			obj.parseStats()
 		
 		elif text=="/scan":
-			obj.scansion_prepare()
 			obj.scansion()
 		
 		elif text=="/draw":

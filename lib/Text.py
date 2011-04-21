@@ -189,8 +189,21 @@ class Text(entity):
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
 	
-		self.scansion_prepare()
-		self.scansion()
+		#self.scansion_prepare(conscious=True)
+		self.scansion(meter=meter,conscious=True)
+	
+	def scansion(self,meter=None,conscious=False):
+		if not meter:
+			try:
+				meter=self.__bestparses.keys()[0]
+			except:
+				return
+		
+		self.scansion_prepare(meter=meter,conscious=conscious)
+		for line in self.lines():
+			line.scansion(meter=meter,conscious=conscious)
+		
+	
 	
 	def allParses(self,meter=None):
 		if not meter:

@@ -114,7 +114,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self.numhits=0
 		self.numhits+=1
 
-	def om(self,breath):
+	def om(self,breath,conscious=True):
 		"""
 		Print the string passed via argument 'breath',
 		and store the string for saving in prosodic.being.om.
@@ -123,7 +123,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""
 		
 		import prosodic
-		if bool(prosodic.config['print_to_screen']):
+		if (not conscious) or bool(prosodic.config['print_to_screen']):
 			being.om+=str(breath)+"\n"
 			print self.u2s(breath)
 
@@ -1304,7 +1304,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
 		self.om("\t".join([makeminlength(str("text"),being.linelen),makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
 		
-	def scansion_prepare(self,meter=None):
+	def scansion_prepare(self,meter=None,conscious=False):
 		if not meter:
 			if not hasattr(self,'_Text__bestparses'): return
 			x=getattr(self,'_Text__bestparses')
@@ -1312,15 +1312,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			meter=x.keys()[0]
 		
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
-		self.om("\t".join([makeminlength(str("text"),being.linelen), makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
+		self.om("\t".join([makeminlength(str("text"),being.linelen), makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]),conscious=conscious)
 		
 
-	def scansion(self,meter=None):
+	def scansion(self,meter=None,conscious=False):
+
 		if (hasattr(self,'bestParse')):
 			bp=self.bestParse(meter)
 			if not bp: return
 			lowestScore=bp.score()
-			self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ))
+			self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)
 			
 		else:
 			if not self.children:
@@ -1328,7 +1329,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			elif type(self.children[0])==type([]):
 				return "\t??"+str(self)	## no parse on the word level (where optionality begins?) -- then no parses for this line
 			else:
-				[child.scansion() for child in self.children]
+				[child.scansion(meter=meter,conscious=conscious) for child in self.children]
 		
 		
 	def namestr(self,namestr=[]):

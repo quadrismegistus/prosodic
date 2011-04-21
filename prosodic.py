@@ -161,7 +161,7 @@ else:	## if not imported, go into interactive mode
 			obj.chart()
 		
 		elif text=="/stats":
-			obj.parseStats()
+			obj.stats()
 		
 		elif text=="/scan":
 			obj.scansion()

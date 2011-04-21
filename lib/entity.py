@@ -87,14 +87,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		return self.children
 	
 	def classname(self):
-		"""
-		Returns the classname for this object [ie, self.__class__.__name__]
-		"""
-		
+		""" Returns the classname for this object [ie, self.__class__.__name__] """
 		return self.__class__.__name__
 	
 	
-	def hits(self):
+	def _hits(self):
 		"""
 		Returns number of 'hits' for this object
 		[eg, number of times this syllable used in representing the corpus/texts.]
@@ -104,11 +101,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		return self.numhits
 		
 		
-	def hit(self):
+	def _hit(self):
 		"""
 		Increment by 1 this object's 'numhits' attribute [ie, self.numhits].
 		"""
-		
 		
 		if (not hasattr(self,'numhits')):
 			self.numhits=0
@@ -154,13 +150,27 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				obj=self.feats[k]
 				self.feats[k]=[obj,v]
 			
-	def feature(self,feat,searchforit=False):
+	def feature(self,feat,searchforit=False,init=None):
 		"""
 		Returns value of self.feats[feat].
 		If searchforit==True, will search in this object's children recursively.
 		If not found, returns None.
 		"""
 		
+		
+		if not init:
+			init=self
+			init.tick=0
+			init._matches=[]
+			feat=feat.strip()
+			if feat.startswith("+"):
+				init._eval=True
+				feat=feat[1:]
+			elif feat.startswith("-"):
+				init._eval=False
+				feat=feat[1:]
+			else:
+				init._eval=None
 		
 		if (hasattr(self,'feats')) and (feat in self.feats):
 			if type(self.feats[feat]) == type([]):
@@ -172,16 +182,34 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				return self.feats[feat]
 		else:
 			if searchforit:
-				return self.search(SearchTerm(feat))
+				
+				for child in self.descendants():
+					init.tick+=1
+					x=child.feature(feat,searchforit,init)
+					#print init.tick, self.classname(), child.classname(), x
+					if x==None: continue
+					init._matches.append ( (child,x) )
+				
+					
+				#return [child.feature(feat,searchforit) for child in self.descendants()]
 			else:
-				None
+				return None
+			#if searchforit:
+			#	return self.search(SearchTerm(feat))
+			#else:
+			#	None
+		
+		if self==init:
+
+			if init._eval==None:
+				return init._matches
+			else:
+				return [ x for (x,y) in init._matches if bool(y)==init._eval ]
 		
 		
 	## unicode-ascii conversion
 	def u2s(self,u):
-		"""
-		Returns an ASCII representation of the Unicode string 'u'.
-		"""
+		"""Returns an ASCII representation of the Unicode string 'u'."""
 		
 		try:
 			return str(u.encode('utf-8','replace'))
@@ -219,7 +247,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	## object build status
 	def finish(self):
-		"""Marks the current object as 'finished', such as a Line which has been successfully populated with its words. Currently used by classes: Stanza, Line."""
+		"""Marks the current object as 'finished', such as a Line which has been successfully populated with its words."""
 		self.finished = True
 
 	def finished(self):
@@ -231,7 +259,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 	## getting entities of various kinds
 	def ents(self,cls="Word",flattenList=True):
-		"""Returns a list of entities of the classname specified the second argument. For instance. to call a Word-object's ents('Phoneme') would return a list of the word's Phoneme objects sequentially. This method recursively searches the self-object's children for the type of object specified."""
+		"""Returns a list of entities of the classname specified the second argument.
+		For instance. to call a Word-object's ents('Phoneme') would return a list of the word's Phoneme objects sequentially.
+		This method recursively searches the self-object's children for the type of object specified."""
 		
 		ents = []
 		if self.classname() == cls:
@@ -255,25 +285,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	## helper functions of ents()
 	def phonemes(self):
-		"""
-		Returns a list of this object's Phonemes in order of their appearance.
-		"""
-		
+		"""Returns a list of this object's Phonemes in order of their appearance."""
 		return self.ents('Phoneme')
-
-
-	def phones(self):
-		"""
-		Returns a list of this object's Phonemes in order of their appearance.
-		"""
-		
-		return self.phonemes()
-		
-		
-		
+	
+	
 	def onsets(self):
 		"""Returns a list of this object's Onsets in order of their appearance."""
-		
 		return self.ents('Onset')
 
 
@@ -284,55 +301,47 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 	def codae(self):
 		"""Returns a list of this object's Codae in order of their appearance."""
-				
 		return self.ents('Coda')
 
 
 	def rimes(self):
 		"""Returns a list of this object's Rimes in order of their appearance."""
-		
 		return self.ents('Rime')
 
 
 	def syllables(self):
-		"""Returns a list of this object's Syllables in order of their appearance."""
+		"""Returns a list of this object's Syllables in order of their appearance.
+		NOTE: A Syllable knows its stress, but not its shape and weight: its only child, SyllableBody, will know that."""
 		
 		return self.ents('Syllable')
-
-
-	def sylls(self):
-		"""Returns a list of this object's Syllables in order of their appearance."""
+	
+	def syllableBodies(self):
+		"""Returns a list of this object's SyllableBody's in order of their appearance.
+		A SyllableBody does not know its stress, but does know its shape and weight."""
 		
-		return self.syllables()
-		
-		
-	def words(self):
+		return self.ents('SyllableBody')
+	
+	
+	def words(self,flattenList=True):
 		"""Returns a list of this object's Words in order of their appearance.
-		NOTE: This will be a list of lists, as optionality exists among Words
-			(ie, different stressings/weightings of the word).
-		"""
-		
-		return self.ents('Word')
+		Set flattenList to False to receive a list of lists of Words."""
+		return self.ents('Word',flattenList=flattenList)
 		
 	def lines(self):
 		"""Returns a list of this object's Lines in order of their appearance."""
-		
 		return self.ents('Line')
 		
 	def stanzas(self):
 		"""Returns a list of this object's Stanzas in order of their appearance."""
-		
 		return self.ents('Stanza')
 		
 		
 	def texts(self):
 		"""Returns a list of this object's Texts in order of their appearance."""
-		
 		return self.ents('Text')
 	
 	def show(self):
-		"""
-		'Prints' (using self.om()) the basic stats about the loaded text. Eg:
+		"""'Prints' (using self.om()) the basic stats about the loaded text. Eg:
 			001776	ecstatic            	P:'ecs.ta.tic                      	S:PUU	W:HLH
 			001777	breath              	P:'bre.ath                         	S:PU	W:LH
 		"""
@@ -346,11 +355,41 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			words=self.words()
 			for i in range(len(words)):
 				word=words[i]
-				word.om(str(i+1).zfill(6)+"\t"+str(word.output_minform()))
+				word.om(str(i+1).zfill(6)+"\t"+str(word.output_minform()),conscious=False)
 	
-	def dir(self):
+	def less(self):
+		"""Show this object's attributes only."""
+		self.dir(methods=False)
+	
+	def more(self):
+		"""Show this object's attributes and methods."""
+		self.dir(methods=True)
+	
+	
+	def dir(self,methods=True):
+		"""Show this object's attributes and methods."""
+		
+		#print "[attributes]"
 		for k,v in sorted(self.__dict__.items()):
+			if k.startswith("_"): continue
 			print "."+k,"\t",v
+		
+		if not methods:
+			return
+			
+		print
+		#print "[methods]" 		
+		for x in [x for x in dir(self) if ("bound method "+self.classname() in str(getattr(self,x))) and not x.startswith("_")]:
+			attr=getattr(self,x)
+			doc=attr.__doc__
+			if not doc:
+				doc=""
+			y=describe_func(attr)
+			if not y:
+				y=""
+			else:
+				y=", ".join(a+"="+str(b) for (a,b) in y)
+			print "."+x+"("+y+")","\t",doc
 	
 	
 	## outputs
@@ -402,6 +441,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	## parsing
 	def parse(self,arbiter='Line',init=None,namestr=[]):
+		"""Parse this object metrically."""
+		
 		import time
 		if entity.time==0:
 			entity.time=time.clock()
@@ -540,7 +581,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					init.minparselen=len(parse.positions)
 	
 	
-	def parseStats(self,init=None):
+	def stats(self,init=None):
+		"""Save statistics about the parsing."""
+		
 		if not init:
 			init=self
 			init.mstats={'lines':{},'positions':{},'positionsRaw':{},'positionsT':{},'texts':{},'_ot':{}}
@@ -679,7 +722,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			writeToFile(name,stattype,totalstr,iscorpus=True)
 		return None					
 
-	def getFeatValDict(self,init=None):		
+	def _getFeatValDict(self,init=None):
 		if not init:
 			init=self
 			init.unitfeats={}
@@ -687,7 +730,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if not hasattr(self,'bestparses'):
 			for child in self.children:
 				if type(child)==type([]): return None
-				child.getFeatValDict(init)
+				child._getFeatValDict(init)
 		else:
 			for parse in self.__bestparses:
 				print parse
@@ -707,7 +750,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	#def make_pkey(self,posdict,domainfeat,domainfeatval,domainfeat1,domainfeatval1,targetfeat=None,targetfeatval=None):
 	#	pkey=".".join(["of_all",domainfeat.replace("prom.","")+"_is_"+str(domainfeatval)])
 	
-	def groom(self,init=None):
+	def _groom(self,init=None):
 		if self.classname()!="Corpus":
 			return "<< cannot groom object smaller than corpus: grooming meant to normalize corpus of texts to a standard >>"
 		
@@ -756,10 +799,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						
 	
 	def plot(self,init=None):
+		"""Interactive plotting of parsing features."""
+		
 		if not init:
 			init=self
 			init.plotstats={}
-			init.unitfeats=self.getFeatValDict()
+			init.unitfeats=self._getFeatValDict()
 			
 			sels=[]
 			for k,v in sorted(init.unitfeats.items()):
@@ -910,7 +955,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			try:
 				strtowrite=self.makeBubbleChart(posdict,".".join([textname,init.pkey]),(cc,p))
 				totalstrs+=[strtowrite]
-				writeToFile(textname,init.pkey,self.getBubbleHeader()+strtowrite+self.getBubbleFooter(),extension="htm")
+				writeToFile(textname,init.pkey,self._getBubbleHeader()+strtowrite+self._getBubbleFooter(),extension="htm")
 			except:
 				pass
 			
@@ -920,19 +965,21 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if not self.classname()=="Corpus": return None
 		writeToFile(self.getName(),
 			init.pkey,
-			self.getBubbleHeader()+"\n<br/><br/><br/><br/><br/><br/><br/><br/>\n".join(totalstrs)+self.getBubbleFooter(),
+			self._getBubbleHeader()+"\n<br/><br/><br/><br/><br/><br/><br/><br/>\n".join(totalstrs)+self._getBubbleFooter(),
 			iscorpus=True,
 			extension="htm")
 		writeToFile(self.getName(),init.pkey,"\n\n\n\n".join(totaltsvs),iscorpus=True,extension="tsv")
 		
 	
-	def getBubbleHeader(self):
+	def _getBubbleHeader(self):
 		return '<html> <head> <script type="text/javascript" src="[[prosodic_dir]]/lib/mootools-core-1.3-full-compat.js"></script> <script type="text/javascript" src="[[prosodic_dir]]/lib/moochart-0.1b1-nc.js"></script></head><body>'.replace('[[prosodic_dir]]',sys.path[0])
 		
-	def getBubbleFooter(self):
+	def _getBubbleFooter(self):
 		return '</body></html>'
 	
 	def makeBubbleChart(self,posdict,name,stattup=None):
+		"""Returns HTML for a bubble chart of the positin dictionary."""
+		
 		xname=[x for x in name.split(".") if x.startswith("X_")][0]
 		yname=[x for x in name.split(".") if x.startswith("Y_")][0]
 		#elsename=name.replace(xname,'').replace(yname,'').replace('..','.').replace('..','.')
@@ -960,13 +1007,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		
 	
-	def genCorrStats(self,init=None):
+	def _genCorrStats(self,init=None):
 		from copy import deepcopy
 		
 		if not init:
 			init=self
 			init.corrstats={}
-			init.unitfeats=self.getFeatValDict()
+			init.unitfeats=self._getFeatValDict()
 		
 		if not hasattr(self,'bestparses'):
 			for child in self.children:
@@ -1044,11 +1091,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 													else:
 														pkeydict[pkey][posnum].append(0)
 			#print pkeydict
-			self.correlatePositionAttributes(pkeydict)
+			self._correlatePositionAttributes(pkeydict)
 			exit()	
 			#print len(pkeydict.keys())
 
-	def correlatePositionAttributes(self,keyposdict,threshold=0.9):
+	def _correlatePositionAttributes(self,keyposdict,threshold=0.9):
 		data=[]
 		keys=[]
 		thisword=None
@@ -1095,10 +1142,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		
 
-	def str_numseg(self):
-		return len(self.phonemes())
-
+	
 	def getName(self):
+		"""Return a Name string for this object."""
+		
 		name=self.findattr('name')
 		if not name:
 			name="_directinput_"
@@ -1113,6 +1160,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		return name
 
 	def genfsms(self):
+		"""Generate FSM images. Requires networkx and GraphViz."""
+		
 		if (hasattr(self,'bestparses')):
 			name=self.getName()
 				
@@ -1233,70 +1282,20 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			else:
 				[child.genfsms() for child in self.children]
 	
-	def genmetnet(self):
-		import networkx as nx
-		#import matplotlib.pyplot as plt
-		m2int={'w':'0','s':'1'}
-		if (hasattr(self,'parses')):
-			G=nx.DiGraph()
-			slot1=None
-			slot2=None
-			for parse in self.parses:
-				slot1=None
-				slot2=None
-				for pos in parse.positions:
-					edge_weight=1
-					errorSum=sum([i for i in pos.constraintScores.values()])*1000000
-					if errorSum:
-							edge_weight=1/errorSum
-					for slot in pos.slots:
-						
-						if pos.meterVal=="s":
-							unit=slot.token.upper()
-						else:
-							unit=slot.token.lower()
-						
-						if not slot1:
-							slot1=str(slot.i)+str(pos.meterVal)+"_"+unit
-							continue
-						slot2=str(slot.i)+str(pos.meterVal)+"_"+unit
-						G.add_edge(slot1,slot2,weight=edge_weight)
-						slot1=slot2												
-			self.G=G
-			#nx.draw_graphviz(G)
-			
-			
-			fn='results/metnets/'+".".join(self.namestr())+'.'+str(self).replace(" ","_").lower()+'.png'
-			print ">> saved: "+fn+""
-			#plt.savefig(fn)
-			#nx.write_dot(G,fn)
-			pyd=nx.to_pydot(G)
-			pyd.set_rankdir('LR')
-
-			for node in pyd.get_node_list():
-				node.set_orientation('portrait')
-			pyd.write_png(fn, prog='dot') 
-			
-		else:
-			if not self.children:
-				return ""
-			elif type(self.children[0])==type([]):
-				return []
-			else:
-				[child.genmetnet() for child in self.children]
+	
 		
 	
 	
-	
-			
-	def isParsed(self):
-		if (hasattr(self,'parses')):
-			return True
-		for child in self.children:
-			if type(child)==type([]):
-				return False
-			if child.isParsed():
-				return True
+	#
+	#		
+	#def isParsed(self):
+	#	if (hasattr(self,'parses')):
+	#		return True
+	#	for child in self.children:
+	#		if type(child)==type([]):
+	#			return False
+	#		if child.isParsed():
+	#			return True
 
 	def _scansion_prepare(self):
 		from Meter import Meter
@@ -1305,6 +1304,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		self.om("\t".join([makeminlength(str("text"),being.linelen),makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
 		
 	def scansion_prepare(self,meter=None,conscious=False):
+		"""Print out header column for line-scansions for a given meter. """
+		
 		if not meter:
 			if not hasattr(self,'_Text__bestparses'): return
 			x=getattr(self,'_Text__bestparses')
@@ -1316,7 +1317,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 
 	def scansion(self,meter=None,conscious=False):
-
+		"""Print out scansion for a given meter. """
 		if (hasattr(self,'bestParse')):
 			bp=self.bestParse(meter)
 			if not bp: return
@@ -1347,11 +1348,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		
 	def report(self):
+		""" Print all parses and their violations in a structured format. """
+		
 		from Meter import Meter
 		meter=Meter('default')
-		if (hasattr(self,'parses')):
+		if (hasattr(self,'allParses')):
 			self.om(str(self))
-			self.om(meter.printParses(self.parses))
+			self.om(meter.printParses(self.allParses()),conscious=False)
 		else:
 			for child in self.children:
 				if type(child)==type([]): continue
@@ -1377,6 +1380,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				
 	## outputs
 	def tree(self,offset=0,prefix_inherited="",nofeatsplease=['Phoneme']):
+		"""Print a tree-structure of this object's phonological representation."""
+		
 		tree = ""
 		numchild=0
 		for child in self.children:
@@ -1442,163 +1447,165 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		return tree
 	
-	def showFeat(self,k,v):
-		if type(v) == type(True):
-			if v:
-				r="[+"+k+"]"
-			else:
-				r="[-"+k+"]"
-		else:
-			r="["+k+"="+str(v)+"]"
-		return r
+	#def showFeat(self,k,v):
+	#	if type(v) == type(True):
+	#		if v:
+	#			r="[+"+k+"]"
+	#		else:
+	#			r="[-"+k+"]"
+	#	else:
+	#		r="["+k+"="+str(v)+"]"
+	#	return r
+	#
+	#def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
+	#	for dat in feats:
+	#		row+=1
+	#		col=0
+	#		sheet.row(row).write(col,'['+posmark+dat+']')
+	#		for feat in feats:
+	#			col+=1
+	#			feat=unit.feature(dat)
+	#			feat=self._filterFeat(feat, bool, posmark, negmark)
+	#			sheet.row(row).write(col,feat)
+	#	return row+1
+	#
+	#def writeViols(self,sheet,units,viols,unitviols,row=0,bool=True,posmark="+",negmark=False):
+	#	for violtype in viols:
+	#		row+=1
+	#		col=0
+	#		sheet.row(row).write(col,'['+posmark+violtype+']')
+	#		i =-1
+	#		for unit in units:
+	#			i+=1
+	#			col+=1
+	#			if (not i in unitviols):
+	#				continue
+	#			if (not violtype in unitviols[i]):
+	#				continue
+	#			feat=unitviols[i][violtype]
+	#			feat=self._filterFeat(feat, bool, posmark, negmark)
+	#			sheet.row(row).write(col,feat)
+	#	return row
+	#
+	#def _filterFeat(self,feat,bool=True,posmark="+",negmark=False):
+	#	if feat==None: feat=""
+	#	elif feat==True: feat=posmark
+	#	elif feat==1: feat=posmark
+	#	elif feat==0:
+	#		if negmark: feat=negmark
+	#		else: feat=""
+	#	elif feat==False:
+	#		if negmark: feat=negmark
+	#		else: feat=""
+	#	elif type(feat)==type(float()):
+	#		if bool==True:
+	#			if feat > 0:
+	#				feat=posmark
+	#			else:
+	#				if negmark: feat=negmark
+	#				else: feat=""
+	#		else:
+	#			feat = str(feat)
+	#	else:
+	#		feat=str(feat)
+	#	
+	#	return feat
 	
-	def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
-		for dat in feats:
-			row+=1
-			col=0
-			sheet.row(row).write(col,'['+posmark+dat+']')
-			for feat in feats:
-				col+=1
-				feat=unit.feature(dat)
-				feat=self.filterFeat(feat, bool, posmark, negmark)
-				sheet.row(row).write(col,feat)
-		return row+1
+	#def getNumEnts(self,numents={}):
+	#	### Returns a dictionary of [classname][toks], [classname][typs]
+	#	
+	#	if type(self.children)!=type([]): return numents
+	#	for child in self.children:
+	#		if child==None: continue
+	#		if (not child.classname() in numents):
+	#			numents[child.classname()]={}
+	#			numents[child.classname()]['toks']=0
+	#			numents[child.classname()]['typs']={}
+	#		if (not child in numents[child.classname()]['typs']):
+	#			numents[child.classname()]['typs'][child]=0
+	#		
+	#		numents[child.classname()]['toks']+=1
+	#		numents[child.classname()]['typs'][child]+=1
+	#		numents=child.getNumEnts(numents)
+	#	return numents
+	#
+	#def getStats(self):
+	#	numents=self.getNumEnts()
+	#	
+	#	stats={}
+	#	for k,v in numents.items():
+	#		numtok=v['toks']
+	#		numtyp=len(v['typs'])
+	#		typovertok=round((numtyp/numtok*100),2)
+	#		stats[k]=(numtok,numtyp,typovertok)
+	#		
+	#	return stats
 	
-	def writeViols(self,sheet,units,viols,unitviols,row=0,bool=True,posmark="+",negmark=False):
-		for violtype in viols:
-			row+=1
-			col=0
-			sheet.row(row).write(col,'['+posmark+violtype+']')
-			i =-1
-			for unit in units:
-				i+=1
-				col+=1
-				if (not i in unitviols):
-					continue
-				if (not violtype in unitviols[i]):
-					continue
-				feat=unitviols[i][violtype]
-				feat=self.filterFeat(feat, bool, posmark, negmark)
-				sheet.row(row).write(col,feat)
-		return row
-	
-	def filterFeat(self,feat,bool=True,posmark="+",negmark=False):
-		if feat==None: feat=""
-		elif feat==True: feat=posmark
-		elif feat==1: feat=posmark
-		elif feat==0:
-			if negmark: feat=negmark
-			else: feat=""
-		elif feat==False:
-			if negmark: feat=negmark
-			else: feat=""
-		elif type(feat)==type(float()):
-			if bool==True:
-				if feat > 0:
-					feat=posmark
-				else:
-					if negmark: feat=negmark
-					else: feat=""
-			else:
-				feat = str(feat)
-		else:
-			feat=str(feat)
-		
-		return feat
-	
-	def getNumEnts(self,numents={}):
-		if type(self.children)!=type([]): return numents
-		for child in self.children:
-			if child==None: continue
-			if (not child.classname() in numents):
-				numents[child.classname()]={}
-				numents[child.classname()]['toks']=0
-				numents[child.classname()]['typs']={}
-			if (not child in numents[child.classname()]['typs']):
-				numents[child.classname()]['typs'][child]=0
-			
-			numents[child.classname()]['toks']+=1
-			numents[child.classname()]['typs'][child]+=1
-			numents=child.getNumEnts(numents)
-		return numents
-	
-	def getStats(self):
-		numents=self.getNumEnts()
-		
-		stats={}
-		for k,v in numents.items():
-			numtok=v['toks']
-			numtyp=len(v['typs'])
-			typovertok=round((numtyp/numtok*100),2)
-			stats[k]=(numtok,numtyp,typovertok)
-			
-		return stats
-	
-	def writeUnits(self,sheet,units,row=-1):
-		col=0
-		sheet.row(row).write(col,"[meter.s]")
-		sheet.row(row+1).write(col,"[meter.w]")
-		for unit in units:
-			if unit==unit.upper():
-				sheet.row(row).write(col,unit)
-			else:
-				sheet.row(row+1).write(col,unit)
-		return row+1
-
-	def tiergraph(self,parses,colwidth=24):
-		from xlwt import Workbook
-		book = Workbook()
-		headers = False
-		
-		parse_i=0
-		for parse in parses:
-			parse_i+=1
-			sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs') 
-			sheet.col(0).width=(colwidth*256)
-
-			row=0
-			proms = []
-			viols = []
-			feats = []
-			units = []
-			
-			col=0
-			for pos in parse.positions:
-				for slot in pos.slots:
-					if pos.meterVal=="s":
-						unit=str(slot).upper()
-					else:
-						unit=str(slot).lower()
-					units.append(unit)
-					
-					col+=1
-					sheet.row(row).write(col,str(unit))
-
-					for k,v in slot.feats.items():
-						if k.startswith('prom'):
-							if (not k in proms):
-								proms.append(k)
-						else:
-							if (not k in feats):
-								feats.append(k)
-			proms.sort()
-			viols.sort()
-			feats.sort()
-			
-			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
-
-
-			row=self.writeUnits(sheet,units,row=(row+1))	# the units and their metrical parsing
-			
-
-			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
-			#row=self.writeViols(sheet,parse.units,viols,parse.unitviols,row=(row+1),bool=True,posmark="*")	# constraint violations
-			#row=self.writeFeats(sheet,parse.units,feats,row=(row+1),bool=False,posmark="1",negmark="0")	# all other feats
-			
-			book.save('results/tiergraphs/'+str(self)+'.xls')
+	#def writeUnits(self,sheet,units,row=-1):
+	#	col=0
+	#	sheet.row(row).write(col,"[meter.s]")
+	#	sheet.row(row+1).write(col,"[meter.w]")
+	#	for unit in units:
+	#		if unit==unit.upper():
+	#			sheet.row(row).write(col,unit)
+	#		else:
+	#			sheet.row(row+1).write(col,unit)
+	#	return row+1
+	#
+	#def tiergraph(self,parses,colwidth=24):
+	#	from xlwt import Workbook
+	#	book = Workbook()
+	#	headers = False
+	#	
+	#	parse_i=0
+	#	for parse in parses:
+	#		parse_i+=1
+	#		sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs') 
+	#		sheet.col(0).width=(colwidth*256)
+	#
+	#		row=0
+	#		proms = []
+	#		viols = []
+	#		feats = []
+	#		units = []
+	#		
+	#		col=0
+	#		for pos in parse.positions:
+	#			for slot in pos.slots:
+	#				if pos.meterVal=="s":
+	#					unit=str(slot).upper()
+	#				else:
+	#					unit=str(slot).lower()
+	#				units.append(unit)
+	#				
+	#				col+=1
+	#				sheet.row(row).write(col,str(unit))
+	#
+	#				for k,v in slot.feats.items():
+	#					if k.startswith('prom'):
+	#						if (not k in proms):
+	#							proms.append(k)
+	#					else:
+	#						if (not k in feats):
+	#							feats.append(k)
+	#		proms.sort()
+	#		viols.sort()
+	#		feats.sort()
+	#		
+	#		row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
+	#
+	#
+	#		row=self.writeUnits(sheet,units,row=(row+1))	# the units and their metrical parsing
+	#		
+	#
+	#		row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
+	#		#row=self.writeViols(sheet,parse.units,viols,parse.unitviols,row=(row+1),bool=True,posmark="*")	# constraint violations
+	#		#row=self.writeFeats(sheet,parse.units,feats,row=(row+1),bool=False,posmark="1",negmark="0")	# all other feats
+	#		
+	#		book.save('results/tiergraphs/'+str(self)+'.xls')
 	
 	
-	def searchSingleValue(self, value, feature):
+	def _searchSingleValue(self, value, feature):
 		matches = []
 		#print feature
 		#print value
@@ -1609,15 +1616,15 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		else:
 			for child in self.descendants():
 				if not child: continue
-				matches.extend(child.searchSingleValue(value, feature))
+				matches.extend(child._searchSingleValue(value, feature))
 		return matches
 		
-	def searchSingleTerm(self, searchTerm):
+	def _searchSingleTerm(self, searchTerm):
 		value = searchTerm.terms[0]
 		feature = valueToFeature(value)
-		return self.searchSingleValue(value, feature)
+		return self._searchSingleValue(value, feature)
 		
-	def searchMultipleTerms(self, searchTerm):
+	def _searchMultipleTerms(self, searchTerm):
 		termList = searchTerm.terms
 		found = True
 		for term in termList:
@@ -1626,21 +1633,42 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				break
 		return found
 		
-	def searchInChildren(self, searchTerm):
+	def _searchInChildren(self, searchTerm):
 		matches = []
 		for child in self.descendants():
 			matches.extend(child.search(searchTerm))
 		return matches
 	
+	def query(self,query_string,toprint=False):
+		"""Prints words matching the given query. Eg:   [-voice] (Syllable: (Onset: [+voice]) (Coda: [+voice]))"""
+		qq=SearchTerm(query_string)
+		matchcount=0
+		matches=[]
+		for word in self.words():
+			for match in word.search(qq):
+				matches.append(match)
+				matchcount+=1
+				if "Word" in str(type(match)):
+					matchstr=""
+				else:
+					matchstr=str(match)
+				if toprint:
+					word.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(word),int(being.linelen))+"\t"+matchstr)
+		return matches
+
 	def search(self, searchTerm):
+		"""Returns objects matching the query."""
+		if type(searchTerm)==type(''):
+			searchTerm=SearchTerm(searchTerm)
+		
 		if searchTerm not in self.featpaths:
 			matches = None	
 			if searchTerm.type != None and searchTerm.type != self.classname():
-				matches = self.searchInChildren(searchTerm)
+				matches = self._searchInChildren(searchTerm)
 			elif searchTerm.isAtomic():
-				matches = self.searchSingleTerm(searchTerm)
+				matches = self._searchSingleTerm(searchTerm)
 			else:
-				matches = self.searchMultipleTerms(searchTerm)		
+				matches = self._searchMultipleTerms(searchTerm)		
 				if matches == True:
 					matches = [self]
 				if matches == False:
@@ -1649,12 +1677,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		return self.featpaths[searchTerm]
 					
-	def getTypesFromHereOnDown(self,types=[]):
+	def _getTypesFromHereOnDown(self,types=[]):
 		classname=self.classname()
 		if (not classname in types):
 			types.append(classname) 
 		if self.descendants():
-			return self.descendants()[0].getTypesFromHereOnDown(types)
+			return self.descendants()[0]._getTypesFromHereOnDown(types)
 		else:
 			return types
 	

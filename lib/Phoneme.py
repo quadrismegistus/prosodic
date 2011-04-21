@@ -44,7 +44,8 @@ class Phoneme(entity):
 			return self.u2s(self.phon)
 			
 	def __repr__(self):
-		return "["+str(self)+"]"
+		#return "["+str(self)+"]"
+		return str(self)
 	
 	def isConsonant(self):
 		return self.feature('cons')

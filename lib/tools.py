@@ -42,6 +42,7 @@ def loadConfig(toprint=True,dir_prosodic=None):
 
 def choose(optionlist,msg="please select from above options [using commas for individual selections and a hyphen for ranges]:\n"):
 	seldict={}
+	
 	selnum=0
 	print
 	print
@@ -329,3 +330,42 @@ class SearchTerm:
 		
 	def __hash__(self):
 		return id(self.terms)
+
+
+
+
+
+def describe_func(obj, method=False):
+	""" Describe the function object passed as argument.
+	If this is a method object, the second argument will
+	be passed as True """
+	import inspect
+	o=[]
+
+	try:
+		arginfo = inspect.getargspec(obj)
+	except TypeError:
+		return
+
+	args = arginfo[0]
+	argsvar = arginfo[1]
+
+	if args:
+		if args[0] == 'self':
+			#o+=['self']
+			args.pop(0)
+
+		#o+=['\t-Method Arguments:', args]
+
+		if arginfo[3]:
+			dl = len(arginfo[3])
+			al = len(args)
+			defargs = args[al-dl:al]
+			o=zip(defargs, arginfo[3])
+
+	# if arginfo[1]:
+	# 		o+=['\t-Positional Args Param: %s' % arginfo[1]]
+	# 	if arginfo[2]:
+	# 		o+=['\t-Keyword Args Param: %s' % arginfo[2]]
+	
+	return o

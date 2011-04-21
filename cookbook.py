@@ -1,6 +1,11 @@
 import prosodic as p
-t = p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt',lang='fi')
+t = p.Text('have you reckoned a thousand acres much?')
 
+
+print
+print t.feature('prom.weight',True)
+
+exit()
 
 def is_ntV(word):
 	phonemes = word.phonemes()

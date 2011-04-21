@@ -123,24 +123,24 @@ class Line(entity):
 		return "".join(o)
 
 
-	def __eq__(self,other):
-		if (not hasattr(being,'pointsofcomparison') or not being.pointsofcomparison):
-			return object.__eq__(self,other)
-		else:
-			print
-			print
-			print
-			print self
-			print other
-			
-			for poc in being.pointsofcomparison:
-				a=getattr(self,poc)()
-				b=getattr(other,poc)()
-				
-				print
-				print a
-				print b
-								
-				if a!=b:
-					return False
-			return True
+	#def __eq__(self,other):
+	#	if (not hasattr(being,'pointsofcomparison') or not being.pointsofcomparison):
+	#		return object.__eq__(self,other)
+	#	else:
+	#		print
+	#		print
+	#		print
+	#		print self
+	#		print other
+	#		
+	#		for poc in being.pointsofcomparison:
+	#			a=getattr(self,poc)()
+	#			b=getattr(other,poc)()
+	#			
+	#			print
+	#			print a
+	#			print b
+	#							
+	#			if a!=b:
+	#				return False
+	#		return True

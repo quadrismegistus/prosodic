@@ -141,7 +141,6 @@ class Meter:
 		slotMatrix = self.genSlotMatrix(wordlist)
 		if not slotMatrix: return None
 
-
 		constraints = self.constraints
 
 		
@@ -275,8 +274,8 @@ class Meter:
 			
 	def printScores(self, scores):
 		output = ""
-		for key, value in sorted(scores.items()):
-			output += makeminlength("[*"+key.name+"]:"+str(value),24)
+		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items())):
+			output += makeminlength("[*"+key+"]:"+str(value),24)
 		output = output[:-1]
 		return output
 		

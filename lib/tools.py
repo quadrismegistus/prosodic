@@ -20,13 +20,10 @@ def loadConfig(toprint=True,dir_prosodic=None):
 		
 		if ("=" in ln) and (not "=>" in ln):
 			dat=ln.split("=")
-			if "\t" in dat[1]:
-				dat[1]=dat[1].split("\t")[0].strip()
-			dat[0]=dat[0].strip()
-			dat[1]=dat[1].strip()
-			if dat[1].isdigit(): dat[1]=int(dat[1])
-			settings[dat[0]]=dat[1]
-			
+			k=dat[0].strip()
+			v=[z for z in dat[1].split() if z.strip()][0].strip()
+			if v.isdigit(): v=int(v)
+			settings[k]=v
 			
 		else:
 			dat=ln.split("\t")

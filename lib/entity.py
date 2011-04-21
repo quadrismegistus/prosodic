@@ -1305,14 +1305,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	#
 	#		
-	#def isParsed(self):
-	#	if (hasattr(self,'parses')):
-	#		return True
-	#	for child in self.children:
-	#		if type(child)==type([]):
-	#			return False
-	#		if child.isParsed():
-	#			return True
+	def isParsed(self):
+		if (hasattr(self,'bestParse')) and bool(self.bestParse()):
+			return True
+		for child in self.children:
+			if type(child)==type([]):
+				return False
+			if child.isParsed():
+				return True
 
 	def _scansion_prepare(self):
 		from Meter import Meter
@@ -1371,7 +1371,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		meter=Meter('default')
 		if (hasattr(self,'allParses')):
 			self.om(str(self))
-			self.om(meter.printParses(self.allParses()),conscious=False)
+			for parseList in self.allParses():
+				self.om("\n"+meter.printParses(parseList),conscious=False)
 		else:
 			for child in self.children:
 				if type(child)==type([]): continue

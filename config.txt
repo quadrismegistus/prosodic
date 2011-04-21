@@ -61,8 +61,8 @@ weight.w=>u/1				# a *weak* metrical position must contain *at least one* light 
 ## this helps prevent the parser from hanging on the occasional very long line.
 line_minsylls=2
 line_maxsylls=20
-resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
-#resolve_optionality=0
+#resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
+resolve_optionality=0
 
 
 ## line headedness: [optional] force parser to select best parse from the lowest-scoring parse which beguns as such:
@@ -79,8 +79,8 @@ resolve_optionality=1		# resolve syllabification/stress/weight optionalities by 
 #linebreak=line					# linebreaks occur only at actual line-breaks in the processed text file (good for metrical poetry);
 #linebreak=,;:.?!()[]{}<>		# linebreaks occur only upon encountering any of these punctuation marks (good for prose);
 linebreak=line,;:.?!()[]{}<>	# linebreaks occur both at actual-linebreaks, and at any of these punctuation marks (good for prose and free-verse poetry).
-
-
+tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and hyphens [-]
+#tokenizer=[^\s+]+          # words tokenized against [^] whitespaces [\s+]
 
 
 # [3.0 OUTPUT-FORMATTING]

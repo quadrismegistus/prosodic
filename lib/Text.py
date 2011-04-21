@@ -101,6 +101,7 @@ class Text(entity):
 		line.parent=stanza
 		numwords = 0
 		recentpunct=True
+		tokenizer=prosodic.config['tokenizer'].replace('\\\\','\\')
 		
 		## [loop] lines
 		for ln in file:
@@ -111,10 +112,11 @@ class Text(entity):
 					break
 	
 			# split into words
+			
 			if self.isUnicode:
-				toks = re.findall('[^\s+-]+',ln.strip(),flags=re.UNICODE)
+				toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE)
 			else:
-				toks = re.findall('[^\s+-]+',ln.strip())
+				toks = re.findall(tokenizer,ln.strip())
 			numtoks=len(toks)
 			
 			

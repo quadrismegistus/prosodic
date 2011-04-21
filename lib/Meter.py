@@ -7,10 +7,11 @@ from Parse import Parse, Bounding
 from copy import copy
 from tools import makeminlength
 from entity import being
-import os,prosodic
+import os
 
 
 def genDefault():
+	import prosodic
 	return Meter(prosodic.config['constraints'].split(),(prosodic.config['maxS'],prosodic.config['maxW']),prosodic.config['splitheavies'])
 	
 

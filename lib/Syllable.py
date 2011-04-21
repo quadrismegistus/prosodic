@@ -1,4 +1,4 @@
-import prosodic
+
 from entity import entity,being
 
 class Syllable(entity):
@@ -83,7 +83,8 @@ class Syllable(entity):
 			lang='**'
 		else:
 			lang=self.lang
-		
+
+		import prosodic
 		if (not 'output_'+lang in prosodic.config):
 			lang="**"
 		

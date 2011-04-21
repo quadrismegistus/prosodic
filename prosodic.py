@@ -10,6 +10,7 @@ sys.path.append(dir_imports)
 ## import necessary objects
 from tools import *
 config=loadConfig(__name__=='__main__')
+import entity
 from entity import being
 from Corpus import Corpus
 from Text import Text
@@ -27,12 +28,10 @@ dict={}
 for lng in languages:
 	dict[lng]=loadDict(lng)
 del lng
-being.dict=dict
 
 
 ## load config
 if __name__ != "__main__":
-	being.omms=False
 	being.printout=False
 else:	## if not imported, go into interactive mode
 	skip=False
@@ -113,7 +112,7 @@ else:	## if not imported, go into interactive mode
 			msg+="\n"
 	
 		# msg+="\t\t/config\tchange settings\n"
-		if being.omms:
+		if config['print_to_screen']:
 			msg+="\t\t/mute\thide output from screen\n"
 		else:
 			msg+="\t\t/unmute\tunhide output from screen\n"
@@ -276,13 +275,13 @@ else:	## if not imported, go into interactive mode
 	
 	
 		elif text.startswith('/mute'):
-			if being.omms:
-				being.omms=False
+			if config['print_to_screen']:
+				config['print_to_screen']=False
 			else:
-				being.omms=True
+				config['print_to_screen']=True
 	
 		elif text.startswith('/unmute'):
-			being.omms=True
+			config['print_to_screen']=True
 		if cmd:
 			text=cmd
 			cmd=""

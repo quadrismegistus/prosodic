@@ -1,6 +1,6 @@
 from __future__ import division
 import sys,re,os,codecs
-import prosodic
+
 
 from Stanza import Stanza
 from Line import Line
@@ -12,6 +12,9 @@ from operator import itemgetter
 
 class Text(entity):
 	def __init__(self,filename,lang=None,printout=None,limWord=False,linebreak=None): #',;:.?!()[]{}<>'
+		## import prosodic to access global features
+		import prosodic
+
 		## load/write-load text
 		if os.path.exists(filename):
 			self.filename = filename
@@ -54,9 +57,7 @@ class Text(entity):
 		self.phrasebreak=prosodic.config['linebreak'].strip()
 		
 		
-		if printout==None: printout=being.printout
-		
-		
+		#if printout==None: printout=being.printout
 		
 		if self.phrasebreak=='line':
 			pass
@@ -161,7 +162,7 @@ class Text(entity):
 				line.newchild(newwords)
 				numwords+=1
 				
-				if printout:
+				if prosodic.config['print_to_screen']:
 					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
 				
 				if punct and len(line.children):

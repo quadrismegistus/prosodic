@@ -1,10 +1,11 @@
-import prosodic
+
 from entity import entity,being
 from tools import *
 import Meter
 class Word(entity):
 	def __init__(self,token,syllables=None,sylls_text=[],broken=False,lang=None):
 		if syllables==None:
+			import prosodic
 			if lang==None:
 				lang=prosodic.lang
 			w=prosodic.dict[lang].get(token)[0]
@@ -76,6 +77,7 @@ class Word(entity):
 
 	def __str__stressedSylls(self):
 		lang=self.lang
+		import prosodic
 		if (not 'output_'+lang in prosodic.config):
 			lang="**"
 		if prosodic.config['output_'+lang]=="cmu":

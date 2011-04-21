@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from __future__ import division
-import os,glob,prosodic
+import os,glob
 from tools import *
 
 class being:
@@ -8,7 +8,7 @@ class being:
 	excels=False
 	om=''
 	omm=''
-	omms=bool(int(prosodic.config['print_to_screen']))
+	#omms=bool(int(prosodic.config['print_to_screen']))
 	linelen=50
 	lang=False
 	printout=True
@@ -122,7 +122,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		(The string just prior to this one will remain available at prosodic.being.omm).		
 		"""
 		
-		if being.omms:
+		import prosodic
+		if bool(prosodic.config['print_to_screen']):
 			being.om+=str(breath)+"\n"
 			print self.u2s(breath)
 

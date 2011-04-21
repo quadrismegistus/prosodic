@@ -27,6 +27,7 @@ class MeterPosition(Parse):
 		self.token = ""
 		self.slots.append(slot)	
 	
+	
 	def posfeats(self):
 		posfeats={'prom.meter':[]}
 		for slot in self.slots:

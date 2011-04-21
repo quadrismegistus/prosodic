@@ -246,6 +246,13 @@ class Parse(entity):
 	def canCompare(self, parse):
 		return (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
 
+	def violations(self,boolean=False):
+		if not boolean:
+			return self.constraintScores
+		else:
+			return [(k,(v>0)) for (k,v) in self.constraintScores.items()]
+		
+
 
 	def constraintScorez(self):
 		toreturn={}

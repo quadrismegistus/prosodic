@@ -150,13 +150,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				obj=self.feats[k]
 				self.feats[k]=[obj,v]
 			
-	def feature(self,feat,searchforit=False,init=None):
+	def feature(self,feat=None,searchforit=False,init=None):
 		"""
 		Returns value of self.feats[feat].
 		If searchforit==True, will search in this object's children recursively.
 		If not found, returns None.
 		"""
-		
+		if feat==None:
+			return self.feats
 		
 		if not init:
 			init=self

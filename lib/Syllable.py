@@ -28,6 +28,10 @@ class Syllable(entity):
 	def settok(self,tok):
 		self.token=tok
 	
+	def __repr__(self):
+		return "<"+self.classname()+"."+self.u2s(self.token)+"> ["+str(self)+"]"
+	
+	
 	def getShape(self):
 		return self.syll.getShape()
 
@@ -46,7 +50,7 @@ class Syllable(entity):
 		return self.syll.newRimeForSuffix(phon)
 		
 	def str_ipa(self):
-		return self.u2s("".join([repr(x) for x in self.phonemes()]))
+		return "".join(self.u2s(repr(x)) for x in self.phonemes())
 	
 	def str_cmu(self):
 		return " ".join([str(x.str_cmu()) for x in self.phonemes()])

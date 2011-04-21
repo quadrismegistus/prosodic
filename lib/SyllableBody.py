@@ -1,6 +1,7 @@
 from entity import entity
 from Phoneme import Phoneme
-class SyllableBody(entity):
+from Syllable import Syllable
+class SyllableBody(entity,Syllable):
 	def __init__(self,onset,rime,lang):
 		## initialize
 		self.feats = {}
@@ -8,6 +9,7 @@ class SyllableBody(entity):
 		self.rime=rime
 		self.children=[]
 		self.lang=lang
+		self.token=""
 		if self.onset:
 			self.children.append(self.onset)
 		self.children.append(self.rime)
@@ -22,6 +24,9 @@ class SyllableBody(entity):
 	def settok(self,tok):
 		self.token=tok
 	
+	def __repr__(self):
+		return "<"+self.classname()+"> ["+str(self)+"]"
+
 	def getShape(self):
 		shape = ""
 		for phoneme in self.phonemes():

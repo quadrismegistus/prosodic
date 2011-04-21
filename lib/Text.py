@@ -269,4 +269,4 @@ class Text(entity):
 	#	return o
 	
 	def __repr__(self):
-		return str(self.name)
+		return "<Text."+str(self.name)+"> ("+str(len(self.words()))+" words)"

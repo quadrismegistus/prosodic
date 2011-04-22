@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 import sys,glob,os,time
-sys.dont_write_bytecode=1
+
 
 dir_prosodic=sys.path[0]
 dir_imports=os.path.join(dir_prosodic,'lib')

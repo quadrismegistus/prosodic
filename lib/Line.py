@@ -39,6 +39,7 @@ class Line(entity):
 	
 	def scansion(self,meter=None,conscious=False):
 		bp=self.bestParse(meter)
+		if type(bp)==type(None): return
 		lowestScore=bp.score()
 		from tools import makeminlength
 		self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)

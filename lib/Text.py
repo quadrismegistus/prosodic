@@ -118,7 +118,7 @@ class Text(entity):
 			else:
 				toks = re.findall(tokenizer,ln.strip())
 			numtoks=len(toks)
-			
+			print toks
 			
 			## if no words, mark stanza/para end
 			if (not ln.strip()) or (numtoks < 1):
@@ -143,31 +143,54 @@ class Text(entity):
 	
 			## [loop] words
 			for toknum in range(numtoks):
+				
+					
+				# get token
 				tok=toks[toknum]
 				
 				## check if really a word
 				if not tok: continue
 				tok=tok.strip()
 				if not tok: continue
-				(tok,punct) = gleanPunc(tok)				
 				
+				# remove punct
+				tok1=tok
+				(tok,punct) = gleanPunc(tok)
+				punct1=False
+				punct2=False
+				if punct and tok:
+					if tok1[0]!=tok[0]:
+						punct1=True
+					if tok1[-1]!=tok[-1]:
+						punct2=True
+					
+					## if initial punct eg '(there', end previous line if it contains anything
+					if punct1 and len(line.children):
+						if self.phrasebreak != 'line':
+							if (self.phrasebreak_punct.find(punct) > -1):
+								line.finish()
+
+
 				# check if new stanza/line necessary 
 				if stanza.finished:
 					stanza = self.newchild()
 					stanza.parent=self
 				if line.finished:
 					line = stanza.newchild()
-					line.parent=stanza
+					line.parent=stanza		
 				
-				newwords=self.dict.get(tok)
 				
-				line.newchild(newwords)
-				numwords+=1
+				if tok:
+					newwords=self.dict.get(tok)
+					
+					line.newchild(newwords)
+					numwords+=1
 				
-				if prosodic.config['print_to_screen']:
-					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
+					if prosodic.config['print_to_screen']:
+						self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
 				
-				if punct and len(line.children):
+				# end line if end punctuation
+				if punct2 and len(line.children):
 					if self.phrasebreak != 'line':
 						if (self.phrasebreak_punct.find(punct) > -1):
 							line.finish()

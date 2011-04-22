@@ -379,6 +379,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			return
 		
 		entmethods=dir(entity)
+		for x in ['parse','scansion']:
+			entmethods.remove(x)
 		
 		print
 		#print "[methods]" 		

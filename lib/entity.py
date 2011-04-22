@@ -203,7 +203,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if self==init:
 
 			if init._eval==None:
-				return init._matches
+				return [ (x,y) for (x,y) in init._matches if y!=None ]
 			else:
 				return [ x for (x,y) in init._matches if bool(y)==init._eval ]
 		

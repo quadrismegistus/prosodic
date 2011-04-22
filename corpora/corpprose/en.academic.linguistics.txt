@@ -1,0 +1,92 @@
+The purpose of this study was to examine within- and across-language relationships between lexical
+and grammatical domains by focusing on measures of lexical diversity and grammatical complexity
+in Spanish and English. One hundred ninety-six preschool and school-aged Latino children with
+different levels of English and Spanish proficiencies and different language abilities produced narratives
+in Spanish, English, or both. Analyses revealed strong associations between lexical (number of
+different words and number of different verbs) and grammatical measures (mean length of utterances in
+words and use of ditransitive predicates), supporting the domain interdependence hypothesis within a
+language. Cross-linguistic comparisons indicate a greater diversity of verbs and ditransitive predicates
+in Spanish compared to English for this population. In the language samples of children who produced
+narratives in the two languages, there was no relationship between the two domains across languages.
+The lack of cross-language correlations may be related to other variables influencing lexical and
+semantic development in bilingual learners. Methodological issues to be considered in future studies
+with bilingual speakers are discussed.
+
+An alternative approach to examine cross-language relationships for oral language
+measures in older children is to assess their spontaneous language samples. One
+advantage is that this methodology does not rely on tests developed for monolingual
+speakers as is the case with current standardized measures. In addition, to
+study bilingual children in the two languages, it is important to use measures that
+are comparable across the languages. Narratives can helpmeasure lexical diversity
+and grammatical complexity in both languages. During narration, children need
+to use sentences of different length and complexity as well as an appropriate and
+relevant lexicon. Then, these utterances can be analyzed to obtain estimates of
+lexical and grammatical complexity in every language. Narratives allow us to
+study cross-linguistic differences across the languages of monolingual speakers.
+
+The bestmethodology to study lexical diversity in Spanish is not established yet.
+In contrast to English, Spanish is highly inflected for verbs, articles, and adjectives,
+and thus rules for counting word roots differ from one language to the other.
+
+In two picture-naming experiments we investigated the nature of such form facilitation effect
+with Mandarin Chinese, separating the effects of phonology and orthography. Significant facilitation
+effects were observed both when distractors were only orthographically or only phonologically related
+to the targets. The orthographic effect was overall stronger than the phonological effect. These findings
+suggest that the classic form facilitation effect in picture–word interference is a mixed effect with
+multiple loci: it cannot be attributed merely to the nonlexical activation of the target phonological
+segments from the visual input of the distractor. It seems instead that orthographically only related
+distractors facilitate the lexical selection process of picture naming, and phonologically only related
+distractors facilitate the retrieval of target phonological segments.
+
+Laboratory-based experiments examining the process of spoken word recognition
+have shown in a variety of tasks that English words with a sparse neighborhood
+are responded to more quickly and more accurately than words with a dense neighborhood.
+
+These results
+suggest that during spoken word recognition multiple word-forms are activated and
+compete with each other.
+
+Evidence for the activation of and competition among multiple word-forms
+during spoken word recognition also comes from an analysis of a corpus of speech
+perception errors known as slips of the ear.
+
+This more ecologically valid examination of the process of
+spoken word recognition further demonstrates that multiple, similar word-forms are
+activated and compete during spoken word recognition, and that words that activate
+many similar sounding words are more likely to be misperceived than words that
+activate few similar sounding words.
+
+It is important to note, however, that much of the empirical work—including
+studies of human behavior and computer simulations—examining the process of
+lexical activation has used monosyllabic words as stimuli.
+
+It is important to note, however, that this work examined the recognition
+of bisyllabic Spanish words by native speakers of Spanish, not the recognition
+of bisyllabic English words by native speakers of English. Although the results of
+Vitevitch and Rodríguez suggest that multiple word-forms can facilitate the recognition
+of spoken words, it is unclear if the facilitative rather than competitive influence
+of neighborhood density on spoken word recognition could be better accounted for
+by a cross-linguistic difference in spoken word recognition processes—like that seen
+in the process of segmenting a spoken word from fluent speech—or if the result reported in
+Vitevitch and Rodríguez was due to a different processing dynamic being employed
+for the recognition of longer versus shorter spoken words.
+
+They hypothesized that longer words would have greater lexical activation than
+shorter words, leading to a larger lexical shift in the trisyllabic words than in the monosyllabic
+words.
+
+They also found that duration manipulations and
+task demands modulated the effect, most notably for the monosyllabic words. Pitt
+and Samuel concluded that a better understanding of lexical processing could only
+be obtained by examining words of various lengths, not just monosyllabic words as
+previous studies have used.
+
+Unfortunately, the relationship between uniqueness
+point and the number of competitors is not so straightforward.
+
+Because uniqueness point and
+the number of competitors are not linearly related, it is difficult to use uniqueness
+point as a consistent measure of number of competitors.
+
+Given the difficulty in interpreting the results of Pitt and Samuel, the
+influence of word length on lexical processing is still unclear.

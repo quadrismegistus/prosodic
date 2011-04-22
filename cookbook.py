@@ -1,11 +1,6 @@
-import prosodic as p
-#t = p.Text('have you reckoned a thousand acres much?')
-t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt')
-t.more()
-print
+from __future__ import division
 
-print ">> printing all heavy syllables..."
-print t.feature('+prom.weight',True)
+## functions
 
 def is_ntV(word):
 	phonemes = word.phonemes()
@@ -13,8 +8,70 @@ def is_ntV(word):
 		return False
 	return phonemes[-1].feature("syll")
 
+def typtok(ent,enttype='Phoneme'):
+	group=ent.ents(enttype)
+	return len(set(group))/len(group)
 
-print
-print ">> printing all -ntV words..."
-nta = [word for word in t.words() if is_ntV(word)]
-print nta
+
+
+if __name__ == '__main__':
+	## main
+	import prosodic as p
+	p.config['print_to_screen']=0
+	
+	#t=p.Text('have you reckoned a thousand acres much?')
+	t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt',lang='fi')
+	#t=p.Text('corpora/leavesofgrass/1855.whitman.leavesofgrass.txt')
+	#t=p.Text('corpora/corppoetry_en/en.shakespeare.txt')
+	
+	print ">> printing Word typ/tok ratio for text:"
+	print typtok(t,'Word')
+	
+	
+	"""
+	print ">> printing all heavy syllables..."
+	print t.feature('+prom.weight',True)
+	
+	print ">> printing all -ntV words..."
+	nta = [word for word in t.words() if is_ntV(word)]
+	print nta
+	
+	
+	print ">> counting stress clashes per line..."
+	for line in t.validlines():
+		linestress = "".join(word.stress for word in line.words())
+		
+		clashes=0
+		#badclashes=linestress.count("PP")  # python's String.count(substr) is non-overlapping
+		
+		## to capture the overlapping clashes -- ie, PPP is 2 clashes ...
+		a=None                        # create variable a, set to None
+		for b in linestress:          # iterate over the letters of linestress (UPPU...) 
+			if not a:             # true only just when loop begun
+				a=b           # set a to b's initial position to linestress[0]
+				continue      # skip to next iteration of b (linestress[1]) 
+			
+			if a=="P" and b=="P": # clash! 
+				clashes+=1
+			
+			a=b                   # set a to 'former' b, so that a/former_b--next_b compared next
+		
+		print clashes,"\t",line       # print clashes, tab, line
+	
+	
+	print ">> [alliteration?] printing typtok ratio of Onsets for lines..."
+	for line in t.validlines():
+		if len(line.onsets())!=8: continue
+		print typtok(line,'Onset'),"\t",line
+	
+	print ">> [line-rhyme?] printing typtok ratio of Rimes for lines..."
+	for line in t.validlines():
+		if len(line.rimes())!=8: continue
+		print typtok(line,'Rime'),"\t",line
+	
+	print ">> printing typtok ratio of Phonemes for lines..."
+	for line in t.validlines():
+		if len(line.phonemes())!=20: continue
+		print typtok(line),"\t",line
+	
+	"""

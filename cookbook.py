@@ -73,7 +73,8 @@ if __name__ == '__main__':
 		for x in feats:
 			for y in feats:
 				if y>=x: continue	# strings sort alphabetically; this avoids duplication of data
-				print "    % of "+x+" and "+y+" vowels =", len( [ z for z in t.feature(x,True) if z.feature(y) ] ) / len ( t.feature('+syll',True) )
+				print "    % of "+x+" and "+y+" vowels =",
+				print len( [ z for z in t.feature(x,True) if z.feature(y) ] ) / len ( t.feature('+syll',True) )
 		
 		
 	

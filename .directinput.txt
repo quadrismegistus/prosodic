@@ -1,3 +1,2 @@
-corpora
-corppoetry_fi
-en.yeats.late.txt
+mankind
+kind kid word ward

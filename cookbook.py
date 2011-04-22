@@ -20,12 +20,14 @@ if __name__ == '__main__':
 	p.config['print_to_screen']=0
 	
 	#t=p.Text('have you reckoned a thousand acres much?')
-	t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt',lang='fi')
-	#t=p.Text('corpora/leavesofgrass/1855.whitman.leavesofgrass.txt')
+	#t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt',lang='fi')
+	t=p.Text('corpora/leavesofgrass/1855.whitman.leavesofgrass.txt')
 	#t=p.Text('corpora/corppoetry_en/en.shakespeare.txt')
 	
-	print ">> printing Word typ/tok ratio for text:"
-	print typtok(t,'Word')
+	print ">> printing Word typ/tok ratio for text "+str(t)+":", typtok(t,'Word')
+	print ">> printing Syllable typ/tok ratio for text "+str(t)+":", typtok(t,'Syllable')
+	print ">> printing Onset typ/tok ratio for text "+str(t)+":", typtok(t,'Onset')
+	print ">> printing Rime typ/tok ratio for text "+str(t)+":", typtok(t,'Rime')
 	
 	
 	"""
@@ -58,20 +60,5 @@ if __name__ == '__main__':
 		
 		print clashes,"\t",line       # print clashes, tab, line
 	
-	
-	print ">> [alliteration?] printing typtok ratio of Onsets for lines..."
-	for line in t.validlines():
-		if len(line.onsets())!=8: continue
-		print typtok(line,'Onset'),"\t",line
-	
-	print ">> [line-rhyme?] printing typtok ratio of Rimes for lines..."
-	for line in t.validlines():
-		if len(line.rimes())!=8: continue
-		print typtok(line,'Rime'),"\t",line
-	
-	print ">> printing typtok ratio of Phonemes for lines..."
-	for line in t.validlines():
-		if len(line.phonemes())!=20: continue
-		print typtok(line),"\t",line
 	
 	"""

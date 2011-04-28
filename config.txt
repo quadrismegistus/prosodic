@@ -79,8 +79,8 @@ resolve_optionality=0
 #linebreak=line					# linebreaks occur only at actual line-breaks in the processed text file (good for metrical poetry);
 #linebreak=,;:.?!()[]{}<>		# linebreaks occur only upon encountering any of these punctuation marks (good for prose);
 linebreak=line,;:.?!()[]{}<>	# linebreaks occur both at actual-linebreaks, and at any of these punctuation marks (good for prose and free-verse poetry).
-tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and hyphens [-]
-#tokenizer=[^\s+]+          # words tokenized against [^] whitespaces [\s+]
+#tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and hyphens [-]
+tokenizer=[^\s+]+          # words tokenized against [^] whitespaces [\s+]
 
 
 # [3.0 OUTPUT-FORMATTING]

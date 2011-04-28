@@ -118,7 +118,7 @@ class Text(entity):
 			else:
 				toks = re.findall(tokenizer,ln.strip())
 			numtoks=len(toks)
-			print toks
+			
 			
 			## if no words, mark stanza/para end
 			if (not ln.strip()) or (numtoks < 1):

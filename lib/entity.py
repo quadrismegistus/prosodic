@@ -1459,7 +1459,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 							for i in range(0,offset+1):
 								newline+="      "
 							newline+="|     "
-							newline+=self.showFeat(k,v)
+							newline+=self._showFeat(k,v)
 							
 
 			tree+=newline
@@ -1467,16 +1467,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		return tree
 	
-	#def showFeat(self,k,v):
-	#	if type(v) == type(True):
-	#		if v:
-	#			r="[+"+k+"]"
-	#		else:
-	#			r="[-"+k+"]"
-	#	else:
-	#		r="["+k+"="+str(v)+"]"
-	#	return r
-	#
+	def _showFeat(self,k,v):
+		if type(v) == type(True):
+			if v:
+				r="[+"+k+"]"
+			else:
+				r="[-"+k+"]"
+		else:
+			r="["+k+"="+str(v)+"]"
+		return r
+	
 	#def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
 	#	for dat in feats:
 	#		row+=1

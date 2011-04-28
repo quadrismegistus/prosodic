@@ -26,35 +26,46 @@ def numclashes(ent,stressval=1.0):
 	return clashes
 
 
+def getLD(ents):
+	ld=[]
+	i=0
+	for t in ents:
+		i+=1
+		d={}
+		d['name']=str(i).zfill(4)+'.'+str(t)
+		d['typtok_word']=typtok(t,'Word')
+		d['typtok_syll']=typtok(t,'Syllable')
+		d['typtok_ons']=typtok(t,'Onset')
+		d['typtok_rime']=typtok(t,'Rime')
+		d['clash_persyll']=numclashes(t,stressval=1.0)/len(t.syllables())
+		d['lapse_persyll']=numclashes(t,stressval=0.0)/len(t.syllables())
+		d['heavy']=len(t.feature('+prom.weight',True)) / len(t.feature('prom.weight',True))
+		d['light']=len(t.feature('+prom.stress',True)) / len(t.feature('prom.stress',True))
+		ld.append(d)
+	return ld
+
+def getCatLD(ent):
+	ld=[]
+	i=0
+	for syll in ent.syllables():
+		d={}
+		d['stress']=str(syll.str_stress())
+		d['weight']=str(syll.str_weight())
+		d['shape']=str(syll.getShape())
+		ld.append(d)
+	return ld
+
+
+
+
 if __name__ == '__main__':
 	## main
 	import prosodic as p
 	p.config['print_to_screen']=0
-	
-	
-	#t=p.Text('have you reckoned a thousand acres much?')
-	#t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt',lang='fi')
-	#t=p.Text('corpora/leavesofgrass/1855.whitman.leavesofgrass.txt')
-	#t=p.Text('corpora/corppoetry_en/en.shakespeare.txt')
-	
-	
-	
-	
-	texts=[]
-	texts.append(p.Text('corpora/corppoetry_en/en.shakespeare.txt'))
-	texts.append(p.Text('corpora/corppoetry_en/en.whitman.txt'))
-	texts.append(p.Text('corpora/corppoetry_en/en.yeats.early.txt'))
-	texts.append(p.Text('corpora/corppoetry_en/en.yeats.late.txt'))
-	texts.append(p.Text('corpora/corpprose/en.speech.gettysburg.txt'))
-	texts.append(p.Text('corpora/corpprose/en.speech.bush.txt'))
-	texts.append(p.Text('corpora/corpprose/en.speech.obama.txt'))
-	texts.append(p.Text('corpora/corpprose/en.prose.nyt.txt'))
-	texts.append(p.Text('corpora/corpprose/en.prose.blog.google.txt'))
-	texts.append(p.Text('corpora/corpprose/en.academic.linguistics.txt'))
-	texts.append(p.Text('corpora/corpprose/en.academic.literature.txt'))
-	
-	
-	for t in texts:
+		
+	c=p.Corpus('corpora/corptest')
+		
+	for t in c.texts():
 		print "\n"
 		print t
 		

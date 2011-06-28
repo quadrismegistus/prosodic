@@ -84,7 +84,6 @@ def parse2grid(ifn,ldlim=None,shuffle=False):
 		print " ".join(words)	
 		
 	return ld
-				
 
 def parse2tree(ifn,ldlim=None,shuffle=False):
 	ofn=os.path.basename(ifn)
@@ -194,6 +193,86 @@ def parse2tree(ifn,ldlim=None,shuffle=False):
 
 	return ld
 
+def short_parse2tree(ifn,ldlim=None,shuffle=False):
+	ofn=os.path.basename(ifn)
+	f=open(ifn)
+	parse=str(f.read())
+	f.close()
+
+	import networkx as nx
+	noderoot=None
+	sentnum = 0
+		
+	G=nx.DiGraph()
+	
+	pdat=parse.split()
+	wordi=0
+	pnumi=-1
+
+	pstack=[]
+	words=[]
+	wordnodes=[]
+	for pnum in range(len(pdat)):
+		p=pdat[pnum]
+		pnumi+=1
+		
+		pnop=p.replace('(','').replace(')','')
+		if not pytxt.noPunc(pnop): continue
+		pnode=(pnumi,pnop)
+		
+		## lay first stone
+		if not len(pstack):
+			pstack.append(pnode)
+			noderoot=pnode
+			continue
+		
+		
+		## make sure maximally binary
+		if len(G.edge):
+			edges_already=sorted(G.edge[pstack[-1]].keys())
+			
+			if len(edges_already)>1:
+				print edges_already
+				
+				#newnode=(pnumi+0.1,'NODE')
+				newnode=(str(pnumi)+"b",'NODE')
+				G.add_edge(pstack[-1],newnode,type='real',prom=None,weight=0)
+				for e in edges_already[1:]:
+					G.remove_edge(pstack[-1],e)
+					G.add_edge(newnode,e,type='real',prom=None,weight=0)
+				pstack.pop()
+				pstack.append(newnode)
+		
+		G.add_edge(pstack[-1],pnode,weight=0,type='real',prom=None)
+		
+		if p.startswith('('):		# is tag	
+			#G.edge[pstack[-1]][pnode]['isFinal']=False
+			pstack.append(pnode)
+		else:						# is word
+			#G.edge[pstack[-1]][pnode]['isFinal']=True
+		
+			## get word stats
+			word=p.replace(')','')
+			
+			words+=[word]
+			wordnodes+=[pnode]
+			stresslevel=0
+
+			## go through tags in stack according to the number of tags which closed
+			num_closing_paren=p.count(')')
+			for i in range(num_closing_paren):
+				pt=pstack.pop()
+	
+	for node in G.nodes():
+		if node in wordnodes:
+			G.node[node]['type']='word'
+			G.node[node]['color']='green'
+		else:
+			G.node[node]['type']='nonword'
+	
+	G=treeStress(G)
+	return G
+
 def create_grid_rec(g, node, level):
 	neighbors = g.neighbors(node)
 	if not neighbors:
@@ -229,9 +308,10 @@ def create_grid(g):
 	return create_grid_rec(g, start, 0)
 
 def tree2grid(G):
-	sentence = [node for node in g.nodes() if not g.neighbors(node)]
+	create_grid(G)
+	sentence = [node for node in G.nodes() if not G.neighbors(node)]
 	sentence.sort(key=lambda val:val[0])
-	return [(node[1], g.node[node]['grid']) for node in sentence]
+	return [(node[1], G.node[node]['grid']) for node in sentence]
 
 def pathsum(G,path,attr='prom',avg=True):
 	ea=None

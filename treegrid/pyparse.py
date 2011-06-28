@@ -179,23 +179,59 @@ def parse2tree(ifn,ldlim=None,shuffle=False):
 		G=treeStress(G)
 		#G=treeAlign(G)
 		#G.graph['nodesep']=0.5
-		
+		ld.append(G)
 		for node in wordnodes:
 			path=nx.shortest_path(G,noderoot,node)
 			print node, pathsum(G,path)
 		
 
-		pyd=nx.to_pydot(G)
-		pyd.write_png('test.png')
+		#pyd=nx.to_pydot(G)
+		#pyd.write_png('test.png')
 		#pyd.set_rankdir('LR')
-		exit()
+		#exit()
 
 		#print " ".join(words)	
 
 	return ld
 
+def create_grid_rec(g, node, level):
+	neighbors = g.neighbors(node)
+	if not neighbors:
+		g.node[node]['grid'] = level
+		return level
+	
+	weak = None
+	strong = None
+	for nbr in neighbors:
+		edge = g[node][nbr]
+		if not 'label' in edge:
+			continue
+		elif edge['label'] == '-':
+			weak = nbr
+		elif edge['label'] == '+':
+			strong = nbr
+	
+	if weak == None or strong == None:
+		neighbors.sort(key=lambda val:val[0])
+		return create_grid_rec(g, neighbors[0], level)
+	
+	w_val = create_grid_rec(g, weak, 0)
+	level = max(w_val+1, level)
+	return create_grid_rec(g, strong, level)
+
+def create_grid(g):
+	root = None
+	for node in g.nodes():
+		if node[0] == 0:
+			root = node
+			break
+	start = g.neighbors(root)[0]
+	return create_grid_rec(g, start, 0)
+
 def tree2grid(G):
-	pass
+	sentence = [node for node in g.nodes() if not g.neighbors(node)]
+	sentence.sort(key=lambda val:val[0])
+	return [(node[1], g.node[node]['grid']) for node in sentence]
 
 def pathsum(G,path,attr='prom',avg=True):
 	ea=None

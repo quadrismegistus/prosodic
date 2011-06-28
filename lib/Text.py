@@ -107,8 +107,8 @@ class Text(entity):
 		for ln in file:
 			#print ln
 			## check limWord
-			if(limWord):
-				if(numwords>limWord):
+			if(prosodic.config['limWord']):
+				if(numwords>=prosodic.config['limWord']):
 					break
 	
 			# split into words

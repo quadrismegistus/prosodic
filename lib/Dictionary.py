@@ -4,7 +4,11 @@ from tools import *
 from entity import *
 from Word import Word
 from Syllable import Syllable
-dirself=sys.path[0]
+dir_prosodic=[p for p in sys.path if os.path.basename(p)=='prosodic']
+try:
+	dirself=dir_prosodic[0]
+except:
+	dirself=sys.path[0]
 libfolder=os.path.join(dirself,'lib')
 dictsfolder=os.path.join(dirself,'dicts')
 

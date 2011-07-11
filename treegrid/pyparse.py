@@ -176,22 +176,14 @@ def parse2tree(ifn,ldlim=None,shuffle=False):
 				G.node[node]['type']='nonword'
 		
 		G=treeStress(G)
-		#G=treeAlign(G)
-		#G.graph['nodesep']=0.5
-		ld.append(G)
-		for node in wordnodes:
-			path=nx.shortest_path(G,noderoot,node)
-			print node, pathsum(G,path)
+		
+		
+		
+		G=tree2grid(G)
+		print G
 		
 
-		#pyd=nx.to_pydot(G)
-		#pyd.write_png('test.png')
-		#pyd.set_rankdir('LR')
-		#exit()
-
-		#print " ".join(words)	
-
-	return ld
+	return None
 
 def short_parse2tree(ifn,ldlim=None,shuffle=False):
 	ofn=os.path.basename(ifn)
@@ -358,10 +350,10 @@ def treeStress(G,edgeFrom=None):
 					G.edge[edgeFrom][edge]['color']='red'
 				G.edge[edgeFrom][edge]['minlen']=1
 				
-				if edgeL:
-					G.add_edge(edgeL,edge,type='graphic',weight=1,prom=None,label='',color='white',minlen=0)
+				#if edgeL:
+				#	G.add_edge(edgeL,edge,type='graphic',weight=1,prom=None,label='',color='white',minlen=0)
 					#G.add_edge(edge,edgeL,type='graphic',weight=0,label='',color='green')
-				edgeL=edge
+				#edgeL=edge
 
 		return edges
 	

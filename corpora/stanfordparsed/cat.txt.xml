@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="CoreNLP-to-HTML.xsl" type="text/xsl"?>
+<root>
+  <document>
+    <sentences>
+      <sentence id="1">
+        <tokens>
+          <token id="1">
+            <word>the</word>
+            <lemma>the</lemma>
+            <CharacterOffsetBegin>0</CharacterOffsetBegin>
+            <CharacterOffsetEnd>3</CharacterOffsetEnd>
+            <POS>DT</POS>
+          </token>
+          <token id="2">
+            <word>cat</word>
+            <lemma>cat</lemma>
+            <CharacterOffsetBegin>4</CharacterOffsetBegin>
+            <CharacterOffsetEnd>7</CharacterOffsetEnd>
+            <POS>NN</POS>
+          </token>
+          <token id="3">
+            <word>that</word>
+            <lemma>that</lemma>
+            <CharacterOffsetBegin>8</CharacterOffsetBegin>
+            <CharacterOffsetEnd>12</CharacterOffsetEnd>
+            <POS>WDT</POS>
+          </token>
+          <token id="4">
+            <word>ate</word>
+            <lemma>eat</lemma>
+            <CharacterOffsetBegin>13</CharacterOffsetBegin>
+            <CharacterOffsetEnd>16</CharacterOffsetEnd>
+            <POS>VBD</POS>
+          </token>
+          <token id="5">
+            <word>the</word>
+            <lemma>the</lemma>
+            <CharacterOffsetBegin>17</CharacterOffsetBegin>
+            <CharacterOffsetEnd>20</CharacterOffsetEnd>
+            <POS>DT</POS>
+          </token>
+          <token id="6">
+            <word>rat</word>
+            <lemma>rat</lemma>
+            <CharacterOffsetBegin>21</CharacterOffsetBegin>
+            <CharacterOffsetEnd>24</CharacterOffsetEnd>
+            <POS>NN</POS>
+          </token>
+          <token id="7">
+            <word>that</word>
+            <lemma>that</lemma>
+            <CharacterOffsetBegin>25</CharacterOffsetBegin>
+            <CharacterOffsetEnd>29</CharacterOffsetEnd>
+            <POS>WDT</POS>
+          </token>
+          <token id="8">
+            <word>ate</word>
+            <lemma>eat</lemma>
+            <CharacterOffsetBegin>30</CharacterOffsetBegin>
+            <CharacterOffsetEnd>33</CharacterOffsetEnd>
+            <POS>VBD</POS>
+          </token>
+          <token id="9">
+            <word>the</word>
+            <lemma>the</lemma>
+            <CharacterOffsetBegin>34</CharacterOffsetBegin>
+            <CharacterOffsetEnd>37</CharacterOffsetEnd>
+            <POS>DT</POS>
+          </token>
+          <token id="10">
+            <word>cheese</word>
+            <lemma>cheese</lemma>
+            <CharacterOffsetBegin>38</CharacterOffsetBegin>
+            <CharacterOffsetEnd>44</CharacterOffsetEnd>
+            <POS>NN</POS>
+          </token>
+        </tokens>
+        <parse>(ROOT (S (NP (NP (DT the) (NN cat)) (SBAR (WHNP (WDT that)) (S (VP (VBD ate) (NP (NP (DT the) (NN rat)) (SBAR (WHNP (WDT that)) (S (VP (VBD ate) (NP (DT the) (NN cheese)))))))))))) </parse>
+        <basic-dependencies>
+          <dep type="det">
+            <governor idx="2">cat</governor>
+            <dependent idx="1">the</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="4">ate</governor>
+            <dependent idx="3">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="2">cat</governor>
+            <dependent idx="4">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="6">rat</governor>
+            <dependent idx="5">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="4">ate</governor>
+            <dependent idx="6">rat</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="8">ate</governor>
+            <dependent idx="7">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="6">rat</governor>
+            <dependent idx="8">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="10">cheese</governor>
+            <dependent idx="9">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="8">ate</governor>
+            <dependent idx="10">cheese</dependent>
+          </dep>
+        </basic-dependencies>
+        <collapsed-dependencies>
+          <dep type="det">
+            <governor idx="2">cat</governor>
+            <dependent idx="1">the</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="4">ate</governor>
+            <dependent idx="3">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="2">cat</governor>
+            <dependent idx="4">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="6">rat</governor>
+            <dependent idx="5">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="4">ate</governor>
+            <dependent idx="6">rat</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="8">ate</governor>
+            <dependent idx="7">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="6">rat</governor>
+            <dependent idx="8">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="10">cheese</governor>
+            <dependent idx="9">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="8">ate</governor>
+            <dependent idx="10">cheese</dependent>
+          </dep>
+        </collapsed-dependencies>
+        <collapsed-ccprocessed-dependencies>
+          <dep type="det">
+            <governor idx="2">cat</governor>
+            <dependent idx="1">the</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="4">ate</governor>
+            <dependent idx="3">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="2">cat</governor>
+            <dependent idx="4">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="6">rat</governor>
+            <dependent idx="5">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="4">ate</governor>
+            <dependent idx="6">rat</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="8">ate</governor>
+            <dependent idx="7">that</dependent>
+          </dep>
+          <dep type="rcmod">
+            <governor idx="6">rat</governor>
+            <dependent idx="8">ate</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="10">cheese</governor>
+            <dependent idx="9">the</dependent>
+          </dep>
+          <dep type="dobj">
+            <governor idx="8">ate</governor>
+            <dependent idx="10">cheese</dependent>
+          </dep>
+        </collapsed-ccprocessed-dependencies>
+      </sentence>
+    </sentences>
+  </document>
+</root>

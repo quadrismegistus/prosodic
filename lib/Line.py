@@ -1,15 +1,24 @@
 from entity import being
 from entity import entity
 class Line(entity):
-	def __init__(self):
+	def __init__(self,linestr=None,lang=None):
 		self.parent=False
 		self.children=[]
 		self.feats={}
 		self.featpaths={}
 		self.finished = False
+	
+		
+		
 		
 		self.__parses={}
 		self.__bestparse={}
+		
+		if linestr and type(linestr)==type(''):
+			import prosodic
+			if lang==None: lang=prosodic.lang
+			self.children=[ prosodic.dict[lang].get(w) for w in linestr.strip().split() if w ]
+			self.finish()
 	
 	def parse(self,meter=None):
 		if not meter:

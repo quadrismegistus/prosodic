@@ -75,11 +75,7 @@ def get_profile(lineobj, start, num_sylls):
 	
 	for WorS in lineobj.str_meter()[start:start+num_sylls]:
 		profile.append(1 if WorS=='s' else 0)
-	
-	print profile
-	
 	ptup=tuple(profile)
-	
 	return ptup
 	
 
@@ -100,40 +96,50 @@ def get_profile(lineobj, start, num_sylls):
 
 def add_line_profile(stanza, dict, num_sylls, start):
 	lineobj=stanza
-	print stanza.lines()
-	breakpoints=[len(l.syllables()) for l in stanza.lines()]
+	#print stanza.lines()
+	
+	breakpoints=[]
+	breakpoint=0
+	for l in stanza.lines():
+		lenl=len(l.syllables())
+		breakpoints+=[lenl+breakpoint]
+		breakpoint+=lenl
+	#print breakpoints
 	try:
 		line=stanza.syllables()
+		
+		## MID-SENTENCE STATS
 		for i in range(len(line)-num_sylls):
 			
 			good=False
 			prange=range(i,i+num_sylls)
 			for bpoint in breakpoints:
-				if bpoint in prange:
+				if bpoint in prange and (bpoint-1) in prange:
 					break
 			else:
 				good=True
 			if not good: continue
-			print line[i:i+num_sylls]
+			
+			
 			profile = get_profile(lineobj, i, num_sylls)
 			if not len(profile): continue
+			#if profile[0]==1:
 			if start == None or profile[0] == start:
 				dict[profile][0] += 1
 		
 		
+		## END OF SENTENCE STATS
 		good=False
-		
 		i=len(line)-num_sylls
 		prange=range(i,i+num_sylls)
 		for bpoint in breakpoints:
-			if bpoint in prange:
+			if bpoint in prange and (bpoint-1) in prange:
 				break
 		else:
 			good=True
 		if good:
-			
 			profile = get_profile(lineobj, i, num_sylls)
-		
+			# if profile[0]==1:
 			if start == None or profile[0] == start:
 				dict[profile][1] += 1
 	except:
@@ -142,19 +148,21 @@ def add_line_profile(stanza, dict, num_sylls, start):
 def add_profile(text, dict, num_sylls, start):
 	import prosodic
 	prosodic.config['print_to_screen']=0
-	text.parse()
 	for stanza in text.stanzas():
-		if True in [line.broken for line in stanza.children]:
+		try:
+			if True in [line.broken for line in stanza.children]:
+				continue
+			
+			for parse in [line.bestParse() for line in stanza.children]:
+				if not parse:
+					goodness=False
+					break
+			else:
+				goodness=True
+			
+			if not goodness: continue
+		except:
 			continue
-		
-		for parse in [line.bestParse() for line in stanza.children]:
-			if not parse:
-				goodness=False
-				break
-		else:
-			goodness=True
-		
-		if not goodness: continue
 		
 		sylls = stanza.syllables()
 		if len(sylls) <= num_sylls: continue
@@ -206,18 +214,18 @@ if __name__ == '__main__':
 	
 	pattern_totals={}
 	
-	numtrials=40
-	numtextspertrial=5
+	numtrials=100
+	numtextspertrial=1
 	
 	for trial in range(numtrials):
 		texts=[Text(os.path.join(corpusfolder,fn)) for fn in random.sample(os.listdir(corpusfolder),numtextspertrial)]
+		[text.parse() for text in texts]
 	
 		artist=make_artist(texts)
 		for i in artist:
 			for p,v in artist[i]:
-				
-				
 				pc=pattern2croll_str(p)
+				if pc[0]!=str(i): continue
 				
 				print i,pc,v
 				

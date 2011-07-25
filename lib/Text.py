@@ -56,7 +56,7 @@ class Text(entity):
 		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
 		self.limit_line=int(prosodic.config.get('limLine',0))
-		
+		self.limit_stanza=int(prosodic.config.get('limStanza',0))
 		
 		#if printout==None: printout=being.printout
 		
@@ -97,6 +97,7 @@ class Text(entity):
 		
 		## create first stanza,line 
 		numlines=0
+		numstanzas=0
 		stanza = self.newchild()
 		stanza.parent=self
 		line = stanza.newchild()	# returns a new Line, the child of Stanza
@@ -129,9 +130,15 @@ class Text(entity):
 				# if Stanza not empty, start a new one
 				if not stanza.empty():
 					stanza.finish()
+					if len(line.children): line.finish()
+					numstanzas+=1
+					if self.limit_stanza and numstanzas>=self.limit_stanza:
+						break
 					stanza = self.newchild()
 					stanza.parent=self
 					continue
+				
+
 			
 			## resolve contractions
 			"""for toknum in range(numtoks):
@@ -213,6 +220,10 @@ class Text(entity):
 			## if line-based breaks, end line
 			if (self.phrasebreak == 'both') or (self.phrasebreak == 'line'):
 				line.finish()
+		
+		## finish last remaining line
+		if len(line.children): line.finish()
+		if len(stanza.children): stanza.finish()
 	
 	## def parse
 	def parse(self,meter=None,arbiter='Line'):

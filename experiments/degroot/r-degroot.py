@@ -3,7 +3,7 @@ import sys,rpyd2,pickle
 stats=pickle.load(open(sys.argv[1]))
 
 for i in stats:
-	r=rpyd2.RpyD2([d for d in stats[i]])
+	r=rpyd2.RpyD2([d for d in stats[i] if d['oe']<7])
 	r.plot(fn='cadences-length-'+str(i).zfill(4)+'.',
 		x='pattern',
 		y='oe',

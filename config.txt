@@ -16,7 +16,8 @@ lang=en			# if set, will not ask for lang and assume everything english
 #lang=fi		# if set, will not ask for lang and assume everything english
 #lang=**		# if set, will not ask for lang, but will attempt to discover language and if fail, ask later
 limWord=0
-limLine=1000
+limLine=0
+limStanza=1000
 line_minWord=2
 
 # [1. METRICAL PARSING]

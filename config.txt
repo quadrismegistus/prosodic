@@ -16,12 +16,13 @@ lang=en			# if set, will not ask for lang and assume everything english
 #lang=fi		# if set, will not ask for lang and assume everything english
 #lang=**		# if set, will not ask for lang, but will attempt to discover language and if fail, ask later
 limWord=0
-
+limLine=1000
+line_minWord=2
 
 # [1. METRICAL PARSING]
 ## [1.1 Position Size]
 ## the number of syllables allowed per metrical position (cf. Kiparsky&Hanson's "position size" parameter)
-maxS=2		# the number of syllables allowed in a *strong* metrical position
+maxS=1		# the number of syllables allowed in a *strong* metrical position
 maxW=2		# the number of syllables allowed in a *weak* metrical position
 #splitheavies=1		# allow positions to be as small as a single mora (a split heavy syllable across two metrical positions)
 splitheavies=0		# positions are at least one syllable in size
@@ -61,8 +62,8 @@ weight.w=>u/1				# a *weak* metrical position must contain *at least one* light 
 ## this helps prevent the parser from hanging on the occasional very long line.
 line_minsylls=2
 line_maxsylls=20
-#resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
-resolve_optionality=0
+resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
+#resolve_optionality=0
 
 
 ## line headedness: [optional] force parser to select best parse from the lowest-scoring parse which beguns as such:
@@ -77,12 +78,11 @@ resolve_optionality=0
 ## here you may decide how texts divide into lines by leaving uncommented your preferred method.
 ## this is significant only because the line, with its words and syllables, is the unit passed to the metrical parser.
 #linebreak=line					# linebreaks occur only at actual line-breaks in the processed text file (good for metrical poetry);
-linebreak=.?!
+linebreak=;:,
 #linebreak=,;:.?!()[]{}<>		# linebreaks occur only upon encountering any of these punctuation marks (good for prose);
 #linebreak=line,;:.?!()[]{}<>	# linebreaks occur both at actual-linebreaks, and at any of these punctuation marks (good for prose and free-verse poetry).
 #tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and hyphens [-]
 tokenizer=[^\s+]+          # words tokenized against [^] whitespaces [\s+]
-
 
 # [3.0 OUTPUT-FORMATTING]
 ## here you may change the format under which the syllabified, "pronunciation" output will appear.

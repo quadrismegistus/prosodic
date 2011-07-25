@@ -143,14 +143,16 @@ class Meter:
 
 		constraints = self.constraints
 
-		
+		print ' '.join(word[0].token for word in wordlist)
 		allParses = []
 		for slots in slotMatrix:
 			allParses.append(self.parseLine(slots))
 		
 		parses = self.boundParses(allParses)
-		parses.sort()		
-		
+		parses.sort()
+		print parses[0]
+		print parses[0].str_ot()
+		print
 		return parses
 		
 	def boundParses(self, parseLists):
@@ -240,10 +242,10 @@ class Meter:
 			for parseSet in newParses:
 				for parse in parseSet:		
 					if not parse.isBounded:
-						if (parse.score() < 1000):
-							parse.parseNum = parseNum
-							parseNum += 1
-							parses.append(parse)
+						#if (parse.score() < 1000):
+						parse.parseNum = parseNum
+						parseNum += 1
+						parses.append(parse)
 			
 			for parse in parses:
 			
@@ -264,17 +266,20 @@ class Meter:
 		for parse in parselist:
 			if onlyBounded and parse.isBounded:
 				continue
-			
-			o+="[parse #" + str(i) + " of " + str(n) + "]: " + str(parse.getErrorCount()) + " errors\n"
+			constraintScores=parse.constraintScorez()
+			num_violations=len([c for c,v in constraintScores.items() if v])
+			sum_violations=sum(constraintScores.values())
+			o+="[parse #" + str(i) + " of " + str(n) + "]: " + str(num_violations) + " errors costing "+str(sum_violations)+" viols\n"
 			o+=parse.__report__(proms=False)+"\n"
-			o+=self.printScores(parse.constraintScores)
+			o+=self.printScores(constraintScores)
 			o+="\n\n"
 			i-=1
 		return o
 			
 	def printScores(self, scores):
 		output = ""
-		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items())):
+		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items()),key=lambda lx: -lx[1]):
+			if not value: break
 			output += makeminlength("[*"+key+"]:"+str(value),24)
 		output = output[:-1]
 		return output

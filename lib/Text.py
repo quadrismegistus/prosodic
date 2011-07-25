@@ -55,6 +55,7 @@ class Text(entity):
 		self.__bestparses={}
 		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
+		self.limit_line=int(prosodic.config.get('limLine',0))
 		
 		
 		#if printout==None: printout=being.printout
@@ -95,6 +96,7 @@ class Text(entity):
 			
 		
 		## create first stanza,line 
+		numlines=0
 		stanza = self.newchild()
 		stanza.parent=self
 		line = stanza.newchild()	# returns a new Line, the child of Stanza
@@ -102,7 +104,6 @@ class Text(entity):
 		numwords = 0
 		recentpunct=True
 		tokenizer=prosodic.config['tokenizer'].replace('\\\\','\\')
-		
 		## [loop] lines
 		for ln in file:
 			#print ln
@@ -110,6 +111,9 @@ class Text(entity):
 			if(prosodic.config['limWord']):
 				if(numwords>=prosodic.config['limWord']):
 					break
+	
+			if self.limit_line and numlines>self.limit_line:
+				break
 	
 			# split into words
 			
@@ -142,6 +146,7 @@ class Text(entity):
 			"""
 	
 			## [loop] words
+
 			for toknum in range(numtoks):
 				
 					
@@ -167,8 +172,12 @@ class Text(entity):
 					## if initial punct eg '(there', end previous line if it contains anything
 					if punct1 and len(line.children):
 						if self.phrasebreak != 'line':
+							
+							minword=prosodic.config.get('line_minWord',0)
+
 							if (self.phrasebreak_punct.find(punct) > -1):
-								line.finish()
+								if not minword or len(line.children)>=minword:
+									line.finish()
 
 
 				# check if new stanza/line necessary 
@@ -176,6 +185,7 @@ class Text(entity):
 					stanza = self.newchild()
 					stanza.parent=self
 				if line.finished:
+					numlines+=1
 					line = stanza.newchild()
 					line.parent=stanza		
 				
@@ -192,8 +202,12 @@ class Text(entity):
 				# end line if end punctuation
 				if punct2 and len(line.children):
 					if self.phrasebreak != 'line':
+						
+						minword=prosodic.config.get('line_minWord',0)
+						
 						if (self.phrasebreak_punct.find(punct) > -1):
-							line.finish()
+							if not minword or len(line.children)>=minword:
+								line.finish()
 					continue
 				
 			## if line-based breaks, end line
@@ -211,7 +225,10 @@ class Text(entity):
 		self.__parses[meter]=[]
 		self.__bestparses[meter]=[]
 		ents=self.ents(arbiter)
+		import prosodic
 		for ent in ents:
+			if len(ent.syllables())>prosodic.config['line_maxsylls']: continue
+			if len(ent.syllables())<prosodic.config['line_minsylls']: continue
 			ent.parse(meter)
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )

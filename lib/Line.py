@@ -13,6 +13,7 @@ class Line(entity):
 		
 		self.__parses={}
 		self.__bestparse={}
+		self.__bestparse_now=None
 		
 		if linestr and type(linestr)==type(''):
 			import prosodic
@@ -68,10 +69,13 @@ class Line(entity):
 		
 	def bestParse(self,meter=None):
 		if not meter:
-			itms=self.__bestparse.items()
-			if not len(itms): return
-			for mtr,parses in itms:
-				return parses
+			if not self.__bestparse_now:
+				itms=self.__bestparse.items()
+				if not len(itms): return
+				for mtr,parse in itms:
+					self.__bestparse_now=parse
+					break
+			return self.__bestparse_now
 		
 		try:
 			return self.__bestparse[meter]
@@ -101,8 +105,8 @@ class Line(entity):
 						if words.isBroken():
 							self.broken=True
 							
-			#if not self.broken:
-			#	print self
+			if not self.broken:
+				print self
 			#self.pointsofcomparison=[]
 			
 	

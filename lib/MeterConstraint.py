@@ -158,4 +158,6 @@ class MeterConstraint:
 				return 0
 				
 			# made it through this minefield, eh?
+			
 			return 0
+		#print "made it through a larger minefield", self.name

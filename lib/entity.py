@@ -514,10 +514,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			##
 			
 			if (numSyll < config['line_minsylls']):
-				#print "\t>skipping ("+str(numSyll)+" is fewer than minimum of "+str(config['parse_line_numsyll_min'])+" sylls)"
+				print "\t>skipping ("+str(numSyll)+" is fewer than minimum of "+str(config['parse_line_numsyll_min'])+" sylls)"
+				print words
+				print
 				return []
 			elif(numSyll > config['line_maxsylls']):
-				#print "\t>skipping ("+str(numSyll)+" is more than maximum of "+str(config['parse_line_numsyll_max'])+" sylls)"
+				print "\t>skipping ("+str(numSyll)+" is more than maximum of "+str(config['parse_line_numsyll_max'])+" sylls)"
+				print words
+				print
 				return []
 			
 			#print "\n\t>parsing:\t"+str(self)+"\t("+str(numSyll)+" sylls)"

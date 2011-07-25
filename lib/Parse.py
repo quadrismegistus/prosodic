@@ -34,6 +34,7 @@ class Parse(entity):
 		self.comparisonParses = []
 		self.parseNum = 0
 		self.totalScore = None
+		self.data_constraintScorez=None
 			
 	def __copy__(self):
 		other = Parse(self.meter, self.totalSlots)
@@ -45,8 +46,9 @@ class Parse(entity):
 		for k,v in self.constraintScores.items():
 			other.constraintScores[k]=copy(v)
 		#other.constraintScores=self.constraintScores.copy()
-		#print self.constraintScores
-		#print other.constraintScores
+		
+		#print self, self.constraintScores
+		#print other, other.constraintScores
 		
 		return other
 	
@@ -87,7 +89,6 @@ class Parse(entity):
 			self.positions.append(sPos)
 			wParse.positions.append(wPos)
 			extendedParses.append(wParse)
-			
 		else:
 			lastPos = self.positions[-1]
 			
@@ -109,10 +110,11 @@ class Parse(entity):
 			
 			for constraint in self.constraints:
 				vScore = constraint.violationScore(self.positions[-2])
-				if vScore == "*":
-					self.constraintScores[constraint] = "*"
-				else:
-					self.constraintScores[constraint] += vScore
+				if vScore:
+					if vScore == "*":
+						self.constraintScores[constraint] = "*"
+					else:
+						self.constraintScores[constraint] += vScore
 				
 		if self.numSlots == self.totalSlots:
 
@@ -121,10 +123,11 @@ class Parse(entity):
 				
 				for constraint in self.constraints:
 					vScore = constraint.violationScore(parse.positions[-1])
-					if vScore == "*":
-						self.constraintScores[constraint] = "*"
-				else:
-					self.constraintScores[constraint] += vScore
+					if vScore:
+						if vScore == "*":
+							self.constraintScores[constraint] = "*"
+						else:
+							self.constraintScores[constraint] += vScore
 				
 		return extendedParses
 			
@@ -156,15 +159,25 @@ class Parse(entity):
 			return vals
 	
 	def score(self):
+		# if self.totalScore == None:
+		# 			score = 0
+		# 			for position in self.positions:
+		# 				for constraint, value in position.constraintScores.items():
+		# 					if value == "*":
+		# 						self.totalScore = "*"
+		# 						return self.totalScore
+		# 					score += value
+		# 			self.totalScore = score
+		
+		return sum(self.constraintScorez().values())
+		
+		
 		if self.totalScore == None:
 			score = 0
 			for constraint, value in self.constraintScores.items():
-				if value == "*":
-					self.totalScore = "*"
-					return self.totalScore
 				score += value
 			self.totalScore = score
-			
+		
 		return self.totalScore
 		
 	def __cmp__(self, other):
@@ -251,16 +264,23 @@ class Parse(entity):
 			return self.constraintScores
 		else:
 			return [(k,(v>0)) for (k,v) in self.constraintScores.items()]
-		
-
 
 	def constraintScorez(self):
 		toreturn={}
+		#if not self.data_constraintScorez: self.data_constraintScorez={}
 		for c in self.constraints:
-			toreturn[c]=0
-			for pos in self.positions:
-				toreturn[c]+=pos.constraintScores[c]
+			#if not c in self.data_constraintScorez: self.data_constraintScorez[c]={}
+			#for pi,pos in enumerate(self.positions):
+			#	if not pi in self.data_constraintScorez[c]:
+			#		self.data_constraintScorez[c][pi]=pos.constraintScores[c]
+			
+				#toreturn[c]+=pos.constraintScores[c]
+		#self.data_constraintScorez=toreturn
+		
+		#for k,v in self.data_constraintScorez.items():
+			toreturn[c]=sum(pos.constraintScores[c] for pos in self.positions)
 		return toreturn
+		
 
 	# return a representation of the bounding relation between self and parse
 	def boundingRelation(self, parse):
@@ -272,12 +292,19 @@ class Parse(entity):
 			mark = self.constraintScores[constraint]
 			mark2 = parse.constraintScores[constraint]
 			
+			#mark=self.constraintScorez()[constraint]
+			#mark2=parse.constraintScorez()[constraint]
+			
+			mark=sum(pos.constraintScores[constraint] for pos in self.positions)
+			mark2=sum(pos.constraintScores[constraint] for pos in parse.positions)
+			#print self, mark, self.constraintScorez()[constraint], "VS", parse, mark2, parse.constraintScorez()[constraint]
+			
 			#print str(mark)+"\t"+str(mark2)
 			
-			if mark > parse.constraintScores[constraint]:
+			if mark > mark2:
 				containsGreaterViolation = True
 				
-			if mark < parse.constraintScores[constraint]:
+			if mark < mark2:
 				containsLesserViolation = True
 
 		if containsGreaterViolation:

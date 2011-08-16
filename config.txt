@@ -17,7 +17,7 @@ lang=en			# if set, will not ask for lang and assume everything english
 #lang=**		# if set, will not ask for lang, but will attempt to discover language and if fail, ask later
 limWord=0
 limLine=0
-limStanza=1000
+limStanza=2500
 line_minWord=2
 
 # [1. METRICAL PARSING]
@@ -62,7 +62,7 @@ weight.w=>u/1				# a *weak* metrical position must contain *at least one* light 
 ## you may also set the minimum and maximum "sizes" (in terms of syllable-count) of the lines you would like to parse.
 ## this helps prevent the parser from hanging on the occasional very long line.
 line_minsylls=2
-line_maxsylls=20
+line_maxsylls=15
 resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
 #resolve_optionality=0
 
@@ -97,7 +97,7 @@ output_en=cmu		# since our english information comes from the cmu, we default th
 output_fi=orth		# since finnish pronunciation is essentially identical to its orthography
 
 
-print_to_screen=1	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
+print_to_screen=0	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
 linelen=60
 
 ## [appendix: how this file works]

@@ -256,7 +256,29 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		return self.finished
 	
 		
-
+	def shuffle(self,cls=[],shuffled=[]):
+		"""If cls empty, shuffles the children.
+		If cls set, shuffles children recursively whose classnames match those in cls"""
+		import random
+		if not cls:
+			random.shuffle(self.children)
+		else:
+			try:
+				mychild=self.children[0].classname()
+			except:
+				mychild=self.children[0][0].classname()
+			
+			if mychild in cls:
+				print ">>",mychild,"in",cls,"so shuffling self.children... [i am",self.classname(),"]"
+				random.shuffle(self.children)
+			
+			for child in self.children:
+				try:
+					child.shuffle(cls=cls)
+				except:
+					pass
+		
+	
 
 	## getting entities of various kinds
 	def ents(self,cls="Word",flattenList=True):

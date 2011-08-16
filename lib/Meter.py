@@ -137,22 +137,26 @@ class Meter:
 		if not numSyll:
 			return []
 		
-		
+		import time
+		clocked=time.clock()
 		slotMatrix = self.genSlotMatrix(wordlist)
 		if not slotMatrix: return None
 
 		constraints = self.constraints
 
-		print ' '.join(word[0].token for word in wordlist)
+		#print ' '.join(word[0].token for word in wordlist)
 		allParses = []
 		for slots in slotMatrix:
 			allParses.append(self.parseLine(slots))
 		
 		parses = self.boundParses(allParses)
 		parses.sort()
-		print parses[0]
-		print parses[0].str_ot()
-		print
+		
+		print len(slots),"\t",time.clock()-clocked
+		
+		#print parses[0]
+		#print parses[0].str_ot()
+		#print
 		return parses
 		
 	def boundParses(self, parseLists):

@@ -68,6 +68,17 @@ class Parse(entity):
 				str_meter+=pos.meterVal
 		return str_meter
 	
+	def viols_bysyll(self):
+		l=[]
+		for pos in self.positions:
+			numsylls=len(pos.slots)
+			#score=pos.score()
+			score=len([k for k,v in pos.constraintScores.items() if v])
+			inc=score/numsylls
+			for slot in pos.slots:
+				l+=[inc]
+		return l
+	
 	# add an extra slot to the parse
 	# returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
 	def extend(self, slot):

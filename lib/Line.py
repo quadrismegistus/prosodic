@@ -8,18 +8,18 @@ class Line(entity):
 		self.featpaths={}
 		self.finished = False
 	
-		
-		
-		
 		self.__parses={}
 		self.__bestparse={}
 		self.__bestparse_now=None
 		
-		if linestr and type(linestr)==type(''):
+		if linestr and isinstance(linestr,basestring):
 			import prosodic
 			if lang==None: lang=prosodic.lang
 			self.children=[ prosodic.dict[lang].get(w) for w in linestr.strip().split() if w ]
 			self.finish()
+	
+	def str_meter(self):
+		return self.bestParse().str_meter()
 	
 	def parse(self,meter=None):
 		if not meter:
@@ -94,20 +94,14 @@ class Line(entity):
 			if len(self.children) == 0:
 				self.broken=True
 			
-			if not self.broken:
-				## if word broken, self broken
-				for words in self.children:
-					if type(words)==type([]):
-						for word in words:
-							if word.isBroken():
-								self.broken=True
-					else:
-						if words.isBroken():
-							self.broken=True
-							
-			if not self.broken:
-				print self
-			#self.pointsofcomparison=[]
+
+			## if word broken, self broken
+			for words in self.children:
+				if words[0].isBroken():
+					self.broken=True
+					break
+			else:
+				self.broken=False
 			
 	
 	

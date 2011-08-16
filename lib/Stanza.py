@@ -14,3 +14,10 @@ class Stanza(entity):
 	
 	def str_meter(self):
 		return ''.join([l.bestParse().str_meter() for l in self.children if l.bestParse()])
+	
+	def viols_bysyll(self):
+		lis=[]
+		for l in self.children:
+			if not l.bestParse(): continue
+			lis.extend( l.bestParse().viols_bysyll() )
+		return lis

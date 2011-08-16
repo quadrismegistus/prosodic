@@ -278,7 +278,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				except:
 					pass
 		
+	#def enttup(self,ents=['Word','Syllable']):
 	
+	def syllword(self):
+		return [(syll,word) for word in self.words() for syll in word.syllables()]
+		
 
 	## getting entities of various kinds
 	def ents(self,cls="Word",flattenList=True):

@@ -108,24 +108,19 @@ class Line(entity):
 				self.resolveLapses()
 	
 	def resolveLapses(self):
-		print self.words()
-		num_recent_unstressed=0
-		lastword=None
-		syllword=self.syllword()
-		for sylli,(syll,word) in enumerate(syllword):
-			if not syll.feature('prom.stress'):
-				num_recent_unstressed+=1
-			
-			if num_recent_unstressed>2:
-				s,w=syllword[sylli-1]
-				wi=self.words().index(w)
-				if len(self.children[wi])>1 and len(self.children[wi][0].children)==1:
-					print "reversing:",self.children[wi]
-					self.children[wi].reverse()
-					if self.children[wi][0].stress!="U":
-						num_recent_unstressed=1
-		print
-		print self.words()
+		words = self.words()
+		num_recent_unstressed = 0
+		for i, word in enumerate(words):
+			for syll in word.syllables():
+				if syll.feature('prom.stress'):
+					num_recent_unstressed = 0
+				else:
+					num_recent_unstressed += 1
+					if num_recent_unstressed > 2:
+						if i > 0 and len(words[i-1].syllables()) == 1:
+							self.children[i-1] = self.children[i-1][:]
+							self.children[i-1].reverse()
+							num_recent_unstressed = 1
 	
 	def __repr__(self):
 		return " ".join([child[0].getToken() for child in self.children])

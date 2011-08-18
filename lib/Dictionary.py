@@ -410,9 +410,10 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			return [self.unstressed(wordobj)]
 			
 		elif word in self.maybestressedWords:
-			for wordobj in words:
+			for i, wordobj in enumerate(words):
 				if wordobj.stress=="U":
 					wordobj.feat('functionword',True)
+					words[0], words[i] = words[i], words[0]
 					break
 			else:
 				return [self.unstressed(words[0])]+words

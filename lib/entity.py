@@ -282,7 +282,23 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	def syllword(self):
 		return [(syll,word) for word in self.words() for syll in word.syllables()]
+	
+	def unwords(self,stats=True):
+		statd={}
+		statl=[]
+		for word in [w for w in self.words() if w.isBroken()]:
+			if stats:
+				try:
+					statd[word.token]+=1
+				except KeyError:
+					statd[word.token]=1
+			else:
+				statl+=[word.token]
 		
+		if stats:
+			return statd
+		else:
+			return list(set(statl))
 
 	## getting entities of various kinds
 	def ents(self,cls="Word",flattenList=True):

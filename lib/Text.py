@@ -117,7 +117,8 @@ class Text(entity):
 				break
 	
 			# split into words
-			
+			ln=u''.join([(lnx if lnx!=u'\ufffd' else ' ') for lnx in ln])
+
 			if self.isUnicode:
 				toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE)
 			else:

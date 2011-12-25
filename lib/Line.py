@@ -1,25 +1,15 @@
 from entity import being
 from entity import entity
 class Line(entity):
-	def __init__(self,linestr=None,lang=None):
+	def __init__(self):
 		self.parent=False
 		self.children=[]
 		self.feats={}
 		self.featpaths={}
 		self.finished = False
-	
+		
 		self.__parses={}
 		self.__bestparse={}
-		self.__bestparse_now=None
-		
-		if linestr and isinstance(linestr,basestring):
-			import prosodic
-			if lang==None: lang=prosodic.lang
-			self.children=[ prosodic.dict[lang].get(w) for w in linestr.strip().split() if w ]
-			self.finish()
-	
-	def str_meter(self):
-		return self.bestParse().str_meter()
 	
 	def parse(self,meter=None):
 		if not meter:
@@ -49,7 +39,6 @@ class Line(entity):
 	
 	def scansion(self,meter=None,conscious=False):
 		bp=self.bestParse(meter)
-		if type(bp)==type(None): return
 		lowestScore=bp.score()
 		from tools import makeminlength
 		self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)
@@ -69,13 +58,10 @@ class Line(entity):
 		
 	def bestParse(self,meter=None):
 		if not meter:
-			if not self.__bestparse_now:
-				itms=self.__bestparse.items()
-				if not len(itms): return
-				for mtr,parse in itms:
-					self.__bestparse_now=parse
-					break
-			return self.__bestparse_now
+			itms=self.__bestparse.items()
+			if not len(itms): return
+			for mtr,parses in itms:
+				return parses
 		
 		try:
 			return self.__bestparse[meter]
@@ -94,33 +80,22 @@ class Line(entity):
 			if len(self.children) == 0:
 				self.broken=True
 			
-
-			## if word broken, self broken
-			for words in self.children:
-				if words[0].isBroken():
-					self.broken=True
-					break
-			else:
-				self.broken=False
-			
-			# resolve lapses if possible
 			if not self.broken:
-				self.resolveLapses()
+				## if word broken, self broken
+				for words in self.children:
+					if type(words)==type([]):
+						for word in words:
+							if word.isBroken():
+								self.broken=True
+					else:
+						if words.isBroken():
+							self.broken=True
+							
+			#if not self.broken:
+			#	print self
+			#self.pointsofcomparison=[]
+			
 	
-	def resolveLapses(self):
-		words = self.words()
-		num_recent_unstressed = 0
-		for i, word in enumerate(words):
-			for syll in word.syllables():
-				if syll.feature('prom.stress'):
-					num_recent_unstressed = 0
-				else:
-					num_recent_unstressed += 1
-					if num_recent_unstressed > 2:
-						if i > 0 and len(words[i-1].syllables()) == 1:
-							self.children[i-1] = self.children[i-1][:]
-							self.children[i-1].reverse()
-							num_recent_unstressed = 1
 	
 	def __repr__(self):
 		return " ".join([child[0].getToken() for child in self.children])

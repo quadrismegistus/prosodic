@@ -2,19 +2,14 @@
 import sys,glob,os,time
 
 
-dir_prosodic=[p for p in sys.path if os.path.basename(p)=='prosodic']
-try:
-	dir_prosodic=dir_prosodic[0]
-except:
-	dir_prosodic=sys.path[0]
-	
+dir_prosodic=sys.path[0]
 dir_imports=os.path.join(dir_prosodic,'lib')
 dir_corpus=os.path.join(dir_prosodic,'corpora')
 sys.path.append(dir_imports)
 
 ## import necessary objects
 from tools import *
-config=loadConfig(__name__=='__main__',dir_prosodic=dir_prosodic)
+config=loadConfig(__name__=='__main__')
 import entity
 from entity import being
 from Corpus import Corpus

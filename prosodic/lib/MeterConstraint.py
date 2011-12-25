@@ -38,16 +38,8 @@ class MeterConstraint:
 		return violation
 	
 	def __hardparse(self,meterPos):
-		#if meterPos.slots[0].i<2:
-		#	print meterPos.slots[0].word
-	
 		if '.' in self.name:	# kiparsky self.names
 			## load variables
-			
-			#exception for first foot
-			if meterPos.slots[0].i<2:
-				return 0
-			
 			promSite = self.name.split(".")[1]
 			promType = self.name.split(".")[0]
 			promSite_meter = promSite.split("=>")[0].strip()	# s/w
@@ -103,26 +95,6 @@ class MeterConstraint:
 				else:
 					return 0
 		
-		elif self.name.lower().startswith('initialstrong'):
-			if meterPos.slots[0].i==0:
-				if meterPos.meterVal == 's':
-					return self.weight
-			return 0
-		
-		elif self.name.lower().startswith('functiontow'):
-			#exception for first foot
-			if meterPos.slots[0].i<3:
-				return 0
-				
-			if meterPos.meterVal != 's':	# then this constraint does not apply
-				return 0
-				
-			vio = 0
-			for slot in meterPos.slots:
-				if slot.word.feature('functionword'):
-					vio += self.weight
-			return vio
-		
 		elif self.name.lower().startswith('footmin'):
 			if len(meterPos.slots) < 2:
 				return 0
@@ -144,28 +116,8 @@ class MeterConstraint:
 			if "nolh" in name:
 				if ( (bool(b.feature('prom.weight',True))) ):
 					return self.weight
-
-			if "strongconstraint" in name:
-				if bool(b.feature('prom.strength',True)):
-					return self.weight
-			
-				if bool(a.feature('prom.strength',True)):
-					if not bool(a.feature('prom.weight',True)):
-						 if a.word==b.word and not a.wordpos[0]==a.wordpos[1]:
-						 	if not bool(b.feature('prom.stress',True)):
-						 		return 0	
-					return self.weight
-			
-			if "none" in name:
-					return self.weight
-
 			
 			if "wordbound" in name:
-				if "nomono" in name:
-					if (a.word.numSyll==1 or b.word.numSyll==1):
-						return self.weight
-
-				
 				## everyone is happy if both are function words
 				if a.word.feature('functionword') and b.word.feature('functionword'):
 					return 0
@@ -183,8 +135,6 @@ class MeterConstraint:
 					elif "rightfw":
 						if not (b.word.feature('functionword')):
 							return self.weight
-				
-			
 				
 				# only remaining possibilities:
 				#	i) slots a,b are from the same word
@@ -209,4 +159,3 @@ class MeterConstraint:
 				
 			# made it through this minefield, eh?
 			return 0
-		

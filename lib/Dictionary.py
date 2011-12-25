@@ -4,32 +4,13 @@ from tools import *
 from entity import *
 from Word import Word
 from Syllable import Syllable
-from copy import deepcopy
-dir_prosodic=[p for p in sys.path if os.path.basename(p)=='prosodic']
-try:
-	dirself=dir_prosodic[0]
-except:
-	dirself=sys.path[0]
+dirself=sys.path[0]
 libfolder=os.path.join(dirself,'lib')
 dictsfolder=os.path.join(dirself,'dicts')
 
 
 from ipa import ipa
 import codecs
-
-def fn2wordlist(fn):
-	l=[]
-	try:
-		file=codecs.open(fn,encoding='utf-8')
-		for ln in file:
-			for word in ln.split():
-				l.append(word.strip().lower())
-		file.close()
-	except:
-		pass
-	return l
-
-
 
 class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_en,Dictionary_fi,usw.
 	classnames=['Phoneme','Onset','Nucleus','Coda','Rime','SyllableBody','Syllable','Word','Phrase']
@@ -56,8 +37,14 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if not self.language:
 			exit('!! language could not be ascertained from files in '+self.dictsfolder+'. Please name your .tsv and/or .py dictionary file(s) using a string which begins with the two characters which serve as the name for the dictionary folder (eg, "en")') 
 		
-		self.unstressedWords=fn2wordlist(os.path.join(self.dictsfolder, 'unstressed.txt'))
-		self.maybestressedWords=fn2wordlist(os.path.join(self.dictsfolder, 'maybestressed.txt'))
+		self.unstressedWords=[]
+		for filename in glob.glob(os.path.join(self.dictsfolder, 'unstressed*')):
+			file=codecs.open(filename,encoding='utf-8')
+			for ln in file:
+				for word in ln.split():
+					self.unstressedWords.append(word)
+			file.close()			
+			break
 		
 		pyfile=os.path.join(self.dictsfolder,self.language+'.py')
 		if os.path.exists(pyfile):
@@ -404,34 +391,30 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	
 	def maybeUnstress(self,words):
 		word=words[0].token.lower()
-		wordobj=words[0]
-		
 		if word in self.unstressedWords:
-			return [self.unstressed(wordobj)]
+			# for wordobj in self.dict['Word'][word]:
+			# 				unstr=True
+			# 				for child in wordobj.children:
+			# 					if bool(child.feature('prom.stress'))==True:
+			# 						unstr=False
+			# 				if unstr:
+			# 					return [wordobj]
+			# 			
+			#if not unstr:
+			wordobj=self.dict['Word'][word][0]
+			wordobj.feat('functionword',True)
+			wordobj.stress=""
+			for child in wordobj.children:
+				wordobj.stress+="U"
+				child.feats['prom.stress']=0.0
+				child.feats['prom.kalevala']=None
+				child.children[0].feats['prom.weight']=False
 			
-		elif word in self.maybestressedWords:
-			for i, wordobj in enumerate(words):
-				if wordobj.stress=="U":
-					wordobj.feat('functionword',True)
-					words[0], words[i] = words[i], words[0]
-					break
-			else:
-				return [self.unstressed(words[0])]+words
-			## if already an unstressed version
-			return words
+			return [wordobj]
+	
 		
 		return words
 	
-	def unstressed(self,wordobj):
-		wordobj=deepcopy(wordobj)
-		wordobj.feat('functionword',True)
-		wordobj.stress=""
-		for child in wordobj.children:
-			wordobj.stress+="U"
-			child.feats['prom.stress']=0.0
-			child.feats['prom.kalevala']=None
-			child.children[0].feats['prom.weight']=False	
-		return wordobj
 	
 	def get(self,word):
 		if type(word)==type(""):

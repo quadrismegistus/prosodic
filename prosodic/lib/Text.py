@@ -207,10 +207,8 @@ class Text(entity):
 		
 		self.scansion_prepare(meter=meter,conscious=conscious)
 		for line in self.lines():
-			try:
-				line.scansion(meter=meter,conscious=conscious)
-			except:
-				print "### Line skipped: Unknown word ###"
+			line.scansion(meter=meter,conscious=conscious)
+		
 	
 	
 	def allParses(self,meter=None):

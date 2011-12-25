@@ -55,8 +55,7 @@ class Text(entity):
 		self.__bestparses={}
 		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
-		self.limit_line=int(prosodic.config.get('limLine',0))
-		self.limit_stanza=int(prosodic.config.get('limStanza',0))
+		
 		
 		#if printout==None: printout=being.printout
 		
@@ -96,8 +95,6 @@ class Text(entity):
 			
 		
 		## create first stanza,line 
-		numlines=0
-		numstanzas=0
 		stanza = self.newchild()
 		stanza.parent=self
 		line = stanza.newchild()	# returns a new Line, the child of Stanza
@@ -105,20 +102,17 @@ class Text(entity):
 		numwords = 0
 		recentpunct=True
 		tokenizer=prosodic.config['tokenizer'].replace('\\\\','\\')
+		
 		## [loop] lines
 		for ln in file:
 			#print ln
 			## check limWord
-			if(prosodic.config['limWord']):
-				if(numwords>=prosodic.config['limWord']):
+			if(limWord):
+				if(numwords>limWord):
 					break
 	
-			if self.limit_line and numlines>self.limit_line:
-				break
-	
 			# split into words
-			ln=u''.join([(lnx if lnx!=u'\ufffd' else ' ') for lnx in ln])
-
+			
 			if self.isUnicode:
 				toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE)
 			else:
@@ -131,15 +125,9 @@ class Text(entity):
 				# if Stanza not empty, start a new one
 				if not stanza.empty():
 					stanza.finish()
-					if len(line.children): line.finish()
-					numstanzas+=1
-					if self.limit_stanza and numstanzas>=self.limit_stanza:
-						break
 					stanza = self.newchild()
 					stanza.parent=self
 					continue
-				
-
 			
 			## resolve contractions
 			"""for toknum in range(numtoks):
@@ -154,77 +142,40 @@ class Text(entity):
 			"""
 	
 			## [loop] words
-
 			for toknum in range(numtoks):
-				
-					
-				# get token
 				tok=toks[toknum]
 				
 				## check if really a word
 				if not tok: continue
 				tok=tok.strip()
 				if not tok: continue
+				(tok,punct) = gleanPunc(tok)				
 				
-				# remove punct
-				tok1=tok
-				(tok,punct) = gleanPunc(tok)
-				punct1=False
-				punct2=False
-				if punct and tok:
-					if tok1[0]!=tok[0]:
-						punct1=True
-					if tok1[-1]!=tok[-1]:
-						punct2=True
-					
-					## if initial punct eg '(there', end previous line if it contains anything
-					if punct1 and len(line.children):
-						if self.phrasebreak != 'line':
-							
-							minword=prosodic.config.get('line_minWord',0)
-
-							if (self.phrasebreak_punct.find(punct) > -1):
-								if not minword or len(line.children)>=minword:
-									line.finish()
-
-
 				# check if new stanza/line necessary 
 				if stanza.finished:
 					stanza = self.newchild()
 					stanza.parent=self
 				if line.finished:
-					numlines+=1
 					line = stanza.newchild()
-					line.parent=stanza		
+					line.parent=stanza
 				
+				newwords=self.dict.get(tok)
 				
-				if tok:
-					newwords=self.dict.get(tok)
-					
-					line.newchild(newwords)
-					numwords+=1
+				line.newchild(newwords)
+				numwords+=1
 				
-					if prosodic.config['print_to_screen']:
-						self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
+				if prosodic.config['print_to_screen']:
+					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
 				
-				# end line if end punctuation
-				if punct2 and len(line.children):
+				if punct and len(line.children):
 					if self.phrasebreak != 'line':
-						
-						minword=prosodic.config.get('line_minWord',0)
-						
 						if (self.phrasebreak_punct.find(punct) > -1):
-							if not minword or len(line.children)>=minword:
-								line.finish()
+							line.finish()
 					continue
 				
 			## if line-based breaks, end line
 			if (self.phrasebreak == 'both') or (self.phrasebreak == 'line'):
 				line.finish()
-		
-		## finish last remaining line
-		if len(line.children): line.finish()
-		if len(stanza.children): stanza.finish()
 	
 	## def parse
 	def parse(self,meter=None,arbiter='Line'):
@@ -237,10 +188,7 @@ class Text(entity):
 		self.__parses[meter]=[]
 		self.__bestparses[meter]=[]
 		ents=self.ents(arbiter)
-		import prosodic
 		for ent in ents:
-			if len(ent.syllables())>prosodic.config['line_maxsylls']: continue
-			if len(ent.syllables())<prosodic.config['line_minsylls']: continue
 			ent.parse(meter)
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
@@ -259,8 +207,10 @@ class Text(entity):
 		
 		self.scansion_prepare(meter=meter,conscious=conscious)
 		for line in self.lines():
-			line.scansion(meter=meter,conscious=conscious)
-		
+			try:
+				line.scansion(meter=meter,conscious=conscious)
+			except:
+				print "### Line skipped: Unknown word ###"
 	
 	
 	def allParses(self,meter=None):

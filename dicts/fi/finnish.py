@@ -79,6 +79,7 @@ ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.iteritems()])
 def get(token):
 	token=token.strip()
 	
+
 	Annotation = make_annotation(token)
 	syllables=[]
 	wordbroken=False
@@ -110,6 +111,7 @@ def get(token):
 				syllStr+=u"".join(orth2phon[x])
 		
 		syllables.append(syllStr)
+	
 	words=[]
 	
 	sylls_text=[]

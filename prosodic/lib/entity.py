@@ -460,8 +460,6 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def parse(self,arbiter='Line',init=None,namestr=[]):
 		"""Parse this object metrically."""
 		
-		print "parsing!"
-		
 		import time
 		if entity.time==0:
 			entity.time=time.clock()
@@ -492,8 +490,6 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 			
 		if arbiter != self.classname():
-			raise Exception('spam', 'eggs')
-
 			for child in self.children:
 				child.parse(arbiter,init,namestr)
 		else:
@@ -529,17 +525,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self.numparses=len(self.parses)
 			self.__bestparse=self.parses[0]
 			
-			raise Exception('spam', 'eggs')
-			print "headedness!"
 			if hasattr(being,'line_headedness'):
 				for parse in self.parses:
-					print parse.str_meter()
-					print parse.str_meter().startswith(str(being.line_headedness))
 					if parse.str_meter().startswith(str(being.line_headedness)):
 						self.__bestparse=parse
 						break
-			else:
-				print "nolh"
 			init.bestparses.append(self.__bestparse)
 
 
@@ -620,10 +610,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		if not hasattr(self,'meter_stats'):
 			for child in self.children:
-				try:
-					child.parseStats(init)
-				except:
-					print "Child skipped"
+				child.parseStats(init)
 		else:
 			name=self.getName()
 			

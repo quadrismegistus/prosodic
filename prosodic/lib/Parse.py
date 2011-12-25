@@ -118,12 +118,13 @@ class Parse(entity):
 
 			# assign violation scores for the (completed) ultimate position
 			for parse in extendedParses:
+				
 				for constraint in self.constraints:
 					vScore = constraint.violationScore(parse.positions[-1])
 					if vScore == "*":
-						parse.constraintScores[constraint] = "*"
-					else:
-						parse.constraintScores[constraint] += vScore
+						self.constraintScores[constraint] = "*"
+				else:
+					self.constraintScores[constraint] += vScore
 				
 		return extendedParses
 			

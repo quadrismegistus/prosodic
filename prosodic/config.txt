@@ -1,0 +1,116 @@
+# [config.txt]
+## here you may change the runtime settings for prosodic.
+## if you have any questions, please email: ryan <heuser@stanford.edu> or josh <falkj@stanford.edu>
+
+
+
+# [0. OVERVIEW]
+## There are three main areas for which you may want to change the settings:
+## 1. how the metrical parsing works (in the maximum size of metrical positions, and in the constraints);
+## 2. the way in which texts are divided into 'lines' (which is the unit given to the metrical parser); 
+## 3. how linguistic annotations are displayed (eg, the syllabification).
+
+
+lang=en			# if set, will not ask for lang and assume everything english
+#lang=fi		# if set, will not ask for lang and assume everything english
+#lang=**		# if set, will not ask for lang, but will attempt to discover language and if fail, ask later
+
+
+
+# [1. METRICAL PARSING]
+## [1.1 Position Size]
+## the number of syllables allowed per metrical position (cf. Kiparsky&Hanson's "position size" parameter)
+maxS=2		#. the number of syllables allowed in a *strong* metrical position
+maxW=2		#. the number of syllables allowed in a *weak* metrical position
+#splitheavies=1		# allow positions to be as small as a single mora (a split heavy syllable across two metrical positions)
+splitheavies=0		# positions are at least one syllable in size
+
+
+## [1.2 Metrical Constraints]
+## here you may set/unset the active constraints, by "commenting out" unwanted constraints with a # sign before them.
+## you may assign constraints a numerical weight, by changing the number after the / in their name.
+## for more information about these constraints, please see {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}
+
+
+#footmin-noHX/100		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
+#footmin-noLH-noHX/1			# a disyllabic metrical position prefers LL to LH. constraints nested to assist harmonic bounding.
+#footmin-wordbound-bothnotfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied only if both syllables are function-words.
+#footmin-wordbound-neitherfw/5		#.? in disyllabic metrical position crossing a word-boundary, satisfied if one syllable is a function-word.
+#footmin-wordbound-leftfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if left syllable is a function-word.
+#footmin-wordbound-rightfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if right syllable is a function-word.
+
+#strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
+strength.w=>-p/103			# a weak metrical position may not contain any strong syllables, or "peaks" 
+#strength.s=>p/5				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
+#strength.w=>u/1				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
+
+#stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
+#stress.w=>-p/5				#. a *weak* metrical position may not contain *any* stressed syllables
+#stress.s=>p/5				# a *strong* position must contain *at least one* stressed syllable
+#stress.w=>u/5				# a *weak* position must contain *at least one* unstressed syllable
+
+#weight.s=>-u/1				# a *strong* metrical position may not contain *any* light syllable#s
+#weight.w=>-p/1				# a *weak* metrical position may not contain *any* heavy syllables
+#weight.s=>p/1				# a *strong* metrical position must contain *at least one* heavy syllable
+#weight.w=>u/1				# a *weak* metrical position must contain *at least one* light syllable
+#kalevala.s=>-u/1			# a *strong* metrical position may not contain *any* -prom.kalevala syllables
+#kalevala.w=>-P/1			# a *weak* metrical position may not contain *any* +prom.kalevala syllables
+
+#new (Sam Bowman)
+
+footmin-none/1		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
+
+footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
+
+footmin-strongconstraint/101		#.? A disyllabic metrical position may contain a strong syllable of a lexical word only if the syllable is (i) light and (ii) followed within the same position by an unstressed syllable normally belonging to the same word.
+
+functiontow/1				# a function word can fall only in a weak position
+
+initialstrong/10000			# an initial syllable must be in a weak position
+
+
+## [1.3 Maximal Line-Size]
+## you may also set the minimum and maximum "sizes" (in terms of syllable-count) of the lines you would like to parse.
+## this helps prevent the parser from hanging on the occasional very long line.
+line_minsylls=8
+line_maxsylls=20
+resolve_optionality=1		# resolve syllabification/stress/weight optionalities by letting them compete among the parses
+#resolve_optionality=0
+
+
+## line headedness: [optional] force parser to select best parse from the lowest-scoring parse which beguns as such:
+line_headedness=sw
+#line_headedness=ws
+#line_headedness=wws
+#line_headedness=ssw
+
+
+
+# [2. LINE-DIVISIONS]
+## here you may decide how texts divide into lines by leaving uncommented your preferred method.
+## this is significant only because the line, with its words and syllables, is the unit passed to the metrical parser.
+linebreak=line					# linebreaks occur only at actual line-breaks in the processed text file (good for metrical poetry);
+#linebreak=,;:.?!()[]{}<>		# linebreaks occur only upon encountering any of these punctuation marks (good for prose);
+#linebreak=line,;:.?!()[]{}<>	# linebreaks occur both at actual-linebreaks, and at any of these punctuation marks (good for prose and free-verse poetry).
+tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and hyphens [-]
+#tokenizer=[^\s+]+          # words tokenized against [^] whitespaces [\s+]
+
+
+# [3.0 OUTPUT-FORMATTING]
+## here you may change the format under which the syllabified, "pronunciation" output will appear.
+## options are:
+## 	ipa
+## 	cmu (the formatting used in the CMU Pronunciation Dictionary)
+## 	orth (the orthography itself [good for Finnish])
+## this is a language-specific option, in order to take into account the differing relationships languages' orthographies have to their phonetics.
+output_**=ipa		# the catch-all option, for all languages not explicitly defined below
+output_en=cmu		# since our english information comes from the cmu, we default this to its native CMU
+output_fi=orth		# since finnish pronunciation is essentially identical to its orthography
+
+
+print_to_screen=1	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
+linelen=60
+
+## [appendix: how this file works]
+# any line with a pound (#) to the utmost left is considered a 'comment' and ignored;
+# if multiple uncommented settings for the same variable, the last is taken 

@@ -1,0 +1,51 @@
+[remaining issues]
+
+- very simple!: in the direct input, "/" means new line
+
+- a better orthographic-syllabifier for english?
+
+- constraints: separating counts from scores
+
+- finnish syllabifier ipa vs orth mismatches (my fault?):
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.in
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.n
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.in.kin
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.s.saan
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.s.san.sa
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.ss
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.et
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.taan
+	<error> numSyll mismatch: [ipa] mo.no vs [orth] mo.no.lo.gin
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.in
+	<error> numSyll mismatch: [ipa] ko.ko.nɑis vs [orth] ko.ko.nais.ta
+	<error> numSyll mismatch: [ipa] ko.ko.nɑis vs [orth] ko.ko.nais.ta
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.m.mis.ta
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.e.hen
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.ta
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.i.a
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.tan.sa
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.na
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.t
+	<error> numSyll mismatch: [ipa] hʊo.no vs [orth] huo.no.a
+	<error> numSyll mismatch: [ipa] pie.nois vs [orth] pie.nois.en
+	
+
+
+WHATS NEW?:
+	- config.txt
+	- readme.txt
+	- you can start prosodic from anywhere now
+	- an OT format is included in the /stats function
+	- primary/secondary stress is now working, and with the correct accents (P = ', S = `)
+	- /scan (and the automatic output when parsing) prints all lowest-scoring parses
+	- the directory structure is trimmed:
+		config.txt
+		corpora/
+		dicts/
+		lib/
+		prosodic.py
+		readme.txt
+		remaining_issues.txt
+		results/
+	- ZODB has been found guilty (of superfluousness) until proven innocent
+	- the runtime /config is gone for now (this ok?)

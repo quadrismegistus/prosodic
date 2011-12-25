@@ -28,12 +28,6 @@ class MeterPosition(Parse):
 		self.slots.append(slot)
 	
 	
-	def score(self):
-		return sum(self.constraintScores.values())
-	
-	def constraintScorez(self):
-		return self.constraintScores
-	
 	def posfeats(self):
 		posfeats={'prom.meter':[]}
 		for slot in self.slots:

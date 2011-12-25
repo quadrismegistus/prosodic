@@ -203,7 +203,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if self==init:
 
 			if init._eval==None:
-				return [ (x,y) for (x,y) in init._matches if y!=None ]
+				return init._matches
 			else:
 				return [ x for (x,y) in init._matches if bool(y)==init._eval ]
 		
@@ -256,49 +256,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		return self.finished
 	
 		
-	def shuffle(self,cls=[],shuffled=[]):
-		"""If cls empty, shuffles the children.
-		If cls set, shuffles children recursively whose classnames match those in cls"""
-		import random
-		if not cls:
-			random.shuffle(self.children)
-		else:
-			try:
-				mychild=self.children[0].classname()
-			except:
-				mychild=self.children[0][0].classname()
-			
-			if mychild in cls:
-				print ">>",mychild,"in",cls,"so shuffling self.children... [i am",self.classname(),"]"
-				random.shuffle(self.children)
-			
-			for child in self.children:
-				try:
-					child.shuffle(cls=cls)
-				except:
-					pass
-		
-	#def enttup(self,ents=['Word','Syllable']):
-	
-	def syllword(self):
-		return [(syll,word) for word in self.words() for syll in word.syllables()]
-	
-	def unwords(self,stats=True):
-		statd={}
-		statl=[]
-		for word in [w for w in self.words() if w.isBroken()]:
-			if stats:
-				try:
-					statd[word.token]+=1
-				except KeyError:
-					statd[word.token]=1
-			else:
-				statl+=[word.token]
-		
-		if stats:
-			return statd
-		else:
-			return list(set(statl))
+
 
 	## getting entities of various kinds
 	def ents(self,cls="Word",flattenList=True):
@@ -421,8 +379,6 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			return
 		
 		entmethods=dir(entity)
-		for x in ['parse','scansion']:
-			entmethods.remove(x)
 		
 		print
 		#print "[methods]" 		
@@ -504,6 +460,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def parse(self,arbiter='Line',init=None,namestr=[]):
 		"""Parse this object metrically."""
 		
+		print "parsing!"
+		
 		import time
 		if entity.time==0:
 			entity.time=time.clock()
@@ -534,6 +492,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 			
 		if arbiter != self.classname():
+			raise Exception('spam', 'eggs')
+
 			for child in self.children:
 				child.parse(arbiter,init,namestr)
 		else:
@@ -556,14 +516,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			##
 			
 			if (numSyll < config['line_minsylls']):
-				print "\t>skipping ("+str(numSyll)+" is fewer than minimum of "+str(config['parse_line_numsyll_min'])+" sylls)"
-				print words
-				print
+				#print "\t>skipping ("+str(numSyll)+" is fewer than minimum of "+str(config['parse_line_numsyll_min'])+" sylls)"
 				return []
 			elif(numSyll > config['line_maxsylls']):
-				print "\t>skipping ("+str(numSyll)+" is more than maximum of "+str(config['parse_line_numsyll_max'])+" sylls)"
-				print words
-				print
+				#print "\t>skipping ("+str(numSyll)+" is more than maximum of "+str(config['parse_line_numsyll_max'])+" sylls)"
 				return []
 			
 			#print "\n\t>parsing:\t"+str(self)+"\t("+str(numSyll)+" sylls)"
@@ -573,11 +529,17 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self.numparses=len(self.parses)
 			self.__bestparse=self.parses[0]
 			
+			raise Exception('spam', 'eggs')
+			print "headedness!"
 			if hasattr(being,'line_headedness'):
 				for parse in self.parses:
+					print parse.str_meter()
+					print parse.str_meter().startswith(str(being.line_headedness))
 					if parse.str_meter().startswith(str(being.line_headedness)):
 						self.__bestparse=parse
 						break
+			else:
+				print "nolh"
 			init.bestparses.append(self.__bestparse)
 
 
@@ -658,7 +620,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		if not hasattr(self,'meter_stats'):
 			for child in self.children:
-				child.parseStats(init)
+				try:
+					child.parseStats(init)
+				except:
+					print "Child skipped"
 		else:
 			name=self.getName()
 			
@@ -1505,7 +1470,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 							for i in range(0,offset+1):
 								newline+="      "
 							newline+="|     "
-							newline+=self._showFeat(k,v)
+							newline+=self.showFeat(k,v)
 							
 
 			tree+=newline
@@ -1513,16 +1478,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		return tree
 	
-	def _showFeat(self,k,v):
-		if type(v) == type(True):
-			if v:
-				r="[+"+k+"]"
-			else:
-				r="[-"+k+"]"
-		else:
-			r="["+k+"="+str(v)+"]"
-		return r
-	
+	#def showFeat(self,k,v):
+	#	if type(v) == type(True):
+	#		if v:
+	#			r="[+"+k+"]"
+	#		else:
+	#			r="[-"+k+"]"
+	#	else:
+	#		r="["+k+"="+str(v)+"]"
+	#	return r
+	#
 	#def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
 	#	for dat in feats:
 	#		row+=1

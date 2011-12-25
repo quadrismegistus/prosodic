@@ -48,7 +48,7 @@ class Word(entity):
 		## am i broken?	
 		if (not len(syllables)) or (self.token==""):
 			self.broken = True
-			#self.token='?'+self.token
+			self.token='?'+self.token
 		else:
 			## set sylltokens
 			len_sylls=len(self.children)

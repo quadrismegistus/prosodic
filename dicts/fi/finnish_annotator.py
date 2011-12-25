@@ -129,7 +129,6 @@ class Annotation:
         self.syllables += annotation.syllables
         self.weights += annotation.weights
         self.sonorities += annotation.sonorities
-        self.split_sylls += annotation.split_sylls
 
         # only concatenate stresses if there is something to concatenate
         if len(annotation.stresses[0]) > 0:

@@ -1,4 +1,0 @@
-presyllabified.txt
-initial.txt
-suffix.txt
-compound.txt

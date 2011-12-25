@@ -1,1 +1,0 @@
-This command allows the user to perform queries on the linguistic annotations performed on the inputted text.

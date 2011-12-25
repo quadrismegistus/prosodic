@@ -1,9 +1,0 @@
-pienois
-kokonais
-tiedotus
-onnettomuus
-huono
-alavieskalais
-tilanne
-ruumiin
-erikois

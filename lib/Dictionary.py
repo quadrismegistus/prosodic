@@ -46,6 +46,15 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 					self.unstressedWords.append(word)
 			file.close()			
 			break
+
+		self.maybestressedWords=[]
+		for filename in glob.glob(os.path.join(self.dictsfolder, 'maybestressed*')):
+			file=codecs.open(filename,encoding='utf-8')
+			for ln in file:
+				for word in ln.split():
+					self.maybestressedWords.append(word)
+			file.close()			
+			break
 		
 		pyfile=os.path.join(self.dictsfolder,self.language+'.py')
 		if os.path.exists(pyfile):
@@ -402,16 +411,30 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	
 	def maybeUnstress(self,words):
 		word=words[0].token.lower()
-		if word in self.unstressedWords:
-			# for wordobj in self.dict['Word'][word]:
-			# 				unstr=True
-			# 				for child in wordobj.children:
-			# 					if bool(child.feature('prom.stress'))==True:
-			# 						unstr=False
-			# 				if unstr:
-			# 					return [wordobj]
-			# 			
-			#if not unstr:
+
+		if word in self.maybestressedWords:		# only for monosyllabs
+			wordobjs=self.dict['Word'][word]
+			stresses = [wordobj.stress for wordobj in wordobjs]
+
+			if 'U' in stresses and 'P' in stresses:
+				return wordobjs	# already good
+			else:
+				wordobj1=wordobjs[0]
+				ipa=wordobj1.ipa
+				if 'U' in stresses and not 'P' in stresses:
+					newipa="'"+ipa
+					newobjs=[self.make((_ipa,None),word) for _ipa in [ipa,newipa]]
+					newobjs[0].feat('functionword',True)
+				elif 'P' in stresses and not 'U' in stresses:
+					newipa=ipa[1:]
+					newobjs=[self.make((_ipa,None),word) for _ipa in [ipa,newipa]]
+					newobjs[-1].feat('functionword',True)
+
+				return newobjs
+
+			
+
+		elif word in self.unstressedWords:
 			wordobj=self.dict['Word'][word][0]
 			wordobj.feat('functionword',True)
 			wordobj.stress=""
@@ -423,14 +446,14 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			
 			return [wordobj]
 	
-		
 		return words
 	
 	
 	def get(self,word):
-		if type(word)==type(""):
-			word=unicode(word)
+		if type(word)==str: word=unicode(word)
+
 		(word,punct)=gleanPunc(word)
+
 		if self.has(word):
 			words=self.dict['Word'][word.lower()]
 		elif self.getprep:
@@ -438,16 +461,20 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		else:
 			return [Word(word,[],None)]
 
-		if type(words)==type([]):
-			if type(words[0])==type(tuple()):
-				#print "\t>building new word: "+str(word.encode('utf-8')) 
+		print words
+
+		if type(words)==list:
+			if type(words[0])==tuple:	# New word needs to be built
+
 				wordobjs=[self.make(wrd,word) for wrd in words]
 				self.dict['Word'][word.lower()]=wordobjs
 				return self.maybeUnstress(wordobjs)
 			else:
-				return self.maybeUnstress(words)
+				wordobjs=words
 		else:
-			return self.maybeUnstress([words])
+			wordobjs=[words]
+
+		return self.maybeUnstress(wordobjs)
 		
 		
 		

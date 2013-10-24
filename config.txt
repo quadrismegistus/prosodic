@@ -25,6 +25,7 @@ maxW=2		#. the number of syllables allowed in a *weak* metrical position
 #splitheavies=1		# allow positions to be as small as a single mora (a split heavy syllable across two metrical positions)
 splitheavies=0		# positions are at least one syllable in size
 
+skip_initial_foot=0	# the first two metrical positions will not be evaluated for metrical errors if this is not set to 0
 
 ## [1.2 Metrical Constraints]
 ## here you may set/unset the active constraints, by "commenting out" unwanted constraints with a # sign before them.
@@ -32,20 +33,20 @@ splitheavies=0		# positions are at least one syllable in size
 ## for more information about these constraints, please see {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}
 
 
-#footmin-noHX/100		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
+footmin-noHX/1		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
 #footmin-noLH-noHX/1			# a disyllabic metrical position prefers LL to LH. constraints nested to assist harmonic bounding.
 #footmin-wordbound-bothnotfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied only if both syllables are function-words.
 #footmin-wordbound-neitherfw/5		#.? in disyllabic metrical position crossing a word-boundary, satisfied if one syllable is a function-word.
 #footmin-wordbound-leftfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if left syllable is a function-word.
 #footmin-wordbound-rightfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if right syllable is a function-word.
 
-#strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
-strength.w=>-p/103			# a weak metrical position may not contain any strong syllables, or "peaks" 
+strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
+strength.w=>-p/1			# a weak metrical position may not contain any strong syllables, or "peaks" 
 #strength.s=>p/5				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
 #strength.w=>u/1				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
 
-#stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
-#stress.w=>-p/5				#. a *weak* metrical position may not contain *any* stressed syllables
+stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
+stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed syllables
 #stress.s=>p/5				# a *strong* position must contain *at least one* stressed syllable
 #stress.w=>u/5				# a *weak* position must contain *at least one* unstressed syllable
 
@@ -58,15 +59,15 @@ strength.w=>-p/103			# a weak metrical position may not contain any strong sylla
 
 #new (Sam Bowman)
 
-footmin-none/1		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
+#footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
 
-footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
+#footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
 
-footmin-strongconstraint/101		#.? A disyllabic metrical position may contain a strong syllable of a lexical word only if the syllable is (i) light and (ii) followed within the same position by an unstressed syllable normally belonging to the same word.
+#footmin-strongconstraint/101		#.? A disyllabic metrical position may contain a strong syllable of a lexical word only if the syllable is (i) light and (ii) followed within the same position by an unstressed syllable normally belonging to the same word.
 
-functiontow/1				# a function word can fall only in a weak position
+#functiontow/1				# a function word can fall only in a weak position
 
-initialstrong/10000			# an initial syllable must be in a weak position
+#initialstrong/10000			# an initial syllable must be in a weak position
 
 
 ## [1.3 Maximal Line-Size]

@@ -4,10 +4,6 @@ from tools import *
 from entity import *
 from Word import Word
 from Syllable import Syllable
-dirself=sys.path[0]
-libfolder=os.path.join(dirself,'lib')
-dictsfolder=os.path.join(dirself,'dicts')
-
 
 from ipa import ipa
 import codecs
@@ -15,13 +11,18 @@ import codecs
 class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_en,Dictionary_fi,usw.
 	classnames=['Phoneme','Onset','Nucleus','Coda','Rime','SyllableBody','Syllable','Word','Phrase']
 	char2phons=[]
-	
 	for k in ipa.keys():
 		if len(k)>1:
 			for x in k[1:]:
 				char2phons.append(x)
 	
 	def __init__(self,lang):
+		import prosodic
+		dirself=prosodic.dir_prosodic
+		libfolder=os.path.join(dirself,'lib')
+		dictsfolder=os.path.join(dirself,'dicts')
+		
+		
 		self.lang = lang
 		self.libfolder = libfolder
 		self.dictsfolder = os.path.join(dictsfolder,self.lang)
@@ -114,6 +115,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			line=ln.split('\t')
 			line.reverse()
 			token=line.pop().strip()
+			if token.startswith('#'): continue
 			stressedipa=line.pop().strip()
 			
 			if ("." in token) and (token.count(".")==stressedipa.count(".")):
@@ -194,10 +196,14 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			linedat=line.split(sep)
 			key=linedat[0]
 			val=linedat[1]
+			if key.startswith('#'): continue
 			if (not key in newdict):
 				newdict[key]=val
 			else:
-				newdict[key]=[newdict[key],val]
+				if type(newdict[key])==list:
+					newdict[key].append(val)
+				else:
+					newdict[key]=[newdict[key],val]
 		return newdict
 
 	def boot_build(self):
@@ -224,7 +230,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	def has(self,word):
 		if not word: return False
 		word=unicode(word)
-		(word,punct)=gleanPunc(word)
+		(p0,word,p1)=gleanPunc2(word)
 		return ((word.lower() in self.dict['Word']) and (self.dict['Word'][word.lower()]))
 		
 	
@@ -367,7 +373,11 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			
 		return (prom_stress,prom_strength)
 			
-	
+	def reset(self):
+		for classtype in [ct for ct in self.dict if ct!='Word']: self.dict[classtype]={}
+		for word in self.dict['Word']:
+			self.dict['Word'][word]=[((wordobj.ipa,wordobj.sylls_text) if type(wordobj)!=tuple else wordobj) for wordobj in self.dict['Word'][word]]
+		
 	
 	def make(self,stressedipasylls_text,token):
 		stressedipa=stressedipasylls_text[0]
@@ -383,6 +393,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			syll=self.use('Syllable',(syllbody,prom_strength[i],prom_stress[i]))
 			sylls.append(syll)
 		word=Word(token,sylls,sylls_text)
+		word.ipa=stressedipa
 		word.stress=stress
 		word.lang=self.lang
 		

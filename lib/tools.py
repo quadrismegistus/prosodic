@@ -1,5 +1,34 @@
 import pickle,sys,os
 from pyparsing import nestedExpr
+
+def bigrams(l):
+	return ngram(l,2)
+
+def ngram(l,n=3):
+	grams=[]
+	gram=[]
+	for x in l:
+		gram.append(x)
+		if len(gram)<n: continue
+		g=tuple(gram)
+		grams.append(g)
+		gram.reverse()
+		gram.pop()
+		gram.reverse()
+	return grams
+
+def gleanPunc2(aToken):
+	aPunct0 = ''
+	aPunct1 = ''
+	while(len(aToken) > 0 and not aToken[0].isalnum()):
+		aPunct0 = aPunct0+aToken[:1]
+		aToken = aToken[1:]
+	while(len(aToken) > 0 and not aToken[-1].isalnum()):
+		aPunct1 = aToken[-1]+aPunct1
+		aToken = aToken[:-1]
+	return (aPunct0, aToken, aPunct1)
+
+
 def findall(L, value, start=0):
 	# generator version
 	i = start - 1

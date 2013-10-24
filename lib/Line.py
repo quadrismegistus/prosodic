@@ -71,7 +71,11 @@ class Line(entity):
 	
 	def finish(self):
 		if not hasattr(self,'finished') or not self.finished:
-			#print "finishing... " + str(self)
+			"""print "finishing... " + str(self)
+			for word in self.words():
+				print word, word.origin
+			print"""
+			
 			self.finished = True
 			if not hasattr(self,'broken'):
 				self.broken=False

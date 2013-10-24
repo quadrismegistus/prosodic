@@ -237,7 +237,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		if not chld:
 			chld = self.givebirth()
+		
+		lchld=[chld] if type(chld)!=list else chld
+		for chldx in lchld: chldx.parent=self
 		self.children.append(chld)
+		
 		return chld
 	
 	def empty(self):

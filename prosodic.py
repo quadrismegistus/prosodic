@@ -1,19 +1,20 @@
 # -*- coding: UTF-8 -*-
 import sys,glob,os,time
 
-
-dir_prosodic=sys.path[0]
+#dir_prosodic=sys.path[0]
+dir_prosodic=os.path.split(globals()['__file__'])[0]
+sys.path.insert(0,dir_prosodic)
 dir_imports=os.path.join(dir_prosodic,'lib')
 dir_corpus=os.path.join(dir_prosodic,'corpora')
 sys.path.append(dir_imports)
 
 ## import necessary objects
 from tools import *
-config=loadConfig(__name__=='__main__')
+config=loadConfig(__name__=='__main__',dir_prosodic=dir_prosodic)
 import entity
 from entity import being
-from Corpus import Corpus
 from Text import Text
+from Corpus import Corpus
 from Stanza import Stanza
 from Line import Line
 from Phoneme import Phoneme
@@ -102,7 +103,7 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/query\tquery annotations\n\n"
 		
 			msg+="\t\t/parse\tparse metrically\n"
-		if obj and obj.isParsed():
+		if obj and obj.isParsed:
 			msg+="\t\t/scan\tprint out the scanned lines\n"
 			msg+="\t\t/report\tlook over the parse outputs\n"
 			msg+="\t\t/stats\tget statistics from the parser\n"

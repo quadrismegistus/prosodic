@@ -1,6 +1,1 @@
-
-Lab
-Projects
-sentence
-sents
-1782.Burney.Cecilia.txt
+hello world

@@ -38,6 +38,7 @@ class MeterConstraint:
 		return violation
 	
 	def __hardparse(self,meterPos):
+		import prosodic as p
 		#if meterPos.slots[0].i<2:
 		#	print meterPos.slots[0].word
 	
@@ -45,8 +46,9 @@ class MeterConstraint:
 			## load variables
 			
 			#exception for first foot
-			if meterPos.slots[0].i<2:
-				return 0
+			if p.config.get('skip_initial_foot',0):
+				if meterPos.slots[0].i<2:
+					return 0
 			
 			promSite = self.name.split(".")[1]
 			promType = self.name.split(".")[0]
@@ -111,8 +113,9 @@ class MeterConstraint:
 		
 		elif self.name.lower().startswith('functiontow'):
 			#exception for first foot
-			if meterPos.slots[0].i<3:
-				return 0
+			if p.config.get('skip_initial_foot',0):
+				if meterPos.slots[0].i<2:
+					return 0
 				
 			if meterPos.meterVal != 's':	# then this constraint does not apply
 				return 0

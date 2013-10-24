@@ -25,6 +25,7 @@ maxW=2		#. the number of syllables allowed in a *weak* metrical position
 #splitheavies=1		# allow positions to be as small as a single mora (a split heavy syllable across two metrical positions)
 splitheavies=0		# positions are at least one syllable in size
 
+skip_initial_foot=0	# the first two metrical positions will not be evaluated for metrical errors if this is not set to 0
 
 ## [1.2 Metrical Constraints]
 ## here you may set/unset the active constraints, by "commenting out" unwanted constraints with a # sign before them.

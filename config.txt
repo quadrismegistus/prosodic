@@ -40,13 +40,13 @@ footmin-noHX/1		#. a disyllabic metrical position may not contain more than a mi
 #footmin-wordbound-leftfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if left syllable is a function-word.
 #footmin-wordbound-rightfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if right syllable is a function-word.
 
-strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
-strength.w=>-p/1			# a weak metrical position may not contain any strong syllables, or "peaks" 
+strength.s=>-u/5			# a strong metrical position may not contain any weak syllables, or "troughs"
+strength.w=>-p/5			# a weak metrical position may not contain any strong syllables, or "peaks" 
 #strength.s=>p/5				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
 #strength.w=>u/1				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
 
-stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
-stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed syllables
+stress.s=>-u/2				# a *strong* metrical position may not contain *any* unstressed syllables
+stress.w=>-p/2				#. a *weak* metrical position may not contain *any* stressed syllables
 #stress.s=>p/5				# a *strong* position must contain *at least one* stressed syllable
 #stress.w=>u/5				# a *weak* position must contain *at least one* unstressed syllable
 
@@ -59,7 +59,7 @@ stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed s
 
 #new (Sam Bowman)
 
-#footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
+footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
 
 #footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
 

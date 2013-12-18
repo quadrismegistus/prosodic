@@ -1,0 +1,213 @@
+text                                    	parse                                   	#pars	#viol	meter	[*footmin-no-s]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
+and over is their antique joy           	and|OV|er|IS|their.ant|IQUE|joy         	4	6	wswswwsw	0	0	3	0	3
+of old the world on dreaming fed        	of|OLD|the|WORLD|on|DRE|aming|FED       	1	0	wswswsws	0	0	0	0	0
+grey truth is now her painted toy       	GREY|truth.is|NOW|her|PAI|nted|TOY      	3	3	swwswsws	0	0	0	0	3
+yet still she turns her restless head   	yet|STILL|she|TURNS|her|RES|tless|HEAD  	1	0	wswswsws	0	0	0	0	0
+but o sick children of the world        	but|O|sick|CHI|ldren|OF|the|WORLD       	4	6	wswswsws	0	0	3	0	3
+of all the many changing things         	of|ALL|the|MA|ny|CHA|nging|THINGS       	1	0	wswswsws	0	0	0	0	0
+in dreary dancing past us whirled       	in|DRE|ary|DAN|cing|PAST|us|WHIRLED     	1	0	wswswsws	0	0	0	0	0
+words alone are certain good            	WORDS|al|ONE|are|CER|tain|GOOD          	2	0	swswsws	0	0	0	0	0
+where are now the warring kings         	WHERE|are|NOW|the|WAR|ring|KINGS        	2	0	swswsws	0	0	0	0	0
+where are now the warring kings         	WHERE|are|NOW|the|WAR|ring|KINGS        	2	0	swswsws	0	0	0	0	0
+an idle word is now their glory         	an|ID|le|WORD|is|NOW|their|GLO|ry       	1	0	wswswswsw	0	0	0	0	0
+reading some entangled story            	RE|ading|SOME|ent|ANG|led|STO|ry        	1	0	swswswsw	0	0	0	0	0
+the kings of the old time are dead      	the|KINGS|of.the|OLD|time.are|DEAD      	2	3	wswwswws	0	0	0	0	3
+the wandering earth herself may be      	the|WA|nd.ering|EARTH|her|SELF|may.be   	1	0	wswwswsww	0	0	0	0	0
+only a sudden flaming word              	ONL|y.a|SU|dden|FLA|ming|WORD           	1	0	swwswsws	0	0	0	0	0
+in clanging space a moment heard        	in|CLA|nging|SPACE|a|MOM|ent|HEARD      	1	0	wswswsws	0	0	0	0	0
+troubling the endless reverie           	TRO|ubling.the|END|less|RE|ve.rie       	1	0	swwswsww	0	0	0	0	0
+to hunger fiercely after truth          	to|HUN|ger|FIE|rcely|AF|ter|TRUTH       	1	0	wswswsws	0	0	0	0	0
+lest all thy toiling only breeds        	lest|ALL|thy|TOI|ling|ONL|y|BREEDS      	1	0	wswswsws	0	0	0	0	0
+new dreams new dreams there is no truth 	new|DREAMS|new|DREAMS|there.is|NO|truth 	16	9	wswswwsw	0	0	0	0	9
+saving in thine own heart seek then     	SAV|ing|IN|thine|OWN|heart|SEEK|then    	1	3	swswswsw	0	0	0	0	3
+no learning from the starry men         	no|LEA|rning|FROM|the|STA|rry|MEN       	2	3	wswswsws	0	0	0	0	3
+who follow with the optic glass         	who|FO|llow|WITH|the|OP|tic|GLASS       	1	0	wswswsws	0	0	0	0	0
+the whirling ways of stars that pass    	the|WHI|rling|WAYS|of|STARS|that|PASS   	1	0	wswswsws	0	0	0	0	0
+no word of theirs the cold star bane    	NO|word.of|THEIRS|the|COLD|star|BANE    	3	6	swwswsws	0	0	0	0	6
+and dead is all their human truth       	and|DEAD|is|ALL|their|HUM|an|TRUTH      	1	0	wswswsws	0	0	0	0	0
+go gather by the humming sea            	go|GA|ther|BY|the|HU|mming|SEA          	2	3	wswswsws	0	0	0	0	3
+and to its lips thy story tell          	AND|to.its|LIPS|thy|STO|ry|TELL         	2	3	swwswsws	0	0	3	0	0
+and they thy comforters will be         	AND|they.thy|COM|for.ters|WILL|be       	3	3	swwswwsw	0	0	3	0	0
+thy fretful words a little while        	thy|FRE|tful|WORDS|a|LI|ttle.while      	1	0	wswswsww	0	0	0	0	0
+till they shall singing fade in ruth    	TILL|they.shall|SI|nging|FADE|in|RUTH   	1	0	swwswsws	0	0	0	0	0
+and die a pearly brotherhood            	and|DIE|a|PEA|rly|BRO|the|RHOOD         	1	0	wswswsws	0	0	0	0	0
+for words alone are certain good        	for|WORDS|al|ONE|are|CER|tain|GOOD      	2	0	wswswsws	0	0	0	0	0
+i must be gone there is a grave         	I|must.be|GONE|there.is|A|grave         	12	3	swwswwsw	0	0	0	0	3
+where daffodil and lily wave            	where|DA|ff|ODIL|and|LI|ly|WAVE         	1	0	wswswsws	0	0	0	0	0
+buried under the sleepy ground          	BUR|ied|UN|der.the|SLE|epy|GROUND       	1	0	swswwsws	0	0	0	0	0
+his shouting days with mirth were crowned	his|SHO|uting|DAYS|with|MIRTH|were|CROWNED	1	0	wswswsws	0	0	0	0	0
+and still i dream he treads the lawn    	and|STILL|i|DREAM|he|TREADS|the|LAWN    	1	0	wswswsws	0	0	0	0	0
+walking ghostly in the dew              	WAL|king|GHOS|tly|IN|the|DEW            	1	0	swswsws	0	0	0	0	0
+pierced by my glad singing through      	pierced|BY|my.glad|SI|nging|THROUGH     	7	6	wswwsws	0	0	0	0	6
+my songs of old earth's dreamy youth    	my|SONGS|of|OLD|earth's|DRE|amy|YOUTH   	1	3	wswswsws	0	0	0	0	3
+but ah she dreams not now dream thou    	BUT|ah.she|DREAMS|not|NOW|dream|THOU    	24	9	swwswsws	0	0	3	0	6
+for fair are poppies on the brow        	for|FAIR|are|POP|pies|ON|the|BROW       	1	0	wswswsws	0	0	0	0	0
+where dips the rocky highland           	where|DIPS|the|RO|cky|HIG|hland         	1	0	wswswsw	0	0	0	0	0
+of sleuth wood in the lake              	of|SLEUTH|wood|IN|the|LAKE              	1	0	wswsws	0	0	0	0	0
+there lies a leafy island               	there|LIES|a|LEA|fy|ISL|and             	2	0	wswswsw	0	0	0	0	0
+where flapping herons wake              	where|FLA|pping|HER|ons|WAKE            	1	0	wswsws	0	0	0	0	0
+the drowsy water rats                   	the|DRO|wsy|WAT|er|RATS                 	1	0	wswsws	0	0	0	0	0
+full of berries                         	FULL|of|BER|ries                        	1	0	swsw	0	0	0	0	0
+and of reddest stolen cherries          	and.of|RED|dest|STO|len|CHE|rries       	1	0	wwswswsw	0	0	0	0	0
+to the waters and the wild              	to.the|WAT|ers|AND|the|WILD             	1	3	wwswsws	0	0	3	0	0
+for the world's more full of weeping than you can	FOR|the|WORLD'S|more|FULL|of|WEE|ping|THAN|you.can	2	0	swswswswsww	0	0	0	0	0
+understand                              	UND|ers|TAND                            	1	0	sws	0	0	0	0	0
+where the wave of moonlight glosses     	WHERE|the|WAVE|of|MOON|light|GLO|sses   	2	8	swswswsw	0	5	0	0	3
+the dim grey sands with light           	the|DIM|grey|SANDS|with|LIGHT           	1	3	wswsws	0	0	0	0	3
+we foot it all the night                	we|FOOT|it|ALL|the|NIGHT                	1	0	wswsws	0	0	0	0	0
+weaving olden dances                    	WEA|ving|OLD|en|DAN|ces                 	1	0	swswsw	0	0	0	0	0
+mingling hands and mingling glances     	MI|ng.ling|HANDS|and|MI|ng.ling|GLA|nces	4	0	swwswswwsw	0	0	0	0	0
+till the moon has taken flight          	TILL|the|MOON|has|TAK|en|FLIGHT         	2	0	swswsws	0	0	0	0	0
+to and fro we leap                      	to.and|FRO|we|LEAP                      	1	0	wwsws	0	0	0	0	0
+and chase the frothy bubbles            	and|CHASE|the|FRO|thy|BUB|bles          	1	0	wswswsw	0	0	0	0	0
+while the world is full of troubles     	while.the|WORLD|is|FULL|of|TRO|ubles    	1	0	wwswswsw	0	0	0	0	0
+and is anxious in its sleep             	and.is|ANX|ious|IN|its|SLEEP            	1	0	wwswsws	0	0	0	0	0
+to the waters and the wild              	to.the|WAT|ers|AND|the|WILD             	1	3	wwswsws	0	0	3	0	0
+for the world's more full of weeping than you can	FOR|the|WORLD'S|more|FULL|of|WEE|ping|THAN|you.can	2	0	swswswswsww	0	0	0	0	0
+understand                              	UND|ers|TAND                            	1	0	sws	0	0	0	0	0
+where the wandering water gushes        	WHERE|the|WA|nd.ering|WAT|er|GU|shes    	2	0	swswwswsw	0	0	0	0	0
+from the hills above glen car           	FROM|the|HILLS|ab|OVE|glen|CAR          	2	3	swswsws	0	0	0	0	3
+in pools among the rushes               	in|POOLS|am|ONG|the|RU|shes             	1	0	wswswsw	0	0	0	0	0
+that scarce could bathe a star          	that|SCARCE|could|BATHE|a|STAR          	1	0	wswsws	0	0	0	0	0
+we seek for slumbering trout            	we|SEEK|for|SLU|mbe.ring|TROUT          	1	0	wswswws	0	0	0	0	0
+and whispering in their ears            	and|WH|is.pering|IN|their|EARS          	1	0	wswwsws	0	0	0	0	0
+leaning softly out                      	LEA|ning|SOFT|ly|OUT                    	2	0	swsws	0	0	0	0	0
+from ferns that drop their tears        	from|FERNS|that|DROP|their|TEARS        	1	0	wswsws	0	0	0	0	0
+over the young streams                  	OV|er.the|YOUNG|streams                 	2	3	swwsw	0	0	0	0	3
+to to waters and the wild               	to.to|WAT|ers|AND|the|WILD              	1	3	wwswsws	0	0	3	0	0
+for to world's more full of weeping than you can	FOR|to|WORLD'S|more|FULL|of|WEE|ping|THAN|you.can	2	0	swswswswsww	0	0	0	0	0
+understand                              	UND|ers|TAND                            	1	0	sws	0	0	0	0	0
+away with us he's going                 	aw|AY|with|US|he's|GO|ing               	5	3	wswswsw	0	0	3	0	0
+the solemn eyed                         	the|SO|lemn|EYED                        	1	0	wsws	0	0	0	0	0
+he'll hear no more the lowing           	HE'LL|hear|NO|more.the|LO|wing          	4	3	swswwsw	0	0	0	0	3
+of the calves on the warm hillside      	of.the|CALVES|on.the|WARM|hil|LSIDE     	3	8	wwswwsws	0	5	0	0	3
+or the kettle on the hob                	or.the|KE|ttle|ON|the|HOB               	1	0	wwswsws	0	0	0	0	0
+sing peace into his breast              	SING|peace.in|TO|his|BREAST             	4	3	swwsws	0	0	0	0	3
+or see the brown mice bob               	or|SEE|the|BROWN|mice|BOB               	1	3	wswsws	0	0	0	0	3
+round and round the oatmeal chest       	ROUND|and|ROUND|the|OAT|meal|CHEST      	4	8	swswsws	0	5	0	0	3
+to the waters and the wild              	to.the|WAT|ers|AND|the|WILD             	1	3	wwswsws	0	0	3	0	0
+from a world more full of weeping than you can	FROM|a|WORLD|more|FULL|of|WEE|ping|THAN|you.can	2	0	swswswswsww	0	0	0	0	0
+understand                              	UND|ers|TAND                            	1	0	sws	0	0	0	0	0
+the brawling of a sparrow in the eaves  	the|BRA|wling|OF|a|SPA|rrow|IN|the|EAVES	3	3	wswswswsws	0	0	3	0	0
+the brilliant moon and all the milky sky	the|BRIL|liant|MOON|and|ALL|the|MIL|ky|SKY	1	0	wswswswsws	0	0	0	0	0
+and all that famous harmony of leaves   	and|ALL|that|FAM|ous|HA|rm|ONY|of|LEAVES	1	3	wswswswsws	0	0	3	0	0
+a girl arose that had red mournful lips 	a|GIRL|ar|OSE|that|HAD|red|MOUR|nful|LIPS	3	6	wswswswsws	0	0	3	0	3
+and seemed the greatness of the world in tears	and|SEEMED|the|GREA|tness|OF|the|WORLD|in|TEARS	1	3	wswswswsws	0	0	3	0	0
+and proud as priam murdered with his peers	and|PROUD|as|PRI|am|MUR|dered|WITH|his|PEERS	1	0	wswswswsws	0	0	0	0	0
+a climbing moon upon an empty sky       	a|CLI|mbing|MOON|up|ON|an|EMP|ty|SKY    	1	0	wswswswsws	0	0	0	0	0
+could but compose man's image and his cry	COULD|but.com|POSE|man's|IM|age|AND|his|CRY	4	9	swwswswsws	0	0	6	0	3
+and he had known at last some tenderness	AND|he.had|KNOWN|at|LAST|some|TEN|der.ness	2	3	swwswswsww	0	0	3	0	0
+before earth took him to her stony care 	bef|ORE|earth|TOOK|him|TO|her|STO|ny|CARE	1	6	wswswswsws	0	0	3	0	3
+but when a man poured fish into a pile  	but|WHEN|a|MAN|poured|FISH|in|TO|a|PILE 	2	3	wswswswsws	0	0	0	0	3
+it seemed they raised their little silver heads	it|SEEMED|they|RAISED|their|LI|ttle|SIL|ver|HEADS	1	0	wswswswsws	0	0	0	0	0
+and sang what gold morning or evening sheds	and|SANG|what.gold|MOR|ning.or|EVE|ning|SHEDS	3	3	wswwswwsws	0	0	0	0	3
+upon a woven world forgotten isle       	up|ON|a|WOV|en|WORLD|fo|RG|otten|ISLE   	1	0	wswswswsws	0	0	0	0	0
+that time can never mar a lover's vows  	that|TIME|can|NE|ver|MAR|a|LOV|er's|VOWS	1	0	wswswswsws	0	0	0	0	0
+the singing shook him out of his new ease	the|SI|nging|SHOOK|him|OUT|of.his|NEW|ease	2	3	wswswswwsw	0	0	0	0	3
+his mind ran all on money cares and fears	his|MIND|ran|ALL|on|MO|ney|CARES|and|FEARS	3	3	wswswswsws	0	0	0	0	3
+and he had known at last some prudent years	AND|he.had|KNOWN|at|LAST|some|PRUD|ent|YEARS	4	3	swwswswsws	0	0	3	0	0
+before they heaped his grave under the hill	bef|ORE|they|HEAPED|his.grave|UN|der.the|HILL	2	3	wswswwswws	0	0	0	0	3
+a lug worm with its grey and muddy mouth	A|lug|WORM|with.its|GREY|and|MU|ddy|MOUTH	4	3	swswwswsws	0	0	0	0	3
+sang that somewhere to north or west or south	SANG|that|SOM|ewhere.to|NORTH|or|WEST|or|SOUTH	6	8	swswwswsws	0	5	0	0	3
+under the golden or the silver skies    	UN|der.the|GOL|den|OR|the|SIL|ver|SKIES 	1	3	swwswswsws	0	0	3	0	0
+that if a dancer stayed his hungry foot 	THAT|if.a|DAN|cer|STAYED|his|HUN|gry|FOOT	1	0	swwswswsws	0	0	0	0	0
+it seemed the sun and moon were in the fruit	it|SEEMED|the|SUN|and|MOON|were|IN|the|FRUIT	1	0	wswswswsws	0	0	0	0	0
+and at that singing he was no more wise 	and|AT|that|SI|nging|HE|was|NO|more|WISE	1	3	wswswswsws	0	0	3	0	0
+his sudden vengeance were a country tale	his|SU|dden|VEN|geance|WERE|a|COU|ntry|TALE	3	3	wswswswsws	0	0	3	0	0
+when earthy night had drunk his body in 	when|EA|rthy|NIGHT|had|DRUNK|his|BO|dy.in	2	0	wswswswsww	0	0	0	0	0
+but one small knot grass growing by the pool	but|ONE|small|KNOT|grass|GRO|wing|BY|the|POOL	8	6	wswswswsws	0	0	0	0	6
+sang where unnecessary cruel voice      	SANG|where.un|NE|ce|SS|ary|CRU|el|VOICE 	2	0	swwswswsws	0	0	0	0	0
+old silence bids its chosen race rejoice	old|SIL|ence|BIDS|its|CHO|sen|RACE|rej|OICE	2	3	wswswswsws	0	0	0	0	3
+or stormy silver fret the gold of day   	or|STOR|my|SIL|ver|FRET|the|GOLD|of|DAY 	1	0	wswswswsws	0	0	0	0	0
+and midnight there enfold them like a fleece	and.mid|NIGHT|there.enf|OLD|them|LIKE|a|FLEECE	4	8	wwswwswsws	0	5	0	0	3
+and lover there by lover be at peace    	and|LO|ver|THERE|by|LO|ver.be|AT|peace  	12	6	wswswswwsw	0	0	3	0	3
+the tale drove his fine angry mood away 	the.tale|DROVE|his.fine|ANG|ry|MOOD|aw|AY	5	6	wwswwswsws	0	0	0	0	6
+now that the earth had taken man and all	NOW|that.the|EARTH|had|TAK|en|MAN|and|ALL	2	0	swwswswsws	0	0	0	0	0
+that god has laid his fingers on the sky	that|GOD|has|LAID|his|FIN|gers|ON|the|SKY	1	0	wswswswsws	0	0	0	0	0
+that from those fingers glittering summer runs	THAT|from.those|FIN|gers|GL|it.tering|SU|mmer|RUNS	2	0	swwswswwsws	0	0	0	0	0
+why should those lovers that no lovers miss	WHY|should.those|LOV|ers|THAT|no|LOV|ers|MISS	2	3	swwswswsws	0	0	0	0	3
+dream until god burn nature with a kiss 	DREAM|un|TIL|god|BURN|nat.ure|WITH|a|KISS	5	11	swswswwsws	0	5	0	0	6
+the man has found no comfort in the grave	the|MAN|has|FOUND|no|COM|fort|IN|the|GRAVE	1	3	wswswswsws	0	0	0	0	3
+when my arms wrap you round i press     	WHEN|my|ARMS|wrap.you|ROUND|i|PRESS     	5	3	swswwsws	0	0	0	0	3
+that has long faded from the world      	THAT|has.long|FAD|ed|FROM|the|WORLD     	3	3	swwswsws	0	0	0	0	3
+in shadowy pools when armies fled       	in|SH|ad.owy|POOLS|when|ARM|ies|FLED    	1	0	wswwswsws	0	0	0	0	0
+by dreaming ladies upon cloth           	by|DRE|aming|LAD|ies.up|ON|cloth        	2	3	wswswwsw	0	0	0	0	3
+that has made fat the murderous moth    	THAT|has|MADE|fat.the|MU|rd.erous|MOTH  	5	3	swswwswws	0	0	0	0	3
+the roses that of old time were         	the|ROS|es|THAT|of|OLD|time.were        	3	3	wswswsww	0	0	0	0	3
+woven by ladies in their hair           	WOV|en.by|LAD|ies|IN|their|HAIR         	1	0	swwswsws	0	0	0	0	0
+the dew cold lilies ladies bore         	the|DEW|cold|LIL|ies|LAD|ies|BORE       	1	3	wswswsws	0	0	0	0	3
+through many a sacred corridor          	through|MA|ny.a|SAC|red|CO|rr.idor      	1	0	wswwswsww	0	0	0	0	0
+where such grey clouds of incense rose  	WHERE|such.grey|CLOUDS|of.inc|ENSE|rose 	8	6	swwswwsw	0	0	0	0	6
+that only god's eyes did not close      	that|ONL|y|GOD'S|eyes|DID|not|CLOSE     	9	6	wswswsws	0	0	0	0	6
+for that pale breast and lingering hand 	FOR|that|PALE|breast.and|LI|ng.ering|HAND	12	3	swswwswws	0	0	0	0	3
+come from a more dream heavy land       	COME|from|A|more.dream|HE|avy|LAND      	3	3	swswwsws	0	0	0	0	3
+a more dream heavy hour than this       	A|more.dream|HE|avy|HOUR|than|THIS      	8	3	swwswsws	0	0	0	0	3
+and when you sigh from kiss to kiss     	and|WHEN|you|SIGH|from|KISS|to|KISS     	1	0	wswswsws	0	0	0	0	0
+i hear white beauty sighing too         	i|HEAR|white|BEA|uty|SI|ghing.too       	1	3	wswswsww	0	0	0	0	3
+for hours when all must fade like dew   	for|HO|urs|WHEN|all.must|FADE|like|DEW  	3	0	wswswwsws	0	0	0	0	0
+but flame on flame and deep on deep     	but|FLAME|on|FLAME|and|DEEP|on|DEEP     	2	0	wswswsws	0	0	0	0	0
+throne over throne where in half sleep  	throne|OV|er|THRONE|where.in|HALF|sleep 	6	6	wswswwsw	0	0	0	0	6
+their swords upon their iron knees      	their|SWORDS|up|ON|their|IR|on|KNEES    	1	0	wswswsws	0	0	0	0	0
+brood her high lonely mysteries         	BROOD|her.high|LON|ely|MYS|ter.ies      	2	3	swwswsww	0	0	0	0	3
+the dews drop slowly and dreams gather unknown spears	the|DEWS|drop|SLO|wly|AND|dreams|GA|ther.unk|NOWN|spears	4	12	wswswswswwsw	0	0	3	0	9
+suddenly hurtle before my dream awakened eyes	SU|dd.enly|HUR|tle.bef|ORE|my|DREAM|aw|AK|ened|EYES	1	0	swwswwswswsws	0	0	0	0	0
+and then the clash of fallen horsemen and the cries	and|THEN|the|CLASH|of|FA|llen|HORS|emen|AND|the|CRIES	1	3	wswswswswsws	0	0	3	0	0
+being weary of the world's empires bow down to you	BE|ing|WE|ary|OF|the.world's|EMP|ires.bow|DOWN|to.you	12	9	swswswwswwsww	0	0	3	0	6
+master of the still stars and of the flaming door	MAS|ter|OF|the|STILL|stars|AND|of.the|FLA|ming|DOOR	5	9	swswswswwsws	0	0	6	0	3
+i wander by the edge                    	i|WAN|der|BY|the|EDGE                   	1	0	wswsws	0	0	0	0	0
+of this desolate lake                   	of.this|DE|so.late|LAKE                 	1	0	wwswws	0	0	0	0	0
+where wind cries in the sedge           	WHERE|wind|CRIES|in.the|SEDGE           	4	3	swswws	0	0	0	0	3
+until the axle break                    	un|TIL|the|AX|le|BREAK                  	1	0	wswsws	0	0	0	0	0
+that keeps the stars in their round     	that|KEEPS|the|STARS|in.their|ROUND     	1	0	wswswws	0	0	0	0	0
+and hands hurl in the deep              	and.hands|HURL|in.the|DEEP              	3	3	wwswws	0	0	0	0	3
+the banners of east and west            	the|BAN|ners.of|EAST|and|WEST           	1	0	wswwsws	0	0	0	0	0
+and the girdle of light is unbound      	and.the|GIR|dle.of|LIGHT|is.unb|OUND    	1	0	wwswwswws	0	0	0	0	0
+your breast will not lie by the breast  	your|BREAST|will|NOT|lie|BY|the|BREAST  	3	3	wswswsws	0	0	0	0	3
+of your beloved in sleep                	OF|your.bel|OVED|in|SLEEP               	4	3	swwsws	0	0	3	0	0
+folk dance like a wave of the sea       	FOLK|dance|LIKE|a|WAVE|of.the|SEA       	3	3	swswswws	0	0	0	0	3
+i passed my brother and cousin          	i|PASSED|my|BRO|ther.and|CO|usin        	1	0	wswswwsw	0	0	0	0	0
+they read in their books of prayer      	they|READ|in.their|BOOKS|of|PRAYER      	2	0	wswwsws	0	0	0	0	0
+i read in my book of songs              	i|READ|in.my|BOOK|of|SONGS              	1	0	wswwsws	0	0	0	0	0
+when we come at the end of time         	WHEN|we|COME|at.the|END|of|TIME         	2	0	swswwsws	0	0	0	0	0
+to peter sitting in state               	to|PET|er|SI|tting.in|STATE             	1	0	wswswws	0	0	0	0	0
+he will smile on the three old spirits  	he.will|SMILE|on.the|THREE|old|SPI|rits 	1	3	wwswwswsw	0	0	0	0	3
+but call me first through the gate      	but|CALL|me|FIRST|through.the|GATE      	2	0	wswswws	0	0	0	0	0
+for the good are always the merry       	FOR|the|GOOD|are|ALW|ays.the|ME|rry     	2	0	swswswwsw	0	0	0	0	0
+save by an evil chance                  	SAVE|by.an|EV|il|CHANCE                 	2	0	swwsws	0	0	0	0	0
+and the merry love the fiddle           	and.the|ME|rry|LOVE|the|FI|ddle         	1	0	wwswswsw	0	0	0	0	0
+and the merry love to dance             	and.the|ME|rry|LOVE|to|DANCE            	1	0	wwswsws	0	0	0	0	0
+and when the folk there spy me          	and|WHEN|the|FOLK|there|SPY|me          	2	0	wswswsw	0	0	0	0	0
+they will all come up to me             	they|WILL|all|COME|up.to|ME             	1	0	wswswws	0	0	0	0	0
+and dance like a wave of the sea        	and|DANCE|like.a|WAVE|of.the|SEA        	1	0	wswwswws	0	0	0	0	0
+i have heard the pigeons of the seven woods	I|have|HEARD|the|PIG|eons|OF|the|SE|ven|WOODS	2	3	swswswswsws	0	0	3	0	0
+make their faint thunder and the garden bees	MAKE|their.faint|THU|nder|AND|the|GAR|den|BEES	2	6	swwswswsws	0	0	3	0	3
+hum in the lime tree flowers and put away	HUM|in.the|LIME|tree|FLO|wers.and|PUT|aw|AY	1	3	swwswswwsws	0	0	0	0	3
+the unavailing outcries and the old bitterness	the|UN|av|AI|ling|OUTC|ries|AND|the.old|BI|tt.erness	6	14	wswswswswwsww	0	5	3	0	6
+that empty the heart i have forgot awhile	that|EMP|ty.the|HEART|i|HAVE|for|GOT|aw|HILE	1	0	wswwswswsws	0	0	0	0	0
+upon the throne and crying about the streets	up|ON|the|THRONE|and|CRY|ing.ab|OUT|the|STREETS	1	0	wswswswwsws	0	0	0	0	0
+and hanging its paper flowers from post to post	and|HA|nging.its|PAP|er|FLO|wers|FROM|post.to|POST	3	0	wswwswswswws	0	0	0	0	0
+because it is alone of all things happy 	bec|AUSE|it|IS|al|ONE|of|ALL|things|HA|ppy	2	6	wswswswswsw	0	0	3	0	3
+i am contented for i know that quiet    	I|am.con|TEN|ted|FOR|i|KNOW|that|QUI|et 	1	0	swwswswswsw	0	0	0	0	0
+wanders laughing and eating her wild heart	WAN|ders|LA|ughing.and|EA|ting.her|WILD|heart	2	3	swswwswwsw	0	0	0	0	3
+among pigeons and bees while that great archer	am.ong|PIG|eons.and|BEES|while|THAT|great|AR|cher	3	11	wwswwswswsw	0	5	0	0	6
+who but awaits his hour to shoot still hangs	WHO|but.awa|ITS|his|HOUR|to|SHOOT|still|HANGS	2	3	swwswswsws	0	0	0	0	3
+i swayed upon the gaudy stem            	i|SWAYED|up|ON|the|GAU|dy|STEM          	1	0	wswswsws	0	0	0	0	0
+the butt end of a steering oar          	the.butt|END|of.a|STE|ering.oar         	1	0	wwswwsww	0	0	0	0	0
+and saw wherever i could turn           	and|SAW|wh|ER|ever|I|could|TURN         	1	0	wswswsws	0	0	0	0	0
+a crowd upon a shore                    	a|CROWD|up|ON|a|SHORE                   	1	0	wswsws	0	0	0	0	0
+and though i would have hushed the crowd	and.though|I|would.have|HUSHED|the|CROWD	1	0	wwswwsws	0	0	0	0	0
+there was no mother's son but said      	THERE|was.no|MOT|her's|SON|but|SAID     	16	6	swwswsws	0	0	3	0	3
+what is the figure in a shroud          	WHAT|is.the|FIG|ure|IN|a|SHROUD         	1	0	swwswsws	0	0	0	0	0
+upon a gaudy bed                        	up|ON|a|GAU|dy|BED                      	1	0	wswsws	0	0	0	0	0
+and after running at the brim           	and|AF|ter|RU|nning|AT|the|BRIM         	1	0	wswswsws	0	0	0	0	0
+cried out upon that thing beneath       	CRIED|out.up|ON|that|THING|ben|EATH     	1	0	swwswsws	0	0	0	0	0
+it had such dignity of limb             	IT|had.such|DI|gn|ITY|of|LIMB           	4	6	swwswsws	0	0	6	0	0
+by the sweet name of death              	BY|the|SWEET|name.of|DEATH              	5	3	swswws	0	0	0	0	3
+though i'd my finger on my lip          	though|I'D|my|FIN|ger|ON|my|LIP         	1	0	wswswsws	0	0	0	0	0
+what could i but take up the song       	WHAT|could|I|but|TAKE|up.the|SONG       	4	0	swswswws	0	0	0	0	0
+and running crowd and gaudy ship        	and|RU|nning|CROWD|and|GAU|dy|SHIP      	1	0	wswswsws	0	0	0	0	0
+cried out the whole night long          	CRIED|out.the|WHOLE|night|LONG          	1	3	swwsws	0	0	0	0	3
+crying amid the glittering sea          	CRY|ing.am|ID|the|GL|it.tering|SEA      	1	0	swwswswws	0	0	0	0	0
+naming it with ecstatic breath          	NAM|ing.it|WITH|ec|ST|atic|BREATH       	1	0	swwswsws	0	0	0	0	0
+because it had such dignity             	bec|AUSE|it|HAD|such|DI|gn.ity          	2	3	wswswsww	0	0	3	0	0
+by the sweet name of death              	BY|the|SWEET|name.of|DEATH              	5	3	swswws	0	0	0	0	3

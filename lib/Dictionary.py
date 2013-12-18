@@ -412,12 +412,25 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	def maybeUnstress(self,words):
 		word=words[0].token.lower()
 
+		def unstress_word(wordobj):
+			wordobj.feat('functionword',True)
+			wordobj.stress=""
+			for child in wordobj.children:
+				wordobj.stress+="U"
+				child.feats['prom.stress']=0.0
+				child.feats['prom.kalevala']=None
+				child.children[0].feats['prom.weight']=False
+
+
 		if word in self.maybestressedWords:		# only for monosyllabs
 			wordobjs=self.dict['Word'][word]
 			stresses = [wordobj.stress for wordobj in wordobjs]
 
 			if 'U' in stresses and 'P' in stresses:
-				return wordobjs	# already good
+				unstressed_words = [wordobj for wordobj in wordobjs if wordobj.stress=='U']
+				for wordobj in unstressed_words: unstress_word(wordobj)
+				return wordobjs
+
 			else:
 				wordobj1=wordobjs[0]
 				ipa=wordobj1.ipa
@@ -436,14 +449,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 		elif word in self.unstressedWords:
 			wordobj=self.dict['Word'][word][0]
-			wordobj.feat('functionword',True)
-			wordobj.stress=""
-			for child in wordobj.children:
-				wordobj.stress+="U"
-				child.feats['prom.stress']=0.0
-				child.feats['prom.kalevala']=None
-				child.children[0].feats['prom.weight']=False
-			
+			unstress_word(wordobj)
 			return [wordobj]
 	
 		return words
@@ -460,8 +466,6 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			words=self.getprep(word)
 		else:
 			return [Word(word,[],None)]
-
-		print words
 
 		if type(words)==list:
 			if type(words[0])==tuple:	# New word needs to be built

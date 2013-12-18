@@ -286,3 +286,12 @@ else:	## if not imported, go into interactive mode
 		if cmd:
 			text=cmd
 			cmd=""
+
+
+
+
+
+def report(text):
+	t=Text(text)
+	t.parse()
+	t.report()

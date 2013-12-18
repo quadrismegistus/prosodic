@@ -162,6 +162,10 @@ class MeterConstraint:
 			if "none" in name:
 					return self.weight
 
+			if "-no-" in name:
+				forbidden=name.strip()[-1]
+				if meterPos.meterVal==forbidden: return self.weight
+
 			
 			if "wordbound" in name:
 				if "nomono" in name:

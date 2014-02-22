@@ -31,6 +31,8 @@ class Syllable(entity):
 	def __repr__(self):
 		return "<"+self.classname()+"."+self.u2s(self.token)+"> ["+str(self)+"]"
 	
+	def getVowel(self):
+		return [ph for ph in self.phonemes() if ph.isVowel()][0]
 	
 	def getShape(self):
 		return self.syll.getShape()

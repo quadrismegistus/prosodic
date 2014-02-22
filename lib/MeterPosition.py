@@ -22,6 +22,10 @@ class MeterPosition(Parse):
 		for k,v in self.constraintScores.items():
 			other.constraintScores[k]=copy(v)		
 		return other
+
+	@property
+	def isStrong(self):
+		return self.meterVal.startswith("s")
 	
 	def append(self,slot):
 		self.token = ""

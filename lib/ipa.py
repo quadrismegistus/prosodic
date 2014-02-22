@@ -1,4 +1,8 @@
 # -*- coding: UTF-8 -*-
+
+## NOTES
+# changed ɐ to be a non-vowel [syll = False]
+
 #ipakey = ['[+approx]','[+cons]','[+son]','[+syll]','[+constr]','[+spread]','[+voice]','vlength.[+long]','[+cont_acoust]','[+cont_artic]','[+del_rel]','[+lat]','[+nas]','[+strid]','[+tap]','[+trill]','[+coronal]','[+dorsal]','[+labial]','[+labiodental]','[+ant]','[+dist]','[+back]','[+front]','[+high]','[+low]','[+tense]','[+round]']
 ipakey = ['approx','cons','son','syll','constr','spread','voice','long','cont_acoust','cont_artic','delrel','lat','nas','strid','tap','trill','coronal','dorsal','labial','labiodental','ant','dist','back','front','high','low','tense','round']
 ipa = {}
@@ -88,7 +92,7 @@ ipa[u'ʣ']=[False,True,False,False,False,False,True,None,False,False,True,False,
 ipa[u'ɽ']=[True,True,True,False,False,False,True,None,True,True,False,False,False,False,True,False,True,False,False,False,False,False,False,None,False,False,None,False]
 ipa[u'o']=[None,False,True,True,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,True,False,False,False,True,True]
 ipa[u'ɔ']=[None,False,True,True,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,True,False,False,False,False,True]
-ipa[u'ɐ']=[None,False,True,True,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,False,False,False,True,True,False]
+ipa[u'ɐ']=[None,False,True,False,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,False,False,False,True,True,False]
 ipa[u'w']=[None,False,True,False,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,False,False,False,False,False,False]
 ipa[u'ɤ']=[None,False,True,True,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,True,False,False,False,True,False]
 ipa[u'ɨ']=[None,False,True,True,None,None,None,False,None,None,None,None,False,None,None,None,None,None,None,None,None,None,False,False,True,False,True,False]
@@ -182,3 +186,97 @@ ipa2cmu['w'] = 'W'
 ipa2cmu['j'] = 'Y'
 ipa2cmu['z'] = 'Z'
 
+
+d_sampa2ipa={}
+sampa_table=u"""i	i
+I	I
+e	e
+E	ɛ
+{	æ
+y	y
+2	ø
+9	œ
+1	ɨ
+@	ə
+6	ɐ
+3	ɜ
+a	a
+}	ʉ
+8	ɵ
+&	ɶ
+M	ɯ
+7	ɤ
+V	ʌ
+A	ɑ
+u	u
+U	ʊ 
+o	o
+O	ɔ 
+Q	ɒ
+p	p
+b	b
+t	t
+d	d
+tS	ʧ
+dZ	ʤ
+c	c
+J\	ɟ
+k	k
+g	g
+q	q
+p\	φ
+B	β 
+f	f
+v	v
+T	θ 
+D	ð 
+s	s
+z	z
+S	ʃ
+Z	ʒ
+C	ç
+j\	ʝ
+jj	ʝ
+x	x
+G	γ
+M\	ɰ
+h	h
+h\	ɦ
+m	m
+F	ɱ
+n	n
+J	ɲ
+N	ŋ
+l	l
+L	ʎ
+5	ɫ
+4	ɾ
+r	ɽ
+r\`	ɻ
+R	ʀ
+w	w
+H	ɥ 
+j	j
+aI	aɪ
+aU	aʊ
+EI	ɛɪ
+OY	ɔɪ
+UI	ʊɪ 
+ts	ʦ
+Y	ʏ
+pf	pʰ
+r=	ɽ"""
+for ln in sampa_table.split('\n'):
+	sampa,ipa_str=ln.split('\t')
+	d_sampa2ipa[sampa.strip()]=ipa_str.strip()
+
+def sampa2ipa(sampa):
+	sampa=sampa.replace(u'?',u'')
+	if not sampa: return sampa
+	if ':' in sampa:
+		colon=u'ː'
+		sampa=sampa.replace(u':',u'')
+	else:
+		colon=u''
+
+	return d_sampa2ipa[sampa] + colon

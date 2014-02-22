@@ -173,7 +173,9 @@ class Word(entity):
 	def addPunct(self,punct):
 		self.punct=punct
 
-
+	@property
+	def weight(self):
+		return "".join([entity.weight_bool2str[syll.children[0].feature('prom.weight')] for syll in self.children])
 
 
 

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from __future__ import division
 import sys,re,os,codecs
 
@@ -7,6 +8,7 @@ from Word import Word
 from entity import entity,being
 from tools import *
 from operator import itemgetter
+from ipa import sampa2ipa
 #import prosodic
 
 def openmary(line):
@@ -55,7 +57,7 @@ def openmary(line):
 	return t
 
 class Text(entity):
-	def __init__(self,filename,lang=None,printout=None,limWord=False,linebreak=None): #',;:.?!()[]{}<>'
+	def __init__(self,filename,lang=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
 		import prosodic
 		self.lang=self.set_lang(filename) if not lang else lang
@@ -69,6 +71,8 @@ class Text(entity):
 		self.feats = {}
 		self.children = []
 		self.isUnicode=True
+		self.use_dict=use_dict
+		self.fix_phons_novowel=fix_phons_novowel
 		
 		## phrasebreak features
 		if self.phrasebreak=='line':
@@ -192,7 +196,8 @@ class Text(entity):
 					if line.finished: line = stanza.newchild()
 					wordstr=word['token']
 					if not word.get('ph',None): continue
-					if self.dict.has(wordstr):
+					if self.dict.has(wordstr) and self.use_dict:
+						#print "HAVE",wordstr
 						words=self.dict.get(wordstr)
 						for w in words: w.origin='cmu'
 						#print ">>",wordstr,words
@@ -202,13 +207,23 @@ class Text(entity):
 						sylls=[]
 						for syll in word.find_all('syllable'):
 							syllstr="'" if syll.get('stress',None) else ""
-							syllstr+=lexconvert.convert(syll['ph'],'x-sampa','unicode-ipa')
+
+							for ph in syll('ph'):
+								ph_str=ph['p']
+								ph_ipa=sampa2ipa(ph_str)
+								#print ph_str, ph_ipa
+								syllstr+=ph_ipa
+
+							#syllstr+=lexconvert.convert(syll['ph'],'sampa','unicode-ipa')
+							#print syllstr, syll['ph']
 							sylls+=[syllstr]
 						
-						from Phoneme import Phoneme
-						if len(sylls)>1 and not True in [Phoneme(phon).isVowel() for phon in sylls[0]]:
-							sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
-						
+						#if self.fix_phons_novowel:
+							from Phoneme import Phoneme
+							#if len(sylls)>1 and not True in [Phoneme(phon).isVowel() for phon in sylls[0]]:
+							if len(sylls)>1 and sylls[0]==u'ʃ':
+								sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
+							
 						
 						pronounc='.'.join(sylls)
 						words=[ self.dict.make((pronounc,[]), wordstr) ]
@@ -358,7 +373,96 @@ class Text(entity):
 		except KeyError:
 			return []
 
-	
+	def viol_words(self):
+		bp=self.bestParses()
+		if not bp: return ''
+		constraintd={}
+		for parse in bp:
+			for mpos in parse.positions:
+				viold=False
+				words=set([slot.word.token for slot in mpos.slots])
+				for ck,cv in mpos.constraintScores.items():
+					if not cv: continue
+					ckk=ck.name.replace('.','_')
+					if not ckk in constraintd: constraintd[ckk]=set()
+					constraintd[ckk]|=words
+		for k in constraintd:
+			constraintd[k]=list(constraintd[k])
+		
+		return constraintd
+
+
+	def parse_str(self,text=True,viols=True,text_poly=False):
+		bp=self.bestParses()
+		if not bp: return ''
+		all_strs=[]
+		letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']
+		for parse in bp:
+			parse_strs=[]
+			for mpos in parse.positions:
+				viold=False
+				for ck,cv in mpos.constraintScores.items():
+					if cv:
+						viold=True
+						break
+
+				if text_poly:
+					word_pos=[slot.wordpos[0] for slot in mpos.slots]
+					mpos_letters=[letters[pos-1] for pos in word_pos]
+					if not mpos.isStrong: mpos_letters=[letter.lower() for letter in mpos_letters]
+					mpos_str='.'.join(mpos_letters)
+
+				elif not text:
+					mpos_str=mpos.mstr
+				else:
+					mpos_str=repr(mpos)
+				
+
+				if viols and viold: mpos_str+='*'
+
+				parse_strs+=[mpos_str]
+			all_strs+=['|'.join(parse_strs)]
+		return '||'.join(all_strs)
+
+	@property
+	def numBeats(self):
+		parse_str=self.parse_str(text=False,viols=False)
+		s_feet=[x for x in parse_str.split('|') if x.startswith('s')]
+		return len(s_feet)
+
+	@property
+	def constraintd(self):
+		bp=self.bestParses()
+		viold={}
+		if not bp: return {}
+		mstrs=[]
+		for parse in bp:
+			for mpos in parse.positions:
+				for ck,cv in mpos.constraintScores.items():
+					ck=ck.name
+					if not ck in viold: viold[ck]=[]
+					viold[ck]+=[0 if not cv else 1]
+		
+		for ck in viold:
+			lv=viold[ck]
+			viold[ck]=sum(lv)/float(len(lv))
+
+		return viold
+
+	@property
+	def ambiguity(self):
+		ap=self.allParses()
+		line_numparses=[]
+		line_parselen=0
+		if not ap: return 0
+		for parselist in ap:
+			numparses=len(parselist)
+			line_numparses+=[numparses]
+		
+		import operator
+		ambigx=reduce(operator.mul, line_numparses, 1)
+		return ambigx
+
 				
 	
 	## children	

@@ -60,7 +60,12 @@ class Phoneme(entity):
 	def isHigh(self):
 		return self.feature('high')
 	
-	
+	@property
+	def phon_str(self):
+		if self.phon: return self.phon
+		return u''.join(phon.phon for phon in self.children)
+
+
 	def CorV(self):
 		if self.isDipthong() or self.isLong():
 			return "VV"

@@ -107,7 +107,7 @@ tokenizer=[^\s+-]+          # words tokenized against [^] whitespaces [\s+] and 
 ## 	orth (the orthography itself [good for Finnish])
 ## this is a language-specific option, in order to take into account the differing relationships languages' orthographies have to their phonetics.
 output_**=ipa		# the catch-all option, for all languages not explicitly defined below
-output_en=cmu		# since our english information comes from the cmu, we default this to its native CMU
+output_en=ipa		# since our english information comes from the cmu, we default this to its native CMU
 output_fi=orth		# since finnish pronunciation is essentially identical to its orthography
 
 

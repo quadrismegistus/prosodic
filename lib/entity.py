@@ -313,6 +313,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns a list of this object's Rimes in order of their appearance."""
 		return self.ents('Rime')
 
+	def rimestr(self):
+		sylls=self.syllables()
+		last_sylls=[]
+		for syll in reversed(sylls):
+			last_sylls.insert(0, syll)
+			if syll.stressed: break
+		if last_sylls: last_sylls[0] = last_sylls[0].rimes()[0]
+		return ''.join(x.phonstr() for x in last_sylls)
+
+
 
 	def syllables(self):
 		"""Returns a list of this object's Syllables in order of their appearance.
@@ -625,13 +635,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if not hasattr(self,'meter_stats'):
 			for child in self.children:
 				try:
-					child.parseStats(init)
-				except:
+					child.stats(init)
+				except TypeError:
 					print "Child skipped"
 		else:
 			name=self.getName()
 			
 			constraintNames=[str(constraint.name) for constraint in self.meter_stats['_constraints']]
+			print constraintNames
 		
 			statsByLine="line\t"+"\t".join(constraintNames)+"\n"
 			
@@ -1729,9 +1740,83 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		for word in words:
 			o+=word.__str__minform()+"\n"
 		return o
+
+	def get_available_rime(self):
+		#print self
+		last_word=self.words()[-1]
+		import copy
+		def reduce_word(word0):
+			word=word0
+			sylls=word.syllables()
+			stress_yet=False
+			to_keep=[]
+			if sylls[-2].feature('prom.stress') and not sylls[-1].feature('prom.stress'):
+				for i in reversed(range(len(sylls))):
+					to_keep.insert(0,i)
+					if sylls[i].feature('prom.stress'): break
+			else:
+				to_keep=[range(len(sylls))[-1]]
+
+			obj=entity()
+			children=[word.children[i] for i in to_keep]
+			#print "KEEPING:",children
+			sbody=children[0].children[0] # first syllable's syllable body
+			for x in sbody.children[1:]: # all but onset (only rime)
+				obj.children+=x.phonemes()
+			for x in children[1:]:
+				obj.children+=x.phonemes()
+			return obj
+
+		if len(last_word.syllables())==1:
+			rime=self.rimes()[-1]
+			if not rime.phonemes():
+				return self.syllables()[-1].children[0]
+			return rime
+		else:
+			#print "REDUCING:",last_word.token
+			return reduce_word(last_word)
+
+	def rime_distance(self,other,normalized=False):
+		my_rime=self.get_available_rime()
+		other_rime=other.get_available_rime()
+		#print "COMPARING:"
+		#print self.words()[-1], my_rime.phonemes()
+		#print other.words()[-1], other_rime.phonemes()
+		#print
+		return my_rime.phonetic_distance(other_rime,normalized=normalized)
 			
 	
-	
+	def phonetic_distance(self,other,normalized=False):
+		phonemes1=self.phonemes()
+		phonemes2=other.phonemes()
+
+		p2chr={}
+		for p in phonemes1+phonemes2:
+			pstr=p.phon_str
+			if not pstr in p2chr: p2chr[pstr]=unichr(len(p2chr))
+
+		chr1=u''.join([p2chr[p.phon_str] for p in phonemes1])
+		chr2=u''.join([p2chr[p.phon_str] for p in phonemes2])
+
+
+		from Levenshtein import editops
+		dist=0.0
+		for edit_type,index1,index2 in editops(chr1,chr2):
+			if edit_type!='replace':
+				dist+=1
+				continue
+			try:
+				p1=phonemes1[index1]
+				p2=phonemes2[index2]
+				#print edit_type,p1,p2,index1,index2 #,p1.distance(p2)
+				dist+=p1.distance(p2)
+			except IndexError:
+				dist+=1
+
+		if normalized: return dist / float(max(len(phonemes1),len(phonemes2)))
+		return dist
+
+
 	
 	
 	

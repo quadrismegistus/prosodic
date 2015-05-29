@@ -6,10 +6,11 @@ from Text import Text
 
 class Corpus(entity):
 	def __init__(self,corpusRoot,lang=None,printout=None,corpusFiles="*.txt",phrasebreak=',;:.?!()[]{}<>',limWord=None):
+		import prosodic
 		## entity-shared attribtues
 		
-		dict=being.dict
-		self.dict=dict
+		self.lang=prosodic.config['lang'] if not lang else lang
+		self.dict=prosodic.dict[self.lang]
 		self.parent=False
 		#self.foldername=corpusRoot.split("/").pop().strip()
 		self.children=[]	# texts

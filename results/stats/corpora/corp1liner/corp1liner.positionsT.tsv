@@ -1,0 +1,16 @@
+text	constraint	pos0	pos1	pos2	pos3	pos4	pos5	pos6	pos7	pos8
+en.poison	[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison	[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison	[*footmin-no-s]	0.0	0.0	1.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison	[*stress.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison	[*stress.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.theoryofnovel	[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0	0
+en.theoryofnovel	[*stress.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0	0
+en.theoryofnovel	[*stress.s=>-u]	0.0	0.0	0.0	0.428571428571	0.0	0.0	0.0	0	0
+en.theoryofnovel	[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0	0
+en.theoryofnovel	[*footmin-no-s]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0	0
+en.poison2	[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison2	[*stress.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison2	[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison2	[*stress.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+en.poison2	[*footmin-no-s]	0.0	0.0	1.0	0.0	0.0	0.0	0.0	0.0	0.0

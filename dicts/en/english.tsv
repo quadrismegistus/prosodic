@@ -7391,6 +7391,7 @@ barcus	'bɑr.kəs
 barczak	'bɑr.ʧæk
 bard	'bɑrd
 bard's	'bɑrdz
+bards	'bɑrdz
 bardell	bɑr.'dɛl
 barden	'bɑr.dən
 bardera	`bɑr.'dɛ.rə
@@ -22398,6 +22399,7 @@ conversions	kən.'vɛː.ʒənz
 convert	'kɑn.vɛːt
 convert	kən.'vɛːt
 converted	kən.'vɛː.tɪd
+converteth	kən.'vɛː.tɛθ
 converter	kən.'vɛː.tɛː
 converters	kən.'vɛː.tɛːz
 convertibility	`kɑn.vɛː.tɪ.'bɪ.lɪ.tiː
@@ -29855,6 +29857,7 @@ distracts	dɪ.'strækts
 distraught	dɪ.'strɔːt
 distress	dɪ.'strɛs
 distressed	dɪ.'strɛst
+distrest	dɪ.'strɛst
 distresses	dɪ.'strɛ.sɪz
 distressing	dɪ.'strɛ.sɪŋ
 distressingly	dɪ.'strɛ.sɪŋ.liː
@@ -30752,7 +30755,7 @@ dot	'dɑt
 dotan	'doʊ.tən
 dote	'doʊt
 doten	'doʊ.tən
-doth	'dɔːθ
+doth	dɔːθ
 dothan	'dɑ.θʌn
 doting	'doʊ.tɪŋ
 doto	'doʊ.toʊ
@@ -98879,7 +98882,8 @@ shadings	'ʃeɪ.dɪŋz
 shadle	'ʃeɪ.dəl
 shadley	'ʃæd.liː
 shadoan	'ʃæ.doʊn
-shadow	'ʃæ.`doʊ
+#shadow	'ʃæ.`doʊ
+shadow	'ʃæ.doʊ
 shadowed	'ʃæ.doʊd
 shadowens	'ʃæ.doʊ.ənz
 shadowing	'ʃæ.doʊ.ɪŋ

@@ -40,13 +40,13 @@ skip_initial_foot=0	# the first two metrical positions will not be evaluated for
 #footmin-wordbound-leftfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if left syllable is a function-word.
 #footmin-wordbound-rightfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if right syllable is a function-word.
 
-strength.s=>-u/5			# a strong metrical position may not contain any weak syllables, or "troughs"
-strength.w=>-p/5			# a weak metrical position may not contain any strong syllables, or "peaks" 
+strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
+strength.w=>-p/1			# a weak metrical position may not contain any strong syllables, or "peaks" 
 #strength.s=>p/5				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
 #strength.w=>u/1				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
 
-stress.s=>-u/3				# a *strong* metrical position may not contain *any* unstressed syllables
-stress.w=>-p/3				#. a *weak* metrical position may not contain *any* stressed syllables
+stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
+stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed syllables
 #stress.s=>p/5				# a *strong* position must contain *at least one* stressed syllable
 #stress.w=>u/5				# a *weak* position must contain *at least one* unstressed syllable
 
@@ -60,7 +60,7 @@ stress.w=>-p/3				#. a *weak* metrical position may not contain *any* stressed s
 #new (Sam Bowman)
 
 #footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
-footmin-no-s/10 		# a disyllabic STRONG metrical position will break this constraint
+footmin-no-s/1 		# a disyllabic STRONG metrical position will break this constraint
 #footmin-no-w/1 		# a disyllabic WEAK metrical position will break this constraint
 
 #footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
@@ -111,7 +111,7 @@ output_en=ipa		# since our english information comes from the cmu, we default th
 output_fi=orth		# since finnish pronunciation is essentially identical to its orthography
 
 
-print_to_screen=1	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
+print_to_screen=0	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
 linelen=60
 
 ## [appendix: how this file works]

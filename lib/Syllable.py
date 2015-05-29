@@ -27,6 +27,20 @@ class Syllable(entity):
 
 	def settok(self,tok):
 		self.token=tok
+
+	@property
+	def feature_pairs(self):
+		w=self.str_weight()
+		s=self.str_stress()
+		nucleus=self.children[0].rime.nucleus
+		highlow='High' if nucleus.isHigh() else 'Low'
+		longshort='Long' if nucleus.isLong() else 'Short'
+		stress='Stressed' if s in ['P','S'] else 'Unstressed'
+		weight='Heavy' if w=='H' else 'Light'
+		return [stress+weight, stress+highlow, stress+longshort, weight+longshort, weight+highlow, highlow+longshort]
+
+
+		
 	
 	def __repr__(self):
 		return "<"+self.classname()+"."+self.u2s(self.token)+"> ["+str(self)+"]"
@@ -47,6 +61,10 @@ class Syllable(entity):
 
 	def isHeavy(self):
 		return self.syll.isHeavy()
+
+	@property
+	def stressed(self):
+		return self.str_stress() in ['P','S']
 	
 	def newRimeForSuffix(self,phon):
 		return self.syll.newRimeForSuffix(phon)

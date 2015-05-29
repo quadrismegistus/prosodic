@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import sys,glob,os,time
+print '>> importing prosodic...'
 
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]
@@ -19,6 +20,7 @@ from Stanza import Stanza
 from Line import Line
 from Phoneme import Phoneme
 from Word import Word
+import ipa
 
 ## set defaults
 languages=['en','fi']
@@ -295,3 +297,5 @@ def report(text):
 	t=Text(text)
 	t.parse()
 	t.report()
+
+

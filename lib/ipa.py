@@ -258,6 +258,7 @@ w	w
 H	ɥ 
 j	j
 aI	aɪ
+AI	aɪ
 aU	aʊ
 EI	ɛɪ
 OY	ɔɪ
@@ -270,7 +271,53 @@ for ln in sampa_table.split('\n'):
 	sampa,ipa_str=ln.split('\t')
 	d_sampa2ipa[sampa.strip()]=ipa_str.strip()
 
+d_ipa2sampa={}
+for sm,ip in d_sampa2ipa.items():
+	d_ipa2sampa[ip]=sm
+
+
+## FORMANTS
+formantd={}
+x=u"""i	240	2400
+y	235	2100
+e	390	2300
+ø	370	1900
+ɛ	610	1900
+œ	585	1710
+a	850	1610
+ɶ	820	1530
+ɑ	750	940
+ɒ	700	760
+ʌ	600	1170
+ɔ	500	700
+ɤ	460	1310
+o	360	640
+ɯ	300	1390
+u	250	595"""
+f1s=[]
+f2s=[]
+for ln in x.split('\n'):
+	_ipa,f1,f2=ln.strip().split()
+	f1s+=[int(f1)]
+	f2s+=[int(f2)]
+	formantd[_ipa]=[int(f1),int(f2)]
+maxf1,minf1=max(f1s),min(f1s)
+maxf2,minf2=max(f2s),min(f2s)
+f1_range=maxf1-minf1
+f2_range=maxf2-minf2
+for _ipa in formantd:
+	formantd[_ipa][0] = (formantd[_ipa][0] - minf1) / float(f1_range)
+	formantd[_ipa][1] = (formantd[_ipa][1] - minf2) / float(f2_range)
+	#print _ipa,formantd[_ipa]
+
+
+
+
 def sampa2ipa(sampa):
+	import lexconvert
+	if sampa == 'r=':
+		return u'ɛː'
+	return lexconvert.convert(sampa,'x-sampa','unicode-ipa')
 	sampa=sampa.replace(u'?',u'')
 	if not sampa: return sampa
 	if ':' in sampa:
@@ -279,4 +326,8 @@ def sampa2ipa(sampa):
 	else:
 		colon=u''
 
-	return d_sampa2ipa[sampa] + colon
+	if not sampa in d_sampa2ipa and len(sampa)==2:
+		#print "?!!",sampa
+		return sampa2ipa(sampa[0]) + sampa2ipa(sampa[1])
+	else:
+		return d_sampa2ipa[sampa] + colon

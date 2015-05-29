@@ -1,5 +1,7 @@
 from entity import being
 from entity import entity
+from tools import *
+
 class Line(entity):
 	def __init__(self):
 		self.parent=False
@@ -11,7 +13,7 @@ class Line(entity):
 		self.__parses={}
 		self.__bestparse={}
 	
-	def parse(self,meter=None):
+	def parse(self,meter=None,init=None):
 		if not meter:
 			from Meter import Meter,genDefault
 			meter = genDefault()
@@ -36,6 +38,56 @@ class Line(entity):
 			self.__bestparse[meter]=self.__parses[meter][0]
 		except KeyError:
 			self.__bestparse[meter]=None
+
+		if init: self.store_stats(meter,init)
+
+
+	def store_stats(self,meter,init):
+		textname=init.getName()
+		if not textname: textname=str(self).replace(" ","_")
+		
+		## store stats
+		if (not textname in init.meter_stats['lines']):
+			init.meter_stats['lines'][textname]={}
+		if (not textname in init.meter_stats['positions']):
+			init.meter_stats['positions'][textname]={}
+		if (not textname in init.meter_stats['texts']):
+			init.meter_stats['texts'][textname]={}
+		if (not textname in init.meter_stats['_ot']):
+			init.meter_stats['_ot'][textname]=makeminlength("line",being.linelen)+"\tmeter\t"+init.ckeys+"\n"
+		
+		parsedat=[]
+		for k,v in sorted(self.__bestparse[meter].constraintScores.items()):
+			if (not k in init.meter_stats['texts'][textname]):
+				init.meter_stats['texts'][textname][k]=[]
+			init.meter_stats['texts'][textname][k].append(v)
+			
+			#parsedat.append(v/len(self.__bestparse.positions))	#???
+			parsedat.append(v)
+			
+		linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.__bestparse[meter].posString())
+		init.meter_stats['lines'][textname][linekey]=parsedat
+		
+		## OT stats
+		parses=self.__parses[meter]
+		init.meter_stats['_ot'][textname]+=makeminlength(str(self),being.linelen)+"\t"+parses[0].str_ot()+"\n"
+		if len(parses)>1:
+			for parse in parses[1:]:
+				init.meter_stats['_ot'][textname]+=makeminlength("",being.linelen)+"\t"+parse.str_ot()+"\n"
+			
+		
+		
+		for posn in range(len(self.__bestparse[meter].positions)):
+			pos=self.__bestparse[meter].positions[posn]
+			(posdat,ckeys)=pos.formatConstraints(normalize=True,getKeys=True)
+			
+			for cnum in range(len(ckeys)):
+				if (not posn in init.meter_stats['positions'][textname]):
+					init.meter_stats['positions'][textname][posn]={}
+				if (not ckeys[cnum] in init.meter_stats['positions'][textname][posn]):
+					init.meter_stats['positions'][textname][posn][ckeys[cnum]]=[]
+				init.meter_stats['positions'][textname][posn][ckeys[cnum]].append(posdat[cnum])
+
 	
 	def scansion(self,meter=None,conscious=False):
 		bp=self.bestParse(meter)

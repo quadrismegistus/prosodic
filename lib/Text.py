@@ -128,6 +128,7 @@ class Text(entity):
 		return lang
 		
 	def init_run_mary(self,text):
+		#print ">> init_run_mary..."
 		import lexconvert,bs4
 		numwords = 0
 		stanza=self.newchild()
@@ -153,13 +154,17 @@ class Text(entity):
 					if self.dict.has(word):
 						words=self.dict.get(word)
 						for w in words: w.origin='cmu'
-					else:
+					elif self.lang=='en':
 						## make word from openmary
 						wordxml=bs4.BeautifulSoup(openmary(word))
 						sylls=[]
 						for syll in wordxml.find_all('syllable'):
 							syllstr="'" if syll.get('stress',None) else ""
-							syllstr+=lexconvert.convert(syll['ph'],'x-sampa','unicode-ipa')
+							#print syll['ph']
+							for ph in syll['ph'].split():
+								syllstr+=sampa2ipa(ph)
+							#print syllstr
+							#print
 							sylls+=[syllstr]
 
 						from Phoneme import Phoneme
@@ -169,9 +174,12 @@ class Text(entity):
 						pronounc='.'.join(sylls)
 						words=[ self.dict.make((pronounc,[]), word) ]
 						for w in words: w.origin='openmary'
+					else:
+						words=self.dict.get(word)
 					
 					line.newchild(words)
-					if p1 and not line.empty(): line.finish()
+					if self.phrasebreak!='line':
+						if p1 and not line.empty(): line.finish()
 					numwords+=1
 				
 				if not line.empty(): line.finish()
@@ -224,7 +232,6 @@ class Text(entity):
 							if len(sylls)>1 and sylls[0]==u'ʃ':
 								sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
 							
-						
 						pronounc='.'.join(sylls)
 						words=[ self.dict.make((pronounc,[]), wordstr) ]
 						for w in words: w.origin='openmary'
@@ -253,7 +260,7 @@ class Text(entity):
 		## [loop] lines
 		for ln in lines_or_file:
 			ln=ln.strip()
-			if self.limWord and numwords>limWord: break
+			if self.limWord and numwords>self.limWord: break
 			
 			# split into words			
 			toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE) if self.isUnicode else re.findall(tokenizer,ln.strip())
@@ -300,9 +307,17 @@ class Text(entity):
 		
 		self.__parses[meter]=[]
 		self.__bestparses[meter]=[]
+
+		init=self
+		if not hasattr(init,'meter_stats'): init.meter_stats={'lines':{},'positions':{},'texts':{}, '_ot':{},'_constraints':{}}
+		if not hasattr(init,'bestparses'): init.bestparses=[]
+		init.meter=meter
+		init.meter_stats['_constraints']=sorted(init.meter.constraints)
+		init.ckeys="\t".join(sorted([str(x) for x in init.meter.constraints]))
+
 		ents=self.ents(arbiter)
 		for ent in ents:
-			ent.parse(meter)
+			ent.parse(meter,init=init)
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
 	

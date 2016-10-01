@@ -4,9 +4,9 @@ PROSODIC is a a metrical-phonological parser written in pure Python. Currently, 
 ## About PROSODIC
 PROSODIC does two main things. First, it tokenizes text into words, and the converts each word into its stressed, syllabified, IPA transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
 
-## Examples
+## Example of metrical parsing
 
-Here's an example of Shakespeare's first sonnet.
+Here's an example of the metrical parser in action, on Shakespeare's first sonnet.
 
 	text                                    				parse                                   
 	from fairest creatures we desire increase				from|FAI|rest|CREA|tures|WE|des|IRE|inc|REASE
@@ -23,6 +23,12 @@ Here's an example of Shakespeare's first sonnet.
 	and tender churl mak'st waste in niggarding				and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
 	pity the world or else this glutton be  				PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
 	to eat the world's due by the grave and thee			to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
+
+Not bad, right? PROSODIC not only captures the overall iambic meter of the poem, but also some of its variations in the sonnet. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)).
+
+## Accuracy of metrical parser
+
+
 
 
 ## Overview of the IPA transcription process

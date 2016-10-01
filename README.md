@@ -1,23 +1,35 @@
 # PROSODIC
-Prosodic is a a metrical-phonological parser written in pure Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish.
+PROSODIC is a a metrical-phonological parser written in pure Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. PROSODIC was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish.
 
 ## About PROSODIC
+PROSODIC does two main things. First, it tokenizes text into words, and the converts each word into its stressed, syllabified, IPA transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
+
+## Examples
+
+Here's an example of Shakespeare's first sonnet.
+
+	text                                    				parse                                   
+	from fairest creatures we desire increase				from|FAI|rest|CREA|tures|WE|des|IRE|inc|REASE
+	that thereby beauty's rose might never die				that|THE|reby|BEAU|ty's|ROSE|might|NE|ver|DIE
+	but as the riper should by time decease 				but|AS|the|RI|per|SHOULD|by|TIME|dec|EASE
+	his tender heir might bear his memory   				his|TEN|der|HEIR|might|BEAR|his|ME|mo|RY
+	but thou contracted to thine own bright eyes			but|THOU|con|TRA|cted|TO|thine|OWN|bright|EYES
+	feed'st thy light's flame with self substantial fuel	FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STA|ntial|FUE|l
+	making a famine where abundance lies    				MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
+	thy self thy foe to thy sweet self too cruel			thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
+	thou that art now the world's fresh ornament			thou|THAT|art|NOW|the|WORLD'S|fresh|ORN|ame|NT
+	and only herald to the gaudy spring     				and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING  
+	within thine own bud buriest thy content				wi|THIN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
+	and tender churl mak'st waste in niggarding				and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
+	pity the world or else this glutton be  				PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
+	to eat the world's due by the grave and thee			to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
 
 
+## Overview of the IPA transcription process
 
-[0. ABOUT]
-- "Prosodic" is a python script which performs two main functions:
-	1. annotating English and Finnish text for their phonological properties (see #1 below);
-	2. evaluating the relative metricality of lines of English and Finnish text (see #2 below).
-
-- This document is intended as:
-	1-2. a brief theoretical overview of the intentions and behaviors of the program;
-	3-?. a user's manual to the functionality of the program.
+PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in *config.txt*, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
 
 
-
-
-[1. OVERVIEW: PHONOLOGICAL ANNOTATION]
  A. Prosodic annotates a given word in a language it recognizes by interpreting that word as a hierarchical organization of its phonological properties.
 	
 	i. These properties include:

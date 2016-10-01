@@ -1,7 +1,6 @@
 # [config.txt]
-## here you may change the runtime settings for prosodic.
-## if you have any questions, please email: ryan <heuser@stanford.edu> or josh <falkj@stanford.edu>
-
+## Here you may change the runtime settings for prosodic.
+## If you have any questions, please email Ryan <heuser@stanford.edu>.
 
 
 # [0. OVERVIEW]
@@ -10,11 +9,15 @@
 ## 2. the way in which texts are divided into 'lines' (which is the unit given to the metrical parser); 
 ## 3. how linguistic annotations are displayed (eg, the syllabification).
 
-
-lang=en			# if set, will not ask for lang and assume everything english
-#lang=fi		# if set, will not ask for lang and assume everything english
+# LANGUAGE?
+lang=en			# if set, will not ask for lang and assume everything is English
+#lang=fi		# if set, will not ask for lang and assume everything is Finnish
 #lang=**		# if set, will not ask for lang, but will attempt to discover language and if fail, ask later
 
+# TTS ENGINES FOR PARSING UNKNOWN WORDS IN ENGLISH
+en_TTS_ENGINE = espeak			# Use espeak to pronounce unknown words; syllabified by CMU Syllabifier
+#en_TTS_ENGINE = openmary		# Use openmary to pronounce and syllabify unknown words
+#en_TTS_ENGINE = none 			# Use neither; lines with unknown words skipped when metrically parsing
 
 
 # [1. METRICAL PARSING]
@@ -36,19 +39,19 @@ skip_initial_foot=0	# the first two metrical positions will not be evaluated for
 #footmin-noHX/1		#. a disyllabic metrical position may not contain more than a minimal foot (ie allowed positions are weighted LL or LH)
 #footmin-noLH-noHX/1			# a disyllabic metrical position prefers LL to LH. constraints nested to assist harmonic bounding.
 #footmin-wordbound-bothnotfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied only if both syllables are function-words.
-#footmin-wordbound-neitherfw/5		#.? in disyllabic metrical position crossing a word-boundary, satisfied if one syllable is a function-word.
+#footmin-wordbound-neitherfw/1		#.? in disyllabic metrical position crossing a word-boundary, satisfied if one syllable is a function-word.
 #footmin-wordbound-leftfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if left syllable is a function-word.
 #footmin-wordbound-rightfw/1		# in disyllabic metrical position crossing a word-boundary, satisfied if right syllable is a function-word.
 
-strength.s=>-u/1			# a strong metrical position may not contain any weak syllables, or "troughs"
-strength.w=>-p/1			# a weak metrical position may not contain any strong syllables, or "peaks" 
-#strength.s=>p/5				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
-#strength.w=>u/1				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
+strength.s=>-u/3			# a strong metrical position may not contain any weak syllables, or "troughs"
+strength.w=>-p/3			# a weak metrical position may not contain any strong syllables, or "peaks" 
+#strength.s=>p/3				# a *strong* metrical position must contain at least one syllable which is *prominent* in terms of *strength*
+#strength.w=>u/3				# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength*
 
-stress.s=>-u/1				# a *strong* metrical position may not contain *any* unstressed syllables
-stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed syllables
-#stress.s=>p/5				# a *strong* position must contain *at least one* stressed syllable
-#stress.w=>u/5				# a *weak* position must contain *at least one* unstressed syllable
+stress.s=>-u/2				# a *strong* metrical position may not contain *any* unstressed syllables
+stress.w=>-p/2				#. a *weak* metrical position may not contain *any* stressed syllables
+#stress.s=>p/2				# a *strong* position must contain *at least one* stressed syllable
+#stress.w=>u/2				# a *weak* position must contain *at least one* unstressed syllable
 
 #weight.s=>-u/1				# a *strong* metrical position may not contain *any* light syllable#s
 #weight.w=>-p/1				# a *weak* metrical position may not contain *any* heavy syllables
@@ -59,17 +62,32 @@ stress.w=>-p/1				#. a *weak* metrical position may not contain *any* stressed s
 
 #new (Sam Bowman)
 
-#footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
-footmin-no-s/1 		# a disyllabic STRONG metrical position will break this constraint
-#footmin-no-w/1 		# a disyllabic WEAK metrical position will break this constraint
+footmin-none/1		#. a disyllabic metrical position will always break this constraint. Use only to discourage disyllabic positions
+#footmin-none-unless-in-first-two-positions/1
+#footmin-none-unless-in-second-position/1
+#footmin-no-s/1 		# a disyllabic STRONG metrical position will break this constraint
+#footmin-no-w/1 		# a disyllabic WEAK metrical position will break this 
+footmin-no-s-unless-preceded-by-ww/10	# a disyllabic strong position is not allowed unless it is preceded by a ww
 
 #footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
 
 #footmin-strongconstraint/101		#.? A disyllabic metrical position may contain a strong syllable of a lexical word only if the syllable is (i) light and (ii) followed within the same position by an unstressed syllable normally belonging to the same word.
 
-#functiontow/1				# a function word can fall only in a weak position
+#functiontow/2				# a function word can fall only in a weak position
 
 #initialstrong/10000			# an initial syllable must be in a weak position
+
+## new new (Ryan) CONTRAINTS THAT APPLY ONCE LINE IS COMPLETE
+
+posthoc-no-final-ww/1		# Punish a final ww often throws off an otherwise iambic line
+posthoc-standardize-weakpos/1	# Punish lines mixing ww and w
+
+#extrametrical-first-pos/0	# Force all constraints to be 0 for first position
+
+
+
+
+
 
 
 ## [1.3 Maximal Line-Size]
@@ -82,7 +100,7 @@ resolve_optionality=1		# resolve syllabification/stress/weight optionalities by 
 
 
 ## line headedness: [optional] force parser to select best parse from the lowest-scoring parse which beguns as such:
-line_headedness=sw
+line_headedness=ws
 #line_headedness=ws
 #line_headedness=wws
 #line_headedness=ssw
@@ -111,9 +129,12 @@ output_en=ipa		# since our english information comes from the cmu, we default th
 output_fi=orth		# since finnish pronunciation is essentially identical to its orthography
 
 
-print_to_screen=0	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
+print_to_screen=1	# set to 1 to print words, parses, etc to screen; set to 0 to hide them; either way, you may save any output, hidden or not, using the /save command.
 linelen=60
 
 ## [appendix: how this file works]
 # any line with a pound (#) to the utmost left is considered a 'comment' and ignored;
 # if multiple uncommented settings for the same variable, the last is taken 
+
+
+folder_tagged_samples = tagged_samples/ 	# folder for hand-tagged parses for evaluation

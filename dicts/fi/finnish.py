@@ -76,7 +76,7 @@ ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.iteritems()])
 			
 
 	
-def get(token):
+def get(token,config={}):
 	token=token.strip()
 	
 

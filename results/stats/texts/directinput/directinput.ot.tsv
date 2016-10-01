@@ -1,17 +1,2 @@
-line                                    	meter	[*footmin-no-s]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
-i am mad for it to be in contact with me	swswwswwssws	0	0	1	0	1
-                                        	swswwswwssww	0	0	1	0	1
-                                        	wwswwswwssws	0	0	1	0	1
-                                        	wwswwswwssww	0	0	1	0	1
-                                        	swswwswwswsw	1	0	0	1	1
-                                        	swswwswwswws	1	0	0	1	1
-                                        	swswswwswsws	1	0	0	1	1
-                                        	swswwswswsws	1	0	0	1	1
-                                        	swswswwswsww	1	0	0	1	1
-                                        	swswwswswsww	1	0	0	1	1
-                                        	wwswwswwswsw	1	0	0	1	1
-                                        	wwswwswwswws	1	0	0	1	1
-                                        	wwswswwswsws	1	0	0	1	1
-                                        	wwswwswswsws	1	0	0	1	1
-                                        	wwswswwswsww	1	0	0	1	1
-                                        	wwswwswswsww	1	0	0	1	1
+line                                    	meter	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
+hello world                             	wsw	0	0	0	1

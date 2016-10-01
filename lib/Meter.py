@@ -15,17 +15,44 @@ def genDefault():
 	return Meter(prosodic.config['constraints'].split(),(prosodic.config['maxS'],prosodic.config['maxW']),prosodic.config['splitheavies'])
 	
 
+#def meterShakespeare():
+#	return Meter('strength.s=>')
+
+
+
+
+
+
+
 class Meter:
 	Weak="w"
 	Strong="s"
 	## for caching meter-parses
 	parseDict = {}
+
+	@staticmethod
+	def genMeters():
+		meterd={}
+		meterd['*StrongSyllableWeakPosition [Shakespeare]']=Meter(['strength.w=>-p/1'], (1,2), False)
+		meterd['*WeakSyllableStrongPosition']=Meter(['strength.s=>-u/1'], (1,2), False)
+		meterd['*StressedSyllableWeakPosition']=Meter(['stress.w=>-p/1'], (1,2), False)
+		meterd['*UnstressedSyllableStrongPosition [Hopkins]']=Meter(['stress.s=>-u/1'], (1,2), False)
+		return meterd
+
+	def __str__(self):
+		x='<<Meter\n\tName: {0}\n\tConstraints: {1}\n\tMaxS, MaxW: {2}, {3}\n\tSplit heavies?: {4}\n>>'.format(self.name, self.constraint_nameweights, self.posLimit[0], self.posLimit[1], self.splitheavies)
+		return x
 	
-	def __init__(self,constraints=None,posLimit=(2,2),splitheavies=False):
+	@property
+	def constraint_nameweights(self):
+		return ' '.join(c.name_weight for c in self.constraints)
+
+	def __init__(self,constraints=None,posLimit=(2,2),splitheavies=False,name=None):
 		self.type = type
 		self.posLimit=posLimit
 		self.constraints = []
 		self.splitheavies=splitheavies
+		self.name=name
 		
 		if not constraints:
 			self.constraints.append(Constraint(0,"foot-min",None,1))
@@ -40,10 +67,11 @@ class Meter:
 				c=constraints[i]
 				if "/" in c:
 					(cname,cweight)=c.split("/")
-					cweight=int(cweight)
+					#cweight=int(cweight)
+					cweight=float(cweight)
 				else:
 					cname=c
-					cweight=1
+					cweight=1.0
 				self.constraints.append(Constraint(i,cname,None,cweight))
 		else:
 			if os.path.exists(constraints):
@@ -75,13 +103,15 @@ class Meter:
 		for row in self.genWordMatrix(words):
 			unitlist = []
 			id=-1
+			wordnum=-1
 			for word in row:
+				wordnum+=1
 				syllnum=-1
 				for unit in word.children:	# units = syllables
 					syllnum+=1
 					id+=1
 					wordpos=(syllnum+1,len(word.children))
-					unitlist.append(Slot(id, unit, word.sylls_text[syllnum], wordpos, word))
+					unitlist.append(Slot(id, unit, word.sylls_text[syllnum], wordpos, word, i_word=wordnum, i_syll_in_word=syllnum))
 					
 			if not self.splitheavies:
 				matrix.append(unitlist)

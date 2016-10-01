@@ -21,6 +21,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		dirself=prosodic.dir_prosodic
 		libfolder=os.path.join(dirself,'lib')
 		dictsfolder=os.path.join(dirself,'dicts')
+		self.config=prosodic.config
 		
 		
 		self.lang = lang
@@ -240,17 +241,50 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if not word: return False
 		word=unicode(word)
 		(p0,word,p1)=gleanPunc2(word)
-		return ((word.lower() in self.dict['Word']) and (self.dict['Word'][word.lower()]))
+		word_l = word.lower()
+
+		
+		## if not there, but a contractino
+		# if already there, say yes
+		if word_l in self.dict['Word'] and self.dict['Word'][word_l]: return True
+		"""
+		for contr,add_ipa in [("'s","z"), ("'d","d")]:
+			if word_l.endswith(contr):
+				word_l_unc = word_l[:-2]
+				# if the uncontracted in the dictionary
+				if word_l_unc in self.dict['Word'] and self.dict['Word'][word_l_unc]:
+					for obj in self.dict['Word'][word_l_unc]:
+						if type(obj) in [tuple]:
+							ipa,sylls_text=obj
+						else:
+							ipa=obj.ipa
+							sylls_text=obj.sylls_text
+						
+						ipa+=add_ipa
+						#sylls_text[-1]+=contr
+
+						## save new word
+						if not word_l in self.dict['Word']: self.dict['Word'][word_l]=[]
+						self.dict['Word'][word_l]+=[(ipa,sylls_text)]
+		"""
+		
+		return (word_l in self.dict['Word'] and self.dict['Word'][word_l])
 		
 	
 	def use(self,classtype,key):
+		"""
+		HACKED 9/29/16: No longer caching SyllableBodies. Reuse was causing bugs. More thorough solution would be helpful.
+		"""
+
 		if type(key)==type([]):
 			key=tuple(key)
 		if (not key in self.dict[classtype]):
 			if classtype in ['Phoneme','Onset','Nucleus','Coda','Rime','Syllable']:
 				self.dict[classtype][key]=get_class(classtype+'.'+classtype)(key,self.lang)
+				#return get_class(classtype+'.'+classtype)(key,self.lang)
 			elif classtype=="SyllableBody":
-				self.dict[classtype][key]=self.syllphon2syll(key,self.lang)
+				#self.dict[classtype][key]=self.syllphon2syll(key,self.lang)
+				return self.syllphon2syll(key,self.lang)
 			
 		return self.dict[classtype][key]
 	
@@ -269,8 +303,10 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 				if (phon in Dictionary.char2phons): continue
 				if (phon=="`") or (phon=="'"): continue
 				
-				try: phonN=syllphon[i+1]
-				except IndexError: phonN=False
+				try:
+					phonN=syllphon[i+1]
+				except IndexError:
+					phonN=False
 				if phonN and (phonN in Dictionary.char2phons):
 					phon=phon+phonN
 				
@@ -397,9 +433,11 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		syllphons=self.ipa2phons(stressedipa)
 		
 		sylls=[]
+
 		for i in range(len(syllphons)):
 			syllbody=self.use('SyllableBody',syllphons[i])
 			syll=self.use('Syllable',(syllbody,prom_strength[i],prom_stress[i]))
+			#print token,i,syllbody,syll,syllphons,stressedipa,stress,prom_stress,prom_strength
 			sylls.append(syll)
 		word=Word(token,sylls,sylls_text)
 		word.ipa=stressedipa
@@ -413,7 +451,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		word=words[0].token.lower()
 
 		def unstress_word(wordobj):
-			wordobj.feat('functionword',True)
+			#wordobj.feat('functionword',True)
+			wordobj.feats['functionword']=True
 			wordobj.stress=""
 			for child in wordobj.children:
 				wordobj.stress+="U"
@@ -437,11 +476,13 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 				if 'U' in stresses and not 'P' in stresses:
 					newipa="'"+ipa
 					newobjs=[self.make((_ipa,None),word) for _ipa in [ipa,newipa]]
-					newobjs[0].feat('functionword',True)
+					#newobjs[0].feat('functionword',True)
+					newobjs[0].feats['functionword']=True
 				elif 'P' in stresses and not 'U' in stresses:
 					newipa=ipa[1:]
 					newobjs=[self.make((_ipa,None),word) for _ipa in [ipa,newipa]]
-					newobjs[-1].feat('functionword',True)
+					#newobjs[-1].feat('functionword',True)
+					newobjs[-1].feats['functionword']=True
 
 				return newobjs
 
@@ -455,7 +496,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		return words
 	
 	
-	def get(self,word):
+	def get(self,word,stress_ambiguity=True):
 		if type(word)==str: word=unicode(word)
 
 		(word,punct)=gleanPunc(word)
@@ -463,8 +504,11 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if self.has(word):
 			words=self.dict['Word'][word.lower()]
 		elif self.getprep:
-			words=self.getprep(word)
+			words=self.getprep(word,config=self.config)
 		else:
+			return [Word(word,[],None)]
+
+		if not words:
 			return [Word(word,[],None)]
 
 		if type(words)==list:
@@ -472,13 +516,13 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 				wordobjs=[self.make(wrd,word) for wrd in words]
 				self.dict['Word'][word.lower()]=wordobjs
-				return self.maybeUnstress(wordobjs)
+				return self.maybeUnstress(wordobjs) if stress_ambiguity else wordobjs
 			else:
 				wordobjs=words
 		else:
 			wordobjs=[words]
 
-		return self.maybeUnstress(wordobjs)
+		return self.maybeUnstress(wordobjs) if stress_ambiguity else wordobjs
 		
 		
 		

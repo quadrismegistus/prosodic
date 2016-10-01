@@ -1,2 +1,2 @@
-textname	strength.w=>-p	strength.s=>-u	footmin-no-s	stress.w=>-p	stress.s=>-u
-directinput	1.0	1.0	0.0	0.0	0.0
+textname	strength.s=>-u	strength.w=>-p	stress.s=>-u	stress.w=>-p
+directinput	1.0	0.0	0.0	0.0

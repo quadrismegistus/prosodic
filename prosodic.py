@@ -20,6 +20,7 @@ from Stanza import Stanza
 from Line import Line
 from Phoneme import Phoneme
 from Word import Word
+from Meter import Meter
 import ipa
 
 ## set defaults
@@ -109,13 +110,14 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/scan\tprint out the scanned lines\n"
 			msg+="\t\t/report\tlook over the parse outputs\n"
 			msg+="\t\t/stats\tget statistics from the parser\n"
-			msg+="\t\t/plot\tcompare features against positions\n"
-			if being.networkx:
-				msg+="\t\t/draw\tdraw finite-state machines\n" 
+			#msg+="\t\t/plot\tcompare features against positions\n"
+			#if being.networkx:
+			#	msg+="\t\t/draw\tdraw finite-state machines\n" 
 
 			msg+="\n"
 	
 		# msg+="\t\t/config\tchange settings\n"
+		msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n"
 		if config['print_to_screen']:
 			msg+="\t\t/mute\thide output from screen\n"
 		else:
@@ -130,7 +132,10 @@ else:	## if not imported, go into interactive mode
 	
 		## ask for input only if argument not received
 		if not skip:
-			text=raw_input(msg).strip()
+			try:
+				text=raw_input(msg).strip()
+			except (KeyboardInterrupt,EOFError) as e:
+				text='/exit'
 		else:
 			skip=False
 	
@@ -139,6 +144,8 @@ else:	## if not imported, go into interactive mode
 				#dict[k].save_tabbed()
 				dict[k].persist()
 				dict[k].close()
+			print
+			print "Goodbye."
 			exit()
 	
 		elif text and text[0]!="/":
@@ -192,7 +199,7 @@ else:	## if not imported, go into interactive mode
 				except:
 					break
 				
-				for words in obj.words():
+				for words in obj.words(flattenList=False):
 					wordobj=words[0]
 					for match in wordobj.search(qq):
 						matchcount+=1
@@ -275,6 +282,37 @@ else:	## if not imported, go into interactive mode
 				print ">> saving previous output to: "+ofn
 			except IOError:
 				print "** [error: file not saved.]\n\n"
+
+		elif text.startswith('/eval'):
+			path=os.path.join(dir_prosodic,config['folder_tagged_samples'])
+			fn=None
+
+			if not fn:
+				fns=[]
+				for _fn in os.listdir(path):
+					if _fn.startswith('.'): continue
+					if '.evaluated.' in _fn: continue
+					fn_i=len(fns)
+					fns+=[_fn]
+					print '[{0}] {1}'.format(fn_i+1, _fn)
+				inp=raw_input('\n>> please enter the number of the file to use as evaluation data:\n').strip()
+				if not inp.isdigit():
+					print '<<invalid: not a number>>'
+					continue
+
+				fn_i=int(inp)-1
+				fn=fns[fn_i]
+
+			key_line = raw_input('\n>> please enter the column name in the file for the column of lines to parse: [default: line]\n').strip()
+			if not key_line: key_line='line'
+
+			key_parse = raw_input('\n>> please enter the column name in the file for the column of hand-done parses (using "s" for metrically strong syllables, "w" for metrically weak ones): [default: parse]\n').strip()
+			if not key_parse: key_parse='parse'
+
+			key_meterscheme = raw_input('\n>> [optional, will use if present] please enter the column name in the file for the column indicating the metrical template in the poem (anapestic, dactylic, iambic, or trochaic): [default: Meter Scheme]\n').strip()
+			if not key_meterscheme: key_meterscheme='Meter Scheme'
+
+			assess(os.path.join(path,fn), key_meterscheme=key_meterscheme, key_parse=key_parse, key_line=key_line)
 	
 	
 		elif text.startswith('/mute'):
@@ -285,17 +323,10 @@ else:	## if not imported, go into interactive mode
 	
 		elif text.startswith('/unmute'):
 			config['print_to_screen']=True
+		
 		if cmd:
 			text=cmd
 			cmd=""
 
-
-
-
-
-def report(text):
-	t=Text(text)
-	t.parse()
-	t.report()
 
 

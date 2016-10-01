@@ -15,12 +15,14 @@ class being:
 	pointsofcomparison=[]
 	pass
 	
+"""
 try:
 	import networkx
 	being.networkx=True
 except ImportError:
 	being.networkx=False
-
+"""
+being.networkx=False
 
 
 class entity(being):	## this class, like the godhead, never instantiates, but is the Form and Archetype for all.	
@@ -610,7 +612,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if self==init:
 			init.maxparselen=0
 			init.minparselen=None
-			for parse in self.__bestparses:
+			for parse in self.bestParses():
 				if not init.maxparselen:
 					init.maxparselen=len(parse.positions)
 					init.minparselen=len(parse.positions)
@@ -777,7 +779,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if type(child)==type([]): return None
 				child._getFeatValDict(init)
 		else:
-			for parse in self.__bestparses:
+			for parse in self.bestParses():
 				print parse
 				for pos in parse.positions:
 					posfeats=pos.posfeats()
@@ -899,16 +901,22 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			print ">> plotting: "+ init.pkey
 			
 		
-		if not hasattr(self,'bestparses'):
+		if not hasattr(self,'bestParses'):
 			for child in self.children:
 				child.plot(init)
 		else:
 			posdict={}
+			minparselen = min([len(parse.positions) for parse in self.bestParses()])
+			maxparselen = max([len(parse.positions) for parse in self.bestParses()])
 			#if not hasattr(self,'minparselen'): return None
-			for posnum in range(self.minparselen):
+			for posnum in range(maxparselen):
 				posdict[posnum]={'x':[],'y':[]}
-				for parse in self.__bestparses:
-					posfeats=parse.positions[posnum].posfeats()
+				for parse in self.bestParses():
+					try:
+						posfeats=parse.positions[posnum].posfeats()
+					except IndexError:
+						# there is no position number `posnum` in this parse `parse`
+						continue
 					
 					for a in ['x','y']:
 						conds=init.population[a]
@@ -961,16 +969,18 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		totaltsvs=[]
 		for textname,posdict in sorted(init.plotstats.items()):
 			
-			tsv="posnum\tx_mean\ty_mean\tx_std\ty_std\n"
+			tsv="posnum\tnumobs\tx_mean\ty_mean\tx_std\ty_std\n"
 			xs=[]
 			ys=[]
 			for posnum,xydict in posdict.items():
 				x_avg,x_std=mean_stdev(xydict['x'])
 				y_avg,y_std=mean_stdev(xydict['y'])
+
+				assert len(xydict['x'])==len(xydict['y'])
 				
 				xs.append(x_avg)
 				ys.append(y_avg)
-				tsv+="\t".join(str(bb) for bb in [(posnum+1),x_avg,y_avg,x_std,y_std])+"\n"
+				tsv+="\t".join(str(bb) for bb in [(posnum+1),len(xydict['x']),x_avg,y_avg,x_std,y_std])+"\n"
 			
 			
 			ccmsg=""
@@ -997,22 +1007,28 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			writeToFile(textname,init.pkey,tsv,extension="tsv")
 			totaltsvs.append(tsv)
 			
+			"""
 			try:
 				strtowrite=self.makeBubbleChart(posdict,".".join([textname,init.pkey]),(cc,p))
 				totalstrs+=[strtowrite]
 				writeToFile(textname,init.pkey,self._getBubbleHeader()+strtowrite+self._getBubbleFooter(),extension="htm")
 			except:
 				pass
+			"""
 			
 			if ccmsg:
 				print ccmsg
 		
 		if not self.classname()=="Corpus": return None
+		
+		"""
 		writeToFile(self.getName(),
 			init.pkey,
 			self._getBubbleHeader()+"\n<br/><br/><br/><br/><br/><br/><br/><br/>\n".join(totalstrs)+self._getBubbleFooter(),
 			iscorpus=True,
 			extension="htm")
+		"""
+		
 		writeToFile(self.getName(),init.pkey,"\n\n\n\n".join(totaltsvs),iscorpus=True,extension="tsv")
 		
 	
@@ -1072,7 +1088,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				posdict[posnum]={}
 
 				
-				for parse in self.__bestparses:
+				for parse in self.bestParses():
 					posfeats=parse.positions[posnum].posfeats()
 				
 					for domainfeat,domainfeatvals in stats.items():
@@ -1231,7 +1247,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				sumweight={}
 				nodetypes=[]
 				linelens=[]
-				for parse in self.__bestparses:
+				for parse in self.bestParses():
 					node1=None
 					node2=None
 				
@@ -1493,162 +1509,162 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			
 		return tree
 	
-	#def showFeat(self,k,v):
-	#	if type(v) == type(True):
-	#		if v:
-	#			r="[+"+k+"]"
-	#		else:
-	#			r="[-"+k+"]"
-	#	else:
-	#		r="["+k+"="+str(v)+"]"
-	#	return r
-	#
-	#def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
-	#	for dat in feats:
-	#		row+=1
-	#		col=0
-	#		sheet.row(row).write(col,'['+posmark+dat+']')
-	#		for feat in feats:
-	#			col+=1
-	#			feat=unit.feature(dat)
-	#			feat=self._filterFeat(feat, bool, posmark, negmark)
-	#			sheet.row(row).write(col,feat)
-	#	return row+1
-	#
-	#def writeViols(self,sheet,units,viols,unitviols,row=0,bool=True,posmark="+",negmark=False):
-	#	for violtype in viols:
-	#		row+=1
-	#		col=0
-	#		sheet.row(row).write(col,'['+posmark+violtype+']')
-	#		i =-1
-	#		for unit in units:
-	#			i+=1
-	#			col+=1
-	#			if (not i in unitviols):
-	#				continue
-	#			if (not violtype in unitviols[i]):
-	#				continue
-	#			feat=unitviols[i][violtype]
-	#			feat=self._filterFeat(feat, bool, posmark, negmark)
-	#			sheet.row(row).write(col,feat)
-	#	return row
-	#
-	#def _filterFeat(self,feat,bool=True,posmark="+",negmark=False):
-	#	if feat==None: feat=""
-	#	elif feat==True: feat=posmark
-	#	elif feat==1: feat=posmark
-	#	elif feat==0:
-	#		if negmark: feat=negmark
-	#		else: feat=""
-	#	elif feat==False:
-	#		if negmark: feat=negmark
-	#		else: feat=""
-	#	elif type(feat)==type(float()):
-	#		if bool==True:
-	#			if feat > 0:
-	#				feat=posmark
-	#			else:
-	#				if negmark: feat=negmark
-	#				else: feat=""
-	#		else:
-	#			feat = str(feat)
-	#	else:
-	#		feat=str(feat)
-	#	
-	#	return feat
+	def showFeat(self,k,v):
+		if type(v) == type(True):
+			if v:
+				r="[+"+k+"]"
+			else:
+				r="[-"+k+"]"
+		else:
+			r="["+k+"="+str(v)+"]"
+		return r
 	
-	#def getNumEnts(self,numents={}):
-	#	### Returns a dictionary of [classname][toks], [classname][typs]
-	#	
-	#	if type(self.children)!=type([]): return numents
-	#	for child in self.children:
-	#		if child==None: continue
-	#		if (not child.classname() in numents):
-	#			numents[child.classname()]={}
-	#			numents[child.classname()]['toks']=0
-	#			numents[child.classname()]['typs']={}
-	#		if (not child in numents[child.classname()]['typs']):
-	#			numents[child.classname()]['typs'][child]=0
-	#		
-	#		numents[child.classname()]['toks']+=1
-	#		numents[child.classname()]['typs'][child]+=1
-	#		numents=child.getNumEnts(numents)
-	#	return numents
-	#
-	#def getStats(self):
-	#	numents=self.getNumEnts()
-	#	
-	#	stats={}
-	#	for k,v in numents.items():
-	#		numtok=v['toks']
-	#		numtyp=len(v['typs'])
-	#		typovertok=round((numtyp/numtok*100),2)
-	#		stats[k]=(numtok,numtyp,typovertok)
-	#		
-	#	return stats
+	def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
+		for dat in feats:
+			row+=1
+			col=0
+			sheet.row(row).write(col,'['+posmark+dat+']')
+			for feat in feats:
+				col+=1
+				feat=unit.feature(dat)
+				feat=self._filterFeat(feat, bool, posmark, negmark)
+				sheet.row(row).write(col,feat)
+		return row+1
 	
-	#def writeUnits(self,sheet,units,row=-1):
-	#	col=0
-	#	sheet.row(row).write(col,"[meter.s]")
-	#	sheet.row(row+1).write(col,"[meter.w]")
-	#	for unit in units:
-	#		if unit==unit.upper():
-	#			sheet.row(row).write(col,unit)
-	#		else:
-	#			sheet.row(row+1).write(col,unit)
-	#	return row+1
-	#
-	#def tiergraph(self,parses,colwidth=24):
-	#	from xlwt import Workbook
-	#	book = Workbook()
-	#	headers = False
-	#	
-	#	parse_i=0
-	#	for parse in parses:
-	#		parse_i+=1
-	#		sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs') 
-	#		sheet.col(0).width=(colwidth*256)
-	#
-	#		row=0
-	#		proms = []
-	#		viols = []
-	#		feats = []
-	#		units = []
-	#		
-	#		col=0
-	#		for pos in parse.positions:
-	#			for slot in pos.slots:
-	#				if pos.meterVal=="s":
-	#					unit=str(slot).upper()
-	#				else:
-	#					unit=str(slot).lower()
-	#				units.append(unit)
-	#				
-	#				col+=1
-	#				sheet.row(row).write(col,str(unit))
-	#
-	#				for k,v in slot.feats.items():
-	#					if k.startswith('prom'):
-	#						if (not k in proms):
-	#							proms.append(k)
-	#					else:
-	#						if (not k in feats):
-	#							feats.append(k)
-	#		proms.sort()
-	#		viols.sort()
-	#		feats.sort()
-	#		
-	#		row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
-	#
-	#
-	#		row=self.writeUnits(sheet,units,row=(row+1))	# the units and their metrical parsing
-	#		
-	#
-	#		row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
-	#		#row=self.writeViols(sheet,parse.units,viols,parse.unitviols,row=(row+1),bool=True,posmark="*")	# constraint violations
-	#		#row=self.writeFeats(sheet,parse.units,feats,row=(row+1),bool=False,posmark="1",negmark="0")	# all other feats
-	#		
-	#		book.save('results/tiergraphs/'+str(self)+'.xls')
+	def writeViols(self,sheet,units,viols,unitviols,row=0,bool=True,posmark="+",negmark=False):
+		for violtype in viols:
+			row+=1
+			col=0
+			sheet.row(row).write(col,'['+posmark+violtype+']')
+			i =-1
+			for unit in units:
+				i+=1
+				col+=1
+				if (not i in unitviols):
+					continue
+				if (not violtype in unitviols[i]):
+					continue
+				feat=unitviols[i][violtype]
+				feat=self._filterFeat(feat, bool, posmark, negmark)
+				sheet.row(row).write(col,feat)
+		return row
+	
+	def _filterFeat(self,feat,bool=True,posmark="+",negmark=False):
+		if feat==None: feat=""
+		elif feat==True: feat=posmark
+		elif feat==1: feat=posmark
+		elif feat==0:
+			if negmark: feat=negmark
+			else: feat=""
+		elif feat==False:
+			if negmark: feat=negmark
+			else: feat=""
+		elif type(feat)==type(float()):
+			if bool==True:
+				if feat > 0:
+					feat=posmark
+				else:
+					if negmark: feat=negmark
+					else: feat=""
+			else:
+				feat = str(feat)
+		else:
+			feat=str(feat)
+		
+		return feat
+	
+	def getNumEnts(self,numents={}):
+		### Returns a dictionary of [classname][toks], [classname][typs]
+		
+		if type(self.children)!=type([]): return numents
+		for child in self.children:
+			if child==None: continue
+			if (not child.classname() in numents):
+				numents[child.classname()]={}
+				numents[child.classname()]['toks']=0
+				numents[child.classname()]['typs']={}
+			if (not child in numents[child.classname()]['typs']):
+				numents[child.classname()]['typs'][child]=0
+			
+			numents[child.classname()]['toks']+=1
+			numents[child.classname()]['typs'][child]+=1
+			numents=child.getNumEnts(numents)
+		return numents
+	
+	def getStats(self):
+		numents=self.getNumEnts()
+		
+		stats={}
+		for k,v in numents.items():
+			numtok=v['toks']
+			numtyp=len(v['typs'])
+			typovertok=round((numtyp/numtok*100),2)
+			stats[k]=(numtok,numtyp,typovertok)
+			
+		return stats
+	
+	def writeUnits(self,sheet,units,row=-1):
+		col=0
+		sheet.row(row).write(col,"[meter.s]")
+		sheet.row(row+1).write(col,"[meter.w]")
+		for unit in units:
+			if unit==unit.upper():
+				sheet.row(row).write(col,unit)
+			else:
+				sheet.row(row+1).write(col,unit)
+		return row+1
+	
+	def tiergraph(self,parses,colwidth=24):
+		from xlwt import Workbook
+		book = Workbook()
+		headers = False
+		
+		parse_i=0
+		for parse in parses:
+			parse_i+=1
+			sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs') 
+			sheet.col(0).width=(colwidth*256)
+	
+			row=0
+			proms = []
+			viols = []
+			feats = []
+			units = []
+			
+			col=0
+			for pos in parse.positions:
+				for slot in pos.slots:
+					if pos.meterVal=="s":
+						unit=str(slot).upper()
+					else:
+						unit=str(slot).lower()
+					units.append(unit)
+					
+					col+=1
+					sheet.row(row).write(col,str(unit))
+	
+					for k,v in slot.feats.items():
+						if k.startswith('prom'):
+							if (not k in proms):
+								proms.append(k)
+						else:
+							if (not k in feats):
+								feats.append(k)
+			proms.sort()
+			viols.sort()
+			feats.sort()
+			
+			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
+	
+	
+			row=self.writeUnits(sheet,units,row=(row+1))	# the units and their metrical parsing
+			
+	
+			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
+			#row=self.writeViols(sheet,parse.units,viols,parse.unitviols,row=(row+1),bool=True,posmark="*")	# constraint violations
+			#row=self.writeFeats(sheet,parse.units,feats,row=(row+1),bool=False,posmark="1",negmark="0")	# all other feats
+			
+			book.save('results/tiergraphs/'+str(self)+'.xls')
 	
 	
 	def _searchSingleValue(self, value, feature):

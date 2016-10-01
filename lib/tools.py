@@ -182,6 +182,7 @@ def write(fn,data,toprint=False):
 
 
 
+"""
 def loadDict(dictFile):
 	cmuFile = open(dictFile, 'r')
 	if dictFile[-7:] == ".pickle":
@@ -208,6 +209,7 @@ def loadDict(dictFile):
 		cmuDict[wrd].append(curLine)
 			
 	return cmuDict
+"""
 
 def loadDicts(dictFolder,srch='dict.*'):
 	import os,glob
@@ -395,3 +397,347 @@ def describe_func(obj, method=False):
 	# 		o+=['\t-Keyword Args Param: %s' % arginfo[2]]
 	
 	return o
+
+
+def read_ld(fn):
+	if fn.endswith('.xls') or fn.endswith('.xlsx'):
+		return xls2ld(fn)
+	else:
+		return tsv2ld(fn)
+
+def xls2ld(fn,header=[],sheetname=True,keymap={}):
+	import xlrd
+	headerset=True if len(header) else False
+	f=xlrd.open_workbook(fn)
+	ld=[]
+	def _boot_xls_sheet(sheet,header=[]):
+		ld2=[]
+		for y in range(sheet.nrows):
+			if not header:
+				for xi in range(sheet.ncols):
+					cell=sheet.cell_value(rowx=y,colx=xi)
+					header+=[cell]
+				continue
+			d={}
+			for key in header:
+				try:
+					value=sheet.cell_value(rowx=y, colx=header.index(key))
+					d[key]=value
+					#print key,value,y,header.index(key),row[header.index(key)]
+				except:
+					#print "!! "+key+" not found in "+str(sheet)
+					#d[key]=''
+					pass
+			if len(d):
+				if sheetname: d['sheetname']=sheet.name
+				ld2.append(d)
+		return ld2
+
+
+	if f.nsheets > 1:
+		sheetnames=sorted(f.sheet_names())
+		for sheetname in sheetnames:
+			sheet=f.sheet_by_name(sheetname)
+			for d in _boot_xls_sheet(sheet,header=header if headerset else []):
+				ld.append(d)			
+	else:
+		sheet = f.sheet_by_index(0)
+		ld.extend(_boot_xls_sheet(sheet,header=header if headerset else []))
+
+	return ld
+
+def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpties=False):
+	import time
+	now=time.time()
+	print '>> reading as ld:',fn
+	import os
+	if fn.startswith('http'):
+		print '>> reading webpage...'
+		import urllib
+		f=urllib.urlopen(fn)
+		t=f.read()
+		if fn.endswith('/pubhtml'):
+			return goog2tsv(t)
+		f.close()
+	elif not os.path.exists(fn):
+		t=fn
+	elif u:
+		import codecs
+		f=codecs.open(fn,encoding='utf-8')
+		t=f.read()
+		f.close()
+	else:
+		f=open(fn,'r')
+		t=f.read()
+		f.close()
+	t=t.replace('\r\n','\n')
+	t=t.replace('\r','\n')
+	
+	#header=[]
+	listdict=[]
+	
+	
+	for line in t.split(nsep):
+		if not line.strip(): continue
+		line=line.replace('\n','')
+		ln=line.split(tsep)
+		#print ln
+		if not header:
+			header=ln
+			for i,v in enumerate(header):
+				if v.startswith('"') and v.endswith('"'):
+					header[i]=v[1:-1]
+			continue
+		edict={}
+		for i in range(len(ln)):
+			try:
+				k=header[i]
+			except IndexError:
+				#print "!! unknown column for i={0} and val={1}".format(i,ln[i])
+				continue
+			v=ln[i].strip()
+			
+			if k in keymap:
+				#print v, type(v)
+				v=keymap[k](v)
+				#print v, type(v)
+			else:
+				if v.startswith('"') and v.endswith('"'):
+					v=v[1:-1]
+				try:
+					v=float(v)
+				except ValueError:
+					v=v
+			
+			if type(v) in [str,unicode] and not v:
+				if zero=='' and removeEmpties:
+					continue
+				else:
+					v=zero
+			edict[k]=v
+		if edict:
+			listdict.append(edict)
+
+	nownow=time.time()
+	print '>> done ['+str(round(nownow-now,1))+' seconds]'
+
+	return listdict
+
+def product(*args):
+	if not args:
+		return iter(((),)) # yield tuple()
+	return (items + (item,) 
+		for items in product(*args[:-1]) for item in args[-1])
+
+def writegen(fnfn,generator):
+	import codecs
+	header=None
+	of = codecs.open(fnfn,'w',encoding='utf-8')
+	for dx in generator():
+		if not header:
+			header=sorted(dx.keys())
+			of.write('\t'.join(header) + '\n')
+
+		vals=[]
+		for h in header:
+			v=dx.get(h,'')
+			try:
+				o=unicode(dx.get(h,''))
+			except UnicodeDecodeError:
+				o=dx.get(h,'').decode('utf-8',errors='ignore')
+			vals+=[o]
+
+		
+		of.write('\t'.join(vals) + '\n')
+
+
+
+
+
+
+def hyphenator():
+	from hyphen import Hyphenator, dict_info
+	from hyphen.dictools import is_installed,install
+	for lang in ['en_US']:
+		if not is_installed(lang):
+			install(lang)
+
+	h_en = Hyphenator('en_US')
+	return h_en
+
+
+
+
+
+
+def report(text):
+	t=Text(text)
+	t.parse()
+	t.report()
+
+
+def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
+	from prosodic import Text
+	def get_num_sylls_correct(parse_human,parse_comp):
+		maxlen=max([len(parse_comp),len(parse_human)])
+		parse_comp_forzip = parse_comp + ''.join(['x' for x in range(maxlen-len(parse_comp))])
+		parse_human_forzip = parse_human + ''.join(['x' for x in range(maxlen-len(parse_human))])
+
+		## sylls correct?
+		_sylls_iscorrect=[]
+		for syll1,syll2 in zip(parse_human_forzip,parse_comp_forzip):
+			syll_iscorrect = int(syll1==syll2)
+			_sylls_iscorrect+=[syll_iscorrect]
+		return _sylls_iscorrect
+
+	import codecs
+	ld=read_ld(fn)
+	fn_split = fn.split('.')
+	ofn_split=fn_split[:-1] + ['evaluated'] + [fn_split[-1]]
+	ofn='.'.join(ofn_split)
+
+	def _print(dx):
+		print
+		for k,v in sorted(dx.items()):
+			print k,'\t',v
+		print
+
+	def _recapitalize(parse,code):
+		code=' '.join([x for x in code])
+		parse=parse.replace('|',' ').replace('.',' ')
+		newparse=[]
+		for s,c in zip(parse.split(),code.split()):
+			if c=='w':
+				newparse+=[s.lower()]
+			else:
+				newparse+=[s.upper()]
+		return '\t'.join(newparse)
+	
+	def _writegen():
+		lines_iscorrect=[]
+		lines_iscorrect_control=[]
+		lines_iscorrect_control2=[]
+		sylls_iscorrect_control=[]
+		sylls_iscorrect_control2=[]
+		sylls_iscorrect=[]
+		lines_iscorrect_nonbounded=[]
+
+		for d in ld:
+			#if d['Meter Scheme'] != 'iambic': continue
+			line=d[key_line]
+			#if not line.startswith('Improved the simple plan'): continue
+			parse_human=d[key_parse].replace('|','')
+			t=Text(line)
+			t.parse()
+			#print line
+			#if not t.isParsed: continue
+			"""
+			print
+			print t.bestParses()
+			print [x.constraintScores for x in t.bestParses()]
+			for l in t.allParses():
+				for x in l:
+					print x
+					#print x.constraintScores
+					print x.__report__()
+			print
+			"""
+
+			parse_comp=t.parse_str(viols=False, text=False).replace('|','')
+
+			#if len(parse_comp) != len(parse_human): continue
+
+			parse_str=t.parse_str(viols=True, text=True)
+			parses_comp = [x.replace('|','') for x in t.parse_strs(viols=False,text=False)]
+
+			
+			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_human))])
+			if key_meterscheme:
+				if d[key_meterscheme]=='iambic':
+					parse_comp_dummy = ('ws'*100)[:len(parse_human)]
+				elif d[key_meterscheme]=='trochaic':
+					parse_comp_dummy = ('sw'*100)[:len(parse_human)]
+				elif d[key_meterscheme]=='anapestic':
+					parse_comp_dummy = ('wws'*100)[:len(parse_human)]
+				elif d[key_meterscheme]=='dactylic':
+					parse_comp_dummy = ('sww'*100)[:len(parse_human)]
+				else:
+					parse_comp_dummy=parse_comp_dummy2
+			else:
+				parse_comp_dummy=parse_comp_dummy2
+
+			
+			## sylls correct?
+			this_sylls_correct = get_num_sylls_correct(parse_human, parse_comp)
+			this_sylls_correct_dummy = get_num_sylls_correct(parse_human, parse_comp_dummy)
+			this_sylls_correct_dummy2 = get_num_sylls_correct(parse_human, parse_comp_dummy2)
+			num_sylls_correct=sum(this_sylls_correct)
+			num_sylls_correct_dummy = sum(this_sylls_correct_dummy)
+			num_sylls_correct_dummy2 = sum(this_sylls_correct_dummy2)
+			sylls_iscorrect+=this_sylls_correct
+			sylls_iscorrect_control+=this_sylls_correct_dummy
+			sylls_iscorrect_control2+=this_sylls_correct_dummy2
+
+			# line correct?
+			line_iscorrect=int(parse_comp == parse_human)
+			lines_iscorrect+=[line_iscorrect]
+			line_iscorrect_dummy = int(parse_comp_dummy == parse_human)
+			line_iscorrect_dummy2 = int(parse_comp_dummy2 == parse_human)
+			lines_iscorrect_control+=[line_iscorrect_dummy]
+			lines_iscorrect_control2+=[line_iscorrect_dummy2]
+
+			# line at least in list of nonbounded parses?
+			line_iscorrect_nonbounded=int(parse_human in parses_comp)
+			lines_iscorrect_nonbounded+=[line_iscorrect_nonbounded]
+
+			parse_stress = []
+			for w in t.words():
+				for x in w.stress:
+					parse_stress += ['w' if x=='U' else 's']
+			parse_stress=''.join(parse_stress)
+			
+
+			odx=d
+			odx['parse_human']=parse_human
+			odx['parse_comp']=parse_comp
+			odx['parses_comp_nonbounded']=' | '.join(parses_comp)
+			odx['num_sylls']=len(parse_human)
+			odx['num_sylls_correct']=num_sylls_correct
+			odx['num_sylls_correct_control']=num_sylls_correct_dummy
+			odx['num_sylls_correct_control_iambic']=num_sylls_correct_dummy2
+			odx['line_iscorrect']=line_iscorrect
+			odx['line_iscorrect_dummy']=line_iscorrect_dummy
+			odx['line_iscorrect_dummy_iambic']=line_iscorrect_dummy2
+			odx['line_is_in_nonbounded_parses']=line_iscorrect_nonbounded
+			odx['parse_str_human']=_recapitalize(parse_str, parse_human)
+			odx['parse_str_compu']=_recapitalize(parse_str, parse_comp)
+			odx['parse_str_stress']=_recapitalize(parse_str, parse_stress)
+			odx['prosody_ipa']=' '.join([w.str_ipasyllstress() for w in t.words()])
+			odx['prosody_stress']=' '.join([w.stress for w in t.words()])
+			odx['meter_info']=str(t.meter).replace('\n',' ').replace('\t',' ')
+			sumconstr=0
+			for k,v in t.constraintViolations(use_weights=False,normalize=False).items():
+				odx['constraint_'+k]=v
+				sumconstr+=v
+			odx['constraint_SUM_VIOL']=sumconstr
+
+			#if not line_iscorrect:
+			_print(odx)
+			yield odx
+
+		print
+		print '##'*10
+		print 'RESULTS SUMMARY'
+		print '##'*10
+		perc_sylls_correct = sum(sylls_iscorrect) / float(len(sylls_iscorrect)) * 100
+		perc_lines_correct = sum(lines_iscorrect) / float(len(lines_iscorrect)) * 100
+		perc_lines_correct_control = sum(lines_iscorrect_control) / float(len(lines_iscorrect_control)) * 100
+		perc_sylls_correct_control = sum(sylls_iscorrect_control) / float(len(sylls_iscorrect_control)) * 100
+		perc_lines_correct_nonbound = sum(lines_iscorrect_nonbounded) / float(len(lines_iscorrect_nonbounded)) * 100
+		print 'PERCENT SYLLABLES CORRECT:',round(perc_sylls_correct,2),'% [vs.',round(perc_sylls_correct_control,2),'% for control]'
+		print 'PERCENT LINES CORRECT:',round(perc_lines_correct,2),'% [vs.',round(perc_lines_correct_control,2),'% for control]'
+		print 'PERCENT LINES IN AVAILABLE NONBOUNDED PARSES:',round(perc_lines_correct_nonbound,2),'%'
+	
+	writegen(ofn, _writegen)
+
+	

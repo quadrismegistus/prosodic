@@ -19,28 +19,45 @@ class MeterConstraint:
 	
 	def __repr__(self):
 		return "[*"+self.name+"]"
+
+	@property
+	def name_weight(self):
+		return "[*"+self.name+"/"+str(self.weight)+"]"
 	
 
 	#def __hash__(self):
 	#	return self.name.__hash__()
 	
-	def violationScore(self,meterPos):
+	def violationScore(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None):
 		"""call this on a MeterPosition to return an integer representing the violation value
 		for this Constraint in this MPos (0 represents no violation)""" 
 		violation = None
 		if self.constr != None:
 			violation = self.constr.parse(meterPos)
 		else:
-			violation = self.__hardparse(meterPos)
+			violation = self.__hardparse(meterPos,pos_i=pos_i,slot_i=slot_i,num_slots=num_slots,all_positions=all_positions)
 		#violation = self.__hardparse(meterPos)
 		if violation != "*":
 			meterPos.constraintScores[self] += violation
+
+
+		"""
+		print 
+		print '>>',slot_i,num_slots, self.name, meterPos, violation, all_positions
+		for slot in meterPos.slots:
+			print slot, slot.feature('prom.stress')
+		print"""
+
 		return violation
 	
-	def __hardparse(self,meterPos):
+	def __hardparse(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None):
 		import prosodic as p
 		#if meterPos.slots[0].i<2:
 		#	print meterPos.slots[0].word
+
+		#print meterPos,pos_i,slot_i,num_slots,all_positions
+		#prevpos=all_positions[pos_i-1]
+		#print pos_i, meterPos, prevpos, pos_i,pos_i-1,all_positions, len(meterPos.slots)
 	
 		if '.' in self.name:	# kiparsky self.names
 			## load variables
@@ -136,8 +153,8 @@ class MeterConstraint:
 			b = meterPos.slots[1]
 			
 			## should this apply to ALL foomin constraints?
-			if ( bool(a.feature('prom.stress',True)) and bool(b.feature('prom.stress',True))):
-				return self.weight
+			#if ( bool(a.feature('prom.stress',True)) and bool(b.feature('prom.stress',True))):
+			#	return self.weight
 			##
 			
 			if "nohx" in name:
@@ -159,12 +176,30 @@ class MeterConstraint:
 						 		return 0	
 					return self.weight
 			
-			if "none" in name:
+			if name=='footmin-none':
+				return self.weight
+
+			if name=='footmin-none-unless-in-first-two-positions':
+				if pos_i!=0 and pos_i!=1:
 					return self.weight
 
-			if "-no-" in name:
-				forbidden=name.strip()[-1]
-				if meterPos.meterVal==forbidden: return self.weight
+			if name=='footmin-none-unless-in-second-position':
+				if pos_i!=1:
+					return self.weight
+
+			if name=='footmin-no-s': return self.weight * int(meterPos.meterVal=='s')
+			if name=='footmin-no-w': return self.weight * int(meterPos.meterVal=='w')
+
+			if name=='footmin-no-s-unless-preceded-by-ww':
+				if meterPos.meterVal!='s': return 0
+				if pos_i==0: return self.weight
+				prevpos=all_positions[pos_i-1]
+				#print pos_i, meterPos, prevpos, pos_i,pos_i-1,all_positions
+				if len(prevpos.slots)>1 and prevpos.meterVal=='w':
+					return 0
+				return self.weight
+			
+
 
 			
 			if "wordbound" in name:
@@ -213,7 +248,26 @@ class MeterConstraint:
 				
 				# poss. (i) remains
 				return 0
-				
-			# made it through this minefield, eh?
-			return 0
+		
+		## POST HOC CONSTRAINTS
+		# is this the end?
+		is_end = slot_i+1==num_slots and meterPos.slots==all_positions[-1].slots
+		#print is_end
+		#print
+
+		if self.name.startswith('posthoc') and is_end:
+			if self.name=='posthoc-no-final-ww':
+				if len(all_positions[-1].slots)>1 and all_positions[-1].meterVal=='w':
+					return self.weight
+
+			if self.name=='posthoc-standardize-weakpos':
+				weak_pos = [pos for pos in all_positions if pos.meterVal=='w']
+				weak_pos_types = [''.join('w' for slot in pos.slots) for pos in weak_pos]
+				maxcount = max([weak_pos_types.count(wtype) for wtype in set(weak_pos_types)])
+				diff = len(weak_pos) - maxcount
+				return self.weight*diff
+
+		# made it through this minefield, eh?
+		return 0
+
 		

@@ -1,6 +1,5 @@
-text	constraint	pos0	pos1	pos2	pos3	pos4	pos5	pos6	pos7	pos8
-directinput	[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-directinput	[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-directinput	[*footmin-no-s]	0.0	0.0	0.0	0.0	0.0	0.0	1.0	0.0	0.0
-directinput	[*stress.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-directinput	[*stress.s=>-u]	0.0	0.0	0.0	0.0	1.0	0.0	0.0	0.0	0.0
+text	constraint	pos0	pos1	pos2
+directinput	[*strength.s=>-u]	0.0	0.0	0.0
+directinput	[*strength.w=>-p]	0.0	0.0	0.0
+directinput	[*stress.s=>-u]	0.0	0.0	0.0
+directinput	[*stress.w=>-p]	0.0	0.0	1.0

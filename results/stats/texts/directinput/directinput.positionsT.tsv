@@ -1,6 +1,5 @@
-constraint	pos0	pos1	pos2	pos3	pos4	pos5	pos6	pos7	pos8
-[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*footmin-no-s]	0.0	0.0	0.0	0.0	0.0	0.0	1.0	0.0	0.0
-[*stress.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*stress.s=>-u]	0.0	0.0	0.0	0.0	1.0	0.0	0.0	0.0	0.0
+constraint	pos0	pos1	pos2
+[*strength.s=>-u]	0.0	0.0	0.0
+[*strength.w=>-p]	0.0	0.0	0.0
+[*stress.s=>-u]	0.0	0.0	0.0
+[*stress.w=>-p]	0.0	0.0	1.0

@@ -27,6 +27,7 @@ class Parse(entity):
 		self.constraintScores = {}
 		for constraint in self.constraints:
 			self.constraintScores[constraint] = 0
+		self.constraintNames = [c.name for c in self.constraints]
 		self.numSlots = 0
 		self.totalSlots = totalSlots
 		self.isBounded = False
@@ -51,11 +52,18 @@ class Parse(entity):
 		return other
 	
 	# return a list of all slots in the parse
-	def slots(self):
+	def slots(self,by_word=False):
 		slots = []
+		last_word_i=None
 		for pos in self.positions:
 			for slot in pos.slots:
-				slots.append(slot)				
+				if not by_word:
+					slots.append(slot)
+				else:
+					if last_word_i==None or last_word_i != slot.i_word:
+						slots.append([])
+					slots[-1].append(slot)
+					last_word_i=slot.i_word
 		return slots
 	
 	
@@ -106,20 +114,25 @@ class Parse(entity):
 				self.positions.append(sPos)
 				
 			# assign violation scores for the (completed) penultimate position
-			
-			for constraint in self.constraints:
-				vScore = constraint.violationScore(self.positions[-2])
-				if vScore == "*":
-					self.constraintScores[constraint] = "*"
-				else:
-					self.constraintScores[constraint] += vScore
+
+			## EXTRAMETRICAL?
+			pos_i=len(self.positions)-2
+			if 'extrametrical-first-pos' in self.constraintNames and pos_i==0:
+				pass # give this position a pass
+			else:
+				for constraint in self.constraints:
+					vScore = constraint.violationScore(self.positions[-2], pos_i=pos_i,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=self.positions)
+					if vScore == "*":
+						self.constraintScores[constraint] = "*"
+					else:
+						self.constraintScores[constraint] += vScore
 				
 		if self.numSlots == self.totalSlots:
 
 			# assign violation scores for the (completed) ultimate position
 			for parse in extendedParses:
 				for constraint in self.constraints:
-					vScore = constraint.violationScore(parse.positions[-1])
+					vScore = constraint.violationScore(parse.positions[-1], pos_i=len(parse.positions)-1,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=parse.positions)
 					if vScore == "*":
 						parse.constraintScores[constraint] = "*"
 					else:
@@ -196,7 +209,7 @@ class Parse(entity):
 			unitlist = ""
 			factlist = ""
 			for unit in pos.slots:
-				unitlist += str(unit.token) + " "
+				unitlist += unicode(unit.token) + " "
 				#factlist += unit.stress + unit.weight + " "
 			unitlist = unitlist[:-1]
 			#factlist = factlist[:-1]

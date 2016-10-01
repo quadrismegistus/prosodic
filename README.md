@@ -45,25 +45,25 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 	</thead>
 	<tbody>
 		<tr>
-			<td>Iambic lines</td>
+			<td>Iambic poems</td>
 			<td>89.9%</td>
 			<td>93.6%</td>
 			<td>93.6%</td>
 		</tr>
 		<tr>
-			<td>Trochaic lines</td>
+			<td>Trochaic poems</td>
 			<td>91.6%</td>
 			<td>94.4%</td>
 			<td>5.6%</td>
 		</tr>
 		<tr>
-			<td>Anapestic lines</td>
+			<td>Anapestic poems</td>
 			<td>85.0%</td>
 			<td>64.2%</td>
 			<td>53.3%</td>
 		</tr>
 		<tr>
-			<td>Dactylic lines</td>
+			<td>Dactylic poems</td>
 			<td>83.0%</td>
 			<td>80.7%</td>
 			<td>50.1%</td>
@@ -72,7 +72,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 </table>
 </center>
 
-The data here show, we believe, that PROSODIC's parses match a human's about as often or sometiems more often than a bare template of the poem's meter–when we already know the meter of the poem. PROSODIC vastly outperforms a bare metrical template when that template does not match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, for parsing poems whose meter is unknown, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then likely to be reliable (enough at least to be interesting) when we don't.
+The data here show, we believe, that PROSODIC's parses match a human's about as often, and sometimes more often, than a bare template of the poem's meter–that is, when we already know the meter of the poem. Not surprisingly, PROSODIC vastly outperforms a bare metrical template when that template doesn't match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, for parsing poems whose meter is unknown, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then likely to be reliable enough (at least to be interesting) when we don't.
 
 The data above were produced when the meter was defined as the following constraints and weights: *strength.s=>-u/3 strength.w=>-p/3 stress.s=>-u/2 stress.w=>-p/2 footmin-none/1 footmin-no-s-unless-preceded-by-ww/10 posthoc-no-final-ww/1 posthoc-standardize-weakpos/1*. These constraints will be discussd below. 
 

@@ -24,9 +24,75 @@ Here's an example of the metrical parser in action, on Shakespeare's first sonne
 	pity the world or else this glutton be  				PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
 	to eat the world's due by the grave and thee			to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
 
-Not bad, right? PROSODIC not only captures the overall iambic meter of the poem, but also some of its variations in the sonnet. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)).
+Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)).
 
 ## Accuracy of metrical parser
+
+In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse, PROSODIC's accuracy is the following.
+
+<table>
+	<thead align=center>
+		<tr style="font-style:italic">
+			<th></th>
+			<th colspan="3">% Syllables Correctly Parsed</th>
+			<th colspan="3">% Lines Correctly Parsed</th>
+		</tr>
+		<tr>
+			<th></th>
+			<th>PROSODIC</th>
+			<th>Baseline (knowing meter)</th>
+			<th>Baseline (iambic)</th>
+			<th>PROSODIC</th>
+			<th>Baseline (knowing meter)</th>
+			<th>Baseline (iambic)</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Iambic</td>
+			<td>89.9%</td>
+			<td>93.6%</td>
+			<td>93.6%</td>
+			<td>68.5%</td>
+			<td>83.3%</td>
+			<td>83.3%</td>
+		</tr>
+		<tr>
+			<td>Trochaic</td>
+			<td>91.6%</td>
+			<td>94.4%</td>
+			<td>5.6%</td>
+			<td>77.7%</td>
+			<td>93.2%</td>
+			<td>4.9%</td>
+		</tr>
+		<tr>
+			<td>Anapestic</td>
+			<td>85.0%</td>
+			<td>64.2%</td>
+			<td>53.3%</td>
+			<td>47.3%</td>
+			<td>41.3%</td>
+			<td>0.0%</td>
+		</tr>
+		<tr>
+			<td>Dactylic</td>
+			<td>83.0%</td>
+			<td>80.7%</td>
+			<td>50.1%</td>
+			<td>40.9%</td>
+			<td>57.5%</td>
+			<td>0.0%</td>
+		</tr>
+	</tbody>
+</table>
+
+The data here show, we believe, that PROSODIC is about as good or better than a bare template of the poem's meter at accurately capturing the metrical position of syllables—sometimes better capturing, in other words, the metrical variations in the poems. Moreover, PROSODIC vastly outperforms a bare metrical template when that template does not match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, for parsing poems whose meter is unknown, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then arguably reliable enough (at least to be interesting) when we don't.
+
+The data above were produced when the meter was defined as the following constraints and weights: *strength.s=>-u/3 strength.w=>-p/3 stress.s=>-u/2 stress.w=>-p/2 footmin-none/1 footmin-no-s-unless-preceded-by-ww/10 posthoc-no-final-ww/1 posthoc-standardize-weakpos/1*. These constraints will be discussd below. 
+
+
+
 
 
 

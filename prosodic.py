@@ -72,7 +72,7 @@ else:	## if not imported, go into interactive mode
 		## welcome
 		print ""
 		print "################################################"
-		print "## welcome to prosodic!                  v0.2 ##"
+		print "## welcome to PROSODIC!                  v1.1 ##"
 		print "################################################"
 		print ""
 		text=""

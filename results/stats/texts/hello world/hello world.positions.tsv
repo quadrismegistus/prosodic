@@ -1,0 +1,4 @@
+position	strength.s=>-u	strength.w=>-p	stress.s=>-u	stress.w=>-p	footmin-none	footmin-no-s-unless-preceded-by-ww	posthoc-no-final-ww	posthoc-standardize-weakpos
+pos0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+pos1	0.0	0.0	0.333333333333	0.0	0.0	0.0	0.0	0.0
+pos2	0.0	0.0	0.0	0.333333333333	0.0	0.0	0.0	0.0

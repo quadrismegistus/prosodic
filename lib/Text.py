@@ -58,7 +58,7 @@ class Text(entity):
 			self.init_mary(filename)
 		else:
 			lines = filename.split('\n')
-			self.name = lines[0]
+			self.name = noPunc(lines[0].lower())[:25].strip().replace(' ','-')
 			self.filename = lines[0].replace(' ','_')[:100]+'.txt'
 			#self.init_text(lines)
 			#if prosodic.config['use_open_mary']:
@@ -292,15 +292,17 @@ class Text(entity):
 		init.ckeys="\t".join(sorted([str(x) for x in init.meter.constraints]))
 
 		ents=self.ents(arbiter)
+		self.scansion_prepare(meter=meter,conscious=True)
 		for ent in ents:
 			ent.parse(meter,init=init)
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
+			ent.scansion(meter=meter,conscious=True)
 	
 		#self.scansion_prepare(conscious=True)
-		self.scansion(meter=meter,conscious=True)
+		#self.scansion(meter=meter,conscious=True)
 	
-	@property
+	#@property
 	def isParsed(self):
 		return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
 	

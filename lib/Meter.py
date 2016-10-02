@@ -295,17 +295,24 @@ class Meter:
 			if onlyBounded and parse.isBounded:
 				continue
 			
+			o+='-'*20+'\n'
 			o+="[parse #" + str(i) + " of " + str(n) + "]: " + str(parse.getErrorCount()) + " errors\n"
 			o+=parse.__report__(proms=False)+"\n"
 			o+=self.printScores(parse.constraintScores)
+			o+='-'*20
 			o+="\n\n"
 			i-=1
 		return o
 			
 	def printScores(self, scores):
-		output = ""
+		output = "\n"
 		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items())):
-			output += makeminlength("[*"+key+"]:"+str(value),24)
-		output = output[:-1]
+			if not value: continue
+			#output += makeminlength("[*"+key+"]:"+str(value),40)
+			#output+='[*'+key+']: '+str(value)+"\n"
+			output+='[*'+key+']: '+str(value)+"  "
+		#output = output[:-1]
+		if not output.strip(): output=''
+		output +='\n'
 		return output
 		

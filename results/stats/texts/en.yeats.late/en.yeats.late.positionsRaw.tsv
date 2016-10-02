@@ -1,0 +1,16 @@
+position	strength.s=>-u	strength.w=>-p	stress.s=>-u	posthoc-no-final-ww	footmin-no-s-unless-preceded-by-ww	posthoc-standardize-weakpos	stress.w=>-p	footmin-none
+pos0	0	2	12	0	0	0	34	22
+pos1	0	0	12	0	0	0	9	47
+pos2	0	2	11	1	0	0	21	61
+pos3	0	1	31	0	0	5	11	35
+pos4	0	1	11	1	0	5	23	45
+pos5	0	0	27	1	0	44	8	16
+pos6	0	2	8	2	0	23	14	26
+pos7	0	1	27	0	0	25	7	2
+pos8	0	0	3	0	0	25	13	13
+pos9	0	0	13	0	0	25	0	3
+pos10	0	0	1	0	0	4	3	7
+pos11	0	0	7	0	0	13	1	2
+pos12	0	0	0	0	0	1	1	1
+pos13	0	0	1	0	0	2	0	0
+pos14	0	0	0	0	0	1	0	0

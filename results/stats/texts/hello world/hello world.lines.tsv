@@ -1,0 +1,4 @@
+line	strength.s=>-u	strength.w=>-p	stress.s=>-u	stress.w=>-p	footmin-none	footmin-no-s-unless-preceded-by-ww	posthoc-no-final-ww	posthoc-standardize-weakpos
+line000002_how|ARE|you	0	0	2.0	0	0	0	0	0.0
+line000001_hel|LO|world	0	0	0	2.0	0	0	0	0.0
+line000003_GO|ah|EAD	0	0	0	0	0	0	0	0

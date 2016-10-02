@@ -1,0 +1,5 @@
+line	strength.s=>-u	strength.w=>-p	stress.s=>-u	stress.w=>-p	footmin-none	footmin-no-s-unless-preceded-by-ww	posthoc-no-final-ww	posthoc-standardize-weakpos
+line000004_with|LOSS|of|E|den|TILL|one|GRE|ater|MAN	0	0	2.0	0	0	0	0	0.0
+line000003_brought|DEATH|in|TO|the|WORLD|and|ALL|our|WOE	0	0	0	2.0	0	0	0	0.0
+line000002_of|THAT|for|BID|den|TREE|whose|MOR|tal|TAST	0	0	0	0	0	0	0	0.0
+line000001_of|MANS|first|DI|so|BE|di|ENCE|and.the|FRUIT	0	0	2.0	2.0	1.0	0	0	1.0

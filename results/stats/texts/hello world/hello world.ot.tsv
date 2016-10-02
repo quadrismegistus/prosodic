@@ -1,0 +1,5 @@
+line                                    	meter	[*footmin-no-s-unless-preceded-by-ww]	[*footmin-none]	[*posthoc-no-final-ww]	[*posthoc-standardize-weakpos]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
+hello world                             	wsw	0	0	0	2.0	0	0	0	0.0
+                                        	wss	0	0	0	0	1.0	10.0	0	0
+how are you                             	wsw	0	0	2.0	0	0	0	0	0.0
+go ahead                                	sws	0	0	0	0	0	0	0	0

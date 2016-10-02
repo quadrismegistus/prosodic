@@ -476,7 +476,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def parse(self,arbiter='Line',init=None,namestr=[]):
 		"""Parse this object metrically."""
 		
-		print "parsing!"
+		print ">> parsing!"
 		
 		import time
 		if entity.time==0:
@@ -766,7 +766,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						totalstr+=ln+"\n"
 			
 			if stattype.startswith("_"): continue
-			writeToFile(name,stattype,totalstr,iscorpus=True)
+			if init.classname()=='Corpus':
+				writeToFile(name,stattype,totalstr,iscorpus=True)
 		return None					
 
 	def _getFeatValDict(self,init=None):
@@ -1416,7 +1417,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if (hasattr(self,'allParses')):
 			self.om(str(self))
 			for parseList in self.allParses():
-				self.om("\n"+meter.printParses(parseList),conscious=False)
+				hdr="\n\n"+'='*20+'\n'
+				ftr='='*20+'\n'
+				self.om(hdr+meter.printParses(parseList)[:-1]+ftr,conscious=False)
 		else:
 			for child in self.children:
 				if type(child)==type([]): continue

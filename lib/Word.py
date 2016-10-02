@@ -68,7 +68,9 @@ class Word(entity):
 		return "<"+self.classname()+"."+self.u2s(self.token)+"> ["+self.__str__stressedSylls()+"]"
 		
 	def __str__(self):
-		return str(self.token)+str("\t<")+str(self.__str__stressedSylls())+str(">")
+		tok=self.token if type(self.token)==str else self.token.encode('utf-8')
+		return tok+str("\t<")+str(self.__str__stressedSylls())+str(">")
+		#return self.token+"\t<"+self.__str__stressedSylls()+">"
 
 	def __str__weight(self):
 		if not hasattr(self,'weight'):

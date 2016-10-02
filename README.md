@@ -123,72 +123,35 @@ By default, PROSODIC has no module dependencies. The modules it does use—[lexc
 
 
 
-## How it works
+## Usage
+
+There are two main ways of using PROSODIC: in interactive mode, and, for more Python-advanced users, as a Python module.
+
+### Interactive mode
+
+You can enter the interactive mode of prosodic by running `python prosodic.py`. This will bring you to an interface like this:
+
+	################################################
+	## welcome to PROSODIC!                  v1.1 ##
+	################################################
 
 
-### Overview of the IPA transcription process
+		[please type a line of text, or enter one of the following commands:]
+			/text	corpora[folder/file.txt] or [blank for file-list]
+			/corpus	corpora[folder] or [blank for dir-list]
 
-PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in *config.txt*, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
+			/eval	evaluate this meter against a hand-tagged sample
+			/mute	hide output from screen
+			/save	save previous output to file
+			/exit	exit
 
-Prosodic annotates a given word in a language it recognizes by interpreting that word as a hierarchical organization of its phonological properties: a word contains syllables; which contain onsets, nuclei, and coda; which themselves contain phonemes. For instance, the English word "love" is interpreted:
+	>>[0.0s] prosodic:en$ 
 
-	| (W1) <Word>	love	<'l ah v>
-	|     [numSyll=1]
-	|
-	|-----| (W1.S1) <Syllable>                               
-	      |     [prom.stress=1.0]
-	      |
-	      |-----| (W1.S1.SB1) <SyllableBody>
-	            |     [shape=CVC]
-	            |     [+prom.weight]
-	            |
-	            |-----| (W1.S1.SB1.O1) <Onset>
-	                  |
-	                  |-----| (W1.S1.SB1.O1.P1) <Phoneme>          [l]
-	            |
-	            |-----| (W1.S1.SB1.R2) <Rime>
-	                  |
-	                  |-----| (W1.S1.SB1.R2.N1) <Nucleus>
-	                        |
-	                        |-----| (W1.S1.SB1.R2.N1.P1) <Phoneme> [ʌ]
-	                  |
-	                  |-----| (W1.S1.SB1.R2.C2) <Coda>
-	                        |
-	                        |-----| (W1.S1.SB1.R2.C2.P1) <Phoneme> [v]
+#### Loading text
+
+There's a few ways to enter text into PROSODIC. The first is simply to type a line.
 
 
-Due to this hierarchical organization, sophisticated queries become possible on the linguistic structures in their interrelationships. In other words, since the hierarchy defines basic "child-of" or "contained-in" relationships between linguistic structures, it is possible to query for, say, "all onsets *with* at least one voiced consonant *in* stressed syllables." (For more details on the included query language, see below).
-
-### Overview of metrical parser
-
-Metrical parsing is performed in the spirit of Optimality Theory: given user-specified constraints, along with a parameter specifying the maximum number of syllables allowed in strong/weak metrical positions, all non-harmonically-bounded scansions of the line are generated, and ranked in terms of their weighted violation scores.
-	- note: These and all other user-specified configurations occur in the file "config.txt" in the main prosodic directory. See that file or instructions, or #5 below for more details.
-
-Included constraints:
-	- Prosodic includes built-in support for 13 constraints, all of which we have taken from {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}:
-		foot-min			# a metrical position may not contain *more than* a minimal foot (ie, weight-wise, allowed positions are H, L, LL, or LH)
-
-	strength.s=>-u		# a *strong* metrical position may not contain *any* "weak" syllables, or "troughs" (ie, the monosyllable rule, strong version 1)
-	strength.w=>-p		# a *weak* metrical position may not contain *any* "strong" syllables, or "peaks" (ie, the monosyllable rule, strong version 2)
-	strength.s=>p		# a *strong* metrical position must contain *at least one* syllable which is *prominent* in terms of *strength* (ie, the monosyllable rule, weak version 1)
-	strength.w=>u		# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength* (ie, the monosyllable rule, weak version 2)
-
-	stress.s=>-u		# a *strong* metrical position may not contain *any* unstressed syllables
-	stress.w=>-p		# a *weak* metrical position may not contain *any* stressed syllables
-	stress.s=>p			# a *strong* position must contain *at least one* stressed syllable
-	stress.w=>u			# a *weak* position must contain *at least one* unstressed syllable
-
-	#weight.s=>-u		# a *strong* metrical position may not contain *any* light syllables
-	#weight.w=>-p		# a *weak* metrical position may not contain *any* heavy syllables
-	weight.s=>p			# a *strong* metrical position must contain *at least one* heavy syllable
-	weight.w=>u			# a *weak* metrical position must contain *at least one* light syllable		
-
-
-
-
-
-
-## How to run prosodic
 
  A. There are three possible ways to initiate prosodic:
 	i. With no arguments:
@@ -306,6 +269,72 @@ Included constraints:
 	i. Options for the metrical parser (maximum position size, and metrical constraints);
 	ii. options determining how texts group words into lines (by linebreak, punctuation, or both);
 	iii. how linguistic annotations are displayed.
+
+
+
+
+## How it works
+
+
+### Overview of the IPA transcription process
+
+PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in *config.txt*, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
+
+Prosodic annotates a given word in a language it recognizes by interpreting that word as a hierarchical organization of its phonological properties: a word contains syllables; which contain onsets, nuclei, and coda; which themselves contain phonemes. For instance, the English word "love" is interpreted:
+
+	| (W1) <Word>	love	<'l ah v>
+	|     [numSyll=1]
+	|
+	|-----| (W1.S1) <Syllable>                               
+	      |     [prom.stress=1.0]
+	      |
+	      |-----| (W1.S1.SB1) <SyllableBody>
+	            |     [shape=CVC]
+	            |     [+prom.weight]
+	            |
+	            |-----| (W1.S1.SB1.O1) <Onset>
+	                  |
+	                  |-----| (W1.S1.SB1.O1.P1) <Phoneme>          [l]
+	            |
+	            |-----| (W1.S1.SB1.R2) <Rime>
+	                  |
+	                  |-----| (W1.S1.SB1.R2.N1) <Nucleus>
+	                        |
+	                        |-----| (W1.S1.SB1.R2.N1.P1) <Phoneme> [ʌ]
+	                  |
+	                  |-----| (W1.S1.SB1.R2.C2) <Coda>
+	                        |
+	                        |-----| (W1.S1.SB1.R2.C2.P1) <Phoneme> [v]
+
+
+Due to this hierarchical organization, sophisticated queries become possible on the linguistic structures in their interrelationships. In other words, since the hierarchy defines basic "child-of" or "contained-in" relationships between linguistic structures, it is possible to query for, say, "all onsets *with* at least one voiced consonant *in* stressed syllables." (For more details on the included query language, see below).
+
+### Overview of metrical parser
+
+Metrical parsing is performed in the spirit of Optimality Theory: given user-specified constraints, along with a parameter specifying the maximum number of syllables allowed in strong/weak metrical positions, all non-harmonically-bounded scansions of the line are generated, and ranked in terms of their weighted violation scores.
+	- note: These and all other user-specified configurations occur in the file "config.txt" in the main prosodic directory. See that file or instructions, or #5 below for more details.
+
+Included constraints:
+	- Prosodic includes built-in support for 13 constraints, all of which we have taken from {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}:
+		foot-min			# a metrical position may not contain *more than* a minimal foot (ie, weight-wise, allowed positions are H, L, LL, or LH)
+
+	strength.s=>-u		# a *strong* metrical position may not contain *any* "weak" syllables, or "troughs" (ie, the monosyllable rule, strong version 1)
+	strength.w=>-p		# a *weak* metrical position may not contain *any* "strong" syllables, or "peaks" (ie, the monosyllable rule, strong version 2)
+	strength.s=>p		# a *strong* metrical position must contain *at least one* syllable which is *prominent* in terms of *strength* (ie, the monosyllable rule, weak version 1)
+	strength.w=>u		# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength* (ie, the monosyllable rule, weak version 2)
+
+	stress.s=>-u		# a *strong* metrical position may not contain *any* unstressed syllables
+	stress.w=>-p		# a *weak* metrical position may not contain *any* stressed syllables
+	stress.s=>p			# a *strong* position must contain *at least one* stressed syllable
+	stress.w=>u			# a *weak* position must contain *at least one* unstressed syllable
+
+	#weight.s=>-u		# a *strong* metrical position may not contain *any* light syllables
+	#weight.w=>-p		# a *weak* metrical position may not contain *any* heavy syllables
+	weight.s=>p			# a *strong* metrical position must contain *at least one* heavy syllable
+	weight.w=>u			# a *weak* metrical position must contain *at least one* light syllable		
+
+
+
 
 
 

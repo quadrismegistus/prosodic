@@ -261,6 +261,18 @@ def gleanPunc(aToken):
 		aToken = aToken[:-1]
 	return (aToken, aPunct)
 
+def noPunc(token):
+	if not token: return token
+	x=gleanPunc(token)[0]
+	x=x.split('&')[0]
+	y=x.split(';')
+	try:
+		x=y[1]
+	except IndexError:
+		pass
+	x=x.split('\\')[0]
+	return x
+
 class string2(str):
 	def overcount(self, pattern): #Returns how many p on s, works for overlapping
 		ocu = 0

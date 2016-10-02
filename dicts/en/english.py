@@ -2,22 +2,57 @@
 import sys,codecs,os,subprocess
 from ipa import sampa2ipa
 
+DIR_ROOT=os.path.split(globals()['__file__'])[0]
+CMU_DICT_FN=os.path.join(DIR_ROOT,'english.tsv')
+CMU_DICT={}
+
+
+
+
+def load_cmu(fn=CMU_DICT_FN):
+	global CMU_DICT
+	with codecs.open(fn,encoding='utf-8') as f:
+		for ln in f:
+			ln=ln.strip()
+			if not ln or ln.count('\t')!=1: continue
+			word,ipa=ln.split('\t')
+			if not word in CMU_DICT: CMU_DICT[word]=[]
+			CMU_DICT[word]+=[ipa]
 
 def get(token,config={}):
-	TTS_ENGINE=config.get('en_TTS_ENGINE','')
-	if TTS_ENGINE=='espeak':
-		ipa=espeak2ipa(token)
-		cmu=ipa2cmu(ipa)
-		cmu_sylls = syllabify_cmu(cmu)
-		ipa = cmusylls2ipa(cmu_sylls)
-	elif TTS_ENGINE=='openmary':
-		ipa=openmary2ipa(token)
-	else:
-		return None
+	# If not CMU loaded
+	global CMU_DICT
+	if not CMU_DICT: load_cmu()
 
-	num_sylls=ipa.count('.')+1
-	sylls_text = syllabify_orth(token,num_sylls=num_sylls)
-	return [(ipa, sylls_text)]
+	# First try CMU
+	ipas = CMU_DICT.get(token,[])
+
+	# Else, use TTS
+	if not ipas:
+		TTS_ENGINE=config.get('en_TTS_ENGINE','')
+		if TTS_ENGINE=='espeak':
+			ipa=espeak2ipa(token)
+			cmu=ipa2cmu(ipa)
+			cmu_sylls = syllabify_cmu(cmu)
+			ipa = cmusylls2ipa(cmu_sylls)
+		elif TTS_ENGINE=='openmary':
+			ipa=openmary2ipa(token)
+		else:
+			return None
+		ipas=[ipa]
+
+
+	## Syllabify the orthography if possible
+	results = []
+	for ipa in ipas:
+		num_sylls=ipa.count('.')+1
+		sylls_text = syllabify_orth(token,num_sylls=num_sylls)
+		res = (ipa, sylls_text)
+		results+=[res]
+
+	# Return the results to the dictionary
+	return results
+
 
 def espeak2ipa(token):
 	CMD='espeak -q --ipa '+token

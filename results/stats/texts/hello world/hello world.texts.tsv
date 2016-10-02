@@ -1,0 +1,2 @@
+textname	strength.s=>-u	strength.w=>-p	stress.s=>-u	stress.w=>-p	footmin-none	footmin-no-s-unless-preceded-by-ww	posthoc-no-final-ww	posthoc-standardize-weakpos
+hello world	0.0	0.0	0.0	0.0	0.0	0.0	0.666666666667	0.666666666667

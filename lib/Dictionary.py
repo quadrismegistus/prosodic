@@ -98,13 +98,14 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		
 			
 	def boot(self):		## NEEDS EXTENSION
-		bootfile=os.path.join(self.dictsfolder,self.language+'.tsv')
-		if os.path.exists(bootfile):
-			self.boot_general(bootfile)
-			self.booted=True
+		if not self.getprep:
+			bootfile=os.path.join(self.dictsfolder,self.language+'.tsv')
+			if os.path.exists(bootfile):
+				self.boot_general(bootfile)
+				self.booted=True
 			
-		if (not self.getprep) and (not self.booted):
-			exit("<error:dictionary> neither a "+self.language+".tsv nor a "+self.language+".py in directory "+self.dictsfolder)
+			if not self.booted:
+				exit("<error:dictionary> neither a "+self.language+".tsv nor a "+self.language+".py in directory "+self.dictsfolder)
 	
 	def str2unicode(self,string):
 		o=u""
@@ -464,6 +465,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if word in self.maybestressedWords:		# only for monosyllabs
 			wordobjs=self.dict['Word'][word]
 			stresses = [wordobj.stress for wordobj in wordobjs]
+			if max([len(sx) for sx in stresses])>1:
+				return wordobjs
 
 			if 'U' in stresses and 'P' in stresses:
 				unstressed_words = [wordobj for wordobj in wordobjs if wordobj.stress=='U']
@@ -483,6 +486,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 					newobjs=[self.make((_ipa,None),word) for _ipa in [ipa,newipa]]
 					#newobjs[-1].feat('functionword',True)
 					newobjs[-1].feats['functionword']=True
+				else:
+					print "??",word,stresses
 
 				return newobjs
 
@@ -497,7 +502,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	
 	
 	def get(self,word,stress_ambiguity=True):
-		if type(word)==str: word=unicode(word)
+		if type(word)==str:
+			word=word.decode('utf-8',errors='ignore')
 
 		(word,punct)=gleanPunc(word)
 

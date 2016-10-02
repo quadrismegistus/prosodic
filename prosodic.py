@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 import sys,glob,os,time
-print '>> importing prosodic...'
+#print '>> importing prosodic...'
 
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]
@@ -10,8 +10,10 @@ dir_corpus=os.path.join(dir_prosodic,'corpora')
 sys.path.append(dir_imports)
 
 ## import necessary objects
+#toprintconfig=__name__=='__main__'
+toprintconfig=False
 from tools import *
-config=loadConfig(__name__=='__main__',dir_prosodic=dir_prosodic)
+config=loadConfig(toprint=toprintconfig,dir_prosodic=dir_prosodic)
 import entity
 from entity import being
 from Text import Text
@@ -22,6 +24,7 @@ from Phoneme import Phoneme
 from Word import Word
 from Meter import Meter
 import ipa
+hdrbar="################################################"
 
 ## set defaults
 languages=['en','fi']
@@ -95,8 +98,14 @@ else:	## if not imported, go into interactive mode
 			being.om=''
 		#msg="\n########################################################################\n"
 		msg="\n\t[please type a line of text, or enter one of the following commands:]\n"
-		msg+="\t\t/text\t"+dir_corpus+"[folder/file.txt] or [blank for file-list]\n"
-		msg+="\t\t/corpus\t"+dir_corpus+"[folder] or [blank for dir-list]\n"
+		#msg+="\t\t/text\t"+dir_corpus+"[folder/file.txt] or [blank for file-list]\n"
+		#msg+="\t\t/corpus\t"+dir_corpus+"[folder] or [blank for dir-list]\n"
+		msg+="\t\t/text\tload a text\n"
+		msg+="\t\t/corpus\tload folder of texts\n"
+		msg+="\t\t/paste\tenter multi-line text\n"
+		
+		
+		
 		msg+="\n"
 	
 		if text!="":
@@ -106,7 +115,7 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/query\tquery annotations\n\n"
 		
 			msg+="\t\t/parse\tparse metrically\n"
-		if obj and obj.isParsed:
+		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
 			msg+="\t\t/report\tlook over the parse outputs\n"
 			msg+="\t\t/stats\tget statistics from the parser\n"
@@ -150,10 +159,25 @@ else:	## if not imported, go into interactive mode
 	
 		elif text and text[0]!="/":
 			## load line #######
-			fn=os.path.join(dir_corpus,'.directinput.txt')
-			write(fn,text.replace('//','\n\n').replace('/','\n'))
-			obj = Text(fn)
+			obj = Text(text)
 			####################
+
+		elif text.startswith('/paste'):
+			print "Enter or paste your content here. Press Ctrl-D to save it."
+			contents = []
+			while True:
+				try:
+					line = raw_input("")
+					contents.append(line)
+				except EOFError:
+					break
+				except KeyboardInterrupt:
+					contents=[]
+					break
+				
+			if contents:
+				txt="\n".join(contents)
+				obj=Text(txt)
 	
 		elif text=="/parse":
 			obj.parse()
@@ -241,6 +265,18 @@ else:	## if not imported, go into interactive mode
 					else:
 						if filename[-4]==".txt":
 							print "\t"+filename
+
+				print
+				print "\t" + hdrbar
+				#print ">> to load a text, please either:"
+				print "\t>> select from one of the relative paths above:"
+				print "\t     i.e. /text [foldername]/[filename.txt]"
+				print "\t     e.g. /text shakespeare/sonnet-001.txt"
+				print "\t>> or use an absolute path to a text file on your disk:"
+				print "\t     e.g. /text /absolute/path/to/file.txt"
+				print "\t" + hdrbar
+				print
+
 			else:
 				if os.path.exists(os.path.join(dir_corpus,fn)):
 					obj=Text(os.path.join(dir_corpus,fn))
@@ -259,6 +295,19 @@ else:	## if not imported, go into interactive mode
 					if filename.startswith("."): continue
 					if os.path.isdir(os.path.join(dir_corpus,filename)):
 						print "\t"+filename
+
+
+				print
+				print "\t" + hdrbar
+				#print ">> to load a text, please either:"
+				print "\t>> select from one of the relative paths above:"
+				print "\t     i.e. /corpus [foldername]"
+				print "\t     e.g. /corpus yeats"
+				print "\t>> or use an absolute path to a folder of text files on your disk:"
+				print "\t     e.g. /corpus /absolute/path/to/folder/of/text/files"
+				print "\t" + hdrbar
+				print
+
 			else:		
 				if os.path.exists(os.path.join(dir_corpus,fn)):
 					obj = Corpus(os.path.join(dir_corpus,fn))

@@ -262,6 +262,7 @@ class MeterConstraint:
 
 			if self.name=='posthoc-standardize-weakpos':
 				weak_pos = [pos for pos in all_positions if pos.meterVal=='w']
+				if len(weak_pos)<2: return 0 
 				weak_pos_types = [''.join('w' for slot in pos.slots) for pos in weak_pos]
 				maxcount = max([weak_pos_types.count(wtype) for wtype in set(weak_pos_types)])
 				diff = len(weak_pos) - maxcount

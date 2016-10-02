@@ -5,6 +5,7 @@ from Text import Text
 
 
 class Corpus(entity):
+
 	def __init__(self,corpusRoot,lang=None,printout=None,corpusFiles="*.txt",phrasebreak=',;:.?!()[]{}<>',limWord=None):
 		import prosodic
 		## entity-shared attribtues

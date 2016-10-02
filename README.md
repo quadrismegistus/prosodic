@@ -85,17 +85,42 @@ To install PROSODIC, it's best to pull the github repository here. To do that, t
 
 	git clone git@github.com:quadrismegistus/prosodic.git
 	
-You can also [download the repository as a zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), and unzip it. Either method will create a directory called "prosodic." Enter that folder in the terminal, and boot up prosodic by typing:
+If yo don't have git, you can [get it here](https://git-scm.com/downloads). Or, you can also [download the repository as a zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), and unzip it. Either method will create a directory called "prosodic." Enter that folder in the terminal, and boot up prosodic by typing:
 
 	python prosodic.py
 	
-Instructions on how to use PROSODIC in interactive mode are below.
+PROSODIC can also be used as a python module within your own applications:
+
+	import prosodic as p
+	text = p.Text("Shall I compare thee to a summer's day?")
+	text.parse()
+
+Instructions on how to use PROSODIC in interactive mode, and as a python module, are below. 
 
 ### Dependencies
 
 #### Text to speech engine for parsing unknown English words
 
-In order to parse unknown English words, you will need to install an open-source Text-to-Speech engine: either [espeak](http://espeak.sourceforge.net/download.html) (recommended), or [OpenMary](http://mary.dfki.de/download/index.html) [select "Run time package"]. If using OpenMary, you will need to start a server process before running PROSODIC. To do that, unzip the *marytts-5.x.zip* file you downloaded, then run these commands in your terminal:
+By default, PROSODIC uses the CMU pronunciation dictionary to discover the syllable boundaries, stress pattern, and other information about English words necessary for metrical parsing. Lines with words not in this dictionary are, again by default, skipped when parsing. However, with a Text-to-Speech engine, it's possible to "sound out" unknown English words into a stressed, syllabified form that can then be parsed. PROSODIC supports two TTS engines: *espeak* (recommended), and *OpenMary*. I find that espeak produces better syllabifications than OpenMary (at least for English), and is simpler to use, but either will work just fine.
+
+##### Setting up espeak
+
+[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal:
+	
+	brew install espeak
+
+After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.txt* file to "espeak." That's it!
+
+*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which PROSODIC draws from (if possible) before resorting to a TTS engine.
+
+##### Setting up OpenMary
+
+OpenMary is another open-source TTS engine, written in Java and developed by the [German Research Center for Artificial Intelligence](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). 
+
+
+In order to parse unknown English words, you will need to install an open-source Text-to-Speech engine: either [espeak](http://espeak.sourceforge.net/download.html) (recommended), or [OpenMary](http://mary.dfki.de/download/index.html) [select "Run time package"]. If you're running Mac OS X, an alternative way to install 
+
+If using OpenMary, you will need to start a server process before running PROSODIC. To do that, unzip the *marytts-5.x.zip* file you downloaded, then run these commands in your terminal:
 
 	cd marytts-5.x
 	./bin/marytts-server.sh 

@@ -25,7 +25,8 @@ def get(token,config={}):
 	if not CMU_DICT: load_cmu()
 
 	# First try CMU
-	ipas = CMU_DICT.get(token,[])
+	tokenl=token.lower()
+	ipas = CMU_DICT.get(tokenl,[])
 
 	# Else, use TTS
 	if not ipas:

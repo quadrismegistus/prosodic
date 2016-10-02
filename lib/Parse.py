@@ -209,7 +209,7 @@ class Parse(entity):
 			unitlist = ""
 			factlist = ""
 			for unit in pos.slots:
-				unitlist += unicode(unit.token) + " "
+				unitlist += self.u2s(unit.token) + " "
 				#factlist += unit.stress + unit.weight + " "
 			unitlist = unitlist[:-1]
 			#factlist = factlist[:-1]

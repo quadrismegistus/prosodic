@@ -23,7 +23,7 @@ en_TTS_ENGINE = espeak			# Use espeak to pronounce unknown words; syllabified by
 # [1. METRICAL PARSING]
 ## [1.1 Position Size]
 ## the number of syllables allowed per metrical position (cf. Kiparsky&Hanson's "position size" parameter)
-maxS=2		#. the number of syllables allowed in a *strong* metrical position
+maxS=1		#. the number of syllables allowed in a *strong* metrical position
 maxW=2		#. the number of syllables allowed in a *weak* metrical position
 #splitheavies=1		# allow positions to be as small as a single mora (a split heavy syllable across two metrical positions)
 splitheavies=0		# positions are at least one syllable in size
@@ -67,7 +67,7 @@ footmin-none/1		#. a disyllabic metrical position will always break this constra
 #footmin-none-unless-in-second-position/1
 #footmin-no-s/1 		# a disyllabic STRONG metrical position will break this constraint
 #footmin-no-w/1 		# a disyllabic WEAK metrical position will break this 
-footmin-no-s-unless-preceded-by-ww/10	# a disyllabic strong position is not allowed unless it is preceded by a ww
+#footmin-no-s-unless-preceded-by-ww/10	# a disyllabic strong position is not allowed unless it is preceded by a ww
 
 #footmin-wordbound-nomono/102		#.? in disyllabic metrical position crossing a word-boundary, neither word can be a monosyllable.
 
@@ -79,8 +79,8 @@ footmin-no-s-unless-preceded-by-ww/10	# a disyllabic strong position is not allo
 
 ## new new (Ryan) CONTRAINTS THAT APPLY ONCE LINE IS COMPLETE
 
-posthoc-no-final-ww/1		# Punish a final ww often throws off an otherwise iambic line
-posthoc-standardize-weakpos/1	# Punish lines mixing ww and w
+#posthoc-no-final-ww/1		# Punish a final ww often throws off an otherwise iambic line
+#posthoc-standardize-weakpos/1	# Punish lines mixing ww and w
 
 #extrametrical-first-pos/0	# Force all constraints to be 0 for first position
 

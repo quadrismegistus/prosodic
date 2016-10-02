@@ -215,7 +215,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns an ASCII representation of the Unicode string 'u'."""
 		
 		try:
-			return str(u.encode('utf-8','replace'))
+			return u.encode('utf-8',errors='ignore')
 		except UnicodeDecodeError:
 			return str(u)
 			
@@ -1416,10 +1416,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		meter=Meter('default')
 		if (hasattr(self,'allParses')):
 			self.om(str(self))
-			for parseList in self.allParses():
-				hdr="\n\n"+'='*20+'\n'
-				ftr='='*20+'\n'
-				self.om(hdr+meter.printParses(parseList)[:-1]+ftr,conscious=False)
+			allparses=self.allParses()
+			numallparses=len(allparses)
+			for pi,parseList in enumerate(self.allParses()):
+				line=self.iparse2line(pi).txt
+				hdr="\n\n"+'='*30+'\n[line #'+str(pi+1)+' of '+str(numallparses)+']: '+line+'\n\n\t'
+				ftr='='*30+'\n'
+				self.om(hdr+meter.printParses(parseList).replace('\n','\n\t')[:-1]+ftr,conscious=False)
 		else:
 			for child in self.children:
 				if type(child)==type([]): continue

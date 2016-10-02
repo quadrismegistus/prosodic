@@ -46,8 +46,9 @@ else:	## if not imported, go into interactive mode
 	
 	## but do not go into interactive mode if only a single argument
 	## (which is later proven to be a real file or directory)
+	## ACTUALLY NVERMIND ABOVE: GO INTO INTERACTIVE MODE IF SINGLE ARGUMENT
 	try:
-		cmd=sys.argv[2]
+		cmd=sys.argv[1]
 		being.printout=False
 		if not cmd.startswith('/'):
 			cmd=""
@@ -63,7 +64,7 @@ else:	## if not imported, go into interactive mode
 				#dir_corpus=sys.argv[1]
 				skip=True
 			else:
-				#dir_corpus=os.path.dirname(sys.argv[1])
+				#dir_corpus=os.path.dirname(sys.G[1])
 				basename=os.path.basename(sys.argv[1])
 				text="/text "+sys.argv[1]
 				if basename[0:2] in languages:
@@ -75,7 +76,7 @@ else:	## if not imported, go into interactive mode
 		## welcome
 		print ""
 		print "################################################"
-		print "## welcome to PROSODIC!                  v1.1 ##"
+		print "## welcome to prosodic!                  v1.1 ##"
 		print "################################################"
 		print ""
 		text=""
@@ -134,7 +135,7 @@ else:	## if not imported, go into interactive mode
 		msg+="\t\t/save\tsave previous output to file\n"
 		msg+="\t\t/exit\texit\n"
 		#msg+="#######################################################################\n\n"
-		msg+="\n>>["+str(round((time.clock() - timestart),2))+"s] prosodic:"+lang+"$ "
+		msg+="\n>> ["+str(round((time.clock() - timestart),2))+"s] prosodic:"+lang+"$ "
  	
 	 	## restart timer
 		timestart=time.clock()
@@ -154,7 +155,7 @@ else:	## if not imported, go into interactive mode
 				dict[k].persist()
 				dict[k].close()
 			print
-			print "Goodbye."
+			print ">> goodbye."
 			exit()
 	
 		elif text and text[0]!="/":
@@ -163,7 +164,7 @@ else:	## if not imported, go into interactive mode
 			####################
 
 		elif text.startswith('/paste'):
-			print "Enter or paste your content here. Press Ctrl-D to save it."
+			print ">> enter or paste your content here. press Ctrl-D when finished."
 			contents = []
 			while True:
 				try:

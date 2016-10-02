@@ -156,6 +156,10 @@ class Line(entity):
 	def __repr__(self):
 		return " ".join([child[0].getToken() for child in self.children])
 
+	@property
+	def txt(self):
+		return " ".join([child[0].getToken() for child in self.children])
+
 
 	def str_wordbound(self):
 		o=[]

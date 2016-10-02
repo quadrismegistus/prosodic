@@ -187,6 +187,8 @@ class Word(entity):
 			return self.u2s(self.token) + self.u2s(self.punct)
 		else:
 			return self.u2s(self.token)
+
+		
 	def getPOS(self):
 		return self.pos
 	def getStress(self):

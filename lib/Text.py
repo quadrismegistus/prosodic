@@ -22,6 +22,7 @@ class Text(entity):
 		self.featpaths={}
 		self.__parses={}
 		self.__bestparses={}
+		self.__parsed_ents={}
 		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
 		self.limWord = limWord
@@ -283,6 +284,7 @@ class Text(entity):
 		
 		self.__parses[meter]=[]
 		self.__bestparses[meter]=[]
+		self.__parsed_ents[meter]=[]
 
 		init=self
 		if not hasattr(init,'meter_stats'): init.meter_stats={'lines':{},'positions':{},'texts':{}, '_ot':{},'_constraints':{}}
@@ -297,11 +299,17 @@ class Text(entity):
 			ent.parse(meter,init=init)
 			self.__parses[meter].append( ent.allParses(meter) )
 			self.__bestparses[meter].append( ent.bestParse(meter) )
+			self.__parsed_ents[meter].append(ent)
 			ent.scansion(meter=meter,conscious=True)
 	
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)
 	
+	def iparse2line(self,i,meter=None):
+		if not meter:
+			meter=self.__parsed_ents.keys()[0]
+		return self.__parsed_ents[meter][i]
+
 	#@property
 	def isParsed(self):
 		return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])

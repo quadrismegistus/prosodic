@@ -308,7 +308,7 @@ class Meter:
 		output = "\n"
 		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items())):
 			if not value: continue
-			#output += makeminlength("[*"+key+"]:"+str(value),40)
+			#output += makeminlength("[*"+key+"]:"+str(value),24)
 			#output+='[*'+key+']: '+str(value)+"\n"
 			output+='[*'+key+']: '+str(value)+"  "
 		#output = output[:-1]

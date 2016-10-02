@@ -132,7 +132,7 @@ There are two main ways of using PROSODIC: in interactive mode, and, for more Py
 You can enter the interactive mode of prosodic by running `python prosodic.py`. This will bring you to an interface like this:
 
 	################################################
-	## welcome to PROSODIC!                  v1.1 ##
+	## welcome to prosodic!                  v1.1 ##
 	################################################
 
 
@@ -146,131 +146,85 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 			/save	save previous output to file
 			/exit	exit
 
-	>>[0.0s] prosodic:en$ 
+	>> [0.0s] prosodic:en$ 
 
 #### Loading text
 
-There's a few ways to enter text into PROSODIC. The first is simply to type a line.
+The first thing to do when using PROSODIC is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within PROSODIC's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot PROSODIC with: `python prosodic.py /path/to/my/file.txt`.
+
+#### Checking phonetic/phonological annotations
+
+Few commands for this.
+
+#### Metrically parsing text
+
+The command `/parse` will metrically parse whatever text is currently loaded into PROSODIC. Once the text is parsed, further commands become possible, which all either view or save the data gleaned from the parser.
+
+The command `/scan` prints the best parse for each line, along with statistics on which constraints it violated. [This output, like any other output, can be saved to disk (and then opened with Excel) by using the `/save` command.] For instance, here are the first four lines of Paradise Lost, using the `/scan` command:
+
+	text                                    		parse                                   		#pars	#viol	meter			[*footmin-none]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
+	of mans first disobedience and the fruit		of|MANS|first|DI|so|BE|di|ENCE|and.the|FRUIT	3		5		wswswswswws		0				0					2					2				1
+	of that forbidden tree whose mortal tast		of|THAT|for|BID|den|TREE|whose|MOR|tal|TAST		1		0		wswswswsws		0				0					0					0				0
+	brought death into the world and all our woe	brought|DEATH|in|TO|the|WORLD|and|ALL|our|WOE	1		2		wswswswsws		0				0					0					2				0
+	with loss of eden till one greater man  		with|LOSS|of|ED|en|TILL|one|GRE|ater|MAN		1		2		wswswswsws		0				0					2					0				0
 
 
 
- A. There are three possible ways to initiate prosodic:
-	i. With no arguments:
-		- [enter:] 	python [path_to_prosodic]/prosodic.py
-		- [effect:]	This has the effect of bringing the user to the "interactive mode" of the script (for more details, see #4 below).
-		- [uses:]	This runtime method is most useful for testing out prosodic: entering a line, looking at its syllabifications, parsing it, and so on.
-		
-	ii. With one argument: a text-file or directory of text-files
-		- [enter:]	python [path_to_prosodic]/prosodic.py [path_to_textfile_or_directory]
-		- [effect:]	This runtime method is unique in that it does *not* bring the user into the interactive mode of the script; instead, as Prosodic annotates the text or corpus, it outputs the following:
-						## loading Text en.poison.txt...
-						1	never       P:'n eh . v er     S:PU		W:LH
-						2	came        P:'k ey m          S:P		W:H
-						3	poison      P:'p oy . z ah n   S:PU		W:HH
-						4	from        P:f er m           S:U		W:H
-						5	so          P:'s ow            S:P		W:H
-						6	sweet       P:'s w iy t        S:P		W:H
-						7	a           P:ah               S:U		W:L
-						8	place       P:'p l ey s        S:P		W:H
-						. . .
-		- [uses:]	The principal benefit of this method is that it allows the user to manipulate this output using other terminal-based commands.
-					For instance, to "pipe" this output to a separate file:
-						python prosodic.py file.txt > myoutput.txt
-					Or to use "grep" to search for patterns in the pronunciation (P:), stress (S:), and/or weight outputs (W:):
-						<some grep example(s) from Arto here?>
+The command `/report` is a more verbose version of `/scan`, printing each possible (i.e. non-harmonically-bounded) parse for each line. For instance, for each line, it produces an output like:
 
-	iii. With two arguments: (1) a text-file or directory of text-files, and (2) any other character or string, eg "$"
-		- [enter:]	python [path_to_prosodic]/prosodic.py [path_to_textfile_or_directory] $
-		- [effect:]	Like ii, this method annotates the text or directory of texts; however, it does not output the above, but instead brings the user to the interactive mode of the script.
-		- [uses:]	If you want to parse a particular text or corpus, it's often more convenient to load that text or directory as an argument; but in order to parse, one needs to be "inside" the interactive mode of the script. This third option is geared toward this and other uses which require using Prosodic's interactive commands (see just below, #4).
+	==============================
+	[line #1 of 4]: of mans first disobedience and the fruit
 
-
-
-
-[4. HOWTO: USE PROSODIC'S INTERACTIVE COMMANDS]
- A. Once "inside" the interactive mode of the script -- which can be arrived at either by initiating prosodic with no arguments (see #3.i), or with two arguments (see #3.iii) -- Prosodic features several commands you can run by typing "/" followed by the command's name, and then hitting [return].
-
- B. Loading commands:
-	i. /text
-		- Without any "argument" -- ie, anything following the command "/text" -- this command will show all the text-files contained under the "corpusfolder": by default, "corpora/" under the main prosodic directory.
-		- With an argument -- ie, a path to a particular text-file, which can either begin from the "corpusfolder" ([prosodic_dir]/corpora/) or from the root directory of your machine -- this command will load and annotate the text whose path you have given.
+		--------------------
+		[parse #3 of 3]: 8.0 errors
+		1	w	of        	
+		2	s	MANS      	
+		3	w	first     	[*stress.w=>-p]
+		4	s	DI        	
+		5	w	so        	
+		6	s	BE        	
+		7	w	di        	
+		8	s	ENCE      	[*stress.s=>-u]
+		9	w	and       	
+		10	s	THE       	[*stress.s=>-u]
+		11	w	fruit     	[*stress.w=>-p]
 	
-	ii. /corpus
-		- As with /text above, without an "argument" (ie, here, a path to a directory), this command will show all the directories contained under the "corpusfolder" ([prosodic_dir]/corpora/).
-		- With an argument -- also as with /text, a path to a directory which can either begin from the corpusfolder or from the root of your machine -- this command will load and annotate all the text-files contained within the directory whose path you have given.
-		
-	iii. [any text not beginning with a /]
-		- To have Prosodic annotate text not contained in a text-file or directory, simply type that text directly and hit [return].
-		- note: You may use the "/" character to separate multiple lines. (Be careful that your line does not begin with a /, as this will be interpreted as a "command").
+		[*stress.s=>-u]: 4.0  [*stress.w=>-p]: 4.0  
+		--------------------
 	
- C. Parsing commands:
-	i. /parse
-		- This command will metrically parse either the lines of the text you have loaded, or the line(s) of the text you have typed into Prosodic directly.
-		- This command makes the following further commands possible, which all either view or save the data gleaned from the parser:
+		--------------------
+		[parse #2 of 3]: 5.0 errors
+		1	w	of        	
+		2	s	MANS      	
+		3	w	first     	[*stress.w=>-p]
+		4	s	DI        	
+		5	w	so        	
+		6	s	BE        	
+		7	w	di ence   	[*footmin-none]
+		8	s	AND       	[*stress.s=>-u]
+		9	w	the       	
+		10	s	FRUIT     	
 	
-	ii. /scan
-		- This is the brief version of the parsing output-viewer, which prints only the 1 or more parses which have the lowest weighted violation score.
-		- eg:
-				(3 best parse(s): weighted score of 20)	[24 others]
-	       		NE|ver|CAME|poi.son|FROM|so|SWEET|a|PLACE
-	       		NE|ver|CAME.POI|son|FROM|so|SWEET|a|PLACE
-	       		NE|ver.came|POI|son|FROM|so|SWEET|a|PLACE
-		
-	iii. /report
-		- This command is the verbose version of the parsing output-viewer, which prints, for every non-harmonically-bounded parse of every line, its viola
-	 	- eg:
-				[parse #1 of 27]: 20 errors
-				1	s	NE        	[*weight.s=>p]
-				2	w	ver       	[*weight.w=>u]
-				3	s	CAME      	
-				4	w	poi son   	[*weight.w=>u][*foot-min]
-				5	s	FROM      	[*stress.s=>p]
-				6	w	so        	[*stress.w=>u][*weight.w=>u]
-				7	s	SWEET     	
-				8	w	a         	
-				9	s	PLACE     	
-				[*foot-min]:10  [*strength.s=>p]:0  [*stress.w=>u]:3  [*stress.s=>p]:3  [*strength.w=>u]:0  [*weight.s=>p]:1  [*weight.w=>u]:3
-		
-	iv. /stats
-		- This command saves four tab-separated statistics-files to the folder ([prosodic_dir]/results/data):
-			-- parsing statistics by position
-			-- parsing statistics by line
-			-- parsing statistics by text
-			-- the standard Optimality Theory output, of line[tab]parse[tab]violation_scores
-			
-	v. /draw
-		- This command computes a directed graph, akin to a finite state machine, of all the non-harmonically bounded parses, and saves it to the folder ([prosodic_dir]/results/metnets/).
-		- Unfortunately, this command requires several other packages to be installed on your machine:
-			-- networkx <http://networkx.lanl.gov/>
-			-- pydot <http://dkbza.org/pydot.html>
-			-- graphviz <http://www.graphviz.org/>
-		
- D. Query command:
-	i. /query
-		- This command allows the user to perform queries on the linguistic annotations performed on the inputted text.
-		- <need help on documenting possible query combinatorics?>
+		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
+		--------------------
 	
- E. Structure-viewing command:
-	i. /tree
-		- This command shows a tabbed-hierarchical display of the inputted text.
-		- eg: see (#1.ii) above.
-		
- F. Exiting commands:
-	i. /exit
-		- softly, stage left!
+		--------------------
+		[parse #1 of 3]: 5.0 errors
+		1	w	of        	
+		2	s	MANS      	
+		3	w	first     	[*stress.w=>-p]
+		4	s	DI        	
+		5	w	so        	
+		6	s	BE        	
+		7	w	di        	
+		8	s	ENCE      	[*stress.s=>-u]
+		9	w	and the   	[*footmin-none]
+		10	s	FRUIT     	
 	
-	ii. [Ctrl]+C
-		- hard, stage right!
-
-
-[5. HOWTO: CONFIGURE PROSODIC]
- A. All configuration options are stored in the file "config.txt". Please see that file for more detailed instructions.
-
- B. There are three main areas of configuration:
-	i. Options for the metrical parser (maximum position size, and metrical constraints);
-	ii. options determining how texts group words into lines (by linebreak, punctuation, or both);
-	iii. how linguistic annotations are displayed.
-
+		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
+		--------------------
+	
+	==============================
 
 
 

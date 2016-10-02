@@ -229,7 +229,7 @@ Lastly, the `/query` command allows you to query these phonological annotations.
 
 #### Metrically parsing text
 
-The command `/parse` will metrically parse whatever text is currently loaded into PROSODIC. Once the text is parsed, further commands become possible, which all either view or save the data gleaned from the parser.
+The command `/parse` will metrically parse whatever text is currently loaded into PROSODIC. Once the text is parsed, further commands become possible, all of which either view or save the data gleaned from the parser.
 
 The command `/scan` prints the best parse for each line, along with statistics on which constraints it violated. [This output, like any other output, can be saved to disk (and then opened with Excel) by using the `/save` command.] For instance, here are the first four lines of Paradise Lost, using the `/scan` command:
 
@@ -299,7 +299,17 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 
 Finally, you can also save a variety of statistics from the metrical parser in tab-separated form by running the `/stats` command.
 
+#### Evaluating the meter against a hand-parsed sample
 
+ee
+
+### Configuration options
+
+ee
+
+### Running PROSODIC as a python module
+
+ee
 
 
 ## How it works

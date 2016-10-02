@@ -191,7 +191,11 @@ else:	## if not imported, go into interactive mode
 		elif text=="/query":
 			q=""
 			while (not q.startswith("/")):
-				q=raw_input(">> please type the conjunction of features for which you are searching [type /exit to exit]:\neg: [-voice] (Syllable: (Onset: [+voice]) (Coda: [+voice]))\n\n").strip()
+				try:
+					q=raw_input(">> please type the conjunction of features for which you are searching [type / to exit]:\neg: [-voice] (Syllable: (Onset: [+voice]) (Coda: [+voice]))\n\n").strip()
+				except (KeyboardInterrupt,EOFError) as e:
+					text=''
+					break
 			
 				matchcount=0
 				try:

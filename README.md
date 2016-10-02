@@ -105,31 +105,22 @@ By default, PROSODIC uses the CMU pronunciation dictionary to discover the sylla
 
 ##### Setting up espeak
 
-[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal:
-	
-	brew install espeak
+[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.txt* file to "espeak." That's it!
 
-After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.txt* file to "espeak." That's it!
-
-*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which PROSODIC draws from (if possible) before resorting to a TTS engine.
+<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which PROSODIC draws from (if possible) before resorting to a TTS engine.</small>
 
 ##### Setting up OpenMary
 
-OpenMary is another open-source TTS engine, written in Java and developed by the [German Research Center for Artificial Intelligence](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). 
-
-
-In order to parse unknown English words, you will need to install an open-source Text-to-Speech engine: either [espeak](http://espeak.sourceforge.net/download.html) (recommended), or [OpenMary](http://mary.dfki.de/download/index.html) [select "Run time package"]. If you're running Mac OS X, an alternative way to install 
-
-If using OpenMary, you will need to start a server process before running PROSODIC. To do that, unzip the *marytts-5.x.zip* file you downloaded, then run these commands in your terminal:
-
-	cd marytts-5.x
-	./bin/marytts-server.sh 
-
-If espeak, no further setup is necessary. Update which option you select in *config.txt*. PROSODIC defaults to using espeak.
+OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) [select the "Run time package" link]. Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in PROSODIC, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. For espeak, this step isn't necessary.
 
 #### Python module dependencies
 
-??	
+By default, PROSODIC has no module dependencies. The modules it does use—[lexconvert](http://people.ds.cam.ac.uk/ssb22/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python imlpementation of the hyphenation algorithm in TeX](http://nedbatchelder.com/code/modules/hyphenate.html)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
+
+- If you'd like to use the built-in query language (available under "/query" in the interactive mode), you'll need to install pyparsing: `pip install pyparsing`.
+- If you're running OpenMary, you'll need to install the xml parser Beautiful Soup 4, and the unicode module unidecode: `pip install bs4` and `pip install unidecode`.
+- If you'd like to be able to read evaluation data in spreadsheet form (*.xls, *.xlsx) (available under "/eval" in interactive mode), you'll need to install xlrd: `pip install xlrd`.
+
 
 
 ## How it works

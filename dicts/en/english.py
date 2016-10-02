@@ -14,7 +14,7 @@ def get(token,config={}):
 		ipa=openmary2ipa(token)
 	else:
 		return None
-	
+
 	num_sylls=ipa.count('.')+1
 	sylls_text = syllabify_orth(token,num_sylls=num_sylls)
 	return [(ipa, sylls_text)]
@@ -116,8 +116,23 @@ def openmary2ipa(word):
 	return pronounc
 
 def openmary(line):
-	from unidecode import unidecode
-	import re, urlparse, urllib2,bs4
+	import re, urlparse, urllib2
+
+	try:
+		from unidecode import unidecode
+	except ImportError:
+		raise Exception("""
+			In order to use OpenMary, you need to install the unidecode python module. Run:
+			pip install unidecode
+			""")
+
+	try:
+		import bs4
+	except ImportError:
+		raise Exception("""
+			In order to use OpenMary, you need to install the bs4 python module. Run:
+			pip install bs4
+			""")
 
 	#print '>> openmary:',line
 	line=line.replace("'","") # apostrophes seem to make openmary oversyllabify by a mile

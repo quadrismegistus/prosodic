@@ -1,5 +1,4 @@
 import pickle,sys,os
-from pyparsing import nestedExpr
 
 def bigrams(l):
 	return ngram(l,2)
@@ -323,6 +322,14 @@ def matchValue(bool, val):
 	return bool == (val[1] == '+')
 	
 def searchStringToList(str):
+	try:
+		from pyparsing import nestedExpr
+	except ImportError:
+		raise Exception("""
+			In order to use the query language, you need to install the pyparsing python module. Run:
+			pip install pyparsing
+			""")
+
 	if len(str) < 1 or str[0] != '(' or str[-1] != ')':
 		str = '(' + str + ')'
 	return nestedExpr().parseString(str).asList()[0]
@@ -406,7 +413,14 @@ def read_ld(fn):
 		return tsv2ld(fn)
 
 def xls2ld(fn,header=[],sheetname=True,keymap={}):
-	import xlrd
+	try:
+		import xlrd
+	except ImportError:
+		raise Exception("""
+			In order to load Excel files, you need to install the xlrd python module. Run:
+			pip install xlrd
+			""")
+	
 	headerset=True if len(header) else False
 	f=xlrd.open_workbook(fn)
 	ld=[]
@@ -549,22 +563,6 @@ def writegen(fnfn,generator):
 
 		
 		of.write('\t'.join(vals) + '\n')
-
-
-
-
-
-
-def hyphenator():
-	from hyphen import Hyphenator, dict_info
-	from hyphen.dictools import is_installed,install
-	for lang in ['en_US']:
-		if not is_installed(lang):
-			install(lang)
-
-	h_en = Hyphenator('en_US')
-	return h_en
-
 
 
 

@@ -137,8 +137,9 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 
 
 		[please type a line of text, or enter one of the following commands:]
-			/text	corpora[folder/file.txt] or [blank for file-list]
-			/corpus	corpora[folder] or [blank for dir-list]
+			/text	load a text
+			/corpus	load folder of texts
+			/paste	enter multi-line text
 
 			/eval	evaluate this meter against a hand-tagged sample
 			/mute	hide output from screen

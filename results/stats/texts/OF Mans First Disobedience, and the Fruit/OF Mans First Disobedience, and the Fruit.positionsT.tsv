@@ -1,9 +1,0 @@
-constraint	pos0	pos1	pos2	pos3	pos4	pos5	pos6	pos7	pos8	pos9
-[*strength.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*strength.w=>-p]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*stress.s=>-u]	0.0	0.0	0.0	0.0	0.0	0.25	0.0	0.25	0.0	0.0
-[*stress.w=>-p]	0.25	0.0	0.25	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*footmin-none]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.25	0.0
-[*footmin-no-s-unless-preceded-by-ww]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*posthoc-no-final-ww]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
-[*posthoc-standardize-weakpos]	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.25

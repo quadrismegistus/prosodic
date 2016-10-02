@@ -1678,6 +1678,18 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		#print feature
 		#print value
 		#print
+		#for x,y in zip([self, value, feature, self.feats],['self','value','feature','feats']):
+		#	print y,'-->',x,type(x)
+		#print
+		#if not feature and type(value)==list and len(value)==2:
+		#	print "!!!!"
+		#	value=value[-1]
+		#	feature=noPunc(value)
+
+		if not type(feature) in [str,unicode]:
+			print '>> Query failed:',self,value,feature
+			return []
+
 		if feature in self.feats:
 			if matchValue(self.feats[feature], value):
 				matches.append(self)

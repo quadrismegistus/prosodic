@@ -154,7 +154,78 @@ The first thing to do when using PROSODIC is to give it some text to work with. 
 
 #### Checking phonetic/phonological annotations
 
-Few commands for this.
+Even before metrically parsing the text you've loaded (see below), you can run a few commands to test out how PROSODIC has interpreted the text in terms of its phonetics and phonology. The command `/show` will show the phonetic transcription and stress- and weight-profiles for each word:
+
+    000001  of                      P:ʌv                                S:U     W:L
+    000002  mans                    P:'mænz                             S:P     W:H
+    000003  first                   P:'fɛːst                            S:P     W:H
+    000004  disobedience            P:`dɪ.sə.'biː.diː.əns               S:SUPUU W:LLHHH
+    000005  and                     P:ænd                               S:U     W:L
+    000006  the                     P:ðə                                S:U     W:L
+    000007  fruit                   P:'fruːt                            S:P     W:H
+
+The command `/tree` shows a hierarchical description of each word's phonology, as it is embedded in the hierarchical organization of the text. For instance, the beginning of the output from `/tree` for this line would be:
+
+	-----| (S1) <Stanza>
+	      |
+	      |-----| (S1.L1) <Line>                                                                       [of mans first disobedience and the fruit]
+	            |
+	            |-----| (S1.L1.W1) <Word>	of	<ʌv>
+	                  |     [+functionword]
+	                  |     [numSyll=1]
+	                  |
+	                  |-----| (S1.L1.W1.S1) <Syllable>                                                 [ʌv]
+	                        |     [prom.stress=0.0]
+	                        |
+	                        |-----| (S1.L1.W1.S1.SB1) <SyllableBody>                                   [ʌv]
+	                              |     [shape=VC]
+	                              |     [-prom.vheight]
+	                              |     [-prom.weight]
+	                              |
+	                              |-----| (S1.L1.W1.S1.SB1.O1) <Onset>
+	                              |
+	                              |-----| (S1.L1.W1.S1.SB1.R2) <Rime>
+	                                    |
+	                                    |-----| (S1.L1.W1.S1.SB1.R2.N1) <Nucleus>
+	                                          |     [-prom.vheight]
+	                                          |
+	                                          |-----| (S1.L1.W1.S1.SB1.R2.N1.P1) <Phoneme>             [ʌ]
+	                                    |
+	                                    |-----| (S1.L1.W1.S1.SB1.R2.C2) <Coda>
+	                                          |
+	                                          |-----| (S1.L1.W1.S1.SB1.R2.C2.P1) <Phoneme>             [v]
+	            |
+	            |-----| (S1.L1.W2) <Word>	mans	<'mænz>
+	                  |     [numSyll=1]
+	                  |
+	                  |-----| (S1.L1.W2.S1) <Syllable>                                                 ['mænz]
+	                        |     [prom.stress=1.0]
+	                        |     [prom.kalevala=1.0]
+	                        |
+	                        |-----| (S1.L1.W2.S1.SB1) <SyllableBody>                                   [mænz]
+	                              |     [shape=CVCC]
+	                              |     [-prom.vheight]
+	                              |     [+prom.weight]
+	                              |
+	                              |-----| (S1.L1.W2.S1.SB1.O1) <Onset>
+	                                    |
+	                                    |-----| (S1.L1.W2.S1.SB1.O1.P1) <Phoneme>                      [m]
+	                              |
+	                              |-----| (S1.L1.W2.S1.SB1.R2) <Rime>
+	                                    |
+	                                    |-----| (S1.L1.W2.S1.SB1.R2.N1) <Nucleus>
+	                                          |     [-prom.vheight]
+	                                          |
+	                                          |-----| (S1.L1.W2.S1.SB1.R2.N1.P1) <Phoneme>             [æ]
+	                                    |
+	                                    |-----| (S1.L1.W2.S1.SB1.R2.C2) <Coda>
+	                                          |
+	                                          |-----| (S1.L1.W2.S1.SB1.R2.C2.P1) <Phoneme>             [n]
+	                                          |
+	                                          |-----| (S1.L1.W2.S1.SB1.R2.C2.P2) <Phoneme>             [z]
+
+Lastly, the `/query` command allows you to query these phonological annotations. Once `/query` is entered, the query language parser starts up (type `/` to exit, or hit `Ctrl+D`). Which are the stressed syllables in the text? `(Syllable: [+prom.stress])`. Which are all the voiced phonemes? `(Phoneme: [+voice])`. Which are all the syllables with voiced onsets and codas? `(Syllable: (Onset: [+voice]) (Coda: [+voice]))`.
+
 
 #### Metrically parsing text
 
@@ -225,6 +296,9 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		--------------------
 	
 	==============================
+
+Finally, you can also save a variety of statistics from the metrical parser in tab-separated form by running the `/stats` command.
+
 
 
 

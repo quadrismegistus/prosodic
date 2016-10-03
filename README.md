@@ -34,39 +34,49 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 <table>
 	<thead align=center>
 		<tr>
-			<th colspan="4">% Syllables Correctly Parsed</th>
+			<th colspan="6">% Syllables Correctly Parsed</th>
 		</tr>
 		<tr>
 			<th></th>
 			<th width=100>PROSODIC</th>
-			<th width=100>Baseline (knowing meter)</th>
-			<th width=100>Baseline (iambic)</th>
+			<th width=100>Baseline (known meter)</th>
+			<th width=100>Baseline (iambic meter)</th>
+			<th width=100><i>PROSODIC - Baseline (known meter)</i></th>
+			<th width=100><i>PROSODIC - Baseline (iambic meter)</i></th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
 			<td>Iambic poems</td>
 			<td>89.9%</td>
+			<td><u>93.6%</u></td>
 			<td>93.6%</td>
-			<td>93.6%</td>
+			<td><i>-3.7%</i></td>
+			<td><i>-3.7%</i></td>
 		</tr>
 		<tr>
 			<td>Trochaic poems</td>
 			<td>91.6%</td>
-			<td>94.4%</td>
+			<td><u>94.4%</u></td>
 			<td>5.6%</td>
+			<td><i>-2.8%</i></td>
+			<td><i>+85.0%</i></td>
 		</tr>
 		<tr>
 			<td>Anapestic poems</td>
-			<td>85.0%</td>
+			<td><u>85.0%</u></td>
 			<td>64.2%</td>
 			<td>53.3%</td>
+			<td><i>+20.8%</i></td>
+			<td><i>+31.7%</i></td>
 		</tr>
 		<tr>
 			<td>Dactylic poems</td>
-			<td>83.0%</td>
+			<td><u>83.0%</u></td>
 			<td>80.7%</td>
 			<td>50.1%</td>
+			<td><i>+2.3%</i></td>
+			<td><i>+32.9%</i></td>
 		</tr>
 	</tbody>
 </table>
@@ -231,7 +241,7 @@ Lastly, the `/query` command allows you to query these phonological annotations.
 
 The command `/parse` will metrically parse whatever text is currently loaded into PROSODIC. Once the text is parsed, further commands become possible, all of which either view or save the data gleaned from the parser.
 
-The command `/scan` prints the best parse for each line, along with statistics on which constraints it violated. [This output, like any other output, can be saved to disk (and then opened with Excel) by using the `/save` command.] For instance, here are the first four lines of Paradise Lost, using the `/scan` command:
+The command `/scan` prints the best parse for each line, along with statistics on which constraints it violated. [This output, like any other output, can be saved to disk (and then opened with Excel) by using the `/save` command.] For instance, here are the first four lines of *Paradise Lost*, using the `/scan` command:
 
 	text                                    		parse                                   		#pars	#viol	meter			[*footmin-none]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
 	of mans first disobedience and the fruit		of|MANS|first|DI|so|BE|di|ENCE|and.the|FRUIT	3		5		wswswswswws		0				0					2					2				1
@@ -301,7 +311,7 @@ Finally, you can also save a variety of statistics from the metrical parser in t
 
 #### Evaluating the meter against a hand-parsed sample
 
-ee
+How well does PROSODIC do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic"). PROSODIC will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.txt`.
 
 ### Configuration options
 

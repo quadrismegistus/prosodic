@@ -38,33 +38,33 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 		</tr>
 		<tr>
 			<th></th>
-			<th width=100>PROSODIC</th>
-			<th width=100>Baseline (known meter)</th>
-			<th width=100>Baseline (iambic meter)</th>
-			<th width=100><i>PROSODIC - Baseline (known meter)</i></th>
-			<th width=100><i>PROSODIC - Baseline (iambic meter)</i></th>
+			<th width=150>PROSODIC</th>
+			<th width=150>Baseline (known meter)</th>
+			<th width=150>Baseline (iambic meter)</th>
+			<th width=150><i>PROSODIC - Baseline (known meter)</i></th>
+			<th width=150><i>PROSODIC - Baseline (iambic meter)</i></th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
 			<td>Iambic poems</td>
 			<td>89.9%</td>
-			<td><u>93.6%</u></td>
+			<td><b>93.6%</b></td>
 			<td>93.6%</td>
-			<td><i>-3.7%</i></td>
-			<td><i>-3.7%</i></td>
+			<td><i><b>-3.7%</b></i></td>
+			<td><i><b>-3.7%</b></i></td>
 		</tr>
 		<tr>
 			<td>Trochaic poems</td>
 			<td>91.6%</td>
-			<td><u>94.4%</u></td>
+			<td><b>94.4%</b></td>
 			<td>5.6%</td>
-			<td><i>-2.8%</i></td>
-			<td><i>+85.0%</i></td>
+			<td><i><b>-2.8%</b></i></td>
+			<td><i><b>+85.0%</b></i></td>
 		</tr>
 		<tr>
 			<td>Anapestic poems</td>
-			<td><u>85.0%</u></td>
+			<td><b>85.0%</b></td>
 			<td>64.2%</td>
 			<td>53.3%</td>
 			<td><i>+20.8%</i></td>
@@ -72,7 +72,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 		</tr>
 		<tr>
 			<td>Dactylic poems</td>
-			<td><u>83.0%</u></td>
+			<td><b>83.0%</b></td>
 			<td>80.7%</td>
 			<td>50.1%</td>
 			<td><i>+2.3%</i></td>

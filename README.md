@@ -34,7 +34,8 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 <table>
 	<thead align=center>
 		<tr>
-			<th colspan="6">% Syllables Correctly Parsed</th>
+			<th colspan="4">% Syllables Correctly Parsed</th>
+			<th colspan="2">Comparison of % Syllables Correct</th>
 		</tr>
 		<tr>
 			<th></th>
@@ -51,16 +52,16 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td>89.9%</td>
 			<td><b>93.6%</b></td>
 			<td>93.6%</td>
-			<td><i><b>-3.7%</b></i></td>
-			<td><i><b>-3.7%</b></i></td>
+			<td><i>-3.7%</i></td>
+			<td><i>-3.7%</i></td>
 		</tr>
 		<tr>
 			<td>Trochaic poems</td>
 			<td>91.6%</td>
 			<td><b>94.4%</b></td>
 			<td>5.6%</td>
-			<td><i><b>-2.8%</b></i></td>
-			<td><i><b>+85.0%</b></i></td>
+			<td><i>-2.8%</i></td>
+			<td><i>+85.0%</i></td>
 		</tr>
 		<tr>
 			<td>Anapestic poems</td>

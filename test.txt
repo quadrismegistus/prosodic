@@ -1,5 +1,0 @@
-text                                    	parse                                   	#pars	#viol	meter	[*footmin-no-s-unless-preceded-by-ww]	[*footmin-none]	[*posthoc-no-final-ww]	[*posthoc-standardize-weakpos]	[*strength.s=>-u]	[*strength.w=>-p]	[*stress.s=>-u]	[*stress.w=>-p]
-of mans first disobedience and the fruit	of|MANS|first|DI|so|BE|di|ENCE|and.the|FRUIT	4	6.0	wswswswswws	0	0	2.0	2.0	1.0	0	0	1.0
-of that forbidden tree whose mortal tast	of|THAT|for|BID|den|TREE|whose|MOR|tal|TAST	1	0.0	wswswswsws	0	0	0	0	0	0	0	0.0
-brought death into the world and all our woe	brought|DEATH|in|TO|the|WORLD|and|ALL|our|WOE	2	2.0	wswswswsws	0	0	0	2.0	0	0	0	0.0
-with loss of eden till one greater man  	with|LOSS|of|E|den|TILL|one|GRE|ater|MAN	1	2.0	wswswswsws	0	0	2.0	0	0	0	0	0.0

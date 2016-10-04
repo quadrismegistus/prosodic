@@ -6,14 +6,21 @@ import sys,glob,os,time
 dir_prosodic=os.path.split(globals()['__file__'])[0]
 sys.path.insert(0,dir_prosodic)
 dir_imports=os.path.join(dir_prosodic,'lib')
-dir_corpus=os.path.join(dir_prosodic,'corpora')
 sys.path.append(dir_imports)
 
 ## import necessary objects
 #toprintconfig=__name__=='__main__'
 toprintconfig=False
 from tools import *
-config=loadConfig(toprint=toprintconfig,dir_prosodic=dir_prosodic)
+config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
+
+
+dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
+dir_results=os.path.join(dir_prosodic,config['folder_results'])
+dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
+
+
+
 import entity
 from entity import being
 from Text import Text

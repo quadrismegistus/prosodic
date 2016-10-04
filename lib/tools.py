@@ -65,6 +65,38 @@ def loadConfig(toprint=True,dir_prosodic=None):
 			print "\t"+"\t".join(str(x) for x in [k,v])
 	return settings
 
+def loadConfigPy(toprint=True,dir_prosodic=None):
+	settings={'constraints':[]}
+	import config
+	vnames = [x for x in dir(config) if not x.startswith('_')]
+
+	for vname in vnames:
+		vval=getattr(config,vname)
+		if vname=='Cs':
+			for k,v in vval.items():
+				cname=k+'/'+str(v)
+				settings['constraints']+=[cname]
+		else:
+			settings[vname]=vval
+
+	
+	if toprint:
+		print ">> loaded settings:"
+		for k,v in sorted(settings.items()):
+			if type(v) == list:
+				print '\t',k
+				for x in v:
+					print '\t\t',x
+			else:
+				print '\t',k,'\t',v
+
+	settings['constraints']=" ".join(settings['constraints'])
+
+	return settings
+
+
+
+
 def choose(optionlist,msg="please select from above options [using commas for individual selections and a hyphen for ranges]:\n"):
 	seldict={}
 	
@@ -587,7 +619,10 @@ def report(text):
 
 
 def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
-	from prosodic import Text
+	#from prosodic import Text
+	import prosodic as p
+	Text=p.Text
+	p.config['print_to_screen']=0
 	def get_num_sylls_correct(parse_human,parse_comp):
 		maxlen=max([len(parse_comp),len(parse_human)])
 		parse_comp_forzip = parse_comp + ''.join(['x' for x in range(maxlen-len(parse_comp))])
@@ -661,16 +696,16 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			parses_comp = [x.replace('|','') for x in t.parse_strs(viols=False,text=False)]
 
 			
-			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_human))])
+			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_comp))])
 			if key_meterscheme:
 				if d[key_meterscheme]=='iambic':
-					parse_comp_dummy = ('ws'*100)[:len(parse_human)]
+					parse_comp_dummy = ('ws'*100)[:len(parse_comp)]
 				elif d[key_meterscheme]=='trochaic':
-					parse_comp_dummy = ('sw'*100)[:len(parse_human)]
+					parse_comp_dummy = ('sw'*100)[:len(parse_comp)]
 				elif d[key_meterscheme]=='anapestic':
-					parse_comp_dummy = ('wws'*100)[:len(parse_human)]
+					parse_comp_dummy = ('wws'*100)[:len(parse_comp)]
 				elif d[key_meterscheme]=='dactylic':
-					parse_comp_dummy = ('sww'*100)[:len(parse_human)]
+					parse_comp_dummy = ('sww'*100)[:len(parse_comp)]
 				else:
 					parse_comp_dummy=parse_comp_dummy2
 			else:
@@ -731,8 +766,8 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 				sumconstr+=v
 			odx['constraint_SUM_VIOL']=sumconstr
 
-			#if not line_iscorrect:
-			_print(odx)
+			if not line_iscorrect:
+				_print(odx)
 			yield odx
 
 		print

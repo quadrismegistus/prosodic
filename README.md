@@ -52,32 +52,32 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td><b>93.9%</b></td>
 			<td>92.4%</td>
 			<td>02.4%</td>
-			<td style="color:green"><font color="green">+1.5%</font></td>
-			<td style="color:green">+1.5%</td>
+			<td><b>+1.5%</b></td>
+			<td><b>+1.5%</b></td>
 		</tr>
 		<tr>
 			<td>Trochaic poems</td>
 			<td>93.7%</td>
 			<td><b>94.0%</b></td>
 			<td>5.8%</td>
-			<td style="color:red">-0.4%</td>
-			<td style="color:green">+87.8%</td>
+			<td>-0.4%</td>
+			<td><b>+87.8%</b></td>
 		</tr>
 		<tr>
 			<td>Anapestic poems</td>
 			<td><b>84.5%</b></td>
 			<td>64.9%</td>
 			<td>53.4%</td>
-			<td style="color:green">+19.6%</td>
-			<td style="color:green">+31.1%</td>
+			<td><b>+19.6%</b></td>
+			<td><b>+31.1%</b></td>
 		</tr>
 		<tr>
 			<td>Dactylic poems</td>
 			<td><b>81.2%</b></td>
 			<td>80.0%</td>
 			<td>49.8%</td>
-			<td style="color:green">+1.2%</td>
-			<td style="color:green">+31.4%</td>
+			<td><b>+1.2%</b></td>
+			<td><b>+31.4%</b></td>
 		</tr>
 	</tbody>
 </table>

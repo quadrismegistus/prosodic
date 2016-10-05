@@ -310,6 +310,9 @@ for _ipa in formantd:
 	formantd[_ipa][1] = (formantd[_ipa][1] - minf2) / float(f2_range)
 	#print _ipa,formantd[_ipa]
 
+ipa2featd={}
+for ph,vals in ipa.items():
+	ipa2featd[ph]=dict(zip(ipakey,vals))
 
 
 

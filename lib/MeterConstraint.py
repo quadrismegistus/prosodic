@@ -101,7 +101,7 @@ class MeterConstraint:
 					if type(promSite_prom)==type(True):	
 						slot_prom=bool(slot_prom)
 					if slot_prom == promSite_prom:
-							return self.weight
+						return self.weight
 				return 0
 			
 			# AT LEAST ONE unit_prom must be promSite_prom (or else, violate):
@@ -123,7 +123,8 @@ class MeterConstraint:
 					return 0
 		
 		elif self.name.lower().startswith('initialstrong'):
-			if meterPos.slots[0].i==0:
+			#if meterPos.slots[0].i==0:
+			if pos_i==0:
 				if meterPos.meterVal == 's':
 					return self.weight
 			return 0
@@ -249,6 +250,19 @@ class MeterConstraint:
 				# poss. (i) remains
 				return 0
 		
+		
+		## Constraints about words
+		if self.name=='word-elision':
+			words=set([slot.word for slot in meterPos.slots if hasattr(slot.word,'is_elision') and slot.word.is_elision])
+			sylls=[]
+			for slot in meterPos.slots: sylls+=slot.children
+
+			for word in words:
+				lastsyll=word.children[-1]
+				if lastsyll in sylls: # only break if this position contains the word's final syllable
+					return self.weight
+
+
 		## POST HOC CONSTRAINTS
 		# is this the end?
 		is_end = slot_i+1==num_slots and meterPos.slots==all_positions[-1].slots
@@ -258,6 +272,10 @@ class MeterConstraint:
 		if self.name.startswith('posthoc') and is_end:
 			if self.name=='posthoc-no-final-ww':
 				if len(all_positions[-1].slots)>1 and all_positions[-1].meterVal=='w':
+					return self.weight
+
+			if self.name=='posthoc-no-final-w':
+				if all_positions[-1].meterVal=='w':
 					return self.weight
 
 			if self.name=='posthoc-standardize-weakpos':

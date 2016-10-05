@@ -74,7 +74,6 @@ class Text(entity):
 
 	def set_lang(self,filename):
 		filename=os.path.basename(filename)
-		print filename
 		import prosodic
 		if filename[2]=="." and (filename[0:2] in prosodic.dict):
 			lang=filename[0:2]

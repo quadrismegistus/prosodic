@@ -519,8 +519,13 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 		if type(words)==list:
 			if type(words[0])==tuple:	# New word needs to be built
-
-				wordobjs=[self.make(wrd,word) for wrd in words]
+				wordobjs=[]
+				for wordtuple in words:
+					wrd=wordtuple[:2]
+					attrs=wordtuple[2] if len(wordtuple)>2 else {}
+					wordobj=self.make(wrd,word)
+					for _k,_v in attrs.items(): setattr(wordobj,_k,_v)
+					wordobjs+=[wordobj]
 				self.dict['Word'][word.lower()]=wordobjs
 				return self.maybeUnstress(wordobjs) if stress_ambiguity else wordobjs
 			else:

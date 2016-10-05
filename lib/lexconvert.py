@@ -277,7 +277,9 @@ def convert(pronunc,source,dest):
     dictionary = make_dictionary(source,dest)
     while pronunc:
         for lettersToTry in [2,1,0]:
-            if not lettersToTry and source=="espeak" and not pronunc[0] in "_: ": sys.stderr.write("Warning: ignoring unknown espeak phoneme "+repr(pronunc[0])+"\n")
+            if not lettersToTry and source=="espeak" and not pronunc[0] in "_: ":
+              #sys.stderr.write("Warning: ignoring unknown espeak phoneme "+repr(pronunc[0])+"\n")
+              pass
             if not lettersToTry: pronunc=pronunc[1:] # ignore
             elif dictionary.has_key(pronunc[:lettersToTry]):
                 toAdd=dictionary[pronunc[:lettersToTry]]

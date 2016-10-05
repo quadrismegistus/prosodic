@@ -623,13 +623,29 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 	import prosodic as p
 	Text=p.Text
 	p.config['print_to_screen']=0
+
+	def parse2list(parse):
+		l=[]
+		for i,x in enumerate(parse):
+			if not l or l[-1]!=x:
+				l+=[x]
+			else:
+				l[-1]+=x
+		return l
+
 	def get_num_sylls_correct(parse_human,parse_comp):
 		maxlen=max([len(parse_comp),len(parse_human)])
+		#parse_human=parse2list(parse_human)
+		#parse_comp=parse2list(parse_comp)
+		#parse_comp_forzip = parse_comp + ['x' for x in range(maxlen-len(parse_comp))]
+		#parse_human_forzip = parse_human + ['x' for x in range(maxlen-len(parse_human))]
 		parse_comp_forzip = parse_comp + ''.join(['x' for x in range(maxlen-len(parse_comp))])
 		parse_human_forzip = parse_human + ''.join(['x' for x in range(maxlen-len(parse_human))])
 
 		## sylls correct?
 		_sylls_iscorrect=[]
+		#print '\t'.join(parse_human_forzip)
+		#print '\t'.join(parse_comp_forzip)
 		for syll1,syll2 in zip(parse_human_forzip,parse_comp_forzip):
 			syll_iscorrect = int(syll1==syll2)
 			_sylls_iscorrect+=[syll_iscorrect]
@@ -645,6 +661,9 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 		print
 		for k,v in sorted(dx.items()):
 			print k,'\t',v
+		print 'HUMAN   :','\t'.join(dx['parse_human'])
+		print 'PROSODIC:','\t'.join(dx['parse_comp'])
+		print '         ','\t'.join(['*' if x!=y else ' ' for x,y in zip(dx['parse_human'],dx['parse_comp'])])
 		print
 
 	def _recapitalize(parse,code):
@@ -671,7 +690,7 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			#if d['Meter Scheme'] != 'iambic': continue
 			line=d[key_line]
 			#if not line.startswith('Improved the simple plan'): continue
-			parse_human=d[key_parse].replace('|','')
+			parse_human=''.join([x for x in d[key_parse].lower() if x in ['s','w']])
 			t=Text(line)
 			t.parse()
 			#print line
@@ -692,7 +711,7 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 
 			#if len(parse_comp) != len(parse_human): continue
 
-			parse_str=t.parse_str(viols=True, text=True)
+			parse_str=t.parse_str(viols=False, text=True)
 			parses_comp = [x.replace('|','') for x in t.parse_strs(viols=False,text=False)]
 
 			
@@ -766,8 +785,10 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 				sumconstr+=v
 			odx['constraint_SUM_VIOL']=sumconstr
 
-			if not line_iscorrect:
-				_print(odx)
+			#if not line_iscorrect and line_iscorrect_dummy:
+			#if len(parse_comp) != len(parse_human):
+			#if len(parse_human)>len(parse_comp):
+			_print(odx)
 			yield odx
 
 		print

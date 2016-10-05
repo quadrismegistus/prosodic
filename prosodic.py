@@ -74,7 +74,7 @@ else:	## if not imported, go into interactive mode
 				#dir_corpus=os.path.dirname(sys.G[1])
 				basename=os.path.basename(sys.argv[1])
 				text="/text "+sys.argv[1]
-				if basename[0:2] in languages:
+				if basename[0:2] in languages and basename[2]=='.':
 					lang=basename[0:2]
 				skip=True
 		else:
@@ -167,7 +167,7 @@ else:	## if not imported, go into interactive mode
 	
 		elif text and text[0]!="/":
 			## load line #######
-			obj = Text(text)
+			obj = Text(text,lang=lang)
 			####################
 
 		elif text.startswith('/paste'):
@@ -185,7 +185,7 @@ else:	## if not imported, go into interactive mode
 				
 			if contents:
 				txt="\n".join(contents)
-				obj=Text(txt)
+				obj=Text(txt,lang=lang)
 	
 		elif text=="/parse":
 			obj.parse()

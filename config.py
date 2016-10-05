@@ -75,7 +75,7 @@ print_to_screen=1
 # Do not print loaded words, parses, etc. to screen:
 # Although hiden, you may still save any output to disk
 # using the /save command.
-print_to_screen=0
+#print_to_screen=0
 #
 # The default length for the line used by printing
 linelen=60
@@ -190,10 +190,10 @@ Cs['stress.w=>-p']=2
 # [Stricter versions:]
 #
 # A strong metrical position should not contain any light syllables:
-Cs['weight.s=>-u']=2
+#Cs['weight.s=>-u']=2
 #
 # A weak metrical position should not contain any heavy syllables:
-Cs['weight.w=>-p']=2
+#Cs['weight.w=>-p']=2
 #
 ###
 # [Laxer versions:]
@@ -215,10 +215,10 @@ Cs['weight.w=>-p']=2
 #
 # A disyllabic metrical position should not contain more than a minimal foot:
 # (i.e. allowed positions are syllables weighted light-light or light-heavy)
-Cs['footmin-noHX']=1
+#Cs['footmin-noHX']=1
 #
 # A disyllabic metrical position should be syllables weighted light-light:
-Cs['footmin-noLH-noHX']=1
+#Cs['footmin-noLH-noHX']=1
 #
 ###
 # [Categorical:]
@@ -283,7 +283,10 @@ Cs['footmin-no-s-unless-preceded-by-ww']=10
 #
 # The final metrical position of the line should not be 'ww'
 # [use to encourage "...LI|ber|TY" rather than "...LI|ber.ty"]
-Cs['posthoc-no-final-ww']=1
+Cs['posthoc-no-final-ww']=2
+#
+# The final metrical position of the line should not be 'w' or 'ww'
+#Cs['posthoc-no-final-w']=2
 #
 # A line should have all 'ww' or all 'w':
 # It works by:
@@ -294,6 +297,7 @@ Cs['posthoc-no-final-ww']=1
 # V = Nw - M
 # Violation Score = V * [Weight]
 # [use to encourage consistency of meter across line]
+# [feel free to make this a decimal number, like 0.25]
 Cs['posthoc-standardize-weakpos']=1
 #
 #
@@ -305,7 +309,7 @@ Cs['posthoc-standardize-weakpos']=1
 #Cs['functiontow']=2
 #
 # An initial syllable must be in a weak position:
-#Cs['initialstrong']=10
+#Cs['initialstrong']=2
 #
 # The first metrical position will not be evaluated
 # for any metrical constraints whatsoever:
@@ -316,6 +320,10 @@ Cs['posthoc-standardize-weakpos']=1
 # for any metrical constraints whatsoever:
 # [set to 1 to be true]
 #Cs['skip_initial_foot']=0
+#
+# A word should not be an elision [use to discourage elisions]:
+Cs['word-elision']=1
+
 #
 # A weak metrical position should not contain any syllables
 # that are stressed and heavy: [Meter of Finnish "Kalevala"]
@@ -412,6 +420,21 @@ tokenizer='[^\s+-]+'
 # word that best fit the metrical parse:
 resolve_optionality=1
 #resolve_optionality=0
+#
+#
+######
+# [ELISIONS of Syllables: English only]
+# 
+# Some syllables are elided in English verse, e.g.
+# e.g. sweet as love, which overflows her bower
+# --> with|MU|sic|SWEET|as|LOVE|which|OV|er|FLOWS|her|BOW'R
+# or e.g. scattering unbeholden
+# --> SCAT|tring|UN|be|HOLD|en
+# 
+# Add pronunciations for words that could have elided syllables:
+add_elided_pronunciations=1
+#add_elided_pronunciations=0
+#
 #
 ######
 # [Output formatting]

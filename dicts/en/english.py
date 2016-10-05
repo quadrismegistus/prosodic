@@ -25,15 +25,26 @@ def get(token,config={}):
 	if not CMU_DICT: load_cmu()
 
 	# First try CMU
-	tokenl=token.lower()
+	tokenl=word_l=token.lower()
 	ipas = CMU_DICT.get(tokenl,[])
 
-	# Else, use TTS
+	# First see if this is a contraction
+	if not ipas:
+		for contr,add_ipa in [("'d","d")]: # no longer doing ("'s","z")-- too simple
+			if word_l.endswith(contr):
+				word_l_unc = word_l[:-2]
+				# if the uncontracted in the dictionary
+				if word_l_unc in CMU_DICT:
+					for wipa in CMU_DICT[word_l_unc]:
+						wipa+=add_ipa
+						ipas+=[wipa]
+
+	# Otherwise use TTS
 	if not ipas:
 		TTS_ENGINE=config.get('en_TTS_ENGINE','')
 		if TTS_ENGINE=='espeak':
 			ipa=espeak2ipa(token)
-			cmu=ipa2cmu(ipa)
+			cmu=espeak2cmu(ipa)
 			cmu_sylls = syllabify_cmu(cmu)
 			ipa = cmusylls2ipa(cmu_sylls)
 		elif TTS_ENGINE=='openmary':
@@ -45,18 +56,113 @@ def get(token,config={}):
 
 	## Syllabify the orthography if possible
 	results = []
+	iselision=[]
 	for ipa in ipas:
 		num_sylls=ipa.count('.')+1
 		sylls_text = syllabify_orth(token,num_sylls=num_sylls)
 		res = (ipa, sylls_text)
-		results+=[res]
+		if not res in results:
+			results+=[res]
+			iselision+=[False]
+
+
+		if config.get('add_elided_pronunciations',0):
+			for ipa2 in add_elisions(ipa):
+				num_sylls2=ipa2.count('.')+1
+				sylls_text2 = syllabify_orth(token,num_sylls=num_sylls2)
+				res = (ipa2, sylls_text2)
+				if not res in results:
+					results+=[res]
+					iselision+=[True]
+	
+	toreturn = [(a,b,{'is_elision':c}) for ((a,b),c) in zip(results,iselision)]
 
 	# Return the results to the dictionary
-	return results
+	return toreturn
+
+def add_elisions(_ipa):
+	"""
+	Add alternative pronunciations: those that have elided syllables
+	"""
+	replace={}
+
+	# -OWER
+	# e.g. tower, hour, bower, etc
+	replace[u'aʊ.ɛː']=u'aʊr'
+
+	
+	# -INOUS
+	# e.g. ominous, etc
+	replace[u'ə.nəs']=u'nəs'
+
+	# -EROUS
+	# e.g. ponderous, adventurous
+	replace[u'ɛː.əs']=u'rəs'
+	
+	# -IA-
+	# e.g. plutonian, indian, assyrian, idea, etc
+	replace[u'iː.ə']=u'jə'
+	# -IOUS
+	# e.g. studious, tedious, etc
+	#replace[u'iː.əs']=u'iːəs'
+
+
+	# -IER
+	# e.g. happier
+	replace[u'iː.ɛː']=u'ɪr'
+
+	# -ERING
+	# e.g. scattering, wondering, watering
+	replace[u'ɛː.ɪŋ']=u'rɪŋ'
+
+	# -ERY
+	# e.g. memory
+	# QUESTIONABLE
+	#replace[u'ɛː.iː']=u'riː'
+
+	# -ENING
+	# e.g. opening
+	replace[u'ə.nɪŋ']=u'nɪŋ'
+
+	# -ENER
+	# e.g. gardener
+	replace[u'ə.nɛː']=u'nɛː'
+
+	# -EL- (-ELLER, -ELLING, -ELLY)
+	# e.g. traveller, dangling, gravelly
+	# QUESTIONABLE
+	#replace[u'ə.l']=u'l'
+
+	# -IRE-
+	# e.g. fire, fiery, attire, hired
+	replace[u'ɪ.ɛː']=u'ɪr'
+
+	# -EL, -UAL
+	# e.g. jewel
+	replace[u'uː.əl']=u'uːl'
+
+	# -EVN
+	# e.g. heaven, seven
+	replace[u'ɛ.vən']=u'ɛvn'
+
+	# -IOUS, -EER
+	# e.g. sincerest, dear, incommodiously
+	# QUESTIONABLE
+	#replace[u'.ʌ.']=u'ʌ.'
+	#replace[u'eɪ.ʌ']=u'eɪʌ'
+
+	new=[_ipa]
+	for k,v in replace.items():
+		if k in _ipa:
+			new+=[_ipa.replace(k,v)]
+	return new
+
+
+
 
 
 def espeak2ipa(token):
-	CMD='espeak -q --ipa '+token
+	CMD='espeak -q -x '+token
 	#print CMD
 	return subprocess.check_output(CMD.split()).strip()
 
@@ -68,6 +174,10 @@ def tts2ipa(token,TTS_ENGINE=None):
 	else:
 		#raise Exception("No TTS engine specified. Please select 'espeak' or 'openmary' in config.txt.")
 		return None
+
+def espeak2cmu(tok):
+	import lexconvert
+	return lexconvert.convert(tok,'espeak','cmu')
 
 def ipa2cmu(tok):
 	import lexconvert

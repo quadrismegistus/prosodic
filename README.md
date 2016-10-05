@@ -35,15 +35,15 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 	<thead align=center>
 		<tr>
 			<th colspan="4">% Syllables Correctly Parsed</th>
-			<th colspan="2">Comparison of % Syllables Correct</th>
+			<th colspan="2">Comparison of % Syllables Correctly Parsed</th>
 		</tr>
 		<tr>
 			<th></th>
-			<th width=130>PROSODIC</th>
-			<th width=130>Baseline (known meter)</th>
-			<th width=130>Baseline (iambic meter)</th>
-			<th width=130><i>PROSODIC - Baseline (known meter)</i></th>
-			<th width=130><i>PROSODIC - Baseline (iambic meter)</i></th>
+			<th width=140>PROSODIC</th>
+			<th width=140>Baseline (known meter)</th>
+			<th width=140>Baseline (iambic meter)</th>
+			<th width=140><i>PROSODIC - Baseline (known meter)</i></th>
+			<th width=140><i>PROSODIC - Baseline (iambic meter)</i></th>
 		</tr>
 	</thead>
 	<tbody>

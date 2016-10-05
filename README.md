@@ -31,7 +31,7 @@ Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, bu
 In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse, PROSODIC's accuracy is the following.
 
 <center>
-<table>
+<table align=center>
 	<thead align=center>
 		<tr>
 			<th colspan="4">% Syllables Correctly Parsed</th>
@@ -48,7 +48,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 	</thead>
 	<tbody>
 		<tr>
-			<td>Iambic poems</td>
+			<td>Iambic lines</td>
 			<td><b>93.9%</b></td>
 			<td>92.4%</td>
 			<td>02.4%</td>
@@ -56,7 +56,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td><b>+1.5%</b></td>
 		</tr>
 		<tr>
-			<td>Trochaic poems</td>
+			<td>Trochaic lines</td>
 			<td>93.7%</td>
 			<td><b>94.0%</b></td>
 			<td>5.8%</td>
@@ -64,7 +64,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td><b>+87.8%</b></td>
 		</tr>
 		<tr>
-			<td>Anapestic poems</td>
+			<td>Anapestic lines</td>
 			<td><b>84.5%</b></td>
 			<td>64.9%</td>
 			<td>53.4%</td>
@@ -72,7 +72,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td><b>+31.1%</b></td>
 		</tr>
 		<tr>
-			<td>Dactylic poems</td>
+			<td>Dactylic lines</td>
 			<td><b>81.2%</b></td>
 			<td>80.0%</td>
 			<td>49.8%</td>

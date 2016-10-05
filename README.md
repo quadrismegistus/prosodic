@@ -52,7 +52,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td><b>93.9%</b></td>
 			<td>92.4%</td>
 			<td>02.4%</td>
-			<td style="color:green">+1.5%</td>
+			<td style="color:green"><font color="green">+1.5%</font></td>
 			<td style="color:green">+1.5%</td>
 		</tr>
 		<tr>

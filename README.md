@@ -28,10 +28,29 @@ Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, bu
 
 ### Accuracy of metrical parser
 
-In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse, PROSODIC's accuracy is the following.
+In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2014.txt)), PROSODIC's accuracy is the following.
 
-<center>
-<table align=center>
+For example, here is a line, how it was parsed 
+
+	Line:       Happy  the  man,  whose  wish  and  care
+	Human:      s  w   w    s     w      s     w    s
+	PROSODIC:   s  w   w    s     w      s     w    s
+	Template:   w* s*  w    s     w      s     w    s
+	
+	Line:		Than  the  firm  oak  of  which  the  frame  was  form'd.
+	Human:      w     w    s     s    w   s      w    s      w    s
+	
+	
+	
+	
+	[Anapestic line]
+	Line:		
+
+
+
+
+
+<table>
 	<thead align=center>
 		<tr>
 			<th colspan="4">% Syllables Correctly Parsed</th>
@@ -51,7 +70,7 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 			<td>Iambic lines</td>
 			<td><b>93.9%</b></td>
 			<td>92.4%</td>
-			<td>02.4%</td>
+			<td>92.4%</td>
 			<td><b>+1.5%</b></td>
 			<td><b>+1.5%</b></td>
 		</tr>
@@ -81,9 +100,8 @@ In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, troc
 		</tr>
 	</tbody>
 </table>
-</center>
 
-The data here show, we believe, that PROSODIC's parses match a human's about as often, and sometimes more often, than a bare template of the poem's meter does–that is, when we already know the meter of the poem. Not surprisingly, PROSODIC vastly outperforms a bare metrical template when that template doesn't match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then likely to be reliable enough (at least to be interesting) when we don't.
+The data here show, we believe, that PROSODIC's parses match a human's about as often, or more often, than does a bare template of the poem's meter–that is, when we already know the meter of the poem. Not surprisingly, PROSODIC vastly outperforms a bare metrical template when that template doesn't match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then likely to be reliable enough (at least to be interesting) when we don't.
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints will be discussd below.
 

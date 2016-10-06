@@ -675,14 +675,16 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 				newparse+=[s.lower()]
 			else:
 				newparse+=[s.upper()]
-		return '\t'.join(newparse)
+		return '  '.join(newparse)
 	
 	def _writegen():
 		lines_iscorrect=[]
 		lines_iscorrect_control=[]
 		lines_iscorrect_control2=[]
+		lines_iscorrect_human2=[]
 		sylls_iscorrect_control=[]
 		sylls_iscorrect_control2=[]
+		sylls_iscorrect_human2=[]
 		sylls_iscorrect=[]
 		lines_iscorrect_nonbounded=[]
 
@@ -691,6 +693,7 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			line=d[key_line]
 			#if not line.startswith('Improved the simple plan'): continue
 			parse_human=''.join([x for x in d[key_parse].lower() if x in ['s','w']])
+			if not parse_human: continue
 			t=Text(line)
 			t.parse()
 			#print line
@@ -714,6 +717,10 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			parse_str=t.parse_str(viols=False, text=True)
 			parses_comp = [x.replace('|','') for x in t.parse_strs(viols=False,text=False)]
 
+			parse_human2=''.join([x for x in d.get('parse_human2','').lower() if x in ['s','w']])
+
+			#parse_human,parse_human2=parse_human2,parse_human
+
 			
 			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_comp))])
 			if key_meterscheme:
@@ -735,20 +742,26 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			this_sylls_correct = get_num_sylls_correct(parse_human, parse_comp)
 			this_sylls_correct_dummy = get_num_sylls_correct(parse_human, parse_comp_dummy)
 			this_sylls_correct_dummy2 = get_num_sylls_correct(parse_human, parse_comp_dummy2)
+			if parse_human2: this_sylls_correct_human2 = get_num_sylls_correct(parse_human, parse_human2)
 			num_sylls_correct=sum(this_sylls_correct)
 			num_sylls_correct_dummy = sum(this_sylls_correct_dummy)
 			num_sylls_correct_dummy2 = sum(this_sylls_correct_dummy2)
+			if parse_human2: num_sylls_correct_human2 = sum(this_sylls_correct_human2)
 			sylls_iscorrect+=this_sylls_correct
 			sylls_iscorrect_control+=this_sylls_correct_dummy
 			sylls_iscorrect_control2+=this_sylls_correct_dummy2
+			if parse_human2: sylls_iscorrect_human2+=this_sylls_correct_human2
+
 
 			# line correct?
 			line_iscorrect=int(parse_comp == parse_human)
 			lines_iscorrect+=[line_iscorrect]
 			line_iscorrect_dummy = int(parse_comp_dummy == parse_human)
 			line_iscorrect_dummy2 = int(parse_comp_dummy2 == parse_human)
+			if parse_human2: line_iscorrect_human2 = int(parse_human2 == parse_human)
 			lines_iscorrect_control+=[line_iscorrect_dummy]
 			lines_iscorrect_control2+=[line_iscorrect_dummy2]
+			if parse_human2: lines_iscorrect_human2+=[line_iscorrect_human2]
 
 			# line at least in list of nonbounded parses?
 			line_iscorrect_nonbounded=int(parse_human in parses_comp)
@@ -763,12 +776,20 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 
 			odx=d
 			odx['parse_human']=parse_human
+			if parse_human2: odx['parse_human2']=parse_human2
 			odx['parse_comp']=parse_comp
 			odx['parses_comp_nonbounded']=' | '.join(parses_comp)
 			odx['num_sylls']=len(parse_human)
 			odx['num_sylls_correct']=num_sylls_correct
 			odx['num_sylls_correct_control']=num_sylls_correct_dummy
 			odx['num_sylls_correct_control_iambic']=num_sylls_correct_dummy2
+			if parse_human2:
+				odx['num_sylls_correct_human2']=num_sylls_correct_human2
+				odx['perc_sylls_correct_human2']=num_sylls_correct_human2 / float(len(parse_human))
+				odx['line_iscorrect_human2']=line_iscorrect_human2
+			odx['perc_sylls_correct']=num_sylls_correct / float(len(parse_human))
+			odx['perc_sylls_correct_control']=num_sylls_correct_dummy  / float(len(parse_human))
+			odx['perc_sylls_correct_control_iambic']=num_sylls_correct_dummy2 / float(len(parse_human))
 			odx['line_iscorrect']=line_iscorrect
 			odx['line_iscorrect_dummy']=line_iscorrect_dummy
 			odx['line_iscorrect_dummy_iambic']=line_iscorrect_dummy2

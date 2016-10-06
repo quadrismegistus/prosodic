@@ -28,7 +28,7 @@ Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, bu
 
 ### Accuracy of metrical parser
 
-In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2014.txt)), PROSODIC's accuracy is the following.
+In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)), PROSODIC's accuracy is the following.
 
 For example, here is a line, how it was parsed 
 
@@ -53,50 +53,44 @@ For example, here is a line, how it was parsed
 <table>
 	<thead align=center>
 		<tr>
-			<th colspan="4">% Syllables Correctly Parsed</th>
-			<th colspan="2">Comparison of % Syllables Correctly Parsed</th>
+			<th colspan="5">% Syllables Correctly Parsed</th>
 		</tr>
 		<tr>
 			<th></th>
+			<th width=140>Another Human</th>
 			<th width=140>PROSODIC</th>
-			<th width=140>Baseline (known meter)</th>
-			<th width=140>Baseline (iambic meter)</th>
-			<th width=140><i>PROSODIC - Baseline (known meter)</i></th>
-			<th width=140><i>PROSODIC - Baseline (iambic meter)</i></th>
+			<th width=140>Base Template (for this meter)</th>
+			<th width=140>Base Template (iambic meter)</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
 			<td>Iambic lines</td>
-			<td><b>93.9%</b></td>
-			<td>92.4%</td>
-			<td>92.4%</td>
-			<td><b>+1.5%</b></td>
-			<td><b>+1.5%</b></td>
+			<td>94.5%</td>
+			<td>93.0%</td>
+			<td>89.8%</td>
+			<td>89.8%</td>
 		</tr>
 		<tr>
 			<td>Trochaic lines</td>
-			<td>93.7%</td>
-			<td><b>94.0%</b></td>
+			<td>98.6%</td>
+			<td>94.1%</td>
+			<td>94.1%</td>
 			<td>5.8%</td>
-			<td>-0.4%</td>
-			<td><b>+87.8%</b></td>
 		</tr>
 		<tr>
 			<td>Anapestic lines</td>
-			<td><b>84.5%</b></td>
-			<td>64.9%</td>
-			<td>53.4%</td>
-			<td><b>+19.6%</b></td>
-			<td><b>+31.1%</b></td>
+			<td>97.5%</td>
+			<td>84.7%</td>
+			<td>84.1%</td>
+			<td>53.3%</td>
 		</tr>
 		<tr>
 			<td>Dactylic lines</td>
-			<td><b>81.2%</b></td>
-			<td>80.0%</td>
-			<td>49.8%</td>
-			<td><b>+1.2%</b></td>
-			<td><b>+31.4%</b></td>
+			<td>95.8%</td>
+			<td>82.3%</td>
+			<td>79.7%</td>
+			<td>50.8%</td>
 		</tr>
 	</tbody>
 </table>

@@ -387,9 +387,9 @@ How does PROSODIC work? Here is an overview of its two major aspects: how words 
 
 ### From text, to words, to phonetics and phonology
 
-PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
+PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated. If the word is found in the [CMU pronunciation dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict), its syllabified, stressed, phonetic transcription is used. If not, a text-to-speech engine is used to "sound out" the unknown word, and then a syllabifier is used to break the stressed IPA transcription into syllables. For details on which text-to-speech engine and syllabifier are used, see above, "Text to speech engine for parsing unknown English words."
 
-Prosodic annotates a given word in a language it recognizes by interpreting that word as a hierarchical organization of its phonological properties: a word contains syllables; which contain onsets, nuclei, and coda; which themselves contain phonemes. For instance, the English word "love" is interpreted:
+With these phonetic-phonological transcriptions, PROSODIC builds each word as a hierarchy of its constituent parts. For instance, the English word "love" is interpreted:
 
 	| (W1) <Word>	love	<'l ah v>
 	|     [numSyll=1]
@@ -416,9 +416,9 @@ Prosodic annotates a given word in a language it recognizes by interpreting that
 	                        |-----| (W1.S1.SB1.R2.C2.P1) <Phoneme> [v]
 
 
-Due to this hierarchical organization, sophisticated queries become possible on the linguistic structures in their interrelationships. In other words, since the hierarchy defines basic "child-of" or "contained-in" relationships between linguistic structures, it is possible to query for, say, "all onsets *with* at least one voiced consonant *in* stressed syllables." (For more details on the included query language, see below).
+Due to this hierarchical organization, sophisticated queries become possible on the linguistic structures in their interrelationships. In other words, since the hierarchy defines basic "child-of" or "contained-in" relationships between linguistic structures, it is possible to query for, say, "all onsets *with* at least one voiced consonant *in* stressed syllables." (For more details on the included query language, see above).
 
-### Overview of metrical parser
+### From phonology to metrics
 
 Metrical parsing is performed in the spirit of Optimality Theory: given user-specified constraints, along with a parameter specifying the maximum number of syllables allowed in strong/weak metrical positions, all non-harmonically-bounded scansions of the line are generated, and ranked in terms of their weighted violation scores.
 	- note: These and all other user-specified configurations occur in the file "config.py" in the main prosodic directory. See that file or instructions, or #5 below for more details.
@@ -444,24 +444,49 @@ Included constraints:
 
 
 
+## Extending PROSODIC
 
+### Adding languages
 
+There are two possible methods by which Prosodic can understand a language:
 
+* using a dictionary in the format:
+	* {word-token}[tab]{stressed, syllabified, IPA format}
+	* eg:
+		* befuddle [tab] bɪ.'fə.dəl
+		* befuddled	[tab] bɪ.'fə.dəld
+		* befuddles	[tab] bɪ.'fə.dəlz
 
-[6. HOWTO: EXPAND PROSODIC'S LANGUAGE COVERAGE]
- A. There are two possible methods by which Prosodic can understand a language:
-	i. using a dictionary (eg, English) in the format:
-		{word token}[tab]{stressed, syllabified, IPA format}
-		- eg:
-			befuddle	bɪ.'fə.dəl
-			befuddled	bɪ.'fə.dəld
-			befuddles	bɪ.'fə.dəlz
+* using a python function which takes in a word-token as an input, and a stressed, syllabified, IPA format as its output. 
 
-	ii. using an on-the-fly syllabifier (eg, Finnish) which has takes in a {word-token} as an input, and a {stressed, syllabified, IPA format} as its output
+Currently, Finnish is implemented by the latter method; English, by a combination of two, using the dictionary for recognized words, and a python function for unrecognized words.
+
+To add entries to a language's dictionary, simply add an entry in the above format to the dictionary `[language_name].tsv` under the folder `[prosodic_dir]/dicts/[language_twoletter_code]`.
+
+To add a new language entirely, either:
+
+* create a new dictionary in the above format and place it under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv`.
+* or create a python file under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py`, which has a function `get(token,config={})` which accepts a word-token as its only argument, and PROSODIC's configuration settings as an optional keyword argument. This function must return a list in the form:
+
+	 
+	[
+		(
+			<ipa string>,
+			<token string split into a list of syllable strings>,
+			{a dictionary of optional keyword arguments to be stored on the word object}		),
+		...
+	]
 	
- B. To add a new word to a dictionary-language, simply add an entry in the above format to the dictionary [language_name].tsv under the folder ([prosodic_dir]/dicts/[language_twoletter_code]).
+For example, `get("into", config={'add_elided_pronunciations':1})` might return:
 
- C. To add a new language, either:
-	i. create a new dictionary in the above format and place it under ([prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv)
-	ii. or create a python file under ([prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py),
-		which has a function "get" which accepts a word-token as its only argument, and which outputs a tuple of (stressed-syllabified-ipa,[optionally]syllabified-orthography) as its only output
+	[
+		("ɪn.'tuː", ['in','to'], {'is_elision': False}),
+		"'ɪn.tuː", ['in','to'], {'is_elision': False}),
+		"ɪn.tʌ", ['in','to'], {'is_elision': False})
+	]
+
+
+ 
+and which outputs a tuple of (stressed-syllabified-ipa,[optionally]syllabified-orthography) as its only output
+
+See the `get()` function in `english.py` or `finnish.py` in the `dicts/en` and `dicts/fi` folders for examples.

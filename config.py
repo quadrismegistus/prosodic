@@ -93,10 +93,10 @@ linelen=60
 # [Maximum position size]
 #
 # The maximum number of syllables allowed in strong metrical positions (i.e. "s")
-maxS=1
+maxS=2
 #
 # The maximum number of syllables allowed in weak metrical positions (i.e. "w")
-maxW=1
+maxW=2
 #
 #
 ######

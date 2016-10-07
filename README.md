@@ -44,7 +44,7 @@ In preliminary tests, we ran PROSODIC against a sample of 1800 hand-parsed lines
                 w   s    w   s     w   s     w    s  w     s
 	            *   *
 
-We can see that PROSODIC gets this line right, and the template gets most of it line right, missing only the trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
+We can see that PROSODIC gets this line right; the template gets most of it right, missing only the trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
 
 <table>
 	<thead align=center>

@@ -95,6 +95,8 @@ The extent to which two human taggers (both English literature Ph.D. students) a
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints are mentioned below, but are best documented in their confuration file, `config.py`.
 
+[One final note: these human annotations—made by literature Ph.D. students—embody certain assumptions about meter that are common in literary, but not linguistic circles. For instance, representing a trochaic inversion as a literal inversion of feet, "swws," is not how Kiparsky would represent it; for him, a trochaic inversion is simply a conventional, permissible violation of the iambic meter. However, PROSODIC doesn't necessarily commit itself to either of these theories or approaches: parses that conform to either theory can be generated using different sets of constraints.]
+
 
 ## Installation
 

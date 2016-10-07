@@ -1,10 +1,14 @@
 #encoding=utf-8
 import sys,codecs,os,subprocess
 from ipa import sampa2ipa
+import pyphen
+
+Pyphen = None
 
 DIR_ROOT=os.path.split(globals()['__file__'])[0]
 CMU_DICT_FN=os.path.join(DIR_ROOT,'english.tsv')
 CMU_DICT={}
+
 
 
 
@@ -232,12 +236,22 @@ def cmusylls2ipa(sylls):
 	return ipa
 
 
-def syllabify_orth(token,num_sylls=None):
+def syllabify_orth_with_hyphenate(token,num_sylls=None):
 	from hyphenate import hyphenate_word
 	l=hyphenate_word(token)
 	if not num_sylls or len(l)==num_sylls:
 		return l
 	return []
+
+def syllabify_orth_with_pyphen(token,num_sylls=None):
+	global Pyphen
+	if not Pyphen: Pyphen=pyphen.Pyphen(lang='en_US')
+	sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
+	if len(sylls)==num_sylls: return sylls
+	return []
+
+def syllabify_orth(token,num_sylls=None):
+	return syllabify_orth_with_pyphen(token,num_sylls=num_sylls)
 
 
 

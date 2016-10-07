@@ -1,30 +1,32 @@
 # PROSODIC
-PROSODIC is a a metrical-phonological parser written in pure Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. PROSODIC was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish.
+
+PROSODIC is a a metrical-phonological parser written in pure Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. PROSODIC was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
 ## About PROSODIC
+
 PROSODIC does two main things. First, it tokenizes text into words, and the converts each word into its stressed, syllabified, IPA transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
 
 ### Example of metrical parsing
 
 Here's an example of the metrical parser in action, on Shakespeare's first sonnet.
 
-	text                                    				parse                                   
-	from fairest creatures we desire increase				from|FAI|rest|CREA|tures|WE|des|IRE|inc|REASE
-	that thereby beauty's rose might never die				that|THE|reby|BEAU|ty's|ROSE|might|NE|ver|DIE
-	but as the riper should by time decease 				but|AS|the|RI|per|SHOULD|by|TIME|dec|EASE
-	his tender heir might bear his memory   				his|TEN|der|HEIR|might|BEAR|his|ME|mo|RY
-	but thou contracted to thine own bright eyes			but|THOU|con|TRA|cted|TO|thine|OWN|bright|EYES
-	feed'st thy light's flame with self substantial fuel	FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STA|ntial|FUE|l
+	[text]                                    				[parse]                                   
+	from fairest creatures we desire increase				from|FAI|rest|CREA|tures|WE|de|SIRE|in|CREASE
+	that thereby beauty's rose might never die				that|THERE|by|BEAU|ty's|ROSE|might|NEV|er|DIE
+	but as the riper should by time decease 				but|AS|the|RI|per|SHOULD|by|TIME|de|CEASE
+	his tender heir might bear his memory   				his|TEN|der|HEIR|might|BEAR|his|MEM|o|RY
+	but thou contracted to thine own bright eyes			but|THOU|con|TRACT|ed|TO|thine|OWN|bright|EYES
+	feed'st thy light's flame with self substantial fuel	FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STAN|tial|FU|el
 	making a famine where abundance lies    				MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
 	thy self thy foe to thy sweet self too cruel			thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
-	thou that art now the world's fresh ornament			thou|THAT|art|NOW|the|WORLD'S|fresh|ORN|ame|NT
-	and only herald to the gaudy spring     				and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING  
-	within thine own bud buriest thy content				wi|THIN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
+	thou that art now the world's fresh ornament			thou|THAT|art|NOW|the|WORLD'S|fresh|OR|na|MENT
+	and only herald to the gaudy spring     				and|ON|ly|HER|ald|TO|the|GAU|dy|SPRING  
+	within thine own bud buriest thy content				with|IN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
 	and tender churl mak'st waste in niggarding				and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
 	pity the world or else this glutton be  				PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
 	to eat the world's due by the grave and thee			to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
 
-Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)).
+Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)). It also gets some lines wrong: its interpretation of "feed'st thy light's flame," for example. But how accurate is it on average?
 
 ### Accuracy of metrical parser
 
@@ -365,18 +367,7 @@ PROSODIC can also be run within other python applications.
 	   ...:     
 	from|FAI|rest|CREA|tures|WE|de|SIRE|in|CREASE
 	that|THERE|by|BEAU|ty's|ROSE|might|NEV|er|DIE
-	but|AS|the|RI|per|SHOULD|by|TIME|de|CEASE
-	his|TEN|der|HEIR|might|BEAR|his|MEM|o|RY
-	but|THOU|con|TRACT|ed|TO|thine|OWN|bright|EYES
-	FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STAN|tial|FUE|l
-	MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
-	thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
-	thou|THAT|art|NOW|the|WORLD'S|fresh|OR|na|MENT
-	and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING
-	with|IN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
-	and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
-	PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
-	to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
+	[...]
 
 For more information on this, please see [the Wiki](https://github.com/quadrismegistus/prosodic/wiki).
 
@@ -420,29 +411,88 @@ Due to this hierarchical organization, sophisticated queries become possible on 
 
 ### From phonology to metrics
 
-Metrical parsing is performed in the spirit of Optimality Theory: given user-specified constraints, along with a parameter specifying the maximum number of syllables allowed in strong/weak metrical positions, all non-harmonically-bounded scansions of the line are generated, and ranked in terms of their weighted violation scores.
-	- note: These and all other user-specified configurations occur in the file "config.py" in the main prosodic directory. See that file or instructions, or #5 below for more details.
+Once these phonetic and phonological annotations on words are in place, metrical parsing can then use them as it tries to maximize the correspondence between metrically strong positions and, say, syllable stress. The parsing is performed in the spirit of Optimality Theory: (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. Parses that violate the same constraints, on the same positions, but also violate additional constraints on the same or other positions, are considered "hamonically bounded": no matter how the constraints are weighted, these "bounded" parses are categorically worse than others. The metrical parser, written primarily by [Josh Falk](https://github.com/jsfalk), works as fast as it does by throwing away harmonically bounded parses as it goes: this way, it doesn't have to travel further down a parse once it realizes that parse has already been bounded by other parses.
 
-Included constraints:
-	- Prosodic includes built-in support for 13 constraints, all of which we have taken from {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}:
-		foot-min			# a metrical position may not contain *more than* a minimal foot (ie, weight-wise, allowed positions are H, L, LL, or LH)
+The number of *unbounded* parses for a given line then represents something about the metrical complexity of the line. For instance, take Richard III's line in the play, "A horse! A horse! My kingdom for a horse!" Only one parse survives the harmonic bounding process:
 
-	strength.s=>-u		# a *strong* metrical position may not contain *any* "weak" syllables, or "troughs" (ie, the monosyllable rule, strong version 1)
-	strength.w=>-p		# a *weak* metrical position may not contain *any* "strong" syllables, or "peaks" (ie, the monosyllable rule, strong version 2)
-	strength.s=>p		# a *strong* metrical position must contain *at least one* syllable which is *prominent* in terms of *strength* (ie, the monosyllable rule, weak version 1)
-	strength.w=>u		# a *weak* metrical position must contain *at least one* syllable which is *unprominent* in terms of *strength* (ie, the monosyllable rule, weak version 2)
+	[parse #1 of 1]: 2.0 errors
+	1	w	a         	
+	2	s	HORSE     	
+	3	w	a         	
+	4	s	HORSE     	
+	5	w	my        	
+	6	s	KING      	
+	7	w	dom       	
+	8	s	FOR       	[*stress.s=>-u]
+	9	w	a         	
+	10	s	HORSE     	
+	
+	[*stress.s=>-u]: 2.0  
 
-	stress.s=>-u		# a *strong* metrical position may not contain *any* unstressed syllables
-	stress.w=>-p		# a *weak* metrical position may not contain *any* stressed syllables
-	stress.s=>p			# a *strong* position must contain *at least one* stressed syllable
-	stress.w=>u			# a *weak* position must contain *at least one* unstressed syllable
+This parse only violates one constraint: it elevated an unstressed word, "for," to a metrically strong position. Compare this line to another of Shakespeare's, which has the same number of syllables, but is metrically more complex: "Never came poison from so sweet a place." Here, four parses survive:
 
-	#weight.s=>-u		# a *strong* metrical position may not contain *any* light syllables
-	#weight.w=>-p		# a *weak* metrical position may not contain *any* heavy syllables
-	weight.s=>p			# a *strong* metrical position must contain *at least one* heavy syllable
-	weight.w=>u			# a *weak* metrical position must contain *at least one* light syllable		
+	--------------------
+	[parse #4 of 4]: 14.0 errors
+	1	w	nev       	[*strength.w=>-p][*stress.w=>-p]
+	2	s	ER        	[*strength.s=>-u][*stress.s=>-u]
+	3	w	came      	[*stress.w=>-p]
+	4	s	POI       	
+	5	w	son       	
+	6	s	FROM      	[*stress.s=>-u]
+	7	w	so        	
+	8	s	SWEET     	
+	9	w	a         	
+	10	s	PLACE     	
+	
+	[*strength.s=>-u]: 3.0  [*strength.w=>-p]: 3.0  [*stress.s=>-u]: 4.0  [*stress.w=>-p]: 4.0  
+	--------------------
+	
+	--------------------
+	[parse #3 of 4]: 13.0 errors
+	1	s	NEV       	
+	2	w	er        	
+	3	s	CAME POI  	[*footmin-none][*footmin-no-s-unless-preceded-by-ww]
+	4	w	son       	
+	5	s	FROM      	[*stress.s=>-u]
+	6	w	so        	
+	7	s	SWEET     	
+	8	w	a         	
+	9	s	PLACE     	
+	
+	[*footmin-no-s-unless-preceded-by-ww]: 10.0  [*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  
+	--------------------
+	
+	--------------------
+	[parse #2 of 4]: 9.0 errors
+	1	s	NEV       	
+	2	w	er came   	[*stress.w=>-p][*footmin-none]
+	3	s	POI       	
+	4	w	son from  	[*footmin-none]
+	5	s	SO        	[*stress.s=>-u]
+	6	w	sweet a   	[*stress.w=>-p][*footmin-none]
+	7	s	PLACE     	
+	
+	[*footmin-none]: 3.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 4.0  
+	--------------------
+	
+	--------------------
+	[parse #1 of 4]: 6.0 errors
+	1	s	NEV       	
+	2	w	er came   	[*stress.w=>-p][*footmin-none]
+	3	s	POI       	
+	4	w	son       	
+	5	s	FROM      	[*stress.s=>-u]
+	6	w	so        	
+	7	s	SWEET     	
+	8	w	a         	
+	9	s	PLACE     	[*posthoc-standardize-weakpos]
+	
+	[*footmin-none]: 1.0  [*posthoc-standardize-weakpos]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
+	--------------------
 
+The best parse (at the bottom) is iambic with a trochaic inversion; it violates the constraint against demoting stressed syllables ("came") into a metrically weak position, as well as a constraint discouraging disyllabic positions. The next best is a dactylic interpretation of the line, but it too violates certain constraints. The third best tried to squeeze two syllables into a strong position, and the last—the traditional iambic parse—tried to alter the stress contour of "never," which violates constraints encouraging the correspondence between the meter and syllable "strength" in polysyllabic words.
 
+The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See `config.py` for a better description of these and other constraints.
 
 ## Extending PROSODIC
 
@@ -463,30 +513,27 @@ Currently, Finnish is implemented by the latter method; English, by a combinatio
 
 To add entries to a language's dictionary, simply add an entry in the above format to the dictionary `[language_name].tsv` under the folder `[prosodic_dir]/dicts/[language_twoletter_code]`.
 
-To add a new language entirely, either:
+To add a new language entirely, you can create a new dictionary in the above format and place it under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv`. Or, you can create a python file under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py`, which has a function `get(token,config={})`. This function must accept a word-token as its only argument, and PROSODIC's configuration settings as an optional keyword argument, and it must return a list of tuples in the form:
 
-* create a new dictionary in the above format and place it under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv`.
-* or create a python file under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py`, which has a function `get(token,config={})` which accepts a word-token as its only argument, and PROSODIC's configuration settings as an optional keyword argument. This function must return a list in the form:
-
-	 
 	[
 		(
-			<ipa string>,
+			<ipa unicode string>,
 			<token string split into a list of syllable strings>,
-			{a dictionary of optional keyword arguments to be stored on the word object}		),
+			{a dictionary of optional keyword arguments to be stored on the word object},
+		),
 		...
 	]
 	
 For example, `get("into", config={'add_elided_pronunciations':1})` might return:
 
 	[
-		("ɪn.'tuː", ['in','to'], {'is_elision': False}),
-		"'ɪn.tuː", ['in','to'], {'is_elision': False}),
-		"ɪn.tʌ", ['in','to'], {'is_elision': False})
+		(u"ɪn.'tuː", ['in','to'], {'is_elision': False}),
+		u"'ɪn.tuː", ['in','to'], {'is_elision': False}),
+		u"ɪn.tʌ", ['in','to'], {'is_elision': False})
 	]
 
+See the `get()` function in `dicts/en/english.py` or `dicts/fi/finnish.py` for examples.
 
- 
-and which outputs a tuple of (stressed-syllabified-ipa,[optionally]syllabified-orthography) as its only output
+### Contributing to the code base
 
-See the `get()` function in `english.py` or `finnish.py` in the `dicts/en` and `dicts/fi` folders for examples.
+Please feel free to pull and push back to the codebase here! And feel free to use this code in your projects: it is licensed by [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).

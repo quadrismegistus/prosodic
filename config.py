@@ -96,7 +96,7 @@ linelen=60
 maxS=2
 #
 # The maximum number of syllables allowed in weak metrical positions (i.e. "w")
-maxW=3
+maxW=2
 #
 #
 ######

@@ -354,41 +354,38 @@ Again, please see the documentation within `config.py` for more information.
 
 PROSODIC can also be run within other python applications.
 
-```python
-In [1]: import prosodic as p
-
-In [2]: t = p.Text("corpora/shakespeare/sonnet-001.txt")
-
-In [3]: t.parse()
-
-In [4]: for parse in t.bestParses():
-   ...:     print parse
-   ...:     
-from|FAI|rest|CREA|tures|WE|de|SIRE|in|CREASE
-that|THERE|by|BEAU|ty's|ROSE|might|NEV|er|DIE
-but|AS|the|RI|per|SHOULD|by|TIME|de|CEASE
-his|TEN|der|HEIR|might|BEAR|his|MEM|o|RY
-but|THOU|con|TRACT|ed|TO|thine|OWN|bright|EYES
-FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STAN|tial|FUE|l
-MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
-thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
-thou|THAT|art|NOW|the|WORLD'S|fresh|OR|na|MENT
-and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING
-with|IN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
-and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
-PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
-to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
-```
-
-
+	In [1]: import prosodic as p
+	
+	In [2]: t = p.Text("corpora/shakespeare/sonnet-001.txt")
+	
+	In [3]: t.parse()
+	
+	In [4]: for parse in t.bestParses():
+	   ...:     print parse
+	   ...:     
+	from|FAI|rest|CREA|tures|WE|de|SIRE|in|CREASE
+	that|THERE|by|BEAU|ty's|ROSE|might|NEV|er|DIE
+	but|AS|the|RI|per|SHOULD|by|TIME|de|CEASE
+	his|TEN|der|HEIR|might|BEAR|his|MEM|o|RY
+	but|THOU|con|TRACT|ed|TO|thine|OWN|bright|EYES
+	FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STAN|tial|FUE|l
+	MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
+	thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
+	thou|THAT|art|NOW|the|WORLD'S|fresh|OR|na|MENT
+	and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING
+	with|IN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
+	and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
+	PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
+	to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
 
 For more information on this, please see [the Wiki](https://github.com/quadrismegistus/prosodic/wiki).
 
 
 ## How it works
 
+How does PROSODIC work? Here is an overview of its two major aspects: how words are tokenized, phonetically transcribed, syllabified, and stressed; and then how that information is used to find the optimal metrical parse according to a set of constraints.
 
-### Overview of the IPA transcription process
+### From text, to words, to phonetics and phonology
 
 PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
 

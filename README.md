@@ -42,7 +42,7 @@ In preliminary tests, we ran PROSODIC against a sample of 1800 hand-parsed lines
                 w   s    w   s     w   s     w    s  w     s
 	            *   *
 
-We can see that the template gets most of the line right, as we would expect, but misses the line's trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
+We can see that PROSODIC gets this line right, and the template gets most of it line right, missing only the trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
 
 <table>
 	<thead align=center>
@@ -89,7 +89,7 @@ We can see that the template gets most of the line right, as we would expect, bu
 	</tbody>
 </table>
 
-The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect PROSODIC to do. But PROSODIC is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," PROSODIC is nonetheless able to discover the right basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), PROSODIC's parses were able to predict the meter of 200 poems with 98% accuracy.
+The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect PROSODIC to do. But PROSODIC is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," PROSODIC is nonetheless able to discover the right basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), PROSODIC's parses were able to predict the overall meter in 200 poems with about 98% accuracy.
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints will be discussd below.
 
@@ -241,7 +241,7 @@ The command `/tree` shows a hierarchical description of each word's phonology, a
 	                                          |
 	                                          |-----| (S1.L1.W2.S1.SB1.R2.C2.P2) <Phoneme>             [z]
 
-Lastly, the `/query` command allows you to query these phonological annotations. Once `/query` is entered, the query language parser starts up (type `/` to exit, or hit `Ctrl+D`). Which are the stressed syllables in the text? `(Syllable: [+prom.stress])`. Which are all the voiced phonemes? `(Phoneme: [+voice])`. Which are all the syllables with voiced onsets and codas? `(Syllable: (Onset: [+voice]) (Coda: [+voice]))`.
+Lastly, the `/query` command allows you to query these phonological annotations. Once `/query` is entered, the query language parser starts up (type `/` to exit, or hit `Ctrl+D`). Which are the stressed syllables in the text? `(Syllable: [+prom.stress])`. Which are all the voiced phonemes? `(Phoneme: [+voice])`. Which are all the syllables with voiced onsets and codas? `(Syllable: (Onset: [+voice]) (Coda: [+voice]))`. Etc.
 
 
 #### Metrically parsing text
@@ -322,7 +322,7 @@ How well does PROSODIC do when its metrical parses are compared with those that 
 
 ### Configuration options
 
-All configuration of PROSODIC takes place in `config.py` in the root folder of PROSODIC. This file is well-commented and is the best source of documentation on how to use it. Here is a list of what you will find there.
+All configuration of PROSODIC takes place in `config.py` in the root folder of PROSODIC. This file is well-commented and is the best source of documentation on how to use it. (It's best to edit this file inside a text editor that highlights the Python syntax, so you can visually see which settings are deactivated by being "commented-out," i.e. by having a "#" character at the start of their lines.) Here is a list of what you will find there.
 
 * Technical options about how PROSODIC works:
 	* The paths used for corpora, results, and tagged samples
@@ -347,12 +347,42 @@ All configuration of PROSODIC takes place in `config.py` in the root folder of P
 	* Whether to allow elided pronunciations (e.g. "Plu-ton-ian" for "Plu-ton-i-an") as metrical possibilities also
 	* How to display the phonetic output for words (IPA, orthography, CMU notation)
 
-		
+Again, please see the documentation within `config.py` for more information.
 	
 
 ### Running PROSODIC as a python module
 
-ee
+PROSODIC can also be run within other python applications.
+
+```python
+In [1]: import prosodic as p
+
+In [2]: t = p.Text("corpora/shakespeare/sonnet-001.txt")
+
+In [3]: t.parse()
+
+In [4]: for parse in t.bestParses():
+   ...:     print parse
+   ...:     
+from|FAI|rest|CREA|tures|WE|de|SIRE|in|CREASE
+that|THERE|by|BEAU|ty's|ROSE|might|NEV|er|DIE
+but|AS|the|RI|per|SHOULD|by|TIME|de|CEASE
+his|TEN|der|HEIR|might|BEAR|his|MEM|o|RY
+but|THOU|con|TRACT|ed|TO|thine|OWN|bright|EYES
+FEED'ST|thy|LIGHT'S|flame.with|SELF|sub|STAN|tial|FUE|l
+MAK|ing.a|FA|mine|WHERE|ab|UN|dance|LIES
+thy|SELF|thy|FOE|to.thy|SWEET.SELF|too|CRU|el
+thou|THAT|art|NOW|the|WORLD'S|fresh|OR|na|MENT
+and|ONL|y|HER|ald|TO|the|GAU|dy|SPRING
+with|IN|thine|OWN|bud|BU|ri|EST|thy|CON|tent
+and|TEN|der|CHURL|mak'st|WASTE|in|NIG|gard|ING
+PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
+to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
+```
+
+
+
+For more information on this, please see [the Wiki](https://github.com/quadrismegistus/prosodic/wiki).
 
 
 ## How it works

@@ -192,6 +192,7 @@ class MeterConstraint:
 			if name=='footmin-no-w': return self.weight * int(meterPos.meterVal=='w')
 
 			if name=='footmin-no-s-unless-preceded-by-ww':
+				# @TODO: bug when number of syllables in maxW is > 2 ?
 				if meterPos.meterVal!='s': return 0
 				if pos_i==0: return self.weight
 				prevpos=all_positions[pos_i-1]

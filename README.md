@@ -28,27 +28,21 @@ Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, bu
 
 ### Accuracy of metrical parser
 
-In preliminary tests, against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)), PROSODIC's accuracy is the following.
+In preliminary tests, we ran PROSODIC against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)). For example, here is a line, and how it was parsed by a human, PROSODIC, and the "bare template" of its poem's meter (iambic).
 
-For example, here is a line, how it was parsed 
+	Line:       Anxious  in  vain  to  find  the  distant  floor
 
-	Line:       Happy  the  man,  whose  wish  and  care
-	Human:      s  w   w    s     w      s     w    s
-	PROSODIC:   s  w   w    s     w      s     w    s
-	Template:   w* s*  w    s     w      s     w    s
-	
-	Line:		Than  the  firm  oak  of  which  the  frame  was  form'd.
-	Human:      w     w    s     s    w   s      w    s      w    s
-	
-	
-	
-	
-	[Anapestic line]
-	Line:		
+	Human:      ANxious  in  VAIN  to  FIND  the  DIStant  FLOOR
+                s   w    w   s     w   s     w    s  w     s
 
+	PROSODIC:   ANxious  in  VAIN  to  FIND  the  DIStant  FLOOR
+                s   w    w   s     w   s     w    s  w     s
 
+	Template:   anXIOUS  in  VAIN  to  FIND  the  DIStant  FLOOR
+                w   s    w   s     w   s     w    s  w     s
+	            *   *
 
-
+We can see that the template gets most of the line right, as we would expect, but misses the line's trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
 
 <table>
 	<thead align=center>
@@ -66,36 +60,36 @@ For example, here is a line, how it was parsed
 	<tbody>
 		<tr>
 			<td>Iambic lines</td>
-			<td>94.5%</td>
-			<td>93.0%</td>
-			<td>89.8%</td>
-			<td>89.8%</td>
+			<td>93.7%</td>
+			<td>92.6%</td>
+			<td>89.0%</td>
+			<td>89.0%</td>
 		</tr>
 		<tr>
 			<td>Trochaic lines</td>
-			<td>98.6%</td>
-			<td>94.1%</td>
-			<td>94.1%</td>
-			<td>5.8%</td>
+			<td>98.8%</td>
+			<td>94.5%</td>
+			<td>95.3%</td>
+			<td>4.5%</td>
 		</tr>
 		<tr>
 			<td>Anapestic lines</td>
-			<td>97.5%</td>
+			<td>97.2%</td>
 			<td>84.7%</td>
-			<td>84.1%</td>
-			<td>53.3%</td>
+			<td>66.1%</td>
+			<td>52.9%</td>
 		</tr>
 		<tr>
 			<td>Dactylic lines</td>
 			<td>95.8%</td>
-			<td>82.3%</td>
-			<td>79.7%</td>
-			<td>50.8%</td>
+			<td>83.8%</td>
+			<td>75.6%</td>
+			<td>49.7%</td>
 		</tr>
 	</tbody>
 </table>
 
-The data here show, we believe, that PROSODIC's parses match a human's about as often, or more often, than does a bare template of the poem's meter–that is, when we already know the meter of the poem. Not surprisingly, PROSODIC vastly outperforms a bare metrical template when that template doesn't match the poem: an iambic template works well for iambic poems, but not at all for poems of other meters. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Its metrical descriptions, reliable enough when we know the meter of the poem, are then likely to be reliable enough (at least to be interesting) when we don't.
+The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect PROSODIC to do. But PROSODIC is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," PROSODIC is nonetheless able to discover the right basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), PROSODIC's parses were able to predict the meter of 200 poems with 98% accuracy.
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints will be discussd below.
 
@@ -128,7 +122,7 @@ By default, PROSODIC uses the CMU pronunciation dictionary to discover the sylla
 
 ##### Setting up espeak
 
-[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.txt* file to "espeak." That's it!
+[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.py* file to "espeak." That's it!
 
 <small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which PROSODIC draws from (if possible) before resorting to a TTS engine.</small>
 
@@ -324,11 +318,37 @@ Finally, you can also save a variety of statistics from the metrical parser in t
 
 #### Evaluating the meter against a hand-parsed sample
 
-How well does PROSODIC do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic"). PROSODIC will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.txt`), and save statistics to the same folder in tab-separated form. The spreadsheet used in the above accuracy table is provided, made by the Stanford Literary Lab's [poetry project](http://github.com/quadrismegistus/litlab-poetry) in 2014.
+How well does PROSODIC do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic"). PROSODIC will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.py`), and save statistics to the same folder in tab-separated form. The spreadsheet used in the above accuracy table is provided, made by the Stanford Literary Lab's [poetry project](http://github.com/quadrismegistus/litlab-poetry) in 2014 and 2016.
 
 ### Configuration options
 
-ee
+All configuration of PROSODIC takes place in `config.py` in the root folder of PROSODIC. This file is well-commented and is the best source of documentation on how to use it. Here is a list of what you will find there.
+
+* Technical options about how PROSODIC works:
+	* The paths used for corpora, results, and tagged samples
+	* The language used (currently, English or Finnish)
+	* Which Text-to-Speech engine, if any, is used for parsing unknown English words
+	* Whether to print output to screen
+* Options about metrical parsing:
+	* The minimum and maximum size of metrical positions (from a mora to two or more syllables)
+	* The constraints used in metrical parsing, some of which are:
+		* Constraints proposed by Kiparsky and Hanson in "A Parametric Theory of Poetic Meter" (*Language*, 1996):
+			* *Strength*: A weak/strong syllable should not be in a strong/weak metrical position.
+			* *Stress*: An unstressed/stressed syllable should not bein a strong/weak metrical position.
+			* *Weight*: A light/heavy syllable should not be in a strong/weak metrical position.
+			* *Minimal foot*: a disyllabic metrical position should not contain more than a minimal foot (only if the syllables are weighted light-heavy or light-light is a disyllabic position allowed).
+		* Other constraints regulating disyllabic metrical positions
+		* Constraints allowing the initial parts of lines to be extrametrical
+		* Constraints regulating word elisions (e.g. "Plu-ton-i-an" becoming "Plu-ton-ian")
+	* What to pass to the metrical parser: a line in the text file, a line between punctuation markers, etc.
+* Options about words and tokenization:
+	* The regular expression used for word tokenization
+	* For words with multiple stress profiles (e.g. "INto" and "inTO"), whether to allow the metrical parser to choose the stress profile based on whichever works best metrically in the line
+	* Whether to allow elided pronunciations (e.g. "Plu-ton-ian" for "Plu-ton-i-an") as metrical possibilities also
+	* How to display the phonetic output for words (IPA, orthography, CMU notation)
+
+		
+	
 
 ### Running PROSODIC as a python module
 
@@ -340,7 +360,7 @@ ee
 
 ### Overview of the IPA transcription process
 
-PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in *config.txt*, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
+PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated.
 
 Prosodic annotates a given word in a language it recognizes by interpreting that word as a hierarchical organization of its phonological properties: a word contains syllables; which contain onsets, nuclei, and coda; which themselves contain phonemes. For instance, the English word "love" is interpreted:
 
@@ -374,7 +394,7 @@ Due to this hierarchical organization, sophisticated queries become possible on 
 ### Overview of metrical parser
 
 Metrical parsing is performed in the spirit of Optimality Theory: given user-specified constraints, along with a parameter specifying the maximum number of syllables allowed in strong/weak metrical positions, all non-harmonically-bounded scansions of the line are generated, and ranked in terms of their weighted violation scores.
-	- note: These and all other user-specified configurations occur in the file "config.txt" in the main prosodic directory. See that file or instructions, or #5 below for more details.
+	- note: These and all other user-specified configurations occur in the file "config.py" in the main prosodic directory. See that file or instructions, or #5 below for more details.
 
 Included constraints:
 	- Prosodic includes built-in support for 13 constraints, all of which we have taken from {"A Parametric Theory of Poetic Meter", Kiparsky & Hanson, Language, 1996}:

@@ -89,7 +89,7 @@ Cs={}
 #
 # A strong metrical position should not contain any unstressed syllables:
 # [Kiparsky and Hanson believe this is Hopkins' meter]
-Cs['stress.s=>-u']=1000
+Cs['stress.s=>-u']=1
 #
 # A weak metrical position should not contain any stressed syllables:
 #Cs['stress.w=>-p']=2
@@ -145,7 +145,7 @@ Cs['stress.s=>-u']=1000
 #
 # A disyllabic STRONG metrical position should not contain more than a minimal foot:
 # (i.e. allowed positions are syllables weighted light-light or light-heavy)
-Cs['footmin-s-noHX']=1000
+Cs['footmin-s-noHX']=1
 #
 # A disyllabic metrical position should be syllables weighted light-light:
 #Cs['footmin-noLH-noHX']=1
@@ -213,7 +213,7 @@ Cs['footmin-s-noHX']=1000
 #
 # ...neither word should be a LEXICAL monosyllable
 # (i.e. function words and polysyllabic words ok)
-Cs['footmin-wordbound-lexmono']=1000
+Cs['footmin-wordbound-lexmono']=1
 ###
 # [Miscellaneous constraints relating to disyllabic positions]
 #

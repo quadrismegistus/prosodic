@@ -168,6 +168,10 @@ class Parse(entity):
 			return vals
 
 	@property
+	def totalCount(self):
+		return sum(self.constraintCounts.values())
+
+	@property
 	def constraintCounts(self):
 		return dict((c,int(self.constraintScores[c] / c.weight)) for c in self.constraintScores)
 	

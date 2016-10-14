@@ -1,4 +1,4 @@
-import pickle,sys,os
+import pickle,sys,os,codecs
 
 def slice(l,num_slices=None,slice_length=None,runts=True,random=False):
 	"""
@@ -668,10 +668,14 @@ def report(text):
 	t.report()
 
 
-def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
+def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'):
 	#from prosodic import Text
 	import prosodic as p
 	Text=p.Text
+	if not meter:
+		import Meter
+		meter=Meter.genDefault()
+
 	p.config['print_to_screen']=0
 
 	def parse2list(parse):
@@ -704,8 +708,10 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 	import codecs
 	ld=read_ld(fn)
 	fn_split = fn.split('.')
-	ofn_split=fn_split[:-1] + ['evaluated'] + [fn_split[-1]]
+	ofn_split=fn_split[:-1] + ['evaluated','meter='+meter.id] + [fn_split[-1]]
+	ofn_split_ot=fn_split[:-1] + ['evaluated', 'ot','meter='+meter.id] + [fn_split[-1]]
 	ofn='.'.join(ofn_split)
+	ofn_ot='.'.join(ofn_split_ot)
 
 	def _print(dx):
 		print
@@ -738,12 +744,15 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 		sylls_iscorrect=[]
 		lines_iscorrect_nonbounded=[]
 
-		for d in ld:
+		otf=open(ofn_ot,'w')
+		otf_nl=0
+
+		for di,d in enumerate(ld):
 			line=d[key_line]
 			parse_human=''.join([x for x in d[key_parse].lower() if x in ['s','w']])
 			if not parse_human: continue
 			t=Text(line)
-			t.parse()
+			t.parse(meter=meter)
 			#if not t.isParsed: continue
 
 			parse_comp=t.parse_str(viols=False, text=False).replace('|','')
@@ -756,6 +765,32 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 			parse_human2=''.join([x for x in d.get('parse_human2','').lower() if x in ['s','w']])
 
 			#parse_human,parse_human2=parse_human2,parse_human
+
+			### OT
+			if not otf_nl:
+				header=['','','']
+				for c in meter.constraints: header+=['[*'+c.name+']']
+				otf.write('\t'.join(header)+'\n')
+			
+			humans = [parse_human]
+			if parse_human2: humans+=[parse_human2]
+			for _i,_parses in enumerate(t.allParses()):
+				if not _parses: continue
+				_parses.sort(key=lambda _P: (-humans.count(_P.str_meter()), _P.totalCount))
+				if not humans.count(_parses[0].str_meter()):
+					# is the good parse in the bounded ones?
+					for _bndp in t.boundParses()[_i]:
+						if _bndp.str_meter() in humans:
+							_parses.insert(0,_bndp)
+
+				for _pi,_parse in enumerate(_parses):
+					otf_nl+=1
+					code=_parse.str_meter()
+					row=[line.encode('utf-8',errors='ignore') if not _pi else '', str(_parse) + (' [*Bounded]' if _parse.isBounded else ''), str(humans.count(code)) if code in humans else '']
+					for c in meter.constraints: row+=[str(_parse.constraintCounts[c]) if _parse.constraintCounts[c] else '']
+					otf.write('\t'.join(row)+'\n')
+
+
 
 			
 			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_comp))])

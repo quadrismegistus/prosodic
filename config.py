@@ -23,7 +23,7 @@
 # in its interactive mode. As a python module, you will have to 
 # create the meter first and pass it to the Text object to parse.
 #
-meter = 'litlab' 
+meter = 'kiparskyhanson_shakespeare' 
 ############################################
 
 
@@ -227,7 +227,7 @@ folder_tagged_samples = 'tagged_samples/'
 ####
 # MEMORY DECISIONS
 #
-num_bounded_parses_to_store = 100
+num_bounded_parses_to_store = 10
 #
 ###
 

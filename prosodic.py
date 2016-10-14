@@ -442,7 +442,7 @@ else:	## if not imported, go into interactive mode
 			key_meterscheme = raw_input('\n>> [optional, will use if present] please enter the column name in the file for the column indicating the metrical template in the poem (anapestic, dactylic, iambic, or trochaic): [default: Meter Scheme]\n').strip()
 			if not key_meterscheme: key_meterscheme='Meter Scheme'
 
-			assess(os.path.join(path,fn), key_meterscheme=key_meterscheme, key_parse=key_parse, key_line=key_line)
+			assess(os.path.join(path,fn), key_meterscheme=key_meterscheme, key_parse=key_parse, key_line=key_line, meter=METER)
 	
 	
 		elif text.startswith('/mute'):

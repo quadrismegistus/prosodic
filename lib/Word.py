@@ -82,7 +82,7 @@ class Word(entity):
 		import prosodic
 		if (not 'output_'+lang in prosodic.config):
 			lang="**"
-		if prosodic.config['output_'+lang]=="cmu":
+		if prosodic.config.get('output_'+lang,'')=="cmu":
 			return " . ".join([str(syll) for syll in self.children])
 		else:
 			return ".".join([str(syll) for syll in self.children])

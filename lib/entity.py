@@ -305,6 +305,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns a list of this object's Nuclei in order of their appearance."""
 		return self.ents('Nucleus')
 		
+
+	@property
+	def num_syll(self):
+		if not hasattr(self,'_num_syll'):
+			self._num_syll=sum([w.numSyll for w in self.words()])
+		return self._num_syll
+
 		
 	def codae(self):
 		"""Returns a list of this object's Codae in order of their appearance."""
@@ -625,6 +632,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	
 	
 	def stats(self,init=None):
+		#print "HI FROM ENTITY",type(self),self
 		"""Save statistics about the parsing."""
 		
 		if not init:
@@ -1221,10 +1229,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		return name
 
-	def genfsms(self):
+	def genfsms(self,meter=None):
 		"""Generate FSM images. Requires networkx and GraphViz."""
 		
-		if (hasattr(self,'bestparses')):
+		if (hasattr(self,'allParses')):
 			name=self.getName()
 				
 			import networkx as nx
@@ -1243,58 +1251,71 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			#gs['weightshape']=['str_weight','str_shape']
 
 			Gs={}
+
+			if len(self.bestParses(meter=meter))==1: # if this is a direct input or a single line
+				parses=[]
+				for _parses in self.allParses():
+					parses+=_parses
+				use_labels = True
+			else:
+				parses=self.bestParses()
+				use_labels = False
+
 			for gtype in gs.keys():
 				G=nx.DiGraph()
 				sumweight={}
 				nodetypes=[]
 				linelens=[]
-				for parse in self.bestParses():
+
+				for parse in parses:
 					node1=None
 					node2=None
 				
 					posnum=0
 					linelens.append(len(parse.positions))
 					for pos in parse.positions:
-						posnum+=1
-						if hasattr(being,'line_maxsylls'):
-							if posnum>int(being.line_maxsylls):
-								break
-						
-						nodestr=""
-						
-						for strcaller in sorted(gs[gtype]):
-							for unit in pos.slots:
-								unit.meter=pos.meterVal
-								
+						has_viol = bool(sum(pos.constraintScores.values()))
+						for unit in pos.slots:
+							spelling=unit.children[0].str_orth()
+							posnum+=1
+							if hasattr(being,'line_maxsylls'):
+								if posnum>int(being.line_maxsylls):
+									break
+							
+							nodestr=""
+							unit.meter=pos.meterVal
+							for strcaller in sorted(gs[gtype]):
+										
 								z=unit.findattr(strcaller,'children')
-								#if len(pos.children)>1:
-								#print z
 								if type(z)==type([]):
 									nodestr+="".join( [str(x()) for x in z] )
 								else:
 									nodestr+=str(z())
 
-						if not nodestr: continue
+							if not nodestr: continue
+							if use_labels:
+								nodestr+='_'+ (spelling.upper() if unit.meter=='s' else spelling.lower())
+							nodestr=str(posnum)+"_"+str(nodestr)
+							if (not nodestr in nodetypes):
+								nodetypes.append(nodestr)
+							#node=str(posnum)+"_"+str(nodestr)
+							node=nodestr
 						
-						if (not nodestr in nodetypes):
-							nodetypes.append(nodestr)
-						node=str(posnum)+"_"+str(nodestr)
-					
-						if not node1:
-							node1=node
-							continue
-						node2=node
-					
-						if G.has_edge(node1,node2):
-							G[node1][node2]['weight']+=1
-						else:
-							G.add_edge(node1,node2,weight=1)
-						try:
-							sumweight[(str(node1)[0],str(node2)[0])]+=1
-						except KeyError:
-							sumweight[(str(node1)[0],str(node2)[0])]=1
-							
-						node1=node2							
+							if not node1:
+								node1=node
+								continue
+							node2=node
+						
+							if G.has_edge(node1,node2):
+								G[node1][node2]['weight']+=1
+							else:
+								G.add_edge(node1,node2,weight=1)
+							try:
+								sumweight[(str(node1)[0],str(node2)[0])]+=1
+							except KeyError:
+								sumweight[(str(node1)[0],str(node2)[0])]=1
+								
+							node1=node2							
 				
 				if not linelens: continue
 				
@@ -1317,13 +1338,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						#G[n1][n2]['arrowhead']='none'
 
 				import math
-				avglinelen=int(max(linelens))
+				"""avglinelen=int(max(linelens))
 				for n in range(2,avglinelen):
 					for ntype in nodetypes:
 						node1=str(n-1)+"_"+ntype
 						node2=str(n)+"_"+ntype
 						if not G.has_edge(node1,node2):
 							G.add_edge(node1,node2,weight=0,penwidth=0,color='white')
+				"""
 
 				fn='results/fsms/'+str(gtype)+"."+name+'.png'
 				print ">> saved: "+fn+""
@@ -1334,7 +1356,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 				for node in pyd.get_node_list():
 					node.set_orientation('portrait')
-				pyd.write_png(fn, prog='dot') 
+
+				import prosodic as p
+				fnfn=os.path.join(p.dir_prosodic,fn)
+				_path=os.path.split(fnfn)[0]
+				if not os.path.exists(_path):
+					os.makedirs(_path)
+				pyd.write_png(fnfn, prog='dot') 
 			
 		else:
 			if not self.children:
@@ -1409,17 +1437,19 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		
 		
 		
-	def report(self):
+	def report(self,meter=None,include_bounded=False):
 		""" Print all parses and their violations in a structured format. """
 		
-		from Meter import Meter
-		meter=Meter('default')
+		if not meter:
+			from Meter import Meter
+			meter=Meter.genDefault()
 		if (hasattr(self,'allParses')):
 			self.om(str(self))
-			allparses=self.allParses()
+			allparses=self.allParses(meter=meter,include_bounded=include_bounded)
 			numallparses=len(allparses)
-			for pi,parseList in enumerate(self.allParses()):
+			for pi,parseList in enumerate(allparses):
 				line=self.iparse2line(pi).txt
+				#parseList.sort(key = lambda P: P.score())
 				hdr="\n\n"+'='*30+'\n[line #'+str(pi+1)+' of '+str(numallparses)+']: '+line+'\n\n\t'
 				ftr='='*30+'\n'
 				self.om(hdr+meter.printParses(parseList).replace('\n','\n\t')[:-1]+ftr,conscious=False)

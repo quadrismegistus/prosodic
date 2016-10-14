@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from __future__ import division
-import sys,re,os,codecs
+import sys,re,os,codecs,time
 
 from Stanza import Stanza
 from Line import Line
@@ -14,7 +14,7 @@ from ipa import sampa2ipa
 
 
 class Text(entity):
-	def __init__(self,filename,lang=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
+	def __init__(self,filename,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
 		import prosodic
 		self.lang=self.set_lang(filename) if not lang else lang
@@ -22,16 +22,25 @@ class Text(entity):
 		self.featpaths={}
 		self.__parses={}
 		self.__bestparses={}
+		self.__boundParses={}
 		self.__parsed_ents={}
 		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
 		self.limWord = limWord
+		self.isFromFile = False
 		self.feats = {}
 		self.children = []
 		self.isUnicode=True
 		self.use_dict=use_dict
 		self.fix_phons_novowel=fix_phons_novowel
 		self.stress_ambiguity=stress_ambiguity
+		self.dir_prosodic=prosodic.dir_prosodic
+		self.dir_results=prosodic.dir_results
+		self.config=prosodic.config
+		self.meter=self.config['meters'][meter] if meter and meter in self.config['meters'] else None
+		#self.meterd={]}
+
+
 		
 		## phrasebreak features
 		if self.phrasebreak=='line':
@@ -47,24 +56,30 @@ class Text(entity):
 		#if False:
 			self.filename = filename
 			self.name = filename.split("/").pop().strip()
+			print '>> loading text:',self.name
 			file=codecs.open(filename,encoding='utf-8',errors='replace')
 			#self.init_text(file)
 			#if prosodic.config['use_open_mary']:
 			#	self.init_run_mary(file.read())
 			#else:
+			self.isFromFile=True
 			self.init_text(file)
 		elif '</maryxml>' in filename:
 			self.name='OpenMary'
+			print '>> loading text:',self.name
 			self.filename=filename
+			self.isFromFile=False
 			self.init_mary(filename)
 		else:
 			lines = filename.split('\n')
 			self.name = noPunc(lines[0].lower())[:25].strip().replace(' ','-')
+			#print '>> loading text:',self.name
 			self.filename = lines[0].replace(' ','_')[:100]+'.txt'
 			#self.init_text(lines)
 			#if prosodic.config['use_open_mary']:
 			#	self.init_run_mary(filename)
 			#else:
+			self.isFromFile=False
 			self.init_text(lines)
 		
 		## clean
@@ -209,9 +224,131 @@ class Text(entity):
 			if not line.empty(): line.finish()
 			if not stanza.empty(): stanza.finish()
 				
-			
+	
+
+	def stats_lines(self,meter=None,all_parses=False):
+		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
+		meter=self.get_meter(meter)
+
+		def _writegen():
+			for line in self.lines():
+				dx={'0_text':self.name, '1_line':str(line)}
+				bp=line.bestParse(meter)
+				ap=line.allParses(meter)
+				dx['2_parse']=str(bp) if bp else ''
+				dx['3_num_parses']=len(ap)
+				dx['4_lowest_score'] = bp.score() if bp else ''
+				dx['5_num_sylls']=sum(len(pos.slots) for pos in bp.positions) if bp else ''
+				dx['meter']=meter.id
+				#if bp:
+				#for c,v in bp.constraintScores.items():
+				for c in meter.constraints:
+					dx['[*'+c.name+']']=bp.constraintScores[c] if bp and c in bp.constraintScores else ''
+				yield dx
+
+		name=self.name.replace('.txt','')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
+		for dx in writegengen(ofn, _writegen):
+			yield dx
+		print '>> saved:',ofn
+
+	def stats_lines_ot(self,meter=None,all_parses=False):
+		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
+		meter=self.get_meter(meter)
+
+		def _writegen():
+			for line in self.lines():
 				
+				bp=line.bestParse(meter)
+				ap=line.allParses(meter)
+				for pi,parse in enumerate(ap):
+					dx={'0_line':str(line) if not pi else ''}
+					dx['1_parse']=str(parse)
+					dx['2_obs']='1'
+					for c in meter.constraints:
+						dx['[*'+c.name+']']=parse.constraintCounts[c] if parse and c in parse.constraintScores and parse.constraintScores[c] else ''
+					yield dx
+
+		name=self.name.replace('.txt','')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
+		for dx in writegengen(ofn, _writegen):
+			yield dx
+		print '>> saved:',ofn
+
+				
+	def stats_positions(self,meter=None,all_parses=False):
 		
+		"""Produce statistics from the parser"""
+
+		"""Positions
+		All feats of slots
+		All constraint violations
+
+
+		"""
+		parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
+		
+		dx={}
+		for parselist in parses:
+			
+			for parse in parselist:
+				slot_i=0
+				for pos in parse.positions:
+					for slot in pos.slots:
+						slot_i+=1
+
+						feat_dicts = [slot.feats, pos.constraintScores, pos.feats]
+						for feat_dict in feat_dicts:
+							for k,v in feat_dict.items():
+								dk = (slot_i,str(k))
+								if not dk in dx: dx[dk]=[]
+								dx[dk]+=[v]
+
+
+		def _writegen():
+			for ((slot_i,k),l) in dx.items():
+				l2=[]
+				for x in l:
+					if type(x)==bool:
+						x=1 if x else 0
+					elif type(x)==type(None):
+						x=0
+					elif type(x) in [str,unicode]:
+						continue
+					else:
+						x=float(x)
+					if x>1: x=1
+					l2+=[x]
+				#print k, l2
+				#try:
+				if not l2: continue
+
+				avg=sum(l2) / float(len(l2))
+				count=sum(l2)
+				chances=len(l2)
+				#except TypeError:
+				#	continue
+
+				odx={'slot_num':slot_i, 'statistic':k, 'average':avg, 'count':count, 'chances':chances, 'text':self.name}
+				#print odx
+				yield odx
+
+		name=self.name.replace('.txt','')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.positions.txt')
+		#print ofn
+		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
+		for dx in writegengen(ofn, _writegen):
+			yield dx
+		print '>> saved:',ofn
+		#for 	
+
+	def stats(self,meter=None,all_parses=False,funcs=['stats_lines','stats_lines_ot','stats_positions']):
+		for funcname in funcs:
+			func=getattr(self,funcname)
+			for dx in func(meter=meter,all_parses=all_parses):
+				yield dx
 		
 		
 	
@@ -269,47 +406,61 @@ class Text(entity):
 	## def parse
 	def parse(self,meter=None,arbiter='Line'):
 		"""Parse this text metrically."""
-		
-		if not meter:
-			from Meter import Meter,genDefault
-			meter = genDefault()
-			#print '>> no meter specified. defaulting to this meter:'
-			#print meter
-			pass
-		else:
-			#print '>> meter specified:'
-			#print meter
-			pass
+		from Meter import Meter,genDefault,parse_ent
+		meter=self.get_meter(meter)
 
-		#print '>> Parsing with meter:',meter
+		if self.isFromFile: print '>> parsing',self.name,'with meter:',meter.id
+		self.meter=meter
 		
-		self.__parses[meter]=[]
-		self.__bestparses[meter]=[]
-		self.__parsed_ents[meter]=[]
+		self.__parses[meter.id]=[]
+		self.__bestparses[meter.id]=[]
+		self.__boundParses[meter.id]=[]
+		self.__parsed_ents[meter.id]=[]
 
 		init=self
-		if not hasattr(init,'meter_stats'): init.meter_stats={'lines':{},'positions':{},'texts':{}, '_ot':{},'_constraints':{}}
-		if not hasattr(init,'bestparses'): init.bestparses=[]
+		if not hasattr(init,'meter_stats'):
+			init.meter_stats={'lines':{},'positions':{},'texts':{}, '_ot':{},'_constraints':{}}
+		if not hasattr(init,'bestparses'):
+			init.bestparses=[]
+
 		init.meter=meter
 		init.meter_stats['_constraints']=sorted(init.meter.constraints)
 		init.ckeys="\t".join(sorted([str(x) for x in init.meter.constraints]))
 
 		ents=self.ents(arbiter)
+		smax=self.config.get('line_maxsylls',100)
+		smin=self.config.get('line_minsylls',0)
+		#print '>> # of lines to parse:',len(ents)
+		ents = [e for e in ents if e.num_syll >= smin and e.num_syll<=smax]
+		#print '>> # of lines to parse after applying min/max line settings:',len(ents)
+
 		self.scansion_prepare(meter=meter,conscious=True)
-		for ent in ents:
+
+		
+		
+		numents=len(ents)
+		now=time.time()
+		clock_snum=0
+		for ei,ent in enumerate(ents):
+			clock_snum+=ent.num_syll
+			if ei and not ei%100:
+				nownow=time.time()
+				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+				now=nownow
+				clock_snum=0
 			ent.parse(meter,init=init)
-			self.__parses[meter].append( ent.allParses(meter) )
-			self.__bestparses[meter].append( ent.bestParse(meter) )
-			self.__parsed_ents[meter].append(ent)
+			self.__parses[meter.id].append( ent.allParses(meter) )
+			self.__bestparses[meter.id].append( ent.bestParse(meter) )
+			self.__boundParses[meter.id].append( ent.boundParses(meter) )
+			self.__parsed_ents[meter.id].append(ent)
 			ent.scansion(meter=meter,conscious=True)
 	
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)
 	
 	def iparse2line(self,i,meter=None):
-		if not meter:
-			meter=self.__parsed_ents.keys()[0]
-		return self.__parsed_ents[meter][i]
+		meter=self.get_meter(meter)
+		return self.__parsed_ents[meter.id][i]
 
 	#@property
 	def isParsed(self):
@@ -328,13 +479,7 @@ class Text(entity):
 	
 	def scansion(self,meter=None,conscious=False):
 		"""Print out the parses and their violations in scansion format."""
-		
-		if not meter:
-			try:
-				meter=self.__bestparses.keys()[0]
-			except:
-				return
-		
+		meter=self.get_meter(meter)
 		self.scansion_prepare(meter=meter,conscious=conscious)
 		for line in self.lines():
 			try:
@@ -349,35 +494,93 @@ class Text(entity):
 		parses=self.allParses(meter=meter)
 		for parse_product in product(*parses):
 			yield parse_product
-	
-	def allParses(self,meter=None):
+
+	def allParses(self,meter=None,include_bounded=False,one_per_meter=True):
 		"""Return a list of lists of parses."""
 		
-		if not meter:
-			itms=self.__parses.items()
-			if not len(itms): return []
-			for mtr,parses in itms:
-				return parses
-		
+		meter=self.get_meter(meter)
 		try:
-			return self.__parses[meter]
-		except KeyError:
+			parses=self.__parses[meter.id]
+			
+			if one_per_meter:
+				toreturn=[]
+				for _parses in parses:
+					sofar=set()
+					_parses2=[]
+					for _p in _parses:
+						_pm=_p.str_meter()
+						if not _pm in sofar:
+							sofar|={_pm}
+							if _p.isBounded and _p.boundedBy.str_meter() == _pm:
+								pass
+							else:
+								_parses2+=[_p]
+					toreturn+=[_parses2]
+				parses=toreturn
+
+			if include_bounded:
+				boundedParses=self.boundParses(meter)
+				return [bp+boundp for bp,boundp in zip(toreturn,boundedParses)]
+			else:
+				return parses
+
+		except (KeyError,IndexError) as e:
 			return []
+
+
+	def get_meter(self,meter=None):
+		if not meter:
+			if self.meter:
+				meter=self.meter
+			elif hasattr(self,'_Text__bestparses') and self.__bestparses:
+				return self.get_meter(sorted(self.__bestparses.keys())[0])
+			else:
+				import Meter
+				meter=Meter.genDefault()
+				#print '>> no meter specified. defaulting to this meter:'
+				#print meter
+		elif type(meter) in [str,unicode]:
+			meter= self.config['meters'][meter]
+		else:
+			pass
+
+		return meter
+
+	def report(self,meter=None,include_bounded=False):
+		#return #super(Text,self).report(meter=meter if meter else self.meter)
+		meter=self.get_meter(meter)
+		return entity.report(self, meter=meter,include_bounded=include_bounded)
 	
 	
 	def bestParses(self,meter=None):
 		"""Return a list of the best parse per line."""
-		
-		if not meter:
-			itms=self.__bestparses.items()
-			if not len(itms): return []
-			for mtr,parses in itms:
-				return parses
-		
+		meter=self.get_meter(meter)
 		try:
-			return self.__bestparses[meter]
-		except KeyError:
+			return self.__bestparses[meter.id]
+		except (KeyError,IndexError) as e:
 			return []
+
+	def boundParses(self,meter=None,include_stressbounds=False):
+		"""Return a list of the best parse per line."""
+		meter=self.get_meter(meter)
+		try:
+			toreturn=[]
+			for _parses in self.__boundParses[meter.id]:
+				sofar=set()
+				_parses2=[]
+				for _p in _parses:
+					_pm=_p.str_meter()
+					if not _pm in sofar:
+						if _p.isBounded and _p.boundedBy.str_meter() == _pm:
+							pass
+						else:
+							sofar|={_pm}
+							_parses2+=[_p]
+				toreturn+=[_parses2]
+			return toreturn
+
+		except (KeyError,IndexError) as e:
+			return [[]]
 
 	def viol_words(self):
 		bp=self.bestParses()
@@ -508,20 +711,6 @@ class Text(entity):
 		"""Return all lines within which Prosodic understood all words."""
 		
 		return [ln for ln in self.lines() if (not ln.isBroken() and not ln.ignoreMe)]
-	
-	#def stats(self):
-	#	o="\t"+makeminlength(" ",16)+"\t#tokens\t#types\t\t%typ/tok\n"
-	#	dict=self.dict
-	#	stats=self.getStats()
-	#	
-	#	for k,v in sorted(stats.items(),key=itemgetter(0)):
-	#		numtok=v[0]
-	#		numtyp=v[1]
-	#		typovertok=v[2]
-	#		
-	#		o+="\t"+makeminlength(str(k),16)+"\t"+str(numtok)+"\t"+str(numtyp)+"\t"+str(typovertok)+"\n"
-	#		
-	#	return o
 	
 	def __repr__(self):
 		return "<Text."+str(self.name)+"> ("+str(len(self.words()))+" words)"

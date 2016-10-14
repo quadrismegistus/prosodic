@@ -9,24 +9,48 @@ DIR_ROOT=os.path.split(globals()['__file__'])[0]
 CMU_DICT_FN=os.path.join(DIR_ROOT,'english.tsv')
 CMU_DICT={}
 
+CACHE_DICT_FN=os.path.join(DIR_ROOT,'english.tts-cache.tsv')
+CACHE_DICT_F=None
 
 
 
 
-def load_cmu(fn=CMU_DICT_FN):
+def load_cmu(fn=CMU_DICT_FN,config={}):
 	global CMU_DICT
-	with codecs.open(fn,encoding='utf-8') as f:
-		for ln in f:
-			ln=ln.strip()
-			if not ln or ln.count('\t')!=1: continue
-			word,ipa=ln.split('\t')
-			if not word in CMU_DICT: CMU_DICT[word]=[]
-			CMU_DICT[word]+=[ipa]
+	fns=[fn]
+	if config.get('en_TTS_cache',False):
+		fns+=[CACHE_DICT_FN]
+
+	for fn in fns:
+		#print '>> loading words from:',fn
+		if os.path.exists(fn):
+			with codecs.open(fn,encoding='utf-8') as f:
+				for ln in f:
+					ln=ln.strip()
+					if not ln or ln.count('\t')!=1: continue
+					word,ipa=ln.split('\t')[:2]
+					word=word.strip()
+					ipa=ipa.strip().split()[0]
+					if not word in CMU_DICT: CMU_DICT[word]=[]
+					CMU_DICT[word]+=[ipa]
+
+def write_to_cache(token,ipa):
+	tokenl=token.lower()
+	global CACHE_DICT_F
+	if not CACHE_DICT_F:
+		CACHE_DICT_F=codecs.open(CACHE_DICT_FN,'a',encoding='utf-8')
+
+	CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
+	if not tokenl in CMU_DICT:
+		CMU_DICT[tokenl]=[]
+	CMU_DICT[tokenl]+=[ipa]
+
+
 
 def get(token,config={}):
 	# If not CMU loaded
 	global CMU_DICT
-	if not CMU_DICT: load_cmu()
+	if not CMU_DICT: load_cmu(config=config)
 
 	# First try CMU
 	tokenl=word_l=token.lower()
@@ -56,6 +80,10 @@ def get(token,config={}):
 		else:
 			return None
 		ipas=[ipa]
+
+		if config.get('en_TTS_cache',False):
+			for ipa in ipas:
+				write_to_cache(token,ipa)
 
 
 	## Syllabify the orthography if possible
@@ -153,7 +181,7 @@ def add_elisions(_ipa):
 	# e.g. sincerest, dear, incommodiously
 	# QUESTIONABLE
 	#replace[u'.ʌ.']=u'ʌ.'
-	#replace[u'eɪ.ʌ']=u'eɪʌ'
+	replace[u'eɪ.ʌ']=u'eɪʌ'
 
 	new=[_ipa]
 	for k,v in replace.items():

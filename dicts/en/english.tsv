@@ -49683,7 +49683,7 @@ hiemstra	'hiːm.strə
 hier	'haɪ.ɛː
 hierarchical	`haɪ.'rɑr.kə.kəl
 hierarchies	'haɪ.`rɑr.kiːz
-hierarchy	'haɪ.ɛː.`ɑr.kiː
+#hierarchy	'haɪ.ɛː.`ɑr.kiː
 hierarchy	'haɪ.`rɑr.kiː
 hierholzer	'haɪr.hoʊl.zɛː
 hieroglyphic	`haɪ.roʊ.'glɪ.fɪk
@@ -111200,7 +111200,9 @@ tovia	'toʊ.viː.ə
 tovia	'toʊ.vjə
 tow	'toʊ
 toward	tʌ.'wɔːrd
+toward	'tʌ.wɔːrd   # added
 toward	'tɔːrd
+towards	'tʌ.wɔːrdz  # added
 towards	tʌ.'wɔːrdz
 towards	'tɔːrdz
 towbin	'toʊ.`bɪn

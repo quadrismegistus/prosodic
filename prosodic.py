@@ -13,6 +13,8 @@ sys.path.append(dir_imports)
 toprintconfig=False
 from tools import *
 config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
+config['meters']=loadMeters()
+METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
 
 
 dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
@@ -133,7 +135,8 @@ else:	## if not imported, go into interactive mode
 
 			msg+="\n"
 	
-		# msg+="\t\t/config\tchange settings\n"
+		#msg+="\t\t/config\tchange settings\n"
+		msg+="\t\t/meter\tset the meter used for parsing\n"
 		msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n"
 		if config['print_to_screen']:
 			msg+="\t\t/mute\thide output from screen\n"
@@ -188,7 +191,7 @@ else:	## if not imported, go into interactive mode
 				obj=Text(txt,lang=lang)
 	
 		elif text=="/parse":
-			obj.parse()
+			obj.parse(meter=METER)
 		
 		elif text=="/plot":
 			obj.plot()
@@ -196,28 +199,94 @@ else:	## if not imported, go into interactive mode
 		elif text=="/groom":
 			obj.groom()
 		
-		elif text=="/report":
-			obj.report()
+		elif text.startswith("/report"):
+			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
+			include_bounded = arg=='all'
+			obj.report(meter=METER, include_bounded=include_bounded)
+			print '\t>> options:\n\t\t/report\t\treport unbounded, metrical parses\n\t\t/report all\treport all parses, including those bounded or unmetrical'
 	
 		elif text=="/chart":
 			obj.chart()
 		
-		elif text=="/stats":
-			obj.stats()
+		elif text.startswith("/stats"):
+			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
+			funcname = None
+			if arg=='lines':
+				funcname='stats_lines'
+			elif arg=='pos':
+				funcname='stats_positions'
+			elif arg=='all':
+				funcname='stats'
+			elif arg=='ot':
+				funcname='stats_lines_ot'
+
+			if funcname:
+				func=getattr(obj,funcname)
+				for dx in func(meter=METER,all_parses=False):
+					pass
+
+			print '\t>> options:\n\t\t/stats all\t\tsave all stats\n\t\t/stats lines\t\tsave stats on lines\n\t\t/stats ot\t\tsave stats on lines in OT/maxent format\n\t\t/stats pos\t\tsave stats on positions'
 		
 		elif text=="/scan":
-			obj.scansion()
+			obj.scansion(meter=METER)
 		
 		elif text=="/draw":
-			if being.networkx:
-				obj.genfsms()
+			try:
+				obj.genfsms(meter=METER)
 				#obj.genmetnet()
+			except ImportError:
+				raise Exception("Loading of networkx failed. Please install networkx: pip install networkx")
+
 		
 		elif text=="/tree":
 			obj.om(obj.tree()+"\n\n")
+			print obj.tree()
+			print
 	
 		elif text=="/show":
 			obj.show()
+
+		elif text.startswith("/meter"):
+			tl = text.split()
+			arg=None
+			if len(tl)>1:
+				arg=' '.join(tl[1:])
+				if not arg.isdigit(): arg=None
+			
+			mnum2name={}
+			for mi,(mname,mmeter) in enumerate(sorted(config['meters'].items())):
+				mnum=mi+1
+				mnum2name[mnum]=mname
+				#print '>> meter #'+str(mnum)+': '+mname
+				if not arg:
+					print '[#'+str(mnum)+']'
+					print mmeter
+					#print '\t>> id:',mname
+					#print '\t>> name:',msettings['name']
+					#print '\t>> constraints:'
+					#for cname in sorted(msettings['constraints']):
+					#	print '\t\t>>',cname
+					print
+
+			if arg and arg.isdigit():
+				meteri=int(arg)
+			else:
+				try:
+					meteri = raw_input('>> please type the number of the meter you would like to use.\n').strip()
+				except (KeyboardInterrupt,EOFError) as e:
+					continue
+
+				if not meteri.isdigit():
+					print '>> not a number. meter not selected.'
+					continue
+
+				meteri=int(meteri)
+			config['meter']=mnum2name[meteri]
+			METER = config['meters'][config['meter']]
+			print '>> meter set to ['+METER.id+']: '+METER.name
+			
+
+
 	
 	
 		elif text=="/query":

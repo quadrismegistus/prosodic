@@ -1,5 +1,19 @@
 import pickle,sys,os
 
+def slice(l,num_slices=None,slice_length=None,runts=True,random=False):
+	"""
+	Returns a new list of n evenly-sized segments of the original list
+	"""
+	if random:
+		import random
+		random.shuffle(l)
+	if not num_slices and not slice_length: return l
+	if not slice_length: slice_length=int(len(l)/num_slices)
+	newlist=[l[i:i+slice_length] for i in range(0, len(l), slice_length)]
+	if runts: return newlist
+	return [lx for lx in newlist if len(lx)==slice_length]
+
+
 def bigrams(l):
 	return ngram(l,2)
 
@@ -65,9 +79,13 @@ def loadConfig(toprint=True,dir_prosodic=None):
 			print "\t"+"\t".join(str(x) for x in [k,v])
 	return settings
 
-def loadConfigPy(toprint=True,dir_prosodic=None):
+def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
+	import imp
 	settings={'constraints':[]}
-	import config
+	if not dir_prosodic: dir_prosodic=sys.path[0]
+
+	config=config if config else imp.load_source('config', os.path.join(dir_prosodic,'config.py'))
+
 	vnames = [x for x in dir(config) if not x.startswith('_')]
 
 	for vname in vnames:
@@ -90,9 +108,23 @@ def loadConfigPy(toprint=True,dir_prosodic=None):
 			else:
 				print '\t',k,'\t',v
 
-	settings['constraints']=" ".join(settings['constraints'])
+	#settings['constraints']=" ".join(settings['constraints'])
+	#settings['meters']=loadMeters()
 
 	return settings
+
+def loadMeters():
+	import meters
+	from Meter import Meter
+	d={}
+	for name,module in meters.d.items():
+		#d[name]=loadConfigPy(toprint=False,config=module)
+		#d[name]['id']=name
+		mconfig = loadConfigPy(toprint=False,config=module)
+		mconfig['id']=name
+		mobj = Meter(config=mconfig)
+		d[name]=mobj
+	return d
 
 
 
@@ -587,9 +619,8 @@ def product(*args):
 	return (items + (item,) 
 		for items in product(*args[:-1]) for item in args[-1])
 
-def writegen(fnfn,generator):
+def writegen(fnfn,generator,header=None):
 	import codecs
-	header=None
 	of = codecs.open(fnfn,'w',encoding='utf-8')
 	for dx in generator():
 		if not header:
@@ -608,7 +639,26 @@ def writegen(fnfn,generator):
 		
 		of.write('\t'.join(vals) + '\n')
 
+def writegengen(fnfn,generator,header=None):
+	import codecs
+	of = codecs.open(fnfn,'w',encoding='utf-8')
+	for dx in generator():
+		if not header:
+			header=sorted(dx.keys())
+			of.write('\t'.join(header) + '\n')
 
+		vals=[]
+		for h in header:
+			v=dx.get(h,'')
+			try:
+				o=unicode(dx.get(h,''))
+			except UnicodeDecodeError:
+				o=dx.get(h,'').decode('utf-8',errors='ignore')
+			vals+=[o]
+
+		
+		of.write('\t'.join(vals) + '\n')
+		yield dx
 
 
 
@@ -689,26 +739,12 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 		lines_iscorrect_nonbounded=[]
 
 		for d in ld:
-			#if d['Meter Scheme'] != 'iambic': continue
 			line=d[key_line]
-			#if not line.startswith('Improved the simple plan'): continue
 			parse_human=''.join([x for x in d[key_parse].lower() if x in ['s','w']])
 			if not parse_human: continue
 			t=Text(line)
 			t.parse()
-			#print line
 			#if not t.isParsed: continue
-			"""
-			print
-			print t.bestParses()
-			print [x.constraintScores for x in t.bestParses()]
-			for l in t.allParses():
-				for x in l:
-					print x
-					#print x.constraintScores
-					print x.__report__()
-			print
-			"""
 
 			parse_comp=t.parse_str(viols=False, text=False).replace('|','')
 
@@ -736,6 +772,7 @@ def assess(fn,key_meterscheme=None, key_line='line',key_parse='parse'):
 					parse_comp_dummy=parse_comp_dummy2
 			else:
 				parse_comp_dummy=parse_comp_dummy2
+
 
 			
 			## sylls correct?

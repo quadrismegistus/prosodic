@@ -18,6 +18,7 @@ class MeterSlot(entity):
 		self.feat('prom.weight',unit.children[0].feature('prom.weight'))
 		self.feat('shape',unit.str_shape())
 		self.feat('prom.vheight',unit.children[0].feature('prom.vheight'))
+		self.feat('word.polysyll',self.word.numSyll>1)
 		
 	def str_meter(self):
 		return self.meter

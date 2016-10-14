@@ -28,14 +28,14 @@ class MeterConstraint:
 	#def __hash__(self):
 	#	return self.name.__hash__()
 	
-	def violationScore(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None):
+	def violationScore(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None,parse=None):
 		"""call this on a MeterPosition to return an integer representing the violation value
 		for this Constraint in this MPos (0 represents no violation)""" 
 		violation = None
 		if self.constr != None:
 			violation = self.constr.parse(meterPos)
 		else:
-			violation = self.__hardparse(meterPos,pos_i=pos_i,slot_i=slot_i,num_slots=num_slots,all_positions=all_positions)
+			violation = self.__hardparse(meterPos,pos_i=pos_i,slot_i=slot_i,num_slots=num_slots,all_positions=all_positions,parse=parse)
 		#violation = self.__hardparse(meterPos)
 		if violation != "*":
 			meterPos.constraintScores[self] += violation
@@ -50,7 +50,7 @@ class MeterConstraint:
 
 		return violation
 	
-	def __hardparse(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None):
+	def __hardparse(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None,parse=None):
 		import prosodic as p
 		#if meterPos.slots[0].i<2:
 		#	print meterPos.slots[0].word
@@ -63,9 +63,15 @@ class MeterConstraint:
 			## load variables
 			
 			#exception for first foot
-			if p.config.get('skip_initial_foot',0):
-				if meterPos.slots[0].i<2:
-					return 0
+			#if 'skip_initial_foot' in parse.constraintNames:
+			#	if meterPos.slots[0].i<2:
+			#		return 0
+
+			if 'extrametrical-first-pos' in parse.constraintNames and pos_i==0:
+				return 0
+			elif 'skip_initial_foot' in parse.constraintNames and pos_i in [0,1]:
+				return 0
+			
 			
 			promSite = self.name.split(".")[1]
 			promType = self.name.split(".")[0]
@@ -95,14 +101,22 @@ class MeterConstraint:
 			
 			# NOT EVEN ONE unit_prom can be promSite_prom:
 			if promSite_isneg: 
+				numtrue=0
 				for slot in meterPos.slots:
 					slot_prom=slot.feature('prom.'+promType,True)
 					if slot_prom==None: continue
 					if type(promSite_prom)==type(True):	
 						slot_prom=bool(slot_prom)
 					if slot_prom == promSite_prom:
-						return self.weight
-				return 0
+						numtrue+=1
+						#return self.weight
+				#return 2 if numtrue else 0
+				#print self.weight, numtrue
+				## CHANGE 10/10/2016: This constraint returns its weight
+				## *times* the number of slots/syllables that violated it.
+
+				return self.weight * numtrue
+				#return 0
 			
 			# AT LEAST ONE unit_prom must be promSite_prom (or else, violate):
 			else:			
@@ -158,9 +172,14 @@ class MeterConstraint:
 			#	return self.weight
 			##
 			
-			if "nohx" in name:
+			if name=='footmin-nohx':
 				if (bool(a.feature('prom.weight',True))):
 					return self.weight
+
+			if name=='footmin-s-nohx':
+				if meterPos.meterVal=='s':
+					if bool(a.feature('prom.weight',True)) or a.word!=b.word:
+						return self.weight
 			
 			if "nolh" in name:
 				if ( (bool(b.feature('prom.weight',True))) ):
@@ -205,9 +224,19 @@ class MeterConstraint:
 
 			
 			if "wordbound" in name:
+				if name=='footmin-wordbound':
+					if a.word!=b.word:
+						return self.weight
+
 				if "nomono" in name:
 					if (a.word.numSyll==1 or b.word.numSyll==1):
 						return self.weight
+
+				if 'lexmono' in name:
+					#if a.word.numSyll==1 and a.word.stress=="P"
+					if a.word.isLexMono() or b.word.isLexMono():
+						return self.weight
+					
 
 				
 				## everyone is happy if both are function words
@@ -264,9 +293,65 @@ class MeterConstraint:
 					return self.weight
 
 
-		## POST HOC CONSTRAINTS
 		# is this the end?
 		is_end = slot_i+1==num_slots and meterPos.slots==all_positions[-1].slots
+
+		## CONSTRAINTS ON PREVIOUS POSITIONS
+		"""
+		ABANDONED TEMPORARILY AS NOT POSSIBLE GIVEN THAT PARSES ARE BOUNDED AS PARSING GOES ON
+		"""
+
+		if self.name=='attridge-ss-not-by-ww':
+			#if meterPos.meterVal!='s': return 0
+			#if not is_end and meterPos.meterVal2 == 'ss':
+			#	parse.pauseComparisons=True
+
+			if pos_i==0: return 0
+			prevpos=all_positions[pos_i-1]
+			prevprevpos=all_positions[pos_i-2] if (pos_i-2)>=0 else None
+			#print prevprevpos,prevpos,meterPos
+			#print prevprevpos.meterVal2 if prevprevpos else None,prevpos.meterVal2, meterPos.meterVal2
+
+			#print prevprevpos,prevpos,meterPos
+			#print prevprevpos.meterVal2 if prevprevpos else None,prevpos.meterVal2, meterPos.meterVal2
+			#print dir(prevprevpos) if prevprevpos else None
+			#print dir(prevpos) if prevprevpos else None
+			#print dir(meterPos)
+			#print
+			
+			if prevpos.meterVal2 == 'ss':
+
+				#if (prevprevpos and prevprevpos.meterVal2=='ww')
+
+				if (prevprevpos and prevprevpos.meterVal2=='ww') and (not hasattr(prevprevpos,'_flag_already_served_as_ww')):
+					prevprevpos._flag_already_served_as_ww=True
+					pass
+				elif meterPos.meterVal2=='ww' and (not hasattr(meterPos,'_flag_already_served_as_ww')):
+					meterPos._flag_already_served_as_ww=True
+					pass
+				else:
+					#print 'ERROR!'
+					for cnstr in prevpos.constraintScores:
+						if cnstr.name==self.name:
+							prevpos.constraintScores[cnstr]=self.weight
+							parse.constraintScores[cnstr]+=self.weight
+
+				#parse.pauseComparisons=False
+			elif is_end and meterPos.meterVal2=='ss':
+				#parse.pauseComparisons=False
+				if prevpos.meterVal2=='ww':
+					pass
+				else:
+					#print 'ERROR!'
+					return self.weight
+			#print
+		#"""
+
+
+
+		## POST HOC CONSTRAINTS
+		
+		
 		#print is_end
 		#print
 

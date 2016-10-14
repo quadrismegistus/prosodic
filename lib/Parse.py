@@ -31,10 +31,13 @@ class Parse(entity):
 		self.numSlots = 0
 		self.totalSlots = totalSlots
 		self.isBounded = False
+		self.boundedBy = None
+		self.unmetrical = False
 		self.comparisonNums = set()
 		self.comparisonParses = []
 		self.parseNum = 0
 		self.totalScore = None
+		self.pauseComparisons = False
 			
 	def __copy__(self):
 		other = Parse(self.meter, self.totalSlots)
@@ -117,22 +120,19 @@ class Parse(entity):
 
 			## EXTRAMETRICAL?
 			pos_i=len(self.positions)-2
-			if 'extrametrical-first-pos' in self.constraintNames and pos_i==0:
-				pass # give this position a pass
-			else:
-				for constraint in self.constraints:
-					vScore = constraint.violationScore(self.positions[-2], pos_i=pos_i,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=self.positions)
-					if vScore == "*":
-						self.constraintScores[constraint] = "*"
-					else:
-						self.constraintScores[constraint] += vScore
+			for constraint in self.constraints:
+				vScore = constraint.violationScore(self.positions[-2], pos_i=pos_i,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=self.positions,parse=self)
+				if vScore == "*":
+					self.constraintScores[constraint] = "*"
+				else:
+					self.constraintScores[constraint] += vScore
 				
 		if self.numSlots == self.totalSlots:
 
 			# assign violation scores for the (completed) ultimate position
 			for parse in extendedParses:
 				for constraint in self.constraints:
-					vScore = constraint.violationScore(parse.positions[-1], pos_i=len(parse.positions)-1,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=parse.positions)
+					vScore = constraint.violationScore(parse.positions[-1], pos_i=len(parse.positions)-1,slot_i=self.numSlots-1,num_slots=self.totalSlots,all_positions=parse.positions,parse=parse)
 					if vScore == "*":
 						parse.constraintScores[constraint] = "*"
 					else:
@@ -166,16 +166,20 @@ class Parse(entity):
 			return (vals,keys)
 		else:
 			return vals
+
+	@property
+	def constraintCounts(self):
+		return dict((c,int(self.constraintScores[c] / c.weight)) for c in self.constraintScores)
 	
 	def score(self):
-		if self.totalScore == None:
-			score = 0
-			for constraint, value in self.constraintScores.items():
-				if value == "*":
-					self.totalScore = "*"
-					return self.totalScore
-				score += value
-			self.totalScore = score
+		#if self.totalScore == None:
+		score = 0
+		for constraint, value in self.constraintScores.items():
+			if value == "*":
+				self.totalScore = "*"
+				return self.totalScore
+			score += value
+		self.totalScore = score
 			
 		return self.totalScore
 		
@@ -187,6 +191,22 @@ class Parse(entity):
 		for pos in self.positions:			
 			output.append(repr(pos))
 		return string.join(output, '|')
+
+	def str_stress(self):		# eg NE|ver|CAME|poi|SON|from|SO|sweet|A|place
+		output = []
+		for pos in self.positions:
+			slotx=[]
+			for slot in pos.slots:
+				if not slot.feats['prom.stress']:
+					slotx.append('U')
+				elif slot.feats['prom.stress']==1:
+					slotx.append('P')
+				else:
+					slotx.append('S')
+			output+=[''.join(slotx)]
+		return string.join(output, '|')
+
+	
 	
 	def __repr__(self):
 		return self.posString()
@@ -205,6 +225,7 @@ class Parse(entity):
 	def __report__(self,proms=False):
 		o = ""
 		i=0
+
 		for pos in self.positions:
 			unitlist = ""
 			factlist = ""
@@ -241,9 +262,9 @@ class Parse(entity):
 				unitlist = unitlist.lower()
 			
 			i+=1
-			o+=str(i) +'\t'+ pos.meterVal + '\t' + unitlist + '\t' + viols
+			o+=str(i) +'\t'+ pos.meterVal2 + '\t' + unitlist + '\t' + viols
 			if proms:
-				o+='\t' + feats + '\n'
+				o+=feats + '\n'
 			else:
 				o+='\n'
 		return o[:-1]

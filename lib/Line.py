@@ -12,11 +12,13 @@ class Line(entity):
 		
 		self.__parses={}
 		self.__bestparse={}
+		self.__boundParses={}
 	
 	def parse(self,meter=None,init=None):
-		if not meter:
-			from Meter import Meter,genDefault
-			meter = genDefault()
+		#print '>> LINE PARSING',meter,init
+		#if not meter:
+		#	from Meter import Meter,genDefault
+		#	meter = genDefault()
 
 		words=self.ents(cls='Word',flattenList=False)
 		numSyll=0
@@ -33,11 +35,18 @@ class Line(entity):
 					return None
 				numSyll+=word.getNumSyll()
 		
-		self.__parses[meter]=meter.parse(words,numSyll)
+		## PARSE
+		self.__parses[meter.id],self.__boundParses[meter.id]=meter.parse(words,numSyll)
+		####
+
+
+		self.__bestparse[meter.id]=None
 		try:
-			self.__bestparse[meter]=self.__parses[meter][0]
-		except KeyError:
-			self.__bestparse[meter]=None
+			self.__bestparse[meter.id]=self.__parses[meter.id][0]
+		except (KeyError,IndexError) as e:
+			self.__bestparse[meter.id]=self.__boundParses[meter.id][0]
+
+			
 
 		if init: self.store_stats(meter,init)
 
@@ -56,47 +65,57 @@ class Line(entity):
 		if (not textname in init.meter_stats['_ot']):
 			init.meter_stats['_ot'][textname]=makeminlength("line",being.linelen)+"\tmeter\t"+init.ckeys+"\n"
 		
-		parsedat=[]
-		for k,v in sorted(self.__bestparse[meter].constraintScores.items()):
-			if (not k in init.meter_stats['texts'][textname]):
-				init.meter_stats['texts'][textname][k]=[]
-			init.meter_stats['texts'][textname][k].append(v)
+		try:
+
+			parsedat=[]
+			for k,v in sorted(self.__bestparse[meter.id].constraintScores.items()):
+				if (not k in init.meter_stats['texts'][textname]):
+					init.meter_stats['texts'][textname][k]=[]
+				init.meter_stats['texts'][textname][k].append(v)
+				
+				#parsedat.append(v/len(self.__bestparse.positions))	#???
+				parsedat.append(v)
+				
+			linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.__bestparse[meter.id].posString())
+			init.meter_stats['lines'][textname][linekey]=parsedat
 			
-			#parsedat.append(v/len(self.__bestparse.positions))	#???
-			parsedat.append(v)
+			## OT stats
+			parses=self.__parses[meter.id]
+			init.meter_stats['_ot'][textname]+=makeminlength(str(self),being.linelen)+"\t"+parses[0].str_ot()+"\n"
+			if len(parses)>1:
+				for parse in parses[1:]:
+					init.meter_stats['_ot'][textname]+=makeminlength("",being.linelen)+"\t"+parse.str_ot()+"\n"
+				
 			
-		linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.__bestparse[meter].posString())
-		init.meter_stats['lines'][textname][linekey]=parsedat
-		
-		## OT stats
-		parses=self.__parses[meter]
-		init.meter_stats['_ot'][textname]+=makeminlength(str(self),being.linelen)+"\t"+parses[0].str_ot()+"\n"
-		if len(parses)>1:
-			for parse in parses[1:]:
-				init.meter_stats['_ot'][textname]+=makeminlength("",being.linelen)+"\t"+parse.str_ot()+"\n"
 			
-		
-		
-		for posn in range(len(self.__bestparse[meter].positions)):
-			pos=self.__bestparse[meter].positions[posn]
-			(posdat,ckeys)=pos.formatConstraints(normalize=True,getKeys=True)
-			
-			for cnum in range(len(ckeys)):
-				if (not posn in init.meter_stats['positions'][textname]):
-					init.meter_stats['positions'][textname][posn]={}
-				if (not ckeys[cnum] in init.meter_stats['positions'][textname][posn]):
-					init.meter_stats['positions'][textname][posn][ckeys[cnum]]=[]
-				init.meter_stats['positions'][textname][posn][ckeys[cnum]].append(posdat[cnum])
+			for posn in range(len(self.__bestparse[meter.id].positions)):
+				pos=self.__bestparse[meter.id].positions[posn]
+				(posdat,ckeys)=pos.formatConstraints(normalize=True,getKeys=True)
+				
+				for cnum in range(len(ckeys)):
+					if (not posn in init.meter_stats['positions'][textname]):
+						init.meter_stats['positions'][textname][posn]={}
+					if (not ckeys[cnum] in init.meter_stats['positions'][textname][posn]):
+						init.meter_stats['positions'][textname][posn][ckeys[cnum]]=[]
+					init.meter_stats['positions'][textname][posn][ckeys[cnum]].append(posdat[cnum])
+		except (IndexError,KeyError,AttributeError) as e:
+			#print "!! no lines successfully parsed with any meter"
+			pass
 
 	
 	def scansion(self,meter=None,conscious=False):
 		bp=self.bestParse(meter)
-		lowestScore=bp.score()
+		#if not bp: return
+		lowestScore=''
+		str_ot=''
+		if bp:
+			str_ot=bp.str_ot()
+			lowestScore=bp.score()
 		from tools import makeminlength
-		self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)
+		self.om("\t".join( [str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp) if bp else '', being.linelen),len(self.allParses(meter)),lowestScore,str_ot] ] ),conscious=conscious)
 	
 	
-	def allParses(self,meter=None):
+	def allParses(self,meter=None,one_per_meter=True):
 		if not meter:
 			itms=self.__parses.items()
 			if not len(itms): return
@@ -104,9 +123,34 @@ class Line(entity):
 				return parses
 
 		try:
-			return self.__parses[meter]
+			parses=self.__parses[meter.id]
+			if one_per_meter:
+				toreturn=[]
+				sofar=set()
+				for _p in parses:
+					_pm=_p.str_meter()
+					if not _pm in sofar:
+						sofar|={_pm}
+						if _p.isBounded and _p.boundedBy.str_meter() == _pm:
+							pass
+						else:
+							toreturn+=[_p]
+				parses=toreturn
+			return parses
 		except KeyError:
-			return None
+			return []
+
+	def boundParses(self,meter=None):
+		if not meter:
+			itms=sorted(self.__boundParses.items())
+			if not len(itms): return []
+			for mtr,parses in itms:
+				return parses
+
+		try:
+			return self.__boundParses[meter.id]
+		except KeyError:
+			return []
 		
 	def bestParse(self,meter=None):
 		if not meter:
@@ -116,7 +160,7 @@ class Line(entity):
 				return parses
 		
 		try:
-			return self.__bestparse[meter]
+			return self.__bestparse[meter.id]
 		except KeyError:
 			return
 	

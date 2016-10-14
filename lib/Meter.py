@@ -12,7 +12,11 @@ import os
 
 def genDefault():
 	import prosodic
-	return Meter(prosodic.config['constraints'].split(),(prosodic.config['maxS'],prosodic.config['maxW']),prosodic.config['splitheavies'])
+	metername = sorted(prosodic.config['meters'].keys())[0]
+	meter=prosodic.config['meters'][metername]
+	print '>> no meter specified. defaulting to this meter:'
+	print meter
+	return meter
 	
 
 #def meterShakespeare():
@@ -40,19 +44,35 @@ class Meter:
 		return meterd
 
 	def __str__(self):
-		x='<<Meter\n\tName: {0}\n\tConstraints: {1}\n\tMaxS, MaxW: {2}, {3}\n\tSplit heavies?: {4}\n>>'.format(self.name, self.constraint_nameweights, self.posLimit[0], self.posLimit[1], self.splitheavies)
+		#constraints = '\n'.join(' '.join([slicex) for slicex in slice() )
+		#constraint_slices=slice(self.constraints,slice_length=3,runts=True)
+		constraint_slices={}
+		for constraint in self.constraints:
+			ckey=constraint.name.replace('-','.').split('.')[0]
+			if not ckey in constraint_slices:
+				constraint_slices[ckey]=[]
+			constraint_slices[ckey]+=[constraint]
+		constraint_slices = [constraint_slices[k] for k in sorted(constraint_slices)]
+		constraints = '\n\t\t'.join(' '.join(c.name_weight for c in slicex) for slicex in constraint_slices)
+
+		x='<<Meter\n\tID: {5}\n\tName: {0}\n\tConstraints: \n\t\t{1}\n\tMaxS, MaxW: {2}, {3}\n\tAllow heavy syllable split across two positions: {4}\n>>'.format(self.name, constraints, self.posLimit[0], self.posLimit[1], bool(self.splitheavies), self.id)
 		return x
 	
 	@property
 	def constraint_nameweights(self):
 		return ' '.join(c.name_weight for c in self.constraints)
 
-	def __init__(self,constraints=None,posLimit=(2,2),splitheavies=False,name=None):
-		self.type = type
-		self.posLimit=posLimit
+	#def __init__(self,constraints=None,posLimit=(2,2),splitheavies=False,name=None):
+	def __init__(self,config):
+		#self.type = type
+		constraints=config['constraints']
+		self.posLimit=(config['maxS'],config['maxW'])
 		self.constraints = []
-		self.splitheavies=splitheavies
-		self.name=name
+		self.splitheavies=config['splitheavies']
+		self.name=config.get('name','')
+		self.id = config['id']
+		import prosodic
+		self.config=prosodic.config
 		
 		if not constraints:
 			self.constraints.append(Constraint(0,"foot-min",None,1))
@@ -62,6 +82,7 @@ class Meter:
 			self.constraints.append(Constraint(4,"stress.w=>u",None,1))
 			self.constraints.append(Constraint(5,"weight.s=>p",None,1))
 			self.constraints.append(Constraint(6,"weight.w=>u",None,1))
+
 		elif type(constraints) == type([]):
 			for i in range(len(constraints)):
 				c=constraints[i]
@@ -162,7 +183,9 @@ class Meter:
 		
 		
 	
-	def parse(self,wordlist,numSyll=0):
+	def parse(self,wordlist,numSyll=0,numTopBounded=10):
+		numTopBounded = self.config.get('num_bounded_parses_to_store',numTopBounded)
+		#print '>> NTB!',numTopBounded
 		from Parse import Parse
 		if not numSyll:
 			return []
@@ -175,16 +198,39 @@ class Meter:
 
 		
 		allParses = []
+		allBoundedParses=[]
 		for slots in slotMatrix:
-			allParses.append(self.parseLine(slots))
+			_parses,_boundedParses = self.parseLine(slots)
+			allParses.append(_parses)
+			allBoundedParses+=_boundedParses
 		
-		parses = self.boundParses(allParses)
+		parses,_boundedParses = self.boundParses(allParses)
+
 		parses.sort()		
+
+		allBoundedParses+=_boundedParses
+
+		allBoundedParses.sort(key=lambda _p: (-_p.numSlots, _p.score()))
+		allBoundedParses=allBoundedParses[:numTopBounded]
+		#allBoundedParses=[]
 		
-		return parses
+		"""print parses
+		print
+		print allBoundedParses
+		for parse in allBoundedParses:
+			print parse.__report__()
+			print
+			print parse.boundedBy if type(parse.boundedBy) in [str,unicode] else parse.boundedBy.__report__()
+			print
+			print
+			print
+		"""
+
+		return parses,allBoundedParses
 		
 	def boundParses(self, parseLists):
 		unboundedParses = []
+		boundedParses=[]
 		for listIndex in range(len(parseLists)):
 			for parse in parseLists[listIndex]:
 				for parseList in parseLists[listIndex+1:]:
@@ -194,15 +240,19 @@ class Meter:
 						relation = parse.boundingRelation(compParse)
 						if relation == Bounding.bounded:
 							parse.isBounded = True
+							parse.boundedBy = compParse
 						elif relation == Bounding.bounds:
 							compParse.isBounded = True
+							compParse.boundedBy = parse
 							
 		for parseList in parseLists:
 			for parse in parseList:
 				if not parse.isBounded:
 					unboundedParses.append(parse)
+				else:
+					boundedParses.append(parse)
 					
-		return unboundedParses
+		return unboundedParses,boundedParses
 		
 	def parseLine(self, slots):
 	
@@ -211,6 +261,9 @@ class Meter:
 		initialParse = Parse(self, numSlots)
 		parses = initialParse.extend(slots[0])
 		parses[0].comparisonNums.add(1)
+
+		boundedParses=[]
+		
 		
 		for slotN in range(1, numSlots):
 		
@@ -251,9 +304,11 @@ class Meter:
 										
 										if boundingRelation == Bounding.bounds:
 											comparisonParse.isBounded = True
+											comparisonParse.boundedBy = parse
 											
 										elif boundingRelation == Bounding.bounded:
 											parse.isBounded = True
+											parse.boundedBy = comparisonParse
 											break
 											
 										elif boundingRelation == Bounding.equal:
@@ -265,15 +320,21 @@ class Meter:
 							pass
 									
 			parses = []
+			#boundedParses=[]
 			parseNum = 0
 								
 			for parseSet in newParses:
-				for parse in parseSet:		
-					if not parse.isBounded:
-						if (parse.score() < 1000):
-							parse.parseNum = parseNum
-							parseNum += 1
-							parses.append(parse)
+				for parse in parseSet:
+					if parse.isBounded:
+						boundedParses+=[parse]
+					elif parse.score() >= 1000:
+						parse.unmetrical = True
+						boundedParses+=[parse]
+					else:
+						parse.parseNum = parseNum
+						parseNum += 1
+						parses.append(parse)
+
 			
 			for parse in parses:
 			
@@ -282,21 +343,30 @@ class Meter:
 				for compParse in parse.comparisonParses:
 					if not compParse.isBounded:
 						parse.comparisonNums.add(compParse.parseNum)
-							
-		return parses
+		
+
+
+		return parses,boundedParses
 	
-	def printParses(self,parselist,onlyBounded=True,lim=False):		
-		i = len(parselist)
-		#i = n+1
+	def printParses(self,parselist,lim=False):		# onlyBounded=True, [option done through "report" now]
 		n = len(parselist)
-		parselist.reverse()
+		l_i = list(reversed(range(n)))
+		#parselist.reverse()
 		o=""
-		for parse in parselist:
-			if onlyBounded and parse.isBounded:
-				continue
+		for i,parse in enumerate(reversed(parselist)):
+			#if onlyBounded and parse.isBounded:
+			#	continue
 			
 			o+='-'*20+'\n'
-			o+="[parse #" + str(i) + " of " + str(n) + "]: " + str(parse.getErrorCount()) + " errors\n"
+			o+="[parse #" + str(l_i[i]+1) + " of " + str(n) + "]: " + str(parse.getErrorCount()) + " errors"
+
+			if parse.isBounded:
+				o+='\n[**** Harmonically bounded ****]\n'+str(parse.boundedBy)+' --[bounds]-->'
+			elif parse.unmetrical:
+				o+='\n[**** Unmetrical ****]'
+			o+='\n'+str(parse)+'\n'
+			o+=parse.str_meter()+'\n'
+
 			o+=parse.__report__(proms=False)+"\n"
 			o+=self.printScores(parse.constraintScores)
 			o+='-'*20
@@ -316,3 +386,11 @@ class Meter:
 		output +='\n'
 		return output
 		
+
+def parse_ent(ent,meter,init):
+	#print init, type(init), dir(init)
+	ent.parse(meter,init=init)
+	init._Text__parses[meter].append( ent.allParses(meter) )
+	init._Text__bestparses[meter].append( ent.bestParse(meter) )
+	init._Text__parsed_ents[meter].append(ent)
+	ent.scansion(meter=meter,conscious=True)

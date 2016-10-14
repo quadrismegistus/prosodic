@@ -201,6 +201,10 @@ class Word(entity):
 		return self.punct
 	def isIgnored(self):
 		return ("?" in self.stress) or ("?" in self.weight)
+
+	def isLexMono(self):
+		return self.numSyll==1 and self.stress=='P'
+
 	def getTokenSyll(self):
 		return ".".join([str(syll) for syll in self.children])
 		

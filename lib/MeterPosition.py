@@ -14,6 +14,7 @@ class MeterPosition(Parse):
 			slot.meter=meterVal
 		
 		self.feat('prom.meter',(meterVal=='s'))
+		#self.feat('meter',self.meterVal2)
 		self.token = ""
 	
 	def __copy__(self):
@@ -30,6 +31,10 @@ class MeterPosition(Parse):
 	def append(self,slot):
 		self.token = ""
 		self.slots.append(slot)
+
+	@property
+	def meterVal2(self):
+		return ''.join([self.meterVal for x in self.slots])
 	
 	@property
 	def mstr(self):

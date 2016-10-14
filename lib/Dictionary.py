@@ -363,6 +363,37 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		return o
 	
 	def getStrengthStress(self,stress):
+		prom_stress=[]
+		prom_strength=[]
+		for x in stress:
+			if x=='P': prom_stress+=[1.0]
+			elif x=='S': prom_stress+=[0.5]
+			elif x=='U': prom_stress+=[0.0]
+
+		for i,x in enumerate(prom_stress):
+			prevx=prom_stress[i-1] if i-1>=0 else None
+			nextx=prom_stress[i+1] if i+1<len(prom_stress) else None
+			#print i,prevx,x,nextx
+
+
+			if nextx!=None and nextx>x:
+				strength=0.0
+			elif nextx!=None and nextx<x:
+				strength=1.0
+			elif prevx!=None and prevx>x:
+				strength=0.0
+			elif prevx!=None and prevx<x:
+				strength=1.0
+			else:
+				strength=None
+			#print i,prevx,x,nextx
+			prom_strength+=[strength]
+		return (prom_stress,prom_strength)
+
+
+
+
+	def getStrengthStress0(self,stress):
 		prom_strength=[]
 		prom_stress=[]
 		for i in range(len(stress)):

@@ -35,6 +35,6 @@ nosetests.xml
 .pydevproject
 
 results/
-corpora/
+corpora/*
 !corpora/corppoetry_fi/
 !corpora/corppoetry_en/

@@ -3,6 +3,8 @@
 # C extensions
 *.so
 
+.DS_Store
+
 # Packages
 *.egg
 *.egg-info

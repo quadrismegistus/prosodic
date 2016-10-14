@@ -294,6 +294,7 @@ class Text(entity):
 		for parselist in parses:
 			
 			for parse in parselist:
+				if not parse: continue
 				slot_i=0
 				for pos in parse.positions:
 					for slot in pos.slots:

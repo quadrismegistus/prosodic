@@ -465,7 +465,9 @@ class Text(entity):
 
 	#@property
 	def isParsed(self):
-		return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
+		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
+		return hasattr(self,'_Text__bestparses') and self.__bestparses
+
 	
 	@property
 	def numSyllables(self):

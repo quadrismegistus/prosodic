@@ -98,6 +98,9 @@ class Corpus(entity):
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn
 
+	def isParsed(self):
+		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
+		return not (False in [hasattr(x,'_Text__bestparses') for x in self.children])
 
 	def stats_lines_ot(self,meter=None,all_parses=False):
 		meter=self.get_meter(meter)

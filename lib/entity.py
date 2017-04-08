@@ -14,7 +14,7 @@ class being:
 	printout=True
 	pointsofcomparison=[]
 	pass
-	
+
 """
 try:
 	import networkx
@@ -25,18 +25,18 @@ except ImportError:
 being.networkx=False
 
 
-class entity(being):	## this class, like the godhead, never instantiates, but is the Form and Archetype for all.	
+class entity(being):	## this class, like the godhead, never instantiates, but is the Form and Archetype for all.
 	## temp ###
 	count=0 #eliminate!
 	time=0	# for timing the parsers.. also eliminate
 	###########
-	
+
 	stress_str2int={'P':1,'S':2,'U':0}
 	stress_str2strikes={'P':'`','S':"'",'U':''}
 	stress_int2strikes={0:'',1:"'",2:"`"}
 	stress_float2str={1.0:'P',0.5:'S',0.0:'U'}
 	weight_bool2str={True:'H',False:'L',None:'?'}
-	
+
 	## classes
 	def __init__(self):
 		self.parent=False
@@ -44,30 +44,30 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		self.feats={}
 		self.featpaths={}
 		self.finished = False
-	
+
 	def __hash__(self):
 		"""
 		Returns a unique integer [returned by Python's built-in __hash__()]
 		based on the string representation of this object's phonemes [ie, self.phonstr()]
 		"""
-		
+
 		return self.phonstr().__hash__()
 	def phonstr(self):
 		return "".join([str(x) for x in self.phonemes()])
-	
+
 	def __repr__(self):
 		"""
 		Default string representation.
 		"""
-		
+
 		return "<"+self.classname()+"> ["+self.__repr2__()+"]"
 	def __repr2__(self):
 		"""
 		Helper function for the default __repr__()
 		"""
-		
+
 		return ", ".join([child.__repr__() for child in self.children])
-	
+
 	def descendants(self,collapseLists=True):
 		"""
 		A more genteel method of accessing an object's children (than self.children)
@@ -76,38 +76,38 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			in the case of optionality among children
 			eg, a line's children is a list of lists of Words.
 		"""
-		
+
 		if not collapseLists:
 			return self.children
-		
+
 		if not self.children:
 			return []
-			
+
 		if type(self.children[0])==type([]):
 			return [x[0] for x in self.children]
-		
+
 		return self.children
-	
+
 	def classname(self):
 		""" Returns the classname for this object [ie, self.__class__.__name__] """
 		return self.__class__.__name__
-	
-	
+
+
 	def _hits(self):
 		"""
 		Returns number of 'hits' for this object
 		[eg, number of times this syllable used in representing the corpus/texts.]
 		A hit is activated by self.hit().
 		"""
-		
+
 		return self.numhits
-		
-		
+
+
 	def _hit(self):
 		"""
 		Increment by 1 this object's 'numhits' attribute [ie, self.numhits].
 		"""
-		
+
 		if (not hasattr(self,'numhits')):
 			self.numhits=0
 		self.numhits+=1
@@ -117,9 +117,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		Print the string passed via argument 'breath',
 		and store the string for saving in prosodic.being.om.
 		[accessed interactively using the '/save' command]
-		(The string just prior to this one will remain available at prosodic.being.omm).		
+		(The string just prior to this one will remain available at prosodic.being.omm).
 		"""
-		
+
 		import prosodic
 		if (not conscious) or bool(prosodic.config['print_to_screen']):
 			being.om+=str(breath)+"\n"
@@ -137,8 +137,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self.feats[k] becomes a list (if not already)
 			'v' is added to this list
 		"""
-		
-		
+
+
 		if (not hasattr(self,'feats')):
 			self.feats = {}
 			if (not hasattr(self,'featpaths')):
@@ -151,7 +151,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			else:
 				obj=self.feats[k]
 				self.feats[k]=[obj,v]
-			
+
 	def feature(self,feat=None,searchforit=False,init=None):
 		"""
 		Returns value of self.feats[feat].
@@ -160,7 +160,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""
 		if feat==None:
 			return self.feats
-		
+
 		if not init:
 			init=self
 			init.tick=0
@@ -174,7 +174,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				feat=feat[1:]
 			else:
 				init._eval=None
-		
+
 		if (hasattr(self,'feats')) and (feat in self.feats):
 			if type(self.feats[feat]) == type([]):
 				if len(self.feats[feat]) > 1:
@@ -185,15 +185,15 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				return self.feats[feat]
 		else:
 			if searchforit:
-				
+
 				for child in self.descendants():
 					init.tick+=1
 					x=child.feature(feat,searchforit,init)
 					#print init.tick, self.classname(), child.classname(), x
 					if x==None: continue
 					init._matches.append ( (child,x) )
-				
-					
+
+
 				#return [child.feature(feat,searchforit) for child in self.descendants()]
 			else:
 				return None
@@ -201,27 +201,27 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			#	return self.search(SearchTerm(feat))
 			#else:
 			#	None
-		
+
 		if self==init:
 
 			if init._eval==None:
 				return init._matches
 			else:
 				return [ x for (x,y) in init._matches if bool(y)==init._eval ]
-		
-		
+
+
 	## unicode-ascii conversion
 	def u2s(self,u):
 		"""Returns an ASCII representation of the Unicode string 'u'."""
-		
+
 		try:
 			return u.encode('utf-8',errors='ignore')
 		except UnicodeDecodeError:
 			return str(u)
-			
-	
 
-	
+
+
+
 	## children
 	def givebirth(self):
 		"""
@@ -230,28 +230,28 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		**This method must be rewritten by each object class!**
 		Can be called directly, or indirectly using method newchild().
 		"""
-		
+
 		return entity()				#### needs to be rewritten by each entity (eg, Word would give birth to Syllables, its children)
-	
-	
+
+
 	def newchild(self,chld=False):
 		"""Like givebirth(), but also appends the new child to the list of children."""
-		
+
 		if not chld:
 			chld = self.givebirth()
-		
+
 		lchld=[chld] if type(chld)!=list else chld
 		for chldx in lchld: chldx.parent=self
 		self.children.append(chld)
-		
+
 		return chld
-	
+
 	def empty(self):
 		"""Returns TRUE if object is childless, FALSE if otherwise."""
 		return (len(self.children) == 0)
-	
-	
-	
+
+
+
 	## object build status
 	def finish(self):
 		"""Marks the current object as 'finished', such as a Line which has been successfully populated with its words."""
@@ -260,8 +260,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def finished(self):
 		"""Returns whether object is finished or not -- see finish()."""
 		return self.finished
-	
-		
+
+
 
 
 	## getting entities of various kinds
@@ -269,7 +269,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns a list of entities of the classname specified the second argument.
 		For instance. to call a Word-object's ents('Phoneme') would return a list of the word's Phoneme objects sequentially.
 		This method recursively searches the self-object's children for the type of object specified."""
-		
+
 		ents = []
 		if self.classname() == cls:
 			return [self]
@@ -284,18 +284,18 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 							if chld:
 								ents_list2ndlevel+=chld.ents(cls=cls,flattenList=flattenList)
 						ents+=[ents_list2ndlevel]
-						
+
 				else:
 					if child:
 						ents += child.ents(cls=cls,flattenList=flattenList)
 		return ents
-	
+
 	## helper functions of ents()
 	def phonemes(self):
 		"""Returns a list of this object's Phonemes in order of their appearance."""
 		return self.ents('Phoneme')
-	
-	
+
+
 	def onsets(self):
 		"""Returns a list of this object's Onsets in order of their appearance."""
 		return self.ents('Onset')
@@ -304,7 +304,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def nuclei(self):
 		"""Returns a list of this object's Nuclei in order of their appearance."""
 		return self.ents('Nucleus')
-		
+
 
 	@property
 	def num_syll(self):
@@ -312,7 +312,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self._num_syll=sum([w.numSyll for w in self.words()])
 		return self._num_syll
 
-		
+
 	def codae(self):
 		"""Returns a list of this object's Codae in order of their appearance."""
 		return self.ents('Coda')
@@ -336,41 +336,41 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def syllables(self):
 		"""Returns a list of this object's Syllables in order of their appearance.
 		NOTE: A Syllable knows its stress, but not its shape and weight: its only child, SyllableBody, will know that."""
-		
+
 		return self.ents('Syllable')
-	
+
 	def syllableBodies(self):
 		"""Returns a list of this object's SyllableBody's in order of their appearance.
 		A SyllableBody does not know its stress, but does know its shape and weight."""
-		
+
 		return self.ents('SyllableBody')
-	
-	
+
+
 	def words(self,flattenList=True):
 		"""Returns a list of this object's Words in order of their appearance.
 		Set flattenList to False to receive a list of lists of Words."""
 		return self.ents('Word',flattenList=flattenList)
-		
+
 	def lines(self):
 		"""Returns a list of this object's Lines in order of their appearance."""
 		return self.ents('Line')
-		
+
 	def stanzas(self):
 		"""Returns a list of this object's Stanzas in order of their appearance."""
 		return self.ents('Stanza')
-		
-		
+
+
 	def texts(self):
 		"""Returns a list of this object's Texts in order of their appearance."""
 		return self.ents('Text')
-	
+
 	def show(self):
 		"""'Prints' (using self.om()) the basic stats about the loaded text. Eg:
 			001776	ecstatic            	P:'ecs.ta.tic                      	S:PUU	W:HLH
 			001777	breath              	P:'bre.ath                         	S:PU	W:LH
 		"""
-		
-		
+
+
 		if self.classname()=="Corpus":
 			for text in self.children:
 				text.om("## showing Text " + text.name)
@@ -380,16 +380,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			for i in range(len(words)):
 				word=words[i]
 				word.om(str(i+1).zfill(6)+"\t"+str(word.output_minform()),conscious=False)
-	
+
 	def less(self):
 		"""Show this object's attributes only."""
 		self.dir(methods=False)
-	
+
 	def more(self):
 		"""Show this object's attributes and methods."""
 		self.dir(methods=True,showall=False)
-	
-	
+
+
 	def dir(self,methods=True,showall=True):
 		"""Show this object's attributes and methods."""
 		import inspect
@@ -397,22 +397,22 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		for k,v in sorted(self.__dict__.items()):
 			if k.startswith("_"): continue
 			print makeminlength("."+k,being.linelen),"\t",v
-		
+
 		if not methods:
 			return
-		
+
 		entmethods=dir(entity)
-		
+
 		print
-		#print "[methods]" 		
+		#print "[methods]"
 		for x in [x for x in dir(self) if ("bound method "+self.classname() in str(getattr(self,x))) and not x.startswith("_")]:
 			if (not showall) and (x in entmethods): continue
-			
+
 			attr=getattr(self,x)
-			
+
 			#print attr.__dict__
 			#print dir(attr)
-	
+
 			#doc=inspect.getdoc(attr)
 			doc = attr.__doc__
 			if not doc:
@@ -430,8 +430,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				y=", ".join(a+"="+str(b) for (a,b) in y)
 			print makeminlength("."+x+"("+y+")",being.linelen),"\t", doc
 			if showall: print
-	
-	
+
+
 	## outputs
 	def str_ipasyllstress(self):
 		"""
@@ -440,8 +440,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		if I am the Word('abandonment'), this method will return:
 		ə.'bæn.dən.mənt
 		"""
-		
-		phonsylls=["".join([str(x) for x in child.phonemes()]) for child in self.children] 
+
+		phonsylls=["".join([str(x) for x in child.phonemes()]) for child in self.children]
 		try:
 			if hasattr(self,'stress'):
 				for i in range(len(self.stress)):
@@ -449,10 +449,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		except IndexError:
 			print "<"+self.classname()+" creation failed on:\n"+str(self)+"\n"
 		return ".".join(phonsylls)
-				
-	
-	
-	
+
+
+
+
 	## attribute finding
 	def findattr(self,attr,connector='parent'):
 		"""Returns the attribute named {attr}, from either the self or the self's parents (recursively)."""
@@ -464,36 +464,36 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if not con:
 					return None
 				if type(con)==type([]):
-					return [x.findattr(attr,connector) for x in con]	
+					return [x.findattr(attr,connector) for x in con]
 				else:
 					return con.findattr(attr,connector)
 		else:
 			return getattr(self,attr)
-	
+
 	def findDict(self):
 		"""Returns the dictionary stored on the self or the self's parents."""
 		return self.findattr('dict')
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	## parsing
 	def parse(self,arbiter='Line',init=None,namestr=[]):
 		"""Parse this object metrically."""
-		
+
 		print ">> parsing!"
-		
+
 		import time
 		if entity.time==0:
 			entity.time=time.clock()
-		
+
 		if self.classname().lower()=="corpus":
 			for child in self.children:
 				child.parse()
 			return None
-		
+
 		if not init:
 			init=self
 			if not hasattr(init,'meter_stats'):
@@ -503,17 +503,17 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			from Meter import Meter
 			init.meter=Meter(config['constraints'].split(),(config['maxS'],config['maxW']),config['splitheavies'])
 			init.meter_stats['_constraints']=sorted(init.meter.constraints)
-			
+
 			init.ckeys="\t".join(sorted([str(x) for x in init.meter.constraints]))
 			#self.om("\t".join([makeminlength(str("text"),being.linelen),				makeminlength(str("parse"),being.linelen),	"meter",init.ckeys]))
-			
+
 			if being.omms:
 				self.scansion_prepare()
-			
+
 		if (hasattr(self,'name')):
 			print "## parsing: "+str(self.name)
-			
-			
+
+
 		if arbiter != self.classname():
 			raise Exception('spam', 'eggs')
 
@@ -537,21 +537,21 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					numSyll+=word.getNumSyll()
 			if not words: return []
 			##
-			
+
 			if (numSyll < config['line_minsylls']):
 				#print "\t>skipping ("+str(numSyll)+" is fewer than minimum of "+str(config['parse_line_numsyll_min'])+" sylls)"
 				return []
 			elif(numSyll > config['line_maxsylls']):
 				#print "\t>skipping ("+str(numSyll)+" is more than maximum of "+str(config['parse_line_numsyll_max'])+" sylls)"
 				return []
-			
+
 			#print "\n\t>parsing:\t"+str(self)+"\t("+str(numSyll)+" sylls)"
-			
-			
+
+
 			self.parses=init.meter.parse(words,numSyll)
 			self.numparses=len(self.parses)
 			self.__bestparse=self.parses[0]
-			
+
 			raise Exception('spam', 'eggs')
 			print "headedness!"
 			if hasattr(being,'line_headedness'):
@@ -572,7 +572,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			textname=self.findattr('name')
 			if not textname:
 				textname=str(self).replace(" ","_")
-			
+
 			## store stats
 			if (not textname in init.meter_stats['lines']):
 				init.meter_stats['lines'][textname]={}
@@ -582,31 +582,31 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				init.meter_stats['texts'][textname]={}
 			if (not textname in init.meter_stats['_ot']):
 				init.meter_stats['_ot'][textname]=makeminlength("line",being.linelen)+"\tmeter\t"+init.ckeys+"\n"
-			
+
 			parsedat=[]
 			for k,v in sorted(self.__bestparse.constraintScores.items()):
 				if (not k in init.meter_stats['texts'][textname]):
 					init.meter_stats['texts'][textname][k]=[]
 				init.meter_stats['texts'][textname][k].append(v)
-				
+
 				#parsedat.append(v/len(self.__bestparse.positions))	#???
 				parsedat.append(v)
-				
+
 			linekey=str(len(init.meter_stats['lines'][textname])+1).zfill(6)+"_"+str(self.__bestparse.posString())
 			init.meter_stats['lines'][textname][linekey]=parsedat
-			
+
 			## OT stats
 			init.meter_stats['_ot'][textname]+=makeminlength(str(self),being.linelen)+"\t"+self.parses[0].str_ot()+"\n"
 			if len(self.parses)>1:
 				for parse in self.parses[1:]:
 					init.meter_stats['_ot'][textname]+=makeminlength("",being.linelen)+"\t"+parse.str_ot()+"\n"
-				
-			
-			
+
+
+
 			for posn in range(len(self.__bestparse.positions)):
 				pos=self.__bestparse.positions[posn]
 				(posdat,ckeys)=pos.formatConstraints(normalize=True,getKeys=True)
-				
+
 				for cnum in range(len(ckeys)):
 					if (not posn in init.meter_stats['positions'][textname]):
 						init.meter_stats['positions'][textname][posn]={}
@@ -615,7 +615,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					init.meter_stats['positions'][textname][posn][ckeys[cnum]].append(posdat[cnum])
 
 			return self.parses
-		
+
 		if self==init:
 			init.maxparselen=0
 			init.minparselen=None
@@ -629,19 +629,19 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					init.maxparselen=len(parse.positions)
 				if len(parse.positions)<init.minparselen:
 					init.minparselen=len(parse.positions)
-	
-	
+
+
 	def stats(self,init=None):
 		#print "HI FROM ENTITY",type(self),self
 		"""Save statistics about the parsing."""
-		
+
 		if not init:
 			init=self
 			init.mstats={'lines':{},'positions':{},'positionsRaw':{},'positionsT':{},'texts':{},'_ot':{}}
 			init.statsByPositionTKeys=[]
 			#self.genCorrStats()
 			#exit()
-		
+
 		if not hasattr(self,'meter_stats'):
 			for child in self.children:
 				try:
@@ -650,41 +650,41 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					print "Child skipped"
 		else:
 			name=self.getName()
-			
+
 			constraintNames=[str(constraint.name) for constraint in self.meter_stats['_constraints']]
 			print constraintNames
-		
+
 			statsByLine="line\t"+"\t".join(constraintNames)+"\n"
-			
+
 			statsByPosition="position\t"+"\t".join(constraintNames)+"\n"
 			statsByPositionRaw="position\t"+"\t".join(constraintNames)+"\n"
 			statsByPositionTLines={}
 			statsByPositionTKeys=[]
 			statsByText="textname\t"+"\t".join(constraintNames)+"\n"
-		
+
 			tosave=[]
-		
+
 			for typename,typedict in self.meter_stats.items():
 				if typename.startswith('_'): continue
 
 				for textname,textdict in self.meter_stats[typename].items():
 					if not self.meter_stats[typename][textname]: continue
 					tosave.append(typename)
-					
+
 					if typename.startswith("text"):
 						statsByText+=textname+"\t"+"\t".join([str(sum(x)/len(x)) for x in self.meter_stats[typename][textname].values()])+"\n"
 						continue
-					
-				
+
+
 					datadict=self.meter_stats[typename][textname]
-					
+
 					if typename.startswith("position"):
 						for posnum,posdat in sorted(datadict.items()):
 							if (not ("pos"+str(posnum)) in init.statsByPositionTKeys):
 								init.statsByPositionTKeys.append("pos"+str(posnum))
 							if (not ("pos"+str(posnum)) in statsByPositionTKeys):
 								statsByPositionTKeys.append("pos"+str(posnum))
-							
+
 							statsByPosition+="pos"+str(posnum)
 							statsByPositionRaw+="pos"+str(posnum)
 							for ckey,cscores in sorted(posdat.items()):
@@ -697,11 +697,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 								except KeyError:
 									statsByPositionTLines[ckey]={}
 									statsByPositionTLines[ckey][posnum]=scoreMean
-								
+
 							statsByPosition+="\n"
 							statsByPositionRaw+="\n"
-							
-							
+
+
 					elif typename.startswith("line"):
 						#pass
 						for posnum,v in datadict.items():
@@ -709,23 +709,23 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 			if 'lines' in tosave:
 				init.mstats['lines'][name]=statsByLine
-			
+
 			if 'positions' in tosave:
 				init.mstats['positions'][name]=statsByPosition
 				init.mstats['positionsRaw'][name]=statsByPositionRaw
-				
+
 				statsByPositionT="constraint\t"+"\t".join(sorted(statsByPositionTKeys))+"\n"
 				for ckey,posdict in sorted(statsByPositionTLines.items()):
 					statsByPositionT+=str(ckey)
 					for posnum,score in sorted(posdict.items()):
 						statsByPositionT+="\t"+str(score)
 					statsByPositionT+="\n"
-				
+
 				init.mstats['positionsT'][name]=statsByPositionT
-				
+
 			if 'texts' in tosave:
 				init.mstats['texts'][name]=statsByText
-							
+
 			try:
 				init.mstats['_ot'][name]=self.meter_stats['_ot'][name]
 			except KeyError:
@@ -735,7 +735,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					init.mstats['_ot'][name]=""
 					#print "<< error: no OT stats found for textname "+name+" >>"
 			if (init!=self): return None
-		
+
 		name=self.getName()
 		for stattype,textdict in init.mstats.items():
 			totalstr=""
@@ -744,12 +744,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if not strtowrite: continue
 				writeToFile(textname,stattype.replace("_",""),strtowrite)
 				if stattype.startswith("_"): continue
-				
+
 				lines=strtowrite.split("\n")
 				for linenum in range(len(lines)):
 					ln=lines[linenum]
 					if not ln.strip(): continue
-					
+
 					if not linenum:
 						if not header:
 							if stattype=="positionsT":
@@ -772,17 +772,17 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						totalstr+=textname+"_"+ln+"\n"
 					else:
 						totalstr+=ln+"\n"
-			
+
 			if stattype.startswith("_"): continue
 			if init.classname()=='Corpus':
 				writeToFile(name,stattype,totalstr,iscorpus=True)
-		return None					
+		return None
 
 	def _getFeatValDict(self,init=None):
 		if not init:
 			init=self
 			init.unitfeats={}
-		
+
 		if not hasattr(self,'bestparses'):
 			for child in self.children:
 				if type(child)==type([]): return None
@@ -792,7 +792,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				print parse
 				for pos in parse.positions:
 					posfeats=pos.posfeats()
-					
+
 					for k,v in posfeats.items():
 						v=tuple(v)
 						if (not k in init.unitfeats):
@@ -800,82 +800,82 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						if (not v in init.unitfeats[k]):
 							init.unitfeats[k][v]={}
 			return init.unitfeats
-		
+
 		return init.unitfeats
-	
+
 	#def make_pkey(self,posdict,domainfeat,domainfeatval,domainfeat1,domainfeatval1,targetfeat=None,targetfeatval=None):
 	#	pkey=".".join(["of_all",domainfeat.replace("prom.","")+"_is_"+str(domainfeatval)])
-	
+
 	def _groom(self,init=None):
 		if self.classname()!="Corpus":
 			return "<< cannot groom object smaller than corpus: grooming meant to normalize corpus of texts to a standard >>"
-		
-		
+
+
 		textdict={}
 		text2lines={}
 		for text in self.children:
 			validlines=text.validlines()
 			textdict[text]=str(len(validlines))+" lines"
 			text2lines[text]=validlines
-		
+
 		sels=choose(textdict,"please select the primary text whose attributes will be sought after in the others:")
 		primary=sels[0]
-		
+
 		sels=choose(['wordbound','stress','weight'],"please choose the dimensions on which lines of primary text <"+repr(primary)+"> must be matched:")
 		being.pointsofcomparison=[]
 		for sel in sels:
 			being.pointsofcomparison.append("str_"+sel.strip())
-		
+
 		sels=choose({'difference':'remove non-matching lines in non-primary texts only','intersection':'remove non-matching lines in all texts'},"please select method of grooming:")
 		diffmethod=sels[0]
-		
+
 		#if diffmethod=="intersection":
-		#	
-		
+		#
+
 		# lineset=set(text2lines[primary])
 		# 		if diffmethod=="intersection":
 		# 			for text in self.children:
 		# 				thislineset=set(text2lines[text])
 		# 				for line in (lineset ^ thislineset):
 		# 					line.ignoreMe=True
-		# 				
+		#
 		# 		else:
-		# 			
+		#
 		# 			for text in self.children:
 		# 				thislineset=set(text2lines[text])
-		# 				
+		#
 		# 				for line in set(thislineset - lineset):
 		# 					line.ignoreMe=True
-		
+
 		print ">> groomed:"
 		for text in self.children:
 			print "\t".join(str(x) for x in [text,str(len(text.validlines()))+" lines"])
-		
-		
-						
-	
+
+
+
+
 	def plot(self,init=None):
 		"""Interactive plotting of parsing features."""
-		
+
 		if not init:
 			init=self
 			init.plotstats={}
 			init.unitfeats=self._getFeatValDict()
-			
+
 			sels=[]
 			for k,v in sorted(init.unitfeats.items()):
 				for kk,vv in v.items():
 					sels.append((k,kk))
-			
+
 			conditions={'x':[],'y':[]}
 			targets={'x':[],'y':[]}
 			pkey={'x':[],'y':[]}
-			
+
 			print str(0)+"\t[no condition]"
 			for selnum in range(len(sels)):
 				print str(selnum+1)+"\t"+str(sels[selnum][0])+" = "+str(sels[selnum][1])
 			print
-			
+
 			stepnum=0
 			for a in sorted(conditions.keys()):
 				stepnum+=1
@@ -886,7 +886,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						pkey[a]+=["of_"+str(sels[int(x)-1][0])+"_is_"+str(sels[int(x)-1][1])]
 					except:
 						pass
-						
+
 				stepnum+=1
 				sel=raw_input(">> [step "+str(stepnum)+"/4] ["+a+" coord] [conditions of sample] please type in the number (or numbers separated by commas)\n\tof the conditions determining the sample:\n").strip()
 				for x in sel.split(","):
@@ -895,21 +895,21 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						pkey[a]+=[str(sels[int(x)-1][0])+"_is_"+str(sels[int(x)-1][1])]
 					except:
 						pass
-				
-			
+
+
 			# print ">> POPULATION:"
 			# print conditions
-			# 
+			#
 			# print ">> SAMPLE:"
 			# print targets
 
 			init.population=conditions
 			init.sample=targets
-			
+
 			init.pkey="X_"+"-".join(pkey['x'])+"."+"Y_"+"-".join(pkey['y'])
 			print ">> plotting: "+ init.pkey
-			
-		
+
+
 		if not hasattr(self,'bestParses'):
 			for child in self.children:
 				child.plot(init)
@@ -926,17 +926,17 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					except IndexError:
 						# there is no position number `posnum` in this parse `parse`
 						continue
-					
+
 					for a in ['x','y']:
 						conds=init.population[a]
 						targs=init.sample[a]
-						
+
 						condsHold=True
-						if len(conds):							
+						if len(conds):
 							for cond in conds:
 								condK=cond[0]
 								condV=cond[1]
-							
+
 								try:
 									if posfeats[condK]==condV:
 										continue
@@ -945,7 +945,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 									break
 								condsHold=False
 								break
-						
+
 						if condsHold:
 							targsHold=True
 							for targ in targs:
@@ -960,12 +960,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 									break
 								targsHold=False
 								break
-							
+
 							if targsHold:
 								posdict[posnum][a].append(1)
 							else:
 								posdict[posnum][a].append(0)
-			
+
 			for a in ['x','y']:
 				if not posdict[posnum][a]:
 					print "<< not enough data: position number ("+str(posnum)+") empty on dimension ["+str(a)+"]"
@@ -977,7 +977,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		totalstrs=[]
 		totaltsvs=[]
 		for textname,posdict in sorted(init.plotstats.items()):
-			
+
 			tsv="posnum\tnumobs\tx_mean\ty_mean\tx_std\ty_std\n"
 			xs=[]
 			ys=[]
@@ -986,36 +986,36 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				y_avg,y_std=mean_stdev(xydict['y'])
 
 				assert len(xydict['x'])==len(xydict['y'])
-				
+
 				xs.append(x_avg)
 				ys.append(y_avg)
 				tsv+="\t".join(str(bb) for bb in [(posnum+1),len(xydict['x']),x_avg,y_avg,x_std,y_std])+"\n"
-			
-			
+
+
 			ccmsg=""
 			cc=None
 			p=None
 			try:
 				from statlib import stats
 				(cc,p)=stats.pearsonr(xs,ys)
-				
+
 				aa=makeminlength("    correlation coefficient: ",int(being.linelen/1.4))+str(cc)
 				bb=makeminlength("    p-value: ",int(being.linelen/1.4))+str(p)
-				
+
 				tsv+=aa.strip().replace(":",":\t")+"\n"
 				tsv+=bb.strip().replace(":",":\t")+"\n"
-				
+
 				for l in tsv.split("\n"):
 					totaltsvs.append(textname+"_"+l)
-				
+
 				ccmsg+=aa+"\n"+bb+"\n"
-				
+
 			except:
 				pass
-			
+
 			writeToFile(textname,init.pkey,tsv,extension="tsv")
 			totaltsvs.append(tsv)
-			
+
 			"""
 			try:
 				strtowrite=self.makeBubbleChart(posdict,".".join([textname,init.pkey]),(cc,p))
@@ -1024,12 +1024,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			except:
 				pass
 			"""
-			
+
 			if ccmsg:
 				print ccmsg
-		
+
 		if not self.classname()=="Corpus": return None
-		
+
 		"""
 		writeToFile(self.getName(),
 			init.pkey,
@@ -1037,54 +1037,54 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			iscorpus=True,
 			extension="htm")
 		"""
-		
+
 		writeToFile(self.getName(),init.pkey,"\n\n\n\n".join(totaltsvs),iscorpus=True,extension="tsv")
-		
-	
+
+
 	def _getBubbleHeader(self):
 		return '<html> <head> <script type="text/javascript" src="[[prosodic_dir]]/lib/mootools-core-1.3-full-compat.js"></script> <script type="text/javascript" src="[[prosodic_dir]]/lib/moochart-0.1b1-nc.js"></script></head><body>'.replace('[[prosodic_dir]]',sys.path[0])
-		
+
 	def _getBubbleFooter(self):
 		return '</body></html>'
-	
+
 	def makeBubbleChart(self,posdict,name,stattup=None):
 		"""Returns HTML for a bubble chart of the positin dictionary."""
-		
+
 		xname=[x for x in name.split(".") if x.startswith("X_")][0]
 		yname=[x for x in name.split(".") if x.startswith("Y_")][0]
 		#elsename=name.replace(xname,'').replace(yname,'').replace('..','.').replace('..','.')
-		
-		
-		
+
+
+
 		o='<div id="'+name+'"><h2>'+name+'</h2>'
-		
+
 		if stattup:
 			cc=stattup[0]
 			p=stattup[1]
 			o+='<h3>corr.coef='+str(cc)+' / p-value='+str(p)+'</h3>'
-		
+
 		o+='<br/><script type="text/javascript">\nvar myChart = new Chart.Bubble("'+name+'", {\nwidth: 400,\nheight: 400,\n bubbleSize: 10,\nxlabel:"'+xname+'",\nylabel:"'+yname+'"});\n'
-		
+
 		for posnum,xydict in posdict.items():
 			x_avg,x_std=mean_stdev(xydict['x'])
 			y_avg,y_std=mean_stdev(xydict['y'])
-			
+
 			z=1/(x_std+y_std)
-			
+
 			o+='myChart.addBubble('+str(x_avg*100)+', '+str(y_avg*100)+', '+str(z)+', "#666", "'+str(posnum+1)+' [%'+str(x_avg*100)[0:5]+', %'+str(y_avg*100)[0:5]+']");\n'
 		o+='myChart.redraw();\n</script>\n</div>'
 		return o
-		
-		
-	
+
+
+
 	def _genCorrStats(self,init=None):
 		from copy import deepcopy
-		
+
 		if not init:
 			init=self
 			init.corrstats={}
 			init.unitfeats=self._getFeatValDict()
-		
+
 		if not hasattr(self,'bestparses'):
 			for child in self.children:
 				child.genCorrStats(init)
@@ -1092,18 +1092,18 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			stats=deepcopy(init.unitfeats)
 			posdict={}
 			pkeydict={}
-			
+
 			for posnum in range(self.minparselen):
 				posdict[posnum]={}
 
-				
+
 				for parse in self.bestParses():
 					posfeats=parse.positions[posnum].posfeats()
-				
+
 					for domainfeat,domainfeatvals in stats.items():
 						for domainfeatval,targetfeats in domainfeatvals.items():
 							thisdomainfeatval=posfeats[domainfeat]
-							
+
 							pkey=".".join(["of_all",domainfeat.replace("prom.","")+"_is_"+str(domainfeatval)])
 							#if (not pkey in posdict[posnum]):
 							#	posdict[posnum][pkey]=[]
@@ -1111,39 +1111,39 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 								pkeydict[pkey]={}
 							if (not posnum in pkeydict[pkey]):
 								pkeydict[pkey][posnum]=[]
-							
+
 							if thisdomainfeatval==domainfeatval:
 								pkeydict[pkey][posnum].append(1)
 							else:
 								pkeydict[pkey][posnum].append(0)
-							
+
 							for domainfeat1,domainfeatvals1 in stats.items():
 								if domainfeat==domainfeat1: continue
 								for domainfeatval1,targetfeats1 in domainfeatvals1.items():
 									thisdomainfeatval1=posfeats[domainfeat1]
-									
+
 									pkey=".".join(["of_"+domainfeat.replace("prom.","")+"_is_"+str(domainfeatval),
 										domainfeat1.replace("prom.","")+"_is_"+str(domainfeatval1)])
 									#print pkey
-										
+
 									#if (not pkey in posdict[posnum]):
 									#	posdict[posnum][pkey]=[]
 									if (not pkey in pkeydict):
 										pkeydict[pkey]={}
 									if (not posnum in pkeydict[pkey]):
 										pkeydict[pkey][posnum]=[]
-									
+
 									if thisdomainfeatval==domainfeatval:
 										if thisdomainfeatval1==domainfeatval1:
 											pkeydict[pkey][posnum].append(1)
 										else:
 											pkeydict[pkey][posnum].append(0)
-									
+
 									for targetfeat,targetfeatvals in stats.items():
 										if domainfeat1==targetfeat: continue
 										for targetfeatval,targetfeats1 in targetfeatvals.items():
 											thistargetfeatval=posfeats[targetfeat]
-											
+
 											pkey=".".join(["of_"+domainfeat.replace("prom.","")+"_is_"+str(domainfeatval),
 												"of_"+domainfeat1.replace("prom.","")+"_is_"+str(domainfeatval1),
 												targetfeat.replace("prom.",""	)+"_is_"+str(targetfeatval)])
@@ -1153,7 +1153,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 												pkeydict[pkey]={}
 											if (not posnum in pkeydict[pkey]):
 												pkeydict[pkey][posnum]=[]
-																								
+
 											if thisdomainfeatval==domainfeatval:
 												if thisdomainfeatval1==domainfeatval1:
 													if thistargetfeatval==targetfeatval:
@@ -1162,7 +1162,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 														pkeydict[pkey][posnum].append(0)
 			#print pkeydict
 			self._correlatePositionAttributes(pkeydict)
-			exit()	
+			exit()
 			#print len(pkeydict.keys())
 
 	def _correlatePositionAttributes(self,keyposdict,threshold=0.9):
@@ -1179,23 +1179,23 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			for pos,vallist in posdict.items():
 				if not len(vallist):
 					break
-				
+
 				avg=sum(vallist)/len(vallist)
 				posvals.append(avg)
-					
+
 			if len(posvals)!=len(posdict): continue
-			
-			
+
+
 			print pkey
 			print posvals
 			print
-			
+
 			keys.append(pkey)
 			data.append(posvals)
-			
+
 		import numpy
 		arr=numpy.array(data)
-		
+
 		print ">> correlating..."
 		matrix=numpy.corrcoef(arr)
 		tuples=[]
@@ -1206,16 +1206,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				absVal=abs(matrix[seedindex][i])
 				if absVal>threshold:
 					print "\t".join(str(x) for x in [keys[seedindex],keys[i],matrix[seedindex][i],absVal])
-					
+
 					#G.add_edge(seedword,keys[i],weight=matrix[seedindex][i])
 					#tuples.append((matrix[seedindex][i],keys[i]))
-			
-		
 
-	
+
+
+
 	def getName(self):
 		"""Return a Name string for this object."""
-		
+
 		name=self.findattr('name')
 		if not name:
 			name="_directinput_"
@@ -1223,18 +1223,18 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				name+="."+str(self).replace(" ","_").lower()
 		else:
 			name=name.replace('.txt','')
-		
+
 		while name.startswith("."):
 			name=name[1:]
-		
+
 		return name
 
 	def genfsms(self,meter=None):
 		"""Generate FSM images. Requires networkx and GraphViz."""
-		
+
 		if (hasattr(self,'allParses')):
 			name=self.getName()
-				
+
 			import networkx as nx
 			m2int={'w':'0','s':'1'}
 
@@ -1270,7 +1270,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				for parse in parses:
 					node1=None
 					node2=None
-				
+
 					posnum=0
 					linelens.append(len(parse.positions))
 					for pos in parse.positions:
@@ -1281,11 +1281,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 							if hasattr(being,'line_maxsylls'):
 								if posnum>int(being.line_maxsylls):
 									break
-							
+
 							nodestr=""
 							unit.meter=pos.meterVal
 							for strcaller in sorted(gs[gtype]):
-										
+
 								z=unit.findattr(strcaller,'children')
 								if type(z)==type([]):
 									nodestr+="".join( [str(x()) for x in z] )
@@ -1300,12 +1300,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 								nodetypes.append(nodestr)
 							#node=str(posnum)+"_"+str(nodestr)
 							node=nodestr
-						
+
 							if not node1:
 								node1=node
 								continue
 							node2=node
-						
+
 							if G.has_edge(node1,node2):
 								G[node1][node2]['weight']+=1
 							else:
@@ -1314,11 +1314,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 								sumweight[(str(node1)[0],str(node2)[0])]+=1
 							except KeyError:
 								sumweight[(str(node1)[0],str(node2)[0])]=1
-								
-							node1=node2							
-				
+
+							node1=node2
+
 				if not linelens: continue
-				
+
 				maxlinesize=6
 				for n1,nbrs in G.adjacency_iter():
 					for n2,eattr in nbrs.items():
@@ -1362,8 +1362,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				_path=os.path.split(fnfn)[0]
 				if not os.path.exists(_path):
 					os.makedirs(_path)
-				pyd.write_png(fnfn, prog='dot') 
-			
+				pyd.write_png(fnfn, prog='dot')
+
 		else:
 			if not self.children:
 				return ""
@@ -1371,13 +1371,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				return []
 			else:
 				[child.genfsms() for child in self.children]
-	
-	
-		
-	
-	
+
+
+
+
+
 	#
-	#		
+	#
 	def isParsed(self):
 		if (hasattr(self,'bestParse')) and bool(self.bestParse()):
 			return True
@@ -1392,19 +1392,19 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		meter=Meter(config['constraints'].split(),(config['maxS'],config['maxW']),self.findattr('dict'))
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
 		self.om("\t".join([makeminlength(str("text"),being.linelen),makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]))
-		
+
 	def scansion_prepare(self,meter=None,conscious=False):
 		"""Print out header column for line-scansions for a given meter. """
-		
+
 		if not meter:
 			if not hasattr(self,'_Text__bestparses'): return
 			x=getattr(self,'_Text__bestparses')
 			if not x.keys(): return
 			meter=x.keys()[0]
-		
+
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
 		self.om("\t".join([makeminlength(str("text"),being.linelen), makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]),conscious=conscious)
-		
+
 
 	def scansion(self,meter=None,conscious=False):
 		"""Print out scansion for a given meter. """
@@ -1413,7 +1413,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			if not bp: return
 			lowestScore=bp.score()
 			self.om("\t".join( [ str(x) for x in [makeminlength(str(self),being.linelen), makeminlength(str(bp), being.linelen),len(self.allParses(meter)),lowestScore,bp.str_ot()] ] ),conscious=conscious)
-			
+
 		else:
 			if not self.children:
 				return ""
@@ -1421,8 +1421,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				return "\t??"+str(self)	## no parse on the word level (where optionality begins?) -- then no parses for this line
 			else:
 				[child.scansion(meter=meter,conscious=conscious) for child in self.children]
-		
-		
+
+
 	def namestr(self,namestr=[]):
 		if hasattr(self,'name'):
 			return [self.name.replace('.txt','')]
@@ -1430,16 +1430,16 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			return self.parent.namestr()+[self.classname().lower()+format(self.parent.children.index(self)+1, '0'+str(len(str(len(self.parent.children))))+'d')]
 			#return self.parent.namestr()
 			#return self.parent.namestr()+[self.classname().lower()+format(self.parent.children.index(self)+1, '0'+str(len(str(len(self.parent.children))))+'d')]
-			
+
 		else:
 			return ["_directinput_"]
-		
-		
-		
-		
+
+
+
+
 	def report(self,meter=None,include_bounded=False):
 		""" Print all parses and their violations in a structured format. """
-		
+
 		if not meter:
 			from Meter import Meter
 			meter=Meter.genDefault()
@@ -1457,36 +1457,36 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			for child in self.children:
 				if type(child)==type([]): continue
 				child.report()
-	
+
 	def _getcorr_prepkey(self,key):
 		(newkey,etc)=(key.split(":")[0],key.split(":")[1:])
 		newkey=newkey.strip()
-		
+
 		if newkey=="meter":
 			if "," in etc:
 				newkey+=etc.split(",")[1].split("[")[0]
 		return newkey
-	
 
-				
-	
+
+
+
 	def isBroken(self):
 		if not hasattr(self,'broken'):
 			return False
 		else:
 			return getattr(self,'broken')
-				
+
 	## outputs
 	def tree(self,offset=0,prefix_inherited="",nofeatsplease=['Phoneme']):
 		"""Print a tree-structure of this object's phonological representation."""
-		
+
 		tree = ""
 		numchild=0
 		for child in self.children:
 			if type(child)==type([]):
 				child=child[0]
 			numchild+=1
-			
+
 			classname=child.classname()
 			if classname=="Word":
 				tree+="\n\n"
@@ -1494,7 +1494,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				tree+="\n\n\n"
 			elif classname=="Stanza":
 				tree+="\n\n\n\n"
-			
+
 			if offset!=0:
 				tree+="\n"
 				for i in range(0,offset):
@@ -1502,21 +1502,21 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				#if not len(child.feats):
 				#	tree+="	  "
 				tree+="|"
-			
-			
+
+
 			tree+="\n"
 			newline=""
 			for i in range(0,offset):
 				newline+="      "
 			newline+="|"
-			
-			
+
+
 			cname=""
 			for letter in classname:
 				if letter==letter.upper():
 					cname+=letter
-						
-			prefix=prefix_inherited+cname+str(numchild) + "." 
+
+			prefix=prefix_inherited+cname+str(numchild) + "."
 			newline+="-----| ("+prefix[:-1]+") <"+classname+">"
 			if child.isBroken():
 				newline+="<<broken>>"
@@ -1532,19 +1532,19 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 						for k,v in child.feats.items():
 							if v==None:
 								continue
-							
+
 							newline+="\n"
 							for i in range(0,offset+1):
 								newline+="      "
 							newline+="|     "
 							newline+=self.showFeat(k,v)
-							
+
 
 			tree+=newline
 			tree+=child.tree(offset+1,prefix)
-			
+
 		return tree
-	
+
 	def showFeat(self,k,v):
 		if type(v) == type(True):
 			if v:
@@ -1554,7 +1554,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		else:
 			r="["+k+"="+str(v)+"]"
 		return r
-	
+
 	def writeFeats(self,sheet,feats,row=0,bool=True,posmark="+",negmark=False):
 		for dat in feats:
 			row+=1
@@ -1566,7 +1566,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				feat=self._filterFeat(feat, bool, posmark, negmark)
 				sheet.row(row).write(col,feat)
 		return row+1
-	
+
 	def writeViols(self,sheet,units,viols,unitviols,row=0,bool=True,posmark="+",negmark=False):
 		for violtype in viols:
 			row+=1
@@ -1584,7 +1584,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				feat=self._filterFeat(feat, bool, posmark, negmark)
 				sheet.row(row).write(col,feat)
 		return row
-	
+
 	def _filterFeat(self,feat,bool=True,posmark="+",negmark=False):
 		if feat==None: feat=""
 		elif feat==True: feat=posmark
@@ -1606,12 +1606,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				feat = str(feat)
 		else:
 			feat=str(feat)
-		
+
 		return feat
-	
+
 	def getNumEnts(self,numents={}):
 		### Returns a dictionary of [classname][toks], [classname][typs]
-		
+
 		if type(self.children)!=type([]): return numents
 		for child in self.children:
 			if child==None: continue
@@ -1621,24 +1621,24 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				numents[child.classname()]['typs']={}
 			if (not child in numents[child.classname()]['typs']):
 				numents[child.classname()]['typs'][child]=0
-			
+
 			numents[child.classname()]['toks']+=1
 			numents[child.classname()]['typs'][child]+=1
 			numents=child.getNumEnts(numents)
 		return numents
-	
+
 	def getStats(self):
 		numents=self.getNumEnts()
-		
+
 		stats={}
 		for k,v in numents.items():
 			numtok=v['toks']
 			numtyp=len(v['typs'])
 			typovertok=round((numtyp/numtok*100),2)
 			stats[k]=(numtok,numtyp,typovertok)
-			
+
 		return stats
-	
+
 	def writeUnits(self,sheet,units,row=-1):
 		col=0
 		sheet.row(row).write(col,"[meter.s]")
@@ -1649,24 +1649,24 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			else:
 				sheet.row(row+1).write(col,unit)
 		return row+1
-	
+
 	def tiergraph(self,parses,colwidth=24):
 		from xlwt import Workbook
 		book = Workbook()
 		headers = False
-		
+
 		parse_i=0
 		for parse in parses:
 			parse_i+=1
-			sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs') 
+			sheet = book.add_sheet(str(parse_i)+'__'+str(parse.getErrorCount())+'errs')
 			sheet.col(0).width=(colwidth*256)
-	
+
 			row=0
 			proms = []
 			viols = []
 			feats = []
 			units = []
-			
+
 			col=0
 			for pos in parse.positions:
 				for slot in pos.slots:
@@ -1675,10 +1675,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					else:
 						unit=str(slot).lower()
 					units.append(unit)
-					
+
 					col+=1
 					sheet.row(row).write(col,str(unit))
-	
+
 					for k,v in slot.feats.items():
 						if k.startswith('prom'):
 							if (not k in proms):
@@ -1689,20 +1689,20 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			proms.sort()
 			viols.sort()
 			feats.sort()
-			
+
 			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
-	
-	
+
+
 			row=self.writeUnits(sheet,units,row=(row+1))	# the units and their metrical parsing
-			
-	
+
+
 			row=self.writeFeats(sheet,proms,bool=True,posmark="+",row=1) # prom feats
 			#row=self.writeViols(sheet,parse.units,viols,parse.unitviols,row=(row+1),bool=True,posmark="*")	# constraint violations
 			#row=self.writeFeats(sheet,parse.units,feats,row=(row+1),bool=False,posmark="1",negmark="0")	# all other feats
-			
+
 			book.save('results/tiergraphs/'+str(self)+'.xls')
-	
-	
+
+
 	def _searchSingleValue(self, value, feature):
 		matches = []
 		#print feature
@@ -1728,12 +1728,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if not child: continue
 				matches.extend(child._searchSingleValue(value, feature))
 		return matches
-		
+
 	def _searchSingleTerm(self, searchTerm):
 		value = searchTerm.terms[0]
 		feature = valueToFeature(value)
 		return self._searchSingleValue(value, feature)
-		
+
 	def _searchMultipleTerms(self, searchTerm):
 		termList = searchTerm.terms
 		found = True
@@ -1742,13 +1742,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				found = False
 				break
 		return found
-		
+
 	def _searchInChildren(self, searchTerm):
 		matches = []
 		for child in self.descendants():
 			matches.extend(child.search(searchTerm))
 		return matches
-	
+
 	def query(self,query_string,toprint=False):
 		"""Prints words matching the given query. Eg:   [-voice] (Syllable: (Onset: [+voice]) (Coda: [+voice]))"""
 		qq=SearchTerm(query_string)
@@ -1770,34 +1770,34 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns objects matching the query."""
 		if type(searchTerm)==type(''):
 			searchTerm=SearchTerm(searchTerm)
-		
+
 		if searchTerm not in self.featpaths:
-			matches = None	
+			matches = None
 			if searchTerm.type != None and searchTerm.type != self.classname():
 				matches = self._searchInChildren(searchTerm)
 			elif searchTerm.isAtomic():
 				matches = self._searchSingleTerm(searchTerm)
 			else:
-				matches = self._searchMultipleTerms(searchTerm)		
+				matches = self._searchMultipleTerms(searchTerm)
 				if matches == True:
 					matches = [self]
 				if matches == False:
 					matches = []
 			self.featpaths[searchTerm] = matches
-			
+
 		return self.featpaths[searchTerm]
-					
+
 	def _getTypesFromHereOnDown(self,types=[]):
 		classname=self.classname()
 		if (not classname in types):
-			types.append(classname) 
+			types.append(classname)
 		if self.descendants():
 			return self.descendants()[0]._getTypesFromHereOnDown(types)
 		else:
 			return types
-	
-	
-	
+
+
+
 	def output_min(self):
 		words=self.words()
 		o=""
@@ -1848,8 +1848,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		#print other.words()[-1], other_rime.phonemes()
 		#print
 		return my_rime.phonetic_distance(other_rime,normalized=normalized)
-			
-	
+
+
 	def phonetic_distance(self,other,normalized=False):
 		phonemes1=self.phonemes()
 		phonemes2=other.phonemes()
@@ -1879,8 +1879,3 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 		if normalized: return dist / float(max(len(phonemes1),len(phonemes2)))
 		return dist
-
-
-	
-	
-	

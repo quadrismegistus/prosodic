@@ -1,7 +1,8 @@
 # coding=utf-8
 
 from finnish_annotator import make_annotation
-from tools import get_class
+#from tools import get_class
+
 
 stress2stroke = {0:'',1:"'",2:"`"}
 

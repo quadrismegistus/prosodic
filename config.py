@@ -181,8 +181,8 @@ resolve_optionality=1
 # --> SCAT|tring|UN|be|HOLD|en
 # 
 # Add pronunciations for words that could have elided syllables:
-add_elided_pronunciations=1
-#add_elided_pronunciations=0
+#add_elided_pronunciations=1
+add_elided_pronunciations=0
 #
 #
 ######

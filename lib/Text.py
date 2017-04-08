@@ -41,7 +41,7 @@ class Text(entity):
 		#self.meterd={]}
 
 
-		
+
 		## phrasebreak features
 		if self.phrasebreak=='line':
 			pass
@@ -50,7 +50,7 @@ class Text(entity):
 			self.phrasebreak='both'
 		else:
 			self.phrasebreak_punct=unicode(self.phrasebreak)
-		
+
 		## load/write-load text
 		if os.path.exists(filename) and filename!='.':
 		#if False:
@@ -81,11 +81,11 @@ class Text(entity):
 			#else:
 			self.isFromFile=False
 			self.init_text(lines)
-		
+
 		## clean
 		self.children = [stanza for stanza in self.children if not stanza.empty()]
 		for stanza in self.children: stanza.children = [line for line in stanza.children if not line.empty()]
-		
+
 
 	def set_lang(self,filename):
 		filename=os.path.basename(filename)
@@ -108,31 +108,31 @@ class Text(entity):
 			print "!! language "+lang0+" not recognized. defaulting to: "+lang
 
 		return lang
-		
+
 	def init_run_mary(self,text):
 		#print ">> init_run_mary..."
 		import lexconvert,bs4
 		numwords = 0
 		stanza=self.newchild()
 		line=stanza.newchild()
-		
+
 		for stanzatext in text.split('\n\n'):
 			stanzatext=stanzatext.strip()
 			if not stanzatext: continue
-			
+
 			for linetext in stanzatext.split('\n'):
 				linetext=linetext.strip()
 				if not linetext: continue
-				
+
 				wordlist=linetext.split()
 				for i,word in enumerate(wordlist):
 					p0,word,p1=gleanPunc2(word)
 					if p0 and not line.empty(): line.finish()
 					if not word: continue
-					
+
 					if stanza.finished: stanza = self.newchild()
 					if line.finished: line = stanza.newchild()
-					
+
 					if self.dict.has(word):
 						words=self.dict.get(word,stress_ambiguity=self.stress_ambiguity)
 						for w in words: w.origin='cmu'
@@ -158,29 +158,29 @@ class Text(entity):
 						for w in words: w.origin='openmary'
 					else:
 						words=self.dict.get(word,stress_ambiguity=self.stress_ambiguity)
-					
+
 					line.newchild(words)
 					if self.phrasebreak!='line':
 						if p1 and not line.empty(): line.finish()
 					numwords+=1
-				
+
 				if not line.empty(): line.finish()
 			if not line.empty(): line.finish()
-			if not stanza.empty(): stanza.finish()			
-		
-		
-		
+			if not stanza.empty(): stanza.finish()
+
+
+
 	def init_mary(self,xml):
 		import lexconvert,bs4
 		xml=bs4.BeautifulSoup(xml,'html.parser')
 		numwords = 0
 		stanza=self.newchild()
 		line=stanza.newchild()
-		
-		
+
+
 		for para in xml.find_all('p'):
 			for phrase in para.find_all('phrase'):
-				
+
 				for word in phrase.find_all('t'):
 					if stanza.finished: stanza = self.newchild()
 					if line.finished: line = stanza.newchild()
@@ -207,26 +207,26 @@ class Text(entity):
 							#syllstr+=lexconvert.convert(syll['ph'],'sampa','unicode-ipa')
 							#print syllstr, syll['ph']
 							sylls+=[syllstr]
-						
+
 						#if self.fix_phons_novowel:
 							from Phoneme import Phoneme
 							#if len(sylls)>1 and not True in [Phoneme(phon).isVowel() for phon in sylls[0]]:
 							if len(sylls)>1 and sylls[0]==u'ʃ':
 								sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
-							
+
 						pronounc='.'.join(sylls)
 						words=[ self.dict.make((pronounc,[]), wordstr) ]
 						for w in words: w.origin='openmary'
-					
+
 					line.newchild(words)
 					numwords+=1
 				if not line.empty(): line.finish()
 			if not line.empty(): line.finish()
 			if not stanza.empty(): stanza.finish()
-				
-	
 
-	def stats_lines(self,meter=None,all_parses=False):
+
+
+	def stats_lines(self,meter=None,all_parses=False,viols=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
 
@@ -235,7 +235,7 @@ class Text(entity):
 				dx={'0_text':self.name, '1_line':str(line)}
 				bp=line.bestParse(meter)
 				ap=line.allParses(meter)
-				dx['2_parse']=str(bp) if bp else ''
+				dx['2_parse']=bp.posString(viols=viols) if bp else ''
 				dx['3_num_parses']=len(ap)
 				dx['4_lowest_score'] = bp.score() if bp else ''
 				dx['5_num_sylls']=sum(len(pos.slots) for pos in bp.positions) if bp else ''
@@ -253,18 +253,18 @@ class Text(entity):
 			yield dx
 		print '>> saved:',ofn
 
-	def stats_lines_ot(self,meter=None,all_parses=False):
+	def stats_lines_ot(self,meter=None,all_parses=False,viols=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
 
 		def _writegen():
 			for line in self.lines():
-				
+
 				bp=line.bestParse(meter)
 				ap=line.allParses(meter)
 				for pi,parse in enumerate(ap):
 					dx={'0_line':str(line) if not pi else ''}
-					dx['1_parse']=str(parse)
+					dx['1_parse']=parse.posString(viols=viols)
 					dx['2_obs']='1'
 					for c in meter.constraints:
 						dx['[*'+c.name+']']=parse.constraintCounts[c] if parse and c in parse.constraintScores and parse.constraintScores[c] else ''
@@ -277,9 +277,9 @@ class Text(entity):
 			yield dx
 		print '>> saved:',ofn
 
-				
+
 	def stats_positions(self,meter=None,all_parses=False):
-		
+
 		"""Produce statistics from the parser"""
 
 		"""Positions
@@ -289,10 +289,10 @@ class Text(entity):
 
 		"""
 		parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
-		
+
 		dx={}
 		for parselist in parses:
-			
+
 			for parse in parselist:
 				if not parse: continue
 				slot_i=0
@@ -343,67 +343,67 @@ class Text(entity):
 		for dx in writegengen(ofn, _writegen):
 			yield dx
 		print '>> saved:',ofn
-		#for 	
+		#for
 
 	def stats(self,meter=None,all_parses=False,funcs=['stats_lines','stats_lines_ot','stats_positions']):
 		for funcname in funcs:
 			func=getattr(self,funcname)
 			for dx in func(meter=meter,all_parses=all_parses):
 				yield dx
-		
-		
-	
+
+
+
 	def init_text(self,lines_or_file):
-		## create first stanza,line 
+		## create first stanza,line
 		stanza = self.newchild()
 		line = stanza.newchild()	# returns a new Line, the child of Stanza
 		numwords = 0
 		recentpunct=True
 		import prosodic
 		tokenizer=prosodic.config['tokenizer'].replace('\\\\','\\')
-		
+
 		## [loop] lines
 		for ln in lines_or_file:
 			ln=ln.strip()
 			if self.limWord and numwords>self.limWord: break
-			
-			# split into words			
+
+			# split into words
 			toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE) if self.isUnicode else re.findall(tokenizer,ln.strip())
 			toks = [tok.strip() for tok in toks if tok.strip()]
 			numtoks=len(toks)
-			
+
 			## if no words, mark stanza/para end
 			if (not ln or numtoks < 1):
 				if not stanza.empty():
 					stanza.finish()
 				continue
-	
+
 			## [loop] words
 			for toknum,tok in enumerate(toks):
 				(tok,punct) = gleanPunc(tok)
-				
+
 				if stanza.finished: stanza = self.newchild()
 				if line.finished: line = stanza.newchild()
-				
+
 
 				if tok:
 					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
 					line.newchild(newwords)
 					numwords+=1
-					
+
 					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
-				
+
 				if punct and len(line.children) and self.phrasebreak != 'line':
 					if (self.phrasebreak_punct.find(punct) > -1):
 						line.finish()
-			
+
 			## if line-based breaks, end line
 			if (self.phrasebreak == 'both') or (self.phrasebreak == 'line'):
 				line.finish()
-		
-	
-	
-	
+
+
+
+
 	## def parse
 	def parse(self,meter=None,arbiter='Line'):
 		"""Parse this text metrically."""
@@ -412,7 +412,7 @@ class Text(entity):
 
 		if self.isFromFile: print '>> parsing',self.name,'with meter:',meter.id
 		self.meter=meter
-		
+
 		self.__parses[meter.id]=[]
 		self.__bestparses[meter.id]=[]
 		self.__boundParses[meter.id]=[]
@@ -437,8 +437,8 @@ class Text(entity):
 
 		self.scansion_prepare(meter=meter,conscious=True)
 
-		
-		
+
+
 		numents=len(ents)
 		now=time.time()
 		clock_snum=0
@@ -455,10 +455,10 @@ class Text(entity):
 			self.__boundParses[meter.id].append( ent.boundParses(meter) )
 			self.__parsed_ents[meter.id].append(ent)
 			ent.scansion(meter=meter,conscious=True)
-	
+
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)
-	
+
 	def iparse2line(self,i,meter=None):
 		meter=self.get_meter(meter)
 		return self.__parsed_ents[meter.id][i]
@@ -468,7 +468,7 @@ class Text(entity):
 		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
 		return hasattr(self,'_Text__bestparses') and self.__bestparses
 
-	
+
 	@property
 	def numSyllables(self):
 		if self.isParsed:
@@ -479,7 +479,7 @@ class Text(entity):
 		else:
 			num_syll=len(self.syllables())
 		return num_syll
-	
+
 	def scansion(self,meter=None,conscious=False):
 		"""Print out the parses and their violations in scansion format."""
 		meter=self.get_meter(meter)
@@ -492,7 +492,7 @@ class Text(entity):
 				print line
 				print line.words()
 				print
-	
+
 	def allParsesByLine(self,meter=None):
 		parses=self.allParses(meter=meter)
 		for parse_product in product(*parses):
@@ -500,11 +500,11 @@ class Text(entity):
 
 	def allParses(self,meter=None,include_bounded=False,one_per_meter=True):
 		"""Return a list of lists of parses."""
-		
+
 		meter=self.get_meter(meter)
 		try:
 			parses=self.__parses[meter.id]
-			
+
 			if one_per_meter:
 				toreturn=[]
 				for _parses in parses:
@@ -553,8 +553,8 @@ class Text(entity):
 		#return #super(Text,self).report(meter=meter if meter else self.meter)
 		meter=self.get_meter(meter)
 		return entity.report(self, meter=meter,include_bounded=include_bounded)
-	
-	
+
+
 	def bestParses(self,meter=None):
 		"""Return a list of the best parse per line."""
 		meter=self.get_meter(meter)
@@ -600,13 +600,13 @@ class Text(entity):
 					constraintd[ckk]|=words
 		for k in constraintd:
 			constraintd[k]=list(constraintd[k])
-		
+
 		return constraintd
 
 	def parsed_words(self):
 		bp=self.bestParses()
 		if not bp: return []
-		
+
 		wordNow=None
 		words=[]
 		for parse in bp:
@@ -647,7 +647,7 @@ class Text(entity):
 					mpos_str=mpos.mstr
 				else:
 					mpos_str=repr(mpos)
-				
+
 
 				if viols and viold: mpos_str+='*'
 
@@ -661,12 +661,12 @@ class Text(entity):
 		s_feet=[x for x in parse_str.split('|') if x.startswith('s')]
 		return len(s_feet)
 
-	
+
 	@property
 	def constraintd(self):
 		return self.constraintViolations(self,normalize=True)
 
-	
+
 	def constraintViolations(self,normalize=False,use_weights=False):
 		bp=self.bestParses()
 		viold={}
@@ -679,7 +679,7 @@ class Text(entity):
 					if not ck in viold: viold[ck]=[]
 					val = (cv if not use_weights else 1) if cv else 0
 					viold[ck]+=[val]
-		
+
 		for ck in viold:
 			lv=viold[ck]
 			viold[ck]=sum(lv)/float(len(lv)) if normalize else sum(lv)
@@ -695,25 +695,25 @@ class Text(entity):
 		for parselist in ap:
 			numparses=len(parselist)
 			line_numparses+=[numparses]
-		
+
 		import operator
 		ambigx=reduce(operator.mul, line_numparses, 1)
 		return ambigx
 
-				
-	
-	## children	
+
+
+	## children
 	def givebirth(self):
 		"""Return an empty Stanza."""
-		
+
                 stanza=Stanza()
                 #stanza.parent=self
 		return stanza
-	
+
 	def validlines(self):
 		"""Return all lines within which Prosodic understood all words."""
-		
+
 		return [ln for ln in self.lines() if (not ln.isBroken() and not ln.ignoreMe)]
-	
+
 	def __repr__(self):
 		return "<Text."+str(self.name)+"> ("+str(len(self.words()))+" words)"

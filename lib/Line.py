@@ -21,7 +21,7 @@ class Line(entity):
 		#	meter = genDefault()
 
 		words=self.ents(cls='Word',flattenList=False)
-		print words
+		#print words
 		numSyll=0
 		if not words: return None
 		for word in words:
@@ -183,48 +183,49 @@ class Line(entity):
 
 			if not self.broken:
 				## if word broken, self broken
-				for words in self.children:
-					if type(words)==type([]):
-						for word in words:
-							if word.isBroken():
-								self.broken=True
-					else:
-						if words.isBroken():
+				for words in self.words(flattenList=False):
+					assert type(words)==list
+					for word in words:
+						if word.isBroken():
 							self.broken=True
 
-			#if not self.broken:
-			#	print self
-			#self.pointsofcomparison=[]
 
 
 
 	def __repr__(self):
-		return " ".join([child[0].getToken() for child in self.children])
+		return self.txt
 
 	@property
 	def txt(self):
-		return " ".join([child[0].getToken() for child in self.children])
+		x=""
+		for wordtok in self.wordtokens():
+			if not wordtok.is_punct:
+				x+=" "+wordtok.token
+			else:
+				x+=wordtok.token
+		return x.strip()
+
 
 
 	def str_wordbound(self):
 		o=[]
-		for words in self.children:
+		for word in self.words():
 			e=""
-			for x in words[0].children:
+			for x in word.children:
 				e+="X"
 			o.append(e)
 		return "#".join(o)
 
 	def str_weight(self):
 		o=[]
-		for words in self.children:
-			o.append("".join(x.str_weight() for x in words[0].children))
+		for word in self.words():
+			o.append("".join(x.str_weight() for x in word.children))
 		return "".join(o)
 
 	def str_stress(self):
 		o=[]
-		for words in self.children:
-			o.append("".join(x.str_stress() for x in words[0].children))
+		for word in self.words():
+			o.append("".join(x.str_stress() for x in word.children))
 		return "".join(o)
 
 

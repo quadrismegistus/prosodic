@@ -271,6 +271,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		This method recursively searches the self-object's children for the type of object specified."""
 
 		ents = []
+		"""
 		print 'getting entities',self.classname()
 		if self.classname() == cls:
 			return [self]
@@ -289,6 +290,31 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				else:
 					if child:
 						ents += child.ents(cls=cls,flattenList=flattenList)
+		"""
+		#print 'getting entities',self.classname()
+		if self.classname() == cls:
+			return [self]
+		else:
+			for child in self.children:
+				#print child,child.classname()
+				if child.classname()=='WordToken':
+					if cls=='WordToken':
+						ents+=[child]
+					elif not child.children:
+						pass
+					elif cls=='Word':
+						if flattenList:
+							ents+=[child.children[0]]
+						else:
+							ents+=[child.children]
+					else:
+						if child:
+							ents += child.children[0].ents(cls=cls,flattenList=flattenList)
+				else:
+					if child:
+						ents += child.ents(cls=cls,flattenList=flattenList)
+
+
 		return ents
 
 	## helper functions of ents()
@@ -351,6 +377,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""Returns a list of this object's Words in order of their appearance.
 		Set flattenList to False to receive a list of lists of Words."""
 		return self.ents('Word',flattenList=flattenList)
+
+	def wordtokens(self):
+		"""Returns a list of this object's Words in order of their appearance.
+		Set flattenList to False to receive a list of lists of Words."""
+		return self.ents('WordToken')
 
 	def lines(self):
 		"""Returns a list of this object's Lines in order of their appearance."""

@@ -264,11 +264,15 @@ class Text(entity):
 
 				if tok:
 					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
-					wordtok = WordToken(newwords)
+					wordtok = WordToken(newwords,token=tok,is_punct=False)
 					line.newchild(wordtok)
 					numwords+=1
 
 					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
+
+				if punct:
+					wordtok=WordToken([],token=punct,is_punct=True)
+					line.newchild(wordtok)
 
 				if punct and len(line.children) and self.phrasebreak != 'line':
 					if (self.phrasebreak_punct.find(punct) > -1):

@@ -5,6 +5,7 @@ import sys,re,os,codecs,time
 from Stanza import Stanza
 from Line import Line
 from Word import Word
+from WordToken import WordToken
 from entity import entity,being
 from tools import *
 from operator import itemgetter
@@ -58,27 +59,14 @@ class Text(entity):
 			self.name = filename.split("/").pop().strip()
 			print '>> loading text:',self.name
 			file=codecs.open(filename,encoding='utf-8',errors='replace')
-			#self.init_text(file)
-			#if prosodic.config['use_open_mary']:
-			#	self.init_run_mary(file.read())
-			#else:
 			self.isFromFile=True
 			self.init_text(file)
-		elif '</maryxml>' in filename:
-			self.name='OpenMary'
-			print '>> loading text:',self.name
-			self.filename=filename
-			self.isFromFile=False
-			self.init_mary(filename)
 		else:
 			lines = filename.split('\n')
 			self.name = noPunc(lines[0].lower())[:25].strip().replace(' ','-')
 			#print '>> loading text:',self.name
 			self.filename = lines[0].replace(' ','_')[:100]+'.txt'
 			#self.init_text(lines)
-			#if prosodic.config['use_open_mary']:
-			#	self.init_run_mary(filename)
-			#else:
 			self.isFromFile=False
 			self.init_text(lines)
 
@@ -108,121 +96,6 @@ class Text(entity):
 			print "!! language "+lang0+" not recognized. defaulting to: "+lang
 
 		return lang
-
-	def init_run_mary(self,text):
-		#print ">> init_run_mary..."
-		import lexconvert,bs4
-		numwords = 0
-		stanza=self.newchild()
-		line=stanza.newchild()
-
-		for stanzatext in text.split('\n\n'):
-			stanzatext=stanzatext.strip()
-			if not stanzatext: continue
-
-			for linetext in stanzatext.split('\n'):
-				linetext=linetext.strip()
-				if not linetext: continue
-
-				wordlist=linetext.split()
-				for i,word in enumerate(wordlist):
-					p0,word,p1=gleanPunc2(word)
-					if p0 and not line.empty(): line.finish()
-					if not word: continue
-
-					if stanza.finished: stanza = self.newchild()
-					if line.finished: line = stanza.newchild()
-
-					if self.dict.has(word):
-						words=self.dict.get(word,stress_ambiguity=self.stress_ambiguity)
-						for w in words: w.origin='cmu'
-					elif self.lang=='en':
-						## make word from openmary
-						wordxml=bs4.BeautifulSoup(openmary(word),'html.parser')
-						sylls=[]
-						for syll in wordxml.find_all('syllable'):
-							syllstr="'" if syll.get('stress',None) else ""
-							#print syll['ph']
-							for ph in syll['ph'].split():
-								syllstr+=sampa2ipa(ph)
-							#print syllstr
-							#print
-							sylls+=[syllstr]
-
-						from Phoneme import Phoneme
-						if len(sylls)>1 and not True in [Phoneme(phon).isVowel() for phon in sylls[0]]:
-							sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
-
-						pronounc='.'.join(sylls)
-						words=[ self.dict.make((pronounc,[]), word) ]
-						for w in words: w.origin='openmary'
-					else:
-						words=self.dict.get(word,stress_ambiguity=self.stress_ambiguity)
-
-					line.newchild(words)
-					if self.phrasebreak!='line':
-						if p1 and not line.empty(): line.finish()
-					numwords+=1
-
-				if not line.empty(): line.finish()
-			if not line.empty(): line.finish()
-			if not stanza.empty(): stanza.finish()
-
-
-
-	def init_mary(self,xml):
-		import lexconvert,bs4
-		xml=bs4.BeautifulSoup(xml,'html.parser')
-		numwords = 0
-		stanza=self.newchild()
-		line=stanza.newchild()
-
-
-		for para in xml.find_all('p'):
-			for phrase in para.find_all('phrase'):
-
-				for word in phrase.find_all('t'):
-					if stanza.finished: stanza = self.newchild()
-					if line.finished: line = stanza.newchild()
-					wordstr=word['token']
-					if not word.get('ph',None): continue
-					if self.dict.has(wordstr) and self.use_dict:
-						#print "HAVE",wordstr
-						words=self.dict.get(wordstr,stress_ambiguity=self.stress_ambiguity)
-						for w in words: w.origin='cmu'
-						#print ">>",wordstr,words
-					else:
-						#print "??",wordstr
-						## make word from openmary
-						sylls=[]
-						for syll in word.find_all('syllable'):
-							syllstr="'" if syll.get('stress',None) else ""
-
-							for ph in syll('ph'):
-								ph_str=ph['p']
-								ph_ipa=sampa2ipa(ph_str)
-								#print ph_str, ph_ipa
-								syllstr+=ph_ipa
-
-							#syllstr+=lexconvert.convert(syll['ph'],'sampa','unicode-ipa')
-							#print syllstr, syll['ph']
-							sylls+=[syllstr]
-
-						#if self.fix_phons_novowel:
-							from Phoneme import Phoneme
-							#if len(sylls)>1 and not True in [Phoneme(phon).isVowel() for phon in sylls[0]]:
-							if len(sylls)>1 and sylls[0]==u'ʃ':
-								sylls=[sylls[0]+sylls[1]]+ (sylls[2:] if len(sylls)>2 else [])
-
-						pronounc='.'.join(sylls)
-						words=[ self.dict.make((pronounc,[]), wordstr) ]
-						for w in words: w.origin='openmary'
-
-					line.newchild(words)
-					numwords+=1
-				if not line.empty(): line.finish()
-			if not line.empty(): line.finish()
-			if not stanza.empty(): stanza.finish()
 
 
 
@@ -391,7 +264,8 @@ class Text(entity):
 
 				if tok:
 					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
-					line.newchild(newwords)
+					wordtok = WordToken(newwords)
+					line.newchild(wordtok)
 					numwords+=1
 
 					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))

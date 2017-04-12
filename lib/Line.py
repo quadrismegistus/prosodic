@@ -21,6 +21,7 @@ class Line(entity):
 		#	meter = genDefault()
 
 		words=self.ents(cls='Word',flattenList=False)
+		print words
 		numSyll=0
 		if not words: return None
 		for word in words:

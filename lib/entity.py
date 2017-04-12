@@ -271,6 +271,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		This method recursively searches the self-object's children for the type of object specified."""
 
 		ents = []
+		print 'getting entities',self.classname()
 		if self.classname() == cls:
 			return [self]
 		else:

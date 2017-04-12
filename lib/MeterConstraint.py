@@ -1,4 +1,4 @@
-import os
+import os,tools
 
 class MeterConstraint:
 	def __init__(self,id=None,name=None,logic=None,weight=1):
@@ -16,21 +16,21 @@ class MeterConstraint:
 				os.chdir(originalPath)
 		self.weight=weight
 		self.logic=logic
-	
+
 	def __repr__(self):
 		return "[*"+self.name+"]"
 
 	@property
 	def name_weight(self):
 		return "[*"+self.name+"/"+str(self.weight)+"]"
-	
+
 
 	#def __hash__(self):
 	#	return self.name.__hash__()
-	
+
 	def violationScore(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None,parse=None):
 		"""call this on a MeterPosition to return an integer representing the violation value
-		for this Constraint in this MPos (0 represents no violation)""" 
+		for this Constraint in this MPos (0 represents no violation)"""
 		violation = None
 		if self.constr != None:
 			violation = self.constr.parse(meterPos)
@@ -42,14 +42,14 @@ class MeterConstraint:
 
 
 		"""
-		print 
+		print
 		print '>>',slot_i,num_slots, self.name, meterPos, violation, all_positions
 		for slot in meterPos.slots:
 			print slot, slot.feature('prom.stress')
 		print"""
 
 		return violation
-	
+
 	def __hardparse(self,meterPos,pos_i=None,slot_i=None,num_slots=None,all_positions=None,parse=None):
 		import prosodic as p
 		#if meterPos.slots[0].i<2:
@@ -58,10 +58,10 @@ class MeterConstraint:
 		#print meterPos,pos_i,slot_i,num_slots,all_positions
 		#prevpos=all_positions[pos_i-1]
 		#print pos_i, meterPos, prevpos, pos_i,pos_i-1,all_positions, len(meterPos.slots)
-	
+
 		if '.' in self.name:	# kiparsky self.names
 			## load variables
-			
+
 			#exception for first foot
 			#if 'skip_initial_foot' in parse.constraintNames:
 			#	if meterPos.slots[0].i<2:
@@ -71,22 +71,22 @@ class MeterConstraint:
 				return 0
 			elif 'skip_initial_foot' in parse.constraintNames and pos_i in [0,1]:
 				return 0
-			
-			
+
+
 			promSite = self.name.split(".")[1]
 			promType = self.name.split(".")[0]
 			promSite_meter = promSite.split("=>")[0].strip()	# s/w
 			promSite_prom = promSite.split("=>")[1].strip()		# +- u/p
-			
+
 			if meterPos.meterVal != promSite_meter:	# then this constraint does not apply
 				return 0
-			
+
 			if promSite_prom[0:1] == "-":						# -u or -p: eg, if s=>-u, then NOT EVEN ONE s can be u(nprom)
-				promSite_isneg = True							
+				promSite_isneg = True
 				promSite_prom = promSite_prom[1:]				# u or p
 			else:
 				promSite_isneg = False							# u or p: eg, if s=>p, then AT LEAST ONE s must be p(rom)
-			
+
 			if promSite_prom.lower()==promSite_prom:
 				promSite_prom = (promSite_prom == 'p')				# string 2 boolean: p:True, u:False
 			else:
@@ -95,17 +95,17 @@ class MeterConstraint:
 				#elif promSite_prom=="U":
 				else:
 					promSite_prom=0.0
-					
-			
-			
-			
+
+
+
+
 			# NOT EVEN ONE unit_prom can be promSite_prom:
-			if promSite_isneg: 
+			if promSite_isneg:
 				numtrue=0
 				for slot in meterPos.slots:
 					slot_prom=slot.feature('prom.'+promType,True)
 					if slot_prom==None: continue
-					if type(promSite_prom)==type(True):	
+					if type(promSite_prom)==type(True):
 						slot_prom=bool(slot_prom)
 					if slot_prom == promSite_prom:
 						numtrue+=1
@@ -117,16 +117,16 @@ class MeterConstraint:
 
 				return self.weight * numtrue
 				#return 0
-			
+
 			# AT LEAST ONE unit_prom must be promSite_prom (or else, violate):
-			else:			
+			else:
 				violated=True
 				ran=False
 				for slot in meterPos.slots:
 					slot_prom=slot.feature('prom.'+promType,True)
 					if slot_prom==None:
 						continue
-					if type(promSite_prom)==type(True):	
+					if type(promSite_prom)==type(True):
 						slot_prom=bool(slot_prom)
 					ran=True
 					if slot_prom==promSite_prom:
@@ -135,29 +135,29 @@ class MeterConstraint:
 					return self.weight
 				else:
 					return 0
-		
+
 		elif self.name.lower().startswith('initialstrong'):
 			#if meterPos.slots[0].i==0:
 			if pos_i==0:
 				if meterPos.meterVal == 's':
 					return self.weight
 			return 0
-		
+
 		elif self.name.lower().startswith('functiontow'):
 			#exception for first foot
 			if p.config.get('skip_initial_foot',0):
 				if meterPos.slots[0].i<2:
 					return 0
-				
+
 			if meterPos.meterVal != 's':	# then this constraint does not apply
 				return 0
-				
+
 			vio = 0
 			for slot in meterPos.slots:
 				if slot.word.feature('functionword'):
 					vio += self.weight
 			return vio
-		
+
 		elif self.name.lower().startswith('footmin'):
 			if len(meterPos.slots) < 2:
 				return 0
@@ -166,12 +166,12 @@ class MeterConstraint:
 			name=self.name.lower()
 			a = meterPos.slots[0]
 			b = meterPos.slots[1]
-			
+
 			## should this apply to ALL foomin constraints?
 			#if ( bool(a.feature('prom.stress',True)) and bool(b.feature('prom.stress',True))):
 			#	return self.weight
 			##
-			
+
 			if name=='footmin-nohx':
 				if (bool(a.feature('prom.weight',True))):
 					return self.weight
@@ -180,7 +180,7 @@ class MeterConstraint:
 				if meterPos.meterVal=='s':
 					if bool(a.feature('prom.weight',True)) or a.word!=b.word:
 						return self.weight
-			
+
 			if "nolh" in name:
 				if ( (bool(b.feature('prom.weight',True))) ):
 					return self.weight
@@ -188,14 +188,14 @@ class MeterConstraint:
 			if "strongconstraint" in name:
 				if bool(b.feature('prom.strength',True)):
 					return self.weight
-			
+
 				if bool(a.feature('prom.strength',True)):
 					if not bool(a.feature('prom.weight',True)):
 						 if a.word==b.word and not a.wordpos[0]==a.wordpos[1]:
 						 	if not bool(b.feature('prom.stress',True)):
-						 		return 0	
+						 		return 0
 					return self.weight
-			
+
 			if name=='footmin-none':
 				return self.weight
 
@@ -219,10 +219,10 @@ class MeterConstraint:
 				if len(prevpos.slots)>1 and prevpos.meterVal=='w':
 					return 0
 				return self.weight
-			
 
 
-			
+
+
 			if "wordbound" in name:
 				if name=='footmin-wordbound':
 					if a.word!=b.word:
@@ -236,13 +236,13 @@ class MeterConstraint:
 					#if a.word.numSyll==1 and a.word.stress=="P"
 					if a.word.isLexMono() or b.word.isLexMono():
 						return self.weight
-					
 
-				
+
+
 				## everyone is happy if both are function words
 				if a.word.feature('functionword') and b.word.feature('functionword'):
 					return 0
-					
+
 				if a.word!=b.word:
 					if "bothnotfw" in name:
 						if not (a.word.feature('functionword') and b.word.feature('functionword')):
@@ -256,9 +256,9 @@ class MeterConstraint:
 					elif "rightfw":
 						if not (b.word.feature('functionword')):
 							return self.weight
-				
-			
-				
+
+
+
 				# only remaining possibilities:
 				#	i) slots a,b are from the same word
 				#   ii) slots a,b are from contiguous words which are the same (haPPY HAppy)
@@ -276,11 +276,11 @@ class MeterConstraint:
 					elif "rightfw":
 						if not (b.word.feature('functionword')):
 							return self.weight
-				
+
 				# poss. (i) remains
 				return 0
-		
-		
+
+
 		## Constraints about words
 		if self.name=='word-elision':
 			words=set([slot.word for slot in meterPos.slots if hasattr(slot.word,'is_elision') and slot.word.is_elision])
@@ -318,7 +318,7 @@ class MeterConstraint:
 			#print dir(prevpos) if prevprevpos else None
 			#print dir(meterPos)
 			#print
-			
+
 			if prevpos.meterVal2 == 'ss':
 
 				#if (prevprevpos and prevprevpos.meterVal2=='ww')
@@ -350,29 +350,89 @@ class MeterConstraint:
 
 
 		## POST HOC CONSTRAINTS
-		
-		
-		#print is_end
-		#print
+		if is_end:
+			final_meter_str=''.join([''.join(pos.meterVal for slot in pos.slots) for pos in all_positions])
+			#print final_meter_str
 
-		if self.name.startswith('posthoc') and is_end:
-			if self.name=='posthoc-no-final-ww':
-				if len(all_positions[-1].slots)>1 and all_positions[-1].meterVal=='w':
-					return self.weight
+			# headedness
+			if self.name.startswith('headedness'):
+				shouldbe = self.name.split('!=')[-1]
 
-			if self.name=='posthoc-no-final-w':
-				if all_positions[-1].meterVal=='w':
-					return self.weight
+				"""
+				Approach 1: This approach doesn't really work on individual lines:
 
-			if self.name=='posthoc-standardize-weakpos':
+				# binary or ternary?
 				weak_pos = [pos for pos in all_positions if pos.meterVal=='w']
-				if len(weak_pos)<2: return 0 
+				if len(weak_pos)<2: return 0
 				weak_pos_types = [''.join('w' for slot in pos.slots) for pos in weak_pos]
-				maxcount = max([weak_pos_types.count(wtype) for wtype in set(weak_pos_types)])
-				diff = len(weak_pos) - maxcount
-				return self.weight*diff
+
+				if weak_pos_types.count('ww')>weak_pos_types.count('w'): # ternary
+					if final_meter_str[3]=='w': # anapestic
+						headedness = 'rising'
+					else: # dactylic
+						headedness = 'falling'
+				else: # binary
+					if final_meter_str[3]=='w':
+						headedness = 'falling' # trochaic
+					else:
+						headedness = 'rising'
+
+				if shouldbe != headedness:
+					return self.weight
+				"""
+
+				"""
+				Approach 2: count 'ws' vs 'sw' pairs and give categorical violation
+				"""
+				quasi_feet=[''.join(x) for x in tools.slice([pos.meterVal for pos in all_positions],slice_length=2,runts=False)]
+				headedness = 'rising' if quasi_feet.count('ws')>=quasi_feet.count('sw') else 'falling'
+				#print final_meter_str
+				#print quasi_feet
+				#print headedness
+				#print
+
+				if shouldbe != headedness:
+					return self.weight
+				#"""
+
+				"""
+				Approach 3: count 'ws' vs 'sw' pairs and give violation/num-pos per off foot
+
+				quasi_feet=[''.join(x) for x in tools.slice([pos.meterVal for pos in all_positions],slice_length=2,runts=True)]
+				if shouldbe == 'rising':
+					num_not_rising = float(len([ft for ft in quasi_feet if ft!='ws']))
+					return num_not_rising / float(len(all_positions)) * float(self.weight)
+				elif shouldbe == 'falling':
+					num_not_falling = float(len([ft for ft in quasi_feet if ft!='sw']))
+					return num_not_falling / float(len(all_positions)) * float(self.weight)
+				"""
+
+
+			# number of feet
+			if self.name.startswith('number_feet'):
+				shouldbe = int(self.name.split('!=')[-1])
+				strong_pos = [pos for pos in all_positions if pos.meterVal=='s']
+				num_feet = len(strong_pos) # debatable
+				if shouldbe != num_feet:
+					return self.weight
+
+			# other posthoc constraints
+			if self.name.startswith('posthoc'):
+				if self.name=='posthoc-no-final-ww':
+					if len(all_positions[-1].slots)>1 and all_positions[-1].meterVal=='w':
+						return self.weight
+
+				if self.name=='posthoc-no-final-w':
+					if all_positions[-1].meterVal=='w':
+						return self.weight
+
+				if self.name=='posthoc-standardize-weakpos':
+					weak_pos = [pos for pos in all_positions if pos.meterVal=='w']
+					if len(weak_pos)<2: return 0
+					weak_pos_types = [''.join('w' for slot in pos.slots) for pos in weak_pos]
+					maxcount = max([weak_pos_types.count(wtype) for wtype in set(weak_pos_types)])
+					diff = len(weak_pos) - maxcount
+					return self.weight*diff
 
 		# made it through this minefield, eh?
 		return 0
-
-		

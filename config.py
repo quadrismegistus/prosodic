@@ -20,10 +20,10 @@
 # meter = 'kiparskyhanson_shakespeare'
 #
 # If no Meter ID is provided, PROSODIC will ask you to set the meter
-# in its interactive mode. As a python module, you will have to 
+# in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
 #
-meter = 'kiparskyhanson_shakespeare' 
+meter = 'kiparskyhanson_shakespeare'
 ############################################
 
 
@@ -70,7 +70,7 @@ en_TTS_cache = 1
 
 ############################################
 # OPTIONS ABOUT PRINTING TO SCREEN
-# 
+#
 # Print loaded words, parses, etc. to screen:
 print_to_screen=0
 #
@@ -144,7 +144,7 @@ line_headedness='ws'
 #
 ######
 # [Tokenization]
-# 
+#
 # How are lines of text split into words? Define the regular
 # expression that is applied to a string of text in order
 # to split it into a list of words.
@@ -173,13 +173,13 @@ resolve_optionality=1
 #
 ######
 # [ELISIONS of Syllables: English only]
-# 
+#
 # Some syllables are elided in English verse, e.g.
 # e.g. sweet as love, which overflows her bower
 # --> with|MU|sic|SWEET|as|LOVE|which|OV|er|FLOWS|her|BOW'R
 # or e.g. scattering unbeholden
 # --> SCAT|tring|UN|be|HOLD|en
-# 
+#
 # Add pronunciations for words that could have elided syllables:
 #add_elided_pronunciations=1
 add_elided_pronunciations=0
@@ -187,7 +187,7 @@ add_elided_pronunciations=0
 #
 ######
 # [Output formatting]
-# 
+#
 # Here you may change the format under which the syllabified,
 # phonetic output will appear. The options are:
 #  - ipa
@@ -227,7 +227,6 @@ folder_tagged_samples = 'tagged_samples/'
 ####
 # MEMORY DECISIONS
 #
-num_bounded_parses_to_store = 10
+num_bounded_parses_to_store = 100
 #
 ###
-

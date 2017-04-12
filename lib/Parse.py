@@ -173,7 +173,15 @@ class Parse(entity):
 
 	@property
 	def constraintCounts(self):
-		return dict((c,int(self.constraintScores[c] / c.weight)) for c in self.constraintScores)
+		#return dict((c,int(self.constraintScores[c] / c.weight)) for c in self.constraintScores)
+		cc={}
+		for constraint in self.constraints:
+			cn=0
+			for pos in self.positions:
+				if pos.constraintScores[constraint]:
+					cn+=1
+			cc[constraint]=cn
+		return cc
 
 	def score(self):
 		#if self.totalScore == None:

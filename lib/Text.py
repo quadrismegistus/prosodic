@@ -260,12 +260,15 @@ class Text(entity):
 		def _writegen():
 			for line in self.lines():
 
-				bp=line.bestParse(meter)
+				#bp=line.bestParse(meter)
 				ap=line.allParses(meter)
+				if all_parses: ap+=line.boundParses(meter)
+
 				for pi,parse in enumerate(ap):
 					dx={'0_line':str(line) if not pi else ''}
 					dx['1_parse']=parse.posString(viols=viols)
-					dx['2_obs']='1'
+					#dx['2_obs']='1'
+					dx['2_violation_score'] = parse.score()
 					for c in meter.constraints:
 						dx['[*'+c.name+']']=parse.constraintCounts[c] if parse and c in parse.constraintScores and parse.constraintScores[c] else ''
 					yield dx

@@ -2,13 +2,51 @@
 # [config.py]
 # CONFIGURATION SETTINGS FOR A PARTICULAR METER
 #
-# 
+#
 # Set the long-form name of this meter
 name = "Shakespeare's Meter [Kiparsky and Hanson] [strength.w=>-p on minimal feet]"
+#
+# [Do not remove or uncomment the following line]
+Cs={}
+############################################
+
+############################################
+# STRUCTURE PARAMETERS
+#
+# Parameters subject to conscious control by the poet. Kiparsky & Hanson (1996)
+# call these "formally independent of phonological structure." By contrast,
+# "realization parameters"--e.g., the size of a metrical position, which positions
+# are regulated, and other constraints--"determine the way the structure is
+# linguistically manifested, and are dependent on the prosodic givens of languge."
+#
+#
+####
+# [Number of feet in a line]
+#
+#Cs['number_feet!=2'] = 1       # require dimeter
+#Cs['number_feet!=3'] = 1       # require trimeter
+#Cs['number_feet!=4'] = 1       # require tetrameter
+#Cs['number_feet!=5'] = 1        # require pentameter
+#Cs['number_feet!=6'] = 1       # require hexameter
+#Cs['number_feet!=7'] = 1       # require heptameter
+#
+#
+####
+# [Headedness of the line]
+#
+#Cs['headedness!=falling'] = 1  # require a falling rhythm (e.g. trochaic, dactylic)
+#Cs['headedness!=rising'] = 1    # require a rising rhythm (e.g., iambic, anapestic)
+#
 ############################################
 
 
 ############################################
+# REALIZATION PARAMETERS
+#
+# All subsequent constraints can be seen as "realization parameters."
+# See note to "structure parameters" above for more information.
+#
+#############################################
 # METRICAL PARSING: POSITION SIZE
 #
 # Select how many syllables are at least *possible* in strong or weak positions
@@ -46,9 +84,6 @@ splitheavies=0
 # Constraint weights do not affect harmonic bounding (i.e. which parses
 # survive as possibilities), but they do affect how those possibilities
 # are sorted to select the "best" parse.
-# 
-# [Do not remove or uncomment the following line]
-Cs={}
 #
 #
 ######
@@ -99,7 +134,7 @@ Cs['strength.w=>-p']=1
 #
 # A strong metrical position should contain at least one stressed syllable:
 #Cs['stress.s=>p']=2
-# 
+#
 # A weak metrical position must contain at least one unstressed syllable;
 #Cs['stress.w=>u']=2
 #
@@ -126,7 +161,7 @@ Cs['strength.w=>-p']=1
 #
 # A strong metrical position should contain at least one heavy syllable:
 #Cs['weight.s=>p']=2
-# 
+#
 # A weak metrical position must contain at least one light syllable;
 #Cs['weight.w=>u']=2
 #
@@ -218,7 +253,7 @@ Cs['footmin-wordbound-lexmono']=1
 # [Miscellaneous constraints relating to disyllabic positions]
 #
 # A disyllabic metrical position may contain a strong syllable
-# of a lexical word only if the syllable is (i) light and 
+# of a lexical word only if the syllable is (i) light and
 # (ii) followed within the same position by an unstressed
 # syllable normally belonging to the same word.
 # [written by Sam Bowman]
@@ -276,7 +311,3 @@ Cs['skip_initial_foot']=1
 # that are stressed and light: [Meter of Finnish "Kalevala"]
 #Cs['kalevala.s=>-u']=1
 ############################################
-
-
-
-

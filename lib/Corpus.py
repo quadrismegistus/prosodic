@@ -9,7 +9,7 @@ class Corpus(entity):
 	def __init__(self,corpusRoot,lang=None,printout=None,corpusFiles="*.txt",phrasebreak=',;:.?!()[]{}<>',limWord=None):
 		import prosodic
 		## entity-shared attribtues
-		
+
 		self.lang=prosodic.config['lang'] if not lang else lang
 		self.dict=prosodic.dict[self.lang]
 		self.parent=False
@@ -21,23 +21,23 @@ class Corpus(entity):
 		self.config=prosodic.config
 		self.meter=None
 		if printout==None: printout=being.printout
-		
+
 		## corpus attributes
 		self.corpusRoot = corpusRoot
 		self.corpusFiles = corpusFiles
 		self.name=os.path.split(os.path.abspath(self.corpusRoot))[-1]
 		self.foldername=self.name
 		self.dir_results = prosodic.dir_results
-		
+
 		## language may be **, ie, determinable by the first two character of the textfile ("en" for english, "fi" for finnish, etc)
 		if not lang:
 			lang=being.lang
 		self.lang = lang
-		
+
 		## [loop] through filenames
 		for filename in glob.glob(os.path.join(corpusRoot, corpusFiles)):
 			## create and adopt the text
-			newtext = Text(filename,printout=printout)			
+			newtext = Text(filename,printout=printout)
 			self.newchild(newtext)	# append Text to children
 
 
@@ -58,7 +58,7 @@ class Corpus(entity):
 			print '>> text:',text.name
 			text.scansion(meter=meter)
 			print
-			
+
 	def get_meter(self,meter=None):
 		if not meter:
 			child=self.children[0] if self.children else None
@@ -89,7 +89,7 @@ class Corpus(entity):
 		def _writegen():
 			for text in self.children:
 				for dx in text.stats_lines(meter=meter):
-					#dx['text']=text.name
+					dx['text']=text.name
 					#dx['corpus']=self.name
 					yield dx
 
@@ -108,7 +108,7 @@ class Corpus(entity):
 		def _writegen():
 			for text in self.children:
 				for dx in text.stats_lines_ot(meter=meter):
-					#dx['text']=text.name
+					dx['text']=text.name
 					#dx['corpus']=self.name
 					yield dx
 

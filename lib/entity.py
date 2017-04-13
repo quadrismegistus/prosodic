@@ -378,10 +378,12 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		Set flattenList to False to receive a list of lists of Words."""
 		return self.ents('Word',flattenList=flattenList)
 
-	def wordtokens(self):
+	def wordtokens(self,include_punct=True):
 		"""Returns a list of this object's Words in order of their appearance.
 		Set flattenList to False to receive a list of lists of Words."""
-		return self.ents('WordToken')
+		ws=self.ents('WordToken')
+		if not include_punct: return [w for w in ws if not w.is_punct]
+		return ws
 
 	def lines(self):
 		"""Returns a list of this object's Lines in order of their appearance."""

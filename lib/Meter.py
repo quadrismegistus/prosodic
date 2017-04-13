@@ -17,7 +17,7 @@ def genDefault():
 	print '>> no meter specified. defaulting to this meter:'
 	print meter
 	return meter
-	
+
 
 #def meterShakespeare():
 #	return Meter('strength.s=>')
@@ -57,7 +57,7 @@ class Meter:
 
 		x='<<Meter\n\tID: {5}\n\tName: {0}\n\tConstraints: \n\t\t{1}\n\tMaxS, MaxW: {2}, {3}\n\tAllow heavy syllable split across two positions: {4}\n>>'.format(self.name, constraints, self.posLimit[0], self.posLimit[1], bool(self.splitheavies), self.id)
 		return x
-	
+
 	@property
 	def constraint_nameweights(self):
 		return ' '.join(c.name_weight for c in self.constraints)
@@ -73,7 +73,7 @@ class Meter:
 		self.id = config['id']
 		import prosodic
 		self.config=prosodic.config
-		
+
 		if not constraints:
 			self.constraints.append(Constraint(0,"foot-min",None,1))
 			self.constraints.append(Constraint(1,"strength.s=>p",None,1))
@@ -104,24 +104,29 @@ class Meter:
 
 	def maxS(self):
 		return self.posLimit[0]
-		
+
 	def maxW(self):
 		return self.posLimit[1]
-	
-	
 
 
-	def genWordMatrix(self,wordlist):
+
+
+	def genWordMatrix(self,wordtokens):
+		wordlist = [w.children for w in wordtokens]
+
 		import prosodic
 		if prosodic.config['resolve_optionality']:
 			return list(product(*wordlist))	# [ [on, the1, ..], [on, the2, etc]
 		else:
 			return [ [ w[0] for w in wordlist ] ]
-	
-	def genSlotMatrix(self,words):
+
+	def genSlotMatrix(self,wordtokens):
 		matrix=[]
-		
-		for row in self.genWordMatrix(words):
+
+		row_wordtokens = wordtokens
+		rows_wordmatrix = self.genWordMatrix(wordtokens)
+
+		for row in rows_wordmatrix:
 			unitlist = []
 			id=-1
 			wordnum=-1
@@ -132,8 +137,9 @@ class Meter:
 					syllnum+=1
 					id+=1
 					wordpos=(syllnum+1,len(word.children))
-					unitlist.append(Slot(id, unit, word.sylls_text[syllnum], wordpos, word, i_word=wordnum, i_syll_in_word=syllnum))
-					
+					slot=Slot(id, unit, word.sylls_text[syllnum], wordpos, word, i_word=wordnum, i_syll_in_word=syllnum,wordtoken=row_wordtokens[wordnum])
+					unitlist.append(slot)
+
 			if not self.splitheavies:
 				matrix.append(unitlist)
 			else:
@@ -142,24 +148,24 @@ class Meter:
 					if bool(slot.feature('prom.weight')):
 						slot1=Slot(slot.i,slot.children[0],slot.token,slot.wordpos,slot.word)
 						slot2=Slot(slot.i,slot.children[0],slot.token,slot.wordpos,slot.word)
-						
+
 						## mark as split
 						slot1.issplit=True
 						slot2.issplit=True
-						
+
 						## demote
 						slot2.feats['prom.stress']=0.0
 						slot1.feats['prom.weight']=0.0
 						slot2.feats['prom.weight']=0.0
-						
+
 						## split token
 						slot1.token= slot1.token[ : len(slot1.token)/2 ]
 						slot2.token= slot2.token[len(slot1.token)/2 + 1 : ]
-						
+
 						unitlist2.append([slot,[slot1,slot2]])
 					else:
 						unitlist2.append([slot])
-				
+
 				#unitlist=[]
 				for row in list(product(*unitlist2)):
 					unitlist=[]
@@ -170,50 +176,50 @@ class Meter:
 						else:
 							unitlist.append(x)
 					matrix.append(unitlist)
-			
-			
-				
+
+
+
 		# for r in matrix:
 		# 	for y in r:
 		# 		print y
 		# 	print
-		# 	print	
-		
+		# 	print
+
 		return matrix
-		
-		
-	
+
+
+
 	def parse(self,wordlist,numSyll=0,numTopBounded=10):
 		numTopBounded = self.config.get('num_bounded_parses_to_store',numTopBounded)
 		#print '>> NTB!',numTopBounded
 		from Parse import Parse
 		if not numSyll:
 			return []
-		
-		
+
+
 		slotMatrix = self.genSlotMatrix(wordlist)
 		if not slotMatrix: return None
 
 		constraints = self.constraints
 
-		
+
 		allParses = []
 		allBoundedParses=[]
 		for slots in slotMatrix:
 			_parses,_boundedParses = self.parseLine(slots)
 			allParses.append(_parses)
 			allBoundedParses+=_boundedParses
-		
+
 		parses,_boundedParses = self.boundParses(allParses)
 
-		parses.sort()		
+		parses.sort()
 
 		allBoundedParses+=_boundedParses
 
 		allBoundedParses.sort(key=lambda _p: (-_p.numSlots, _p.score()))
 		allBoundedParses=allBoundedParses[:numTopBounded]
 		#allBoundedParses=[]
-		
+
 		"""print parses
 		print
 		print allBoundedParses
@@ -227,7 +233,7 @@ class Meter:
 		"""
 
 		return parses,allBoundedParses
-		
+
 	def boundParses(self, parseLists):
 		unboundedParses = []
 		boundedParses=[]
@@ -244,47 +250,47 @@ class Meter:
 						elif relation == Bounding.bounds:
 							compParse.isBounded = True
 							compParse.boundedBy = parse
-							
+
 		for parseList in parseLists:
 			for parse in parseList:
 				if not parse.isBounded:
 					unboundedParses.append(parse)
 				else:
 					boundedParses.append(parse)
-					
+
 		return unboundedParses,boundedParses
-		
+
 	def parseLine(self, slots):
-	
+
 		numSlots = len(slots)
-			
+
 		initialParse = Parse(self, numSlots)
 		parses = initialParse.extend(slots[0])
 		parses[0].comparisonNums.add(1)
 
 		boundedParses=[]
-		
-		
+
+
 		for slotN in range(1, numSlots):
-		
+
 			newParses = []
 			for parse in parses:
 				newParses.append(parse.extend(slots[slotN]))
-				
+
 			for parseSetIndex in range(len(newParses)):
-			
+
 				parseSet = newParses[parseSetIndex]
-				
+
 				for parseIndex in range(len(parseSet)):
-				
+
 					parse = parseSet[parseIndex]
 					parse.comparisonParses = []
-					
+
 					if len(parseSet) > 1 and parseIndex == 0:
 						parse.comparisonNums.add(parseSetIndex)
-					
+
 					for comparisonIndex in parse.comparisonNums:
-					
+
 						# should be a label break, but not supported in Python
 						# find better solution; redundant checking
 						if parse.isBounded:
@@ -292,37 +298,37 @@ class Meter:
 
 						try:
 							for comparisonParse in newParses[comparisonIndex]:
-							
+
 								if parse is comparisonParse:
 									continue
-							
+
 								if not comparisonParse.isBounded:
-								
+
 									if parse.canCompare(comparisonParse):
-									
+
 										boundingRelation = parse.boundingRelation(comparisonParse)
-										
+
 										if boundingRelation == Bounding.bounds:
 											comparisonParse.isBounded = True
 											comparisonParse.boundedBy = parse
-											
+
 										elif boundingRelation == Bounding.bounded:
 											parse.isBounded = True
 											parse.boundedBy = comparisonParse
 											break
-											
+
 										elif boundingRelation == Bounding.equal:
 											parse.comparisonParses.append(comparisonParse)
-										
+
 									else:
 										parse.comparisonParses.append(comparisonParse)
 						except IndexError:
 							pass
-									
+
 			parses = []
 			#boundedParses=[]
 			parseNum = 0
-								
+
 			for parseSet in newParses:
 				for parse in parseSet:
 					if parse.isBounded:
@@ -335,19 +341,19 @@ class Meter:
 						parseNum += 1
 						parses.append(parse)
 
-			
+
 			for parse in parses:
-			
+
 				parse.comparisonNums = set()
-				
+
 				for compParse in parse.comparisonParses:
 					if not compParse.isBounded:
 						parse.comparisonNums.add(compParse.parseNum)
-		
+
 
 
 		return parses,boundedParses
-	
+
 	def printParses(self,parselist,lim=False):		# onlyBounded=True, [option done through "report" now]
 		n = len(parselist)
 		l_i = list(reversed(range(n)))
@@ -356,7 +362,7 @@ class Meter:
 		for i,parse in enumerate(reversed(parselist)):
 			#if onlyBounded and parse.isBounded:
 			#	continue
-			
+
 			o+='-'*20+'\n'
 			o+="[parse #" + str(l_i[i]+1) + " of " + str(n) + "]: " + str(parse.getErrorCount()) + " errors"
 
@@ -373,7 +379,7 @@ class Meter:
 			o+="\n\n"
 			i-=1
 		return o
-			
+
 	def printScores(self, scores):
 		output = "\n"
 		for key, value in sorted(((str(k.name),v) for (k,v) in scores.items())):
@@ -385,7 +391,7 @@ class Meter:
 		if not output.strip(): output=''
 		output +='\n'
 		return output
-		
+
 
 def parse_ent(ent,meter,init):
 	#print init, type(init), dir(init)

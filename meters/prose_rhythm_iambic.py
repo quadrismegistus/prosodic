@@ -168,6 +168,33 @@ Cs['strength.w=>-p']=1
 #
 #
 ######
+# [Constraints regulating PHRASAL STRESS]
+#
+# Phrasal stress as defined by Metrical Tree.
+# ...
+# ...
+#
+###
+# [Stricter versions:]
+#
+# A strong metrical position should not contain any phrasally stressed syllables:
+#Cs['phrasal_stress.s=>-u']=10
+#
+# A weak metrical position should not contain any phrasally stressed syllables:
+Cs['phrasal_stress.w=>-p']=50
+#
+###
+# [Laxer versions:]
+#
+# A strong metrical position should contain at least one heavy syllable:
+#Cs['phrasal_stress.s=>p']=2
+#
+# A weak metrical position must contain at least one light syllable;
+#Cs['phrasal_stress.w=>u']=2
+#
+#
+#
+######
 # [Constraints regulating what's permissible as a DISYLLABIC metrical position]
 # [(with thanks to Sam Bowman, who programmed many of these constraints)]
 #

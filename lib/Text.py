@@ -37,6 +37,7 @@ class Text(entity):
 		self.stress_ambiguity=stress_ambiguity
 		self.dir_prosodic=prosodic.dir_prosodic
 		self.dir_results=prosodic.dir_results
+		self.dir_mtree = prosodic.dir_mtree
 		self.config=prosodic.config
 		self.meter=self.config['meters'][meter] if meter and meter in self.config['meters'] else None
 		#self.meterd={]}
@@ -282,58 +283,33 @@ class Text(entity):
 			if (self.phrasebreak == 'both') or (self.phrasebreak == 'line'):
 				line.finish()
 
-	def init_nlp(self,lines_or_file):
-		## create first stanza,line
-		stanza = self.newchild()
-		line = stanza.newchild()	# returns a new Line, the child of Stanza
-		numwords = 0
-		recentpunct=True
-		import prosodic
-		tokenizer=prosodic.config['tokenizer'].replace('\\\\','\\')
+		if self.config.get('parse_using_metrical_tree',False) and self.lang=='en':
+			import time
+			then=time.time()
+			print '>> parsing text using MetricalTree...'
+			self.parse_mtree()
+			now=time.time()
+			print '>> done:',round(now-then,2),'seconds'
 
-		## [loop] lines
-		for ln in lines_or_file:
-			ln=ln.strip()
-			if self.limWord and numwords>self.limWord: break
+	def parse_mtree(self):
+		if self.lang!='en': raise Exception("MetricalTree parsing only works currently for English text.")
 
-			# split into words
-			toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE) if self.isUnicode else re.findall(tokenizer,ln.strip())
-			toks = [tok.strip() for tok in toks if tok.strip()]
-			numtoks=len(toks)
+		import metricaltree as mtree
+		mtree.set_paths(self.dir_mtree)
 
-			## if no words, mark stanza/para end
-			if (not ln or numtoks < 1):
-				if not stanza.empty():
-					stanza.finish()
-				continue
+		wordtoks = self.wordtokens()
+		toks = [wtok.token for wtok in wordtoks]
+		sents = mtree.split_sentences_from_tokens(toks)
+		parser = mtree.return_parser(self.dir_mtree)
+		trees = parser.lex_parse_sents(sents, verbose=False)
+		stats = parser.get_stats(trees,arto=True,format_pandas=False)
+		assert len(stats)==len(wordtoks)
 
-			## [loop] words
-			for toknum,tok in enumerate(toks):
-				(tok,punct) = gleanPunc(tok)
-
-				if stanza.finished: stanza = self.newchild()
-				if line.finished: line = stanza.newchild()
+		for wTok,wStat in zip(wordtoks,stats):
+			for k,v in wStat.items():
+				setattr(wTok,k,v)
 
 
-				if tok:
-					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
-					wordtok = WordToken(newwords,token=tok,is_punct=False)
-					line.newchild(wordtok)
-					numwords+=1
-
-					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
-
-				if punct:
-					wordtok=WordToken([],token=punct,is_punct=True)
-					line.newchild(wordtok)
-
-				if punct and len(line.children) and self.phrasebreak != 'line':
-					if (self.phrasebreak_punct.find(punct) > -1):
-						line.finish()
-
-			## if line-based breaks, end line
-			if (self.phrasebreak == 'both') or (self.phrasebreak == 'line'):
-				line.finish()
 
 
 	## def parse

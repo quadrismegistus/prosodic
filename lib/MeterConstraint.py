@@ -87,6 +87,12 @@ class MeterConstraint:
 			else:
 				promSite_isneg = False							# u or p: eg, if s=>p, then AT LEAST ONE s must be p(rom)
 
+			"""
+			Removed 4/12/2017: apparently there was an option to restrict just 'P'rimary stresses
+			But required using an uppercase P in the meter config. This was nowhere stated elsewhere
+			and has never been used. I'm disabling it. Let's just use a separate prominence type
+			if we want to restrict only primary stresses.
+
 			if promSite_prom.lower()==promSite_prom:
 				promSite_prom = (promSite_prom == 'p')				# string 2 boolean: p:True, u:False
 			else:
@@ -95,6 +101,9 @@ class MeterConstraint:
 				#elif promSite_prom=="U":
 				else:
 					promSite_prom=0.0
+			"""
+
+			promSite_prom = (promSite_prom == 'p')				# string 2 boolean: p:True, u:False
 
 
 
@@ -105,15 +114,19 @@ class MeterConstraint:
 				for slot in meterPos.slots:
 					slot_prom=slot.feature('prom.'+promType,True)
 					if slot_prom==None: continue
-					if type(promSite_prom)==type(True):
-						slot_prom=bool(slot_prom)
-					if slot_prom == promSite_prom:
-						numtrue+=1
+
+					#if type(promSite_prom)==type(True):
+					#	slot_prom=bool(slot_prom)
+					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom>0.5
+					if bool_prom_type == promSite_prom:
+						numtrue+=float(slot_prom)
 						#return self.weight
 				#return 2 if numtrue else 0
 				#print self.weight, numtrue
-				## CHANGE 10/10/2016: This constraint returns its weight
+				## CHANGED 10/10/2016: This constraint returns its weight
 				## *times* the number of slots/syllables that violated it.
+				## CHANGED 4/12/2017: numtrue is actually float of the prominence
+				## so for phrasal stress is its p-stress value, for seconday stress is 0.5, etc.
 
 				return self.weight * numtrue
 				#return 0
@@ -126,10 +139,8 @@ class MeterConstraint:
 					slot_prom=slot.feature('prom.'+promType,True)
 					if slot_prom==None:
 						continue
-					if type(promSite_prom)==type(True):
-						slot_prom=bool(slot_prom)
 					ran=True
-					if slot_prom==promSite_prom:
+					if bool(slot_prom)==promSite_prom:
 						violated=False
 				if ran and violated:
 					return self.weight

@@ -20,6 +20,7 @@ class Line(entity):
 		#	from Meter import Meter,genDefault
 		#	meter = genDefault()
 
+		"""
 		words=self.ents(cls='Word',flattenList=False)
 		#print words
 		numSyll=0
@@ -38,6 +39,20 @@ class Line(entity):
 
 		## PARSE
 		self.__parses[meter.id],self.__boundParses[meter.id]=meter.parse(words,numSyll)
+		####
+		"""
+		wordtoks=self.wordtokens(include_punct=False)
+		#print words
+		numSyll=0
+		if not wordtoks: return None
+		for wordtok in wordtoks:
+			wordtok_words = wordtok.children
+			if not wordtok_words or True in [word.isBroken() for word in wordtok_words]:
+				return None
+			numSyll+=wordtok_words[0].getNumSyll()
+
+		## PARSE
+		self.__parses[meter.id],self.__boundParses[meter.id]=meter.parse(wordtoks,numSyll)
 		####
 
 

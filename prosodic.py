@@ -5,8 +5,12 @@ import sys,glob,os,time
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]
 sys.path.insert(0,dir_prosodic)
+
 dir_imports=os.path.join(dir_prosodic,'lib')
 sys.path.append(dir_imports)
+
+dir_mtree=os.path.join(dir_prosodic,'metricaltree')
+sys.path.append(dir_mtree)
 
 ## import necessary objects
 #toprintconfig=__name__=='__main__'
@@ -52,7 +56,7 @@ if __name__ != "__main__":
 	#config['print_to_screen']=0
 else:	## if not imported, go into interactive mode
 	skip=False
-	
+
 	## but do not go into interactive mode if only a single argument
 	## (which is later proven to be a real file or directory)
 	## ACTUALLY NVERMIND ABOVE: GO INTO INTERACTIVE MODE IF SINGLE ARGUMENT
@@ -101,8 +105,8 @@ else:	## if not imported, go into interactive mode
 
 	obj=None
 	sameobj=None
-	while(text!="/exit"):	
-	
+	while(text!="/exit"):
+
 		if being.om:
 			being.omm=being.om
 			being.om=''
@@ -113,17 +117,17 @@ else:	## if not imported, go into interactive mode
 		msg+="\t\t/text\tload a text\n"
 		msg+="\t\t/corpus\tload folder of texts\n"
 		msg+="\t\t/paste\tenter multi-line text\n"
-		
-		
-		
+
+
+
 		msg+="\n"
-	
+
 		if text!="":
-		
+
 			msg+="\t\t/show\tshow annotations on input\n"
 			msg+="\t\t/tree\tsee phonological structure\n"
 			msg+="\t\t/query\tquery annotations\n\n"
-		
+
 			msg+="\t\t/parse\tparse metrically\n"
 		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
@@ -131,10 +135,10 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/stats\tget statistics from the parser\n"
 			#msg+="\t\t/plot\tcompare features against positions\n"
 			#if being.networkx:
-			#	msg+="\t\t/draw\tdraw finite-state machines\n" 
+			#	msg+="\t\t/draw\tdraw finite-state machines\n"
 
 			msg+="\n"
-	
+
 		#msg+="\t\t/config\tchange settings\n"
 		msg+="\t\t/meter\tset the meter used for parsing\n"
 		msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n"
@@ -146,10 +150,10 @@ else:	## if not imported, go into interactive mode
 		msg+="\t\t/exit\texit\n"
 		#msg+="#######################################################################\n\n"
 		msg+="\n>> ["+str(round((time.clock() - timestart),2))+"s] prosodic:"+lang+"$ "
- 	
+
 	 	## restart timer
 		timestart=time.clock()
-	
+
 		## ask for input only if argument not received
 		if not skip:
 			try:
@@ -158,7 +162,7 @@ else:	## if not imported, go into interactive mode
 				text='/exit'
 		else:
 			skip=False
-	
+
 		if text=="/exit":
 			for k,v in dict.items():
 				#dict[k].save_tabbed()
@@ -167,7 +171,7 @@ else:	## if not imported, go into interactive mode
 			print
 			print ">> goodbye."
 			exit()
-	
+
 		elif text and text[0]!="/":
 			## load line #######
 			obj = Text(text,lang=lang)
@@ -185,29 +189,29 @@ else:	## if not imported, go into interactive mode
 				except KeyboardInterrupt:
 					contents=[]
 					break
-				
+
 			if contents:
 				txt="\n".join(contents)
 				obj=Text(txt,lang=lang)
-	
+
 		elif text=="/parse":
 			obj.parse(meter=METER)
-		
+
 		elif text=="/plot":
 			obj.plot()
-		
+
 		elif text=="/groom":
 			obj.groom()
-		
+
 		elif text.startswith("/report"):
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			include_bounded = arg=='all'
 			obj.report(meter=METER, include_bounded=include_bounded)
 			print '\t>> options:\n\t\t/report\t\treport unbounded, metrical parses\n\t\t/report all\treport all parses, including those bounded or unmetrical'
-	
+
 		elif text=="/chart":
 			obj.chart()
-		
+
 		elif text.startswith("/stats"):
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			funcname = None
@@ -226,10 +230,10 @@ else:	## if not imported, go into interactive mode
 					pass
 
 			print '\t>> options:\n\t\t/stats all\t\tsave all stats\n\t\t/stats lines\t\tsave stats on lines\n\t\t/stats ot\t\tsave stats on lines in OT/maxent format\n\t\t/stats pos\t\tsave stats on positions'
-		
+
 		elif text=="/scan":
 			obj.scansion(meter=METER)
-		
+
 		elif text=="/draw":
 			try:
 				obj.genfsms(meter=METER)
@@ -237,12 +241,12 @@ else:	## if not imported, go into interactive mode
 			except ImportError:
 				raise Exception("Loading of networkx failed. Please install networkx: pip install networkx")
 
-		
+
 		elif text=="/tree":
 			obj.om(obj.tree()+"\n\n")
 			print obj.tree()
 			print
-	
+
 		elif text=="/show":
 			obj.show()
 
@@ -252,7 +256,7 @@ else:	## if not imported, go into interactive mode
 			if len(tl)>1:
 				arg=' '.join(tl[1:])
 				if not arg.isdigit(): arg=None
-			
+
 			mnum2name={}
 			for mi,(mname,mmeter) in enumerate(sorted(config['meters'].items())):
 				mnum=mi+1
@@ -284,11 +288,11 @@ else:	## if not imported, go into interactive mode
 			config['meter']=mnum2name[meteri]
 			METER = config['meters'][config['meter']]
 			print '>> meter set to ['+METER.id+']: '+METER.name
-			
 
 
-	
-	
+
+
+
 		elif text=="/query":
 			q=""
 			while (not q.startswith("/")):
@@ -297,13 +301,13 @@ else:	## if not imported, go into interactive mode
 				except (KeyboardInterrupt,EOFError) as e:
 					text=''
 					break
-			
+
 				matchcount=0
 				try:
 					qq=SearchTerm(q)
 				except:
 					break
-				
+
 				for words in obj.words(flattenList=False):
 					wordobj=words[0]
 					for match in wordobj.search(qq):
@@ -313,22 +317,22 @@ else:	## if not imported, go into interactive mode
 						else:
 							matchstr=str(match)
 						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr)
-			
+
 			cmd = q
-		
-		
+
+
 		#elif text.startswith('/query'):
 		#	print obj.search(SearchTerm(text.replace('/query','').strip()))
-		
+
 		elif text=="/try":
 			obj=Text('corpora/corppoetry/fi.kalevala2.txt')
 			#print obj.tree()
 			self.parses=obj.parse()
 
-		
+
 		elif text.startswith('/text'):
 			fn=text.replace('/text','').strip()
-		
+
 			if not fn:
 				for filename in os.listdir(dir_corpus):
 					if filename.startswith("."): continue
@@ -362,11 +366,11 @@ else:	## if not imported, go into interactive mode
 				else:
 					print "<file not found>\n"
 					continue
-		
+
 		elif text.startswith('/corpus'):
 			from Corpus import Corpus
 			fn=text.replace('/corpus','').strip()
-		
+
 			if not fn:
 				for filename in os.listdir(dir_corpus):
 					if filename.startswith("."): continue
@@ -385,7 +389,7 @@ else:	## if not imported, go into interactive mode
 				print "\t" + hdrbar
 				print
 
-			else:		
+			else:
 				if os.path.exists(os.path.join(dir_corpus,fn)):
 					obj = Corpus(os.path.join(dir_corpus,fn))
 				elif os.path.exists(fn):
@@ -393,19 +397,19 @@ else:	## if not imported, go into interactive mode
 				else:
 					print "<path not found>\n"
 					continue
-	
+
 		elif text.startswith('/save'):
 			fn=text.replace('/save','').strip()
 			if not fn:
 				fn=raw_input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the current working directory ['+os.getcwd()+'],\n\t- or as a full path.\n\n').strip()
-		
+
 			try:
 				ofn=None
 				if os.path.exists(os.path.join(os.path.dirname(fn))):
 					ofn=fn
 				else:
 					ofn=os.path.join(os.getcwd(),fn)
-			
+
 				of=open(fn,'w')
 				of.write(being.omm)
 				of.close()
@@ -443,20 +447,17 @@ else:	## if not imported, go into interactive mode
 			if not key_meterscheme: key_meterscheme='Meter Scheme'
 
 			assess(os.path.join(path,fn), key_meterscheme=key_meterscheme, key_parse=key_parse, key_line=key_line, meter=METER)
-	
-	
+
+
 		elif text.startswith('/mute'):
 			if config['print_to_screen']:
 				config['print_to_screen']=False
 			else:
 				config['print_to_screen']=True
-	
+
 		elif text.startswith('/unmute'):
 			config['print_to_screen']=True
-		
+
 		if cmd:
 			text=cmd
 			cmd=""
-
-
-

@@ -181,7 +181,7 @@ Cs['strength.w=>-p']=1
 #Cs['phrasal_stress.s=>-u']=10
 #
 # A weak metrical position should not contain any phrasally stressed syllables:
-Cs['phrasal_stress.w=>-p']=50
+Cs['phrasal_stress.w=>-p']=1
 #
 ###
 # [Laxer versions:]

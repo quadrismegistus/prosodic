@@ -1,0 +1,105 @@
+			[*number_feet!=5]	[*skip_initial_foot]	[*footmin-wordbound-bothnotfw]	[*headedness!=rising]	[*strength.w=>-p]	[*footmin-s-noHX]	[*phrasal_stress.w=>-p]
+I am monarch of all I survey,	I|am|MON|arch|OF|all|I|sur|VEY					1			
+	i.am|MON|arch|OF|all|I|sur|VEY		1						
+	i.am|MON.ARCH|of.all|I|sur|VEY		1						
+My right there is none to dispute,	my|RIGHT|there|IS|none|TO|dis|PUTE		1						2
+	MY|right|THERE|is|NONE|to|DIS.PUTE		1			1			1
+	MY|right.there|IS.NONE|to|DIS.PUTE		1		2	1		1	
+From the centre all round to the sea,	from.the|CEN|tre.all|ROUND|to.the|SEA [*Bounded]	2	1		1				1
+	FROM|the|CEN|tre|ALL|round|TO|the|SEA					1			1
+	from.the|CEN|tre|ALL|round|TO|the|SEA		1						1
+	from.the|CEN|tre|ALL.ROUND|to.the|SEA		1					1	
+I am lord of the fowl and the brute.	i.am|LORD|of.the|FOWL|and.the|BRUTE	2	1						1
+	I|am|LORD|of|THE|fowl|AND|the|BRUTE					1			2
+	I|am.lord|OF|the|FOWL|and.the|BRUTE		1		1	1			
+O solitude! where are the charms	o|SO|li.tude|WHERE|are.the|CHARMS [*Bounded]	2	1				1		
+	o|SO|li|TUDE|where|ARE|the|CHARMS		1						
+That sages have seen in thy face?	that|SAG|es|HAVE|seen|IN|thy|FACE		1						1
+	THAT|sag|ES|have|SEEN|in.thy|FACE		1			1			
+Better dwell in the midst of alarms,	BET|ter|DWELL|in|THE|midst|OF|ala|RMS					1			2
+	bet.ter|DWELL|in|THE|midst|OF|ala|RMS		1						2
+	BET.TER|dwell|IN|the|MIDST|of|ALA.RMS		1			1			1
+	BET.TER|dwell|IN|the|MIDST.OF|ala|RMS		1		1	1		1	
+Than reign in this horrible place.	than|REIGN|in.this|HOR|ri.ble|PLACE	2	1						
+I am out of humanity's reach,	i|AM|out|OF|hu|MAN|i.ty's|REACH		1						
+	i|AM|out|OF|hu|MAN.I|ty's|REACH		1						
+I must finish my journey alone,	i.must|FIN.ISH|my|JOUR|ney|AL.ONE		1						
+	I|must|FIN|ish|MY|jour|NEY|al|ONE					1	1		1
+Never hear the sweet music of speech,	NEV.ER|hear|THE|sweet|MU|sic|OF|speech		1			1			1
+	NEV|er|HEAR|the|SWEET|mu|SIC|of|SPEECH					1	1		2
+	nev.er|HEAR|the|SWEET|mu|SIC|of|SPEECH		1				1		2
+	NEV.ER|hear|THE|sweet|MU|sic.of|SPEECH		1		1	1			1
+	NEV.ER|hear|THE|sweet|MU.SIC|of|SPEECH		1			1		1	1
+	NEV.ER|hear|THE|sweet|MU|sic|OF.SPEECH		1		1	1		1	
+I start at the sound of my own.	i|START|at|THE|sound|OF|my|OWN		1						2
+	I|start|AT|the|SOUND|of.my|OWN		1			1			1
+	I|start|AT|the|SOUND.OF|my|OWN		1		1	1		1	
+The beasts that roam over the plain	the|BEASTS|that|ROAM|ov|ER|the|PLAIN		1				1		1
+	THE|beasts|THAT|roam|OV|er|THE|plain		1			1			2
+	THE|beasts|THAT|roam|OV|er.the|PLAIN		1		1	1			1
+	THE|beasts|THAT|roam|OV.ER|the|PLAIN		1			1		1	1
+	the|BEASTS|that|ROAM.OV|er|THE|plain		1		1			1	1
+	the|BEASTS|that|ROAM.OV|er.the|PLAIN		1		2			1	
+My form with indifference see,	MY|form|WITH|in|DIF|fer.ence|SEE		1			1			
+	MY|form|WITH|in|DIF.FER|ence|SEE		1			1			
+	MY|form|WITH|ind|IFF|erence|SEE		1			1			
+	my|FORM|with|IND|iff.erence|SEE		1				1		1
+They are so unacquainted with man,	they.are|SO|un.ac|QUAINT|ed.with|MAN	2	1		1				
+	THEY|are|SO|un|AC|quaint|ED|with|MAN					1	1		
+	they|ARE|so|UN|ac|QUAINT|ed|WITH|man		1						1
+	they|ARE|so|UN|ac|QUAINT|ed.with|MAN		1		1				
+	they|ARE|so|UN|ac|QUAINT.ED|with|MAN		1					1	
+	they|ARE|so|UN|ac.quaint|ED|with|MAN		1				1		
+	they|ARE|so|UN.AC|quaint|ED|with|MAN		1				1		
+	they.are|SO|un|AC|quaint|ED|with|MAN		1				1		
+	they.are|SO|un|AC.QUAINT|ed|WITH|man		1						1
+	they.are|SO|un|AC.QUAINT|ed.with|MAN		1		1				
+	they.are|SO|un.ac|QUAINT|ed|WITH|man		1						1
+	they.are|SO|un.ac|QUAINT.ED|with|MAN		1					1	
+Their tameness is shocking to me.	THEIR|tame|NESS|is|SHOCK.ING|to|ME		1			1			1
+	their|TAME|ness|IS.SHOCK|ing|TO|me		1		1			1	1
+	their|TAME|ness|IS.SHOCK|ing|TO.ME		1		1			2	
+	their|TAME|ness|IS.SHOCK|ing.to|ME		1		2			1	
+Society, friendship, and love,	so|CI|et.y|FRIEND|ship.and|LOVE	1	1		1				
+	so|CI|et|Y|friend|SHIP|and|LOVE		1				1		
+	so|CI|et.y|FRIEND|ship|AND|love		1						1
+	so|CI|et.y|FRIEND.SHIP|and|LOVE		1					1	
+	so.ci|ET|y|FRIEND|ship|AND|love		1						1
+	so.ci|ET|y|FRIEND|ship.and|LOVE		1		1				
+	so.ci|ET|y|FRIEND.SHIP|and|LOVE		1					1	
+	so.ci|ET.Y|friend|SHIP|and|LOVE		1				1		
+Divinely bestow'd upon man,	di|VINE|ly|BE.STOW'D|up|ON|man		1						1
+	di|VINE|ly|BE.STOW'D|up.on|MAN		1				1		
+	di.vine|LY|be|STOW'D|up|ON|man		1						1
+	di.vine|LY|be|STOW'D|up.on|MAN		1				1		
+	di|VINE|ly|BE.STOW'D|up|ON.MAN		1		1			1	
+	di.vine|LY|be|STOW'D|up|ON.MAN		1		1			1	
+Oh had I the wings of a dove,	oh|HAD|i.the|WINGS|of.a|DOVE	2	1						1
+	oh|HAD|i.the|WINGS.OF|a|DOVE		1		1			1	
+How soon would I taste you again!	how|SOON|would.i|TASTE|you.ag|AIN [*Bounded]	2	1		1				
+	how|SOON|would.i|TASTE|you|AG.AIN		1						
+My sorrows I then might assuage	my|SOR.ROWS|i|THEN|might|AS.SUAGE		1						1
+	my|SOR.ROWS|i|THEN.MIGHT|as|SUAGE		1					1	
+In the ways of religion and truth,	in|THE|ways|OF|re|LI.GION|and|TRUTH		1						1
+	in.the|WAYS|of|RE.LI|gion.and|TRUTH		1		1				1
+	IN|the.ways|OF|re|LI.GION|and|TRUTH		1		1	1			
+Might learn from the wisdom of age,	MIGHT|learn|FROM|the|WIS|dom|OF|age		1			1			1
+	MIGHT|learn|FROM|the|WIS|dom.of|AGE		1		1	1			1
+	MIGHT|learn|FROM|the|WIS.DOM|of|AGE		1			1		1	1
+	MIGHT|learn|FROM|the|WIS|dom|OF.AGE		1		1	1		1	
+	might|LEARN|from|THE|wis|DOM|of|AGE		1				1		3
+And be cheer'd by the sallies of youth.	and.be|CHEER'D|by.the|SAL|lies.of|YOUTH [*Bounded]	2	1		1				2
+	and.be|CHEER'D|by.the|SAL.LIES|of|YOUTH		1						2
+	AND|be.cheer'd|BY|the|SAL.LIES|of|YOUTH		1		1	1			1
+	and.be|CHEER'D|by.the|SAL|lies|OF.YOUTH		1		1			1	1
+	AND|be.cheer'd|BY|the|SAL|lies|OF.YOUTH		1		2	1		1	
+Religion! what treasure untold	re|LI.GION|what|TREA.SURE|un|TOLD		1						
+	re.li|GION|what|TREA.SURE|un|TOLD		1						
+Resides in that heavenly word!	re|SIDES|in.that|HEAV|en.ly|WORD	2	1						
+	re.sides|IN|that|HEAV|en.ly|WORD		1						
+	re.sides|IN|that|HEAV.EN|ly|WORD		1						
+	re|SIDES|in.that|HEAV.EN|ly|WORD		1						
+More precious than silver and gold,	more|PRE|cious|THAN|sil|VER|and|GOLD		1				1		
+	more|PRE.CIOUS|than|SIL|ver|AND|gold		1						1
+	more|PRE.CIOUS|than|SIL|ver.and|GOLD		1		1				
+	more|PRE.CIOUS|than|SIL.VER|and|GOLD		1					1	

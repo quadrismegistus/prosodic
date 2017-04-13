@@ -548,8 +548,6 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if not words:
 			return [Word(word,[],None)]
 
-		print words
-		
 		if type(words)==list:
 			if type(words[0])==tuple:	# New word needs to be built
 				wordobjs=[]

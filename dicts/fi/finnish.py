@@ -70,32 +70,32 @@ orth2phon[u'x']=orth2phon[u'z']	#wrong
 orth2phon[u'q']=orth2phon[u'k']
 
 ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.iteritems()])
-	
 
-	
 
-			
 
-	
+
+
+
+
 def get(token,config={}):
 	token=token.strip()
-	
+
 
 	Annotation = make_annotation(token)
 	syllables=[]
 	wordbroken=False
-	
+
 	for ij in range(len(Annotation.syllables)):
 		try:
 			sylldat=Annotation.split_sylls[ij]
 		except IndexError:
 			sylldat=["","",""]
-		
+
 		syllStr=""
 		onsetStr=sylldat[0].strip().replace("'","").lower()
 		nucleusStr=sylldat[1].strip().replace("'","").lower()
 		codaStr=sylldat[2].strip().replace("'","").lower()
-		
+
 		for x in [onsetStr,nucleusStr,codaStr]:
 			x=x.strip()
 			if not x: continue
@@ -110,18 +110,17 @@ def get(token,config={}):
 						syllStr+=u"".join(orth2phon[y])
 			else:
 				syllStr+=u"".join(orth2phon[x])
-		
+
 		syllables.append(syllStr)
-	
+
 	words=[]
-	
+
 	sylls_text=[]
 	for syll in Annotation.syllables:
 		sylls_text.append(syll.lower())
-	
+
 	for stress in Annotation.stresses:
-		words.append((u".".join([stress2stroke[stress[i]]+syllables[i] for i in range(len(syllables))]),sylls_text,wordbroken))	
-	
-	
+		words.append((u".".join([stress2stroke[stress[i]]+syllables[i] for i in range(len(syllables))]),sylls_text,{'broken':wordbroken}))	
+
+
 	return words
-				

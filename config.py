@@ -34,10 +34,10 @@ meter = 'kiparskyhanson_shakespeare'
 # when typing text directly or loading text.
 #
 # All text is English:
-lang='en'
+#lang='en'
 #
 # All text is Finnish:
-#lang='fi'
+lang='fi'
 #
 # Detect language from first two characters of filename:
 # e.g. "en.[filename].txt" is English, "fi.[filename].txt" is Finnish

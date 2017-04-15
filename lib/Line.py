@@ -111,11 +111,12 @@ class Line(entity):
 		str_ot=''
 		count=''
 		if bp:
+			meterstr=bp.str_meter()
 			str_ot=bp.str_ot()
 			lowestScore=bp.score()
 			count=bp.totalCount
 		from tools import makeminlength
-		self.om("\t".join( [str(x) for x in [makeminlength(str(self),config['linelen']), makeminlength(str(bp) if bp else '', config['linelen']),str_ot,len(self.allParses(meter)),count,lowestScore] ] ),conscious=conscious)
+		self.om("\t".join( [str(x) for x in [makeminlength(str(self),config['linelen']), makeminlength(str(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot] ] ),conscious=conscious)
 
 
 	def allParses(self,meter=None,one_per_meter=True):

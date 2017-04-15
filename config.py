@@ -72,7 +72,7 @@ en_TTS_cache = 1
 # OPTIONS ABOUT PRINTING TO SCREEN
 #
 # Print loaded words, parses, etc. to screen:
-print_to_screen=0
+print_to_screen=1
 #
 # Do not print loaded words, parses, etc. to screen:
 # Although hiden, you may still save any output to disk

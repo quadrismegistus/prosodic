@@ -25,6 +25,7 @@ dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
 
 import entity
 from entity import being
+being.config=config
 from Text import Text
 from Corpus import Corpus
 from Stanza import Stanza
@@ -118,31 +119,36 @@ else:	## if not imported, go into interactive mode
 
 		msg+="\n"
 
-		if text!="":
+		if obj:
 
 			msg+="\t\t/show\tshow annotations on input\n"
 			msg+="\t\t/tree\tsee phonological structure\n"
 			msg+="\t\t/query\tquery annotations\n\n"
 
 			msg+="\t\t/parse\tparse metrically\n"
+			msg+="\t\t/meter\tset the meter used for parsing\n"
+			msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n\n"
+			msg+="\t\t/save\tsave previous output to file\n"
+
 		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
 			msg+="\t\t/report\tlook over the parse outputs\n"
-			msg+="\t\t/stats\tget statistics from the parser\n"
+			msg+="\t\t/stats\tsave statistics from the parser\n"
 			#msg+="\t\t/plot\tcompare features against positions\n"
 			#if being.networkx:
 			#	msg+="\t\t/draw\tdraw finite-state machines\n"
 
 			msg+="\n"
 
+
 		#msg+="\t\t/config\tchange settings\n"
-		msg+="\t\t/meter\tset the meter used for parsing\n"
-		msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n"
+
+		#"""
 		if config['print_to_screen']:
 			msg+="\t\t/mute\thide output from screen\n"
 		else:
 			msg+="\t\t/unmute\tunhide output from screen\n"
-		msg+="\t\t/save\tsave previous output to file\n"
+		#"""
 		msg+="\t\t/exit\texit\n"
 		#msg+="#######################################################################\n\n"
 		msg+="\n>> ["+str(round((time.clock() - timestart),2))+"s] prosodic:"+lang+"$ "
@@ -199,7 +205,7 @@ else:	## if not imported, go into interactive mode
 		elif text=="/groom":
 			obj.groom()
 
-		elif text.startswith("/report"):
+		elif text.startswith("/report") and obj.isParsed():
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			include_bounded = arg=='all'
 			obj.report(meter=METER, include_bounded=include_bounded)
@@ -208,7 +214,7 @@ else:	## if not imported, go into interactive mode
 		elif text=="/chart":
 			obj.chart()
 
-		elif text.startswith("/stats"):
+		elif text.startswith("/stats") and obj.isParsed():
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			funcname = None
 			if arg=='lines':
@@ -227,7 +233,7 @@ else:	## if not imported, go into interactive mode
 
 			print '\t>> options:\n\t\t/stats all\t\tsave all stats\n\t\t/stats lines\t\tsave stats on lines\n\t\t/stats ot\t\tsave stats on lines in OT/maxent format\n\t\t/stats pos\t\tsave stats on positions'
 
-		elif text=="/scan":
+		elif text=="/scan" and obj.isParsed():
 			obj.scansion(meter=METER)
 
 		elif text=="/draw":
@@ -449,13 +455,10 @@ else:	## if not imported, go into interactive mode
 
 
 		elif text.startswith('/mute'):
-			if config['print_to_screen']:
-				config['print_to_screen']=False
-			else:
-				config['print_to_screen']=True
+			being.config['print_to_screen']=0
 
 		elif text.startswith('/unmute'):
-			config['print_to_screen']=True
+			being.config['print_to_screen']=1
 
 		if cmd:
 			text=cmd

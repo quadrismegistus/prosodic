@@ -7,6 +7,7 @@ from Syllable import Syllable
 
 from ipa import ipa
 import codecs
+LANGCODES = {'en':'english', 'fi':'finnish'}
 
 class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_en,Dictionary_fi,usw.
 	classnames=['Phoneme','Onset','Nucleus','Coda','Rime','SyllableBody','Syllable','Word','Phrase']
@@ -33,11 +34,14 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		self.getprep=False
 		self.booted=False
 
+		"""
 		for filename in glob.glob(os.path.join(self.dictsfolder, self.lang+'*')):
 			self.language = filename.split(os.path.sep).pop().split(".")[0]
 			break
 		if not self.language:
 			exit('!! language could not be ascertained from files in '+self.dictsfolder+'. Please name your .tsv and/or .py dictionary file(s) using a string which begins with the two characters which serve as the name for the dictionary folder (eg, "en")')
+		"""
+		self.language = LANGCODES[self.lang]
 
 		self.unstressedWords=[]
 		for filename in glob.glob(os.path.join(self.dictsfolder, 'unstressed*')):

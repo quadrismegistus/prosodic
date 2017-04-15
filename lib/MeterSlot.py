@@ -27,6 +27,7 @@ class MeterSlot(entity):
 	@property
 	def phrasal_stress(self):
 		if not self.wordtoken: return None
+		if not hasattr(self.wordtoken, 'norm_mean'): return None
 		if self.word.numSyll>1 and self.stress != 'P': return None
 		#if not hasattr(self.wordtoken.norm_mean): return None
 		import numpy as np

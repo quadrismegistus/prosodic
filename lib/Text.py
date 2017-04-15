@@ -13,7 +13,6 @@ from ipa import sampa2ipa
 #import prosodic
 
 
-
 class Text(entity):
 	def __init__(self,filename,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
@@ -294,8 +293,8 @@ class Text(entity):
 	def parse_mtree(self):
 		if self.lang!='en': raise Exception("MetricalTree parsing only works currently for English text.")
 
-		import metricaltree as mtree
-		mtree.set_paths(self.dir_mtree)
+		#import metricaltree as mtree
+		#mtree.set_paths(self.dir_mtree)
 
 		wordtoks = self.wordtokens()
 		toks = [wtok.token for wtok in wordtoks]
@@ -305,6 +304,7 @@ class Text(entity):
 		stats = parser.get_stats(trees,arto=True,format_pandas=False)
 		assert len(stats)==len(wordtoks)
 
+		sents = []
 		for wTok,wStat in zip(wordtoks,stats):
 			for k,v in wStat.items():
 				setattr(wTok,k,v)

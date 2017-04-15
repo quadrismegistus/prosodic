@@ -23,7 +23,7 @@
 # in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
 #
-meter = 'kiparskyhanson_shakespeare'
+meter = 'prose_rhythm_iambic'
 ############################################
 
 
@@ -71,7 +71,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = True
+#parse_using_metrical_tree = True
 ############################################
 
 

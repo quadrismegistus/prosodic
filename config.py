@@ -23,7 +23,7 @@
 # in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
 #
-meter = 'kiparskyhanson_shakespeare'
+meter = 'prose_rhythm_iambic'
 ############################################
 
 
@@ -34,10 +34,10 @@ meter = 'kiparskyhanson_shakespeare'
 # when typing text directly or loading text.
 #
 # All text is English:
-#lang='en'
+lang='en'
 #
 # All text is Finnish:
-lang='fi'
+#lang='fi'
 #
 # Detect language from first two characters of filename:
 # e.g. "en.[filename].txt" is English, "fi.[filename].txt" is Finnish

@@ -120,8 +120,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		(The string just prior to this one will remain available at prosodic.being.omm).
 		"""
 
-		import prosodic
-		if (not conscious) or bool(prosodic.config['print_to_screen']):
+		#import prosodic
+		if (not conscious) or bool(being.config['print_to_screen']):
 			being.om+=str(breath)+"\n"
 			print self.u2s(breath)
 
@@ -1379,8 +1379,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	#
 	#
 	def isParsed(self):
-		if (hasattr(self,'bestParse')) and bool(self.bestParse()):
-			return True
+		#if (hasattr(self,'bestparses')) and bool(self.bestparses):
+		#	return True
 		for child in self.children:
 			if type(child)==type([]):
 				return False
@@ -1395,6 +1395,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 	def scansion_prepare(self,meter=None,conscious=False):
 		"""Print out header column for line-scansions for a given meter. """
+		config=being.config
 
 		if not meter:
 			if not hasattr(self,'_Text__bestparses'): return
@@ -1403,7 +1404,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			meter=x.keys()[0]
 
 		ckeys="\t".join(sorted([str(x) for x in meter.constraints]))
-		self.om("\t".join([makeminlength(str("text"),being.linelen), makeminlength(str("parse"),being.linelen),"#pars","#viol","meter",ckeys]),conscious=conscious)
+		self.om("\t".join([makeminlength(str("text"),config['linelen']), makeminlength(str("parse"),config['linelen']),"meter","num_parses","num_viols","score_viols",ckeys]),conscious=conscious)
 
 
 	def scansion(self,meter=None,conscious=False):

@@ -229,25 +229,29 @@ class Text(entity):
 	def stats_lines(self,meter=None,all_parses=False,viols=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
+		constraint_names = [c.name_weight for c in meter.constraints]
+		header = ['line', 'parse', 'meter', 'num_sylls', 'num_parses', 'num_viols', 'score_viols'] + constraint_names
 
 		def _writegen():
 			for line in self.lines():
-				dx={'0_text':self.name, '1_line':str(line)}
+				dx={'text':self.name, 'line':str(line), 'header':header}
 				bp=line.bestParse(meter)
 				ap=line.allParses(meter)
-				dx['2_parse']=bp.posString(viols=viols) if bp else ''
-				dx['3_num_parses']=len(ap)
-				dx['4_lowest_score'] = bp.score() if bp else ''
-				dx['5_num_sylls']=sum(len(pos.slots) for pos in bp.positions) if bp else ''
-				dx['meter']=meter.id
+				dx['parse']=bp.posString(viols=viols) if bp else ''
+				dx['meter']=bp.str_meter() if bp else ''
+				dx['num_parses']=len(ap)
+				dx['num_viols'] = bp.totalCount if bp else ''
+				dx['score_viols'] = bp.score() if bp else ''
+				dx['num_sylls']=bp.num_sylls if bp else ''
+				#dx['meter']=meter.id
 				#if bp:
 				#for c,v in bp.constraintScores.items():
 				for c in meter.constraints:
-					dx['[*'+c.name+']']=bp.constraintScores[c] if bp and c in bp.constraintScores else ''
+					dx[c.name_weight]=bp.constraintScores[c] if bp and c in bp.constraintScores else ''
 				yield dx
 
 		name=self.name.replace('.txt','')
-		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen):
 			yield dx
@@ -256,6 +260,8 @@ class Text(entity):
 	def stats_lines_ot(self,meter=None,all_parses=False,viols=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
+		constraint_names = [str(c) for c in meter.constraints]
+		header = ['line', 'parse', 'meter', 'num_viols', 'score_viols'] + constraint_names
 
 		def _writegen():
 			for line in self.lines():
@@ -265,16 +271,20 @@ class Text(entity):
 				if all_parses: ap+=line.boundParses(meter)
 
 				for pi,parse in enumerate(ap):
-					dx={'0_line':str(line) if not pi else ''}
-					dx['1_parse']=parse.posString(viols=viols)
+					dx={'line':str(line) if not pi else ''}
+					dx['text']=self.name
+					dx['header']=header
+					dx['parse']=parse.posString(viols=viols)
 					#dx['2_obs']='1'
-					dx['2_violation_score'] = parse.score()
+					dx['score_viols'] = parse.score()
+					dx['num_viols'] = parse.totalCount
+					dx['meter']=parse.str_meter()
 					for c in meter.constraints:
-						dx['[*'+c.name+']']=parse.constraintCounts[c] if parse and c in parse.constraintScores and parse.constraintScores[c] else ''
+						dx[str(c)]=parse.constraintCounts[c] if parse and c in parse.constraintScores and parse.constraintScores[c] else ''
 					yield dx
 
 		name=self.name.replace('.txt','')
-		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen):
 			yield dx
@@ -312,7 +322,7 @@ class Text(entity):
 
 
 		def _writegen():
-			for ((slot_i,k),l) in dx.items():
+			for ((slot_i,k),l) in sorted(dx.items()):
 				l2=[]
 				for x in l:
 					if type(x)==bool:
@@ -336,11 +346,12 @@ class Text(entity):
 				#	continue
 
 				odx={'slot_num':slot_i, 'statistic':k, 'average':avg, 'count':count, 'chances':chances, 'text':self.name}
+				odx['header']=['slot_num', 'statistic','count','chances','average']
 				#print odx
 				yield odx
 
 		name=self.name.replace('.txt','')
-		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.positions.txt')
+		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.positions.csv')
 		#print ofn
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen):
@@ -459,6 +470,8 @@ class Text(entity):
 			self.__parsed_ents[meter.id].append(ent)
 			ent.scansion(meter=meter,conscious=True)
 
+		if being.config['print_to_screen']: print
+
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)
 
@@ -469,7 +482,7 @@ class Text(entity):
 	#@property
 	def isParsed(self):
 		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
-		return hasattr(self,'_Text__bestparses') and self.__bestparses
+		return bool(hasattr(self,'_Text__bestparses') and self.__bestparses)
 
 
 	@property

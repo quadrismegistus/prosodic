@@ -22,7 +22,8 @@ class MeterConstraint:
 
 	@property
 	def name_weight(self):
-		return "[*"+self.name+"/"+str(self.weight)+"]"
+		weight=str(self.weight) if int(self.weight)!=self.weight else str(int(self.weight))
+		return "[*"+self.name+"/"+weight+"]"
 
 
 	#def __hash__(self):

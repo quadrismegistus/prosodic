@@ -619,45 +619,66 @@ def product(*args):
 	return (items + (item,)
 		for items in product(*args[:-1]) for item in args[-1])
 
-def writegen(fnfn,generator,header=None):
+def writegen(fnfn,generator,header=None,sep=','):
 	import codecs
 	of = codecs.open(fnfn,'w',encoding='utf-8')
+	header_written=False
 	for dx in generator():
-		if not header:
-			header=sorted(dx.keys())
-			of.write('\t'.join(header) + '\n')
+		if not header_written:
+			if not header:
+				if 'header' in dx:
+					header=dx['header']
+				else:
+					header=sorted(dx.keys())
+			of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
+			header_written=True
 
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
+			is_str = type(v) in [str,unicode]
+			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(dx.get(h,''))
+				o=unicode(v)
 			except UnicodeDecodeError:
-				o=dx.get(h,'').decode('utf-8',errors='ignore')
+				o=v.decode('utf-8',errors='ignore')
+			if is_str and v:
+				o='"'+o+'"'
 			vals+=[o]
 
 
-		of.write('\t'.join(vals) + '\n')
+		of.write(sep.join(vals) + '\n')
 
-def writegengen(fnfn,generator,header=None):
+def writegengen(fnfn,generator,header=None,sep=','):
 	import codecs
 	of = codecs.open(fnfn,'w',encoding='utf-8')
+	header_written=False
 	for dx in generator():
-		if not header:
-			header=sorted(dx.keys())
-			of.write('\t'.join(header) + '\n')
+		if not header_written:
+			if not header:
+				if 'header' in dx:
+					header=dx['header']
+				else:
+					header=sorted(dx.keys())
+			of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
+			header_written=True
 
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
+			is_str = type(v) in [str,unicode]
+			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(dx.get(h,''))
+				o=unicode(v)
 			except UnicodeDecodeError:
-				o=dx.get(h,'').decode('utf-8',errors='ignore')
+				o=v.decode('utf-8',errors='ignore')
+			if is_str and v:
+				o='"'+o+'"'
+
 			vals+=[o]
 
 
-		of.write('\t'.join(vals) + '\n')
+		of.write(sep.join(vals) + '\n')
 		yield dx
 
 

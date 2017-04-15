@@ -183,6 +183,10 @@ class Parse(entity):
 			cc[constraint]=cn
 		return cc
 
+	@property
+	def num_sylls(self):
+		return sum(len(pos.slots) for pos in self.positions)
+
 	def score(self):
 		#if self.totalScore == None:
 		score = 0

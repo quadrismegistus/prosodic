@@ -110,6 +110,7 @@ class Line(entity):
 		lowestScore=''
 		str_ot=''
 		count=''
+		meterstr=''
 		if bp:
 			meterstr=bp.str_meter()
 			str_ot=bp.str_ot()

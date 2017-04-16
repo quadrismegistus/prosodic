@@ -11,18 +11,19 @@ mkdir "Stanford Library"
 mv stanford-parser-full-$DATE "Stanford Library/"
 cd "Stanford Library/stanford-parser-full-$DATE"
 jar xf stanford-parser-$VERSION-models.jar
+rm "stanford-parser-full-$DATE.zip"
 
-su
-add-apt-repository ppa:webupd8team/java
-apt-get update
-apt-get install oracle-java8-installer
-exit
+#su
+#add-apt-repository ppa:webupd8team/java
+#apt-get update
+#apt-get install oracle-java8-installer
+#exit
 
-su # May need to be su for this, may not
-pip install numpy
-pip install nltk
-pip install matplotlib
-pip install pandas
-exit
+#su # May need to be su for this, may not
+#pip install numpy
+#pip install nltk
+#pip install matplotlib
+#pip install pandas
+#exit
 
-python -c "import nltk; nltk.download('punkt')"
+#python -c "import nltk; nltk.download('punkt')"

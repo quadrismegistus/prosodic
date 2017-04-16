@@ -59,20 +59,20 @@ def loadConfig(toprint=True,dir_prosodic=None):
 		ln=ln.strip()
 		if not ln: continue
 		if ln.startswith("#"): continue
-		
+
 		if ("=" in ln) and (not "=>" in ln):
 			dat=ln.split("=")
 			k=dat[0].strip()
 			v=[z for z in dat[1].split() if z.strip()][0].strip()
 			if v.isdigit(): v=int(v)
 			settings[k]=v
-			
+
 		else:
 			dat=ln.split("\t")
 			constraint=dat[0].strip()
 			settings['constraints']+=[constraint]
 	settings['constraints']=" ".join(settings['constraints'])
-	
+
 	if toprint:
 		print ">> loaded settings:"
 		for k,v in sorted(settings.items()):
@@ -97,7 +97,7 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 		else:
 			settings[vname]=vval
 
-	
+
 	if toprint:
 		print ">> loaded settings:"
 		for k,v in sorted(settings.items()):
@@ -131,11 +131,11 @@ def loadMeters():
 
 def choose(optionlist,msg="please select from above options [using commas for individual selections and a hyphen for ranges]:\n"):
 	seldict={}
-	
+
 	selnum=0
 	print
 	print
-	
+
 	if type(optionlist)==type([]):
 		for option in optionlist:
 			selnum+=1
@@ -146,7 +146,7 @@ def choose(optionlist,msg="please select from above options [using commas for in
 			selnum+=1
 			seldict[selnum]=option
 			print "\t"+"\t".join(str(x) for x in [selnum,option,desc])
-	
+
 	inp=raw_input("\n\t>> "+msg+"\n\t").strip()
 	sels=[]
 	for np in inp.split(","):
@@ -163,7 +163,7 @@ def choose(optionlist,msg="please select from above options [using commas for in
 				sels.append(seldict[int(np)])
 			except:
 				continue
-	
+
 	return sels
 
 
@@ -183,7 +183,7 @@ def mean_stdev(x):
 	std = std + (a - mean)**2
     std = sqrt(std / float(n-1))
     return mean, std
-	
+
 def linreg(X, Y):
 	from math import sqrt
 	from numpy import nan, isnan
@@ -226,15 +226,15 @@ def writeToFile(name,key,data,iscorpus=False,extension="tsv"):
 		ofolder=os.path.join(sys.path[0],'results','stats','texts',name)
 	else:
 		ofolder=os.path.join(sys.path[0],'results','stats','corpora',name)
-	
+
 	if not os.path.exists(ofolder):
 		os.makedirs(ofolder)
-	
+
 	ofn=os.path.join(ofolder,'.'.join([name,key,extension]))
 	print ">> saved: "+ofn
 	of = open(ofn,'w')
 	of.write(data)
-	of.close()			
+	of.close()
 
 def write(fn,data,toprint=False):
 	of = open(fn,'w')
@@ -252,14 +252,14 @@ def loadDict(dictFile):
 		return pickle.load(cmuFile)
 	elif dictFile[-4:] != ".txt":
 		return {}
-	
+
 	cmuDict = dict()
 	curLine = cmuFile.readline().strip()
 	while(curLine):
 		curLine = cmuFile.readline().strip()
 		if(curLine == ""): break
 		if(curLine.startswith("#")): continue
-	
+
 		tokens = curLine.split()
 		if(len(tokens) < 2): continue
 		curKey = tokens[0].lower()
@@ -270,7 +270,7 @@ def loadDict(dictFile):
 		if(not wrd in cmuDict):
 			cmuDict[wrd] = []
 		cmuDict[wrd].append(curLine)
-			
+
 	return cmuDict
 """
 
@@ -299,7 +299,7 @@ def get_class( kls ):
     module = ".".join(parts[:-1])
     m = __import__( module )
     for comp in parts[1:]:
-        m = getattr(m, comp)            
+        m = getattr(m, comp)
     return m
 
 class Bin:
@@ -349,18 +349,18 @@ class string2(str):
 			ocu += 1
 			x = i + 1
 		return ocu
-	
+
 def word2syll(word, numSyll):
 	i = 0
 	textSyll = []
 	while(i < numSyll):
 		textSyll.append("")
 		i+=1
-	
+
 	numLetters = len(word)
 	try:
 		inc = int(numLetters/numSyll)
-		
+
 		curSyll = 0
 		unit = ""
 		curLetter = 1
@@ -372,19 +372,19 @@ def word2syll(word, numSyll):
 			curLetter += 1
 	except ZeroDivisionError:
 		return '<?>'
-			
+
 	return textSyll
 
 def dict_ksort(adict):
     items = adict.items()
     items.sort()
     return [value for key, value in items]
-		
+
 def product(*args):
     if not args:
         return iter(((),)) # yield tuple()
-    return (items + (item,) 
-            for items in product(*args[:-1]) for item in args[-1])	
+    return (items + (item,)
+            for items in product(*args[:-1]) for item in args[-1])
 
 
 
@@ -396,7 +396,7 @@ def valueToFeature(val):
 # return True if value is + and bool is True or value is - and bool is False
 def matchValue(bool, val):
 	return bool == (val[1] == '+')
-	
+
 def searchStringToList(str):
 	try:
 		from pyparsing import nestedExpr
@@ -417,28 +417,28 @@ class SearchTerm:
 	def __init__(self, termList):
 		if type(termList) == type(''):
 			termList = searchStringToList(termList)
-		
+
 		self.type = None
 		possibleType = termList[0]
 		if isTypeName(possibleType):
 			self.type = possibleType[:-1]
 			termList = termList[1:]
-			
+
 		self.terms = termList
 		if self.isAtomic():
 			return
-		
+
 		self.terms = []
 		for i in range(len(termList)):
 			term = termList[i]
 			self.terms.append(SearchTerm(term))
-			
+
 	def isAtomic(self):
 		return len(self.terms) == 1
-	
+
 	def __cmp__(self, other):
 		return cmp(id(self.terms), id(other.terms))
-		
+
 	def __hash__(self):
 		return id(self.terms)
 
@@ -478,7 +478,7 @@ def describe_func(obj, method=False):
 	# 		o+=['\t-Positional Args Param: %s' % arginfo[1]]
 	# 	if arginfo[2]:
 	# 		o+=['\t-Keyword Args Param: %s' % arginfo[2]]
-	
+
 	return o
 
 
@@ -496,7 +496,7 @@ def xls2ld(fn,header=[],sheetname=True,keymap={}):
 			In order to load Excel files, you need to install the xlrd python module. Run:
 			pip install xlrd
 			""")
-	
+
 	headerset=True if len(header) else False
 	f=xlrd.open_workbook(fn)
 	ld=[]
@@ -529,7 +529,7 @@ def xls2ld(fn,header=[],sheetname=True,keymap={}):
 		for sheetname in sheetnames:
 			sheet=f.sheet_by_name(sheetname)
 			for d in _boot_xls_sheet(sheet,header=header if headerset else []):
-				ld.append(d)			
+				ld.append(d)
 	else:
 		sheet = f.sheet_by_index(0)
 		ld.extend(_boot_xls_sheet(sheet,header=header if headerset else []))
@@ -562,11 +562,11 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 		f.close()
 	t=t.replace('\r\n','\n')
 	t=t.replace('\r','\n')
-	
+
 	#header=[]
 	listdict=[]
-	
-	
+
+
 	for line in t.split(nsep):
 		if not line.strip(): continue
 		line=line.replace('\n','')
@@ -586,7 +586,7 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 				#print "!! unknown column for i={0} and val={1}".format(i,ln[i])
 				continue
 			v=ln[i].strip()
-			
+
 			if k in keymap:
 				#print v, type(v)
 				v=keymap[k](v)
@@ -598,7 +598,7 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 					v=float(v)
 				except ValueError:
 					v=v
-			
+
 			if type(v) in [str,unicode] and not v:
 				if zero=='' and removeEmpties:
 					continue
@@ -616,48 +616,69 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 def product(*args):
 	if not args:
 		return iter(((),)) # yield tuple()
-	return (items + (item,) 
+	return (items + (item,)
 		for items in product(*args[:-1]) for item in args[-1])
 
-def writegen(fnfn,generator,header=None):
+def writegen(fnfn,generator,header=None,sep=','):
 	import codecs
 	of = codecs.open(fnfn,'w',encoding='utf-8')
+	header_written=False
 	for dx in generator():
-		if not header:
-			header=sorted(dx.keys())
-			of.write('\t'.join(header) + '\n')
+		if not header_written:
+			if not header:
+				if 'header' in dx:
+					header=dx['header']
+				else:
+					header=sorted(dx.keys())
+			of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
+			header_written=True
 
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
+			is_str = type(v) in [str,unicode]
+			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(dx.get(h,''))
+				o=unicode(v)
 			except UnicodeDecodeError:
-				o=dx.get(h,'').decode('utf-8',errors='ignore')
+				o=v.decode('utf-8',errors='ignore')
+			if is_str and v:
+				o='"'+o+'"'
 			vals+=[o]
 
-		
-		of.write('\t'.join(vals) + '\n')
 
-def writegengen(fnfn,generator,header=None):
+		of.write(sep.join(vals) + '\n')
+
+def writegengen(fnfn,generator,header=None,sep=','):
 	import codecs
 	of = codecs.open(fnfn,'w',encoding='utf-8')
+	header_written=False
 	for dx in generator():
-		if not header:
-			header=sorted(dx.keys())
-			of.write('\t'.join(header) + '\n')
+		if not header_written:
+			if not header:
+				if 'header' in dx:
+					header=dx['header']
+				else:
+					header=sorted(dx.keys())
+			of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
+			header_written=True
 
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
+			is_str = type(v) in [str,unicode]
+			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(dx.get(h,''))
+				o=unicode(v)
 			except UnicodeDecodeError:
-				o=dx.get(h,'').decode('utf-8',errors='ignore')
+				o=v.decode('utf-8',errors='ignore')
+			if is_str and v:
+				o='"'+o+'"'
+
 			vals+=[o]
 
-		
-		of.write('\t'.join(vals) + '\n')
+
+		of.write(sep.join(vals) + '\n')
 		yield dx
 
 
@@ -732,7 +753,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 			else:
 				newparse+=[s.upper()]
 		return '  '.join(newparse)
-	
+
 	def _writegen():
 		lines_iscorrect=[]
 		lines_iscorrect_control=[]
@@ -771,7 +792,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 				header=['','','']
 				for c in meter.constraints: header+=['[*'+c.name+']']
 				otf.write('\t'.join(header)+'\n')
-			
+
 			humans = [parse_human]
 			if parse_human2: humans+=[parse_human2]
 			for _i,_parses in enumerate(t.allParses()):
@@ -792,7 +813,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 
 
 
-			
+
 			parse_comp_dummy2 = ''.join(['w' if not i%2 else 's' for i in range(len(parse_comp))])
 			if key_meterscheme:
 				if d[key_meterscheme]=='iambic':
@@ -809,7 +830,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 				parse_comp_dummy=parse_comp_dummy2
 
 
-			
+
 			## sylls correct?
 			this_sylls_correct = get_num_sylls_correct(parse_human, parse_comp)
 			this_sylls_correct_dummy = get_num_sylls_correct(parse_human, parse_comp_dummy)
@@ -844,7 +865,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 				for x in w.stress:
 					parse_stress += ['w' if x=='U' else 's']
 			parse_stress=''.join(parse_stress)
-			
+
 
 			odx=d
 			odx['parse_human']=parse_human
@@ -896,7 +917,15 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 		print 'PERCENT SYLLABLES CORRECT:',round(perc_sylls_correct,2),'% [vs.',round(perc_sylls_correct_control,2),'% for control]'
 		print 'PERCENT LINES CORRECT:',round(perc_lines_correct,2),'% [vs.',round(perc_lines_correct_control,2),'% for control]'
 		print 'PERCENT LINES IN AVAILABLE NONBOUNDED PARSES:',round(perc_lines_correct_nonbound,2),'%'
-	
+
 	writegen(ofn, _writegen)
 
-	
+
+
+
+def ld2dld(ld,key='rownamecol'):
+	dld={}
+	for d in ld:
+		if not d[key] in dld: dld[d[key]]=[]
+		dld[d[key]]+=[d]
+	return dld

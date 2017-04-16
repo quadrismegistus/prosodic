@@ -183,6 +183,10 @@ class Parse(entity):
 			cc[constraint]=cn
 		return cc
 
+	@property
+	def num_sylls(self):
+		return sum(len(pos.slots) for pos in self.positions)
+
 	def score(self):
 		#if self.totalScore == None:
 		score = 0
@@ -193,7 +197,7 @@ class Parse(entity):
 			score += value
 		self.totalScore = score
 
-		return self.totalScore
+		return int(self.totalScore) if int(self.totalScore) == self.totalScore else self.totalScore
 
 	def __cmp__(self, other):
 		return cmp(self.score(), other.score())
@@ -231,9 +235,11 @@ class Parse(entity):
 
 	def str_ot(self):
 		ot=[]
-		ot+=[self.str_meter()]
-		for k,v in sorted(self.constraintScores.items()):
-			ot+=[str(v)]
+		#ot+=[self.str_meter()]
+		#for k,v in sorted(self.constraintScores.items()):
+		for c in self.constraints:
+			v=self.constraintScores[c]
+			ot+=[str(v) if int(v)!=float(v) else str(int(v))]
 		return "\t".join(ot)
 
 	def __report__(self,proms=False):

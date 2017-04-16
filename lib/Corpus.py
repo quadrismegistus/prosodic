@@ -89,18 +89,17 @@ class Corpus(entity):
 		def _writegen():
 			for text in self.children:
 				for dx in text.stats_lines(meter=meter):
-					dx['text']=text.name
-					#dx['corpus']=self.name
+					dx['header']=['text']+dx['header']
 					yield dx
 
-		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn
 
 	def isParsed(self):
 		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
-		return not (False in [hasattr(x,'_Text__bestparses') for x in self.children])
+		return not (False in [child.isParsed() for child in self.children])
 
 	def stats_lines_ot(self,meter=None,all_parses=False):
 		meter=self.get_meter(meter)
@@ -108,11 +107,12 @@ class Corpus(entity):
 		def _writegen():
 			for text in self.children:
 				for dx in text.stats_lines_ot(meter=meter):
-					dx['text']=text.name
+					#dx['text']=text.name
 					#dx['corpus']=self.name
+					dx['header']=['text']+dx['header']
 					yield dx
 
-		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.txt')
+		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn
@@ -123,11 +123,12 @@ class Corpus(entity):
 		def _writegen():
 			for text in self.children:
 				for dx in text.stats_positions(meter=meter,all_parses=all_parses):
-					dx['text']=text.name
-					dx['corpus']=self.name
+					#dx['text']=text.name
+					#dx['corpus']=self.name
+					dx['header']=['text']+dx['header']
 					yield dx
 
-		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.positions.txt')
+		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.positions.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn

@@ -102,6 +102,8 @@ class Meter:
 					if constraintFile[-3:] == ".py":
 						self.constraints.append(Constraint(i,os.path.join(constraints, constraintFile[:-3]),None,1))
 
+		self.constraints.sort(key=lambda _c: -_c.weight)
+
 	def maxS(self):
 		return self.posLimit[0]
 

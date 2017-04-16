@@ -71,7 +71,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-#parse_using_metrical_tree = True
+parse_using_metrical_tree = True
 ############################################
 
 
@@ -79,12 +79,12 @@ en_TTS_cache = 1
 # OPTIONS ABOUT PRINTING TO SCREEN
 #
 # Print loaded words, parses, etc. to screen:
-print_to_screen=0
+print_to_screen=True
 #
 # Do not print loaded words, parses, etc. to screen:
 # Although hiden, you may still save any output to disk
 # using the /save command.
-#print_to_screen=0
+#print_to_screen=False
 #
 # The default length for the line used by printing
 linelen=60

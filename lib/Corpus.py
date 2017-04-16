@@ -131,3 +131,7 @@ class Corpus(entity):
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn
+
+
+	def sentences(self):
+		return [sent for text in self.children for sent in text.sentences()]

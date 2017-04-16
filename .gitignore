@@ -36,6 +36,9 @@ nosetests.xml
 .project
 .pydevproject
 
+metricaltree/Stanford Library
+metricaltree/Text Book
+metricaltree/Pickle Jar
 results/
 corpora/*
 !corpora/corppoetry_fi/

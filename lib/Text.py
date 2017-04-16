@@ -39,6 +39,7 @@ class Text(entity):
 		self.dir_mtree = prosodic.dir_mtree
 		self.config=prosodic.config
 		self.meter=self.config['meters'][meter] if meter and meter in self.config['meters'] else None
+		self._sentences=[]
 		#self.meterd={]}
 
 
@@ -74,6 +75,8 @@ class Text(entity):
 		self.children = [stanza for stanza in self.children if not stanza.empty()]
 		for stanza in self.children: stanza.children = [line for line in stanza.children if not line.empty()]
 
+	def sentences(self):
+		return self._sentences
 
 	def set_lang(self,filename):
 		filename=os.path.basename(filename)
@@ -293,21 +296,37 @@ class Text(entity):
 	def parse_mtree(self):
 		if self.lang!='en': raise Exception("MetricalTree parsing only works currently for English text.")
 
-		#import metricaltree as mtree
-		#mtree.set_paths(self.dir_mtree)
+		import metricaltree as mtree
+		mtree.set_paths(self.dir_mtree)
 
 		wordtoks = self.wordtokens()
 		toks = [wtok.token for wtok in wordtoks]
 		sents = mtree.split_sentences_from_tokens(toks)
 		parser = mtree.return_parser(self.dir_mtree)
-		trees = parser.lex_parse_sents(sents, verbose=False)
+		trees = list(parser.lex_parse_sents(sents, verbose=False))
 		stats = parser.get_stats(trees,arto=True,format_pandas=False)
 		assert len(stats)==len(wordtoks)
 
 		sents = []
+		sent = []
+		sent_id=None
 		for wTok,wStat in zip(wordtoks,stats):
+			if sent_id!=wStat['sidx']:
+				sent_id=wStat['sidx']
+				if sent: sents+=[sent]
+				sent=[]
+
+			sent+=[wTok]
 			for k,v in wStat.items():
 				setattr(wTok,k,v)
+
+		if sent: sents+=[sent]
+		assert len(sents) == len(trees)
+
+		from Sentence import Sentence
+		for sent,tree in zip(sents,trees):
+			sentobj = Sentence(sent, tree)
+			self._sentences+=[sentobj]
 
 
 

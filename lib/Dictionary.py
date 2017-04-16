@@ -480,6 +480,10 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		word.stress=stress
 		word.lang=self.lang
 
+		# when is word broken?
+		if not word.ipa:
+			word.broken=True
+
 
 		return word
 

@@ -106,7 +106,7 @@ def get(token,config={}):
 				if not res in results:
 					results+=[res]
 					iselision+=[True]
-	
+
 	toreturn = [(a,b,{'is_elision':c}) for ((a,b),c) in zip(results,iselision)]
 
 	# Return the results to the dictionary
@@ -122,7 +122,7 @@ def add_elisions(_ipa):
 	# e.g. tower, hour, bower, etc
 	replace[u'aʊ.ɛː']=u'aʊr'
 
-	
+
 	# -INOUS
 	# e.g. ominous, etc
 	replace[u'ə.nəs']=u'nəs'
@@ -130,7 +130,7 @@ def add_elisions(_ipa):
 	# -EROUS
 	# e.g. ponderous, adventurous
 	replace[u'ɛː.əs']=u'rəs'
-	
+
 	# -IA-
 	# e.g. plutonian, indian, assyrian, idea, etc
 	replace[u'iː.ə']=u'jə'
@@ -196,7 +196,10 @@ def add_elisions(_ipa):
 def espeak2ipa(token):
 	CMD='espeak -q -x '+token
 	#print CMD
-	return subprocess.check_output(CMD.split()).strip()
+	try:
+		return subprocess.check_output(CMD.split()).strip()
+	except OSError:
+		return None
 
 def tts2ipa(token,TTS_ENGINE=None):
 	if TTS_ENGINE=='espeak':
@@ -288,7 +291,11 @@ def syllabify_orth(token,num_sylls=None):
 ### OPEN MARY
 
 def openmary2ipa(word):
-	wordxml=openmary(word)
+	import urllib2
+	try:
+		wordxml=openmary(word)
+	except urllib2.URLError:
+		return None
 	sylls=[]
 	for syll in wordxml.find_all('syllable'):
 		syllstr="'" if syll.get('stress',None) else ""
@@ -327,7 +334,7 @@ def openmary(line):
 	line=unidecode(line)
 	#print '>> openmary:',line
 	#print
-	
+
 
 	def urlEncodeNonAscii(b):
 		return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
@@ -362,10 +369,10 @@ def openmary(line):
 	f=urllib2.urlopen(iriToUri(link))
 	t=f.read()
 	f.close()
-	
+
 	### OPEN MARY CLEANING OPERATIONS
 	xml=bs4.BeautifulSoup(t,'html.parser')
-	
+
 	## fix word string problem
 	for word in xml.find_all('t'): word['token']=word.text.strip()
 
@@ -380,7 +387,6 @@ def openmary(line):
 					word1.find_all('syllable')[-1]['ph']+=' '+phones2add
 					word1['token']+=w2text
 					word2.decompose()
-	
-	
-	return xml
 
+
+	return xml

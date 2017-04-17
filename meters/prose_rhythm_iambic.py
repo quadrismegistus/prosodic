@@ -182,7 +182,7 @@ Cs['strength.w=>-p']=1000
 #Cs['phrasal_head.s=>-u']=10
 #
 # A strong metrical position should not contain any heads of phrases:
-Cs['phrasal_head.w=>-p']=1
+#Cs['phrasal_head.w=>-p']=1
 #
 ###
 # [Laxer versions:]
@@ -192,6 +192,7 @@ Cs['phrasal_head.w=>-p']=1
 #
 # A weak metrical position must contain at least one phrasal head;
 #Cs['phrasal_head.w=>u']=2
+#
 #
 #
 #######
@@ -216,7 +217,7 @@ Cs['phrasal_head.w=>-p']=1
 #Cs['phrasal_strength.s=>-u']=10
 #
 # A weak metrical position should not contain any phrasally strong syllables:
-Cs['phrasal_strength.w=>-p']=1
+#Cs['phrasal_strength.w=>-p']=1
 #
 ###
 # [Laxer versions:]
@@ -236,13 +237,18 @@ Cs['phrasal_strength.w=>-p']=1
 # to each word in the sentence, representing least (0) to most (1) stressed. Please
 # see Tim Dozat's MetricalTree <https://github.com/tdozat/Metrics/> for more information.
 #
-# Because most words have *some* phrasal stress, a word is considered phrasally stressed
-# if its numeric value is greater than 0.5; otherwise, it is considered phrasally unstressed.
-# (This can be changed in MeterConstraint.py, around line 121).
-#
 # Constraint weights are multiplied against the numeric value; so if phrasally stressed syllables
 # are prohibited, and that constraint's weight is "10", and the violating word has a phrasal
 # stress value of 0.75, then the resulting violation score would be 10 * 0.75 = 7.5.
+#
+###
+# [Threshold for phrasal stress]
+#
+# Because most words have *some* phrasal stress, a word is considered phrasally stressed
+# if its numeric value is greater than what is defined here; otherwise, it is considered
+# phrasally unstressed. Default = 0.5, i.e., above the half-most stressed word in sentence.
+Cs['phrasal_stress_threshold']=0.5
+#
 #
 ###
 # [Stricter versions:]
@@ -251,7 +257,7 @@ Cs['phrasal_strength.w=>-p']=1
 #Cs['phrasal_stress.s=>-u']=10
 #
 # A weak metrical position should not contain any phrasally stressed syllables:
-#Cs['phrasal_stress.w=>-p']=1
+Cs['phrasal_stress.w=>-p']=1
 #
 ###
 # [Laxer versions:]

@@ -71,17 +71,18 @@ class Meter:
 		self.splitheavies=config['splitheavies']
 		self.name=config.get('name','')
 		self.id = config['id']
+		self.config=config
 		import prosodic
-		self.config=prosodic.config
+		self.prosodic_config=prosodic.config
 
 		if not constraints:
-			self.constraints.append(Constraint(0,"foot-min",None,1))
-			self.constraints.append(Constraint(1,"strength.s=>p",None,1))
-			self.constraints.append(Constraint(2,"strength.w=>u",None,1))
-			self.constraints.append(Constraint(3,"stress.s=>p",None,1))
-			self.constraints.append(Constraint(4,"stress.w=>u",None,1))
-			self.constraints.append(Constraint(5,"weight.s=>p",None,1))
-			self.constraints.append(Constraint(6,"weight.w=>u",None,1))
+			self.constraints.append(Constraint(id=0,name="foot-min",weight=1,meter=self))
+			self.constraints.append(Constraint(id=1,name="strength.s=>p",weight=1,meter=self))
+			self.constraints.append(Constraint(id=2,name="strength.w=>u",weight=1,meter=self))
+			self.constraints.append(Constraint(id=3,name="stress.s=>p",weight=1,meter=self))
+			self.constraints.append(Constraint(id=4,name="stress.w=>u",weight=1,meter=self))
+			self.constraints.append(Constraint(id=5,name="weight.s=>p",weight=1,meter=self))
+			self.constraints.append(Constraint(id=6,name="weight.w=>u",weight=1,meter=self))
 
 		elif type(constraints) == type([]):
 			for i in range(len(constraints)):
@@ -93,14 +94,16 @@ class Meter:
 				else:
 					cname=c
 					cweight=1.0
-				self.constraints.append(Constraint(i,cname,None,cweight))
+				self.constraints.append(Constraint(id=i,name=cname,weight=cweight,meter=self))
+		"""
 		else:
 			if os.path.exists(constraints):
 				constraintFiles = os.listdir(constraints)
 				for i in range(len(constraintFiles)):
 					constraintFile = constraintFiles[i]
 					if constraintFile[-3:] == ".py":
-						self.constraints.append(Constraint(i,os.path.join(constraints, constraintFile[:-3]),None,1))
+						self.constraints.append(Constraint(id=i,name=os.path.join(constraints, constraintFile[:-3]),weight=1))
+		"""
 
 		self.constraints.sort(key=lambda _c: -_c.weight)
 
@@ -116,8 +119,8 @@ class Meter:
 	def genWordMatrix(self,wordtokens):
 		wordlist = [w.children for w in wordtokens]
 
-		import prosodic
-		if prosodic.config['resolve_optionality']:
+		#import prosodic
+		if self.prosodic_config['resolve_optionality']:
 			return list(product(*wordlist))	# [ [on, the1, ..], [on, the2, etc]
 		else:
 			return [ [ w[0] for w in wordlist ] ]
@@ -192,7 +195,7 @@ class Meter:
 
 
 	def parse(self,wordlist,numSyll=0,numTopBounded=10):
-		numTopBounded = self.config.get('num_bounded_parses_to_store',numTopBounded)
+		numTopBounded = self.prosodic_config.get('num_bounded_parses_to_store',numTopBounded)
 		#print '>> NTB!',numTopBounded
 		from Parse import Parse
 		if not numSyll:

@@ -334,8 +334,6 @@ class Text(entity):
 			for k,v in wStat.items():
 				if k in mtree.INFO_DO_NOT_STORE: continue
 				wTok.feats[k]=v
-			
-
 
 		if sent: sents+=[sent]
 		assert len(sents) == len(trees)
@@ -344,6 +342,10 @@ class Text(entity):
 		for sent,tree in zip(sents,trees):
 			sentobj = Sentence(sent, tree)
 			self._sentences+=[sentobj]
+
+
+	def grid(self,nspace=10):
+		return '\n\n'.join(sent.grid(nspace=nspace) for sent in self.sentences())
 
 
 

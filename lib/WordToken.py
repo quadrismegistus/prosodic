@@ -18,6 +18,15 @@ class WordToken(entity):
     @property
     def phrasal_stress(self):
         import numpy as np
-        if not hasattr(self,'norm_mean'): return None
-        if np.isnan(self.norm_mean): return None
-        return self.norm_mean
+        ps=self.feats.get('norm_mean',None)
+        #if ps: return None
+        if np.isnan(ps): return None
+        return ps
+
+    @property
+    def phrasal_stress_mean(self):
+        import numpy as np
+        ps=self.feats.get('mean',None)
+        #if not ps: return None
+        if np.isnan(ps): return None
+        return ps

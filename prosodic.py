@@ -127,6 +127,7 @@ else:	## if not imported, go into interactive mode
 		if obj:
 
 			msg+="\t\t/show\tshow annotations on input\n"
+			if config.get('parse_using_metrical_tree',False): msg+="\t\t/grid\tsee stress grids\n"
 			msg+="\t\t/tree\tsee phonological structure\n"
 			msg+="\t\t/query\tquery annotations\n\n"
 
@@ -250,8 +251,13 @@ else:	## if not imported, go into interactive mode
 
 
 		elif text=="/tree":
-			obj.om(obj.tree()+"\n\n")
-			print obj.tree()
+			obj.om(obj.tree()+"\n\n",conscious=False)
+			#print obj.tree()
+			print
+
+		elif text=="/grid":
+			grid=obj.grid()
+			obj.om("\n"+grid+"\n",conscious=False)
 			print
 
 		elif text=="/show":
@@ -323,7 +329,7 @@ else:	## if not imported, go into interactive mode
 							matchstr=""
 						else:
 							matchstr=str(match)
-						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr)
+						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr, conscious=False)
 
 			cmd = q
 

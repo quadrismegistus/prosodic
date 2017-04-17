@@ -117,6 +117,14 @@ class Corpus(entity):
 		for dx in writegengen(ofn, _writegen): yield dx
 		print '>> saved:',ofn
 
+	def grid(self,nspace=10):
+		grid=[]
+		for text in self.children:
+			textgrid=text.grid(nspace=nspace)
+			if textgrid:
+				grid+=['## TEXT: '+text.name+'\n\n'+textgrid]
+		return '\n\n\n'.join(grid)
+
 
 	def stats_positions(self,meter=None,all_parses=False):
 

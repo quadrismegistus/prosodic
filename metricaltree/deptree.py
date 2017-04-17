@@ -275,7 +275,7 @@ class DependencyTreeParser(ParserI):
     # Initialize
     def __init__(self,  path_to_jar=None, path_to_models_jar=None, path_to_ejml_jar=None, model_path='edu/stanford/nlp/models/parser/lexparser/englishPCFG.ser.gz', encoding='utf8', verbose=False, java_options='-mx3G'):
         """"""
-        
+
         self._stanford_jar = find_jar(
           self._JAR, path_to_jar,
           env_vars=('STANFORD_PARSER',),

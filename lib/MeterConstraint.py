@@ -1,9 +1,12 @@
 import os,tools
 
+PSTRESS_THRESH_DEFAULT = 0.5
+
 class MeterConstraint:
-	def __init__(self,id=None,name=None,logic=None,weight=1):
+	def __init__(self,id=None,name=None,logic=None,weight=1,meter=None):
 		self.id=id
 		self.constr = None
+		self.meter=meter
 		if not name:
 			self.name=id
 		else:
@@ -118,7 +121,13 @@ class MeterConstraint:
 
 					#if type(promSite_prom)==type(True):
 					#	slot_prom=bool(slot_prom)
-					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom>0.5
+					pstress_thresh=self.meter.config.get('phrasal_stress_threshold',PSTRESS_THRESH_DEFAULT)
+					try:
+						pstress_thresh=float(pstress_thresh)
+					except ValueError:
+						pstress_thresh=PSTRESS_THRESH_DEFAULT
+
+					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom>pstress_thresh
 					if bool_prom_type == promSite_prom:
 						numtrue+=float(slot_prom)
 						#return self.weight

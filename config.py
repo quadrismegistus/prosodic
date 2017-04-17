@@ -79,7 +79,7 @@ parse_using_metrical_tree = True
 # OPTIONS ABOUT PRINTING TO SCREEN
 #
 # Print loaded words, parses, etc. to screen:
-print_to_screen=False
+print_to_screen=True
 #
 # Do not print loaded words, parses, etc. to screen:
 # Although hiden, you may still save any output to disk

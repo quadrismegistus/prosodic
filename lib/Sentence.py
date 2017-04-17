@@ -1,4 +1,5 @@
 from entity import entity,being
+from tools import makeminlength
 
 
 class Sentence(entity):
@@ -15,11 +16,12 @@ class Sentence(entity):
         for wtok,preterm in zip(wordtokens,preterminals):
             wtok.preterminal=preterm
             preterm.wordtoken = wtok
-            wTok.feats['phrasal_stress']=wTok.feats['norm_mean']
+            wtok.feats['phrasal_stress']=wtok.phrasal_stress
 
         for i2,w2 in enumerate(self.children):
             w1=self.children[i2-1] if i2 else None
             w3=self.children[i2+1] if (i2+1)<len(self.children) else None
+            #print w1.phrasal_stress if w1 else None, w2.phrasal_stress if w2 else None, w3.phrasal_stress if w3 else None
             if w2.phrasal_stress is None: continue
 
             if w1 and w1.phrasal_stress!=None and w1.phrasal_stress < w2.phrasal_stress:
@@ -36,6 +38,92 @@ class Sentence(entity):
 
     def __repr__(self):
 		return "<"+self.classname()+":"+' '.join([self.u2s(wtok.token) for wtok in self.children])+">"
+
+    @property
+    def token(self):
+        x=[]
+        for i,wtok in enumerate(self.children):
+            if wtok.is_punct and x:
+                x[-1]+=wtok.token
+            else:
+                x+=[wtok.token]
+        return u' '.join(x)
+
+    def grid(self,nspace=10):
+        lines=[]
+
+        # word line
+        line_words=[]
+        for i,wtok in enumerate(self.children):
+            if wtok.is_punct: continue
+            line_words+=[makeminlength(wtok.token,nspace)]
+        line_words = ' '.join(line_words)
+
+        # grid lines
+        import math,numpy as np
+        grid_lines=[]
+        max_grid = max([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
+        for line_num in range(1,int(math.ceil(max_grid))+1):
+            grid_line=[]
+            for i,wtok in enumerate(self.children):
+                if wtok.is_punct: continue
+                mark = 'X' if wtok.phrasal_stress_mean!=None and wtok.phrasal_stress_mean<=line_num else ''
+                grid_line+=[makeminlength(mark,nspace)]
+            grid_lines+=[' '.join(grid_line)]
+
+        # lines data
+        data_lines=[]
+        for datak in ['mean','norm_mean','phrasal_stress_peak','phrasal_head']:
+            data_line=[]
+            for i,wtok in enumerate(self.children):
+                if wtok.is_punct: continue
+
+                v=wtok.feats.get(datak,'')
+
+                if v==None:
+                    v=''
+                elif type(v) in [float]:
+                    if np.isnan(v):
+                        v=''
+                    else:
+                        v=round(v,1)
+                elif v in [True,False]:
+                    v='+' if v else '-'
+
+                if datak == 'phrasal_stress_peak':
+                    v2=wtok.feats.get('phrasal_stress_valley')
+                    if v2 and v:
+                        v=v+'/-'
+                    elif v2 and not v:
+                        v='-'
+
+                mark = str(v)
+
+                data_line+=[makeminlength(mark,nspace)]
+            datak_name = datak
+            if datak=='mean': datak_name='stress rank'
+            if datak=='norm_mean': datak_name='stress norm'
+            if datak=='phrasal_stress_peak': datak_name='peak/valley'
+            if datak=='phrasal_head': datak_name='head/foot'
+            data_line+=[makeminlength('('+datak_name+')',nspace)]
+            data_lines+=[' '.join(data_line)]
+
+        #grid_lines.insert(0,line_words)
+
+        grid_lines.append(line_words)
+        grid_lines.append('')
+        grid_lines.extend(data_lines)
+
+        maxlength = max([len(l) for l in grid_lines])
+
+        hdrftr='#' * maxlength
+        hdr='STRESS GRID: '+self.token
+        #grid_lines.insert(0,self.token)
+        grid_lines.insert(0,hdr)
+        grid_lines.insert(0,hdrftr)
+        grid_lines.append(hdrftr)
+
+        return '\n'.join(grid_lines)
 
 
 
@@ -54,5 +142,6 @@ def find_phrasal_heads(tree):
                     print subtree[-1]
                     print
                     """
-                    subtree[sti].wordtoken.feats['phrasal_head']=False
+                    if hasattr(subtree[sti],'wordtoken'):
+                        subtree[sti].wordtoken.feats['phrasal_head']=False
             find_phrasal_heads(subtree)

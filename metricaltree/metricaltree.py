@@ -85,6 +85,18 @@ def pause_splitter(s):
     s = [sent for sents in s for sent in sent_splitter.tokenize(sents)]
     return s
 
+def pause_splitter_tokens(tokens,split_by={':',';','--'}):
+    """"""
+    sents=[]
+    sent=[]
+    for tok in tokens:
+        sent+=[tok]
+        if tok in split_by:
+            if sent: sents+=[sent]
+            sent=[]
+    if sent: sents+=[sent]
+    return sents
+
 def split_sentences_from_tokens(l):
     return sent_splitter.sentences_from_tokens(l)
 

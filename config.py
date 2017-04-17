@@ -157,10 +157,10 @@ line_headedness='ws'
 # to split it into a list of words.
 #
 # Words are tokenized against [^] white-spaces [\s+] and hyphens [-]
-tokenizer='[^\s+-]+'
+#tokenizer='[^\s+-]+'
 #
 # Words are tokenized against [^] white-spaces [\s+]
-#tokenizer='[^\s+]+'
+tokenizer='[^\s+]+'
 #
 ######
 # [Resolving stress ambiguity]

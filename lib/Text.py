@@ -270,11 +270,15 @@ class Text(entity):
 
 			## [loop] words
 			for toknum,tok in enumerate(toks):
-				(tok,punct) = gleanPunc(tok)
+				#(tok,punct) = gleanPunc(tok)
+				(punct0,tok,punct) = gleanPunc2(tok)
 
 				if stanza.finished: stanza = self.newchild()
 				if line.finished: line = stanza.newchild()
 
+				if punct0:
+					wordtok=WordToken([],token=punct0,is_punct=True, line = line)
+					line.newchild(wordtok)
 
 				if tok:
 					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
@@ -312,7 +316,13 @@ class Text(entity):
 
 		wordtoks = self.wordtokens()
 		toks = [wtok.token for wtok in wordtoks]
-		sents = mtree.split_sentences_from_tokens(toks)
+
+		pauses = mtree.pause_splitter_tokens(toks)
+
+		#sents = [sent for pause in pauses for sent in pause]
+		sents=[]
+		for pause in pauses:
+			sents.extend(mtree.split_sentences_from_tokens(pause))
 		parser = mtree.return_parser(self.dir_mtree)
 		trees = list(parser.lex_parse_sents(sents, verbose=False))
 		stats = parser.get_stats(trees,arto=True,format_pandas=False)

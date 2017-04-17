@@ -278,14 +278,14 @@ class Text(entity):
 
 				if tok:
 					newwords=self.dict.get(tok,stress_ambiguity=self.stress_ambiguity)
-					wordtok = WordToken(newwords,token=tok,is_punct=False)
+					wordtok = WordToken(newwords,token=tok,is_punct=False, line = line)
 					line.newchild(wordtok)
 					numwords+=1
 
 					self.om(str(numwords).zfill(6)+"\t"+str(newwords[0].output_minform()))
 
 				if punct:
-					wordtok=WordToken([],token=punct,is_punct=True)
+					wordtok=WordToken([],token=punct,is_punct=True, line = line)
 					line.newchild(wordtok)
 
 				if punct and len(line.children) and self.phrasebreak != 'line':
@@ -342,6 +342,16 @@ class Text(entity):
 		for sent,tree in zip(sents,trees):
 			sentobj = Sentence(sent, tree)
 			self._sentences+=[sentobj]
+
+		# create a normalized stress per line
+		import numpy as np
+		for line in self.lines():
+			wtoks = line.children
+			stresses = [wtok.feats['norm_mean'] for wtok in wtoks if not np.isnan(wtok.feats['norm_mean'])]
+			max_stress = float(max(stresses))
+			min_stress = float(min(stresses))
+			for wtok in wtoks:
+				wtok.feats['norm_mean_line']=(wtok.feats['norm_mean']-min_stress)/(max_stress-min_stress) if max_stress else np.nan
 
 
 	def grid(self,nspace=10):

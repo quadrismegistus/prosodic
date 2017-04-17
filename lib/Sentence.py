@@ -16,7 +16,7 @@ class Sentence(entity):
         for wtok,preterm in zip(wordtokens,preterminals):
             wtok.preterminal=preterm
             preterm.wordtoken = wtok
-            wtok.feats['phrasal_stress']=wtok.phrasal_stress
+            #wtok.feats['phrasal_stress']=wtok.phrasal_stress
 
         for i2,w2 in enumerate(self.children):
             w1=self.children[i2-1] if i2 else None
@@ -49,81 +49,101 @@ class Sentence(entity):
                 x+=[wtok.token]
         return u' '.join(x)
 
-    def grid(self,nspace=10):
+    def lines(self):
+        ## Resolve sentence back into lines in original text
         lines=[]
+        lastLine=None
+        for wtok in self.children:
+            if wtok.line!=lastLine:
+                lastLine=wtok.line
+                lines+=[wtok.line]
+        return lines
 
-        # word line
-        line_words=[]
-        for i,wtok in enumerate(self.children):
-            if wtok.is_punct: continue
-            line_words+=[makeminlength(wtok.token,nspace)]
-        line_words = ' '.join(line_words)
+    def grid(self,nspace=10):
 
-        # grid lines
-        import math,numpy as np
-        grid_lines=[]
-        max_grid = max([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
-        for line_num in range(1,int(math.ceil(max_grid))+1):
-            grid_line=[]
-            for i,wtok in enumerate(self.children):
+
+
+        GRID_LINES=[]
+
+        for LINE in self.lines():
+
+            # word line
+            line_words=[]
+            for i,wtok in enumerate(LINE.children):
                 if wtok.is_punct: continue
-                mark = 'X' if wtok.phrasal_stress_mean!=None and wtok.phrasal_stress_mean<=line_num else ''
-                grid_line+=[makeminlength(mark,nspace)]
-            grid_lines+=[' '.join(grid_line)]
+                line_words+=[makeminlength(wtok.token,nspace)]
+            line_words = ' '.join(line_words)
 
-        # lines data
-        data_lines=[]
-        for datak in ['mean','norm_mean','phrasal_stress_peak','phrasal_head']:
-            data_line=[]
-            for i,wtok in enumerate(self.children):
-                if wtok.is_punct: continue
+            # grid lines
+            import math,numpy as np
+            grid_lines=[]
+            max_grid = max([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
+            min_grid = min([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
+            #for line_num in range(int(math.ceil(min_grid))+1,int(math.ceil(max_grid))+1):
+            for line_num in range(1,int(math.ceil(max_grid))+1):
+                grid_line=[]
+                for i,wtok in enumerate(LINE.children):
+                    if wtok.is_punct: continue
+                    mark = 'X' if wtok.phrasal_stress_mean!=None and wtok.phrasal_stress_mean<=line_num else ''
+                    grid_line+=[makeminlength(mark,nspace)]
+                grid_lines+=[' '.join(grid_line)]
 
-                v=wtok.feats.get(datak,'')
+            # lines data
+            data_lines=[]
+            for datak in ['mean','norm_mean','norm_mean_line','phrasal_stress_peak','phrasal_head']:
+                data_line=[]
+                for i,wtok in enumerate(LINE.children):
+                    if wtok.is_punct: continue
 
-                if v==None:
-                    v=''
-                elif type(v) in [float]:
-                    if np.isnan(v):
+                    v=wtok.feats.get(datak,'')
+
+                    if v==None:
                         v=''
-                    else:
-                        v=round(v,1)
-                elif v in [True,False]:
-                    v='+' if v else '-'
+                    elif type(v) in [float]:
+                        if np.isnan(v):
+                            v=''
+                        else:
+                            v=round(v,1)
+                    elif v in [True,False]:
+                        v='+' if v else '-'
 
-                if datak == 'phrasal_stress_peak':
-                    v2=wtok.feats.get('phrasal_stress_valley')
-                    if v2 and v:
-                        v=v+'/-'
-                    elif v2 and not v:
-                        v='-'
+                    if datak == 'phrasal_stress_peak':
+                        v2=wtok.feats.get('phrasal_stress_valley')
+                        if v2 and v:
+                            v=v+'/-'
+                        elif v2 and not v:
+                            v='-'
 
-                mark = str(v)
+                    mark = str(v)
 
-                data_line+=[makeminlength(mark,nspace)]
-            datak_name = datak
-            if datak=='mean': datak_name='stress rank'
-            if datak=='norm_mean': datak_name='stress norm'
-            if datak=='phrasal_stress_peak': datak_name='peak/valley'
-            if datak=='phrasal_head': datak_name='head/foot'
-            data_line+=[makeminlength('('+datak_name+')',nspace)]
-            data_lines+=[' '.join(data_line)]
+                    data_line+=[makeminlength(mark,nspace)]
+                datak_name = datak
+                if datak=='mean': datak_name='stress [sent rank]'
+                if datak=='norm_mean': datak_name='stress [sent norm]'
+                if datak=='norm_mean_line': datak_name='stress [line norm]'
+                if datak=='phrasal_stress_peak': datak_name='peak/valley'
+                if datak=='phrasal_head': datak_name='head/foot'
+                data_line+=[makeminlength('('+datak_name+')',nspace)]
+                data_lines+=[' '.join(data_line)]
 
-        #grid_lines.insert(0,line_words)
+            #grid_lines.insert(0,line_words)
 
-        grid_lines.append(line_words)
-        grid_lines.append('')
-        grid_lines.extend(data_lines)
+            grid_lines.append(line_words)
+            grid_lines.append('')
+            grid_lines.extend(data_lines)
 
-        maxlength = max([len(l) for l in grid_lines])
+            maxlength = max([len(l) for l in grid_lines])
 
-        hdrftr='#' * maxlength
-        hdr='STRESS GRID: '+self.token
-        #grid_lines.insert(0,self.token)
-        grid_lines.insert(0,hdr)
-        grid_lines.insert(0,hdrftr)
-        grid_lines.append(hdrftr)
+            hdrftr='#' * maxlength
+            hdr='STRESS GRID: '+LINE.txt
+            #grid_lines.insert(0,self.token)
+            grid_lines.insert(0,hdr)
+            grid_lines.insert(0,hdrftr)
+            grid_lines.append(hdrftr)
 
-        return '\n'.join(grid_lines)
+            GRID_LINES+=['\n'.join(grid_lines)]
+
+        return '\n\n'.join(GRID_LINES)
 
 
 

@@ -2,12 +2,13 @@ from entity import entity,being
 
 
 class WordToken(entity):
-    def __init__(self,words,token,is_punct=False,sentence=None):
+    def __init__(self,words,token,is_punct=False,sentence=None,line=None):
         self.children=words
         self.token=token
         self.is_punct=is_punct
         self.sentence=None
         self.feats={}
+        self.line=line
 
     def __getitem__(self,key):
         return self.children[key]
@@ -19,6 +20,14 @@ class WordToken(entity):
     def phrasal_stress(self):
         import numpy as np
         ps=self.feats.get('norm_mean',None)
+        #if ps: return None
+        if np.isnan(ps): return None
+        return ps
+
+    @property
+    def phrasal_stress_line(self):
+        import numpy as np
+        ps=self.feats.get('norm_mean_line',None)
         #if ps: return None
         if np.isnan(ps): return None
         return ps

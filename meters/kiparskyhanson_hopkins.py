@@ -250,6 +250,15 @@ Cs['stress.s=>-u']=1
 Cs['phrasal_stress_threshold']=0.5
 #
 #
+# Should the above threshold be computed across the sentence, or the line? If this is 'sentence',
+# then the above number (say, 0.5) refers to the half-most stressed word in *sentence.* If 'line',
+# then it refers to the half-most stressed word in the poetic *line.*
+#
+Cs['phrasal_stress_norm_context_is_line']=1
+#Cs['phrasal_stress_norm_context_is_sentence']=1
+#
+#
+#
 ###
 # [Stricter versions:]
 #

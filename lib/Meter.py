@@ -142,7 +142,7 @@ class Meter:
 					syllnum+=1
 					id+=1
 					wordpos=(syllnum+1,len(word.children))
-					slot=Slot(id, unit, word.sylls_text[syllnum], wordpos, word, i_word=wordnum, i_syll_in_word=syllnum,wordtoken=row_wordtokens[wordnum])
+					slot=Slot(id, unit, word.sylls_text[syllnum], wordpos, word, i_word=wordnum, i_syll_in_word=syllnum,wordtoken=row_wordtokens[wordnum], meter=self)
 					unitlist.append(slot)
 
 			if not self.splitheavies:

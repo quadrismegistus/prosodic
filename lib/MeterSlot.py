@@ -1,6 +1,6 @@
 from entity import entity
 class MeterSlot(entity):
-	def __init__(self,i,unit,token,wordpos,word,i_word=0,i_syll_in_word=0,wordtoken=None):
+	def __init__(self,i,unit,token,wordpos,word,i_word=0,i_syll_in_word=0,wordtoken=None,meter=None):
 		self.i=i					# eg, could be one of 0-9 for a ten-syllable line
 		self.children=[unit]
 		self.token=token
@@ -11,6 +11,7 @@ class MeterSlot(entity):
 		self.i_word=i_word
 		self.i_syll_in_word=i_syll_in_word
 		self.wordtoken=wordtoken
+		self.meter=meter
 
 		#self.feat('slot.wordpos',wordpos)
 		self.feat('prom.stress',unit.feature('prom.stress'))
@@ -45,7 +46,11 @@ class MeterSlot(entity):
 	def phrasal_stress(self):
 		if not self.wordtoken: return None
 		if self.word.numSyll>1 and self.stress != 'P': return None
-		return self.wordtoken.phrasal_stress
+
+		if self.meter.config.get('phrasal_stress_norm_context_is_sentence',0):
+			return self.wordtoken.phrasal_stress
+		else:
+			return self.wordtoken.phrasal_stress_line
 
 
 	def str_meter(self):

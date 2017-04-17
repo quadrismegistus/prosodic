@@ -4,7 +4,7 @@
 #
 #
 # Set the long-form name of this meter
-name = "Prose Rhythm Class, Iambic Meter"
+name = "Prose Rhythm Class, Iambic Meter, with Inviolable Constraints"
 #
 # [Do not remove or uncomment the following line]
 Cs={}
@@ -26,7 +26,7 @@ Cs={}
 #Cs['number_feet!=2'] = 1       # require dimeter
 #Cs['number_feet!=3'] = 1       # require trimeter
 #Cs['number_feet!=4'] = 1       # require tetrameter
-Cs['number_feet!=5'] = 10        # require pentameter
+Cs['number_feet!=5'] = 1000        # require pentameter
 #Cs['number_feet!=6'] = 1       # require hexameter
 #Cs['number_feet!=7'] = 1       # require heptameter
 #
@@ -35,7 +35,7 @@ Cs['number_feet!=5'] = 10        # require pentameter
 # [Headedness of the line]
 #
 #Cs['headedness!=falling'] = 1  # require a falling rhythm (e.g. trochaic, dactylic)
-Cs['headedness!=rising'] = 10    # require a rising rhythm (e.g., iambic, anapestic)
+Cs['headedness!=rising'] = 1000    # require a rising rhythm (e.g., iambic, anapestic)
 #
 ############################################
 
@@ -103,7 +103,7 @@ splitheavies=0
 #
 # A weak metrical position may not contain any strong syllables ("peaks"):
 # [Kiparsky and Hanson believe this is Shakespeare's meter]
-Cs['strength.w=>-p']=100
+Cs['strength.w=>-p']=1000
 #
 ###
 # [Laxer versions:]
@@ -292,7 +292,7 @@ Cs['phrasal_stress.w=>-p']=1
 #
 # A disyllabic STRONG metrical position should not contain more than a minimal foot:
 # (i.e. allowed positions are syllables weighted light-light or light-heavy)
-Cs['footmin-s-noHX']=10
+Cs['footmin-s-noHX']=1000
 #
 # A disyllabic metrical position should be syllables weighted light-light:
 #Cs['footmin-noLH-noHX']=1
@@ -344,7 +344,7 @@ Cs['footmin-s-noHX']=10
 #Cs['footmin-wordbound']=1000
 #
 # ...both words should be function words:
-Cs['footmin-wordbound-bothnotfw']=10
+Cs['footmin-wordbound-bothnotfw']=1000
 #
 # ...at least one word should be a function word:
 #Cs['footmin-wordbound-neitherfw']=1

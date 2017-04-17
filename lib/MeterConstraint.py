@@ -1,6 +1,6 @@
 import os,tools
 
-PSTRESS_THRESH_DEFAULT = 0.5
+PSTRESS_THRESH_DEFAULT = 2
 
 class MeterConstraint:
 	def __init__(self,id=None,name=None,logic=None,weight=1,meter=None):
@@ -127,7 +127,8 @@ class MeterConstraint:
 					except ValueError:
 						pstress_thresh=PSTRESS_THRESH_DEFAULT
 
-					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom>pstress_thresh
+					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom<=pstress_thresh
+					
 					if bool_prom_type == promSite_prom:
 						numtrue+=float(slot_prom)
 						#return self.weight

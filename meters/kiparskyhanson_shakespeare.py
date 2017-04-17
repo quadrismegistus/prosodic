@@ -215,20 +215,20 @@ Cs['strength.w=>-p']=1
 # stress value of 0.75, then the resulting violation score would be 10 * 0.75 = 7.5.
 #
 ###
-# [Threshold for phrasal stress]
+# [Configuration of phrasal stress]
 #
 # Because most words have *some* phrasal stress, a word is considered phrasally stressed
-# if its numeric value is greater than what is defined here; otherwise, it is considered
-# phrasally unstressed. Default = 0.5, i.e., above the half-most stressed word in sentence.
-Cs['phrasal_stress_threshold']=0.5
+# if its numeric value is less than what is defined here; otherwise, it is considered
+# phrasally unstressed. Default = 2, i.e., primary and secondary stresses count.
+Cs['phrasal_stress_threshold']=2
 #
 #
 # Should the above threshold be computed across the sentence, or the line? If this is 'sentence',
-# then the above number (say, 0.5) refers to the half-most stressed word in *sentence.* If 'line',
-# then it refers to the half-most stressed word in the poetic *line.*
-#
-Cs['phrasal_stress_norm_context_is_line']=1
-#Cs['phrasal_stress_norm_context_is_sentence']=1
+# then the above number (say, 2) refers to the secondary stresses in the *sentence.* If 'line',
+# then it refers to the secondary stresses in the poetic *line* (i.e., the stress grid is moved up
+# such that the biggest stress in the line becomes 1 (primary), etc.)
+Cs['phrasal_stress_norm_context_is_sentence']=1
+#Cs['phrasal_stress_norm_context_is_line']=1
 #
 #
 #

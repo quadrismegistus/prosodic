@@ -24,10 +24,10 @@ class Sentence(entity):
             #print w1.phrasal_stress if w1 else None, w2.phrasal_stress if w2 else None, w3.phrasal_stress if w3 else None
             if w2.phrasal_stress is None: continue
 
-            if w1 and w1.phrasal_stress!=None and w1.phrasal_stress < w2.phrasal_stress:
+            if w1 and w1.phrasal_stress!=None and w1.phrasal_stress > w2.phrasal_stress:
                 w1.feats['phrasal_stress_valley']=True
                 w2.feats['phrasal_stress_peak']=True
-            if w3 and w3.phrasal_stress!=None and w3.phrasal_stress < w2.phrasal_stress:
+            if w3 and w3.phrasal_stress!=None and w3.phrasal_stress > w2.phrasal_stress:
                 w3.feats['phrasal_stress_valley']=True
                 w2.feats['phrasal_stress_peak']=True
 
@@ -77,20 +77,20 @@ class Sentence(entity):
             # grid lines
             import math,numpy as np
             grid_lines=[]
-            max_grid = max([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
-            min_grid = min([wtok.phrasal_stress_mean for wtok in self.children if wtok.phrasal_stress_mean!=None])
+            max_grid = max([wtok.phrasal_stress for wtok in self.children if wtok.phrasal_stress!=None])
+            min_grid = min([wtok.phrasal_stress for wtok in self.children if wtok.phrasal_stress!=None])
             #for line_num in range(int(math.ceil(min_grid))+1,int(math.ceil(max_grid))+1):
             for line_num in range(1,int(math.ceil(max_grid))+1):
                 grid_line=[]
                 for i,wtok in enumerate(LINE.children):
                     if wtok.is_punct: continue
-                    mark = 'X' if wtok.phrasal_stress_mean!=None and wtok.phrasal_stress_mean<=line_num else ''
+                    mark = 'X' if wtok.phrasal_stress!=None and wtok.phrasal_stress<=line_num else ''
                     grid_line+=[makeminlength(mark,nspace)]
                 grid_lines+=[' '.join(grid_line)]
 
             # lines data
             data_lines=[]
-            for datak in ['mean','norm_mean','norm_mean_line','phrasal_stress_peak','phrasal_head']:
+            for datak in ['mean','mean_line','phrasal_stress_peak','phrasal_head']:
                 data_line=[]
                 for i,wtok in enumerate(LINE.children):
                     if wtok.is_punct: continue
@@ -118,7 +118,8 @@ class Sentence(entity):
 
                     data_line+=[makeminlength(mark,nspace)]
                 datak_name = datak
-                if datak=='mean': datak_name='stress [sent rank]'
+                if datak=='mean': datak_name='stress [sent]'
+                if datak=='mean_line': datak_name='stress [line]'
                 if datak=='norm_mean': datak_name='stress [sent norm]'
                 if datak=='norm_mean_line': datak_name='stress [line norm]'
                 if datak=='phrasal_stress_peak': datak_name='peak/valley'
@@ -137,13 +138,13 @@ class Sentence(entity):
             hdrftr='#' * maxlength
             hdr='STRESS GRID: '+LINE.txt
             #grid_lines.insert(0,self.token)
-            grid_lines.insert(0,hdr)
-            grid_lines.insert(0,hdrftr)
-            grid_lines.append(hdrftr)
+            #grid_lines.insert(0,hdr)
+            #grid_lines.insert(0,hdrftr)
+            #grid_lines.append(hdrftr)
 
             GRID_LINES+=['\n'.join(grid_lines)]
 
-        return '\n\n'.join(GRID_LINES)
+        return '\n\n\n'.join(GRID_LINES)
 
 
 

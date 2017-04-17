@@ -376,7 +376,7 @@ class Meter:
 			elif parse.unmetrical:
 				o+='\n[**** Unmetrical ****]'
 			o+='\n'+str(parse)+'\n'
-			o+=parse.str_meter()+'\n'
+			o+='[meter]: '+parse.str_meter()+'\n'
 
 			o+=parse.__report__(proms=False)+"\n"
 			o+=self.printScores(parse.constraintScores)

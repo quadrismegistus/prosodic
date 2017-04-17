@@ -357,11 +357,22 @@ class Text(entity):
 		import numpy as np
 		for line in self.lines():
 			wtoks = line.children
+
+			# norm mean
 			stresses = [wtok.feats['norm_mean'] for wtok in wtoks if not np.isnan(wtok.feats['norm_mean'])]
 			max_stress = float(max(stresses))
 			min_stress = float(min(stresses))
 			for wtok in wtoks:
 				wtok.feats['norm_mean_line']=(wtok.feats['norm_mean']-min_stress)/(max_stress-min_stress) if max_stress else np.nan
+
+			# mean
+			stresses = [wtok.feats['mean'] for wtok in wtoks if not np.isnan(wtok.feats['mean'])]
+			min_stress = float(min(stresses))
+			diff = 1.0 - min_stress
+			for wtok in wtoks:
+				wtok.feats['mean_line']=wtok.feats['mean'] + diff
+
+
 
 
 	def grid(self,nspace=10):

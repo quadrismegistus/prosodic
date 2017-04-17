@@ -19,7 +19,8 @@ class WordToken(entity):
     @property
     def phrasal_stress(self):
         import numpy as np
-        ps=self.feats.get('norm_mean',None)
+        #ps=self.feats.get('norm_mean',None)
+        ps=self.feats.get('mean',None)
         #if ps: return None
         if np.isnan(ps): return None
         return ps
@@ -27,15 +28,24 @@ class WordToken(entity):
     @property
     def phrasal_stress_line(self):
         import numpy as np
-        ps=self.feats.get('norm_mean_line',None)
+        #ps=self.feats.get('norm_mean_line',None)
+        ps=self.feats.get('mean_line',None)
         #if ps: return None
         if np.isnan(ps): return None
         return ps
 
     @property
-    def phrasal_stress_mean(self):
+    def phrasal_stress_norm(self):
         import numpy as np
-        ps=self.feats.get('mean',None)
+        ps=self.feats.get('norm_mean',None)
+        #if not ps: return None
+        if np.isnan(ps): return None
+        return ps
+
+    @property
+    def phrasal_stress_norm_line(self):
+        import numpy as np
+        ps=self.feats.get('norm_mean_line',None)
         #if not ps: return None
         if np.isnan(ps): return None
         return ps

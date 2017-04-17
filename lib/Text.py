@@ -328,8 +328,14 @@ class Text(entity):
 				sent=[]
 
 			sent+=[wTok]
+			#for k,v in wStat.items():
+			#	setattr(wTok,k,v)
+			if not hasattr(wTok,'feats'): wTok.feats={}
 			for k,v in wStat.items():
-				setattr(wTok,k,v)
+				if k in mtree.INFO_DO_NOT_STORE: continue
+				wTok.feats[k]=v
+			
+
 
 		if sent: sents+=[sent]
 		assert len(sents) == len(trees)

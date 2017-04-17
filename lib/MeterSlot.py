@@ -23,16 +23,30 @@ class MeterSlot(entity):
 
 		## Phrasal stress
 		self.feat('prom.phrasal_stress',self.phrasal_stress)
+		self.feat('prom.phrasal_strength',self.phrasal_strength)
+		self.feat('prom.phrasal_head',self.phrasal_head)
+
+	@property
+	def phrasal_strength(self):
+		if not self.wordtoken: return None
+		if self.word.numSyll>1 and self.stress != 'P': return None
+		if self.wordtoken.feats.get('phrasal_stress_peak',''): return True
+		if self.wordtoken.feats.get('phrasal_stress_valley',''): return False
+		return None
+
+	@property
+	def phrasal_head(self):
+		if not self.wordtoken: return None
+		if self.word.numSyll>1 and self.stress != 'P': return None
+		if self.wordtoken.feats.get('phrasal_head',''): return True
+		return None
 
 	@property
 	def phrasal_stress(self):
 		if not self.wordtoken: return None
-		if not hasattr(self.wordtoken, 'norm_mean'): return None
 		if self.word.numSyll>1 and self.stress != 'P': return None
-		#if not hasattr(self.wordtoken.norm_mean): return None
-		import numpy as np
-		if np.isnan(self.wordtoken.norm_mean): return None
-		return self.wordtoken.norm_mean
+		return self.wordtoken.phrasal_stress
+
 
 	def str_meter(self):
 		return self.meter

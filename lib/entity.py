@@ -1248,7 +1248,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					newline+="\t"+string
 				if len(child.feats):
 					if (not child.classname() in nofeatsplease):
-						for k,v in child.feats.items():
+						for k,v in sorted(child.feats.items()):
 							if v==None:
 								continue
 

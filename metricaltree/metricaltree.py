@@ -26,6 +26,9 @@ EJML_VERSION = '0.23'
 DIR_ROOT = '.'
 sylcmu = None
 
+INFO_DO_NOT_STORE = ['contour','sent','nsyll','nseg','seg','nstress','word']
+
+
 def set_paths(dir_root='.'):
     global DIR_ROOT,sylcmu
     DIR_ROOT = dir_root

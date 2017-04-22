@@ -304,7 +304,13 @@ class Text(entity):
 			import time
 			then=time.time()
 			print '>> parsing text using MetricalTree...'
-			self.parse_mtree()
+			try:
+				self.parse_mtree()
+			except ImportError as e:
+				print '!! text not parsed because python module missing:',e.split()[-1]
+				print '!! to install, run: pip install numpy
+				print '!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>'
+				print
 			now=time.time()
 			print '>> done:',round(now-then,2),'seconds'
 

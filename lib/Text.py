@@ -317,6 +317,8 @@ class Text(entity):
 					print '!! text not parsed because NLTK missing needed data: punkt'
 					print '!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"'
 					print
+				else:
+					print emsg
 			now=time.time()
 			print '>> done:',round(now-then,2),'seconds'
 

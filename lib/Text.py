@@ -311,6 +311,12 @@ class Text(entity):
 				print '!! to install, run: pip install',str(e).split()[-1]
 				print '!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>'
 				print
+			except LookupError as e:
+				emsg=str(e)
+				if "Resource" in emsg and "punkt" in emsg and "not found" in emsg:
+					print '!! text not parsed because NLTK missing needed data: punkt'
+					print '!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"'
+					print
 			now=time.time()
 			print '>> done:',round(now-then,2),'seconds'
 

@@ -308,7 +308,7 @@ class Text(entity):
 				self.parse_mtree()
 			except ImportError as e:
 				print '!! text not parsed because python module missing:',e.split()[-1]
-				print '!! to install, run: pip install numpy
+				print '!! to install, run: pip install numpy'
 				print '!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>'
 				print
 			now=time.time()

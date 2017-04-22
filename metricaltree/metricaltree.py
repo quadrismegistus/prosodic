@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 import cPickle as pkl
 import numpy as np
-import pandas as pd
+#import pandas as pd
 #import matplotlib.pyplot as plt
 import codecs
 import nltk
@@ -742,17 +742,28 @@ class MetricalTreeParser:
                 data['ambig_words'].append(ambig1)
                 data['ambig_monosyll'].append(ambig2)
             data['contour'].extend([' '.join(str(x) for x in data['mean'][-(j):])]*j)
-        for k, v in data.iteritems():
-            data[k] = pd.Series(v)
-        df=pd.DataFrame(data, columns=['widx', 'norm_widx', 'word', 'seg', 'lexstress',
-                                           'nseg', 'nsyll', 'nstress',
-                                           'pos', 'dep',
-                                           'm1', 'm2a', 'm2b', 'mean',
-                                           'norm_m1', 'norm_m2a', 'norm_m2b', 'norm_mean',
-                                           'sidx', 'sent', 'ambig_words', 'ambig_monosyll',
-                                           'contour'])
-        if format_pandas: return df
-        return df.T.to_dict().values()
+
+        if format_pandas:
+            for k, v in data.iteritems():
+                data[k] = pd.Series(v)
+            df=pd.DataFrame(data, columns=['widx', 'norm_widx', 'word', 'seg', 'lexstress',
+                                               'nseg', 'nsyll', 'nstress',
+                                               'pos', 'dep',
+                                               'm1', 'm2a', 'm2b', 'mean',
+                                               'norm_m1', 'norm_m2a', 'norm_m2b', 'norm_mean',
+                                               'sidx', 'sent', 'ambig_words', 'ambig_monosyll',
+                                               'contour'])
+            return df
+
+        keys=data.keys()
+        old=[]
+        for i_row in range(j):
+            dx={}
+            for k in keys:
+                dx[k]=data[k][i_row]
+            old+=[dx]
+
+        return old
 
     #=====================================================================
     # Parse a list of tokens into phrasal Metrical Trees

@@ -303,7 +303,7 @@ class Text(entity):
 		if self.config.get('parse_using_metrical_tree',False) and self.lang=='en':
 			import time
 			then=time.time()
-			print '>> parsing text using MetricalTree (to deactivate, turn off "parse_using_metrical_tree" setting in config.py)...'
+			print '>> parsing text using MetricalTree (because "parse_using_metrical_tree" setting activated in config.py)...'
 			try:
 				self.parse_mtree()
 			except ImportError as e:

@@ -303,12 +303,12 @@ class Text(entity):
 		if self.config.get('parse_using_metrical_tree',False) and self.lang=='en':
 			import time
 			then=time.time()
-			print '>> parsing text using MetricalTree...'
+			print '>> parsing text using MetricalTree (to deactivate, turn off "parse_using_metrical_tree" setting in config.py)...'
 			try:
 				self.parse_mtree()
 			except ImportError as e:
 				print '!! text not parsed because python module missing:',str(e).split()[-1]
-				print '!! to install, run: pip install numpy'
+				print '!! to install, run: pip install',str(e).split()[-1]
 				print '!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>'
 				print
 			now=time.time()

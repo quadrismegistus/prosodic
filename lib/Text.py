@@ -335,7 +335,7 @@ class Text(entity):
 					print '!! if that doesn\'t work:'
 					print '!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip'
 					print '!! \t2) unzip it'
-					print '!! \t3) move the unzipped directory to:',self.dir_prosodic+'/metricaltree/Stanford Library/stanford-parser-full-2015-04-20/'
+					print '!! \t3) move the unzipped directory to:',self.dir_mtree+'/Stanford Library/stanford-parser-full-2015-04-20/'
 					print
 				else:
 					print '!! text not parsed for unknown reason!'

@@ -22,6 +22,7 @@ class WordToken(entity):
         #ps=self.feats.get('norm_mean',None)
         ps=self.feats.get('mean',None)
         #if ps: return None
+        if ps==None: return None
         if np.isnan(ps): return None
         return ps
 
@@ -31,6 +32,7 @@ class WordToken(entity):
         #ps=self.feats.get('norm_mean_line',None)
         ps=self.feats.get('mean_line',None)
         #if ps: return None
+        if ps==None: return None
         if np.isnan(ps): return None
         return ps
 
@@ -39,6 +41,7 @@ class WordToken(entity):
         import numpy as np
         ps=self.feats.get('norm_mean',None)
         #if not ps: return None
+        if ps==None: return None
         if np.isnan(ps): return None
         return ps
 
@@ -47,5 +50,6 @@ class WordToken(entity):
         import numpy as np
         ps=self.feats.get('norm_mean_line',None)
         #if not ps: return None
+        if ps==None: return None
         if np.isnan(ps): return None
         return ps

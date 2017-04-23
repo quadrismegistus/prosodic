@@ -929,3 +929,12 @@ def ld2dld(ld,key='rownamecol'):
 		if not d[key] in dld: dld[d[key]]=[]
 		dld[d[key]]+=[d]
 	return dld
+
+def wordtoks2str(wordtoks):
+	x=[]
+	for i,wtok in enumerate(wordtoks):
+		if wtok.is_punct and x:
+			x[-1]+=wtok.token
+		else:
+			x+=[wtok.token]
+	return u' '.join(x)

@@ -1,3 +1,4 @@
+#encoding=utf-8
 ############################################
 # [config.py]
 # CONFIGURATION SETTINGS FOR PROSODIC

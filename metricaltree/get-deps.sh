@@ -11,7 +11,9 @@ mkdir "Stanford Library"
 mv stanford-parser-full-$DATE "Stanford Library/"
 cd "Stanford Library/stanford-parser-full-$DATE"
 jar xf stanford-parser-$VERSION-models.jar
+cd ../..
 rm "stanford-parser-full-$DATE.zip"
+echo ">> successfully installed Stanford NLP Parser ($DATE)'"
 
 #su
 #add-apt-repository ppa:webupd8team/java

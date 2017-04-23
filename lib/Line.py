@@ -64,10 +64,10 @@ class Line(entity):
 
 
 
-		if init: self.store_stats(meter,init)
+		#if init: self.store_stats(meter,init)
 
 
-	def store_stats(self,meter,init):
+	"""def store_stats(self,meter,init):
 		textname=init.getName()
 		if not textname: textname=str(self).replace(" ","_")
 
@@ -117,6 +117,7 @@ class Line(entity):
 		except (IndexError,KeyError,AttributeError) as e:
 			#print "!! no lines successfully parsed with any meter"
 			pass
+	"""
 
 
 	def scansion(self,meter=None,conscious=False):
@@ -133,7 +134,7 @@ class Line(entity):
 			lowestScore=bp.score()
 			count=bp.totalCount
 		from tools import makeminlength
-		self.om("\t".join( [str(x) for x in [makeminlength(str(self),config['linelen']), makeminlength(str(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot] ] ),conscious=conscious)
+		self.om("\t".join( [unicode(x) for x in [makeminlength(unicode(self),config['linelen']), makeminlength(unicode(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot] ] ),conscious=conscious)
 
 
 	def allParses(self,meter=None,one_per_meter=True):

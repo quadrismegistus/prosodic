@@ -12,6 +12,9 @@ from operator import itemgetter
 from ipa import sampa2ipa
 #import prosodic
 
+DASHES=['--',u'–',u'—']
+REPLACE_DASHES = True
+
 
 class Text(entity):
 	def __init__(self,filename,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
@@ -110,7 +113,7 @@ class Text(entity):
 
 		def _writegen():
 			for line in self.lines():
-				dx={'text':self.name, 'line':str(line), 'header':header}
+				dx={'text':self.name, 'line':unicode(line), 'header':header}
 				bp=line.bestParse(meter)
 				ap=line.allParses(meter)
 				dx['parse']=bp.posString(viols=viols) if bp else ''
@@ -147,7 +150,7 @@ class Text(entity):
 				if all_parses: ap+=line.boundParses(meter)
 
 				for pi,parse in enumerate(ap):
-					dx={'line':str(line) if not pi else ''}
+					dx={'line':unicode(line) if not pi else ''}
 					dx['text']=self.name
 					dx['header']=header
 					dx['parse']=parse.posString(viols=viols)
@@ -254,11 +257,18 @@ class Text(entity):
 
 		## [loop] lines
 		for ln in lines_or_file:
+			if REPLACE_DASHES:
+				for dash in DASHES:
+					ln=ln.replace(dash,u' '+dash+' ')
 			ln=ln.strip()
+			#print ln,type(ln)
 			if self.limWord and numwords>self.limWord: break
 
 			# split into words
+			#print self.isUnicode
 			toks = re.findall(tokenizer,ln.strip(),flags=re.UNICODE) if self.isUnicode else re.findall(tokenizer,ln.strip())
+			#print toks
+			#print tokenizer
 			toks = [tok.strip() for tok in toks if tok.strip()]
 			numtoks=len(toks)
 
@@ -313,12 +323,31 @@ class Text(entity):
 				print
 			except LookupError as e:
 				emsg=str(e)
+
 				if "Resource" in emsg and "punkt" in emsg and "not found" in emsg:
 					print '!! text not parsed because NLTK missing needed data: punkt'
 					print '!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"'
 					print
+				elif 'stanford-parser.jar' in emsg:
+					print '!! text not parsed because Stanford NLP Parser not installed'
+					print '!! to install, run: cd metricaltree && ./get-deps.sh && cd ..'
+					print
 				else:
+					print '!! text not parsed for unknown reason!'
+					print '!! error message received:'
 					print emsg
+					print
+			except AssertionError:
+				print "This is a bug in PROSODIC that is Ryan Heuser's fault. [Bug ID: Assertion_MTree]"
+				print "Please kindly report it to: https://github.com/quadrismegistus/prosodic/issues"
+				print
+			except Exception as e:
+				emsg=str(e)
+				print '!! text not parsed for unknown reason!'
+				print '!! error message received:'
+				print emsg
+				print
+			#"""
 			now=time.time()
 			print '>> done:',round(now-then,2),'seconds'
 
@@ -410,6 +439,7 @@ class Text(entity):
 		self.__parsed_ents[meter.id]=[]
 
 		init=self
+		"""
 		if not hasattr(init,'meter_stats'):
 			init.meter_stats={'lines':{},'positions':{},'texts':{}, '_ot':{},'_constraints':{}}
 		if not hasattr(init,'bestparses'):
@@ -418,6 +448,7 @@ class Text(entity):
 		init.meter=meter
 		init.meter_stats['_constraints']=sorted(init.meter.constraints)
 		init.ckeys="\t".join(sorted([str(x) for x in init.meter.constraints]))
+		"""
 
 		ents=self.ents(arbiter)
 		smax=self.config.get('line_maxsylls',100)
@@ -709,4 +740,4 @@ class Text(entity):
 		return [ln for ln in self.lines() if (not ln.isBroken() and not ln.ignoreMe)]
 
 	def __repr__(self):
-		return "<Text."+str(self.name)+"> ("+str(len(self.words()))+" words)"
+		return "<Text."+unicode(self.name)+"> ("+str(len(self.words()))+" words)"

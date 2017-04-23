@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-import sys,glob,os,time
+import sys,glob,os,time,codecs
 #print '>> importing prosodic...'
 
 #dir_prosodic=sys.path[0]
@@ -26,6 +26,7 @@ dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
 dir_results=os.path.join(dir_prosodic,config['folder_results'])
 dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
 
+text=''
 
 
 import entity
@@ -64,7 +65,8 @@ else:	## if not imported, go into interactive mode
 	## ACTUALLY NVERMIND ABOVE: GO INTO INTERACTIVE MODE IF SINGLE ARGUMENT
 	try:
 		cmd=sys.argv[1]
-		being.printout=False
+		config['print_to_screen']=0
+		being.config['print_to_screen']=0
 		if not cmd.startswith('/'):
 			cmd=""
 	except IndexError:
@@ -73,20 +75,32 @@ else:	## if not imported, go into interactive mode
 		being.printout=True
 
 	try:
-		if os.path.exists(sys.argv[1]):
-			if os.path.isdir(sys.argv[1]):
-				text="/corpus "+sys.argv[1]
+		arg=sys.argv[1]
+		if os.path.exists(arg):
+			if os.path.isdir(arg):
+				text="/corpus "+arg
 				#dir_corpus=sys.argv[1]
 				skip=True
 			else:
 				#dir_corpus=os.path.dirname(sys.G[1])
-				basename=os.path.basename(sys.argv[1])
-				text="/text "+sys.argv[1]
+				basename=os.path.basename(arg)
+				text="/text "+arg
 				if basename[0:2] in languages and basename[2]=='.':
 					lang=basename[0:2]
 				skip=True
+		elif arg=='install':
+			try:
+				arg2=sys.argv[2]
+			except IndexError:
+				pass
+
+			if arg2=='stanford_parser':
+				os.system('cd '+dir_mtree+' && '+'./get-deps.sh && cd '+dir_prosodic)
+
 		else:
 			print "<error> file not found"
+
+
 	except:
 		## welcome
 		print ""
@@ -165,7 +179,7 @@ else:	## if not imported, go into interactive mode
 		## ask for input only if argument not received
 		if not skip:
 			try:
-				text=raw_input(msg).strip()
+				text=raw_input(msg).strip().decode('utf-8',errors='ignore')
 			except (KeyboardInterrupt,EOFError) as e:
 				text='/exit'
 		else:
@@ -190,7 +204,7 @@ else:	## if not imported, go into interactive mode
 			contents = []
 			while True:
 				try:
-					line = raw_input("")
+					line = raw_input("").decode('utf-8',errors='ignore')
 					contents.append(line)
 				except EOFError:
 					break
@@ -426,7 +440,9 @@ else:	## if not imported, go into interactive mode
 					ofn=os.path.join(dirname,fn)
 
 				if not os.path.exists(dirname): os.makedirs(dirname)
-				of=open(ofn,'w')
+				of=codecs.open(ofn,'w',encoding='utf-8')
+				if type(being.omm) in [str]:
+					being.omm=being.omm.decode('utf-8',errors='ignore')
 				of.write(being.omm)
 				of.close()
 				print ">> saving previous output to: "+ofn

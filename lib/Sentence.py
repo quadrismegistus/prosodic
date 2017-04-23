@@ -1,5 +1,5 @@
 from entity import entity,being
-from tools import makeminlength
+from tools import makeminlength,wordtoks2str
 
 
 class Sentence(entity):
@@ -41,22 +41,22 @@ class Sentence(entity):
 
     @property
     def token(self):
-        x=[]
-        for i,wtok in enumerate(self.children):
-            if wtok.is_punct and x:
-                x[-1]+=wtok.token
-            else:
-                x+=[wtok.token]
-        return u' '.join(x)
+        return wordtoks2str(self.children)
 
     def lines(self):
         ## Resolve sentence back into lines in original text
         lines=[]
         lastLine=None
+        line=[]
         for wtok in self.children:
             if wtok.line!=lastLine:
                 lastLine=wtok.line
-                lines+=[wtok.line]
+                #lines+=[wtok.line]  # ends up repeating lines
+                if line:
+                    lines+=[line]
+                    line=[]
+            line+=[wtok]
+        if line: lines+=[line]
         return lines
 
     def grid(self,nspace=10):
@@ -66,10 +66,9 @@ class Sentence(entity):
         GRID_LINES=[]
 
         for LINE in self.lines():
-
             # word line
             line_words=[]
-            for i,wtok in enumerate(LINE.children):
+            for i,wtok in enumerate(LINE):
                 if wtok.is_punct: continue
                 line_words+=[makeminlength(wtok.token,nspace)]
             line_words = ' '.join(line_words)
@@ -82,7 +81,7 @@ class Sentence(entity):
             #for line_num in range(int(math.ceil(min_grid))+1,int(math.ceil(max_grid))+1):
             for line_num in range(1,int(math.ceil(max_grid))+1):
                 grid_line=[]
-                for i,wtok in enumerate(LINE.children):
+                for i,wtok in enumerate(LINE):
                     if wtok.is_punct: continue
                     mark = 'X' if wtok.phrasal_stress!=None and wtok.phrasal_stress<=line_num else ''
                     grid_line+=[makeminlength(mark,nspace)]
@@ -92,14 +91,14 @@ class Sentence(entity):
             data_lines=[]
             for datak in ['mean','mean_line','phrasal_stress_peak','phrasal_head']:
                 data_line=[]
-                for i,wtok in enumerate(LINE.children):
+                for i,wtok in enumerate(LINE):
                     if wtok.is_punct: continue
 
                     v=wtok.feats.get(datak,'')
 
                     if v==None:
                         v=''
-                    elif type(v) in [float]:
+                    elif type(v) in [float,np.float64]:
                         if np.isnan(v):
                             v=''
                         else:
@@ -136,7 +135,7 @@ class Sentence(entity):
             maxlength = max([len(l) for l in grid_lines])
 
             hdrftr='#' * maxlength
-            hdr='STRESS GRID: '+LINE.txt
+            hdr='STRESS GRID: '+wordtoks2str(LINE)
             #grid_lines.insert(0,self.token)
             #grid_lines.insert(0,hdr)
             #grid_lines.insert(0,hdrftr)

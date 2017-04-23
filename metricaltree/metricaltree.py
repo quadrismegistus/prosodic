@@ -85,7 +85,7 @@ def pause_splitter(s):
     s = [sent for sents in s for sent in sent_splitter.tokenize(sents)]
     return s
 
-def pause_splitter_tokens(tokens,split_by={':',';','--'}):
+def pause_splitter_tokens(tokens,split_by={':',';','--',u'—',u'–'}):
     """"""
     sents=[]
     sent=[]
@@ -757,7 +757,8 @@ class MetricalTreeParser:
 
         keys=data.keys()
         old=[]
-        for i_row in range(j):
+        num_rows=len(data[keys[0]])
+        for i_row in range(num_rows):
             dx={}
             for k in keys:
                 dx[k]=data[k][i_row]

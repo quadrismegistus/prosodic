@@ -122,7 +122,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 		#import prosodic
 		if (not conscious) or bool(being.config['print_to_screen']):
-			being.om+=str(breath)+"\n"
+			if not type(breath) in [str,unicode]:
+				breath=unicode(breath)
+			being.om+=breath+"\n"
 			print self.u2s(breath)
 
 	## features
@@ -216,8 +218,11 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 		try:
 			return u.encode('utf-8',errors='ignore')
-		except UnicodeDecodeError:
-			return str(u)
+		except (UnicodeDecodeError,AttributeError) as e:
+			try:
+				return str(u)
+			except UnicodeEncodeError:
+				return unicode(u).encode('utf-8',errors='ignore')
 
 
 
@@ -1163,7 +1168,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			from Meter import Meter
 			meter=Meter.genDefault()
 		if (hasattr(self,'allParses')):
-			self.om(str(self))
+			self.om(unicode(self))
 			allparses=self.allParses(meter=meter,include_bounded=include_bounded)
 			numallparses=len(allparses)
 			for pi,parseList in enumerate(allparses):
@@ -1240,7 +1245,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			if child.isBroken():
 				newline+="<<broken>>"
 			else:
-				string=str(child)
+				string=self.u2s(child)
 				if (not "<" in string):
 					newline=makeminlength(newline,99)
 					newline+="["+string+"]"

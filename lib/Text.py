@@ -17,7 +17,7 @@ REPLACE_DASHES = True
 
 
 class Text(entity):
-	def __init__(self,filename,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
+	def __init__(self,filename=None,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
 		import prosodic
 		self.lang=self.set_lang(filename) if not lang else lang
@@ -57,7 +57,10 @@ class Text(entity):
 			self.phrasebreak_punct=unicode(self.phrasebreak)
 
 		## load/write-load text
-		if os.path.exists(filename) and filename!='.':
+		if not filename:
+			self.name = '[undefined]'
+			self.isFromFile = False
+		elif os.path.exists(filename) and filename!='.':
 		#if False:
 			self.filename = filename
 			self.name = filename.split("/").pop().strip()
@@ -82,6 +85,7 @@ class Text(entity):
 		return self._sentences
 
 	def set_lang(self,filename):
+		if not filename: return 'en'
 		filename=os.path.basename(filename)
 		import prosodic
 		if filename[2]=="." and (filename[0:2] in prosodic.dict):

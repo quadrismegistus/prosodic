@@ -38,6 +38,7 @@ from Stanza import Stanza
 from Line import Line
 from Phoneme import Phoneme
 from Word import Word
+from WordToken import WordToken
 from Meter import Meter
 import ipa
 hdrbar="################################################"

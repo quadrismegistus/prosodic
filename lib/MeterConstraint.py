@@ -128,10 +128,10 @@ class MeterConstraint:
 						pstress_thresh=PSTRESS_THRESH_DEFAULT
 
 					bool_prom_type = bool(slot_prom) if promType!='phrasal_stress' else slot_prom<=pstress_thresh
-					
+
 					if bool_prom_type == promSite_prom:
-						numtrue+=float(slot_prom)
-						#return self.weight
+						#numtrue+=float(slot_prom)
+						return self.weight
 				#return 2 if numtrue else 0
 				#print self.weight, numtrue
 				## CHANGED 10/10/2016: This constraint returns its weight

@@ -23,7 +23,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		libfolder=os.path.join(dirself,'lib')
 		dictsfolder=os.path.join(dirself,'dicts')
 		self.config=prosodic.config
-
+		self.unstressedWords=[]
+		self.maybestressedWords=[]
 
 		self.lang = lang
 		self.libfolder = libfolder
@@ -43,7 +44,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		"""
 		self.language = LANGCODES[self.lang]
 
-		self.unstressedWords=[]
+
 		for filename in glob.glob(os.path.join(self.dictsfolder, 'unstressed*')):
 			file=codecs.open(filename,encoding='utf-8')
 			for ln in file:
@@ -52,7 +53,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			file.close()
 			break
 
-		self.maybestressedWords=[]
+
 		for filename in glob.glob(os.path.join(self.dictsfolder, 'maybestressed*')):
 			file=codecs.open(filename,encoding='utf-8')
 			for ln in file:
@@ -337,6 +338,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 					else:
 						Vwaslast=phon
 			sylls.append(tuple(syll))
+		#print sylls
 		return sylls
 
 	def syllphon2syll(self,syllphon,lang):
@@ -355,44 +357,6 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		return get_class('SyllableBody.SyllableBody')(self.use('Onset',onset),self.use('Rime', (self.use('Nucleus',nucleus),self.use('Coda',coda))), lang)
 
 
-	def stressedipa2stress(self,stressedipa):
-		o=""
-		for x in stressedipa.split("."):
-			if "'" in x:
-				o+="P"
-			elif "`" in x:
-				o+="S"
-			else:
-				o+="U"
-		return o
-
-	def getStrengthStress(self,stress):
-		prom_stress=[]
-		prom_strength=[]
-		for x in stress:
-			if x=='P': prom_stress+=[1.0]
-			elif x=='S': prom_stress+=[0.5]
-			elif x=='U': prom_stress+=[0.0]
-
-		for i,x in enumerate(prom_stress):
-			prevx=prom_stress[i-1] if i-1>=0 else None
-			nextx=prom_stress[i+1] if i+1<len(prom_stress) else None
-			#print i,prevx,x,nextx
-
-
-			if nextx!=None and nextx>x:
-				strength=0.0
-			elif nextx!=None and nextx<x:
-				strength=1.0
-			elif prevx!=None and prevx>x:
-				strength=0.0
-			elif prevx!=None and prevx<x:
-				strength=1.0
-			else:
-				strength=None
-			#print i,prevx,x,nextx
-			prom_strength+=[strength]
-		return (prom_stress,prom_strength)
 
 
 
@@ -464,8 +428,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		stressedipa=stressedipasylls_text[0]
 		sylls_text=stressedipasylls_text[1]
 
-		stress=self.stressedipa2stress(stressedipa)
-		(prom_stress,prom_strength)=self.getStrengthStress(stress)
+		stress=stressedipa2stress(stressedipa)
+		(prom_stress,prom_strength)=getStrengthStress(stress)
 		syllphons=self.ipa2phons(stressedipa)
 
 		sylls=[]
@@ -475,6 +439,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			syll=self.use('Syllable',(syllbody,prom_strength[i],prom_stress[i]))
 			#print token,i,syllbody,syll,syllphons,stressedipa,stress,prom_stress,prom_strength
 			sylls.append(syll)
+
 		word=Word(token,sylls,sylls_text)
 		word.ipa=stressedipa
 		word.stress=stress
@@ -642,3 +607,46 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		else:
 			return ""
 		return o
+
+
+
+
+
+def getStrengthStress(stress):
+	prom_stress=[]
+	prom_strength=[]
+	for x in stress:
+		if x=='P': prom_stress+=[1.0]
+		elif x=='S': prom_stress+=[0.5]
+		elif x=='U': prom_stress+=[0.0]
+
+	for i,x in enumerate(prom_stress):
+		prevx=prom_stress[i-1] if i-1>=0 else None
+		nextx=prom_stress[i+1] if i+1<len(prom_stress) else None
+		#print i,prevx,x,nextx
+
+
+		if nextx!=None and nextx>x:
+			strength=0.0
+		elif nextx!=None and nextx<x:
+			strength=1.0
+		elif prevx!=None and prevx>x:
+			strength=0.0
+		elif prevx!=None and prevx<x:
+			strength=1.0
+		else:
+			strength=None
+		#print i,prevx,x,nextx
+		prom_strength+=[strength]
+	return (prom_stress,prom_strength)
+
+def stressedipa2stress(stressedipa):
+	o=""
+	for x in stressedipa.split("."):
+		if "'" in x:
+			o+="P"
+		elif "`" in x:
+			o+="S"
+		else:
+			o+="U"
+	return o

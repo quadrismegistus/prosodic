@@ -20,8 +20,7 @@ class Text(entity):
 	def __init__(self,filename=None,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
 		import prosodic
-		self.lang=self.set_lang(filename) if not lang else lang
-		self.dict=prosodic.dict[self.lang]
+
 		self.featpaths={}
 		self.__parses={}
 		self.__bestparses={}
@@ -60,6 +59,8 @@ class Text(entity):
 		if not filename:
 			self.name = '[undefined]'
 			self.isFromFile = False
+			self.lang=self.set_lang(filename) if not lang else lang
+			self.dict=prosodic.dict[self.lang]
 		elif os.path.exists(filename) and filename!='.':
 		#if False:
 			self.filename = filename
@@ -67,6 +68,8 @@ class Text(entity):
 			print '>> loading text:',self.name
 			file=codecs.open(filename,encoding='utf-8',errors='replace')
 			self.isFromFile=True
+			self.lang=self.set_lang(filename) if not lang else lang
+			self.dict=prosodic.dict[self.lang]
 			self.init_text(file)
 		else:
 			lines = filename.split('\n')
@@ -75,7 +78,10 @@ class Text(entity):
 			self.filename = lines[0].replace(' ','_')[:100]+'.txt'
 			#self.init_text(lines)
 			self.isFromFile=False
+			self.lang=self.set_lang(filename) if not lang else lang
+			self.dict=prosodic.dict[self.lang]
 			self.init_text(lines)
+
 
 		## clean
 		self.children = [stanza for stanza in self.children if not stanza.empty()]
@@ -88,7 +94,7 @@ class Text(entity):
 		if not filename: return 'en'
 		filename=os.path.basename(filename)
 		import prosodic
-		if filename[2]=="." and (filename[0:2] in prosodic.dict):
+		if self.isFromFile and len(filename)>2 and filename[2]=="." and (filename[0:2] in prosodic.dict):
 			lang=filename[0:2]
 		elif prosodic.lang:
 			lang=prosodic.lang

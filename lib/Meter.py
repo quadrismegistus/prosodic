@@ -196,6 +196,7 @@ class Meter:
 
 	def parse(self,wordlist,numSyll=0,numTopBounded=10):
 		numTopBounded = self.prosodic_config.get('num_bounded_parses_to_store',numTopBounded)
+		maxsec = self.prosodic_config.get('parse_maxsec',None)
 		#print '>> NTB!',numTopBounded
 		from Parse import Parse
 		if not numSyll:
@@ -210,8 +211,37 @@ class Meter:
 
 		allParses = []
 		allBoundedParses=[]
-		for slots in slotMatrix:
+
+		import time
+		clockstart=time.time()
+		for slots_i,slots in enumerate(slotMatrix):
+			#for slot in slots:
+				#print slot
+				#print slot.feats
+				#print
+
+			## give up?
+			if maxsec and time.time()-clockstart > maxsec:
+				print '!! Time limit ({0}s) elapsed in trying to parse line:'.format(maxsec), ' '.join(wtok.token for wtok in wordlist)
+				return [],[]
+
 			_parses,_boundedParses = self.parseLine(slots)
+
+			"""
+			for prs in _parses:
+				print 'UNBOUNDED:'
+				print prs.__report__()
+				print
+
+			for prs in _parses:
+				print 'BOUNDED:'
+				print prs.__report__()
+				print
+
+			print
+			print
+			"""
+
 			allParses.append(_parses)
 			allBoundedParses+=_boundedParses
 
@@ -314,10 +344,19 @@ class Meter:
 										boundingRelation = parse.boundingRelation(comparisonParse)
 
 										if boundingRelation == Bounding.bounds:
+											# print parse.__report__()
+											# print '--> bounds -->'
+											# print comparisonParse.__report__()
+											# print
 											comparisonParse.isBounded = True
 											comparisonParse.boundedBy = parse
 
 										elif boundingRelation == Bounding.bounded:
+											# print
+											# print comparisonParse.__report__()
+											# print '--> bounds -->'
+											# print parse.__report__()
+											# print
 											parse.isBounded = True
 											parse.boundedBy = comparisonParse
 											break

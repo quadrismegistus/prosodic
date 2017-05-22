@@ -72,7 +72,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = True
+parse_using_metrical_tree = False
 ############################################
 
 
@@ -103,13 +103,17 @@ linelen=60
 # [PROSODIC can parse lines of up to approximately 20 syllables
 # before the number of possibilities become too large,
 # slowing the algorithm down to a halt.]
-line_maxsylls=20
+line_maxsylls=60
 #
 # The minimum size of the line to parse:
 # [useful if lines are determined by punctuation,
 # because sometimes they can be very very short
 # and so pointless for metrical parsing.]
 #line_minsylls=9
+#
+# Alternatively, after how many seconds should Prosodic give up
+# when trying to parse a (long or ambiguous) line?
+parse_maxsec = 30
 #
 #
 ######

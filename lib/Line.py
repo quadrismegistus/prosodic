@@ -60,7 +60,15 @@ class Line(entity):
 		try:
 			self.__bestparse[meter.id]=self.__parses[meter.id][0]
 		except (KeyError,IndexError) as e:
-			self.__bestparse[meter.id]=self.__boundParses[meter.id][0]
+			try:
+				self.__bestparse[meter.id]=self.__boundParses[meter.id][0]
+			except (KeyError,IndexError) as e:
+				self.__bestparse[meter.id]=None
+
+
+		## Re-sort words within wordtoken
+		bp = self.__bestparse[meter.id]
+		if bp: bp.set_wordtokens_to_best_word_options()
 
 
 

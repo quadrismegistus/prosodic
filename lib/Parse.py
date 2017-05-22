@@ -224,6 +224,31 @@ class Parse(entity):
 			output+=[''.join(slotx)]
 		return string.join(output, '|')
 
+	def words(self):
+		last_word = None
+		words=[]
+		for slot in self.slots():
+			slot_word=slot.word
+			slot_wordtoken=slot.wordtoken
+			if last_word != slot_wordtoken:
+				words+=[slot_word]
+				last_word=slot_wordtoken
+		return words
+
+	def wordtokens(self):
+		last_word = None
+		words=[]
+		for slot in self.slots():
+			slot_word=slot.wordtoken
+			if last_word != slot_word:
+				words+=[slot_word]
+				last_word=slot_word
+		return words
+
+	def set_wordtokens_to_best_word_options(self):
+		for wordtok,wordobj in zip(self.wordtokens(),self.words()):
+			wordtok.set_as_best_word_option(wordobj)
+
 
 
 	def __repr__(self):
@@ -298,6 +323,8 @@ class Parse(entity):
 	# return true if two parses can be compared for harmonic bounding
 	def canCompare(self, parse):
 		return (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
+		#return (self.numSlots == self.totalSlots)
+		#return False
 
 	def violations(self,boolean=False):
 		if not boolean:

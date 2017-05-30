@@ -2,6 +2,7 @@ from tools import *
 from copy import copy
 import string
 from entity import entity
+import logging
 
 # class representing the potential bounding relations between to parses
 class Bounding:
@@ -80,6 +81,7 @@ class Parse(entity):
 	# add an extra slot to the parse
 	# returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
 	def extend(self, slot):
+		logging.debug('>> extending self (%s) with slot (%s)',self,slot)
 		from MeterPosition import MeterPosition
 		self.totalScore = None
 		self.numSlots += 1
@@ -138,6 +140,7 @@ class Parse(entity):
 					else:
 						parse.constraintScores[constraint] += vScore
 
+		logging.debug('>> self extended to be (%s) with extendedParses (%s)',self,extendedParses)
 		return extendedParses
 
 	def getErrorCount(self):
@@ -322,7 +325,11 @@ class Parse(entity):
 
 	# return true if two parses can be compared for harmonic bounding
 	def canCompare(self, parse):
-		return (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
+
+		isTrue = (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
+		if isTrue:
+			logging.info('Parse1: %s\nLastMeterVal1: %s\nLastNumSlots1: %s\n--can compare-->\nParse2: %s\nLastMeterVal2: %s\nLastNumSlots2: %s',self,self.positions[-1].meterVal,len(self.positions[-1].slots),parse,parse.positions[-1].meterVal,len(parse.positions[-1].slots))
+		return isTrue
 		#return (self.numSlots == self.totalSlots)
 		#return False
 
@@ -366,11 +373,13 @@ class Parse(entity):
 				return Bounding.unequal # contains both greater and lesser violations
 
 			else:
+				logging.info('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]),self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]))
 				return Bounding.bounded # contains only greater violations
 
 		else:
 
 			if containsLesserViolation:
+				logging.info('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]),parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]))
 				return Bounding.bounds # contains only lesser violations
 
 			else:

@@ -24,7 +24,7 @@
 # in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
 #
-meter = 'prose_rhythm_iambic'
+meter = 'meter_arto'
 ############################################
 
 

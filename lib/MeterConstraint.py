@@ -198,6 +198,20 @@ class MeterConstraint:
 				if (bool(a.feature('prom.weight',True))):
 					return self.weight
 
+			if name=='footmin-w-resolution':
+				if a.word != b.word: return 0 # only applies within word-boundaries
+				firstsyll_islight=bool(a.feature('prom.weight',True)) == False
+				firstsyll_isunstressed=bool(a.feature('prom.stress',True)) == False
+				if not (firstsyll_islight and firstsyll_isunstressed):
+					return self.weight
+
+			if name=='footmin-f-resolution':
+				if a.word == b.word: return 0 # only applies to word-boundaries
+				if meterPos.meterVal=='s': return self.weight # cannot apply to strong positions
+				a_is_fw = bool(a.word.feature('functionword'))
+				b_is_fw = bool(b.word.feature('functionword'))
+				if not (a_is_fw and b_is_fw): return self.weight
+
 			if name=='footmin-s-nohx':
 				if meterPos.meterVal=='s':
 					if bool(a.feature('prom.weight',True)) or a.word!=b.word:

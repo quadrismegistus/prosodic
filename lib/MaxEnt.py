@@ -18,6 +18,9 @@ import numpy as np
 # while minimizing the probability of the
 # non-selected parses.
 
+# Based on algorith and mathematics as 
+# described here: http://homepages.inf.ed.ac.uk/sgwater/papers/OTvar03.pdf
+# and loosely informed by MEGrammarTool from Bruce Hayes
 class DataPoint:
     def __init__(self, line, scansion, scansion_str, frequency):
         self.line = line

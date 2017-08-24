@@ -43,6 +43,8 @@ from Phoneme import Phoneme
 from Word import Word
 from WordToken import WordToken
 from Meter import Meter
+from MaxEnt import DataAggregator
+from MaxEnt import MaxEntAnalyzer
 import ipa
 hdrbar="################################################"
 
@@ -143,7 +145,6 @@ else:	## if not imported, go into interactive mode
 		msg+="\n"
 
 		if obj:
-
 			msg+="\t\t/show\tshow annotations on input\n"
 			if config.get('parse_using_metrical_tree',False): msg+="\t\t/grid\tsee stress grids\n"
 			msg+="\t\t/tree\tsee phonological structure\n"
@@ -163,7 +164,6 @@ else:	## if not imported, go into interactive mode
 			#	msg+="\t\t/draw\tdraw finite-state machines\n"
 
 			msg+="\n"
-
 
 		#msg+="\t\t/config\tchange settings\n"
 
@@ -223,13 +223,28 @@ else:	## if not imported, go into interactive mode
 		elif text=="/parse":
 			obj.parse(meter=METER)
 
+<<<<<<< HEAD
+=======
+		elif text.startswith("/weight"):
+			data_path = text[len("/weight "):]
+			data_aggregator = DataAggregator(METER, data_path, lang)
+			learner = MaxEntAnalyzer(data_aggregator)
+
+			learner.train()
+			learner.report()
+
+>>>>>>> Built MaxEnt logic; need to add error checking
 		elif text=="/plot":
 			obj.plot()
 
 		elif text=="/groom":
 			obj.groom()
 
+<<<<<<< HEAD
 		elif text.startswith("/report") and obj.isParsed():
+=======
+		elif text.startswith("/report"):
+>>>>>>> Built MaxEnt logic; need to add error checking
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			include_bounded = arg=='all'
 			obj.report(meter=METER, include_bounded=include_bounded)
@@ -238,7 +253,11 @@ else:	## if not imported, go into interactive mode
 		elif text=="/chart":
 			obj.chart()
 
+<<<<<<< HEAD
 		elif text.startswith("/stats") and obj.isParsed():
+=======
+		elif text.startswith("/stats"):
+>>>>>>> Built MaxEnt logic; need to add error checking
 			arg=' '.join(text.split()[1:]) if len(text.split())>1 else None
 			funcname = None
 			if arg=='lines':
@@ -257,7 +276,11 @@ else:	## if not imported, go into interactive mode
 
 			print '\t>> options:\n\t\t/stats all\t\tsave all stats\n\t\t/stats lines\t\tsave stats on lines\n\t\t/stats ot\t\tsave stats on lines in OT/maxent format\n\t\t/stats pos\t\tsave stats on positions'
 
+<<<<<<< HEAD
 		elif text=="/scan" and obj.isParsed():
+=======
+		elif text=="/scan":
+>>>>>>> Built MaxEnt logic; need to add error checking
 			obj.scansion(meter=METER)
 
 		elif text=="/draw":
@@ -347,7 +370,11 @@ else:	## if not imported, go into interactive mode
 							matchstr=""
 						else:
 							matchstr=str(match)
+<<<<<<< HEAD
 						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr, conscious=False)
+=======
+						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr)
+>>>>>>> Built MaxEnt logic; need to add error checking
 
 			cmd = q
 
@@ -432,7 +459,11 @@ else:	## if not imported, go into interactive mode
 		elif text.startswith('/save'):
 			fn=text.replace('/save','').strip()
 			if not fn:
+<<<<<<< HEAD
 				fn=raw_input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the default directory ['+config['folder_results']+'],\n\t- or as a full path.\n\n').strip()
+=======
+				fn=raw_input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the current working directory ['+os.getcwd()+'],\n\t- or as a full path.\n\n').strip()
+>>>>>>> Built MaxEnt logic; need to add error checking
 
 			try:
 				ofn=None
@@ -440,6 +471,7 @@ else:	## if not imported, go into interactive mode
 				if dirname:
 					ofn=fn
 				else:
+<<<<<<< HEAD
 					dirname=config['folder_results']
 					ofn=os.path.join(dirname,fn)
 
@@ -447,6 +479,11 @@ else:	## if not imported, go into interactive mode
 				of=codecs.open(ofn,'w',encoding='utf-8')
 				if type(being.omm) in [str]:
 					being.omm=being.omm.decode('utf-8',errors='ignore')
+=======
+					ofn=os.path.join(os.getcwd(),fn)
+
+				of=open(fn,'w')
+>>>>>>> Built MaxEnt logic; need to add error checking
 				of.write(being.omm)
 				of.close()
 				print ">> saving previous output to: "+ofn
@@ -486,10 +523,20 @@ else:	## if not imported, go into interactive mode
 
 
 		elif text.startswith('/mute'):
+<<<<<<< HEAD
 			being.config['print_to_screen']=0
 
 		elif text.startswith('/unmute'):
 			being.config['print_to_screen']=1
+=======
+			if config['print_to_screen']:
+				config['print_to_screen']=False
+			else:
+				config['print_to_screen']=True
+
+		elif text.startswith('/unmute'):
+			config['print_to_screen']=True
+>>>>>>> Built MaxEnt logic; need to add error checking
 
 		if cmd:
 			text=cmd

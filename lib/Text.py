@@ -740,6 +740,8 @@ class Text(entity):
 		return ambigx
 
 
+	def get_parses(self, meter):
+		return self.__parses[meter.id]
 
 	## children
 	def givebirth(self):

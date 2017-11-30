@@ -72,7 +72,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = False
+parse_using_metrical_tree = True
 ############################################
 
 

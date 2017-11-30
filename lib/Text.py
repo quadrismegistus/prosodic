@@ -588,10 +588,10 @@ class Text(entity):
 
 		return meter
 
-	def report(self,meter=None,include_bounded=False):
+	def report(self,meter=None,include_bounded=False,reverse=True):
 		#return #super(Text,self).report(meter=meter if meter else self.meter)
 		meter=self.get_meter(meter)
-		return entity.report(self, meter=meter,include_bounded=include_bounded)
+		return entity.report(self, meter=meter,include_bounded=include_bounded,reverse=reverse)
 
 
 	def bestParses(self,meter=None):

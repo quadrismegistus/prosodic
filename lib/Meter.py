@@ -398,12 +398,13 @@ class Meter:
 
 		return parses,boundedParses
 
-	def printParses(self,parselist,lim=False):		# onlyBounded=True, [option done through "report" now]
+	def printParses(self,parselist,lim=False,reverse=True):		# onlyBounded=True, [option done through "report" now]
 		n = len(parselist)
-		l_i = list(reversed(range(n)))
+		l_i = list(reversed(range(n))) if reverse else list(range(n))
+		parseiter = reversed(parselist) if reverse else parselist
 		#parselist.reverse()
 		o=""
-		for i,parse in enumerate(reversed(parselist)):
+		for i,parse in enumerate(parseiter):
 			#if onlyBounded and parse.isBounded:
 			#	continue
 

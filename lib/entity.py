@@ -126,6 +126,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				breath=unicode(breath)
 			being.om+=breath+"\n"
 			print self.u2s(breath)
+		return breath
 
 	## features
 	def feat(self,k,v):
@@ -1161,9 +1162,10 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 
 
-	def report(self,meter=None,include_bounded=False):
+	def report(self,meter=None,include_bounded=False,reverse=True):
 		""" Print all parses and their violations in a structured format. """
 
+		ReportStr = ''
 		if not meter:
 			from Meter import Meter
 			meter=Meter.genDefault()
@@ -1171,16 +1173,19 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			self.om(unicode(self))
 			allparses=self.allParses(meter=meter,include_bounded=include_bounded)
 			numallparses=len(allparses)
+			#allparses = reversed(allparses) if reverse else allparses
 			for pi,parseList in enumerate(allparses):
 				line=self.iparse2line(pi).txt
 				#parseList.sort(key = lambda P: P.score())
 				hdr="\n\n"+'='*30+'\n[line #'+str(pi+1)+' of '+str(numallparses)+']: '+line+'\n\n\t'
 				ftr='='*30+'\n'
-				self.om(hdr+meter.printParses(parseList).replace('\n','\n\t')[:-1]+ftr,conscious=False)
+				ReportStr+=self.om(hdr+meter.printParses(parseList,reverse=reverse).replace('\n','\n\t')[:-1]+ftr,conscious=False)
 		else:
 			for child in self.children:
 				if type(child)==type([]): continue
-				child.report()
+				ReportStr+=child.report()
+
+		return ReportStr
 
 	def _getcorr_prepkey(self,key):
 		(newkey,etc)=(key.split(":")[0],key.split(":")[1:])

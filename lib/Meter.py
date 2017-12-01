@@ -441,7 +441,12 @@ class Meter:
 def parse_ent(ent,meter,init):
 	#print init, type(init), dir(init)
 	ent.parse(meter,init=init)
-	init._Text__parses[meter].append( ent.allParses(meter) )
-	init._Text__bestparses[meter].append( ent.bestParse(meter) )
-	init._Text__parsed_ents[meter].append(ent)
+	init._Text__parses[meter.id].append( ent.allParses(meter) )
+	init._Text__bestparses[meter.id].append( ent.bestParse(meter) )
+	init._Text__boundParses[meter.id].append( ent.boundParses(meter) )
+	init._Text__parsed_ents[meter.id].append(ent)
 	ent.scansion(meter=meter,conscious=True)
+	return ent
+
+def parse_ent_mp((ent,meter,init)):
+	return parse_ent(ent,meter,init)

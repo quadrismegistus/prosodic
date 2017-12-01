@@ -437,11 +437,82 @@ class Text(entity):
 		return '\n\n'.join(sent.grid(nspace=nspace) for sent in self.sentences())
 
 
+	def iparse(self,meter=None,num_processes=1,arbiter='Line'):
+		"""Parse this text metrically, yielding it line by line."""
+		from Meter import Meter,genDefault,parse_ent,parse_ent_mp
+		import multiprocessing as mp
+		meter=self.get_meter(meter)
 
+		# set internal attributes
+		self.__parses[meter.id]=[]
+		self.__bestparses[meter.id]=[]
+		self.__boundParses[meter.id]=[]
+		self.__parsed_ents[meter.id]=[]
+
+		lines = self.lines()
+		numlines = len(lines)
+
+		init=self
+		ents=self.ents(arbiter)
+		smax=self.config.get('line_maxsylls',100)
+		smin=self.config.get('line_minsylls',0)
+		#print '>> # of lines to parse:',len(ents)
+		ents = [e for e in ents if e.num_syll >= smin and e.num_syll<=smax]
+		#print '>> # of lines to parse after applying min/max line settings:',len(ents)
+
+		self.scansion_prepare(meter=meter,conscious=True)
+
+		numents=len(ents)
+
+		pool=mp.Pool(16)
+
+		objects = [(ent,meter,init) for ent in ents]
+
+		"""jobs = [pool.apply_async(parse_ent,x) for x in objects]
+		for j in jobs:
+			print j.get()
+			yield j.get()
+		"""
+
+
+		now=time.time()
+		clock_snum=0
+		for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
+			clock_snum+=ent.num_syll
+			if ei and not ei%100:
+				nownow=time.time()
+				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+				now=nownow
+				clock_snum=0
+
+			yield ent
+
+		print '>> PARSING COMPLETE IN:',time.time()-now,'seconds'
+
+		"""
+		now=time.time()
+		clock_snum=0
+		for ei,ent in enumerate(ents):
+			clock_snum+=ent.num_syll
+			if ei and not ei%100:
+				nownow=time.time()
+				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+				now=nownow
+				clock_snum=0
+
+			parse_ent(ent,meter,init)
+			yield ent
+		"""
+		if being.config['print_to_screen']: print
+
+
+	def parse(self,meter=None,arbiter='Line'):
+		list(self.iparse(meter=meter,arbiter=arbiter))
 
 	## def parse
-	def parse(self,meter=None,arbiter='Line'):
-		"""Parse this text metrically."""
+	def parse1(self,meter=None,arbiter='Line'):
+		"""@DEPRECATED
+		Parse this text metrically."""
 		from Meter import Meter,genDefault,parse_ent
 		meter=self.get_meter(meter)
 

@@ -109,10 +109,10 @@ Cs['strength.w=>-p']=1
 # [Laxer versions:]
 #
 # A strong metrical position should contain at least one strong syllable:
-#Cs['strength.s=>p']=3
+Cs['strength.s=>p']=3
 #
 # A weak metrical position should contain at least one weak syllable:
-#Cs['strength.w=>u']=3
+Cs['strength.w=>u']=3
 #
 #
 #
@@ -124,10 +124,10 @@ Cs['strength.w=>-p']=1
 #
 # A strong metrical position should not contain any unstressed syllables:
 # [Kiparsky and Hanson believe this is Hopkins' meter]
-Cs['stress.s=>-u']=1
+#Cs['stress.s=>-u']=1
 #
 # A weak metrical position should not contain any stressed syllables:
-Cs['stress.w=>-p']=1
+#Cs['stress.w=>-p']=1
 #
 ###
 # [Laxer versions:]

@@ -213,6 +213,19 @@ class Parse(entity):
 			output.append(x)
 		return string.join(output, '|')
 
+	def posString2(self,viols=False):
+		last_word = None
+		output=''
+		for pos in self.positions:
+			for slot in pos.slots:
+				slotstr=slot.token.upper() if pos.meterVal=='s' else slot.token.lower()
+				if last_word != slot.wordtoken:
+					output+=' '+slotstr
+					last_word=slot.wordtoken
+				else:
+					output+='.'+slotstr
+		return output.strip()
+
 	def str_stress(self):		# eg NE|ver|CAME|poi|SON|from|SO|sweet|A|place
 		output = []
 		for pos in self.positions:
@@ -339,7 +352,13 @@ class Parse(entity):
 		else:
 			return [(k,(v>0)) for (k,v) in self.constraintScores.items()]
 
-
+	@property
+	def violated(self):
+		viold=[]
+		for c,viol in self.constraintScores.items():
+			if viol:
+				viold+=[c]
+		return viold
 
 	def constraintScorez(self):
 		toreturn={}

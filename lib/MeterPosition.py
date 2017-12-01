@@ -29,6 +29,14 @@ class MeterPosition(Parse):
 		return bool(sum(self.constraintScores.values()))
 
 	@property
+	def violated(self):
+		viold=[]
+		for c,viol in self.constraintScores.items():
+			if viol:
+				viold+=[c]
+		return viold
+
+	@property
 	def isStrong(self):
 		return self.meterVal.startswith("s")
 

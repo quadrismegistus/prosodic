@@ -464,7 +464,7 @@ class Text(entity):
 
 		numents=len(ents)
 
-		pool=mp.Pool(16)
+		#pool=mp.Pool(1)
 
 		objects = [(ent,meter,init) for ent in ents]
 
@@ -477,7 +477,8 @@ class Text(entity):
 
 		now=time.time()
 		clock_snum=0
-		for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
+		#for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
+		for ei,objectx in enumerate(objects):
 			clock_snum+=ent.num_syll
 			if ei and not ei%100:
 				nownow=time.time()
@@ -485,7 +486,7 @@ class Text(entity):
 				now=nownow
 				clock_snum=0
 
-			yield ent
+			yield parse_ent_mp(objectx)
 
 		print '>> PARSING COMPLETE IN:',time.time()-now,'seconds'
 

@@ -99,7 +99,7 @@ splitheavies=0
 # [Stricter versions:]
 #
 # A strong metrical position should not contain any weak syllables ("troughs"):
-#Cs['strength.s=>-u']=1
+Cs['strength.s=>-u']=1
 #
 # A weak metrical position may not contain any strong syllables ("peaks"):
 # [Kiparsky and Hanson believe this is Shakespeare's meter]
@@ -109,10 +109,10 @@ Cs['strength.w=>-p']=1
 # [Laxer versions:]
 #
 # A strong metrical position should contain at least one strong syllable:
-Cs['strength.s=>p']=3
+#Cs['strength.s=>p']=3
 #
 # A weak metrical position should contain at least one weak syllable:
-Cs['strength.w=>u']=3
+#Cs['strength.w=>u']=3
 #
 #
 #
@@ -124,10 +124,10 @@ Cs['strength.w=>u']=3
 #
 # A strong metrical position should not contain any unstressed syllables:
 # [Kiparsky and Hanson believe this is Hopkins' meter]
-#Cs['stress.s=>-u']=1
+Cs['stress.s=>-u']=1
 #
 # A weak metrical position should not contain any stressed syllables:
-#Cs['stress.w=>-p']=1
+Cs['stress.w=>-p']=1
 #
 ###
 # [Laxer versions:]
@@ -176,7 +176,7 @@ Cs['strength.w=>u']=3
 #
 # A disyllabic metrical position should not contain more than a minimal foot:
 # i.e. W-resolution requires first syllable to be light and unstressed.
-Cs['footmin-w-resolution']=5
+Cs['footmin-w-resolution']=1
 #
 #
 # A disyllabic metrical position should not contain more than a minimal foot:
@@ -236,7 +236,7 @@ Cs['footmin-w-resolution']=5
 #
 # ...allow only F-resolutions:
 # (both words must be function words and be in a weak metrical position)
-Cs['footmin-f-resolution']=5
+Cs['footmin-f-resolution']=1
 #
 # ...it should never cross a word boundary to begin with:
 #Cs['footmin-wordbound']=1000

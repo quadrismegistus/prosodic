@@ -142,7 +142,10 @@ class Line(entity):
 			lowestScore=bp.score()
 			count=bp.totalCount
 		from tools import makeminlength
-		self.om("\t".join( [unicode(x) for x in [makeminlength(unicode(self),config['linelen']), makeminlength(unicode(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot] ] ),conscious=conscious)
+		print makeminlength(unicode(bp),60)
+		data = [makeminlength(unicode(self),config['linelen']), makeminlength(unicode(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot]
+		data_unicode = [unicode(x) for x in data]
+		self.om("\t".join( data_unicode ),conscious=conscious)
 
 
 	def allParses(self,meter=None,one_per_meter=True):

@@ -72,13 +72,13 @@ class MeterPosition(Parse):
 			slotTokens = []
 
 			for slot in self.slots:
-				slotTokens.append(self.u2s(slot.token))
+				#slotTokens.append(self.u2s(slot.token))
+				slotTokens.append(slot.token)
 
-			self.token = string.join(slotTokens, '.')
+			self.token = '.'.join(slotTokens)
 
 			if self.meterVal == 's':
 				self.token = self.token.upper()
 			else:
 				self.token = self.token.lower()
-
 		return self.token

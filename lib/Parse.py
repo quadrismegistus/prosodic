@@ -208,7 +208,7 @@ class Parse(entity):
 	def posString(self,viols=False):		# eg NE|ver|CAME|poi|SON|from|SO|sweet|A|place
 		output = []
 		for pos in self.positions:
-			x=repr(pos)
+			x=unicode(pos)
 			if viols and pos.has_viol: x+='*'
 			output.append(x)
 		return string.join(output, '|')

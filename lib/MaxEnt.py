@@ -227,7 +227,7 @@ class MaxEntAnalyzer:
         print "\t    perspective, these scansions are indistinguishable, which"
         print "\t    means that they will necessarily split their probabilities."
         print "\t    Either different or more constraints are required in order to "
-        print "\t    distinguish between these constaint-similar scansions"
+        print "\t    distinguish between these constraint-similar scansions"
 
         print ""
         print ""

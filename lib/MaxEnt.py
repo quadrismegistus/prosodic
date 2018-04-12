@@ -18,7 +18,7 @@ import numpy as np
 # while minimizing the probability of the
 # non-selected parses.
 
-# Based on algorith and mathematics as 
+# Based on algorith and mathematics as
 # described here: http://homepages.inf.ed.ac.uk/sgwater/papers/OTvar03.pdf
 # and loosely informed by MEGrammarTool from Bruce Hayes
 class DataPoint:
@@ -78,7 +78,7 @@ class DataAggregator:
     def __get__parses__(self, data):
         full_parses = {}
         for line in data:
-            text = Text(line, lang=self.lang, meter=self.meter)
+            text = Text(line, lang=self.lang, meter=self.meter.id)
             text.parse()
 
             parses = text.allParses(include_bounded=False)[0]
@@ -106,13 +106,16 @@ class DataAggregator:
                 for datum in data[line]:
                     if datum.scansion == meter_str:
                         frequency = datum.frequency
+                        matched = True
 
                 data_point = DataPoint(line, meter_str, scansion_str, frequency)
                 data_point.violations = constraint_viol_count
                 parse_list.append(data_point)
 
 
+
             full_parses[line] = parse_list
+
 
         return full_parses
 
@@ -143,6 +146,8 @@ class DataAggregator:
 
             # Normalize frequencies:
             sum_of_freq = np.sum(frequency_vector)
+            if (sum_of_freq == 0.0):
+                print "ERROR: total frequency of line \"%s\" is 0.0; this is either a test point or the values were ignored due to invalid scansions" % (key)
             frequency_vector = frequency_vector / sum_of_freq
 
             feature_count = violation_matrix.shape[1]
@@ -150,7 +155,6 @@ class DataAggregator:
             inputs_to_data[key] = (violation_matrix, frequency_vector)
 
         return inputs_to_data, inputs_to_outputs, feature_count
-
 
 class MaxEntAnalyzer:
 
@@ -168,19 +172,23 @@ class MaxEntAnalyzer:
         # initializes to all zeros..., maybe could randomize?
         self.weights = np.zeros([self.feature_count])
 
-    def train(self, step = 0.01, epochs = 10000, tolerance=1e-6):
+    def train(self, step = 0.1, epochs = 100000, tolerance=1e-4, only_positive_weights = False):
         self.step = step
         self.tolerance = tolerance
         self.iterations = epochs
 
         for i in range(epochs):
             gradient = self.calculate_gradient()
-
             if np.linalg.norm(gradient) < tolerance:
                 self.iterations = i + 1
                 break
 
             self.weights += step * gradient
+
+            if only_positive_weights:
+                for i in range(self.feature_count):
+                    if self.weights[i] > 0:
+                        self.weights[i] = 0
 
 
     def report(self):
@@ -212,6 +220,17 @@ class MaxEntAnalyzer:
 
         print ""
         print ""
+        print "Interpretation Notes"
+        print "-" * 80
+        print "\t(1) It is possible that two or more scansions have the same"
+        print "\t    violation counts for all constraints. From the algorithm's"
+        print "\t    perspective, these scansions are indistinguishable, which"
+        print "\t    means that they will necessarily split their probabilities."
+        print "\t    Either different or more constraints are required in order to "
+        print "\t    distinguish between these constaint-similar scansions"
+
+        print ""
+        print ""
         print "Input Analysis"
         print "-" * 80
 
@@ -231,7 +250,7 @@ class MaxEntAnalyzer:
                 print "\t\tPredicted Frequency: {}%".format(100 * probs[i])
                 print ""
 
-    def calculate_gradient(self, only_positive_weights=False):
+    def calculate_gradient(self):
         gradient = self.calculate_overfit_penalty_gradient()
 
         for key in self.data:
@@ -241,11 +260,6 @@ class MaxEntAnalyzer:
 
             unsummed_gradient = freqs[:, None] * difference
             gradient = np.sum(unsummed_gradient, axis=0)
-
-        if only_positive_weights:
-            for i in range(self.feature_count):
-                if gradient[i] > 0:
-                    gradient[i] = 0
 
         return gradient
 

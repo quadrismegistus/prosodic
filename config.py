@@ -18,13 +18,13 @@
 # in the "meters" subdirectory, e.g. "kiparskyhanson_shakespeare"
 # (omit the .py from the filename).
 #
-meter = 'kiparskyhanson_shakespeare'
+#meter = 'kiparskyhanson_shakespeare'
 #
 # If no Meter ID is provided, PROSODIC will ask you to set the meter
 # in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
 #
-# meter = 'meter_arto'
+meter = 'meter_arto'
 ############################################
 
 

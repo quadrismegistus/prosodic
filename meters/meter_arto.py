@@ -34,7 +34,7 @@ Cs={}
 ####
 # [Headedness of the line]
 #
-#Cs['headedness!=falling'] = 1  # require a falling rhythm (e.g. trochaic, dactylic)
+Cs['headedness!=falling'] = 1  # require a falling rhythm (e.g. trochaic, dactylic)
 #Cs['headedness!=rising'] = 1    # require a rising rhythm (e.g., iambic, anapestic)
 #
 ############################################

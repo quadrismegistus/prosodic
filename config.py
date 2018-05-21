@@ -235,6 +235,23 @@ folder_results='results/'
 folder_tagged_samples = 'tagged_samples/'
 ############################################
 
+############################################
+# MAXIMUM ENTROPY settings
+#
+# Should negative weights be allowed?
+negative_weights_allowed = True
+#
+# How many epochs should it run for at most?
+max_epochs = 10000
+#
+# What should the step size be?
+step_size = 0.1
+#
+# How small does the gradient have to be before
+# we consider it converged?
+gradient_norm_tolerance = 1e-6
+
+############################################
 
 ####
 # MEMORY DECISIONS

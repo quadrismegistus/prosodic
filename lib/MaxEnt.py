@@ -100,7 +100,7 @@ class DataAggregator:
 
                 constraint_viol_count = []
                 for constraint in self.constraints:
-                    constraint_viol_count.append(constraint_violations[constraint])
+                    constraint_viol_count.append(constraint_violations[constraint] / constraint.weight)
 
                 frequency = 0.0
                 for datum in data[line]:
@@ -142,13 +142,15 @@ class DataAggregator:
             violations, frequencies = inputs_to_data[key]
 
             violation_matrix = np.array(violations)
+            print "Frequencies:", frequencies
             frequency_vector = np.array(frequencies)
 
             # Normalize frequencies:
             sum_of_freq = np.sum(frequency_vector)
             if (sum_of_freq == 0.0):
                 print "ERROR: total frequency of line \"%s\" is 0.0; this is either a test point or the values were ignored due to invalid scansions" % (key)
-            frequency_vector = frequency_vector / sum_of_freq
+            else:
+                frequency_vector = frequency_vector / sum_of_freq
 
             feature_count = violation_matrix.shape[1]
 
@@ -169,8 +171,8 @@ class MaxEntAnalyzer:
         muVec = []
         sigmaVec = []
         for constraint in self.constraints:
-            muVec.append(contraint.mu)
-            sigmaVec.append(contraint.sigma)
+            muVec.append(constraint.mu if constraint.mu == 0 else -constraint.mu)
+            sigmaVec.append(constraint.sigma)
 
         self.mu = np.array(muVec)
         self.sigma = np.array(sigmaVec)
@@ -181,10 +183,11 @@ class MaxEntAnalyzer:
         # initializes to all zeros..., maybe could randomize?
         self.weights = np.zeros([self.feature_count])
 
-    def train(self, step = 0.1, epochs = 100000, tolerance=1e-4, only_positive_weights = False):
+    def train(self, step = 0.01, epochs = 1000000, tolerance=1e-4, only_positive_weights = True):
         self.step = step
         self.tolerance = tolerance
         self.iterations = epochs
+        self.negative_weights_allowed = not only_positive_weights
 
         for i in range(epochs):
             gradient = self.calculate_gradient()
@@ -192,7 +195,7 @@ class MaxEntAnalyzer:
                 self.iterations = i + 1
                 break
 
-            self.weights += step * gradient
+            self.weights += (step * gradient)
 
             if only_positive_weights:
                 for i in range(self.feature_count):
@@ -216,16 +219,17 @@ class MaxEntAnalyzer:
         print "Step Size: {}".format(self.step)
         print "Number of Epochs: {}".format(self.iterations)
         print "Early Stop Tolerance: {}".format(self.tolerance)
+        print "Negative Weights Allowed: {}".format(self.negative_weights_allowed)
 
         print ""
         print ""
         print "Constraint Weighting"
         print "-" * 80
 
-        for i in range(len(self.constraint_names)):
+        for i in range(len(self.constraints)):
             weight = self.weights[i]
             print_weight = 0 if weight == 0 else -weight
-            print "Constraint {}: {}".format(self.constraint_names[i], print_weight)
+            print "Constraint {}: {}".format(self.constraints[i], print_weight)
 
         print ""
         print ""
@@ -260,16 +264,14 @@ class MaxEntAnalyzer:
                 print ""
 
     def calculate_gradient(self):
-        gradient = self.calculate_overfit_penalty_gradient()
-
+        gradient = -self.calculate_overfit_penalty_gradient()
         for key in self.data:
             outs, freqs = self.data[key]
             quotient = self.calculate_gradient_quotient_term(outs)
             difference = outs - quotient
 
             unsummed_gradient = freqs[:, None] * difference
-            gradient = np.sum(unsummed_gradient, axis=0)
-
+            gradient += np.sum(unsummed_gradient, axis=0)
         return gradient
 
     def calculate_gradient_quotient_term(self, outs):
@@ -290,13 +292,13 @@ class MaxEntAnalyzer:
 
         total = 0.0
         for key in self.data:
-            out, freqs = data[key]
+            out, freqs = self.data[key]
 
             probs = self.calculate_probabilities(out)
             log_probs = np.log(probs)
-            total += np.sum(frequencies * log_probs)
+            total += np.sum(freqs * log_probs)
 
-        return total - cost
+        return total - weight_penalty
 
     def calculate_probabilities(self, out):
         scores = np.matmul(out, self.weights)

@@ -90,7 +90,6 @@ class Meter:
 				if "/" in c:
 					(cname,weightVal)=c.split("/")
 					#cweight=int(cweight)
-					print(weightVal)
 					if ";" in weightVal:
 						weightVals = weightVal.split(";")
 						cweight=float(weightVals[0])
@@ -100,19 +99,12 @@ class Meter:
 					else:
 						cweight=float(weightVal)
 						muVal = 0.0
-						sigmaVal = 1.0
+						sigmaVal = 10000
 				else:
 					cname=c
 					weightVal=1.0
 					muVal = 0.0
-					sigmaVal = 1.0
-
-				print "Name:", self.name
-				print "\tName:", cname
-				print "\t\tManual Weight:", cweight
-				print "\t\tMu:", muVal
-				print "\t\tSigma^2:", sigmaVal
-				print ""
+					sigmaVal = 10000
 				self.constraints.append(Constraint(id=i,name=cname,weight=cweight,meter=self, mu=muVal, sigma=sigmaVal))
 		"""
 		else:

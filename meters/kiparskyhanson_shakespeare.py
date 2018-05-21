@@ -103,7 +103,7 @@ splitheavies=0
 #
 # A weak metrical position may not contain any strong syllables ("peaks"):
 # [Kiparsky and Hanson believe this is Shakespeare's meter]
-Cs['strength.w=>-p']=(1, 10, 1)
+Cs['strength.w=>-p']=1
 #
 ###
 # [Laxer versions:]

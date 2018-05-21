@@ -228,7 +228,12 @@ else:	## if not imported, go into interactive mode
 			data_aggregator = DataAggregator(METER, data_path, lang)
 			learner = MaxEntAnalyzer(data_aggregator)
 
-			learner.train(only_positive_weights=False)
+			step_size = float(config['step_size'])
+			negative_weights_allowed = bool(config['negative_weights_allowed'])
+			max_epochs = int(config['max_epochs'])
+			gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
+
+			learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
 			learner.report()
 
 		elif text=="/plot":

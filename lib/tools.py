@@ -92,7 +92,13 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 		vval=getattr(config,vname)
 		if vname=='Cs':
 			for k,v in vval.items():
-				cname=k+'/'+str(v)
+				if not isinstance(v, tuple):
+					cname=k+'/'+str(v)
+				else:
+					cname=k+'/'
+					cname+=str(v[0])
+					for i in range(1, min(3, len(v))):
+						cname+=';' + str(v[i])
 				settings['constraints']+=[cname]
 		else:
 			settings[vname]=vval

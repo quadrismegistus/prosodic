@@ -3,10 +3,12 @@ import os,tools
 PSTRESS_THRESH_DEFAULT = 2
 
 class MeterConstraint:
-	def __init__(self,id=None,name=None,logic=None,weight=1,meter=None):
+	def __init__(self,id=None,name=None,logic=None,weight=1,meter=None, mu=0.0, sigma=1.0):
 		self.id=id
 		self.constr = None
 		self.meter=meter
+		self.mu = mu
+		self.sigma = sigma
 		if not name:
 			self.name=id
 		else:

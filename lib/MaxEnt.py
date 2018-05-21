@@ -37,7 +37,7 @@ class DataAggregator:
         self.lang = lang
         self.has_selected = False
 
-        self.constraint_names = None
+        self.constraints = None
         self.data = self.__build_data_set__(data_path, delimeter)
 
     def __build_data_set__(self, data_path, delimeter):
@@ -93,13 +93,13 @@ class DataAggregator:
 
                 # make sure that all constraints are in
                 # a consistent order
-                if self.constraint_names is None:
-                    self.constraint_names = []
+                if self.constraints is None:
+                    self.constraints = []
                     for constraint in constraint_violations:
-                        self.constraint_names.append(constraint)
+                        self.constraints.append(constraint)
 
                 constraint_viol_count = []
-                for constraint in self.constraint_names:
+                for constraint in self.constraints:
                     constraint_viol_count.append(constraint_violations[constraint])
 
                 frequency = 0.0
@@ -160,13 +160,22 @@ class MaxEntAnalyzer:
 
     def __init__(self, data_aggregator):
         self.data, self.outputs, self.feature_count = data_aggregator.convert_to_table()
-        self.constraint_names = data_aggregator.constraint_names
+        self.constraints = data_aggregator.constraints
 
         # for now, the values of mu and sigma_squared are hard-coded
         # in...need to make a way to provide the actual values at
         # runtime
-        self.mu = np.zeros([self.feature_count])
-        self.sigma = np.full([self.feature_count], 10000)
+
+        muVec = []
+        sigmaVec = []
+        for constraint in self.constraints:
+            muVec.append(contraint.mu)
+            sigmaVec.append(contraint.sigma)
+
+        self.mu = np.array(muVec)
+        self.sigma = np.array(sigmaVec)
+        #self.mu = np.zeros([self.feature_count])
+        #self.sigma = np.full([self.feature_count], 10000)
 
         # Initialize the starting weight vector...right now
         # initializes to all zeros..., maybe could randomize?

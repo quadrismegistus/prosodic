@@ -140,7 +140,17 @@ else:	## if not imported, go into interactive mode
 		msg+="\t\t/corpus\tload folder of texts\n"
 		msg+="\t\t/paste\tenter multi-line text\n"
 
+		msg+="\n"
 
+		msg+="\t\t/weight\trun maximum entropy on a pipe-delimited file\n"
+		msg+="\t\t/weight2\trun maximum entropy on a tab-delimited file\n"
+		try:
+			learner
+		except NameError:
+			pass
+		else:
+			if learner != None:
+				msg+="\t\t/weightsave\tsave the results of the last run of /weight or /weight2 \n"
 
 		msg+="\n"
 
@@ -153,7 +163,7 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/parse\tparse metrically\n"
 			msg+="\t\t/meter\tset the meter used for parsing\n"
 			msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n\n"
-			msg+="\t\t/save\tsave previous output to file\n"
+			msg+="\t\t/save\tsave previous output to file (except for /weight and /weight2; see /weightsave)\n"
 
 		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
@@ -262,11 +272,18 @@ else:	## if not imported, go into interactive mode
 			else:
 				if text.startswith("/weight2"):
 					data_path = text[len("/weight2 "):]
+					if data_path == "" or data_path is None:
+						print "You must enter the filename after the command i.e., /weight2 <filename>"
+						continue
 					aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
 
 				else:
 					data_path = text[len("/weight "):]
+					if data_path == "" or data_path is None:
+						print "You must enter the filename after the command i.e., /weight <filename>"
+						continue
 					data_aggregator = DataAggregator(METER, data_path, lang)
+
 
 				learner = MaxEntAnalyzer(data_aggregator)
 

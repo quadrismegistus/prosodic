@@ -268,15 +268,15 @@ else:	## if not imported, go into interactive mode
 					data_path = text[len("/weight "):]
 					data_aggregator = DataAggregator(METER, data_path, lang)
 
-					learner = MaxEntAnalyzer(data_aggregator)
+				learner = MaxEntAnalyzer(data_aggregator)
 
-					step_size = float(config['step_size'])
-					negative_weights_allowed = bool(config['negative_weights_allowed'])
-					max_epochs = int(config['max_epochs'])
-					gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
+				step_size = float(config['step_size'])
+				negative_weights_allowed = bool(config['negative_weights_allowed'])
+				max_epochs = int(config['max_epochs'])
+				gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
 
-					learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
-					learner.report()
+				learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
+				learner.report()
 
 		elif text=="/plot":
 			obj.plot()

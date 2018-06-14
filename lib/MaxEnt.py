@@ -296,7 +296,7 @@ class MaxEntAnalyzer:
 
         save_string += "\n\n"
 
-        save_string += "Input Report"
+        save_string += "Input Report\n"
         save_string += "Text\tScansion\tObserved Frequency\tPredicted Frequency"
         for i in range(len(self.constraints)):
             save_string += "\t{}".format(self.constraints[i])

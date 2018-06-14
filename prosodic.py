@@ -225,25 +225,58 @@ else:	## if not imported, go into interactive mode
 
 		elif text.startswith("/weight"):
 
-			if text.startswith("/weight2"):
-				data_path = text[len("/weight2 "):]
-				aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
+			# Check if learner is defined
+			try:
+				learner
+			except NameError:
+				learner = None
+
+			if text.startswith("/weightsave"):
+				if not learner:
+					print "Cannot save weights as no weights have been trained. First train the MaxEnt learner with /weight or /weight2"
+				else:
+					# save the weights to a file
+					fn=text.replace('/weightsave','').strip()
+					if not fn:
+						fn=raw_input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the default directory ['+config['folder_results']+'],\n\t- or as a full path.\n\n').strip()
+
+					try:
+						ofn=None
+						dirname=os.path.dirname(fn)
+						if dirname:
+							ofn=fn
+						else:
+							dirname=config['folder_results']
+							ofn=os.path.join(dirname,fn)
+
+						if not os.path.exists(dirname): os.makedirs(dirname)
+						of=codecs.open(ofn,'w',encoding='utf-8')
+						output_str = learner.generate_save_string()
+						of.write(output_str)
+						of.close()
+						print ">> saving weights to: "+ofn
+					except IOError as e:
+						print e
+						print "** [error: file not saved.]\n\n"
 
 			else:
-				data_path = text[len("/weight "):]
-				data_aggregator = DataAggregator(METER, data_path, lang)
+				if text.startswith("/weight2"):
+					data_path = text[len("/weight2 "):]
+					aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
 
-			learner = MaxEntAnalyzer(data_aggregator)
+				else:
+					data_path = text[len("/weight "):]
+					data_aggregator = DataAggregator(METER, data_path, lang)
 
-			step_size = float(config['step_size'])
-			negative_weights_allowed = bool(config['negative_weights_allowed'])
-			max_epochs = int(config['max_epochs'])
-			gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
+					learner = MaxEntAnalyzer(data_aggregator)
 
-			learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
-			learner.report()
+					step_size = float(config['step_size'])
+					negative_weights_allowed = bool(config['negative_weights_allowed'])
+					max_epochs = int(config['max_epochs'])
+					gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
 
-
+					learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
+					learner.report()
 
 		elif text=="/plot":
 			obj.plot()
@@ -469,7 +502,6 @@ else:	## if not imported, go into interactive mode
 				of=codecs.open(ofn,'w',encoding='utf-8')
 				if type(being.omm) in [str]:
 					being.omm=being.omm.decode('utf-8',errors='ignore')
-				print(being.omm)
 				of.write(being.omm)
 				of.close()
 				print ">> saving previous output to: "+ofn

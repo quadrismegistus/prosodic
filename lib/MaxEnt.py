@@ -278,6 +278,52 @@ class MaxEntAnalyzer:
                 print "\t\tPredicted Frequency: {}%".format(100 * probs[i])
                 print ""
 
+    def generate_save_string(self):
+        save_string = ""
+        save_string += "Hyper-Parameters\n"
+        save_string += "Step Size\t{}\n".format(self.step)
+        save_string += "Epochs\t{}\n".format(self.iterations)
+        save_string += "Early Stop Tolerance\t{}\n".format(self.tolerance)
+        save_string += "Negative Weights Allowed\t{}\n".format(self.negative_weights_allowed)
+
+        save_string += "\n\n"
+
+        save_string += "Learned Weights\n"
+        for i in range(len(self.constraints)):
+            weight = self.weights[i]
+            print_weight = 0 if weight == 0 else -weight
+            save_string += "{}\t{}\n".format(self.constraints[i], print_weight)
+
+        save_string += "\n\n"
+
+        save_string += "Input Report"
+        save_string += "Text\tScansion\tObserved Frequency\tPredicted Frequency"
+        for i in range(len(self.constraints)):
+            save_string += "\t{}".format(self.constraints[i])
+        save_string += "\n"
+
+        for line in self.outputs:
+            save_string += "{}".format(line)
+
+            outs, freqs = self.data[line]
+            scans = self.outputs[line]
+
+            probs = self.calculate_probabilities(outs)
+
+            for i in range(freqs.shape[0]):
+                save_string += "\t"
+                save_string += "{}\t".format(scans[i])
+                save_string += "{}\t".format(100 * freqs[i])
+                save_string += "{}\t".format(100 * probs[i])
+
+                for j in range(len(self.constraints)):
+                    viols = outs[i, j]
+                    save_string += "{}\t".format(viols)
+
+                save_string += "\n"
+
+        return save_string
+
     def calculate_gradient(self):
         gradient = -self.calculate_overfit_penalty_gradient()
         for key in self.data:

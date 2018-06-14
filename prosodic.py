@@ -224,8 +224,15 @@ else:	## if not imported, go into interactive mode
 			obj.parse(meter=METER)
 
 		elif text.startswith("/weight"):
-			data_path = text[len("/weight "):]
-			data_aggregator = DataAggregator(METER, data_path, lang)
+
+			if text.startswith("/weight2"):
+				data_path = text[len("/weight2 "):]
+				aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
+
+			else:
+				data_path = text[len("/weight "):]
+				data_aggregator = DataAggregator(METER, data_path, lang)
+
 			learner = MaxEntAnalyzer(data_aggregator)
 
 			step_size = float(config['step_size'])
@@ -235,6 +242,8 @@ else:	## if not imported, go into interactive mode
 
 			learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
 			learner.report()
+
+
 
 		elif text=="/plot":
 			obj.plot()
@@ -460,6 +469,7 @@ else:	## if not imported, go into interactive mode
 				of=codecs.open(ofn,'w',encoding='utf-8')
 				if type(being.omm) in [str]:
 					being.omm=being.omm.decode('utf-8',errors='ignore')
+				print(being.omm)
 				of.write(being.omm)
 				of.close()
 				print ">> saving previous output to: "+ofn

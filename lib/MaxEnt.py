@@ -31,11 +31,13 @@ class DataPoint:
 
 class DataAggregator:
 
-    def __init__(self, meter, data_path, lang, delimeter="|"):
+    def __init__(self, meter, data_path, lang, is_tab_formatted=False, delimeter="|"):
         # initialize basics
         self.meter = meter
         self.lang = lang
         self.has_selected = False
+
+        self.is_tab_formatted = is_tab_formatted
 
         self.constraints = None
         self.data = self.__build_data_set__(data_path, delimeter)
@@ -44,28 +46,45 @@ class DataAggregator:
         data = self.__extract_provided_data__(data_path, delimeter)
         full_parses = self.__get__parses__(data)
 
-        #for key in full_parses:
-            #points = full_parses[key]
-            #for datum in points:
-                #print datum.line
-                #print datum.scansion
-                #print datum.frequency
-                #print datum.violations
-                #print ""
-
         return full_parses
 
 
     def __extract_provided_data__(self, data_path, delimeter):
         data = {}
-        with open(data_path) as f:
-            for line in f.readlines():
-                line = line.strip()
-                split = line.split(delimeter)
 
-                text = split[0]
-                frequency = float(split[1])
-                scansion = split[2]
+        with open(data_path) as f:
+            lastText = None
+            hasReadFirstLine = False
+            for line in f.readlines():
+
+                if self.is_tab_formatted:
+                    if not hasReadFirstLine:
+                        hasReadFirstLine = True
+                        continue
+
+                    split = line.split("\t")
+
+                    print split
+
+                    text = split[0].strip()
+                    if text == "":
+                        text = lastText
+                    else:
+                        lastText = text
+
+                    scansion = split[2]
+
+                    if split[3] == "":
+                        frequency = 0.0
+                    else:
+                        frequency = float(split[3])
+
+                else:
+                    line = line.strip()
+                    split = line.split(delimeter)
+                    text = split[0]
+                    frequency = float(split[1])
+                    scansion = split[2]
 
                 if text not in data:
                     data[text] = []
@@ -80,6 +99,8 @@ class DataAggregator:
         for line in data:
             text = Text(line, lang=self.lang, meter=self.meter.id)
             text.parse()
+
+            print(line)
 
             parses = text.allParses(include_bounded=False)[0]
             parse_list = []
@@ -164,10 +185,6 @@ class MaxEntAnalyzer:
         self.data, self.outputs, self.feature_count = data_aggregator.convert_to_table()
         self.constraints = data_aggregator.constraints
 
-        # for now, the values of mu and sigma_squared are hard-coded
-        # in...need to make a way to provide the actual values at
-        # runtime
-
         muVec = []
         sigmaVec = []
         for constraint in self.constraints:
@@ -176,8 +193,6 @@ class MaxEntAnalyzer:
 
         self.mu = np.array(muVec)
         self.sigma = np.array(sigmaVec)
-        #self.mu = np.zeros([self.feature_count])
-        #self.sigma = np.full([self.feature_count], 10000)
 
         # Initialize the starting weight vector...right now
         # initializes to all zeros..., maybe could randomize?

@@ -88,13 +88,24 @@ class Meter:
 			for i in range(len(constraints)):
 				c=constraints[i]
 				if "/" in c:
-					(cname,cweight)=c.split("/")
+					(cname,weightVal)=c.split("/")
 					#cweight=int(cweight)
-					cweight=float(cweight)
+					if ";" in weightVal:
+						weightVals = weightVal.split(";")
+						cweight=float(weightVals[0])
+						muVal =float(weightVals[1])
+						if len(weightVals) > 2:
+							sigmaVal =float(weightVals[2])
+					else:
+						cweight=float(weightVal)
+						muVal = 0.0
+						sigmaVal = 10000
 				else:
 					cname=c
-					cweight=1.0
-				self.constraints.append(Constraint(id=i,name=cname,weight=cweight,meter=self))
+					weightVal=1.0
+					muVal = 0.0
+					sigmaVal = 10000
+				self.constraints.append(Constraint(id=i,name=cname,weight=cweight,meter=self, mu=muVal, sigma=sigmaVal))
 		"""
 		else:
 			if os.path.exists(constraints):

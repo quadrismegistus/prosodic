@@ -43,6 +43,8 @@ from Phoneme import Phoneme
 from Word import Word
 from WordToken import WordToken
 from Meter import Meter
+from MaxEnt import DataAggregator
+from MaxEnt import MaxEntAnalyzer
 import ipa
 hdrbar="################################################"
 
@@ -138,12 +140,21 @@ else:	## if not imported, go into interactive mode
 		msg+="\t\t/corpus\tload folder of texts\n"
 		msg+="\t\t/paste\tenter multi-line text\n"
 
+		msg+="\n"
 
+		msg+="\t\t/weight\trun maximum entropy on a pipe-delimited file\n"
+		msg+="\t\t/weight2\trun maximum entropy on a tab-delimited file\n"
+		try:
+			learner
+		except NameError:
+			pass
+		else:
+			if learner != None:
+				msg+="\t\t/weightsave\tsave the results of the last run of /weight or /weight2 \n"
 
 		msg+="\n"
 
 		if obj:
-
 			msg+="\t\t/show\tshow annotations on input\n"
 			if config.get('parse_using_metrical_tree',False): msg+="\t\t/grid\tsee stress grids\n"
 			msg+="\t\t/tree\tsee phonological structure\n"
@@ -152,7 +163,7 @@ else:	## if not imported, go into interactive mode
 			msg+="\t\t/parse\tparse metrically\n"
 			msg+="\t\t/meter\tset the meter used for parsing\n"
 			msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n\n"
-			msg+="\t\t/save\tsave previous output to file\n"
+			msg+="\t\t/save\tsave previous output to file (except for /weight and /weight2; see /weightsave)\n"
 
 		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
@@ -163,7 +174,6 @@ else:	## if not imported, go into interactive mode
 			#	msg+="\t\t/draw\tdraw finite-state machines\n"
 
 			msg+="\n"
-
 
 		#msg+="\t\t/config\tchange settings\n"
 
@@ -222,6 +232,68 @@ else:	## if not imported, go into interactive mode
 
 		elif text=="/parse":
 			obj.parse(meter=METER)
+
+		elif text.startswith("/weight"):
+
+			# Check if learner is defined
+			try:
+				learner
+			except NameError:
+				learner = None
+
+			if text.startswith("/weightsave"):
+				if not learner:
+					print "Cannot save weights as no weights have been trained. First train the MaxEnt learner with /weight or /weight2"
+				else:
+					# save the weights to a file
+					fn=text.replace('/weightsave','').strip()
+					if not fn:
+						fn=raw_input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the default directory ['+config['folder_results']+'],\n\t- or as a full path.\n\n').strip()
+
+					try:
+						ofn=None
+						dirname=os.path.dirname(fn)
+						if dirname:
+							ofn=fn
+						else:
+							dirname=config['folder_results']
+							ofn=os.path.join(dirname,fn)
+
+						if not os.path.exists(dirname): os.makedirs(dirname)
+						of=codecs.open(ofn,'w',encoding='utf-8')
+						output_str = learner.generate_save_string()
+						of.write(output_str)
+						of.close()
+						print ">> saving weights to: "+ofn
+					except IOError as e:
+						print e
+						print "** [error: file not saved.]\n\n"
+
+			else:
+				if text.startswith("/weight2"):
+					data_path = text[len("/weight2 "):]
+					if data_path == "" or data_path is None:
+						print "You must enter the filename after the command i.e., /weight2 <filename>"
+						continue
+					aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
+
+				else:
+					data_path = text[len("/weight "):]
+					if data_path == "" or data_path is None:
+						print "You must enter the filename after the command i.e., /weight <filename>"
+						continue
+					data_aggregator = DataAggregator(METER, data_path, lang)
+
+
+				learner = MaxEntAnalyzer(data_aggregator)
+
+				step_size = float(config['step_size'])
+				negative_weights_allowed = bool(config['negative_weights_allowed'])
+				max_epochs = int(config['max_epochs'])
+				gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
+
+				learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
+				learner.report()
 
 		elif text=="/plot":
 			obj.plot()

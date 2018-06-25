@@ -236,7 +236,7 @@ Cs['footmin-w-resolution']=1
 #
 # ...allow only F-resolutions:
 # (both words must be function words and be in a weak metrical position)
-Cs['footmin-f-resolution']=1
+Cs['footmin-wordbound-lexmono']=1
 #
 # ...it should never cross a word boundary to begin with:
 #Cs['footmin-wordbound']=1000

@@ -121,7 +121,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		"""
 
 		#import prosodic
-		if (not conscious) or bool(being.config['print_to_screen']):
+		if (not conscious) and bool(being.config['print_to_screen']):
 			if not type(breath) in [str,unicode]:
 				breath=unicode(breath)
 			being.om+=breath+"\n"
@@ -1060,22 +1060,24 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if not linelens: continue
 
 				maxlinesize=6
-				for n1,nbrs in G.adjacency_iter():
-					for n2,eattr in nbrs.items():
-						count=G[n1][n2]['weight']
-						G[n1][n2]['weight']=count/sumweight[(n1[0],n2[0])]
-						strfreq=str(G[n1][n2]['weight']*100)
-						if len(strfreq)>3:
-							strfreq=strfreq[0:3]
-						G[n1][n2]['label']=str(count)+" ["+str(strfreq)+"%]"
-						G[n1][n2]['fontsize']=10
-						G[n1][n2]['penwidth']=G[n1][n2]['weight']*maxlinesize
-						G.node[n1]['width']=1
-						G.node[n2]['width']=1
-						G[n1][n2]['weight']=0
-						#G[n1][n2]['style']="setlinewidth("+str(int(G[n1][n2]['weight']*maxlinesize)+1)+")"
-						#print G[n1][n2]['style']
-						#G[n1][n2]['arrowhead']='none'
+				nodes=G.nodes()
+				#for n1,nbrs in G.adjacency_iter():
+				#	for n2,eattr in nbrs.items():
+				for n1,n2,eattr in G.edges(data=True):
+					count=G[n1][n2]['weight']
+					G[n1][n2]['weight']=count/sumweight[(n1[0],n2[0])]
+					strfreq=str(G[n1][n2]['weight']*100)
+					if len(strfreq)>3:
+						strfreq=strfreq[0:3]
+					G[n1][n2]['label']=str(count)+" ["+str(strfreq)+"%]"
+					G[n1][n2]['fontsize']=10
+					G[n1][n2]['penwidth']=G[n1][n2]['weight']*maxlinesize
+					G.node[n1]['width']=1
+					G.node[n2]['width']=1
+					G[n1][n2]['weight']=0
+					#G[n1][n2]['style']="setlinewidth("+str(int(G[n1][n2]['weight']*maxlinesize)+1)+")"
+					#print G[n1][n2]['style']
+					#G[n1][n2]['arrowhead']='none'
 
 				import math
 				"""avglinelen=int(max(linelens))

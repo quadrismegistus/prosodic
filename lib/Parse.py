@@ -71,10 +71,14 @@ class Parse(entity):
 		return slots
 
 
-	def str_meter(self):
+	def str_meter(self,word_sep=""):
 		str_meter=""
+		wordTokNow=None
 		for pos in self.positions:
 			for slot in pos.slots:
+				if word_sep and wordTokNow and slot.wordtoken != wordTokNow:
+					str_meter+=word_sep
+				wordTokNow=slot.wordtoken
 				str_meter+=pos.meterVal
 		return str_meter
 
@@ -203,7 +207,19 @@ class Parse(entity):
 		return int(self.totalScore) if int(self.totalScore) == self.totalScore else self.totalScore
 
 	def __cmp__(self, other):
-		return cmp(self.score(), other.score())
+		## @TODO: parameterize this: break ties by favoring the more binary parse
+		x,y=self.score(),other.score()
+		if x<y: return -1
+		if x>y: return 1
+
+		# Break tie
+		return 0
+		xs=self.str_meter()
+		ys=other.str_meter()
+		return cmp(xs.count('ww')+xs.count('ss'), ys.count('ww')+ys.count('ss'))
+		# if x==y:
+		#
+		# return cmp(self.score(), other.score())
 
 	def posString(self,viols=False):		# eg NE|ver|CAME|poi|SON|from|SO|sweet|A|place
 		output = []

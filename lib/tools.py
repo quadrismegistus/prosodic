@@ -649,9 +649,9 @@ def writegen(fnfn,generator,header=None,sep=','):
 
 		of.write(sep.join(vals) + '\n')
 
-def writegengen(fnfn,generator,header=None,sep=','):
+def writegengen(fnfn,generator,header=None,sep=',',save=True):
 	import codecs
-	of = codecs.open(fnfn,'w',encoding='utf-8')
+	if save: of = codecs.open(fnfn,'w',encoding='utf-8')
 	header_written=False
 	for dx in generator():
 		if not header_written:
@@ -660,7 +660,7 @@ def writegengen(fnfn,generator,header=None,sep=','):
 					header=dx['header']
 				else:
 					header=sorted(dx.keys())
-			of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
+			if save: of.write(sep.join(['"'+x+'"' for x in header]) + '\n')
 			header_written=True
 
 		vals=[]
@@ -678,7 +678,7 @@ def writegengen(fnfn,generator,header=None,sep=','):
 			vals+=[o]
 
 
-		of.write(sep.join(vals) + '\n')
+		if save: of.write(sep.join(vals) + '\n')
 		yield dx
 
 

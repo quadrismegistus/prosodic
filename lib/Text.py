@@ -115,7 +115,7 @@ class Text(entity):
 
 
 
-	def stats_lines(self,meter=None,all_parses=False,viols=True):
+	def stats_lines(self,meter=None,all_parses=False,viols=True, save=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
 		constraint_names = [c.name_weight for c in meter.constraints]
@@ -142,11 +142,11 @@ class Text(entity):
 		name=self.name.replace('.txt','')
 		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
-		for dx in writegengen(ofn, _writegen):
+		for dx in writegengen(ofn, _writegen, save=save):
 			yield dx
-		print '>> saved:',ofn
+		if save: print '>> saved:',ofn
 
-	def stats_lines_ot(self,meter=None,all_parses=False,viols=True):
+	def stats_lines_ot(self,meter=None,all_parses=False,viols=True,save=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
 		constraint_names = [str(c) for c in meter.constraints]
@@ -175,10 +175,9 @@ class Text(entity):
 		name=self.name.replace('.txt','')
 		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
-		for dx in writegengen(ofn, _writegen):
+		for dx in writegengen(ofn, _writegen,save=save):
 			yield dx
 		print '>> saved:',ofn
-
 
 	def stats_positions(self,meter=None,all_parses=False):
 
@@ -465,46 +464,33 @@ class Text(entity):
 		numents=len(ents)
 
 		#pool=mp.Pool(1)
+		toprint=being.config['print_to_screen']
+		objects = [(ent,meter,init,False) for ent in ents]
 
-		objects = [(ent,meter,init) for ent in ents]
+		if num_processes>1:
+			print '!! MULTIPROCESSING PARSING IS NOT WORKING YET !!'
+			pool = mp.Pool(num_processes)
+			jobs = [pool.apply_async(parse_ent_mp,(x,)) for x in objects]
+			for j in jobs:
+				print j.get()
+				yield j.get()
+		else:
+			now=time.time()
+			clock_snum=0
+			#for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
+			for ei,objectx in enumerate(objects):
+				clock_snum+=ent.num_syll
+				if ei and not ei%100:
+					nownow=time.time()
+					if being.config['print_to_screen']:
+						print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+					now=nownow
+					clock_snum=0
 
-		"""jobs = [pool.apply_async(parse_ent,x) for x in objects]
-		for j in jobs:
-			print j.get()
-			yield j.get()
-		"""
+				yield parse_ent_mp(objectx)
 
-
-		now=time.time()
-		clock_snum=0
-		#for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
-		for ei,objectx in enumerate(objects):
-			clock_snum+=ent.num_syll
-			if ei and not ei%100:
-				nownow=time.time()
-				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
-				now=nownow
-				clock_snum=0
-
-			yield parse_ent_mp(objectx)
-
-		print '>> PARSING COMPLETE IN:',time.time()-now,'seconds'
-
-		"""
-		now=time.time()
-		clock_snum=0
-		for ei,ent in enumerate(ents):
-			clock_snum+=ent.num_syll
-			if ei and not ei%100:
-				nownow=time.time()
-				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
-				now=nownow
-				clock_snum=0
-
-			parse_ent(ent,meter,init)
-			yield ent
-		"""
-		if being.config['print_to_screen']: print
+		if being.config['print_to_screen']:
+			print '>> PARSING COMPLETE IN:',time.time()-now,'seconds'
 
 
 	def parse(self,meter=None,arbiter='Line'):

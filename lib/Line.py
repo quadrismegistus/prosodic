@@ -248,17 +248,24 @@ class Line(entity):
 			o.append(e)
 		return "#".join(o)
 
-	def str_weight(self):
+	def str_weight(self,word_sep=""):
 		o=[]
 		for word in self.words():
 			o.append("".join(x.str_weight() for x in word.children))
-		return "".join(o)
+		return word_sep.join(o)
 
-	def str_stress(self):
+	def str_stress(self,word_sep=""):
 		o=[]
 		for word in self.words():
 			o.append("".join(x.str_stress() for x in word.children))
-		return "".join(o)
+		return word_sep.join(o)
+
+	def str_sonority(self,word_sep=""):
+		o=[]
+		for word in self.words():
+			o.append("".join(x.str_sonority() for x in word.children))
+		return word_sep.join(o)
+
 
 
 	#def __eq__(self,other):

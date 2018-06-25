@@ -18,7 +18,7 @@
 # in the "meters" subdirectory, e.g. "kiparskyhanson_shakespeare"
 # (omit the .py from the filename).
 #
-meter = 'kiparskyhanson_shakespeare'
+meter = 'meter_ryan'
 #
 # If no Meter ID is provided, PROSODIC will ask you to set the meter
 # in its interactive mode. As a python module, you will have to
@@ -85,7 +85,7 @@ parse_using_metrical_tree = False
 # Do not print loaded words, parses, etc. to screen:
 # Although hiden, you may still save any output to disk
 # using the /save command.
-print_to_screen=False
+print_to_screen=True
 #
 # The default length for the line used by printing
 linelen=60

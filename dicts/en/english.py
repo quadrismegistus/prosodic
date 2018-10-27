@@ -194,11 +194,12 @@ def add_elisions(_ipa):
 
 
 def espeak2ipa(token):
-	CMD='espeak -q -x '+token
+	CMD='espeak -q -x '+token.replace("'","\\'").replace('"','\\"')
 	#print CMD
 	try:
 		return subprocess.check_output(CMD.split()).strip()
-	except OSError:
+	except (OSError,subprocess.CalledProcessError) as e:
+		print "!!",e
 		return None
 
 def tts2ipa(token,TTS_ENGINE=None):

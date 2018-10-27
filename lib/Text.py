@@ -455,7 +455,7 @@ class Text(entity):
 		self.__boundParses={}
 		self.__parsed_ents={}
 
-	def iparse(self,meter=None,num_processes=1,arbiter='Line'):
+	def iparse(self,meter=None,num_processes=1,arbiter='Line',line_lim=None):
 		"""Parse this text metrically, yielding it line by line."""
 		from Meter import Meter,genDefault,parse_ent,parse_ent_mp
 		import multiprocessing as mp
@@ -468,6 +468,7 @@ class Text(entity):
 		self.__parsed_ents[meter.id]=[]
 
 		lines = self.lines()
+		lines=lines[:line_lim]
 		numlines = len(lines)
 
 		init=self
@@ -512,8 +513,8 @@ class Text(entity):
 			print '>> parsing complete in:',time.time()-now,'seconds'
 
 
-	def parse(self,meter=None,arbiter='Line'):
-		list(self.iparse(meter=meter,arbiter=arbiter))
+	def parse(self,meter=None,arbiter='Line',line_lim=None):
+		list(self.iparse(meter=meter,arbiter=arbiter,line_lim=line_lim))
 
 	## def parse
 	def parse1(self,meter=None,arbiter='Line'):

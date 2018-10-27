@@ -4,7 +4,7 @@
 #
 #
 # Set the long-form name of this meter
-name = "Iambic Pentameter"
+name = "*PEAK only"
 #
 # [Do not remove or uncomment the following line]
 Cs={}
@@ -26,7 +26,7 @@ Cs={}
 #Cs['number_feet!=2'] = 1       # require dimeter
 #Cs['number_feet!=3'] = 1       # require trimeter
 #Cs['number_feet!=4'] = 1       # require tetrameter
-Cs['number_feet!=5'] = 1        # require pentameter
+#Cs['number_feet!=5'] = 1        # require pentameter
 #Cs['number_feet!=6'] = 1       # require hexameter
 #Cs['number_feet!=7'] = 1       # require heptameter
 #
@@ -35,7 +35,7 @@ Cs['number_feet!=5'] = 1        # require pentameter
 # [Headedness of the line]
 #
 #Cs['headedness!=falling'] = 1  # require a falling rhythm (e.g. trochaic, dactylic)
-Cs['headedness!=rising'] = 1    # require a rising rhythm (e.g., iambic, anapestic)
+#Cs['headedness!=rising'] = 1    # require a rising rhythm (e.g., iambic, anapestic)
 #
 ############################################
 
@@ -176,7 +176,7 @@ Cs['strength.w=>-p']=1
 #
 # A disyllabic metrical position should not contain more than a minimal foot:
 # i.e. W-resolution requires first syllable to be light and unstressed.
-Cs['footmin-w-resolution']=1
+#Cs['footmin-w-resolution']=1
 #
 #
 # A disyllabic metrical position should not contain more than a minimal foot:
@@ -236,7 +236,7 @@ Cs['footmin-w-resolution']=1
 #
 # ...allow only F-resolutions:
 # (both words must be function words and be in a weak metrical position)
-Cs['footmin-f-resolution']=1
+#Cs['footmin-f-resolution']=1
 #
 # ...it should never cross a word boundary to begin with:
 #Cs['footmin-wordbound']=1000
@@ -307,7 +307,7 @@ Cs['footmin-f-resolution']=1
 # The first two metrical positions will not be evaluated
 # for any of the strength/stress/weight correspondence constraints:
 # [set to 1 to be true]
-#Cs['skip_initial_foot']=1
+Cs['skip_initial_foot']=1
 #
 # A word should not be an elision [use to discourage elisions]:
 #Cs['word-elision']=1

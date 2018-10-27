@@ -4,7 +4,7 @@
 #
 #
 # Set the long-form name of this meter
-name = "Iambic Pentameter"
+name = "Iambic Pentameter 3 (Kitchen Sink)"
 #
 # [Do not remove or uncomment the following line]
 Cs={}
@@ -124,10 +124,10 @@ Cs['strength.w=>-p']=1
 #
 # A strong metrical position should not contain any unstressed syllables:
 # [Kiparsky and Hanson believe this is Hopkins' meter]
-#Cs['stress.s=>-u']=1
+Cs['stress.s=>-u']=1
 #
 # A weak metrical position should not contain any stressed syllables:
-#Cs['stress.w=>-p']=1
+Cs['stress.w=>-p']=1
 #
 ###
 # [Laxer versions:]
@@ -307,7 +307,7 @@ Cs['footmin-f-resolution']=1
 # The first two metrical positions will not be evaluated
 # for any of the strength/stress/weight correspondence constraints:
 # [set to 1 to be true]
-#Cs['skip_initial_foot']=1
+Cs['skip_initial_foot']=1
 #
 # A word should not be an elision [use to discourage elisions]:
 #Cs['word-elision']=1

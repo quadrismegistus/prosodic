@@ -132,6 +132,14 @@ def loadMeters():
 		d[name]=mobj
 	return d
 
+def now(now=None,seconds=True):
+	import datetime as dt
+	if not now:
+		now=dt.datetime.now()
+	elif type(now) in [int,float,str]:
+		now=dt.datetime.fromtimestamp(now)
+
+	return '{0}{1}{2}-{3}{4}{5}'.format(now.year,str(now.month).zfill(2),str(now.day).zfill(2),str(now.hour).zfill(2),str(now.minute).zfill(2),'-'+str(now.second).zfill(2) if seconds else '')
 
 
 

@@ -43,8 +43,9 @@ from Phoneme import Phoneme
 from Word import Word
 from WordToken import WordToken
 from Meter import Meter
-from MaxEnt import DataAggregator
-from MaxEnt import MaxEntAnalyzer
+from MaxEnt2 import DataAggregator
+from MaxEnt2 import MaxEntAnalyzer
+from Meter import get_meter
 import ipa
 hdrbar="################################################"
 

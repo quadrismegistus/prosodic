@@ -22,8 +22,41 @@ def genDefault():
 #def meterShakespeare():
 #	return Meter('strength.s=>')
 
+DEFAULT_CONSTRAINTS = [
+	'footmin-w-resolution/1',
+	'footmin-f-resolution/1',
+	'strength.w=>-p/1',
+	'headedness!=rising/1',
+	'number_feet!=5/1'
+]
+
+def get_meter(id=None, name=None, maxS=2, maxW=2, splitheavies=0, constraints=DEFAULT_CONSTRAINTS,return_dict=False):
+
+	"""
+	{'constraints': ['footmin-w-resolution/1',
+	'footmin-f-resolution/1',
+	'strength.w=>-p/1',
+	'headedness!=rising/1',
+	'number_feet!=5/1'],
+	'id': 'iambic_pentameter',
+	'maxS': 2,
+	'maxW': 2,
+	'name': 'Iambic Pentameter',
+	'splitheavies': 0}"""
+	if 'Meter.Meter' in str(id.__class__): return id
+
+	if not id: id='Meter_%s' % now()
+	if not name: name = id + '['+' '.join(constraints)+']'
+
+	config = locals()
+
+	import prosodic
+	if id in prosodic.config['meters']:
+		return prosodic.config['meters'][id]
 
 
+	if return_dict: return config
+	return Meter(config)
 
 
 

@@ -146,11 +146,16 @@ class Text(entity):
 			yield dx
 		if save: print '>> saved:',ofn
 
+	def stats_lines_ot_header(self,meter=None):
+		meter=self.get_meter(meter)
+		constraint_names = [str(c) for c in meter.constraints]
+		header = ['line', 'parse', 'meter', 'num_viols', 'score_viols'] + constraint_names + ['num_line','num_stanza']
+		return header
+
 	def stats_lines_ot(self,meter=None,all_parses=False,viols=True,save=True):
 		#parses = self.allParses(meter=meter) if all_parses else [[parse] for parse in self.bestParses(meter=meter)]
 		meter=self.get_meter(meter)
-		constraint_names = [str(c) for c in meter.constraints]
-		header = ['line', 'parse', 'meter', 'num_viols', 'score_viols'] + constraint_names
+		header=self.stats_lines_ot_header(meter)
 
 		def _writegen():
 			for line in self.lines():
@@ -166,6 +171,8 @@ class Text(entity):
 					dx['parse']=parse.posString(viols=viols)
 					#dx['2_obs']='1'
 					dx['score_viols'] = parse.score()
+					dx['num_line']=line.num
+					dx['num_stanza']=line.parent.num
 					dx['num_viols'] = parse.totalCount
 					dx['meter']=parse.str_meter()
 					for c in meter.constraints:
@@ -176,8 +183,9 @@ class Text(entity):
 		ofn=os.path.join(self.dir_results, 'stats','texts',name, name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen,save=save):
+			if not save: del dx['header']
 			yield dx
-		print '>> saved:',ofn
+		if save: print '>> saved:',ofn
 
 	def stats_positions(self,meter=None,all_parses=False):
 
@@ -258,7 +266,9 @@ class Text(entity):
 	def init_text(self,lines_or_file):
 		## create first stanza,line
 		stanza = self.newchild()
+		stanza.num=stanza_num=1
 		line = stanza.newchild()	# returns a new Line, the child of Stanza
+		line.num=line_num=1
 		numwords = 0
 		recentpunct=True
 		import prosodic
@@ -292,8 +302,12 @@ class Text(entity):
 				#(tok,punct) = gleanPunc(tok)
 				(punct0,tok,punct) = gleanPunc2(tok)
 
-				if stanza.finished: stanza = self.newchild()
-				if line.finished: line = stanza.newchild()
+				if stanza.finished:
+					stanza = self.newchild()
+					stanza.num = stanza_num = stanza_num+1
+				if line.finished:
+					line = stanza.newchild()
+					line.num = line_num = line_num+1
 
 				if punct0:
 					wordtok=WordToken([],token=punct0,is_punct=True, line = line)
@@ -435,6 +449,11 @@ class Text(entity):
 	def grid(self,nspace=10):
 		return '\n\n'.join(sent.grid(nspace=nspace) for sent in self.sentences())
 
+	def clear_parses(self):
+		self.__parses={}
+		self.__bestparses={}
+		self.__boundParses={}
+		self.__parsed_ents={}
 
 	def iparse(self,meter=None,num_processes=1,arbiter='Line'):
 		"""Parse this text metrically, yielding it line by line."""
@@ -490,7 +509,7 @@ class Text(entity):
 				yield parse_ent_mp(objectx)
 
 		if being.config['print_to_screen']:
-			print '>> PARSING COMPLETE IN:',time.time()-now,'seconds'
+			print '>> parsing complete in:',time.time()-now,'seconds'
 
 
 	def parse(self,meter=None,arbiter='Line'):
@@ -644,6 +663,7 @@ class Text(entity):
 		else:
 			pass
 
+		if not meter.id in self.config['meters']: self.config['meters'][meter.id]=meter
 		return meter
 
 	def report(self,meter=None,include_bounded=False,reverse=True):

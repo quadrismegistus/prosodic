@@ -1,0 +1,670 @@
+			[*footmin-w-resolution]	[*footmin-f-resolution]	[*stress.s=>-u]	[*strength.w=>-p]	[*stress.w=>-p]
+I am monarch of all I survey,	i.am|MON|arch.of|ALL|i.sur|VEY [*Bounded]	2		2			
+	I|am|MON.ARCH|of.all|I|sur|VEY						
+	i.am|MON.ARCH|of.all|I|sur|VEY						
+My right there is none to dispute,	my|RIGHT|there.is|NONE|to.dis|PUTE	2		1			
+	my|RIGHT|there|IS|none|TO|dis|PUTE				1		1
+	my|RIGHT|there.is|NONE|to|DIS.PUTE		1		1		
+From the centre all round to the sea,	from.the|CEN|tre.all|ROUND|to.the|SEA	2		1			
+	from.the|CEN|tre|ALL.ROUND|to.the|SEA			1			
+	from.the|CEN|tre|ALL|round|TO|the|SEA				1		
+I am lord of the fowl and the brute.	i.am|LORD|of.the|FOWL|and.the|BRUTE	2					
+	I|am|LORD|of.the|FOWL|and.the|BRUTE						
+O solitude! where are the charms	o|SO|li.tude|WHERE|are.the|CHARMS	2	1			1	1
+	o|SO|li|TUDE.WHERE|are.the|CHARMS			1			
+	o|SO|li|TUDE|where|ARE|the|CHARMS				1		
+That sages have seen in thy face?	that|SAG|es.have|SEEN|in.thy|FACE	2		1			
+	that|SAG|es|HAVE.SEEN|in.thy|FACE			1			
+	that|SAG|es|HAVE|seen|IN|thy|FACE						1
+	that|SAG.ES|have|SEEN|in.thy|FACE		1		1		
+Better dwell in the midst of alarms,	BET|ter|DWELL|in.the|MIDST|of.ala|RMS	1		1			
+	BET|ter|DWELL|in.the|MIDST|of|ALA.RMS		1		1		
+	BET|ter|DWELL|in|THE|midst|OF|ala|RMS				2		1
+	BET|ter|DWELL|in.the|MIDST|of|ALA|rms				1	1	1
+Than reign in this horrible place.	than|REIGN|in.this|HOR|ri.ble|PLACE	2	1				
+	than|REIGN|in.this|HOR|ri|BLE|place				1		1
+	than|REIGN|in.this|HOR|ri|BLE.PLACE			1	1		
+I am out of humanity's reach,	i.am|OUT|of.hu|MAN|i.ty's|REACH [*Bounded]	2	1	1	1		
+	I|am.out|OF|hu|MAN|i.ty's|REACH		1		1		
+	I|am.out|OF|hu|MAN.I|ty's|REACH				2		
+I must finish my journey alone,	i.must|FIN|ish.my|JOUR|ney.al|ONE	2		2			
+	I|must|FIN|ish.my|JOUR|ney.al|ONE			2			
+	I|must|FIN.ISH|my|JOUR|ney.al|ONE			1	1		
+	i.must|FIN.ISH|my|JOUR|ney.al|ONE			1	1		
+	I|must|FIN.ISH|my|JOUR|ney|AL.ONE		1		2		
+	I|must|FIN.ISH|my|JOUR.NEY|al|ONE		1		2		
+	i.must|FIN.ISH|my|JOUR|ney|AL.ONE		1		2		
+	i.must|FIN.ISH|my|JOUR.NEY|al|ONE		1		2		
+	I|must|FIN|ish|MY|jour|NEY|al|ONE				2	1	1
+	I|must|FIN.ISH|my|JOUR|ney|AL|one				2	1	1
+	i.must|FIN|ish|MY|jour|NEY|al|ONE				2	1	1
+	i.must|FIN.ISH|my|JOUR|ney|AL|one				2	1	1
+Never hear the sweet music of speech,	NEV|er|HEAR|the|SWEET.MU|sic.of|SPEECH			2			
+	NEV|er|HEAR|the|SWEET|mu|SIC|of|SPEECH				1	1	1
+	NEV|er|HEAR|the|SWEET.MU|sic|OF|speech			1	1		1
+	NEV.ER|hear|THE|sweet|MU|sic.of|SPEECH			1	2		2
+	NEV.ER|hear|THE|sweet|MU|sic|OF|speech				3		3
+	NEV.ER|hear|THE|sweet|MU.SIC|of|SPEECH		1		3		2
+I start at the sound of my own.	i|START|at.the|SOUND|of.my|OWN	2					
+The beasts that roam over the plain	the|BEASTS|that.roam|OV|er.the|PLAIN [*Bounded]	2		2			1
+	the|BEASTS|that|ROAM.OV|er.the|PLAIN			2			
+	the|BEASTS|that|ROAM|ov|ER|the|PLAIN				1	1	1
+	the|BEASTS|that|ROAM.OV|er|THE|plain			1	1		1
+	THE|beasts|THAT|roam|OV|er|THE|plain				2		3
+	THE|beasts|THAT|roam|OV.ER|the|PLAIN		1		2		2
+My form with indifference see,	my|FORM|with.in|DIF|fer.ence|SEE [*Bounded]	2	1	1			
+	my|FORM|with.ind|IFF|erence|SEE			1			
+	my|FORM|with|IND.IFF|erence|SEE		1		1		
+	MY|form|WITH|ind|IFF|erence|SEE				2		1
+	my|FORM|with|IND|iff.erence|SEE				1	1	1
+They are so unacquainted with man,	they.are|SO|un.ac|QUAINT|ed.with|MAN [*Bounded]	2	1	1	1		
+	THEY|are.so|UN|ac|QUAINT|ed.with|MAN			1	1		
+	THEY|are.so|UN|ac|QUAINT|ed|WITH|man				2		1
+	THEY|are.so|UN|ac|QUAINT.ED|with|MAN		1		2		
+Their tameness is shocking to me.	their|TAME|ness.is|SHOCK|ing.to|ME [*Bounded]	1		2	1		
+	their|TAME|ness|IS.SHOCK|ing|TO|me			1	1		
+	their|TAME|ness.is|SHOCK|ing|TO|me			1	1		
+	their|TAME|ness.is|SHOCK.ING|to.me			1	1		
+	their|TAME|ness|IS|shock|ING|to.me				1	1	1
+	their|TAME|ness|IS|shock.ing|TO|me				1	1	1
+	their|TAME.NESS|is|SHOCK|ing|TO|me		1		2		
+	their|TAME.NESS|is|SHOCK.ING|to.me		1		2		
+Society, friendship, and love,	so|CI|et.y|FRIEND|ship.and|LOVE	1	1	1			
+	so|CI|et|Y.FRIEND|ship.and|LOVE			2	1		
+	so|CI|et.y|FRIEND|ship|AND|love		1		1		1
+	so|CI|et.y|FRIEND.SHIP|and|LOVE		2		1		
+	so|CI|et|Y|friend|SHIP|and|LOVE				2	1	1
+	so|CI|et|Y.FRIEND|ship|AND|love			1	2		1
+Divinely bestow'd upon man,	di|VINE|ly.be|STOW'D|up.on|MAN [*Bounded]	2	1	1		1	1
+	di|VINE|ly.be|STOW'D|up|ON|man			1			1
+	di|VINE|ly.be|STOW'D|up|ON.MAN			2			
+	di|VINE|ly|BE.STOW'D|up|ON|man		1		1		1
+	di|VINE|ly|BE.STOW'D|up|ON.MAN		1	1	1		
+	di|VINE.LY|be|STOW'D|up|ON|man		1		1		1
+	di|VINE.LY|be|STOW'D|up|ON.MAN		1	1	1		
+	DI|vine|LY|be|STOW'D|up|ON|man				2	1	2
+	DI|vine|LY|be|STOW'D|up|ON.MAN			1	2	1	1
+Oh had I the wings of a dove,	oh|HAD|i.the|WINGS|of.a|DOVE [*Bounded]	2					1
+	OH|had|I|the|WINGS|of.a|DOVE						
+How soon would I taste you again!	how|SOON|would.i|TASTE|you.ag|AIN	2		1			
+	how|SOON|would|I|taste|YOU|ag|AIN				1		1
+	how|SOON|would.i|TASTE|you|AG.AIN		1		1		
+My sorrows I then might assuage	my|SOR|rows.i|THEN|might.as|SUAGE [*Bounded]	2		2			
+	my|SOR|rows|I|then|MIGHT|as|SUAGE						
+In the ways of religion and truth,	in.the|WAYS|of.re|LI|gion.and|TRUTH	2		2			
+	in.the|WAYS|of.re|LI.GION|and|TRUTH			1	1		
+	IN|the|WAYS|of.re|LI|gion.and|TRUTH			2			
+	IN|the|WAYS|of.re|LI.GION|and|TRUTH			1	1		
+	in|THE|ways|OF|re|LI.GION|and|TRUTH				3		1
+	in.the|WAYS|of|RE|li|GION|and|TRUTH				2	1	1
+	in.the|WAYS|of|RE.LI|gion|AND|truth		1		2		1
+	IN|the|WAYS|of|RE|li|GION|and|TRUTH				2	1	1
+	IN|the|WAYS|of|RE.LI|gion|AND|truth		1		2		1
+Might learn from the wisdom of age,	might|LEARN|from.the|WIS|dom.of|AGE	2		1			
+	might|LEARN|from.the|WIS|dom|OF|age				1		1
+	might|LEARN|from.the|WIS.DOM|of|AGE		1		1		
+And be cheer'd by the sallies of youth.	and.be|CHEER'D|by.the|SAL|lies.of|YOUTH	2		1			
+	and.be|CHEER'D|by.the|SAL.LIES|of|YOUTH				1		
+Religion! what treasure untold	re|LI|gion.what|TREA|sure.un|TOLD	2		2			
+	re|LI|gion|WHAT.TREA|sure.un|TOLD			2			
+	re|LI|gion.what|TREA.SURE|un|TOLD			1	1		
+	re|LI.GION|what|TREA|sure.un|TOLD			1	1		
+	re|LI.GION|what|TREA.SURE|un|TOLD				2		
+	re|LI|gion|WHAT|trea|SURE|un|TOLD				1	1	1
+Resides in that heavenly word!	re|SIDES|in.that|HEAV|en.ly|WORD [*Bounded]	2	1				
+	re|SIDES|in.that|HEA|venly|WORD						
+More precious than silver and gold,	more|PRE|cious.than|SIL|ver.and|GOLD	2		2			
+	more|PRE.CIOUS|than|SIL|ver.and|GOLD			1	1		
+	more|PRE|cious.than|SIL|ver|AND|gold			1	1		1
+	more|PRE|cious.than|SIL.VER|and|GOLD		1	1	1		
+	more|PRE.CIOUS|than|SIL|ver|AND|gold				2		1
+	more|PRE.CIOUS|than|SIL.VER|and|GOLD		1		2		
+Or all that this earth can afford.	or|ALL|that.this|EARTH|can.af|FORD	2		1			
+	or.all|THAT|this|EARTH|can.af|FORD			1			
+	or|ALL|that.this|EARTH|can|AF.FORD		1		1		
+	or.all|THAT|this|EARTH|can|AF.FORD		1		1		
+	or|ALL|that|THIS|earth|CAN|af|FORD				2		1
+	or|ALL|that.this|EARTH|can|AF|ford				1	1	1
+	or.all|THAT|this|EARTH|can|AF|ford				1	1	1
+But the sound of the church-going bell	but.the|SOUND|of.the|CHURCH-|go.ing|BELL [*Bounded]	2	1			1	1
+	but.the|SOUND|of.the|CHURCH-.GO|ing|BELL						
+These valleys and rocks never heard,	these|VAL|leys.and|ROCKS|nev.er|HEARD	2		1		1	1
+	these|VAL|leys|AND|rocks|NEV|er|HEARD				1		1
+	these|VAL|leys.and|ROCKS.NEV|er|HEARD			2			
+	these|VAL.LEYS|and|ROCKS.NEV|er|HEARD			1	1		
+Ne'er sigh'd at the sound of a knell,	ne'er|SIGH'D|at.the|SOUND|of.a|KNELL	2					1
+	NE'ER|sigh'd|AT|the|SOUND|of.a|KNELL						1
+	NE'ER.SIGH'D|at.the|SOUND|of.a|KNELL			1			
+Or smiled when a sabbath appear'd.	or|SMILED|when.a|SAB|bath.ap|PEAR'D	2		1			
+	or|SMILED|when.a|SAB.BATH|ap|PEAR'D				1		
+Ye winds that have made me your sport,	ye|WINDS|that.have|MADE|me.your|SPORT	2					
+Convey to this desolate shore	con|VEY|to.this|DES|o.late|SHORE	2	1				
+	con|VEY|to.this|DES.O|late|SHORE				1		
+	con|VEY|to.this|DES|o|LATE|shore						1
+	con|VEY|to.this|DES|o|LATE.SHORE			1			
+Some cordial endearing report	some|COR|dial.en|DEAR|ing.re|PORT	2		2			
+	some|COR|dial|EN.DEAR|ing.re|PORT		1	1	1		
+	some|COR|dial.en|DEAR|ing|RE.PORT		1	1	1		
+	some|COR|dial.en|DEAR.ING|re|PORT		1	1	1		
+	some|COR.DIAL|en|DEAR|ing.re|PORT		1	1	1		
+	SOME|cor|DIAL|en|DEAR|ing.re|PORT			1	1	1	1
+	some|COR|dial|EN|dear|ING|re|PORT				2	1	1
+	some|COR|dial|EN.DEAR|ing|RE.PORT		2		2		
+	some|COR|dial.en|DEAR|ing|RE|port			1	1	1	1
+	some|COR.DIAL|en|DEAR|ing|RE.PORT		2		2		
+	some|COR.DIAL|en|DEAR.ING|re|PORT		2		2		
+Of a land I shall visit no more!	of.a|LAND|i.shall|VIS|it.no|MORE [*Bounded]	2		1			1
+	of.a|LAND|i.shall|VIS|it|NO|more						
+My friends, do they now and then send	my|FRIENDS|do.they|NOW|and.then|SEND	2					
+A wish or a thought after me?	a|WISH|or.a|THOUGHT|af.ter|ME [*Bounded]	2	1		1	1	1
+	a|WISH|or.a|THOUGHT.AF|ter|ME			1	1		
+	a|WISH|or.a|THOUGHT.AF|ter.me			2			
+	a|WISH|or|A|thought|AF|ter|ME				2		1
+	a|WISH|or|A|thought|AF|ter.me			1	1		1
+	a|WISH|or.a|THOUGHT|af|TER|me				1	1	1
+Oh tell me I yet have a friend,	oh|TELL|me.i|YET|have.a|FRIEND	2					1
+	OH.TELL|me|I|yet|HAVE|a|FRIEND			1			
+	oh|TELL|me|I|yet|HAVE|a|FRIEND						1
+	OH.TELL|me.i|YET|have.a|FRIEND			1			
+Though a friend I am never to see.	though.a|FRIEND|i.am|NEV|er.to|SEE	2		1			
+	though.a|FRIEND|i.am|NEV.ER|to|SEE				1		
+How fleet is a glance of the mind!	how|FLEET|is.a|GLANCE|of.the|MIND	2					
+Compared with the speed of its flight,	com|PARED|with.the|SPEED|of.its|FLIGHT	2					
+The tempest itself lags behind,	the|TEM|pest.it|SELF|lags.be|HIND [*Bounded]	2		2			1
+	the|TEM|pest.it|SELF.LAGS|be|HIND			2			
+	the|TEM|pest|IT|self|LAGS|be|HIND				1	1	1
+	the|TEM.PEST|it|SELF.LAGS|be|HIND		1	1	1		
+	the|TEM|pest.it|SELF|lags|BE.HIND		1	1	1		1
+	the|TEM|pest|IT.SELF|lags|BE.HIND		2		2		1
+	the|TEM.PEST|it|SELF|lags|BE.HIND		2		2		1
+And the swift winged arrows of light.	and.the|SWIFT|winged|AR|rows.of|LIGHT			1			1
+	and.the|SWIFT|winged|AR.ROWS|of|LIGHT				1		1
+When I think of my own native land,	when.i|THINK|of.my|OWN|na.tive|LAND	2	1			1	1
+	WHEN|i|THINK|of.my|OWN.NA|tive|LAND			1			
+	WHEN|i|THINK|of|MY|own|NA|tive|LAND				1		
+	when.i|THINK|of.my|OWN.NA|tive|LAND			1			
+	when.i|THINK|of|MY|own|NA|tive|LAND				1		
+	WHEN|i|THINK|of.my|OWN|na.tive|LAND		1			1	1
+In a moment I seem to be there;	in.a|MO|ment.i|SEEM|to.be|THERE [*Bounded]	2		1	1		
+	in.a|MO|ment|I.SEEM|to|BE|there			1			
+	in.a|MO|ment.i|SEEM|to|BE|there			1			
+	IN|a|MO|ment|I.SEEM|to|BE|there			1			
+	IN|a|MO|ment.i|SEEM|to|BE|there			1			
+	in.a|MO|ment|I|seem|TO|be.there				1		1
+	in.a|MO.MENT|i|SEEM|to|BE|there		1		1		
+	IN|a|MO|ment|I|seem|TO|be.there				1		1
+	IN|a|MO.MENT|i|SEEM|to|BE|there		1		1		
+But alas! recollection at hand	but.al|AS|rec.ol|LEC|tion.at|HAND [*Bounded]	2		2		1	1
+	BUT|al|AS.REC|ol|LEC|tion|AT|hand			1	1		1
+	BUT|al|AS.REC|ol|LEC|tion|AT.HAND			2	1		
+	but.al|AS.REC|ol|LEC|tion|AT|hand			2			1
+	but.al|AS.REC|ol|LEC|tion|AT.HAND			3			
+	BUT|al|AS.REC|ol|LEC|tion.at|HAND			2	1		
+	but.al|AS.REC|ol|LEC|tion.at|HAND			3			
+	BUT|al|AS|rec.ol|LEC|tion|AT|hand				1	1	2
+	BUT|al|AS|rec.ol|LEC|tion|AT.HAND			1	1	1	1
+	but|AL|as|REC|ol|LEC|tion|AT|hand				1	1	2
+	but|AL|as|REC|ol|LEC|tion|AT.HAND			1	1	1	1
+	but.al|AS|rec.ol|LEC|tion|AT|hand			1		1	2
+	but.al|AS|rec.ol|LEC|tion|AT.HAND			2		1	1
+	BUT|al|AS.REC|ol|LEC.TION|at|HAND		1	1	2		
+	BUT|al|AS|rec.ol|LEC.TION|at|HAND		1		2	1	1
+	but|AL|as|REC|ol|LEC.TION|at|HAND		1		2	1	1
+Soon hurries me back to despair.	soon|HUR|ries.me|BACK|to.de|SPAIR	2		2			1
+	SOON.HUR|ries.me|BACK|to.de|SPAIR			3			
+	SOON|hur|RIES|me|BACK|to.de|SPAIR			1	1	1	1
+	SOON.HUR|ries|ME|back|TO|de|SPAIR			1	2		1
+	SOON.HUR|ries.me|BACK|to|DE.SPAIR		1	2	1		
+	soon|HUR|ries|ME|back|TO|de|SPAIR				2		2
+	soon|HUR|ries.me|BACK|to|DE.SPAIR		1	1	1		1
+	soon|HUR.RIES|me|BACK|to.de|SPAIR		1	1	1		1
+	SOON|hur|RIES|me|BACK|to|DE.SPAIR		1		2	1	1
+	SOON.HUR|ries.me|BACK|to|DE|spair			2	1	1	1
+	soon|HUR|ries.me|BACK|to|DE|spair			1	1	1	2
+	soon|HUR.RIES|me|BACK|to|DE.SPAIR		2		2		1
+But the sea-fowl is gone to her nest,	but.the|SEA-.FOWL|is|GONE|to.her|NEST						
+The beast is laid down in his lair,	the|BEAST|is.laid|DOWN|in.his|LAIR [*Bounded]	2		1	1		1
+	the|BEAST|is|LAID|down|IN|his|LAIR						
+Even here is a season of rest,	EV|en|HERE|is.a|SEA|son.of|REST			1			
+	EV|en|HERE|is.a|SEA|son|OF|rest				1		1
+	EV|en|HERE|is.a|SEA.SON|of|REST		1		1		
+And I to my cabin repair.	and|I|to.my|CAB|in.re|PAIR	2		1			
+	and|I|to.my|CAB.IN|re|PAIR				1		
+There is mercy in every place,	there.is|MER|cy.in|EV|er.y|PLACE [*Bounded]	2	1	1			
+	there.is|MER|cy.in|EV|ery|PLACE			1			
+	there.is|MER|cy|IN.EV|ery|PLACE			1			
+	there.is|MER.CY|in|EV|ery|PLACE		1		1		
+	there|IS|mer|CY|in|EV|ery|PLACE				1	1	1
+	there.is|MER|cy|IN|ev|ER|y|PLACE				1	1	1
+	there.is|MER|cy|IN|ev.ery|PLACE		1			1	1
+And mercy, encouraging thought!	and|MER|cy.en|COUR|ag.ing|THOUGHT	2	1	1			
+	and|MER|cy|EN.COUR|ag.ing|THOUGHT		2		1		
+	and|MER|cy.en|COUR|ag|ING|thought			1	1		1
+	and|MER|cy.en|COUR|ag|ING.THOUGHT			2	1		
+	and|MER.CY|en|COUR|ag.ing|THOUGHT		2		1		
+	and|MER|cy|EN|cour|AG|ing|THOUGHT				2	1	1
+	and|MER|cy|EN.COUR|ag|ING|thought		1		2		1
+	and|MER.CY|en|COUR|ag|ING|thought		1		2		1
+	and|MER.CY|en|COUR|ag|ING.THOUGHT		1	1	2		
+Gives even affliction a grace,	gives|EV|en.af|FLIC|tion.a|GRACE	2		2			1
+	GIVES.EV|en.af|FLIC|tion.a|GRACE			3			
+	GIVES|ev|EN|af|FLIC|tion.a|GRACE			1	1	1	1
+	GIVES.EV|en|AF.FLIC|tion.a|GRACE		1	2	1		
+	GIVES.EV|en.af|FLIC|tion|A|grace			2	1		1
+	GIVES.EV|en.af|FLIC.TION|a|GRACE		1	2	1		
+	gives|EV|en|AF.FLIC|tion.a|GRACE		1	1	1		1
+	gives|EV|en.af|FLIC|tion|A|grace			1	1		2
+	gives|EV|en.af|FLIC.TION|a|GRACE		1	1	1		1
+	gives|EV.EN|af|FLIC|tion.a|GRACE		1	1	1		1
+	GIVES|ev|EN|af|FLIC|tion|A|grace				2	1	2
+	GIVES|ev|EN|af|FLIC.TION|a|GRACE		1		2	1	1
+	GIVES.EV|en|AF.FLIC|tion|A|grace		1	1	2		1
+	gives|EV|en|AF|flic|TION|a|GRACE				2	1	2
+	gives|EV|en|AF.FLIC|tion|A|grace		1		2		2
+	gives|EV.EN|af|FLIC|tion|A|grace		1		2		2
+	gives|EV.EN|af|FLIC.TION|a|GRACE		2		2		1
+And reconciles man to his lot.	and|REC|on.ciles|MAN|to.his|LOT	2	1			1	1
+	and|REC|on|CILES.MAN|to.his|LOT			1			
+	and|REC|on|CILES|man|TO|his|LOT				1		1
+Just for a handful of silver he left us,	JUST|for.a|HAND|ful.of|SIL|ver.he|LEFT|us	2		2			1
+	JUST|for.a|HAND.FUL|of|SIL|ver|HE.LEFT|us		1	1			
+	JUST|for.a|HAND.FUL|of|SIL|ver.he|LEFT|us		1	1			
+	JUST|for.a|HAND|ful.of|SIL|ver|HE.LEFT|us			2			1
+	JUST|for.a|HAND.FUL|of|SIL|ver|HE|left|US		1		1		1
+	JUST|for.a|HAND.FUL|of|SIL.VER|he|LEFT|us		2		1		
+	JUST|for|A|hand|FUL|of|SIL|ver|HE.LEFT|us			1	1	1	1
+	JUST|for.a|HAND|ful.of|SIL|ver|HE|left|US			1	1		2
+	JUST|for|A|hand|FUL|of|SIL|ver.he|LEFT|us			1	1	1	1
+	JUST|for|A|hand|FUL|of|SIL|ver|HE|left|US				2	1	2
+	JUST|for.a|HAND|ful|OF|sil|VER|he|LEFT|us				2	1	2
+Just for a riband to stick in his coat	JUST|for.a|RI|band.to|STICK|in.his|COAT	2		1			
+	JUST|for.a|RI.BAND|to|STICK|in.his|COAT				1		
+Found the one gift of which fortune bereft us,	FOUND|the.one|GIFT|of.which|FOR|tune.ber|EFT|us	2		1			
+	FOUND|the.one|GIFT|of.which|FOR|tune|BER.EFT|us		1		1		
+	FOUND|the.one|GIFT|of.which|FOR.TUNE|ber|EFT|us		1		1		
+	FOUND|the.one|GIFT|of|WHICH|for|TUNE|ber|EFT|us				1	1	1
+Lost all the others she lets us devote;	LOST|all.the|OTH|ers.she|LETS|us.de|VOTE	2		2			
+	LOST|all.the|OTH|ers|SHE|lets|US|de|VOTE				1		1
+	LOST|all.the|OTH|ers|SHE.LETS|us.de|VOTE			2			
+	LOST|all.the|OTH.ERS|she|LETS|us.de|VOTE			1	1		
+	LOST|all.the|OTH|ers.she|LETS|us|DE.VOTE		1	1	1		
+	LOST|all.the|OTH.ERS|she|LETS|us|DE.VOTE		1		2		
+They, with the gold to give, doled him out silver,	THEY|with.the|GOLD|to|GIVE.DOLED|him.out|SIL|ver			1			
+	THEY|with.the|GOLD|to|GIVE|doled|HIM|out|SIL|ver				1		1
+So much was theirs who so little allowed:	SO|much.was|THEIRS|who.so|LIT|tle.al|LOWED [*Bounded]	2		1	2		
+	so|MUCH|was.theirs|WHO|so|LIT|tle.al|LOWED			1			
+	so|MUCH|was.theirs|WHO|so|LIT.TLE|al|LOWED				1		
+How all our copper had gone for his service!	HOW|all.our|COP|per.had|GONE|for.his|SER|vice [*Bounded]	2		1	1		
+	how|ALL|our|COP|per|HAD.GONE|for.his|SER|vice			1			
+	how|ALL|our|COP|per.had|GONE|for.his|SER|vice			1			
+	how|ALL|our|COP.PER|had|GONE|for.his|SER|vice				1		
+Rags were they purple, his heart had been proud!	RAGS|were.they|PUR|ple.his|HEART|had.been|PROUD	2		1			
+	RAGS|were.they|PUR|ple|HIS|heart|HAD|been|PROUD				1		1
+	RAGS|were.they|PUR.PLE|his|HEART|had.been|PROUD		1		1		
+We that had loved him so, followed him, honoured him,	WE|that.had|LOVED|him.so|FOL|lowed.him|HON|oured.him	2		2			
+	WE|that.had|LOVED|him.so|FOL|lowed.him|HON|oured|HIM			1	1		
+	WE|that.had|LOVED|him.so|FOL|lowed.him|HON.OURED|him			1	1		
+	WE|that.had|LOVED|him.so|FOL.LOWED|him|HON|oured|HIM				2		
+	WE|that.had|LOVED|him.so|FOL.LOWED|him|HON|oured.him			1	1		
+	WE|that.had|LOVED|him.so|FOL.LOWED|him|HON.OURED|him				2		
+	we|THAT|had|LOVED|him.so|FOL|lowed.him|HON|oured|HIM			1	1		
+	we|THAT|had|LOVED|him.so|FOL|lowed.him|HON|oured.him			2			
+	we|THAT|had|LOVED|him.so|FOL|lowed.him|HON.OURED|him			1	1		
+	we|THAT|had|LOVED|him.so|FOL.LOWED|him|HON|oured|HIM				2		
+	we|THAT|had|LOVED|him.so|FOL.LOWED|him|HON|oured.him			1	1		
+	we|THAT|had|LOVED|him.so|FOL.LOWED|him|HON.OURED|him				2		
+Lived in his mild and magnificent eye,	LIVED|in.his|MILD|and.mag|NIF|i.cent|EYE	2	1	1			
+	LIVED|in.his|MILD|and.mag|NIF.I|cent|EYE			1	1		
+	LIVED|in.his|MILD|and|MAG.NIF|i.cent|EYE		2		1		
+	LIVED|in|HIS|mild|AND|mag|NIF|i.cent|EYE		1		2		1
+	LIVED|in|HIS|mild|AND|mag|NIF.I|cent|EYE				3		1
+	LIVED|in.his|MILD|and|MAG|nif|I|cent|EYE				2	1	1
+	LIVED|in.his|MILD|and|MAG.NIF|i|CENT|eye		1		2		1
+Learned his great language, caught his clear accents,	LEARNED|his|GREAT.LAN|guage|CAUGHT|his|CLEAR.AC|cents			2			
+	LEA|rned|HIS|great|LAN|guage|CAUGHT|his|CLEAR.AC|cents			1	1		1
+	LEARNED|his|GREAT|lan.guage|CAUGHT|his|CLEAR.AC|cents		1	1		1	1
+	LEARNED|his|GREAT.LAN|guage|CAUGHT|his|CLEAR|ac.cents		1	1		1	1
+	LEA|rned|HIS|great|LAN|guage|CAUGHT|his|CLEAR|ac|CENTS				2	1	2
+	LEA|rned|HIS|great|LAN|guage|CAUGHT|his|CLEAR|ac.cents		1		1	1	2
+	LEARNED|his|GREAT|lan.guage|CAUGHT|his|CLEAR|ac.cents		2			2	2
+	LEA|rned|HIS|great|LAN.GUAGE|caught|HIS|clear|AC|cents		1		3		3
+Made him our pattern to live and to die!	MADE|him.our|PAT|tern.to|LIVE|and.to|DIE	2		1			
+	MADE|him.our|PAT.TERN|to|LIVE|and.to|DIE				1		
+Shakespeare was of us, Milton was for us,	SHAKE|speare|WAS|of.us|MIL|ton|WAS|for.us				2		1
+	SHAKE.SPEARE|was|OF|us|MIL|ton|WAS|for.us		1		2		
+Burns, Shelley, were with us, they watch from their graves!	BURNS.SHEL|ley.were|WITH|us.they|WATCH|from.their|GRAVES	1		2	1		
+	burns|SHEL|ley.were|WITH|us.they|WATCH|from.their|GRAVES	1		1	1		1
+	BURNS.SHEL|ley|WERE|with.us|THEY.WATCH|from.their|GRAVES			2	1		
+	burns|SHEL|ley|WERE|with.us|THEY.WATCH|from.their|GRAVES			1	1		1
+	BURNS.SHEL|ley|WERE|with|US|they|WATCH|from.their|GRAVES			1	2		
+	BURNS.SHEL|ley|WERE.WITH|us.they|WATCH|from.their|GRAVES			2	1		
+	burns|SHEL|ley|WERE|with|US|they|WATCH|from.their|GRAVES				2		1
+	burns|SHEL|ley|WERE.WITH|us.they|WATCH|from.their|GRAVES			1	1		1
+	burns|SHEL.LEY|were|WITH|us.they|WATCH|from.their|GRAVES				2		1
+	burns|SHEL.LEY|were.with|US|they|WATCH|from.their|GRAVES				2		1
+He alone breaks from the van and the freemen,	HE|al.one|BREAKS|from.the|VAN|and.the|FRE|emen	2	1			1	1
+	HE|al|ONE.BREAKS|from.the|VAN|and.the|FRE|emen			1			
+	HE|al|ONE|breaks|FROM|the|VAN|and.the|FRE|emen				1		1
+He alone sinks to the rear and the slaves!	HE|al.one|SINKS|to.the|REAR|and.the|SLAVES	2	1			1	1
+	HE|al|ONE.SINKS|to.the|REAR|and.the|SLAVES			1			
+	HE|al|ONE|sinks|TO|the|REAR|and.the|SLAVES				1		1
+We shall march prospering, not thro' his presence;	WE|shall|MARCH.PROS|per|ING|not|THRO|his|PRES|ence			1	1		
+	WE|shall|MARCH.PROS|pering|NOT.THRO|his|PRES|ence			2			
+	WE|shall|MARCH.PROS|pering.not|THRO|his|PRES|ence			2			
+	we|SHALL|march|PROS|per|ING|not|THRO|his|PRES|ence				1		1
+	we|SHALL|march|PROS|pering|NOT.THRO|his|PRES|ence			1			1
+	we|SHALL|march|PROS|pering.not|THRO|his|PRES|ence			1			1
+	we|SHALL|march|PROS.PERING|not|THRO|his|PRES|ence				1		1
+	we.shall|MARCH.PROS|per|ING|not|THRO|his|PRES|ence			1	1		
+	we.shall|MARCH.PROS|pering|NOT.THRO|his|PRES|ence			2			
+	we.shall|MARCH.PROS|pering.not|THRO|his|PRES|ence			2			
+Songs may inspirit us, not from his lyre;	SONGS|may|IN|spir|IT|us|NOT|from.his|LYRE						
+Deeds will be done, while he boasts his quiescence,	DEEDS|will.be|DONE|while.he|BOASTS|his.qui|ES|cence	2		1			
+	DEEDS|will|BE|done|WHILE|he|BOASTS|his.qui|ES|cence			1			
+	DEEDS|will|BE|done|WHILE|he|BOASTS|his|QUI.ES|cence		1		1		
+	DEEDS|will|BE|done.while|HE|boasts|HIS|qui|ES|cence				1		1
+	DEEDS|will.be|DONE|while|HE|boasts|HIS|qui|ES|cence				1		1
+	DEEDS|will.be|DONE|while.he|BOASTS|his|QUI.ES|cence		1		1		
+Still bidding crouch whom the rest bade aspire:	STILL.BID|ding|CROUCH|whom.the|REST.BADE|as|PIRE			2			
+	still|BID|ding|CROUCH|whom.the|REST.BADE|as|PIRE			1			1
+	STILL.BID|ding|CROUCH|whom|THE|rest|BADE|as|PIRE			1	1		1
+	still|BID|ding|CROUCH|whom|THE|rest|BADE|as|PIRE				1		2
+Blot out his name, then, record one lost soul more,	BLOT|out.his|NAME|then.rec|ORD|one|LOST|soul|MORE	1		1			1
+	BLOT|out.his|NAME.THEN|rec|ORD|one|LOST|soul|MORE			1			1
+	BLOT|out.his|NAME.THEN|rec|ORD|one|LOST.SOUL|more			2			
+	BLOT|out.his|NAME|then.rec|ORD|one|LOST.SOUL|more			2			
+	BLOT|out.his|NAME|then|REC|ord.one|LOST|soul|MORE			1			1
+	BLOT|out.his|NAME|then|REC.ORD|one|LOST|soul|MORE				1		1
+	BLOT|out.his|NAME|then|REC|ord|ONE|lost|SOUL|more				1		1
+	BLOT|out.his|NAME|then|REC|ord.one|LOST.SOUL|more			2			
+	BLOT|out.his|NAME|then|REC.ORD|one|LOST.SOUL|more			1	1		
+One task more declined, one more footpath untrod,	one|TASK|more.de|CLINED|one.more|FOOT|path.un|TROD	2		2			1
+	one|TASK.MORE|de|CLINED|one.more|FOOT.PATH|un|TROD		1	1			
+	one|TASK|more.de|CLINED|one.more|FOOT.PATH|un|TROD		1	1			
+	one|TASK.MORE|de|CLINED|one|MORE|foot|PATH|un|TROD			1		1	1
+	ONE|task|MORE|de|CLINED|one.more|FOOT.PATH|un|TROD		1		1		1
+	one|TASK.MORE|de|CLINED|one.more|FOOT|path.un|TROD			2			1
+	one|TASK|more.de|CLINED|one|MORE|foot|PATH|un|TROD			1		1	1
+	one|TASK|more|DE.CLINED|one.more|FOOT.PATH|un|TROD		2		1		
+	ONE|task|MORE|de|CLINED|one|MORE|foot|PATH|un|TROD				1	1	2
+	ONE|task|MORE|de|CLINED|one.more|FOOT|path.un|TROD			1	1		2
+One more devils'-triumph and sorrow for angels,	one.more|DEV|il|S'-TRI|umph.and|SOR|row.for|AN|gels	1		2			
+	one.more|DEV|il|S'-TRI|umph.and|SOR.ROW|for|AN|gels			1	1		
+	one.more|DEV|il|S'-TRI.UMPH|and|SOR|row.for|AN|gels		1	1	1		
+	one.more|DEV|il|S'-TRI.UMPH|and|SOR.ROW|for|AN|gels		1		2		
+	one.more|DEV|il|S'-TRI|umph|AND|sor|ROW|for|AN|gels				2	1	1
+One wrong more to man, one more insult to God!	one|WRONG|more.to|MAN|one.more|IN|sult.to|GOD [*Bounded]	2		1			1
+	one|WRONG|more.to|MAN|one|MORE|in|SULT|to|GOD						
+Life's night begins: let him never come back to us!	LIFE'S.NIGHT|be|GINS.LET|him|NEV|er|COME.BACK|to.us			3			
+	life's|NIGHT|be|GINS.LET|him|NEV|er|COME.BACK|to.us			2			1
+	LIFE'S.NIGHT|be|GINS.LET|him|NEV|er|COME|back|TO|us			2	1		1
+	LIFE'S.NIGHT|be|GINS.LET|him|NEV.ER|come|BACK|to.us			2	1		1
+	life's|NIGHT|be|GINS.LET|him|NEV|er|COME|back|TO|us			1	1		2
+	life's|NIGHT|be|GINS.LET|him|NEV.ER|come|BACK|to.us			1	1		2
+	LIFE'S|night|BE|gins|LET|him|NEV|er|COME.BACK|to.us			1	1	1	2
+	LIFE'S.NIGHT|be.gins|LET|him|NEV|er|COME.BACK|to.us		1	2		1	1
+	life's|NIGHT|be.gins|LET|him|NEV|er|COME.BACK|to.us		1	1		1	2
+	LIFE'S|night|BE|gins|LET|him|NEV|er|COME|back|TO|us				2	1	3
+	LIFE'S|night|BE|gins|LET|him|NEV.ER|come|BACK|to.us				2	1	3
+	LIFE'S.NIGHT|be.gins|LET|him|NEV|er|COME|back|TO|us		1	1	1	1	2
+	LIFE'S.NIGHT|be.gins|LET|him|NEV.ER|come|BACK|to.us		1	1	1	1	2
+	life's|NIGHT|be.gins|LET|him|NEV|er|COME|back|TO|us		1		1	1	3
+	life's|NIGHT|be.gins|LET|him|NEV.ER|come|BACK|to.us		1		1	1	3
+There would be doubt, hesitation and pain,	there|WOULD|be|DOUBT.HES|i|TA|tion.and|PAIN			2			
+	there.would|BE|doubt|HES|i|TA|tion.and|PAIN			1			1
+	there|WOULD|be|DOUBT.HES|i|TA.TION|and|PAIN		1	1	1		
+	there.would|BE|doubt|HES|i|TA|tion|AND|pain				1		2
+	there.would|BE|doubt|HES|i|TA.TION|and|PAIN		1		1		1
+Forced praise on our part the glimmer of twilight,	FORCED.PRAISE|on.our|PART|the|GLIM|mer.of|TWI|light			2			1
+	FORCED.PRAISE|on.our|PART|the|GLIM|mer.of|TWI.LIGHT		1	2			
+	FORCED.PRAISE|on.our|PART|the|GLIM.MER|of|TWI|light			1	1		1
+	FORCED.PRAISE|on.our|PART|the|GLIM.MER|of|TWI.LIGHT		1	1	1		
+	forced|PRAISE|on.our|PART|the|GLIM|mer.of|TWI|light			1			2
+	forced|PRAISE|on.our|PART|the|GLIM|mer.of|TWI.LIGHT		1	1			1
+	forced|PRAISE|on.our|PART|the|GLIM.MER|of|TWI|light				1		2
+	forced|PRAISE|on.our|PART|the|GLIM.MER|of|TWI.LIGHT		1		1		1
+Never glad confident morning again!	NEV|er|GLAD.CON|fi.dent|MORN|ing.ag|AIN		1	2			
+	NEV|er|GLAD|con|FI|dent|MORN|ing.ag|AIN			1	1	1	1
+	NEV|er|GLAD.CON|fi|DENT.MORN|ing.ag|AIN			3	1		
+	NEV|er|GLAD.CON|fi.dent|MORN|ing|AG.AIN		2	1	1		
+	NEV|er|GLAD.CON|fi.dent|MORN.ING|ag|AIN		2	1	1		
+	NEV.ER|glad|CON|fi.dent|MORN|ing.ag|AIN		1	1	1		1
+	NEV|er|GLAD|con|FI|dent|MORN|ing|AG.AIN		1		2	1	1
+	NEV|er|GLAD|con|FI|dent|MORN.ING|ag|AIN		1		2	1	1
+	NEV|er|GLAD.CON|fi|DENT.MORN|ing|AG.AIN		1	2	2		
+	NEV|er|GLAD.CON|fi.dent|MORN|ing|AG|ain		1	1	1	1	1
+	NEV.ER|glad|CON|fi|DENT.MORN|ing.ag|AIN			2	2		1
+	NEV.ER|glad|CON|fi.dent|MORN|ing|AG.AIN		2		2		1
+	NEV.ER|glad|CON|fi.dent|MORN.ING|ag|AIN		2		2		1
+	NEV|er|GLAD|con|FI|dent|MORN|ing|AG|ain				2	2	2
+	NEV|er|GLAD.CON|fi|DENT.MORN|ing|AG|ain			2	2	1	1
+	NEV.ER|glad|CON|fi|DENT|morn|ING|ag|AIN				3	1	2
+	NEV.ER|glad|CON|fi|DENT.MORN|ing|AG.AIN		1	1	3		1
+	NEV.ER|glad|CON|fi.dent|MORN|ing|AG|ain		1		2	1	2
+Best fight on well, for we taught him strike gallantly,	BEST.FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE.GAL|lant|LY			2	1		
+	BEST.FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE.GAL|lant.ly		1	2			
+	best|FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE.GAL|lant|LY			1	1		1
+	best|FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE.GAL|lant.ly		1	1			1
+	BEST.FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE|gal|LANT|ly			1	1	1	1
+	BEST.FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE|gal.lant|LY			1	1	1	1
+	best|FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE|gal|LANT|ly				1	1	2
+	best|FIGHT|on|WELL|for.we|TAUGHT|him|STRIKE|gal.lant|LY				1	1	2
+	best|FIGHT|on|WELL|for|WE|taught|HIM|strike|GAL|lant|LY				2		3
+	best|FIGHT|on|WELL|for|WE|taught|HIM|strike|GAL|lant.ly		1		1		3
+	best|FIGHT|on|WELL|for|WE|taught|HIM|strike|GAL.LANT|ly				2		3
+Menace our heart ere we master his own;	MEN|ace.our|HEART|ere.we|MAS|ter.his|OWN [*Bounded]	2		3			1
+	MEN|ace|OUR|heart|ERE|we|MAS|ter.his|OWN			1	1		1
+	MEN|ace|OUR|heart|ERE|we|MAS.TER|his|OWN				2		1
+	MEN|ace.our|HEART.ERE|we|MAS|ter.his|OWN			3			
+	MEN|ace.our|HEART.ERE|we|MAS.TER|his|OWN			2	1		
+	MEN.ACE|our|HEART.ERE|we|MAS|ter.his|OWN			2	1		
+	MEN.ACE|our|HEART.ERE|we|MAS.TER|his|OWN			1	2		
+	MEN|ace|OUR|heart|ERE|we|MAS|ter|HIS|own				2		1
+	MEN|ace|OUR|heart|ERE|we|MAS.TER|his.own				2		1
+	MEN|ace.our|HEART.ERE|we|MAS|ter|HIS|own			2	1		
+	MEN|ace.our|HEART.ERE|we|MAS.TER|his.own			2	1		
+	MEN.ACE|our|HEART.ERE|we|MAS|ter|HIS|own			1	2		
+	MEN.ACE|our|HEART.ERE|we|MAS.TER|his.own			1	2		
+Then let him receive the new knowledge and wait us,	then|LET|him.re|CEIVE|the|NEW.KNOWL|edge.and|WAIT|us			3			
+	THEN|let|HIM|re|CEIVE|the|NEW.KNOWL|edge.and|WAIT|us			2	1		1
+	then|LET|him|RE.CEIVE|the|NEW.KNOWL|edge.and|WAIT|us		1	2	1		
+	then|LET|him.re|CEIVE|the|NEW|knowl|EDGE|and|WAIT|us			1	1	1	1
+	then|LET|him.re|CEIVE|the.new|KNOWL.EDGE|and|WAIT|us			2	1		1
+	THEN|let|HIM|re|CEIVE|the|NEW|knowl|EDGE|and|WAIT|us				2	1	2
+	THEN|let|HIM|re|CEIVE|the.new|KNOWL.EDGE|and|WAIT|us			1	2		2
+	then|LET|him|RE.CEIVE|the|NEW|knowl|EDGE|and|WAIT|us		1		2	1	1
+	then|LET|him|RE.CEIVE|the.new|KNOWL.EDGE|and|WAIT|us		1	1	2		1
+Pardoned in heaven, the first by the throne!	PAR|doned.in|HEAV|en.the|FIRST|by.the|THRONE [*Bounded]	2		2			
+	PAR|doned.in|HEAVEN|the|FIRST|by.the|THRONE			1			
+	PAR|doned|IN.HEAVEN|the|FIRST|by.the|THRONE			1			
+	PAR.DONED|in|HEAVEN|the|FIRST|by.the|THRONE		1		1		
+	par|DONED|in|HEAVEN|the|FIRST|by.the|THRONE				1	1	1
+	PAR|doned|IN|heav|EN|the|FIRST|by.the|THRONE				1	1	1
+	PAR|doned|IN|heaven|THE|first|BY|the|THRONE				2		2
+This is the forest primeval. The murmuring pines and the hemlocks,	THIS|is.the|FOR|est.pri|MEV|al.the|MUR|mur.ing|PINES|and.the|HEM|locks [*Bounded]	2	1	2	1		
+	this|IS|the|FOR|est.pri|MEV|al.the|MUR|muring|PINES|and.the|HEM|locks			2			
+	this|IS|the|FOR|est|PRI.MEV|al.the|MUR|muring|PINES|and.the|HEM|locks		1	1	1		
+	this|IS|the|FOR|est.pri|MEV.AL|the|MUR|muring|PINES|and.the|HEM|locks		1	1	1		
+	this|IS|the|FOR.EST|pri|MEV|al.the|MUR|muring|PINES|and.the|HEM|locks		1	1	1		
+	this|IS|the|FOR|est|PRI|mev|AL|the|MUR|muring|PINES|and.the|HEM|locks				2	1	1
+	this|IS|the|FOR.EST|pri|MEV.AL|the|MUR|muring|PINES|and.the|HEM|locks		2		2		
+Bearded with moss, and in garments green, indistinct in the twilight,	BEARD|ed.with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI|light	2	1	1			1
+	BEARD|ed.with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI.LIGHT		2	1			
+	BEARD|ed.with|MOSS|and.in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI|light			2	1		1
+	BEARD|ed.with|MOSS|and.in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI.LIGHT		1	2	1		
+	BEARD.ED|with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI|light		2		1		1
+	BEARD.ED|with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI.LIGHT		3		1		
+	BEARD|ed|WITH|moss|AND|in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI|light		1		2		2
+	BEARD|ed|WITH|moss|AND|in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI.LIGHT		2		2		1
+	BEARD.ED|with|MOSS|and.in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI|light		1	1	2		1
+	BEARD.ED|with|MOSS|and.in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI.LIGHT		2	1	2		
+	beard|ED|with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI|light		1		1	1	2
+	beard|ED|with|MOSS|and.in|GAR|ments|GREEN|in.dis|TINCT|in.the|TWI.LIGHT		2		1	1	1
+	BEARD|ed.with|MOSS|and.in|GAR|ments|GREEN|in|DIS|tinct|IN|the|TWI|light			1	1	1	2
+	BEARD|ed|WITH|moss|AND|in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI|light			1	3		2
+	BEARD|ed|WITH|moss|AND|in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI.LIGHT		1	1	3		1
+	beard|ED|with|MOSS|and.in|GAR|ments|GREEN.IN|dis|TINCT|in.the|TWI.LIGHT		1	1	2	1	1
+	BEARD.ED|with|MOSS|and.in|GAR|ments|GREEN|in|DIS|tinct|IN|the|TWI|light		1		3	1	2
+	BEARD|ed|WITH|moss|AND|in|GAR|ments|GREEN|in|DIS|tinct|IN|the|TWI|light				3	1	3
+	beard|ED|with|MOSS|and.in|GAR|ments|GREEN|in|DIS|tinct|IN|the|TWI|light				2	2	3
+Stand like Druids of eld, with voices sad and prophetic,	STAND|like|DRU|ids.of|ELD|with|VOIC|es|SAD|and.pr|OP|hetic	2		2			
+	STAND|like|DRU|ids.of|ELD|with|VOIC|es|SAD|and|PR.OP|hetic		1	1	1		
+	STAND|like|DRU.IDS|of|ELD|with|VOIC|es|SAD|and.pr|OP|hetic		1	1	1		
+	STAND|like|DRU|ids.of|ELD|with|VOIC|es|SAD|and|PR|op.hetic			1	1	1	1
+	STAND|like|DRU.IDS|of|ELD|with|VOIC|es|SAD|and|PR.OP|hetic		2		2		
+	STAND|like|DRU.IDS|of|ELD|with|VOIC|es|SAD|and|PR|op.hetic		1		2	1	1
+	stand|LIKE|dru|IDS|of|ELD|with|VOIC|es|SAD|and|PR|op.hetic				2	2	3
+	STAND|like|DRU|ids|OF|eld|WITH|voic|ES|sad|AND|pr|OP|hetic				4	1	3
+Stand like harpers hoar, with beards that rest on their bosoms.	STAND|like|HAR|pers|HOAR|with|BEARDS|that|REST|on.their|BO|soms	2					
+Loud from its rocky caverns, the deep-voiced neighboring ocean	LOUD|from.its|RO|cky|CAV|erns.the|DEEP|-voiced|NEI|ghboring|OC|ean			1			1
+	LOUD|from.its|RO|cky|CAV.ERNS|the|DEEP|-voiced|NEI|ghboring|OC|ean				1		1
+Speaks, and in accents disconsolate answers the wail of the forest.	SPEAKS|and.in|AC|cents.dis|CON|so.late|AN|swers.the|WAIL|of.the|FOR|est	2	1	2			
+	SPEAKS|and.in|AC|cents|DIS.CON|so.late|AN|swers.the|WAIL|of.the|FOR|est		2	1	1		
+	SPEAKS|and.in|AC|cents.dis|CON|so|LATE.AN|swers.the|WAIL|of.the|FOR|est			3	1		
+	SPEAKS|and.in|AC|cents.dis|CON|so.late|AN.SWERS|the|WAIL|of.the|FOR|est		2	1	1		
+	SPEAKS|and.in|AC.CENTS|dis|CON|so.late|AN|swers.the|WAIL|of.the|FOR|est		2	1	1		
+	SPEAKS|and.in|AC|cents|DIS|con|SO|late|AN|swers.the|WAIL|of.the|FOR|est			1	2	1	1
+	SPEAKS|and.in|AC|cents|DIS.CON|so|LATE.AN|swers.the|WAIL|of.the|FOR|est		1	2	2		
+	SPEAKS|and.in|AC|cents|DIS.CON|so.late|AN.SWERS|the|WAIL|of.the|FOR|est		3		2		
+	SPEAKS|and.in|AC|cents.dis|CON|so|LATE|an|SWERS|the|WAIL|of.the|FOR|est			1	2	1	1
+	SPEAKS|and.in|AC|cents.dis|CON|so.late|AN|swers|THE|wail|OF|the|FOR|est		1	1	2		1
+	SPEAKS|and.in|AC.CENTS|dis|CON|so|LATE.AN|swers.the|WAIL|of.the|FOR|est		1	2	2		
+	SPEAKS|and.in|AC.CENTS|dis|CON|so.late|AN.SWERS|the|WAIL|of.the|FOR|est		3		2		
+	SPEAKS|and|IN|ac|CENTS|dis|CON|so.late|AN|swers.the|WAIL|of.the|FOR|est		1	1	1	1	1
+	SPEAKS|and.in|AC|cents|DIS|con|SO|late|AN.SWERS|the|WAIL|of.the|FOR|est		1		3	1	1
+	SPEAKS|and.in|AC|cents|DIS.CON|so|LATE|an|SWERS|the|WAIL|of.the|FOR|est		1		3	1	1
+	SPEAKS|and.in|AC|cents|DIS.CON|so.late|AN|swers|THE|wail|OF|the|FOR|est		2		3		1
+	SPEAKS|and.in|AC|cents.dis|CON|so|LATE.AN|swers|THE|wail|OF|the|FOR|est			2	3		1
+	SPEAKS|and.in|AC.CENTS|dis|CON|so|LATE|an|SWERS|the|WAIL|of.the|FOR|est		1		3	1	1
+	SPEAKS|and.in|AC.CENTS|dis|CON|so.late|AN|swers|THE|wail|OF|the|FOR|est		2		3		1
+	SPEAKS|and|IN|ac|CENTS|dis|CON|so.late|AN.SWERS|the|WAIL|of.the|FOR|est		2		2	1	1
+	SPEAKS|and.in|AC|cents|DIS|con|SO|late|AN|swers|THE|wail|OF|the|FOR|est				4	1	2
+	SPEAKS|and.in|AC|cents|DIS.CON|so|LATE.AN|swers|THE|wail|OF|the|FOR|est		1	1	4		1
+	SPEAKS|and.in|AC.CENTS|dis|CON|so|LATE.AN|swers|THE|wail|OF|the|FOR|est		1	1	4		1
+	SPEAKS|and|IN|ac|CENTS|dis|CON|so|LATE|an|SWERS|the|WAIL|of.the|FOR|est				3	2	2
+This is the forest primeval; but where are the hearts that beneath it	THIS|is.the|FOR|est.pri|MEV|al.but|WHERE|are.the|HEARTS|that.be|NEATH|it [*Bounded]	2		3	1		
+	this|IS|the|FOR|est.pri|MEV|al.but|WHERE|are.the|HEARTS.THAT|be|NEATH|it			3			
+	this|IS|the|FOR|est.pri|MEV|al.but|WHERE|are.the|HEARTS|that.be|NEATH|it			3			
+	this|IS|the|FOR|est|PRI.MEV|al.but|WHERE|are.the|HEARTS.THAT|be|NEATH|it		1	2	1		
+	this|IS|the|FOR|est.pri|MEV|al.but|WHERE|are|THE|hearts|THAT|be|NEATH|it			2	1		1
+	this|IS|the|FOR|est.pri|MEV.AL|but|WHERE|are.the|HEARTS.THAT|be|NEATH|it		1	2	1		
+	this|IS|the|FOR.EST|pri|MEV|al.but|WHERE|are.the|HEARTS.THAT|be|NEATH|it		1	2	1		
+	this|IS|the|FOR|est|PRI.MEV|al.but|WHERE|are.the|HEARTS|that.be|NEATH|it		1	2	1		
+	this|IS|the|FOR|est.pri|MEV|al.but|WHERE|are.the|HEARTS|that|BE.NEATH|it		1	2	1		
+	this|IS|the|FOR|est.pri|MEV.AL|but|WHERE|are.the|HEARTS|that.be|NEATH|it		1	2	1		
+	this|IS|the|FOR.EST|pri|MEV|al.but|WHERE|are.the|HEARTS|that.be|NEATH|it		1	2	1		
+	this|IS|the|FOR|est.pri|MEV|al|BUT|where|ARE|the|HEARTS.THAT|be|NEATH|it			2	2		
+	this|IS|the|FOR|est.pri|MEV|al|BUT|where.are|THE|hearts|THAT|be|NEATH|it			1	2		1
+	this|IS|the|FOR|est.pri|MEV|al|BUT|where|ARE|the|HEARTS|that.be|NEATH|it			2	2		
+	this|IS|the|FOR.EST|pri|MEV.AL|but|WHERE|are.the|HEARTS.THAT|be|NEATH|it		2	1	2		
+	this|IS|the|FOR|est|PRI.MEV|al.but|WHERE|are.the|HEARTS|that|BE.NEATH|it		2	1	2		
+	this|IS|the|FOR|est.pri|MEV.AL|but|WHERE|are.the|HEARTS|that|BE.NEATH|it		2	1	2		
+	this|IS|the|FOR.EST|pri|MEV|al.but|WHERE|are.the|HEARTS|that|BE.NEATH|it		2	1	2		
+	this|IS|the|FOR.EST|pri|MEV.AL|but|WHERE|are.the|HEARTS|that.be|NEATH|it		2	1	2		
+	this|IS|the|FOR|est|PRI.MEV|al|BUT|where|ARE|the|HEARTS.THAT|be|NEATH|it		1	1	3		
+	this|IS|the|FOR|est|PRI.MEV|al|BUT|where.are|THE|hearts|THAT|be|NEATH|it		1		3		1
+	this|IS|the|FOR.EST|pri|MEV|al|BUT|where|ARE|the|HEARTS.THAT|be|NEATH|it		1	1	3		
+	this|IS|the|FOR.EST|pri|MEV|al|BUT|where.are|THE|hearts|THAT|be|NEATH|it		1		3		1
+	this|IS|the|FOR|est|PRI.MEV|al|BUT|where|ARE|the|HEARTS|that.be|NEATH|it		1	1	3		
+	this|IS|the|FOR|est.pri|MEV|al|BUT|where|ARE|the|HEARTS|that|BE.NEATH|it		1	1	3		
+	this|IS|the|FOR.EST|pri|MEV|al|BUT|where|ARE|the|HEARTS|that.be|NEATH|it		1	1	3		
+	this|IS|the|FOR|est|PRI|mev|AL|but|WHERE|are|THE|hearts|THAT|be|NEATH|it				3	1	2
+	this|IS|the|FOR.EST|pri|MEV.AL|but|WHERE|are.the|HEARTS|that|BE.NEATH|it		3		3		
+	this|IS|the|FOR|est|PRI.MEV|al|BUT|where|ARE|the|HEARTS|that|BE.NEATH|it		2		4		
+	this|IS|the|FOR.EST|pri|MEV|al|BUT|where|ARE|the|HEARTS|that|BE.NEATH|it		2		4		
+Leaped like the roe, when he hears in the woodland the voice of the huntsman?	LEAPED|like.the|ROE|when.he|HEARS|in.the|WOOD|land.the|VOICE|of.the|HUNTS|man	2		1			
+	LEAPED|like.the|ROE|when.he|HEARS|in.the|WOOD.LAND|the|VOICE|of.the|HUNTS|man		1				
+	LEAPED|like.the|ROE|when.he|HEARS|in|THE|wood|LAND|the|VOICE|of.the|HUNTS|man				1	1	1
+	LEAPED|like.the|ROE|when.he|HEARS|in.the|WOOD|land|THE|voice|OF|the|HUNTS|man				2		1
+Where is the thatch-roofed village, the home of Acadian farmers,	WHERE|is.the|THAT|ch-roofed|VIL|lage.the|HOME|of.aca|DI|an|FARM|ers			2			1
+	WHERE|is.the|THAT|ch-roofed|VIL.LAGE|the|HOME|of.aca|DI|an|FARM|ers			1	1		1
+	where|IS|the|THAT|ch-roofed|VIL|lage.the|HOME|of.aca|DI|an|FARM|ers			2			1
+	where|IS|the|THAT|ch-roofed|VIL.LAGE|the|HOME|of.aca|DI|an|FARM|ers			1	1		1
+	WHERE|is.the|THAT|ch-roofed|VIL|lage|THE|home|OF|aca|DI|an|FARM|ers				2		2
+	WHERE|is.the|THAT|ch-roofed|VIL.LAGE|the|HOME|of|ACA.DI|an|FARM|ers		1		2		1
+	where|IS|the|THAT|ch-roofed|VIL|lage|THE|home|OF|aca|DI|an|FARM|ers				2		2
+	where|IS|the|THAT|ch-roofed|VIL.LAGE|the|HOME|of|ACA.DI|an|FARM|ers		1		2		1
+Men whose lives glided on like rivers that water the woodlands,	MEN|whose.lives|GLID|ed|ON|like|RIV|ers.that|WA|ter.the|WOOD|lands [*Bounded]	1		3	1		1
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV|ers|THAT.WA|ter.the|WOOD|lands			3	1		
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV|ers.that|WA|ter.the|WOOD|lands			3	1		
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV.ERS|that|WA|ter.the|WOOD|lands			2	2		
+	men|WHOSE|lives|GLID|ed|ON|like|RIV|ers|THAT.WA|ter.the|WOOD|lands			2	1		2
+	men|WHOSE|lives|GLID|ed|ON|like|RIV|ers.that|WA|ter.the|WOOD|lands			2	1		2
+	men|WHOSE|lives|GLID|ed|ON|like|RIV.ERS|that|WA|ter.the|WOOD|lands			1	2		2
+	MEN|whose|LIVES.GLID|ed.on|LIKE.RIV|ers|THAT.WA|ter.the|WOOD|lands			5			
+	MEN|whose|LIVES.GLID|ed.on|LIKE.RIV|ers.that|WA|ter.the|WOOD|lands			5			
+	MEN|whose|LIVES|glid|ED|on.like|RIV|ers|THAT.WA|ter.the|WOOD|lands			2	1	1	1
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV|ers|THAT|wa|TER|the|WOOD|lands			1	2	1	1
+	MEN|whose|LIVES|glid|ED|on.like|RIV|ers.that|WA|ter.the|WOOD|lands			2	1	1	1
+	MEN|whose|LIVES|glid|ED|on.like|RIV.ERS|that|WA|ter.the|WOOD|lands			1	2	1	1
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV|ers.that|WA.TER|the|WOOD|lands		1	2	2		
+	MEN|whose|LIVES.GLID|ed|ON|like|RIV.ERS|that|WA.TER|the|WOOD|lands		1	1	3		
+	men|WHOSE|lives|GLID|ed.on|LIKE.RIV|ers|THAT.WA|ter.the|WOOD|lands			4			2
+	men|WHOSE|lives|GLID|ed.on|LIKE.RIV|ers.that|WA|ter.the|WOOD|lands			4			2
+	men|WHOSE|lives|GLID|ed|ON|like|RIV|ers|THAT|wa|TER|the|WOOD|lands				2	1	3
+	men|WHOSE|lives|GLID|ed|ON|like|RIV|ers.that|WA.TER|the|WOOD|lands		1	1	2		2
+	men|WHOSE|lives|GLID|ed|ON|like|RIV.ERS|that|WA.TER|the|WOOD|lands		1		3		2
+	MEN|whose|LIVES.GLID|ed.on|LIKE|riv.ers|THAT.WA|ter.the|WOOD|lands			4		1	1
+	MEN|whose|LIVES|glid|ED|on.like|RIV|ers|THAT|wa|TER|the|WOOD|lands				2	2	2
+	MEN|whose|LIVES|glid|ED|on.like|RIV.ERS|that|WA.TER|the|WOOD|lands		1		3	1	1
+	men|WHOSE|lives|GLID|ed.on|LIKE|riv.ers|THAT.WA|ter.the|WOOD|lands			3		1	3
+	men|WHOSE|lives|GLID|ed.on|LIKE|riv.ers|THAT|wa|TER|the|WOOD|lands			1	1	2	4
+Darkened by shadows of earth, but reflecting an image of heaven?	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM|age.of|HEAV|en			4			
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAV|en			3	1		
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM|age.of|HEAVEN			4			
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAVEN			3	1		
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE.FLECT|ing.an|IM.AGE|of|HEAV|en		1	2	2		
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT.ING|an|IM.AGE|of|HEAV|en		1	2	2		
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAV|en		1	2	2		
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE.FLECT|ing.an|IM.AGE|of|HEAVEN		1	2	2		
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT.ING|an|IM.AGE|of|HEAVEN		1	2	2		
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAVEN		1	2	2		
+	DARK|ened|BY|shad|OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAV|en			2	2	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM|age.of|HEAV|en			2	2	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAV|en			1	3	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing|AN|im|AGE|of|HEAV|en			2	2	1	1
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but|RE.FLECT|ing.an|IM.AGE|of|HEAV|en		2	1	3		
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT.ING|an|IM.AGE|of|HEAV|en		2	1	3		
+	dark|ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAV|en			2	2	1	1
+	DARK|ened|BY|shad|OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAVEN			2	2	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM|age.of|HEAVEN			2	2	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAVEN			1	3	1	1
+	DARK|ened.by|SHAD.OWS|of|EARTH|but.re|FLECT|ing|AN|im|AGE|of|HEAVEN			2	2	1	1
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but|RE.FLECT|ing.an|IM.AGE|of|HEAVEN		2	1	3		
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT.ING|an|IM.AGE|of|HEAVEN		2	1	3		
+	dark|ENED|by|SHAD.OWS|of|EARTH|but.re|FLECT|ing.an|IM.AGE|of|HEAVEN			2	2	1	1
+	DARK|ened.by|SHAD|ows|OF|earth|BUT|re|FLECT|ing.an|IM.AGE|of|HEAV|en			2	3		2
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAV|en		1		4	1	1
+	DARK|ened.by|SHAD|ows|OF|earth|BUT|re|FLECT|ing.an|IM.AGE|of|HEAVEN			2	3		2
+	DARK.ENED|by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAVEN		1		4	1	1
+	DARK|ened|BY|shad|OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAV|en				4	2	2
+	DARK|ened.by|SHAD|ows|OF|earth|BUT|re|FLECT.ING|an|IM.AGE|of|HEAV|en		1	1	4		2
+	DARK.ENED|by|SHAD|ows|OF|earth|BUT|re|FLECT|ing.an|IM.AGE|of|HEAV|en		1	1	4		2
+	dark|ENED|by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAV|en				4	2	2
+	DARK|ened|BY|shad|OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAVEN				4	2	2
+	DARK|ened.by|SHAD|ows|OF|earth|BUT|re|FLECT.ING|an|IM.AGE|of|HEAVEN		1	1	4		2
+	DARK.ENED|by|SHAD|ows|OF|earth|BUT|re|FLECT|ing.an|IM.AGE|of|HEAVEN		1	1	4		2
+	dark|ENED|by|SHAD.OWS|of|EARTH|but|RE|flect|ING|an|IM.AGE|of|HEAVEN				4	2	2
+	DARK.ENED|by|SHAD|ows|OF|earth|BUT|re|FLECT.ING|an|IM.AGE|of|HEAV|en		2		5		2
+	DARK.ENED|by|SHAD|ows|OF|earth|BUT|re|FLECT.ING|an|IM.AGE|of|HEAVEN		2		5		2
+Waste are those pleasant farms, and the farmers forever departed!	WASTE|are.those|PLEAS|ant|FARMS|and.the|FARM|ers.for|EV|er.de|PART|ed	2		2			
+	WASTE|are.those|PLEAS|ant|FARMS|and.the|FARM|ers.for|EV.ER|de|PART|ed			1	1		
+	WASTE|are.those|PLEAS|ant|FARMS|and.the|FARM.ERS|for|EV|er.de|PART|ed		1	1	1		
+	WASTE|are.those|PLEAS|ant|FARMS|and.the|FARM.ERS|for|EV.ER|de|PART|ed		1		2		
+	WASTE|are.those|PLEAS|ant|FARMS|and.the|FARM|ers|FOR|ev|ER|de|PART|ed				2	1	1
+Scattered like dust and leaves, when the mighty blasts of October	SCAT|tered.like|DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of.oc|TO|ber	2		2			
+	SCAT|tered|LIKE.DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of.oc|TO|ber			2			
+	SCAT.TERED|like|DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of.oc|TO|ber			1	1		
+	SCAT|tered.like|DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of|OC.TO|ber		1	1	1		
+	SCAT.TERED|like|DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of|OC.TO|ber		1		2		
+	SCAT.TERED|like|DUST|and|LEAVES|when.the|MIG|hty|BLASTS|of|OC|to|BER				3	1	1
+Seize them, and whirl them aloft, and sprinkle them far o'er the ocean.	SEIZE|them.and|WHIRL|them.alo|FT|and|SPRIN|kle.them|FAR|o'er.the|OC|ean	2		2			
+	SEIZE|them.and|WHIRL|them|ALO.FT|and|SPRIN|kle.them|FAR|o'er.the|OC|ean		1	1	1		
+	SEIZE|them.and|WHIRL|them.alo|FT|and|SPRIN.KLE|them|FAR|o'er.the|OC|ean		1	1	1		
+	SEIZE|them|AND|whirl|THEM|alo|FT|and|SPRIN|kle.them|FAR|o'er.the|OC|ean			1	2		1
+	SEIZE|them.and|WHIRL|them|ALO.FT|and|SPRIN.KLE|them|FAR|o'er.the|OC|ean		2		2		
+	SEIZE|them.and|WHIRL|them.alo|FT|and|SPRIN|kle|THEM|far|O'ER|the|OC|ean			1	2		1
+	SEIZE|them|AND|whirl|THEM|alo|FT|and|SPRIN.KLE|them|FAR|o'er.the|OC|ean		1		3		1
+	SEIZE|them.and|WHIRL|them|ALO.FT|and|SPRIN|kle|THEM|far|O'ER|the|OC|ean		1		3		1
+	SEIZE|them|AND|whirl|THEM|alo|FT|and|SPRIN|kle|THEM|far|O'ER|the|OC|ean				4		2
+	SEIZE|them.and|WHIRL|them|ALO|ft|AND|sprin|KLE|them|FAR|o'er.the|OC|ean				3	2	2

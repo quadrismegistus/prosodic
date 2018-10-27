@@ -239,7 +239,7 @@ folder_tagged_samples = 'tagged_samples/'
 # MAXIMUM ENTROPY settings
 #
 # Should negative weights be allowed?
-negative_weights_allowed = True
+negative_weights_allowed = False
 #
 # How many epochs should it run for at most?
 max_epochs = 10000

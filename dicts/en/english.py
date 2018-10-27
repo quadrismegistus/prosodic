@@ -198,10 +198,10 @@ def espeak2ipa(token):
 	#print CMD
 	try:
 		res=subprocess.check_output(CMD.split()).strip()
-		print '>> espeak = ',[res]
+		#print '>> espeak = ',[res]
 		return res
 	except (OSError,subprocess.CalledProcessError) as e:
-		print "!!",e
+		#print "!!",e
 		return None
 
 def tts2ipa(token,TTS_ENGINE=None):

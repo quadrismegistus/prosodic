@@ -197,6 +197,12 @@ def espeak2ipa(token):
 	CMD='espeak -q -x '+token.replace("'","\\'").replace('"','\\"')
 	#print CMD
 	try:
+		# @HACK FOR MPI
+		for k in os.environ.keys():
+			if k.startswith('OMPI_') or k.startswith('PMIX_'):
+				del os.environ[k]
+		##
+
 		res=subprocess.check_output(CMD.split()).strip()
 		#print '>> espeak = ',[res]
 		return res

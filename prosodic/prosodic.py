@@ -15,7 +15,7 @@ sys.path.append(dir_mtree)
 
 from os.path import expanduser
 home = expanduser("~")
-dir_prosodic_home=os.path.join(home,'.prosodic')
+dir_prosodic_home=os.path.join(home,'prosodic_data')
 
 ## import necessary objects
 #toprintconfig=__name__=='__main__'
@@ -28,9 +28,9 @@ meter_dir_home=os.path.join(dir_prosodic_home,'meters')
 config['meters']=loadMeters(meter_dir_root=meter_dir_root,meter_dir_home=meter_dir_home)
 METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
 
-dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
-dir_results=os.path.join(dir_prosodic,config['folder_results'])
-dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
+dir_corpus=os.path.join(dir_prosodic_home,config['folder_corpora']) if not config['folder_corpora'].startswith('/') else config['folder_corpora']
+dir_results=os.path.join(dir_prosodic_home,config['folder_results']) if not config['folder_results'].startswith('/') else config['folder_results']
+dir_tagged=os.path.join(dir_prosodic_home,config['folder_tagged_samples']) if not config['folder_tagged_samples'].startswith('/') else config['folder_tagged_samples']
 
 text=''
 

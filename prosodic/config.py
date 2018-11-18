@@ -70,7 +70,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = True
+parse_using_metrical_tree = False
 ############################################
 
 
@@ -220,7 +220,7 @@ output_fi='orth'		# since finnish pronunciation is essentially identical to its 
 #
 # If these are relative paths (no leading /),
 # they are defined from the point of view of
-# the root directory of PROSODIC.
+# the home directory for prosodic (~/prosodic_data).
 #
 # Folder used as the folder of corpora:
 # [it should contain folders, each of which contains text files]

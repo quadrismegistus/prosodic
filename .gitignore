@@ -22,7 +22,7 @@ pip-log.txt
 metricaltree/StanfordLibrary
 metricaltree/Text Book
 metricaltree/Pickle Jar
-results/
-corpora/*
+prosodic/results
+prosodic/corpora
 !corpora/corppoetry_fi/
 !corpora/corppoetry_en/

@@ -7,3 +7,5 @@ graft prosodic
 graft metricaltree
 
 prune metricaltree/StanfordLibrary
+prune prosodic/corpora
+prune prosodic/results

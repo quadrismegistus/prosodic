@@ -19,9 +19,9 @@ __pycache__
 # Installer logs
 pip-log.txt
 
-prosodic/metricaltree/StanfordLibrary
-prosodic/metricaltree/Text Book
-prosodic/metricaltree/Pickle Jar
+metricaltree/StanfordLibrary
+metricaltree/Text Book
+metricaltree/Pickle Jar
 results/
 corpora/*
 !corpora/corppoetry_fi/

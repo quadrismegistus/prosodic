@@ -38,6 +38,16 @@ This is your home directory for Prosodic. [https://github.com/quadrismegistus/pr
 
 
 def configure_home_dir():
+	def copytree(src, dst, symlinks=False, ignore=None):
+		for item in os.listdir(src):
+			s = os.path.join(src, item)
+			d = os.path.join(dst, item)
+			if os.path.isdir(s):
+				shutil.copytree(s, d, symlinks, ignore)
+			else:
+				shutil.copy2(s, d)
+
+
 	# make sure directory exists
 	from os.path import expanduser
 	home = expanduser("~")
@@ -46,7 +56,7 @@ def configure_home_dir():
 	for dir in [dir_prosodic_home,dir_meter_home]:
 		if not os.path.exists(dir): os.makedirs(dir)
 
-	# copy defaults
+	# get paths
 	ipath_config = os.path.join(_here,'prosodic','config.py')
 	ipath_meter = os.path.join(_here,'prosodic','meters','meter_default.py')
 	ipath_samples = os.path.join(_here,'prosodic','tagged_samples')
@@ -58,6 +68,7 @@ def configure_home_dir():
 	opath_results = os.path.join(dir_prosodic_home,'results')
 	opath_corpora = os.path.join(dir_prosodic_home,'corpora')
 
+	# make folders
 	for odir in [opath_samples,opath_results,opath_corpora]:
 		if not os.path.exists(odir):
 			os.makedirs(odir)
@@ -76,6 +87,13 @@ def configure_home_dir():
 		ofnfn=os.path.join(opath_samples,fn)
 		print '>> copying:',ifnfn,'-->',ofnfn
 		shutil.copyfile(ifnfn,ofnfn)
+
+	# copy corpora
+	for fldr in os.listdir(ipath_corpora):
+		ifnfn=os.path.join(ipath_corpora,fn)
+		ofnfn=os.path.join(opath_corpora,fn)
+		if os.path.isdir(ifnfn):
+			copytree(ifnfn,ofnfn)
 
 	# write README
 	with open(os.path.join(dir_prosodic_home,'README.txt'),'w') as of:

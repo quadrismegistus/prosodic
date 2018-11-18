@@ -72,8 +72,8 @@ class MeterPosition(Parse):
 			slotTokens = []
 
 			for slot in self.slots:
-				#slotTokens.append(self.u2s(slot.token))
-				slotTokens.append(slot.token)
+				slotTokens.append(self.u2s(slot.token))
+				#slotTokens.append(slot.token)
 
 			self.token = '.'.join(slotTokens)
 

@@ -32,9 +32,9 @@ INFO_DO_NOT_STORE = ['contour','sent','nsyll','nseg','seg','nstress','word']
 def set_paths(dir_root='.'):
     global DIR_ROOT,sylcmu
     DIR_ROOT = dir_root
-    os.environ['STANFORD_PARSER'] = os.path.join(dir_root,'Stanford Library/stanford-parser-full-%s/stanford-parser.jar' % DATE)
-    os.environ['STANFORD_MODELS'] = os.path.join(dir_root,'Stanford Library/stanford-parser-full-%s/stanford-parser-%s-models.jar' % (DATE, MODELS_VERSION))
-    os.environ['STANFORD_EJML']   = os.path.join(dir_root,'Stanford Library/stanford-parser-full-%s/ejml-%s.jar' % (DATE, EJML_VERSION))
+    os.environ['STANFORD_PARSER'] = os.path.join(dir_root,'StanfordLibrary/stanford-parser-full-%s/stanford-parser.jar' % DATE)
+    os.environ['STANFORD_MODELS'] = os.path.join(dir_root,'StanfordLibrary/stanford-parser-full-%s/stanford-parser-%s-models.jar' % (DATE, MODELS_VERSION))
+    os.environ['STANFORD_EJML']   = os.path.join(dir_root,'StanfordLibrary/stanford-parser-full-%s/ejml-%s.jar' % (DATE, EJML_VERSION))
 
     """
     then=time.time()
@@ -53,7 +53,7 @@ sent_splitter = nltk.data.load('tokenizers/punkt/english.pickle')
 def parse_worker(q):
     """"""
 
-    parser = DependencyTreeParser(model_path='Stanford Library/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz' % DATE)
+    parser = DependencyTreeParser(model_path='StanfordLibrary/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz' % DATE)
     parser = MetricalTreeParser(parser)
     for filename in iter(q.get, 'STOP'):
         print 'Working on %s...' % filename
@@ -68,7 +68,7 @@ def parse_worker(q):
 
 # Return parser
 def return_parser(dir_root):
-    model_path='Stanford Library/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz' % DATE
+    model_path='StanfordLibrary/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz' % DATE
     fnfn=os.path.join(dir_root,model_path)
     parser = DependencyTreeParser(model_path=fnfn)
     parser = MetricalTreeParser(parser)

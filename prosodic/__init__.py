@@ -5,9 +5,6 @@ import sys,glob,os,time,codecs
 dir_prosodic=os.path.split(globals()['__file__'])[0]
 sys.path.insert(0,dir_prosodic)
 
-dir_imports=os.path.join(dir_prosodic,'lib')
-sys.path.append(dir_imports)
-
 dir_mtree=os.path.join(dir_prosodic,'metricaltree')
 sys.path.append(dir_mtree)
 

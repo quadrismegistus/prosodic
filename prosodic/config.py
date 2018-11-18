@@ -14,17 +14,15 @@
 ############################################
 # METRICAL PARSING
 #
-# Set the Meter ID: the filename to its configuration file
+# Set the default Meter ID: the filename to its configuration file
 # in the "meters" subdirectory, e.g. "kiparskyhanson_shakespeare"
 # (omit the .py from the filename).
 #
-meter = 'meter_ryan'
+meter = 'meter_default'
 #
 # If no Meter ID is provided, PROSODIC will ask you to set the meter
 # in its interactive mode. As a python module, you will have to
 # create the meter first and pass it to the Text object to parse.
-#
-# meter = 'meter_arto'
 ############################################
 
 
@@ -72,7 +70,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = False
+parse_using_metrical_tree = True
 ############################################
 
 

@@ -13,7 +13,6 @@ def slice(l,num_slices=None,slice_length=None,runts=True,random=False):
 	if runts: return newlist
 	return [lx for lx in newlist if len(lx)==slice_length]
 
-
 def bigrams(l):
 	return ngram(l,2)
 
@@ -79,12 +78,20 @@ def loadConfig(toprint=True,dir_prosodic=None):
 			print "\t"+"\t".join(str(x) for x in [k,v])
 	return settings
 
-def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
+def loadConfigPy(toprint=True,dir_prosodic=None,dir_home='',config=None):
 	import imp
 	settings={'constraints':[]}
 	if not dir_prosodic: dir_prosodic=sys.path[0]
+	path_home=os.path.join(dir_home,'config.py')
+	path_root=os.path.join(dir_prosodic,'config.py')
 
-	config=config if config else imp.load_source('config', os.path.join(dir_prosodic,'config.py'))
+	if config:
+		pass
+	elif os.path.exists(path_home):
+		print '>> loading config from:',path_home
+		config=imp.load_source('config', path_home)
+	else:
+		config=imp.load_source('config', path_root)
 
 	vnames = [x for x in dir(config) if not x.startswith('_')]
 
@@ -118,14 +125,33 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 	#settings['meters']=loadMeters()
 
 	return settings
+#
+# def loadMeters():
+# 	import meters
+# 	from Meter import Meter
+# 	d={}
+# 	for name,module in meters.d.items():
+# 		#d[name]=loadConfigPy(toprint=False,config=module)
+# 		#d[name]['id']=name
+# 		mconfig = loadConfigPy(toprint=False,config=module)
+# 		mconfig['id']=name
+# 		mobj = Meter(config=mconfig)
+# 		d[name]=mobj
+# 	return d
 
-def loadMeters():
-	import meters
-	from Meter import Meter
+
+def loadMeters(meter_dir_root,meter_dir_home):
 	d={}
-	for name,module in meters.d.items():
-		#d[name]=loadConfigPy(toprint=False,config=module)
-		#d[name]['id']=name
+	import imp
+	for meter_dir in [meter_dir_root,meter_dir_home]:
+		if os.path.exists(meter_dir) and os.path.isdir(meter_dir):
+			for fn in os.listdir(meter_dir):
+				if not fn.endswith('.py') or fn.startswith('_'): continue
+				idx=fn.replace('.py','').replace('-','_')
+				d[idx]=imp.load_source(idx, os.path.join(meter_dir,fn))
+
+	from Meter import Meter
+	for name,module in d.items():
 		mconfig = loadConfigPy(toprint=False,config=module)
 		mconfig['id']=name
 		mobj = Meter(config=mconfig)

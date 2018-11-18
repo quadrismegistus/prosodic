@@ -1,0 +1,9 @@
+include requirements.txt
+include README.md
+include LICENSE.md
+
+graft prosodic
+graft prosodic
+graft metricaltree
+
+prune metricaltree/StanfordLibrary

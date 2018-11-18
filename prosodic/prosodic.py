@@ -10,20 +10,23 @@ import logging
 dir_prosodic=os.path.split(globals()['__file__'])[0]
 sys.path.insert(0,dir_prosodic)
 
-dir_imports=os.path.join(dir_prosodic,'lib')
-sys.path.append(dir_imports)
-
-dir_mtree=os.path.join(dir_prosodic,'metricaltree')
+dir_mtree=os.path.abspath(os.path.join(dir_prosodic,'..','metricaltree'))
 sys.path.append(dir_mtree)
+
+from os.path import expanduser
+home = expanduser("~")
+dir_prosodic_home=os.path.join(home,'.prosodic')
 
 ## import necessary objects
 #toprintconfig=__name__=='__main__'
 toprintconfig=False
 from tools import *
-config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
-config['meters']=loadMeters()
-METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
+config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic,dir_home=dir_prosodic_home)
 
+meter_dir_root=os.path.join(dir_prosodic,'meters')
+meter_dir_home=os.path.join(dir_prosodic_home,'meters')
+config['meters']=loadMeters(meter_dir_root=meter_dir_root,meter_dir_home=meter_dir_home)
+METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
 
 dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
 dir_results=os.path.join(dir_prosodic,config['folder_results'])
@@ -59,6 +62,10 @@ for lng in languages:
 	dict[lng]=loadDict(lng)
 del lng
 
+## etc
+def install_stanford_parser(dir_mtree=dir_mtree):
+	print '>> INSTALLING STANFORD CORENLP PARSER TO DIRECTORY:',dir_mtree
+	os.system('cd '+dir_mtree+' && '+'./get-deps.sh')
 
 ## load config
 if __name__ != "__main__":
@@ -102,7 +109,7 @@ else:	## if not imported, go into interactive mode
 				pass
 
 			if arg2=='stanford_parser':
-				os.system('cd '+dir_mtree+' && '+'./get-deps.sh && cd '+dir_prosodic)
+				install_stanford_parser(dir_mtree)
 
 		else:
 			print "<error> file not found"

@@ -456,10 +456,10 @@ if __name__ == '__main__':
     MODELS_VERSION = '3.5.2'
     EJML_VERSION = '0.23'
 
-    os.environ['STANFORD_PARSER'] = 'Stanford Library/stanford-parser-full-%s/stanford-parser.jar' % DATE
-    os.environ['STANFORD_MODELS'] = 'Stanford Library/stanford-parser-full-%s/stanford-parser-%s-models.jar' % (DATE, MODELS_VERSION)
-    os.environ['STANFORD_EJML'] = 'Stanford Library/stanford-parser-full-%s/ejml-%s.jar' % (DATE, EJML_VERSION)
-    parser = DependencyTreeParser(model_path='Stanford Library/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishRNN.ser.gz' % DATE)
+    os.environ['STANFORD_PARSER'] = 'StanfordLibrary/stanford-parser-full-%s/stanford-parser.jar' % DATE
+    os.environ['STANFORD_MODELS'] = 'StanfordLibrary/stanford-parser-full-%s/stanford-parser-%s-models.jar' % (DATE, MODELS_VERSION)
+    os.environ['STANFORD_EJML'] = 'StanfordLibrary/stanford-parser-full-%s/ejml-%s.jar' % (DATE, EJML_VERSION)
+    parser = DependencyTreeParser(model_path='StanfordLibrary/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishRNN.ser.gz' % DATE)
 
     #=====================================================================
     basename = sys.argv[1].decode('utf-8')

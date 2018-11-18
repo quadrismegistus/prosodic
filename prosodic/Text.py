@@ -9,7 +9,6 @@ from WordToken import WordToken
 from entity import entity,being
 from tools import *
 from operator import itemgetter
-from ipa import sampa2ipa
 #import prosodic
 
 DASHES=['--',u'–',u'—']
@@ -346,22 +345,25 @@ class Text(entity):
 				print
 			except LookupError as e:
 				emsg=str(e)
+				#print '!! ERROR:',emsg
+				#print '!!'
 
 				if "Resource" in emsg and "punkt" in emsg and "not found" in emsg:
-					print '!! text not parsed because NLTK missing needed data: punkt'
+					print '!! text not parsed with metricaltree because NLTK missing needed data: punkt'
 					print '!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"'
 					print
 				elif 'stanford-parser.jar' in emsg:
 					import prosodic
-					print '!! text not parsed because Stanford NLP Parser not installed'
-					print '!! to install, run: python prosodic.py install stanford_parser'
-					print '!! if that doesn\'t work:'
-					print '!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip'
-					print '!! \t2) unzip it'
-					print '!! \t3) move the unzipped directory to:',self.dir_mtree+'/Stanford Library/stanford-parser-full-2015-04-20/'
+					print '!! text not parsed with metricaltree because Stanford NLP Parser not installed'
+					print '!! to install, run: python -c "import prosodic; prosodic.install_stanford_parser()"'
+					#print '!!'
+					#print '!! if that doesn\'t work:'
+					#print '!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip'
+					#print '!! \t2) unzip it'
+					#print '!! \t3) move the unzipped directory to:',self.dir_mtree+'/StanfordLibrary/stanford-parser-full-2015-04-20/'
 					print
 				else:
-					print '!! text not parsed for unknown reason!'
+					print '!! text not parsed with metricaltree for unknown reason!'
 					print '!! error message received:'
 					print emsg
 					print

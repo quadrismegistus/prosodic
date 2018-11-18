@@ -12,11 +12,15 @@ import os
 
 def genDefault():
 	import prosodic
-	metername = sorted(prosodic.config['meters'].keys())[0]
-	meter=prosodic.config['meters'][metername]
-	print '>> no meter specified. defaulting to this meter:'
-	raise Exception
-	print meter
+	#metername = sorted(prosodic.config['meters'].keys())[0]
+	meter=prosodic.config.get('meter',None)
+	if not meter:
+		metername = sorted(prosodic.config['meters'].keys())[0]
+		meter=prosodic.config['meters'][metername]
+		print '>> no meter specified, and no meter setting in config.py'
+		print '>> defaulting to: meter'
+		print meter
+
 	return meter
 
 

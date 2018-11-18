@@ -1,8 +1,4 @@
 *.py[cod]
-
-# C extensions
-*.so
-
 .DS_Store
 
 # Packages
@@ -23,22 +19,9 @@ __pycache__
 # Installer logs
 pip-log.txt
 
-# Unit test / coverage reports
-.coverage
-.tox
-nosetests.xml
-
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-metricaltree/Stanford Library
-metricaltree/Text Book
-metricaltree/Pickle Jar
+prosodic/metricaltree/StanfordLibrary
+prosodic/metricaltree/Text Book
+prosodic/metricaltree/Pickle Jar
 results/
 corpora/*
 !corpora/corppoetry_fi/

@@ -764,7 +764,7 @@ class Text(entity):
 				elif not text:
 					mpos_str=mpos.mstr
 				else:
-					mpos_str=repr(mpos)
+					mpos_str=mpos.token
 
 
 				if viols and viold: mpos_str+='*'

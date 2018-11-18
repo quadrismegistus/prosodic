@@ -15,7 +15,7 @@ class MeterPosition(Parse):
 
 		self.feat('prom.meter',(meterVal=='s'))
 		#self.feat('meter',self.meterVal2)
-		self.token = ""
+		#self.token = ""
 
 	def __copy__(self):
 		other = MeterPosition(self.meter, self.meterVal)
@@ -41,7 +41,7 @@ class MeterPosition(Parse):
 		return self.meterVal.startswith("s")
 
 	def append(self,slot):
-		self.token = ""
+		#self.token = ""
 		self.slots.append(slot)
 
 	@property
@@ -65,20 +65,32 @@ class MeterPosition(Parse):
 			posfeats[k]=tuple(v)
 
 		return posfeats
+	#
+	# def __repr__(self):
+	#
+	# 	if not self.token:
+	# 		slotTokens = []
+	#
+	# 		for slot in self.slots:
+	# 			#slotTokens.append(self.u2s(slot.token))
+	# 			slotTokens.append(slot.token)
+	#
+	# 		self.token = '.'.join(slotTokens)
+	#
+	# 		if self.meterVal == 's':
+	# 			self.token = self.token.upper()
+	# 		else:
+	# 			self.token = self.token.lower()
+	# 	return self.token
+
 
 	def __repr__(self):
-
-		if not self.token:
-			slotTokens = []
-
-			for slot in self.slots:
-				slotTokens.append(self.u2s(slot.token))
-				#slotTokens.append(slot.token)
-
-			self.token = '.'.join(slotTokens)
-
-			if self.meterVal == 's':
-				self.token = self.token.upper()
-			else:
-				self.token = self.token.lower()
 		return self.token
+
+	@property
+	def token(self):
+		if not hasattr(self,'_token') or not self._token:
+			token = u'.'.join([slot.token for slot in self.slots])
+			token=token.upper() if self.meterVal=='s' else token.lower()
+			self._token=token
+		return self._token

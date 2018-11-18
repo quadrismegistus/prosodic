@@ -15,6 +15,7 @@ def genDefault():
 	metername = sorted(prosodic.config['meters'].keys())[0]
 	meter=prosodic.config['meters'][metername]
 	print '>> no meter specified. defaulting to this meter:'
+	raise Exception
 	print meter
 	return meter
 

@@ -357,7 +357,7 @@ class Parse(entity):
 
 		isTrue = (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
 		if isTrue:
-			logging.info('Parse1: %s\nLastMeterVal1: %s\nLastNumSlots1: %s\n--can compare-->\nParse2: %s\nLastMeterVal2: %s\nLastNumSlots2: %s',self,self.positions[-1].meterVal,len(self.positions[-1].slots),parse,parse.positions[-1].meterVal,len(parse.positions[-1].slots))
+			logging.debug('Parse1: %s\nLastMeterVal1: %s\nLastNumSlots1: %s\n--can compare-->\nParse2: %s\nLastMeterVal2: %s\nLastNumSlots2: %s',self,self.positions[-1].meterVal,len(self.positions[-1].slots),parse,parse.positions[-1].meterVal,len(parse.positions[-1].slots))
 		return isTrue
 		#return (self.numSlots == self.totalSlots)
 		#return False
@@ -408,13 +408,13 @@ class Parse(entity):
 				return Bounding.unequal # contains both greater and lesser violations
 
 			else:
-				logging.info('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]),self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]))
+				logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]),self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]))
 				return Bounding.bounded # contains only greater violations
 
 		else:
 
 			if containsLesserViolation:
-				logging.info('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]),parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]))
+				logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]),parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]))
 				return Bounding.bounds # contains only lesser violations
 
 			else:

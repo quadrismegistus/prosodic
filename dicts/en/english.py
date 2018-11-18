@@ -47,7 +47,7 @@ def write_to_cache(token,ipa):
 
 
 
-def get(token,config={}):
+def get(token,config={},toprint=False):
 	# If not CMU loaded
 	global CMU_DICT
 	if not CMU_DICT: load_cmu(config=config)
@@ -74,7 +74,11 @@ def get(token,config={}):
 			ipa=espeak2ipa(token)
 			cmu=espeak2cmu(ipa)
 			cmu_sylls = syllabify_cmu(cmu)
+			if toprint: print ipa
+			if toprint: print cmu
+			if toprint: print cmu_sylls
 			ipa = cmusylls2ipa(cmu_sylls)
+			if toprint: print ipa
 		elif TTS_ENGINE=='openmary':
 			ipa=openmary2ipa(token)
 		else:
@@ -229,7 +233,11 @@ def ipa2cmu(tok):
 
 def cmu2ipa(tok):
 	import lexconvert
-	return lexconvert.convert(tok,'cmu','unicode-ipa')
+	res=lexconvert.convert(tok,'cmu','unicode-ipa')
+
+	## BUG FIXES
+	if tok.endswith(' T') and not res.endswith('t'): res=res+'t'
+	return res
 
 def syllabify_cmu(cmu_token):
 	import syllabify as sy

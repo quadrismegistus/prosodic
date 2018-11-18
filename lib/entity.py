@@ -1574,6 +1574,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 	def rime_distance(self,other,normalized=False):
 		my_rime=self.get_available_rime()
 		other_rime=other.get_available_rime()
+
 		#print "COMPARING:"
 		#print self.words()[-1], my_rime.phonemes()
 		#print other.words()[-1], other_rime.phonemes()
@@ -1593,6 +1594,9 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		chr1=u''.join([p2chr[p.phon_str] for p in phonemes1])
 		chr2=u''.join([p2chr[p.phon_str] for p in phonemes2])
 
+		# @HACK @TODO
+		#return 0 if chr1==chr2 else 10
+		###
 
 		from Levenshtein import editops
 		dist=0.0
@@ -1607,6 +1611,14 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				dist+=p1.distance(p2)
 			except IndexError:
 				dist+=1
+
+		## @NEW
+		# add a distpoint if does not end with same phoneme?
+		try:
+			if phonemes1[-1]!=phonemes2[-1]: dist+=2
+		except IndexError:
+			# ???? @TODO
+			dist+=2
 
 		if normalized: return dist / float(max(len(phonemes1),len(phonemes2)))
 		return dist

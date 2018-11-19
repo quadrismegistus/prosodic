@@ -38,18 +38,10 @@ This is your home directory for Prosodic. [https://github.com/quadrismegistus/pr
 
 
 def configure_home_dir():
-	# def copytree(src, dst, symlinks=False, ignore=None):
-	# 	for item in os.listdir(src):
-	# 		s = os.path.join(src, item)
-	# 		d = os.path.join(dst, item)
-	# 		if os.path.isdir(s):
-	# 			shutil.copytree(s, d, symlinks, ignore)
-	# 		else:
-	# 			shutil.copy2(s, d)
-
-
-	# make sure directory exists
+	from distutils.dir_util import copy_tree
 	from os.path import expanduser
+
+	# set home
 	home = expanduser("~")
 	dir_prosodic_home=os.path.join(home,'prosodic_data')
 	dir_meter_home=os.path.join(dir_prosodic_home,'meters')
@@ -58,12 +50,14 @@ def configure_home_dir():
 
 	# get paths
 	ipath_config = os.path.join(_here,'prosodic','config.py')
-	ipath_meter = os.path.join(_here,'prosodic','meters','meter_default.py')
+	#ipath_meter = os.path.join(_here,'prosodic','meters','meter_default.py')
+	ipath_meter = os.path.join(_here,'prosodic','meters')
 	ipath_samples = os.path.join(_here,'prosodic','tagged_samples')
 	ipath_corpora = os.path.join(_here,'prosodic','corpora')
 
 	opath_config = os.path.join(dir_prosodic_home,'config_default.py')
-	opath_meter = os.path.join(dir_meter_home,'meter_default.py')
+	#opath_meter = os.path.join(dir_meter_home,'meter_default.py')
+	opath_meter=dir_meter_home
 	opath_samples = os.path.join(dir_prosodic_home,'tagged_samples')
 	opath_results = os.path.join(dir_prosodic_home,'results')
 	opath_corpora = os.path.join(dir_prosodic_home,'corpora')
@@ -77,8 +71,9 @@ def configure_home_dir():
 	import shutil
 	print '>> copying:',ipath_config,'-->',opath_config
 	shutil.copyfile(ipath_config,opath_config)
-	print '>> copying:',ipath_meter,'-->',opath_meter
-	shutil.copyfile(ipath_meter,opath_meter)
+	#print '>> copying:',ipath_meter,'-->',opath_meter
+	#shutil.copyfile(ipath_meter,opath_meter)
+	copy_tree(ipath_meter,opath_meter)
 
 	# copy samples
 	for fn in os.listdir(ipath_samples):
@@ -89,7 +84,7 @@ def configure_home_dir():
 		shutil.copyfile(ifnfn,ofnfn)
 
 	# copy corpora
-	from distutils.dir_util import copy_tree
+
 	copy_tree(ipath_corpora,opath_corpora)
 
 	# write README
@@ -120,7 +115,7 @@ with open("requirements.txt", "r") as fh:
 
 setup(
 	name='prosodic',
-	version='1.2.1',
+	version='1.2.4',
 	description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 	long_description=long_description,
 	long_description_content_type="text/markdown",

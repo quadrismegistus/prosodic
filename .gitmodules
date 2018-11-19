@@ -1,0 +1,3 @@
+[submodule "prosodic/lexconvert"]
+	path = prosodic/lexconvert
+	url = https://github.com/ssb22/lexconvert

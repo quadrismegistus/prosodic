@@ -486,7 +486,7 @@ class Text(entity):
 		numents=len(ents)
 
 		#pool=mp.Pool(1)
-		toprint=being.config['print_to_screen']
+		toprint=self.config['print_to_screen']
 		objects = [(ent,meter,init,False) for ent in ents]
 
 		if num_processes>1:
@@ -504,14 +504,14 @@ class Text(entity):
 				clock_snum+=ent.num_syll
 				if ei and not ei%100:
 					nownow=time.time()
-					if being.config['print_to_screen']:
+					if self.config['print_to_screen']:
 						print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
 					now=nownow
 					clock_snum=0
 
 				yield parse_ent_mp(objectx)
 
-		if being.config['print_to_screen']:
+		if self.config['print_to_screen']:
 			print '>> parsing complete in:',time.time()-now,'seconds'
 
 
@@ -573,7 +573,7 @@ class Text(entity):
 			self.__parsed_ents[meter.id].append(ent)
 			ent.scansion(meter=meter,conscious=True)
 
-		if being.config['print_to_screen']: print
+		if self.config['print_to_screen']: print
 
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)

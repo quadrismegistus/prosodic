@@ -35,14 +35,24 @@ class Corpus(entity):
 		self.lang = lang
 
 		## [loop] through filenames
-		for filename in glob.glob(os.path.join(corpusRoot, corpusFiles)):
+		for filename in sorted(glob.glob(os.path.join(corpusRoot, corpusFiles))):
 			## create and adopt the text
 			newtext = Text(filename,printout=printout)
 			self.newchild(newtext)	# append Text to children
 
 
-	def parse(self,meter=None,arbiter='Line'):
+	def parse(self,meter=None,arbiter='Line',num_processes=1):
 		if not meter and self.meter: meter=self.meter
+
+		# if num_processes>1:
+		# 	#print '!! MULTIPROCESSING PARSING IS NOT WORKING YET !!'
+		# 	import multiprocessing as mp
+		# 	pool = mp.Pool(num_processes)
+		# 	objects = [(text,meter,arbiter) for text in self.children]
+		# 	jobs = [pool.apply_async(parse_text,(text,meter,arbiter)) for x in objects]
+		# 	for j in jobs:
+		# 		j.get()
+		#else:
 		for text in self.children:
 			text.parse(meter=meter,arbiter=arbiter)
 			if not meter: self.meter=meter=text.meter
@@ -144,3 +154,6 @@ class Corpus(entity):
 
 	def sentences(self):
 		return [sent for text in self.children for sent in text.sentences()]
+
+def parse_text(text,meter,arbiter):
+	text.parse(meter=meter,arbiter=arbiter)

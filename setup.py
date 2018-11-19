@@ -38,14 +38,14 @@ This is your home directory for Prosodic. [https://github.com/quadrismegistus/pr
 
 
 def configure_home_dir():
-	def copytree(src, dst, symlinks=False, ignore=None):
-		for item in os.listdir(src):
-			s = os.path.join(src, item)
-			d = os.path.join(dst, item)
-			if os.path.isdir(s):
-				shutil.copytree(s, d, symlinks, ignore)
-			else:
-				shutil.copy2(s, d)
+	# def copytree(src, dst, symlinks=False, ignore=None):
+	# 	for item in os.listdir(src):
+	# 		s = os.path.join(src, item)
+	# 		d = os.path.join(dst, item)
+	# 		if os.path.isdir(s):
+	# 			shutil.copytree(s, d, symlinks, ignore)
+	# 		else:
+	# 			shutil.copy2(s, d)
 
 
 	# make sure directory exists
@@ -89,11 +89,8 @@ def configure_home_dir():
 		shutil.copyfile(ifnfn,ofnfn)
 
 	# copy corpora
-	for fldr in os.listdir(ipath_corpora):
-		ifnfn=os.path.join(ipath_corpora,fn)
-		ofnfn=os.path.join(opath_corpora,fn)
-		if os.path.isdir(ifnfn):
-			copytree(ifnfn,ofnfn)
+	from distutils.dir_util import copy_tree
+	copy_tree(ipath_corpora,opath_corpora)
 
 	# write README
 	with open(os.path.join(dir_prosodic_home,'README.txt'),'w') as of:
@@ -123,7 +120,7 @@ with open("requirements.txt", "r") as fh:
 
 setup(
 	name='prosodic',
-	version='1.1.28',
+	version='1.1.31',
 	description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 	long_description=long_description,
 	long_description_content_type="text/markdown",

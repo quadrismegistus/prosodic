@@ -7,5 +7,6 @@ graft prosodic
 graft metricaltree
 
 prune metricaltree/StanfordLibrary
-prune prosodic/corpora
 prune prosodic/results
+
+global-exclude .DS_Store

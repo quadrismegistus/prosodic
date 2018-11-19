@@ -1137,7 +1137,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 
 	def scansion_prepare(self,meter=None,conscious=False):
 		"""Print out header column for line-scansions for a given meter. """
-		config=being.config
+		import prosodic
+		config=prosodic.config
 
 		if not meter:
 			if not hasattr(self,'_Text__bestparses'): return

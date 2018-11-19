@@ -21,7 +21,7 @@ Currently, Prosodic can parse English and Finnish text, but adding additional la
 
 ## Quickstart
 
-### Install
+### Install Prosodic
 
 Install from pip (preferred):
 
@@ -115,13 +115,13 @@ text.save_stats()
 
 # iterate over features
 for line in text.lines():
-	best_parse = line.bestParse()  # most plausible parse
-	all_parses = line.allParses()  # all plausible parses
+    best_parse = line.bestParse()  # most plausible parse
+    all_parses = line.allParses()  # all plausible parses
 
-	first_word = line.words()[0]
-	last_syllable = line.syllables()[-1]
-	last_syllable_rime = line.rimes()[-1]
-	last_syllable_rime_phonemes = last_syllable_rime.phonemes()
+    first_word = line.words()[0]
+    last_syllable = line.syllables()[-1]
+    last_syllable_rime = line.rimes()[-1]
+    last_syllable_rime_phonemes = last_syllable_rime.phonemes()
 ```
 
 ## Installation

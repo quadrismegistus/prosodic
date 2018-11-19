@@ -11,9 +11,9 @@ becomes
 of|MAN'S|first*|DIS|o|BE|dience|AND*|the|FRUIT
 ```
 
-—finding both the metrical template (shown as capitalization), and the moments where the phonological reality departs from that abstract template (shown as *).
+The metrical scansion is shown as capitalization. Shown in asterisks (*) are the syllables at odds with the scansion, departing from its ideal template, or violating its linguistic rules.
 
-Prosodic converts each word into its stressed, syllabified, phonetic transcription, either from a pronunciation dictionary or from text-to-speech algorithms. To scan the text metrically, it finds the best available metrical parse for each line of text in the style of Optimality Theory: nearly all possibile parses are attempted; the best parses are those that least depart from a set of customizable linguistic rules, or constraints. By default, the constraints are those proposed by Kristin Hanson and Paul Kiparsky in their paper "A Parametric Theory of Poetic Meter" (Language, 1996).
+Prosodic converts each word into its stressed, syllabified, phonetic transcription, either from a pronunciation dictionary or from text-to-speech algorithms. To scan the text metrically, it finds the best available metrical parse for each line of text in the style of Optimality Theory: nearly all possibile parses are attempted; the best parses are those that least depart from a set of customizable linguistic rules or constraints. By default, the constraints are those proposed by Kristin Hanson and Paul Kiparsky in their paper "A Parametric Theory of Poetic Meter" (Language, 1996).
 
 Currently, Prosodic can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function.  Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
@@ -27,7 +27,18 @@ Currently, Prosodic can parse English and Finnish text, but adding additional la
 pip install prosodic
 ```
 
-(This creates a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results.)
+Or install from sources:
+
+
+```
+git clone git@github.com:quadrismegistus/prosodic.git
+cd prosodic
+#pip install -r requirements.txt
+python setup.py install
+```
+
+
+This creates a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
 
 ### Running interactively
 

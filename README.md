@@ -64,7 +64,6 @@ Both of these methods will create a folder `prosodic_data` in your home director
 #### Paste in a text: `/paste`
 
 ```
-/paste
 >> enter or paste your content here. press Ctrl-D when finished.
 
 Turning and turning in the widening gyre   
@@ -120,32 +119,27 @@ for line in text.lines():
     last_syllable_rime_phonemes = last_syllable_rime.phonemes()
 ```
 
-## Installation
+## Dependencies
 
-### 1. Prosodic
+### Text to speech software (Optional, installation required)
 
-To install poetix:
-
-```
-pip install prosodic
-```
-
-To install by latest github source, either [download the zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), or clone the repository in a folder:
-
-```
-git clone git@github.com:quadrismegistus/prosodic.git
-```
-
-
-### 2. (optional) eSpeak
+#### eSpeak (recommended)
 
 [eSpeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). Prosodic uses it in order to sound out unfamiliar words: otherwise, words not found in the CMU Pronunciation Dictionary will lack a phonology and so will deprive the line they appear in of the possibility of metrical parsing.
 
-[Download eSpeak for your operating system](http://espeak.sourceforge.net/download.html). Or, if you're running Mac OS X, install eSpeak with the [HomeBrew package manager](http://brew.sh/):
+To install eSpeak, [download it here for your operating system](http://espeak.sourceforge.net/download.html). Or, if you're running Mac OS X, install eSpeak with the [HomeBrew package manager](http://brew.sh/):
 
-```brew install espeak```
+```
+brew install espeak
+```
 
 *Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which  Prosodic draws from (if possible) before resorting to a TTS engine.
+
+#### OpenMary
+
+OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/).
+
+To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) (select the "Run time package" link). Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in Prosodic, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. Make sure also to set `en_TTS_ENGINE` to `'openmary'` in `~/prosodic_data/config.py` (see just below).
 
 
 ## Configuration

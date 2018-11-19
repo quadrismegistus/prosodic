@@ -71,7 +71,9 @@ class Text(entity):
 			self.dict=prosodic.dict[self.lang]
 			self.init_text(file)
 		else:
-			lines = filename.split('\n')
+			txt=filename
+			if type(txt)!=unicode: txt=txt.decode('utf-8',errors='replace')
+			lines = txt.split('\n')
 			self.name = noPunc(lines[0].lower())[:25].strip().replace(' ','-')
 			#print '>> loading text:',self.name
 			self.filename = lines[0].replace(' ','_')[:100]+'.txt'
@@ -278,6 +280,8 @@ class Text(entity):
 			if REPLACE_DASHES:
 				for dash in DASHES:
 					ln=ln.replace(dash,u' '+dash+' ')
+
+
 			ln=ln.strip()
 			#print ln,type(ln)
 			if self.limWord and numwords>self.limWord: break

@@ -74,8 +74,8 @@ The blood-dimmed tide is loosed, and everywhere
 The ceremony of innocence is drowned;
 The best lack all conviction, while the worst   
 Are full of passionate intensity.
-
 ```
+
 #### Parse metrically: `/parse` (according to the meter specified in `/meter`)
 
 #### Show results: `/scan` (per line, showing only the best parse)
@@ -92,11 +92,6 @@ Are full of passionate intensity.                           	are|FULL|of|PAS|sio
 ```
 #### Save statistics: `/stats all`
 
-```
->> saved: /Users/ryan/prosodic_data/results/stats/texts/turning-and-turning-in-th/turning-and-turning-in-th.lines.meter=meter_default.csv
->> saved: /Users/ryan/prosodic_data/results/stats/texts/turning-and-turning-in-th/turning-and-turning-in-th.lines_ot.meter=meter_default.csv
->> saved: /Users/ryan/prosodic_data/results/stats/texts/turning-and-turning-in-th/turning-and-turning-in-th.positions.csv
-```
 
 ### Running Prosodic as a python module
 

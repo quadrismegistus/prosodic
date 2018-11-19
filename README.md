@@ -1,6 +1,6 @@
 # Prosodic
 
-Prosodic is a a metrical-phonological parser written in Python. It scans poems for their meter according to specified linguistic rules. The first line from Milton's *Paradise Lost*,
+Prosodic is a metrical-phonological parser written in Python. It scans poems for their meter according to specified linguistic rules. The first line from Milton's *Paradise Lost*,
 
 ```
 Of man's first disobedience, and the fruit     

@@ -11,7 +11,7 @@ from tools import *
 from operator import itemgetter
 #import prosodic
 
-DASHES=['--',u'–',u'—']
+DASHES=['--',u'–',u'—','-']
 REPLACE_DASHES = True
 
 
@@ -255,6 +255,10 @@ class Text(entity):
 			yield dx
 		print '>> saved:',ofn
 		#for
+
+	def save_stats(self):
+		for dx in self.stats():
+			pass
 
 	def stats(self,meter=None,all_parses=False,funcs=['stats_lines','stats_lines_ot','stats_positions']):
 		for funcname in funcs:
@@ -676,7 +680,7 @@ class Text(entity):
 	def report(self,meter=None,include_bounded=False,reverse=True):
 		#return #super(Text,self).report(meter=meter if meter else self.meter)
 		meter=self.get_meter(meter)
-		return entity.report(self, meter=meter,include_bounded=include_bounded,reverse=reverse)
+		return entity.report(self,meter=meter,include_bounded=include_bounded,reverse=reverse)
 
 
 	def bestParses(self,meter=None):

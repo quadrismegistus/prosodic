@@ -71,16 +71,24 @@ class Parse(entity):
 		return slots
 
 
-	def str_meter(self,word_sep=""):
+	def str_meter(self,word_sep="",positions=None):
 		str_meter=""
 		wordTokNow=None
-		for pos in self.positions:
+		if not positions: positions=self.positions
+		for pos in positions:
 			for slot in pos.slots:
 				if word_sep and wordTokNow and slot.wordtoken != wordTokNow:
 					str_meter+=word_sep
 				wordTokNow=slot.wordtoken
 				str_meter+=pos.meterVal
 		return str_meter
+
+	@property
+	def num_non_monosyllabic_positions(self,skip_initial_foot=True):
+		positions=self.positions[2:] if not skip_initial_foot else self.positions
+		mtr=self.str_meter(positions=positions)
+		return mtr.count('ww')+mtr.count('ss')
+
 
 	# add an extra slot to the parse
 	# returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
@@ -284,7 +292,7 @@ class Parse(entity):
 
 
 	def __repr__(self):
-		return self.posString()
+		return self.posString(viols=True)
 		#return "["+str(self.getErrorCount()) + "] " + self.getUpDownString()
 
 	def __repr2__(self):

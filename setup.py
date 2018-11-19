@@ -115,7 +115,7 @@ with open("requirements.txt", "r") as fh:
 
 setup(
 	name='prosodic',
-	version='1.2.4',
+	version='1.2.5',
 	description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 	long_description=long_description,
 	long_description_content_type="text/markdown",

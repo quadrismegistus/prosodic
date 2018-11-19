@@ -55,6 +55,10 @@ class Line(entity):
 		self.__parses[meter.id],self.__boundParses[meter.id]=meter.parse(wordtoks,numSyll)
 		####
 
+		### SORT
+		self.__parses[meter.id].sort(key=lambda p: (p.totalScore,p.num_non_monosyllabic_positions))
+		###
+
 
 		self.__bestparse[meter.id]=None
 		try:
@@ -142,7 +146,7 @@ class Line(entity):
 			lowestScore=bp.score()
 			count=bp.totalCount
 		from tools import makeminlength
-		print makeminlength(unicode(bp),60)
+		#print makeminlength(unicode(bp),60)
 		data = [makeminlength(unicode(self),config['linelen']), makeminlength(unicode(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot]
 		data_unicode = [unicode(x) for x in data]
 		self.om("\t".join( data_unicode ),conscious=conscious)

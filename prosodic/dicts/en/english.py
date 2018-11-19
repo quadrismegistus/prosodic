@@ -16,6 +16,11 @@ CACHE_DICT_F=None
 CHARACTERS_FORCING_UNSTRESSED_SYLLABLES=[u'è']
 CHARACTERS_FORCING_STRESSED_SYLLABLES=[u'é']
 
+REPLACE_DIR={
+	"'":'',
+	u"‘":'',
+	u"’":'',
+}
 
 
 def load_cmu(fn=CMU_DICT_FN,config={}):
@@ -50,13 +55,14 @@ def write_to_cache(token,ipa):
 
 
 
-def get(token,config={},toprint=False):
+def get(token,config={},toprint=False,replace_dir=REPLACE_DIR):
 	# If not CMU loaded
 	global CMU_DICT
 	if not CMU_DICT: load_cmu(config=config)
 
 	# First try CMU
 	tokenl=word_l=token.lower()
+	for k,v in replace_dir.items(): tokenl=tokenl.replace(k,v)
 	ipas = CMU_DICT.get(tokenl,[])
 
 	# First see if this is a contraction

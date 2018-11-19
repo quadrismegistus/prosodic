@@ -307,7 +307,7 @@ Cs['footmin-f-resolution']=1
 # The first two metrical positions will not be evaluated
 # for any of the strength/stress/weight correspondence constraints:
 # [set to 1 to be true]
-#Cs['skip_initial_foot']=1
+Cs['skip_initial_foot']=1
 #
 # A word should not be an elision [use to discourage elisions]:
 #Cs['word-elision']=1

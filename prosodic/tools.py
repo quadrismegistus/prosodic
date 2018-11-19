@@ -805,7 +805,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 		sylls_iscorrect=[]
 		lines_iscorrect_nonbounded=[]
 
-		otf=open(ofn_ot,'w')
+		otf=codecs.open(ofn_ot,'w',encoding='utf-8',errors='replace')
 		otf_nl=0
 
 		for di,d in enumerate(ld):
@@ -847,7 +847,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 				for _pi,_parse in enumerate(_parses):
 					otf_nl+=1
 					code=_parse.str_meter()
-					row=[line.encode('utf-8',errors='ignore') if not _pi else '', str(_parse) + (' [*Bounded]' if _parse.isBounded else ''), str(humans.count(code)) if code in humans else '']
+					row=[line if not _pi else '', unicode(_parse) + (' [*Bounded]' if _parse.isBounded else ''), unicode(humans.count(code)) if code in humans else '']
 					for c in meter.constraints: row+=[str(_parse.constraintCounts[c]) if _parse.constraintCounts[c] else '']
 					otf.write('\t'.join(row)+'\n')
 

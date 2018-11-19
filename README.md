@@ -23,11 +23,13 @@ Currently, Prosodic can parse English and Finnish text, but adding additional la
 
 ### Install
 
+Install from pip (preferred):
+
 ```
 pip install prosodic
 ```
 
-Or install from sources:
+Or install latest sources (advanced):
 
 ```
 git clone git@github.com:quadrismegistus/prosodic.git
@@ -37,7 +39,7 @@ python setup.py develop
 
 Both of these methods will create a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
 
-### Running interactively
+### Running Prosodic interactively
 
 #### Run from command line: `prosodic`
 
@@ -96,7 +98,7 @@ Are full of passionate intensity.                           	are|FULL|of|PAS|sio
 >> saved: /Users/ryan/prosodic_data/results/stats/texts/turning-and-turning-in-th/turning-and-turning-in-th.positions.csv
 ```
 
-### Running as a module
+### Running Prosodic as a python module
 
 ```python
 # import
@@ -112,16 +114,14 @@ text.parse()
 text.save_stats()
 
 # iterate over features
-## lines and parses
-lines = text.lines()           # all lines in text, as Line objects
-parses = text.bestParses()     # each line's best parse, as Parse objects
-all_parses = text.allParses()  # each line's list of plausible parses
+for line in text.lines():
+	best_parse = line.bestParse()  # most plausible parse
+	all_parses = line.allParses()  # all plausible parses
 
-## words, syllables, phonemes
-words = text.words()
-words_firstline = lines[0].words()
-last_syllable_per_line = [line.syllables()[-1] for line in lines]
-all_phonemes_in_text = text.phonemes()
+	first_word = line.words()[0]
+	last_syllable = line.syllables()[-1]
+	last_syllable_rime = line.rimes()[-1]
+	last_syllable_rime_phonemes = last_syllable_rime.phonemes()
 ```
 
 ## Installation

@@ -19,9 +19,7 @@ Currently, Prosodic can parse English and Finnish text, but adding additional la
 
 
 
-## Quickstart
-
-### Install Prosodic
+## Installation
 
 Install from pip (preferred):
 
@@ -38,6 +36,8 @@ python setup.py develop
 ```
 
 Both of these methods will create a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
+
+## Quickstart
 
 ### Running Prosodic interactively
 
@@ -204,7 +204,7 @@ These files configure the following options:
 Please see the documentation within `~/prosodic_data/README.txt`, `~/prosodic_data/config.py` and ~/`prosodic_data/meter/meter_default.py` for more information.
 
 
-## Slowstart
+## Usage
 
 There are two main ways of using  Prosodic: in interactive mode, and, for more Python-advanced users, as a Python module.
 
@@ -384,7 +384,7 @@ Finally, you can also save a variety of statistics from the metrical parser in t
 
 How well does Prosodic do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic").  Prosodic will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.py`), and save statistics to the same folder in tab-separated form.
 
-## How it works
+## Background
 
 How does Prosodic work? Here is an overview of its two major aspects: how words are tokenized, phonetically transcribed, syllabified, and stressed; and then how that information is used to find the optimal metrical parse according to a set of constraints.
 

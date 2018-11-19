@@ -64,6 +64,7 @@ Both of these methods will create a folder `prosodic_data` in your home director
 #### Paste in a text: `/paste`
 
 ```
+/paste
 >> enter or paste your content here. press Ctrl-D when finished.
 
 Turning and turning in the widening gyre   

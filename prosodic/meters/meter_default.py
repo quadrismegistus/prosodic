@@ -4,7 +4,7 @@
 #
 #
 # Set the long-form name of this meter
-name = "Default Meter"
+name = "Default Meter [constraints from Hanson & Kiparsky's 1997 Language paper]"
 #
 # [Do not remove or uncomment the following line]
 Cs={}

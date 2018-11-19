@@ -21,6 +21,8 @@ Currently, Prosodic can parse English and Finnish text, but adding additional la
 
 ## Installation
 
+### Install Prosodic
+
 Install from pip (preferred):
 
 ```
@@ -36,6 +38,19 @@ python setup.py develop
 ```
 
 Both of these methods will create a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
+
+### Install text-to-speech software
+
+Prosodic uses TTS software in order to sound out unfamiliar words: otherwise, words not found in the CMU Pronunciation Dictionary will lack a phonology and so will deprive the line they appear in of the possibility of metrical parsing.
+
+[eSpeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). To install eSpeak, [download it here for your operating system](http://espeak.sourceforge.net/download.html). Or, if you're running Mac OS X, install eSpeak with the [HomeBrew package manager](http://brew.sh/):
+
+```
+brew install espeak
+```
+
+<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which  Prosodic draws from (if possible) before resorting to a TTS engine.</small>
+
 
 ## Quickstart
 
@@ -118,28 +133,6 @@ for line in text.lines():
     last_syllable_rime = line.rimes()[-1]
     last_syllable_rime_phonemes = last_syllable_rime.phonemes()
 ```
-
-## Dependencies
-
-### Text to speech software (Optional, installation required)
-
-#### eSpeak (recommended)
-
-[eSpeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). Prosodic uses it in order to sound out unfamiliar words: otherwise, words not found in the CMU Pronunciation Dictionary will lack a phonology and so will deprive the line they appear in of the possibility of metrical parsing.
-
-To install eSpeak, [download it here for your operating system](http://espeak.sourceforge.net/download.html). Or, if you're running Mac OS X, install eSpeak with the [HomeBrew package manager](http://brew.sh/):
-
-```
-brew install espeak
-```
-
-*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which  Prosodic draws from (if possible) before resorting to a TTS engine.
-
-#### OpenMary
-
-OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/).
-
-To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) (select the "Run time package" link). Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in Prosodic, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. Make sure also to set `en_TTS_ENGINE` to `'openmary'` in `~/prosodic_data/config.py` (see just below).
 
 
 ## Configuration
@@ -227,7 +220,7 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 			/save	save previous output to file
 			/exit	exit
 
-	>> [0.0s] prosodic:en$ 
+	>> [0.0s] prosodic:en$
 
 #### Loading text
 
@@ -340,10 +333,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		9	w	and       	
 		10	s	THE       	[*stress.s=>-u]
 		11	w	fruit     	[*stress.w=>-p]
-	
+
 		[*stress.s=>-u]: 4.0  [*stress.w=>-p]: 4.0  
 		--------------------
-	
+
 		--------------------
 		[parse #2 of 3]: 5.0 errors
 		1	w	of        	
@@ -356,10 +349,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		8	s	AND       	[*stress.s=>-u]
 		9	w	the       	
 		10	s	FRUIT     	
-	
+
 		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
 		--------------------
-	
+
 		--------------------
 		[parse #1 of 3]: 5.0 errors
 		1	w	of        	
@@ -372,10 +365,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		8	s	ENCE      	[*stress.s=>-u]
 		9	w	and the   	[*footmin-none]
 		10	s	FRUIT     	
-	
+
 		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
 		--------------------
-	
+
 	==============================
 
 Finally, you can also save a variety of statistics from the metrical parser in tab-separated form by running the `/stats` command.
@@ -397,7 +390,7 @@ There are two possible methods by which Prosodic can understand a language:
 		* befuddled	[tab] bɪ.'fə.dəld
 		* befuddles	[tab] bɪ.'fə.dəlz
 
-* using a python function which takes in a word-token as an input, and a stressed, syllabified, IPA format as its output. 
+* using a python function which takes in a word-token as an input, and a stressed, syllabified, IPA format as its output.
 
 Currently, Finnish is implemented by the latter method; English, by a combination of two, using the dictionary for recognized words, and a python function for unrecognized words.
 
@@ -413,7 +406,7 @@ To add a new language entirely, you can create a new dictionary in the above for
 		),
 		...
 	]
-	
+
 For example, `get("into", config={'add_elided_pronunciations':1})` might return:
 
 	[

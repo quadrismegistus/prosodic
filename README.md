@@ -29,16 +29,13 @@ pip install prosodic
 
 Or install from sources:
 
-
 ```
 git clone git@github.com:quadrismegistus/prosodic.git
 cd prosodic
-#pip install -r requirements.txt
-python setup.py install
+python setup.py develop
 ```
 
-
-This creates a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
+Both of these methods will create a folder `prosodic_data` in your home directory, where you can configure Prosodic, store texts, and save results. See below ("Configuring Prosodic") for more information.
 
 ### Running interactively
 

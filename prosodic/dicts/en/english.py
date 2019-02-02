@@ -242,7 +242,7 @@ def ipa2cmu(tok):
 
 def cmu2ipa(tok):
 	import lexconvert
-	res=lexconvert.convert(tok,'cmu','unicode-ipa')
+	res=lexconvert.convert(tok,'cmu','unicode-ipa-syls')
 
 	## BUG FIXES
 	if tok.endswith(' T') and not res.endswith('t'): res=res+'t'

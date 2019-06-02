@@ -22,7 +22,7 @@ def remove_punct(word):
 
 if len(sys.argv) != 2:
 
-    print "Please enter a single argument for the file to annotate"
+    print("Please enter a single argument for the file to annotate")
 
 else:
 
@@ -47,4 +47,4 @@ else:
 
     except IOError:
 
-        print "File (" + filename + ") could not be opened"
+        print("File (" + filename + ") could not be opened")

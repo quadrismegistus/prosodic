@@ -1,7 +1,9 @@
 from entity import entity
 from Phoneme import Phoneme
 from Syllable import Syllable
-class SyllableBody(entity,Syllable):
+
+#class SyllableBody(entity,Syllable):
+class SyllableBody(entity):
 	def __init__(self,onset,rime,lang):
 		## initialize
 		self.feats = {}
@@ -15,7 +17,7 @@ class SyllableBody(entity,Syllable):
 		self.children.append(self.rime)
 		self._p_changed=True	# for persistence
 		self.featpaths={}
-		
+
 		## load features
 		self.feat('shape',self.getShape())
 		self.feat('prom.weight',self.isHeavy())
@@ -23,7 +25,7 @@ class SyllableBody(entity,Syllable):
 
 	def settok(self,tok):
 		self.token=tok
-	
+
 	def __repr__(self):
 		return "<"+self.classname()+"> ["+str(self)+"]"
 
@@ -37,7 +39,7 @@ class SyllableBody(entity,Syllable):
 		if not self.rime: return None
 		if not self.rime.nucleus: return None
 		return (self.rime.isBranching() or self.rime.nucleus.isBranching())
-		
+
 	def newRimeForSuffix(self,phon):
 		nuc=self.rime.nucleus
 		if self.rime.coda:
@@ -45,7 +47,7 @@ class SyllableBody(entity,Syllable):
 		else:
 			codaphons=[]
 		codaphons.append(phon)
-		
+
 		from Coda import Coda
 		from Rime import Rime
 		coda=Coda(codaphons)

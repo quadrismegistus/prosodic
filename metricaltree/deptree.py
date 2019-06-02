@@ -9,7 +9,7 @@
 # For license information, see LICENSE.TXT
 
 
-from __future__ import unicode_literals
+
 
 import tempfile
 import os
@@ -226,7 +226,7 @@ class DependencyTree(Tree):
                     deps.append(dep)
                     lastWord = thisWord
             except:
-                print ''
+                print('')
         dTree.set_deps(deps)
         return dTree
 
@@ -448,7 +448,7 @@ if __name__ == '__main__':
     import nltk.data
     sent_splitter = nltk.data.load('tokenizers/punkt/english.pickle')
     import codecs
-    import cPickle as pkl
+    import pickle as pkl
     import time
     import sys
 
@@ -483,8 +483,8 @@ if __name__ == '__main__':
                 etc = (lines-i)/lph
                 etc_h = int(etc)
                 etc_m = (etc-etc_h)*60
-                print 'Line %d/%d: %.1f lpm, %dh %.1fm left         \r' % (i, lines, lpm, etc_h, etc_m),
+                print('Line %d/%d: %.1f lpm, %dh %.1fm left         \r' % (i, lines, lpm, etc_h, etc_m), end=' ')
                 sys.stdout.flush()
     except:
-        print 'Stopped while parsing line %d   ' % i
+        print('Stopped while parsing line %d   ' % i)
     pkl.dump(tuples, open('Pickle Jar/%s.pkl'%basename, 'w'), protocol=pkl.HIGHEST_PROTOCOL)

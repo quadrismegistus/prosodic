@@ -39,7 +39,7 @@ def initialize_list(l, filename):
         
     except IOError:
         
-        print "Error: File not found."
+        print("Error: File not found.")
 
 # initialize dict with entries, where key is entry from entries in lowercase without separator, and value is list of words in entry split at separator
 def initialize_dict(dict, entries, separator):
@@ -71,7 +71,7 @@ def initialize_dict_from_file(dict, filename):
         
     except IOError:
         
-        print "Error: File not found."
+        print("Error: File not found.")
     
 # initialize configuration
 def initialize_config():
@@ -98,7 +98,7 @@ def initialize_config():
 
     except IOError:
 
-        print "Error: Config file not found."
+        print("Error: Config file not found.")
     
     initialize_presyllabified(user_files[PRESYLL])
     initialize_list(initial_compounds, user_files[INITIAL])
@@ -202,9 +202,9 @@ def make_annotation(word):
 
 # print a representation of an annotation for a word
 def print_annotation(word_annotation):
-    print annotation_string(word_annotation)
-    print pattern_string(word_annotation)
-    print
+    print(annotation_string(word_annotation))
+    print(pattern_string(word_annotation))
+    print()
 
 # annotate and print the annotation for a word
 def mark(word):

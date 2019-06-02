@@ -64,7 +64,7 @@ class DataAggregator:
 
                     split = line.split("\t")
 
-                    print split
+                    print(split)
 
                     text = split[0].strip()
                     if text == "":
@@ -163,13 +163,13 @@ class DataAggregator:
             violations, frequencies = inputs_to_data[key]
 
             violation_matrix = np.array(violations)
-            print "Frequencies:", frequencies
+            print("Frequencies:", frequencies)
             frequency_vector = np.array(frequencies)
 
             # Normalize frequencies:
             sum_of_freq = np.sum(frequency_vector)
             if (sum_of_freq == 0.0):
-                print "ERROR: total frequency of line \"%s\" is 0.0; this is either a test point or the values were ignored due to invalid scansions" % (key)
+                print("ERROR: total frequency of line \"%s\" is 0.0; this is either a test point or the values were ignored due to invalid scansions" % (key))
             else:
                 frequency_vector = frequency_vector / sum_of_freq
 
@@ -221,62 +221,62 @@ class MaxEntAnalyzer:
     def report(self):
         # First, print out weights
 
-        print "=" * 80
-        print "=" * 80
-        print "MaxEnt REPORT"
-        print "=" * 80
-        print "=" * 80
+        print("=" * 80)
+        print("=" * 80)
+        print("MaxEnt REPORT")
+        print("=" * 80)
+        print("=" * 80)
 
-        print ""
-        print ""
-        print "Hyperparameters"
-        print "-" * 80
-        print "Step Size: {}".format(self.step)
-        print "Number of Epochs: {}".format(self.iterations)
-        print "Early Stop Tolerance: {}".format(self.tolerance)
-        print "Negative Weights Allowed: {}".format(self.negative_weights_allowed)
+        print("")
+        print("")
+        print("Hyperparameters")
+        print("-" * 80)
+        print("Step Size: {}".format(self.step))
+        print("Number of Epochs: {}".format(self.iterations))
+        print("Early Stop Tolerance: {}".format(self.tolerance))
+        print("Negative Weights Allowed: {}".format(self.negative_weights_allowed))
 
-        print ""
-        print ""
-        print "Constraint Weighting"
-        print "-" * 80
+        print("")
+        print("")
+        print("Constraint Weighting")
+        print("-" * 80)
 
         for i in range(len(self.constraints)):
             weight = self.weights[i]
             print_weight = 0 if weight == 0 else -weight
-            print "Constraint {}: {}".format(self.constraints[i], print_weight)
+            print("Constraint {}: {}".format(self.constraints[i], print_weight))
 
-        print ""
-        print ""
-        print "Interpretation Notes"
-        print "-" * 80
-        print "\t(1) It is possible that two or more scansions have the same"
-        print "\t    violation counts for all constraints. From the algorithm's"
-        print "\t    perspective, these scansions are indistinguishable, which"
-        print "\t    means that they will necessarily split their probabilities."
-        print "\t    Either different or more constraints are required in order to "
-        print "\t    distinguish between these constraint-similar scansions"
+        print("")
+        print("")
+        print("Interpretation Notes")
+        print("-" * 80)
+        print("\t(1) It is possible that two or more scansions have the same")
+        print("\t    violation counts for all constraints. From the algorithm's")
+        print("\t    perspective, these scansions are indistinguishable, which")
+        print("\t    means that they will necessarily split their probabilities.")
+        print("\t    Either different or more constraints are required in order to ")
+        print("\t    distinguish between these constraint-similar scansions")
 
-        print ""
-        print ""
-        print "Input Analysis"
-        print "-" * 80
+        print("")
+        print("")
+        print("Input Analysis")
+        print("-" * 80)
 
         # Then, print out probabilities for the inputs
         for line in self.outputs:
-            print "Line: \"{}\"".format(line)
-            print ""
+            print("Line: \"{}\"".format(line))
+            print("")
             outs, freqs = self.data[line]
             scans = self.outputs[line]
 
             probs = self.calculate_probabilities(outs)
 
             for i in range(freqs.shape[0]):
-                print "\tScansion {}: {}".format(i+1, scans[i])
-                print "\tViolations: {}".format(outs[i, :].tolist())
-                print "\t\tObserved Frequency: {}%".format(100 * freqs[i])
-                print "\t\tPredicted Frequency: {}%".format(100 * probs[i])
-                print ""
+                print("\tScansion {}: {}".format(i+1, scans[i]))
+                print("\tViolations: {}".format(outs[i, :].tolist()))
+                print("\t\tObserved Frequency: {}%".format(100 * freqs[i]))
+                print("\t\tPredicted Frequency: {}%".format(100 * probs[i]))
+                print("")
 
     def generate_save_string(self):
         save_string = ""

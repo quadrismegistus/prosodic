@@ -20,7 +20,7 @@ class MeterPosition(Parse):
 	def __copy__(self):
 		other = MeterPosition(self.meter, self.meterVal)
 		other.slots = self.slots[:]
-		for k,v in self.constraintScores.items():
+		for k,v in list(self.constraintScores.items()):
 			other.constraintScores[k]=copy(v)
 		return other
 
@@ -31,7 +31,7 @@ class MeterPosition(Parse):
 	@property
 	def violated(self):
 		viold=[]
-		for c,viol in self.constraintScores.items():
+		for c,viol in list(self.constraintScores.items()):
 			if viol:
 				viold+=[c]
 		return viold
@@ -55,13 +55,13 @@ class MeterPosition(Parse):
 	def posfeats(self):
 		posfeats={'prom.meter':[]}
 		for slot in self.slots:
-			for k,v in slot.feats.items():
+			for k,v in list(slot.feats.items()):
 				if (not k in posfeats):
 					posfeats[k]=[]
 				posfeats[k]+=[v]
 			posfeats['prom.meter']+=[self.meterVal]
 
-		for k,v in posfeats.items():
+		for k,v in list(posfeats.items()):
 			posfeats[k]=tuple(v)
 
 		return posfeats
@@ -90,7 +90,7 @@ class MeterPosition(Parse):
 	@property
 	def token(self):
 		if not hasattr(self,'_token') or not self._token:
-			token = u'.'.join([slot.token for slot in self.slots])
+			token = '.'.join([slot.token for slot in self.slots])
 			token=token.upper() if self.meterVal=='s' else token.lower()
 			self._token=token
 		return self._token

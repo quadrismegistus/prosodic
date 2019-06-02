@@ -16,20 +16,20 @@
 #SON_LOW = set(['a', 'ä', 'o', 'ö'])
 
 
-SYLLABLE_SEPARATOR = u'.'
+SYLLABLE_SEPARATOR = '.'
 
 # consonant clusters that should be kept together, following Karlsson 1985: (4)
-CLUSTERS = set([u'bl', u'br', u'dr', u'fl', u'fr', u'gl', u'gr', u'kl', u'kr', u'kv', u'pl', u'pr', u'cl', u'qv', u'schm'])
+CLUSTERS = set(['bl', 'br', 'dr', 'fl', 'fr', 'gl', 'gr', 'kl', 'kr', 'kv', 'pl', 'pr', 'cl', 'qv', 'schm'])
 CLUSTER_LENGTHS = set(len(cluster) for cluster in CLUSTERS)
 
 # sets of Finnish vowels, diphthongs, and consonants
-VOWELS = set([u'i', u'e', u'ä', u'y', u'ö', u'a', u'u', u'o'])
-DIPHTHONGS = set([u'ai', u'ei', u'oi', u'äi', u'öi', u'au', u'eu', u'ou', u'ey', u'äy', u'öy', u'ui', u'yi', u'iu', u'iy', u'ie', u'uo', u'yö'])
-CONSONANTS = set([u'b', u'c', u'd', u'f', u'g', u'h', u'j', u'k', u'l', u'm', u'n', u'p', u'q', u'r', u's', u't', u'v', u'x', u'z', u"'"]) # ' included for purposes of words like vaa'an
+VOWELS = set(['i', 'e', 'ä', 'y', 'ö', 'a', 'u', 'o'])
+DIPHTHONGS = set(['ai', 'ei', 'oi', 'äi', 'öi', 'au', 'eu', 'ou', 'ey', 'äy', 'öy', 'ui', 'yi', 'iu', 'iy', 'ie', 'uo', 'yö'])
+CONSONANTS = set(['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'z', "'"]) # ' included for purposes of words like vaa'an
 
 # following Anttila 2008 on Finnish stress (p. 5)
-SON_HIGH = set([u'i', u'e', u'u', u'y'])
-SON_LOW = set(['a', u'ä', u'o', u'ö'])
+SON_HIGH = set(['i', 'e', 'u', 'y'])
+SON_LOW = set(['a', 'ä', 'o', 'ö'])
 
 
 

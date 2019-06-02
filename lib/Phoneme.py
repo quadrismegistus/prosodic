@@ -1,12 +1,12 @@
 from ipa import ipa,ipakey,ipa2cmu,formantd
 from entity import entity
-class Phoneme(entity):	
+class Phoneme(entity):
 	def __init__(self,phons,ipalookup=True):
 		self.feats = {}
 		self.children = []	# should remain empty unless dipthong
 		self.featpaths={}
 		self.phon=None
-		
+
 		if type(phons)==type([]):
 			for phon in phons:
 				if type(phon)==type(""):
@@ -16,7 +16,7 @@ class Phoneme(entity):
 			self.feat('dipthong',True)
 		else:
 			self.phon=phons.strip()
-	
+
 		if ipalookup and self.phon:
 			if(self.phon in ipa):
 				k=-1
@@ -24,7 +24,7 @@ class Phoneme(entity):
 					k+=1
 					self.feat(ipakey[k],v)
 			self.finished = True
-		
+
 			if self.isLong() or self.isDipthong():
 				self.len=2
 			else:
@@ -34,19 +34,19 @@ class Phoneme(entity):
 		if strself in ipa2cmu:
 			return ipa2cmu[strself].lower()
 		else:
-			print "<error> no cmu transcription for phoneme: ["+strself+"]"
+			print("<error> no cmu transcription for phoneme: ["+strself+"]")
 			return strself
-		
+
 	def __str__(self):
 		if self.children:
-			return self.u2s(u"".join([x.phon for x in self.children]))
+			return self.u2s("".join([x.phon for x in self.children]))
 		else:
 			return self.u2s(self.phon)
-			
+
 	def __repr__(self):
 		#return "["+str(self)+"]"
 		return str(self)
-	
+
 	def isConsonant(self):
 		return self.feature('cons')
 	def isVowel(self):
@@ -59,11 +59,11 @@ class Phoneme(entity):
 		return self.feature('long')
 	def isHigh(self):
 		return self.feature('high')
-	
+
 	@property
 	def phon_str(self):
 		if self.phon: return self.phon
-		return u''.join(phon.phon for phon in self.children)
+		return ''.join(phon.phon for phon in self.children)
 
 	@property
 	def featset(self):
@@ -81,10 +81,10 @@ class Phoneme(entity):
 		if self.children:
 			for child in self.children:
 				#print "CHILD:",child,child.featset
-				for f,v in child.feats.items():
+				for f,v in list(child.feats.items()):
 					fs[f]=int(v) if v!=None else 0
 		else:
-			for f,v in self.feats.items():
+			for f,v in list(self.feats.items()):
 				fs[f]=int(v) if v!=None else 0
 		return fs
 
@@ -93,7 +93,7 @@ class Phoneme(entity):
 	def CorV(self):
 		if self.isDipthong() or self.isLong():
 			return "VV"
-		
+
 		if self.isPeak():
 			return "V"
 		else:
@@ -105,7 +105,7 @@ class Phoneme(entity):
 		dists=[]
 		for fs1 in lfs1:
 			for fs2 in lfs2:
-				allkeys=set(fs1.keys() + fs2.keys())
+				allkeys=set(list(fs1.keys()) + list(fs2.keys()))
 				f=sorted(list(allkeys))
 				v1=[float(fs1.get(fx,0)) for fx in f]
 				v2=[float(fs2.get(fx,0)) for fx in f]
@@ -134,7 +134,10 @@ class Phoneme(entity):
 		#print self,other,feats1,feats2
 		return jc + sum(vdists)
 
-			
+
 
 	def __eq__(self,other):
 		return self.feats == other.feats
+
+	def __hash__(self):
+		return hash(self.phon)

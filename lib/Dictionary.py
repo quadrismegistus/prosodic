@@ -12,7 +12,7 @@ LANGCODES = {'en':'english', 'fi':'finnish'}
 class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_en,Dictionary_fi,usw.
 	classnames=['Phoneme','Onset','Nucleus','Coda','Rime','SyllableBody','Syllable','Word','Phrase']
 	char2phons=[]
-	for k in ipa.keys():
+	for k in list(ipa.keys()):
 		if len(k)>1:
 			for x in k[1:]:
 				char2phons.append(x)
@@ -74,7 +74,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		timestart=time.clock()
 		if being.persists:
 			if __name__=='__main__':
-				print "## booting ontology: " + self.language + " ..."
+				print("## booting ontology: " + self.language + " ...")
 			if not os.path.exists(self.cachefolder):os.mkdir(self.cachefolder)
 			self.storage = FileStorage(self.cachefolder+'ontology.zodb')
 			self.db = DB(self.storage)
@@ -82,7 +82,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			self.dict = self.conn.root()
 			self.t=transaction
 
-			if not len(self.dict.values()):
+			if not len(list(self.dict.values())):
 				build=True
 		else:
 			self.dict={}
@@ -99,7 +99,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			self.boot()
 
 		if __name__=='__main__':
-			print self.stats(prefix="\t").replace("[[time]]",str(round((time.clock() - timestart),2)))
+			print(self.stats(prefix="\t").replace("[[time]]",str(round((time.clock() - timestart),2))))
 
 
 	def boot(self):		## NEEDS EXTENSION
@@ -113,19 +113,22 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 				exit("<error:dictionary> neither a "+self.language+".tsv nor a "+self.language+".py in directory "+self.dictsfolder)
 
 	def str2unicode(self,string):
-		o=u""
+		# python 3: unicode builtin
+		return string
+
+		o=""
 		for x in string:
 			try:
-				o+=unicode(x)
+				o+=str(x)
 			except UnicodeDecodeError:
-				print "error"
-				o+=unichr(ord(x))
+				print("error")
+				o+=chr(ord(x))
 		return o
 
 
 	def boot_general(self,bootfile):
 		if __name__=='__main__':
-			print "## booting dictionary: " + self.language + " ..."
+			print("## booting dictionary: " + self.language + " ...")
 		file=codecs.open(bootfile,encoding='utf-8')
 		for ln in file:
 			line=ln.split('\t')
@@ -176,7 +179,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		file.close()
 
 	def boot_dict(self,filename):	# filename = *.txt or *.pickle
-		print ">> loading Dictionary " + filename + "..."
+		print(">> loading Dictionary " + filename + "...")
 		fileobj = open(self.dictsfolder + filename, 'r')
 		if filename[-7:] == ".pickle":
 			return None	# the bare-bones text file [language].tsv should not be pickled--wasteful
@@ -245,7 +248,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 	def has(self,word):
 		if not word: return False
-		word=unicode(word)
+		word=str(word)
 		(p0,word,p1)=gleanPunc2(word)
 		word_l = word.lower()
 
@@ -491,7 +494,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 					#newobjs[-1].feat('functionword',True)
 					newobjs[-1].feats['functionword']=True
 				else:
-					print "??",word,stresses
+					print("??",word,stresses)
 
 				return newobjs
 
@@ -506,8 +509,9 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 
 	def get(self,word,stress_ambiguity=True):
-		if type(word)==str:
-			word=word.decode('utf-8',errors='ignore')
+		# python3 unnecessary:
+		#if type(word)==str:
+		#	word=word.decode('utf-8',errors='ignore')
 
 		(word,punct)=gleanPunc(word)
 
@@ -528,7 +532,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 					wrd=wordtuple[:2]
 					attrs=wordtuple[2] if len(wordtuple)>2 else {}
 					wordobj=self.make(wrd,word)
-					for _k,_v in attrs.items(): setattr(wordobj,_k,_v)
+					for _k,_v in list(attrs.items()): setattr(wordobj,_k,_v)
 					wordobjs+=[wordobj]
 				self.dict['Word'][word.lower()]=wordobjs
 				return self.maybeUnstress(wordobjs) if stress_ambiguity else wordobjs
@@ -550,10 +554,10 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 	# save options
 	def save_tabbed(self):
-		for k,v in self.dict.items():
+		for k,v in list(self.dict.items()):
 			if k!='word': continue # just the words for now
 			o="token\tstress\tipa\n"
-			for kk,vv in v.items():
+			for kk,vv in list(v.items()):
 				if type(vv)!=type([]):
 					vv=[vv]
 				for vvv in vv:
@@ -574,7 +578,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 	def save(self):
 		if being.persists:
-			print "saving..."
+			print("saving...")
 			self.t.commit()
 			#transaction.commit()
 
@@ -582,7 +586,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 	def words(self):
 		words=[]
-		for k,v in self.dict['word'].items():
+		for k,v in list(self.dict['word'].items()):
 			for vv in v:
 				words.append(vv)
 		return words
@@ -595,7 +599,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 	def stats(self,prefix="\t"):
 		#self.numents={}
 		o=""
-		for k,v in self.dict.items():
+		for k,v in list(self.dict.items()):
 			if not len(v): continue
 			if k[-2:]=="us":
 				ks=k[:-2]+"i"

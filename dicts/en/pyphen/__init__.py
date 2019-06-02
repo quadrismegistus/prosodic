@@ -21,16 +21,16 @@ Pure Python module to hyphenate text, inspired by Ruby's Text::Hyphen.
 
 """
 
-from __future__ import unicode_literals
+
 
 import os
 import re
 
 try:
-    unichr
+    chr
 except NameError:
     # Python3
-    unichr = chr
+    chr = chr
 
 __all__ = ('Pyphen', 'LANGUAGES', 'language_fallback')
 
@@ -136,7 +136,7 @@ class HyphDict(object):
 
                 # replace ^^hh with the real character
                 pattern = parse_hex(
-                    lambda match: unichr(int(match.group(1), 16)), pattern)
+                    lambda match: chr(int(match.group(1), 16)), pattern)
 
                 # read nonstandard hyphen alternatives
                 if '/' in pattern:
@@ -145,9 +145,9 @@ class HyphDict(object):
                 else:
                     factory = int
 
-                tags, values = zip(*[
+                tags, values = list(zip(*[
                     (string, factory(i or '0'))
-                    for i, string in parse(pattern)])
+                    for i, string in parse(pattern)]))
 
                 # if only zeros, skip this pattern
                 if max(values) == 0:
@@ -204,8 +204,8 @@ class HyphDict(object):
                     if pattern:
                         offset, values = pattern
                         slice_ = slice(i + offset, i + offset + len(values))
-                        references[slice_] = map(
-                            max, values, references[slice_])
+                        references[slice_] = list(map(
+                            max, values, references[slice_]))
 
             points = [
                 DataInt(i - 1, reference=reference)

@@ -3,6 +3,9 @@ from copy import copy
 import string
 from entity import entity
 import logging
+from functools import total_ordering
+
+
 
 # class representing the potential bounding relations between to parses
 class Bounding:
@@ -12,6 +15,7 @@ class Bounding:
 	unequal = 3 # unequal scores; neither set of violations is a subset of the other
 
 
+@total_ordering
 class Parse(entity):
 	str2int = {'w':'1','s':'2'}
 	#def __hash__(self):
@@ -47,7 +51,7 @@ class Parse(entity):
 			other.positions.append(copy(pos))
 
 		other.comparisonNums = copy(self.comparisonNums)
-		for k,v in self.constraintScores.items():
+		for k,v in list(self.constraintScores.items()):
 			other.constraintScores[k]=copy(v)
 		#other.constraintScores=self.constraintScores.copy()
 		#print self.constraintScores
@@ -85,7 +89,7 @@ class Parse(entity):
 	# add an extra slot to the parse
 	# returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
 	def extend(self, slot):
-		logging.debug('>> extending self (%s) with slot (%s)',self,slot)
+		#logging.debug('>> extending self (%s) with slot (%s)',self,slot)
 		from MeterPosition import MeterPosition
 		self.totalScore = None
 		self.numSlots += 1
@@ -144,7 +148,7 @@ class Parse(entity):
 					else:
 						parse.constraintScores[constraint] += vScore
 
-		logging.debug('>> self extended to be (%s) with extendedParses (%s)',self,extendedParses)
+		#logging.debug('>> self extended to be (%s) with extendedParses (%s)',self,extendedParses)
 		return extendedParses
 
 	def getErrorCount(self):
@@ -197,7 +201,7 @@ class Parse(entity):
 	def score(self):
 		#if self.totalScore == None:
 		score = 0
-		for constraint, value in self.constraintScores.items():
+		for constraint, value in list(self.constraintScores.items()):
 			if value == "*":
 				self.totalScore = "*"
 				return self.totalScore
@@ -206,6 +210,8 @@ class Parse(entity):
 
 		return int(self.totalScore) if int(self.totalScore) == self.totalScore else self.totalScore
 
+	"""
+	Python 3 DEPRECATED
 	def __cmp__(self, other):
 		## @TODO: parameterize this: break ties by favoring the more binary parse
 		x,y=self.score(),other.score()
@@ -214,20 +220,27 @@ class Parse(entity):
 
 		# Break tie
 		return 0
+
 		xs=self.str_meter()
 		ys=other.str_meter()
 		return cmp(xs.count('ww')+xs.count('ss'), ys.count('ww')+ys.count('ss'))
 		# if x==y:
 		#
 		# return cmp(self.score(), other.score())
+	"""
+	def __lt__(self,other):
+		return self.score() < other.score()
+
+	def __eq__(self, other):
+		return self.score() == other.score()
 
 	def posString(self,viols=False):		# eg NE|ver|CAME|poi|SON|from|SO|sweet|A|place
 		output = []
 		for pos in self.positions:
-			x=unicode(pos)
+			x=str(pos)
 			if viols and pos.has_viol: x+='*'
 			output.append(x)
-		return string.join(output, '|')
+		return '|'.join(output)
 
 	def posString2(self,viols=False):
 		last_word = None
@@ -316,7 +329,7 @@ class Parse(entity):
 			if proms:
 				feats = ""
 				for unit in pos.slots:
-					for k,v in unit.feats.items():
+					for k,v in list(unit.feats.items()):
 						if (not "prom." in k): continue
 						if v:
 							feats += "[+" + str(k) + "] "
@@ -326,7 +339,7 @@ class Parse(entity):
 				feats = feats.strip()
 
 			viols = ""
-			for k,v in pos.constraintScores.items():
+			for k,v in list(pos.constraintScores.items()):
 				if v:
 					viols+=str(k)
 			viols = viols.strip()
@@ -357,7 +370,8 @@ class Parse(entity):
 
 		isTrue = (self.numSlots == self.totalSlots) or ((self.positions[-1].meterVal == parse.positions[-1].meterVal) and (len(self.positions[-1].slots) == len(parse.positions[-1].slots)))
 		if isTrue:
-			logging.debug('Parse1: %s\nLastMeterVal1: %s\nLastNumSlots1: %s\n--can compare-->\nParse2: %s\nLastMeterVal2: %s\nLastNumSlots2: %s',self,self.positions[-1].meterVal,len(self.positions[-1].slots),parse,parse.positions[-1].meterVal,len(parse.positions[-1].slots))
+			pass
+			#logging.debug('Parse1: %s\nLastMeterVal1: %s\nLastNumSlots1: %s\n--can compare-->\nParse2: %s\nLastMeterVal2: %s\nLastNumSlots2: %s',self,self.positions[-1].meterVal,len(self.positions[-1].slots),parse,parse.positions[-1].meterVal,len(parse.positions[-1].slots))
 		return isTrue
 		#return (self.numSlots == self.totalSlots)
 		#return False
@@ -366,12 +380,12 @@ class Parse(entity):
 		if not boolean:
 			return self.constraintScores
 		else:
-			return [(k,(v>0)) for (k,v) in self.constraintScores.items()]
+			return [(k,(v>0)) for (k,v) in list(self.constraintScores.items())]
 
 	@property
 	def violated(self):
 		viold=[]
-		for c,viol in self.constraintScores.items():
+		for c,viol in list(self.constraintScores.items()):
 			if viol:
 				viold+=[c]
 		return viold
@@ -408,13 +422,13 @@ class Parse(entity):
 				return Bounding.unequal # contains both greater and lesser violations
 
 			else:
-				logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]),self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]))
+				##logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]),self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]))
 				return Bounding.bounded # contains only greater violations
 
 		else:
 
 			if containsLesserViolation:
-				logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]),parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]))
+				##logging.debug('Parse1: %s\nViols1: %s\n--bounds-->\nParse2: %s\nViols2: %s',self,str([(k,v) for k,v in sorted(self.constraintCounts.items()) if v]),parse,str([(k,v) for k,v in sorted(parse.constraintCounts.items()) if v]))
 				return Bounding.bounds # contains only lesser violations
 
 			else:

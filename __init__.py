@@ -27,7 +27,7 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 	for vname in vnames:
 		vval=getattr(config,vname)
 		if vname=='Cs':
-			for k,v in vval.items():
+			for k,v in list(vval.items()):
 				cname=k+'/'+str(v)
 				settings['constraints']+=[cname]
 		else:
@@ -35,14 +35,14 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 
 
 	if toprint:
-		print ">> loaded settings:"
+		print(">> loaded settings:")
 		for k,v in sorted(settings.items()):
 			if type(v) == list:
-				print '\t',k
+				print('\t',k)
 				for x in v:
-					print '\t\t',x
+					print('\t\t',x)
 			else:
-				print '\t',k,'\t',v
+				print('\t',k,'\t',v)
 
 	#settings['constraints']=" ".join(settings['constraints'])
 	#settings['meters']=loadMeters()
@@ -53,4 +53,4 @@ config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
 #config['meters']=loadMeters()
 
 
-from prosodic import *
+from .prosodic import *

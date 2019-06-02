@@ -9,67 +9,67 @@ stress2stroke = {0:'',1:"'",2:"`"}
 orth2phon = {}
 
 ## vowels
-orth2phon[u'a']=[u'ɑ']
-orth2phon[u'aa']=[u'ɑː']
-orth2phon[u'e']=[u'e']
-orth2phon[u'ee']=[u'eː']
-orth2phon[u'i']=[u'i']
-orth2phon[u'ii']=[u'iː']
-orth2phon[u'o']=[u'o']
-orth2phon[u'oo']=[u'oː']
-orth2phon[u'u']=[u'ʊ']
-orth2phon[u'uu']=[u'uː']
-orth2phon[u'y']=[u'y']
-orth2phon[u'yy']=[u'yː']
-orth2phon[u'ä']=[u'æ']
-orth2phon[u'ää']=[u'æː']
-orth2phon[u'ö']=[u'ø']
-orth2phon[u'öö']=[u'øː']
-orth2phon[u'å']=orth2phon[u'o']
+orth2phon['a']=['ɑ']
+orth2phon['aa']=['ɑː']
+orth2phon['e']=['e']
+orth2phon['ee']=['eː']
+orth2phon['i']=['i']
+orth2phon['ii']=['iː']
+orth2phon['o']=['o']
+orth2phon['oo']=['oː']
+orth2phon['u']=['ʊ']
+orth2phon['uu']=['uː']
+orth2phon['y']=['y']
+orth2phon['yy']=['yː']
+orth2phon['ä']=['æ']
+orth2phon['ää']=['æː']
+orth2phon['ö']=['ø']
+orth2phon['öö']=['øː']
+orth2phon['å']=orth2phon['o']
 
 ## dipthongs
-orth2phon[u'ai']=orth2phon[u'a']+orth2phon[u'i']
-orth2phon[u'ei']=orth2phon[u'e']+orth2phon[u'i']
-orth2phon[u'oi']=orth2phon[u'o']+orth2phon[u'i']
-orth2phon[u'äi']=orth2phon[u'ä']+orth2phon[u'i']
-orth2phon[u'öi']=orth2phon[u'ö']+orth2phon[u'i']
-orth2phon[u'au']=orth2phon[u'a']+orth2phon[u'u']
-orth2phon[u'eu']=orth2phon[u'e']+orth2phon[u'u']
-orth2phon[u'ou']=orth2phon[u'o']+orth2phon[u'u']
-orth2phon[u'ey']=orth2phon[u'e']+orth2phon[u'y']
-orth2phon[u'äy']=orth2phon[u'ä']+orth2phon[u'y']
-orth2phon[u'öy']=orth2phon[u'ö']+orth2phon[u'y']
-orth2phon[u'ui']=orth2phon[u'u']+orth2phon[u'i']
-orth2phon[u'yi']=orth2phon[u'y']+orth2phon[u'i']
-orth2phon[u'iu']=orth2phon[u'i']+orth2phon[u'u']
-orth2phon[u'iy']=orth2phon[u'i']+orth2phon[u'y']
-orth2phon[u'ie']=orth2phon[u'i']+orth2phon[u'e']
-orth2phon[u'uo']=orth2phon[u'u']+orth2phon[u'o']
-orth2phon[u'yö']=orth2phon[u'y']+orth2phon[u'ö']
+orth2phon['ai']=orth2phon['a']+orth2phon['i']
+orth2phon['ei']=orth2phon['e']+orth2phon['i']
+orth2phon['oi']=orth2phon['o']+orth2phon['i']
+orth2phon['äi']=orth2phon['ä']+orth2phon['i']
+orth2phon['öi']=orth2phon['ö']+orth2phon['i']
+orth2phon['au']=orth2phon['a']+orth2phon['u']
+orth2phon['eu']=orth2phon['e']+orth2phon['u']
+orth2phon['ou']=orth2phon['o']+orth2phon['u']
+orth2phon['ey']=orth2phon['e']+orth2phon['y']
+orth2phon['äy']=orth2phon['ä']+orth2phon['y']
+orth2phon['öy']=orth2phon['ö']+orth2phon['y']
+orth2phon['ui']=orth2phon['u']+orth2phon['i']
+orth2phon['yi']=orth2phon['y']+orth2phon['i']
+orth2phon['iu']=orth2phon['i']+orth2phon['u']
+orth2phon['iy']=orth2phon['i']+orth2phon['y']
+orth2phon['ie']=orth2phon['i']+orth2phon['e']
+orth2phon['uo']=orth2phon['u']+orth2phon['o']
+orth2phon['yö']=orth2phon['y']+orth2phon['ö']
 
 ## consonants
-orth2phon[u'b']=[u'b']
-orth2phon[u'c']=[u'k']
-orth2phon[u'd']=[u'd']
-orth2phon[u'f']=[u'f']
-orth2phon[u'g']=[u'g']
-orth2phon[u'h']=[u'h']
-orth2phon[u'j']=[u'j']
-orth2phon[u'k']=[u'k']
-orth2phon[u'l']=[u'l']
-orth2phon[u'm']=[u'm']
-orth2phon[u'n']=[u'n']
-orth2phon[u'p']=[u'p']
-orth2phon[u'r']=[u'r']
-orth2phon[u's']=[u's']
-orth2phon[u't']=[u't']
-orth2phon[u'v']=[u'v']
-orth2phon[u'z']=[u'z']
-orth2phon[u'w']=orth2phon[u'v']
-orth2phon[u'x']=orth2phon[u'z']	#wrong
-orth2phon[u'q']=orth2phon[u'k']
+orth2phon['b']=['b']
+orth2phon['c']=['k']
+orth2phon['d']=['d']
+orth2phon['f']=['f']
+orth2phon['g']=['g']
+orth2phon['h']=['h']
+orth2phon['j']=['j']
+orth2phon['k']=['k']
+orth2phon['l']=['l']
+orth2phon['m']=['m']
+orth2phon['n']=['n']
+orth2phon['p']=['p']
+orth2phon['r']=['r']
+orth2phon['s']=['s']
+orth2phon['t']=['t']
+orth2phon['v']=['v']
+orth2phon['z']=['z']
+orth2phon['w']=orth2phon['v']
+orth2phon['x']=orth2phon['z']	#wrong
+orth2phon['q']=orth2phon['k']
 
-ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.iteritems()])
+ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.items()])
 
 
 
@@ -107,9 +107,9 @@ def get(token,config={}):
 						#print "<error> no orth2phon mapping for letter: ["+str(y)+"]"
 						wordbroken=True
 					else:
-						syllStr+=u"".join(orth2phon[y])
+						syllStr+="".join(orth2phon[y])
 			else:
-				syllStr+=u"".join(orth2phon[x])
+				syllStr+="".join(orth2phon[x])
 
 		syllables.append(syllStr)
 
@@ -120,7 +120,7 @@ def get(token,config={}):
 		sylls_text.append(syll.lower())
 
 	for stress in Annotation.stresses:
-		words.append((u".".join([stress2stroke[stress[i]]+syllables[i] for i in range(len(syllables))]),sylls_text,{'broken':wordbroken}))	
+		words.append((".".join([stress2stroke[stress[i]]+syllables[i] for i in range(len(syllables))]),sylls_text,{'broken':wordbroken}))	
 
 
 	return words

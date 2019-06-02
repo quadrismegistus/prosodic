@@ -142,15 +142,15 @@ class Line(entity):
 			lowestScore=bp.score()
 			count=bp.totalCount
 		from tools import makeminlength
-		print makeminlength(unicode(bp),60)
-		data = [makeminlength(unicode(self),config['linelen']), makeminlength(unicode(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot]
-		data_unicode = [unicode(x) for x in data]
+		print(makeminlength(str(bp),60))
+		data = [makeminlength(str(self),config['linelen']), makeminlength(str(bp) if bp else '', config['linelen']),meterstr,len(self.allParses(meter)),count,lowestScore,str_ot]
+		data_unicode = [str(x) for x in data]
 		self.om("\t".join( data_unicode ),conscious=conscious)
 
 
 	def allParses(self,meter=None,one_per_meter=True):
 		if not meter:
-			itms=self.__parses.items()
+			itms=list(self.__parses.items())
 			if not len(itms): return
 			for mtr,parses in itms:
 				return parses
@@ -187,7 +187,7 @@ class Line(entity):
 
 	def bestParse(self,meter=None):
 		if not meter:
-			itms=self.__bestparse.items()
+			itms=list(self.__bestparse.items())
 			if not len(itms): return
 			for mtr,parses in itms:
 				return parses

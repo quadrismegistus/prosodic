@@ -74,11 +74,11 @@ def get(token,config={},toprint=False):
 			ipa=espeak2ipa(token)
 			cmu=espeak2cmu(ipa)
 			cmu_sylls = syllabify_cmu(cmu)
-			if toprint: print ipa
-			if toprint: print cmu
-			if toprint: print cmu_sylls
+			if toprint: print(ipa)
+			if toprint: print(cmu)
+			if toprint: print(cmu_sylls)
 			ipa = cmusylls2ipa(cmu_sylls)
-			if toprint: print ipa
+			if toprint: print(ipa)
 		elif TTS_ENGINE=='openmary':
 			ipa=openmary2ipa(token)
 		else:
@@ -124,20 +124,20 @@ def add_elisions(_ipa):
 
 	# -OWER
 	# e.g. tower, hour, bower, etc
-	replace[u'aʊ.ɛː']=u'aʊr'
+	replace['aʊ.ɛː']='aʊr'
 
 
 	# -INOUS
 	# e.g. ominous, etc
-	replace[u'ə.nəs']=u'nəs'
+	replace['ə.nəs']='nəs'
 
 	# -EROUS
 	# e.g. ponderous, adventurous
-	replace[u'ɛː.əs']=u'rəs'
+	replace['ɛː.əs']='rəs'
 
 	# -IA-
 	# e.g. plutonian, indian, assyrian, idea, etc
-	replace[u'iː.ə']=u'jə'
+	replace['iː.ə']='jə'
 	# -IOUS
 	# e.g. studious, tedious, etc
 	#replace[u'iː.əs']=u'iːəs'
@@ -145,11 +145,11 @@ def add_elisions(_ipa):
 
 	# -IER
 	# e.g. happier
-	replace[u'iː.ɛː']=u'ɪr'
+	replace['iː.ɛː']='ɪr'
 
 	# -ERING
 	# e.g. scattering, wondering, watering
-	replace[u'ɛː.ɪŋ']=u'rɪŋ'
+	replace['ɛː.ɪŋ']='rɪŋ'
 
 	# -ERY
 	# e.g. memory
@@ -158,11 +158,11 @@ def add_elisions(_ipa):
 
 	# -ENING
 	# e.g. opening
-	replace[u'ə.nɪŋ']=u'nɪŋ'
+	replace['ə.nɪŋ']='nɪŋ'
 
 	# -ENER
 	# e.g. gardener
-	replace[u'ə.nɛː']=u'nɛː'
+	replace['ə.nɛː']='nɛː'
 
 	# -EL- (-ELLER, -ELLING, -ELLY)
 	# e.g. traveller, dangling, gravelly
@@ -171,24 +171,24 @@ def add_elisions(_ipa):
 
 	# -IRE-
 	# e.g. fire, fiery, attire, hired
-	replace[u'ɪ.ɛː']=u'ɪr'
+	replace['ɪ.ɛː']='ɪr'
 
 	# -EL, -UAL
 	# e.g. jewel
-	replace[u'uː.əl']=u'uːl'
+	replace['uː.əl']='uːl'
 
 	# -EVN
 	# e.g. heaven, seven
-	replace[u'ɛ.vən']=u'ɛvn'
+	replace['ɛ.vən']='ɛvn'
 
 	# -IOUS, -EER
 	# e.g. sincerest, dear, incommodiously
 	# QUESTIONABLE
 	#replace[u'.ʌ.']=u'ʌ.'
-	replace[u'eɪ.ʌ']=u'eɪʌ'
+	replace['eɪ.ʌ']='eɪʌ'
 
 	new=[_ipa]
-	for k,v in replace.items():
+	for k,v in list(replace.items()):
 		if k in _ipa:
 			new+=[_ipa.replace(k,v)]
 	return new
@@ -274,10 +274,10 @@ def cmusylls2ipa(sylls):
 	# clean
 	ipa_sylls = ipa.split('.')
 	for i,syl in enumerate(ipa_sylls):
-		if u"ˈ" in syl:
-			syl="'"+syl.replace(u"ˈ","")
-		if u"ˌ" in syl:
-			syl="`"+syl.replace(u"ˌ","")
+		if "ˈ" in syl:
+			syl="'"+syl.replace("ˈ","")
+		if "ˌ" in syl:
+			syl="`"+syl.replace("ˌ","")
 		ipa_sylls[i]=syl
 	ipa=".".join(ipa_sylls)
 	#print ipa
@@ -308,10 +308,10 @@ def syllabify_orth(token,num_sylls=None):
 ### OPEN MARY
 
 def openmary2ipa(word):
-	import urllib2
+	import urllib.request, urllib.error, urllib.parse
 	try:
 		wordxml=openmary(word)
-	except urllib2.URLError:
+	except urllib.error.URLError:
 		return None
 	sylls=[]
 	for syll in wordxml.find_all('syllable'):
@@ -328,7 +328,7 @@ def openmary2ipa(word):
 	return pronounc
 
 def openmary(line):
-	import re, urlparse, urllib2
+	import re, urllib.parse, urllib.request, urllib.error, urllib.parse
 
 	try:
 		from unidecode import unidecode
@@ -357,8 +357,8 @@ def openmary(line):
 		return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
 
 	def iriToUri(iri):
-		parts= urlparse.urlparse(iri)
-		return urlparse.urlunparse(
+		parts= urllib.parse.urlparse(iri)
+		return urllib.parse.urlunparse(
 			part.encode('idna') if parti==1 else urlEncodeNonAscii(part.encode('utf-8'))
 			for parti, part in enumerate(parts)
 		)
@@ -382,8 +382,8 @@ def openmary(line):
 
 
 	line=line.replace(' ','+')
-	link=u'http://localhost:59125/process?INPUT_TEXT={0}&INPUT_TYPE=TEXT&OUTPUT_TYPE=ALLOPHONES&LOCALE=en_US'.format(line)
-	f=urllib2.urlopen(iriToUri(link))
+	link='http://localhost:59125/process?INPUT_TEXT={0}&INPUT_TYPE=TEXT&OUTPUT_TYPE=ALLOPHONES&LOCALE=en_US'.format(line)
+	f=urllib.request.urlopen(iriToUri(link))
 	t=f.read()
 	f.close()
 

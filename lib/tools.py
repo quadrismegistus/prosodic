@@ -74,9 +74,9 @@ def loadConfig(toprint=True,dir_prosodic=None):
 	settings['constraints']=" ".join(settings['constraints'])
 
 	if toprint:
-		print ">> loaded settings:"
+		print(">> loaded settings:")
 		for k,v in sorted(settings.items()):
-			print "\t"+"\t".join(str(x) for x in [k,v])
+			print("\t"+"\t".join(str(x) for x in [k,v]))
 	return settings
 
 def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
@@ -91,7 +91,7 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 	for vname in vnames:
 		vval=getattr(config,vname)
 		if vname=='Cs':
-			for k,v in vval.items():
+			for k,v in list(vval.items()):
 				if not isinstance(v, tuple):
 					cname=k+'/'+str(v)
 				else:
@@ -105,14 +105,14 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 
 
 	if toprint:
-		print ">> loaded settings:"
+		print(">> loaded settings:")
 		for k,v in sorted(settings.items()):
 			if type(v) == list:
-				print '\t',k
+				print('\t',k)
 				for x in v:
-					print '\t\t',x
+					print('\t\t',x)
 			else:
-				print '\t',k,'\t',v
+				print('\t',k,'\t',v)
 
 	#settings['constraints']=" ".join(settings['constraints'])
 	#settings['meters']=loadMeters()
@@ -123,7 +123,7 @@ def loadMeters():
 	import meters
 	from Meter import Meter
 	d={}
-	for name,module in meters.d.items():
+	for name,module in list(meters.d.items()):
 		#d[name]=loadConfigPy(toprint=False,config=module)
 		#d[name]['id']=name
 		mconfig = loadConfigPy(toprint=False,config=module)
@@ -147,21 +147,21 @@ def choose(optionlist,msg="please select from above options [using commas for in
 	seldict={}
 
 	selnum=0
-	print
-	print
+	print()
+	print()
 
 	if type(optionlist)==type([]):
 		for option in optionlist:
 			selnum+=1
 			seldict[selnum]=option
-			print "\t"+"\t".join(str(x) for x in [selnum,option])
+			print("\t"+"\t".join(str(x) for x in [selnum,option]))
 	elif type(optionlist)==type({}):
-		for option,desc in optionlist.items():
+		for option,desc in list(optionlist.items()):
 			selnum+=1
 			seldict[selnum]=option
-			print "\t"+"\t".join(str(x) for x in [selnum,option,desc])
+			print("\t"+"\t".join(str(x) for x in [selnum,option,desc]))
 
-	inp=raw_input("\n\t>> "+msg+"\n\t").strip()
+	inp=input("\n\t>> "+msg+"\n\t").strip()
 	sels=[]
 	for np in inp.split(","):
 		np=np.strip()
@@ -182,21 +182,16 @@ def choose(optionlist,msg="please select from above options [using commas for in
 
 
 
-"""
-Calculate mean and standard deviation of data x[]:
-    mean = {\sum_i x_i \over n}
-    std = sqrt(\sum_i (x_i - mean)^2 \over n-1)
-"""
 def mean_stdev(x):
-    from math import sqrt
-    n, mean, std = len(x), 0, 0
-    for a in x:
-	mean = mean + a
-    mean = mean / float(n)
-    for a in x:
-	std = std + (a - mean)**2
-    std = sqrt(std / float(n-1))
-    return mean, std
+	from math import sqrt
+	n, mean, std = len(x), 0, 0
+	for a in x:
+		mean = mean + a
+		mean = mean / float(n)
+	for a in x:
+		std = std + (a - mean)**2
+		std = sqrt(std / float(n-1))
+	return mean, std
 
 def linreg(X, Y):
 	from math import sqrt
@@ -204,26 +199,26 @@ def linreg(X, Y):
 	from numpy import array, mean, std, random
 	"""
 	Summary
-	    Linear regression of y = ax + b
+		Linear regression of y = ax + b
 	Usage
-	    real, real, real = linreg(list, list)
+		real, real, real = linreg(list, list)
 	Returns coefficients to the regression line "y=ax+b" from x[] and y[], and R^2 Value
 	"""
-	if len(X) != len(Y):  raise ValueError, 'unequal length'
+	if len(X) != len(Y):  raise ValueError('unequal length')
 	N = len(X)
 	Sx = Sy = Sxx = Syy = Sxy = 0.0
 	for x, y in map(None, X, Y):
-	    Sx = Sx + x
-	    Sy = Sy + y
-	    Sxx = Sxx + x*x
-	    Syy = Syy + y*y
-	    Sxy = Sxy + x*y
+		Sx = Sx + x
+		Sy = Sy + y
+		Sxx = Sxx + x*x
+		Syy = Syy + y*y
+		Sxy = Sxy + x*y
 	det = Sxx * N - Sx * Sx
 	a, b = (Sxy * N - Sy * Sx)/det, (Sxx * Sy - Sx * Sxy)/det
 	meanerror = residual = 0.0
 	for x, y in map(None, X, Y):
-	    meanerror = meanerror + (y - Sy/N)**2
-	    residual = residual + (y - a * x - b)**2
+		meanerror = meanerror + (y - Sy/N)**2
+		residual = residual + (y - a * x - b)**2
 	RR = 1 - residual/meanerror
 	ss = residual / (N-2)
 	Var_a, Var_b = ss * N / det, ss * Sxx / det
@@ -245,7 +240,7 @@ def writeToFile(name,key,data,iscorpus=False,extension="tsv"):
 		os.makedirs(ofolder)
 
 	ofn=os.path.join(ofolder,'.'.join([name,key,extension]))
-	print ">> saved: "+ofn
+	print(">> saved: "+ofn)
 	of = open(ofn,'w')
 	of.write(data)
 	of.close()
@@ -255,7 +250,7 @@ def write(fn,data,toprint=False):
 	of.write(data)
 	of.close()
 	if toprint:
-		print ">> saved: "+fn
+		print(">> saved: "+fn)
 
 
 
@@ -295,7 +290,7 @@ def loadDicts(dictFolder,srch='dict.*'):
 		if (os.path.exists(filename+'.pickle')):
 			continue
 		else:
-			for k,v in loadDict(filename).items():
+			for k,v in list(loadDict(filename).items()):
 				dict[k] = v
 	return dict
 
@@ -309,12 +304,12 @@ def loadDict(lang):
 	return get_class('Dictionary.Dictionary')(lang)
 
 def get_class( kls ):
-    parts = kls.split('.')
-    module = ".".join(parts[:-1])
-    m = __import__( module )
-    for comp in parts[1:]:
-        m = getattr(m, comp)
-    return m
+	parts = kls.split('.')
+	module = ".".join(parts[:-1])
+	m = __import__( module )
+	for comp in parts[1:]:
+		m = getattr(m, comp)
+	return m
 
 class Bin:
 	def __init__(self,name):
@@ -390,15 +385,15 @@ def word2syll(word, numSyll):
 	return textSyll
 
 def dict_ksort(adict):
-    items = adict.items()
-    items.sort()
-    return [value for key, value in items]
+	items = list(adict.items())
+	items.sort()
+	return [value for key, value in items]
 
 def product(*args):
-    if not args:
-        return iter(((),)) # yield tuple()
-    return (items + (item,)
-            for items in product(*args[:-1]) for item in args[-1])
+	if not args:
+		return iter(((),)) # yield tuple()
+	return (items + (item,)
+			for items in product(*args[:-1]) for item in args[-1])
 
 
 
@@ -486,7 +481,7 @@ def describe_func(obj, method=False):
 			dl = len(arginfo[3])
 			al = len(args)
 			defargs = args[al-dl:al]
-			o=zip(defargs, arginfo[3])
+			o=list(zip(defargs, arginfo[3]))
 
 	# if arginfo[1]:
 	# 		o+=['\t-Positional Args Param: %s' % arginfo[1]]
@@ -553,12 +548,12 @@ def xls2ld(fn,header=[],sheetname=True,keymap={}):
 def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpties=False):
 	import time
 	now=time.time()
-	print '>> reading as ld:',fn
+	print('>> reading as ld:',fn)
 	import os
 	if fn.startswith('http'):
-		print '>> reading webpage...'
-		import urllib
-		f=urllib.urlopen(fn)
+		print('>> reading webpage...')
+		import urllib.request, urllib.parse, urllib.error
+		f=urllib.request.urlopen(fn)
 		t=f.read()
 		if fn.endswith('/pubhtml'):
 			return goog2tsv(t)
@@ -613,7 +608,7 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 				except ValueError:
 					v=v
 
-			if type(v) in [str,unicode] and not v:
+			if type(v) in [str,str] and not v:
 				if zero=='' and removeEmpties:
 					continue
 				else:
@@ -623,7 +618,7 @@ def tsv2ld(fn,tsep='\t',nsep='\n',u=True,header=[],keymap={},zero='',removeEmpti
 			listdict.append(edict)
 
 	nownow=time.time()
-	print '>> done ['+str(round(nownow-now,1))+' seconds]'
+	print('>> done ['+str(round(nownow-now,1))+' seconds]')
 
 	return listdict
 
@@ -650,10 +645,10 @@ def writegen(fnfn,generator,header=None,sep=','):
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
-			is_str = type(v) in [str,unicode]
+			is_str = type(v) in [str,str]
 			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(v)
+				o=str(v)
 			except UnicodeDecodeError:
 				o=v.decode('utf-8',errors='ignore')
 			if is_str and v:
@@ -680,10 +675,10 @@ def writegengen(fnfn,generator,header=None,sep=',',save=True):
 		vals=[]
 		for h in header:
 			v=dx.get(h,'')
-			is_str = type(v) in [str,unicode]
+			is_str = type(v) in [str,str]
 			if type(v) in [float,int] and int(v)==v: v=int(v)
 			try:
-				o=unicode(v)
+				o=str(v)
 			except UnicodeDecodeError:
 				o=v.decode('utf-8',errors='ignore')
 			if is_str and v:
@@ -749,13 +744,13 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 	ofn_ot='.'.join(ofn_split_ot)
 
 	def _print(dx):
-		print
+		print()
 		for k,v in sorted(dx.items()):
-			print k,'\t',v
-		print 'HUMAN   :','\t'.join(dx['parse_human'])
-		print 'PROSODIC:','\t'.join(dx['parse_comp'])
-		print '         ','\t'.join(['*' if x!=y else ' ' for x,y in zip(dx['parse_human'],dx['parse_comp'])])
-		print
+			print(k,'\t',v)
+		print('HUMAN   :','\t'.join(dx['parse_human']))
+		print('PROSODIC:','\t'.join(dx['parse_comp']))
+		print('         ','\t'.join(['*' if x!=y else ' ' for x,y in zip(dx['parse_human'],dx['parse_comp'])]))
+		print()
 
 	def _recapitalize(parse,code):
 		code=' '.join([x for x in code])
@@ -908,7 +903,7 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 			odx['prosody_stress']=' '.join([w.stress for w in t.words()])
 			odx['meter_info']=str(t.meter).replace('\n',' ').replace('\t',' ')
 			sumconstr=0
-			for k,v in t.constraintViolations(use_weights=False,normalize=False).items():
+			for k,v in list(t.constraintViolations(use_weights=False,normalize=False).items()):
 				odx['constraint_'+k]=v
 				sumconstr+=v
 			odx['constraint_SUM_VIOL']=sumconstr
@@ -919,18 +914,18 @@ def assess(fn,meter=None,key_meterscheme=None, key_line='line',key_parse='parse'
 			_print(odx)
 			yield odx
 
-		print
-		print '##'*10
-		print 'RESULTS SUMMARY'
-		print '##'*10
+		print()
+		print('##'*10)
+		print('RESULTS SUMMARY')
+		print('##'*10)
 		perc_sylls_correct = sum(sylls_iscorrect) / float(len(sylls_iscorrect)) * 100
 		perc_lines_correct = sum(lines_iscorrect) / float(len(lines_iscorrect)) * 100
 		perc_lines_correct_control = sum(lines_iscorrect_control) / float(len(lines_iscorrect_control)) * 100
 		perc_sylls_correct_control = sum(sylls_iscorrect_control) / float(len(sylls_iscorrect_control)) * 100
 		perc_lines_correct_nonbound = sum(lines_iscorrect_nonbounded) / float(len(lines_iscorrect_nonbounded)) * 100
-		print 'PERCENT SYLLABLES CORRECT:',round(perc_sylls_correct,2),'% [vs.',round(perc_sylls_correct_control,2),'% for control]'
-		print 'PERCENT LINES CORRECT:',round(perc_lines_correct,2),'% [vs.',round(perc_lines_correct_control,2),'% for control]'
-		print 'PERCENT LINES IN AVAILABLE NONBOUNDED PARSES:',round(perc_lines_correct_nonbound,2),'%'
+		print('PERCENT SYLLABLES CORRECT:',round(perc_sylls_correct,2),'% [vs.',round(perc_sylls_correct_control,2),'% for control]')
+		print('PERCENT LINES CORRECT:',round(perc_lines_correct,2),'% [vs.',round(perc_lines_correct_control,2),'% for control]')
+		print('PERCENT LINES IN AVAILABLE NONBOUNDED PARSES:',round(perc_lines_correct_nonbound,2),'%')
 
 	writegen(ofn, _writegen)
 
@@ -951,4 +946,4 @@ def wordtoks2str(wordtoks):
 			x[-1]+=wtok.token
 		else:
 			x+=[wtok.token]
-	return u' '.join(x)
+	return ' '.join(x)

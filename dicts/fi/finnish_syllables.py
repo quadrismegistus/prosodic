@@ -45,7 +45,7 @@ def initialize_dict_from_file(dict, filename):
         
     except IOError:
         
-        print "Error: File not found."
+        print("Error: File not found.")
 
 pre_sep_dict = {} # map between words that have been hand-annotated and their annotations
 

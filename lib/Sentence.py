@@ -150,7 +150,7 @@ class Sentence(entity):
 
 def find_phrasal_heads(tree):
     for subtree in tree:
-        if not type(subtree) in [str,unicode]:
+        if not type(subtree) in [str,str]:
             #if is_branching(subtree):
             #    subtree[-1].is_head_of_branch = True
             if not subtree._preterm and len(subtree)>1 and subtree[-1]._preterm and not subtree[-1].wordtoken.is_punct:

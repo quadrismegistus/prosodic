@@ -49,15 +49,15 @@ class Corpus(entity):
 
 	def report(self,meter=None,include_bounded=False):
 		for text in self.children:
-			print
-			print '>> text:',text.name
+			print()
+			print('>> text:',text.name)
 			text.report(meter=meter,include_bounded=include_bounded)
 
 	def scansion(self,meter=None):
 		for text in self.children:
-			print '>> text:',text.name
+			print('>> text:',text.name)
 			text.scansion(meter=meter)
-			print
+			print()
 
 	def get_meter(self,meter=None):
 		if not meter:
@@ -69,7 +69,7 @@ class Corpus(entity):
 			else:
 				import Meter
 				meter=Meter.genDefault()
-		elif type(meter) in [str,unicode]:
+		elif type(meter) in [str,str]:
 			meter= self.config['meters'][meter]
 		else:
 			pass
@@ -95,7 +95,7 @@ class Corpus(entity):
 		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
-		print '>> saved:',ofn
+		print('>> saved:',ofn)
 
 	def isParsed(self):
 		#return (not False in [bool(_poemline.isParsed()) for _poemline in self.lines()])
@@ -115,7 +115,7 @@ class Corpus(entity):
 		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.lines_ot.'+('meter='+meter.id if meter else 'unknown')+'.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
-		print '>> saved:',ofn
+		print('>> saved:',ofn)
 
 	def grid(self,nspace=10):
 		grid=[]
@@ -139,7 +139,7 @@ class Corpus(entity):
 		ofn=os.path.join(self.dir_results, 'stats','corpora',self.name, self.name+'.positions.csv')
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen): yield dx
-		print '>> saved:',ofn
+		print('>> saved:',ofn)
 
 
 	def sentences(self):

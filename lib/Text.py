@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-from __future__ import division
+
 import sys,re,os,codecs,time
 
 from Stanza import Stanza
@@ -10,9 +10,10 @@ from entity import entity,being
 from tools import *
 from operator import itemgetter
 from ipa import sampa2ipa
+from functools import reduce
 #import prosodic
 
-DASHES=['--',u'–',u'—']
+DASHES=['--','–','—']
 REPLACE_DASHES = True
 
 
@@ -26,7 +27,7 @@ class Text(entity):
 		self.__bestparses={}
 		self.__boundParses={}
 		self.__parsed_ents={}
-		self.phrasebreak_punct = unicode(",;:.?!()[]{}<>")
+		self.phrasebreak_punct = str(",;:.?!()[]{}<>")
 		self.phrasebreak=prosodic.config['linebreak'].strip()
 		self.limWord = limWord
 		self.isFromFile = False
@@ -50,10 +51,10 @@ class Text(entity):
 		if self.phrasebreak=='line':
 			pass
 		elif self.phrasebreak.startswith("line"):
-			self.phrasebreak_punct=unicode(self.phrasebreak.replace("line",""))
+			self.phrasebreak_punct=str(self.phrasebreak.replace("line",""))
 			self.phrasebreak='both'
 		else:
-			self.phrasebreak_punct=unicode(self.phrasebreak)
+			self.phrasebreak_punct=str(self.phrasebreak)
 
 		## load/write-load text
 		if not filename:
@@ -65,7 +66,7 @@ class Text(entity):
 		#if False:
 			self.filename = filename
 			self.name = filename.split("/").pop().strip()
-			print '>> loading text:',self.name
+			print('>> loading text:',self.name)
 			file=codecs.open(filename,encoding='utf-8',errors='replace')
 			self.isFromFile=True
 			self.lang=self.set_lang(filename) if not lang else lang
@@ -102,14 +103,14 @@ class Text(entity):
 			lang=choose(prosodic.languages,"in what language is '"+self.name+"' written?")
 			if not lang:
 				lang=prosodic.languages[0]
-				print "!! language choice not recognized. defaulting to: "+lang
+				print("!! language choice not recognized. defaulting to: "+lang)
 			else:
 				lang=lang.pop()
 
 		if not lang in prosodic.dict:
 			lang0=lang
 			lang=prosodic.languages[0]
-			print "!! language "+lang0+" not recognized. defaulting to: "+lang
+			print("!! language "+lang0+" not recognized. defaulting to: "+lang)
 
 		return lang
 
@@ -123,7 +124,7 @@ class Text(entity):
 
 		def _writegen():
 			for line in self.lines():
-				dx={'text':self.name, 'line':unicode(line), 'header':header}
+				dx={'text':self.name, 'line':str(line), 'header':header}
 				bp=line.bestParse(meter)
 				ap=line.allParses(meter)
 				dx['parse']=bp.posString(viols=viols) if bp else ''
@@ -144,7 +145,7 @@ class Text(entity):
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen, save=save):
 			yield dx
-		if save: print '>> saved:',ofn
+		if save: print('>> saved:',ofn)
 
 	def stats_lines_ot_header(self,meter=None):
 		meter=self.get_meter(meter)
@@ -165,7 +166,7 @@ class Text(entity):
 				if all_parses: ap+=line.boundParses(meter)
 
 				for pi,parse in enumerate(ap):
-					dx={'line':unicode(line) if not pi else ''}
+					dx={'line':str(line) if not pi else ''}
 					dx['text']=self.name
 					dx['header']=header
 					dx['parse']=parse.posString(viols=viols)
@@ -185,7 +186,7 @@ class Text(entity):
 		for dx in writegengen(ofn, _writegen,save=save):
 			if not save: del dx['header']
 			yield dx
-		if save: print '>> saved:',ofn
+		if save: print('>> saved:',ofn)
 
 	def stats_positions(self,meter=None,all_parses=False):
 
@@ -211,7 +212,7 @@ class Text(entity):
 
 						feat_dicts = [slot.feats, pos.constraintScores, pos.feats]
 						for feat_dict in feat_dicts:
-							for k,v in feat_dict.items():
+							for k,v in list(feat_dict.items()):
 								dk = (slot_i,str(k))
 								if not dk in dx: dx[dk]=[]
 								dx[dk]+=[v]
@@ -225,7 +226,7 @@ class Text(entity):
 						x=1 if x else 0
 					elif type(x)==type(None):
 						x=0
-					elif type(x) in [str,unicode]:
+					elif type(x) in [str,str]:
 						continue
 					else:
 						x=float(x)
@@ -252,7 +253,7 @@ class Text(entity):
 		if not os.path.exists(os.path.split(ofn)[0]): os.makedirs(os.path.split(ofn)[0])
 		for dx in writegengen(ofn, _writegen):
 			yield dx
-		print '>> saved:',ofn
+		print('>> saved:',ofn)
 		#for
 
 	def stats(self,meter=None,all_parses=False,funcs=['stats_lines','stats_lines_ot','stats_positions']):
@@ -278,7 +279,7 @@ class Text(entity):
 		for ln in lines_or_file:
 			if REPLACE_DASHES:
 				for dash in DASHES:
-					ln=ln.replace(dash,u' '+dash+' ')
+					ln=ln.replace(dash,' '+dash+' ')
 			ln=ln.strip()
 			#print ln,type(ln)
 			if self.limWord and numwords>self.limWord: break
@@ -336,48 +337,48 @@ class Text(entity):
 		if self.config.get('parse_using_metrical_tree',False) and self.lang=='en':
 			import time
 			then=time.time()
-			print '>> parsing text using MetricalTree (because "parse_using_metrical_tree" setting activated in config.py)...'
+			print('>> parsing text using MetricalTree (because "parse_using_metrical_tree" setting activated in config.py)...')
 			try:
 				self.parse_mtree()
 			except ImportError as e:
-				print '!! text not parsed because python module missing:',str(e).split()[-1]
-				print '!! to install, run: pip install',str(e).split()[-1]
-				print '!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>'
-				print
+				print('!! text not parsed because python module missing:',str(e).split()[-1])
+				print('!! to install, run: pip install',str(e).split()[-1])
+				print('!! if you don\'t have pip installed, run this script: <https://bootstrap.pypa.io/get-pip.py>')
+				print()
 			except LookupError as e:
 				emsg=str(e)
 
 				if "Resource" in emsg and "punkt" in emsg and "not found" in emsg:
-					print '!! text not parsed because NLTK missing needed data: punkt'
-					print '!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"'
-					print
+					print('!! text not parsed because NLTK missing needed data: punkt')
+					print('!! to install, run: python -c "import nltk; nltk.download(\'punkt\')"')
+					print()
 				elif 'stanford-parser.jar' in emsg:
 					import prosodic
-					print '!! text not parsed because Stanford NLP Parser not installed'
-					print '!! to install, run: python prosodic.py install stanford_parser'
-					print '!! if that doesn\'t work:'
-					print '!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip'
-					print '!! \t2) unzip it'
-					print '!! \t3) move the unzipped directory to:',self.dir_mtree+'/Stanford Library/stanford-parser-full-2015-04-20/'
-					print
+					print('!! text not parsed because Stanford NLP Parser not installed')
+					print('!! to install, run: python prosodic.py install stanford_parser')
+					print('!! if that doesn\'t work:')
+					print('!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip')
+					print('!! \t2) unzip it')
+					print('!! \t3) move the unzipped directory to:',self.dir_mtree+'/Stanford Library/stanford-parser-full-2015-04-20/')
+					print()
 				else:
-					print '!! text not parsed for unknown reason!'
-					print '!! error message received:'
-					print emsg
-					print
+					print('!! text not parsed for unknown reason!')
+					print('!! error message received:')
+					print(emsg)
+					print()
 			except AssertionError:
-				print "This is a bug in PROSODIC that is Ryan Heuser's fault. [Bug ID: Assertion_MTree]"
-				print "Please kindly report it to: https://github.com/quadrismegistus/prosodic/issues"
-				print
+				print("This is a bug in PROSODIC that is Ryan Heuser's fault. [Bug ID: Assertion_MTree]")
+				print("Please kindly report it to: https://github.com/quadrismegistus/prosodic/issues")
+				print()
 			except Exception as e:
 				emsg=str(e)
-				print '!! text not parsed for unknown reason!'
-				print '!! error message received:'
-				print emsg
-				print
+				print('!! text not parsed for unknown reason!')
+				print('!! error message received:')
+				print(emsg)
+				print()
 			#"""
 			now=time.time()
-			print '>> done:',round(now-then,2),'seconds'
+			print('>> done:',round(now-then,2),'seconds')
 
 	def parse_mtree(self):
 		if self.lang!='en': raise Exception("MetricalTree parsing only works currently for English text.")
@@ -412,7 +413,7 @@ class Text(entity):
 			#for k,v in wStat.items():
 			#	setattr(wTok,k,v)
 			if not hasattr(wTok,'feats'): wTok.feats={}
-			for k,v in wStat.items():
+			for k,v in list(wStat.items()):
 				if k in mtree.INFO_DO_NOT_STORE: continue
 				wTok.feats[k]=v
 
@@ -488,29 +489,29 @@ class Text(entity):
 		objects = [(ent,meter,init,False) for ent in ents]
 
 		if num_processes>1:
-			print '!! MULTIPROCESSING PARSING IS NOT WORKING YET !!'
+			print('!! MULTIPROCESSING PARSING IS NOT WORKING YET !!')
 			pool = mp.Pool(num_processes)
 			jobs = [pool.apply_async(parse_ent_mp,(x,)) for x in objects]
 			for j in jobs:
-				print j.get()
+				print(j.get())
 				yield j.get()
 		else:
 			now=time.time()
 			clock_snum=0
 			#for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
 			for ei,objectx in enumerate(objects):
-				clock_snum+=ent.num_syll
+				clock_snum+=objectx[0].num_syll
 				if ei and not ei%100:
 					nownow=time.time()
 					if being.config['print_to_screen']:
-						print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+						print('>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']')
 					now=nownow
 					clock_snum=0
 
 				yield parse_ent_mp(objectx)
 
 		if being.config['print_to_screen']:
-			print '>> parsing complete in:',time.time()-now,'seconds'
+			print('>> parsing complete in:',time.time()-now,'seconds')
 
 
 	def parse(self,meter=None,arbiter='Line',line_lim=None):
@@ -523,7 +524,7 @@ class Text(entity):
 		from Meter import Meter,genDefault,parse_ent
 		meter=self.get_meter(meter)
 
-		if self.isFromFile: print '>> parsing',self.name,'with meter:',meter.id
+		if self.isFromFile: print('>> parsing',self.name,'with meter:',meter.id)
 		self.meter=meter
 
 		self.__parses[meter.id]=[]
@@ -561,7 +562,7 @@ class Text(entity):
 			clock_snum+=ent.num_syll
 			if ei and not ei%100:
 				nownow=time.time()
-				print '>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']'
+				print('>> parsing line #',ei,'of',numents,'lines','[',round(float(clock_snum/(nownow-now)),2),'syllables/second',']')
 				now=nownow
 				clock_snum=0
 			ent.parse(meter,init=init)
@@ -571,7 +572,7 @@ class Text(entity):
 			self.__parsed_ents[meter.id].append(ent)
 			ent.scansion(meter=meter,conscious=True)
 
-		if being.config['print_to_screen']: print
+		if being.config['print_to_screen']: print()
 
 		#self.scansion_prepare(conscious=True)
 		#self.scansion(meter=meter,conscious=True)
@@ -605,10 +606,10 @@ class Text(entity):
 			try:
 				line.scansion(meter=meter,conscious=conscious)
 			except AttributeError:
-				print "!!! Line skipped [Unknown word]:"
-				print line
-				print line.words()
-				print
+				print("!!! Line skipped [Unknown word]:")
+				print(line)
+				print(line.words())
+				print()
 
 	def allParsesByLine(self,meter=None):
 		parses=self.allParses(meter=meter)
@@ -659,7 +660,7 @@ class Text(entity):
 				meter=Meter.genDefault()
 				#print '>> no meter specified. defaulting to this meter:'
 				#print meter
-		elif type(meter) in [str,unicode]:
+		elif type(meter) in [str,str]:
 			meter= self.config['meters'][meter]
 		else:
 			pass
@@ -711,7 +712,7 @@ class Text(entity):
 			for mpos in parse.positions:
 				viold=False
 				words=set([slot.word.token for slot in mpos.slots])
-				for ck,cv in mpos.constraintScores.items():
+				for ck,cv in list(mpos.constraintScores.items()):
 					if not cv: continue
 					ckk=ck.name.replace('.','_')
 					if not ckk in constraintd: constraintd[ckk]=set()
@@ -750,7 +751,7 @@ class Text(entity):
 			parse_strs=[]
 			for mpos in parse.positions:
 				viold=False
-				for ck,cv in mpos.constraintScores.items():
+				for ck,cv in list(mpos.constraintScores.items()):
 					if cv:
 						viold=True
 						break
@@ -792,7 +793,7 @@ class Text(entity):
 		mstrs=[]
 		for parse in bp:
 			for mpos in parse.positions:
-				for ck,cv in mpos.constraintScores.items():
+				for ck,cv in list(mpos.constraintScores.items()):
 					ck=ck.name
 					if not ck in viold: viold[ck]=[]
 					val = (cv if not use_weights else 1) if cv else 0
@@ -825,9 +826,7 @@ class Text(entity):
 	## children
 	def givebirth(self):
 		"""Return an empty Stanza."""
-
-                stanza=Stanza()
-                #stanza.parent=self
+		stanza=Stanza()
 		return stanza
 
 	def validlines(self):
@@ -836,4 +835,4 @@ class Text(entity):
 		return [ln for ln in self.lines() if (not ln.isBroken() and not ln.ignoreMe)]
 
 	def __repr__(self):
-		return "<Text."+unicode(self.name)+"> ("+str(len(self.words()))+" words)"
+		return "<Text."+str(self.name)+"> ("+str(len(self.words()))+" words)"

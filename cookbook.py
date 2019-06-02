@@ -1,11 +1,11 @@
-import prosodic as p
+from . import prosodic as p
 #t = p.Text('have you reckoned a thousand acres much?')
 t=p.Text('corpora/corppoetry_fi/fi.koskenniemi.txt')
 t.more()
-print
+print()
 
-print ">> printing all heavy syllables..."
-print t.feature('+prom.weight',True)
+print(">> printing all heavy syllables...")
+print(t.feature('+prom.weight',True))
 
 def is_ntV(word):
 	phonemes = word.phonemes()
@@ -14,7 +14,7 @@ def is_ntV(word):
 	return phonemes[-1].feature("syll")
 
 
-print
-print ">> printing all -ntV words..."
+print()
+print(">> printing all -ntV words...")
 nta = [word for word in t.words() if is_ntV(word)]
-print nta
+print(nta)

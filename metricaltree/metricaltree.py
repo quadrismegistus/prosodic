@@ -7,7 +7,7 @@
 
 import os
 from collections import defaultdict
-import cPickle as pkl
+import pickle as pkl
 import numpy as np
 #import pandas as pd
 #import matplotlib.pyplot as plt
@@ -56,14 +56,14 @@ def parse_worker(q):
     parser = DependencyTreeParser(model_path='Stanford Library/stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz' % DATE)
     parser = MetricalTreeParser(parser)
     for filename in iter(q.get, 'STOP'):
-        print 'Working on %s...' % filename
+        print('Working on %s...' % filename)
         sents = []
         with codecs.open(filename, encoding='utf-8') as f:
             for line in f:
                 sents.extend(pause_splitter(line))
         df = parser.stats_raw_parse_sents(sents, arto=True)
         df.to_csv(codecs.open('%s.csv' % filename, 'w', encoding='utf-8'), index=False)
-        print 'Finished with %s.' % filename
+        print('Finished with %s.' % filename)
     return True
 
 # Return parser
@@ -85,7 +85,7 @@ def pause_splitter(s):
     s = [sent for sents in s for sent in sent_splitter.tokenize(sents)]
     return s
 
-def pause_splitter_tokens(tokens,split_by={':',';','--',u'—',u'–'}):
+def pause_splitter_tokens(tokens,split_by={':',';','--','—','–'}):
     """"""
     sents=[]
     sent=[]
@@ -128,7 +128,7 @@ class MetricalTree(DependencyTree):
                 syll_info = sylcmu[self[0].lower()]
                 self._seg = syll_info[0]
                 self._nsyll = len(syll_info[1])
-                self._nstress = len(filter(lambda x: x[1] in ('P', 'S'), syll_info[1]))
+                self._nstress = len([x for x in syll_info[1] if x[1] in ('P', 'S')])
             else:
                 self._seg = None
                 self._nsyll = np.nan
@@ -429,7 +429,7 @@ class MetricalTree(DependencyTree):
             alts = [[]]
             for child in self:
                 child_alts = child.disambiguate(syll)
-                for i in xrange(len(alts)):
+                for i in range(len(alts)):
                     alt = alts.pop(0)
                     for child_alt in child_alts:
                         alts.append(alt + [child_alt])
@@ -453,7 +453,7 @@ class MetricalTree(DependencyTree):
             alts = [[]]
             for child in self:
                 child_alts = child.max_stress_disambiguate()
-                for i in xrange(len(alts)):
+                for i in range(len(alts)):
                     alt = alts.pop(0)
                     for child_alt in child_alts:
                         alts.append(alt + [child_alt])
@@ -481,7 +481,7 @@ class MetricalTree(DependencyTree):
             alts = [[]]
             for child in self:
                 child_alts = child.min_stress_disambiguate(stress_polysyll)
-                for i in xrange(len(alts)):
+                for i in range(len(alts)):
                     alt = alts.pop(0)
                     for child_alt in child_alts:
                         alts.append(alt + [child_alt])
@@ -744,7 +744,7 @@ class MetricalTreeParser:
             data['contour'].extend([' '.join(str(x) for x in data['mean'][-(j):])]*j)
 
         if format_pandas:
-            for k, v in data.iteritems():
+            for k, v in data.items():
                 data[k] = pd.Series(v)
             df=pd.DataFrame(data, columns=['widx', 'norm_widx', 'word', 'seg', 'lexstress',
                                                'nseg', 'nsyll', 'nstress',
@@ -755,7 +755,7 @@ class MetricalTreeParser:
                                                'contour'])
             return df
 
-        keys=data.keys()
+        keys=list(data.keys())
         old=[]
         num_rows=len(data[keys[0]])
         for i_row in range(num_rows):
@@ -820,13 +820,13 @@ if __name__ == '__main__':
     q = mp.Queue()
     for filename in files:
         q.put(filename)
-    for worker in xrange(workers):
+    for worker in range(workers):
         q.put('STOP')
     processes = []
-    for worker in xrange(workers):
+    for worker in range(workers):
         process = mp.Process(target=parse_worker, args=(q,))
         process.start()
         processes.append(process)
     for process in processes:
         process.join()
-    print 'Done!'
+    print('Done!')

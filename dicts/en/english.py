@@ -71,14 +71,12 @@ def get(token,config={},toprint=False):
 	if not ipas:
 		TTS_ENGINE=config.get('en_TTS_ENGINE','')
 		if TTS_ENGINE=='espeak':
+			#toprint=True
 			espeak_ipa=espeak2ipa(token)
-			#print(espeak_ipa)
 			cmu=espeak2cmu(espeak_ipa)
 			#cmu=ipa2cmu(ipa)
-			#print(cmu)
 			cmu_sylls = syllabify_cmu(cmu)
-			#print(cmu_sylls)
-			if toprint: print(ipa)
+			if toprint: print(espeak_ipa)
 			if toprint: print(cmu)
 			if toprint: print(cmu_sylls)
 			ipa = cmusylls2ipa(cmu_sylls)
@@ -252,7 +250,9 @@ def syllabify_cmu(cmu_token):
 	#	print x
 	return sylls
 
-def cmusylls2ipa(sylls):
+
+
+def cmusylls2ipa1(sylls):
 	new_cmu=[]
 	for syl in sylls:
 		stress, onset, nucleus, coda = syl
@@ -272,9 +272,11 @@ def cmusylls2ipa(sylls):
 		new_cmu+=[_newcmu]
 	new_cmu =" 0 ".join(new_cmu)
 	#print new_cmu
+	print(new_cmu)
 
 	## ipa
 	ipa=cmu2ipa(new_cmu)
+	print(ipa)
 	#print ipa
 	# clean
 	ipa_sylls = ipa.split('.')
@@ -285,7 +287,40 @@ def cmusylls2ipa(sylls):
 			syl="`"+syl.replace("ˌ","")
 		ipa_sylls[i]=syl
 	ipa=".".join(ipa_sylls)
+	print(ipa)
+	return ipa
+
+def cmusylls2ipa(sylls):
+	new_cmu=[]
+	new_ipa=[]
+	for syl in sylls:
+		stress, onset, nucleus, coda = syl
+		if stress:
+			nucleus = [nucleus[0]+" "+str(stress)] + nucleus[1:]
+
+		_newcmu = " ".join(onset+nucleus+coda).strip().replace("  "," ")
+		_newipa=cmu2ipa(_newcmu)
+		new_ipa+=[_newipa]
+		new_cmu+=[_newcmu]
+	new_cmu =" 0 ".join(new_cmu)
+	#print new_cmu
+	#print(new_cmu)
+
+	## ipa
+	ipa=cmu2ipa(new_cmu)
+	#print(ipa)
 	#print ipa
+	# clean
+	#ipa_sylls = ipa.split('.')
+	ipa_sylls = new_ipa
+	for i,syl in enumerate(ipa_sylls):
+		if "ˈ" in syl:
+			syl="'"+syl.replace("ˈ","")
+		if "ˌ" in syl:
+			syl="`"+syl.replace("ˌ","")
+		ipa_sylls[i]=syl
+	ipa=".".join(ipa_sylls)
+	#print(ipa)
 	return ipa
 
 

@@ -71,9 +71,13 @@ def get(token,config={},toprint=False):
 	if not ipas:
 		TTS_ENGINE=config.get('en_TTS_ENGINE','')
 		if TTS_ENGINE=='espeak':
-			ipa=espeak2ipa(token)
-			cmu=espeak2cmu(ipa)
+			espeak_ipa=espeak2ipa(token)
+			#print(espeak_ipa)
+			cmu=espeak2cmu(espeak_ipa)
+			#cmu=ipa2cmu(ipa)
+			#print(cmu)
 			cmu_sylls = syllabify_cmu(cmu)
+			#print(cmu_sylls)
 			if toprint: print(ipa)
 			if toprint: print(cmu)
 			if toprint: print(cmu_sylls)
@@ -199,6 +203,7 @@ def add_elisions(_ipa):
 
 def espeak2ipa(token):
 	CMD='espeak -q -x '+token.replace("'","\\'").replace('"','\\"')
+	#CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
 	#print CMD
 	try:
 		# @HACK FOR MPI
@@ -209,7 +214,7 @@ def espeak2ipa(token):
 
 		res=subprocess.check_output(CMD.split()).strip()
 		#print '>> espeak = ',[res]
-		return res
+		return res.decode("utf-8")
 	except (OSError,subprocess.CalledProcessError) as e:
 		#print "!!",e
 		return None
@@ -225,15 +230,15 @@ def tts2ipa(token,TTS_ENGINE=None):
 
 def espeak2cmu(tok):
 	import lexconvert
-	return lexconvert.convert(tok,'espeak','cmu')
+	return lexconvert.convert(str(tok),'espeak','cmu')
 
 def ipa2cmu(tok):
 	import lexconvert
-	return lexconvert.convert(tok,'unicode-ipa','cmu')
+	return lexconvert.convert(str(tok),'unicode-ipa','cmu')
 
 def cmu2ipa(tok):
 	import lexconvert
-	res=lexconvert.convert(tok,'cmu','unicode-ipa')
+	res=lexconvert.convert(str(tok),'cmu','unicode-ipa')
 
 	## BUG FIXES
 	if tok.endswith(' T') and not res.endswith('t'): res=res+'t'

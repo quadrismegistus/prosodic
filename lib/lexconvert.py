@@ -25,11 +25,11 @@
 def Phonemes():
    """Create phonemes by calling vowel(), consonant(),
      variant() and other().
-
+   
      For the variants, if a particular variant does not
      exist in the destination format then we will treat it
      as equivalent to the last non-variant we created.
-
+  
      For anything else that does not exist in the
      destination format, we will first try to break the
      source's phoneme into parts (e.g. see the treatment
@@ -146,7 +146,7 @@ def LexFormats():
      BOTH directions; one-directional entries are created
      via (string,phoneme,False) or (phoneme,string,False).
      The makeDic function checks the keys are unique.
-
+     
      First parameter is always a description of the
      format, then come the phoneme entries as described
      above, then any additional settings:
@@ -189,7 +189,7 @@ def LexFormats():
        before starting to convert OUT of this format
        cvtOut_func (default none) - optional special-case
        function to pass through before any cvtOut_regexps
-
+  
        inline_format (default "%s") the format string for
        printing a word with --phones or --phones2phones
        (can be used to put markup around each word)
@@ -242,7 +242,7 @@ def LexFormats():
        --phones and --phones2phones).  If lex_filename is
        specified then this function will be given the open
        file as a parameter. """
-
+  
   phonemes = Phonemes() ; globals().update(phonemes)
   return { "festival" : makeDic(
     "Festival's British voice",
@@ -1230,7 +1230,7 @@ def LexFormats():
      cleanup_regexps=[('[*] ','*'),('[+] ','+')],
      safe_to_drop_characters=' ',
   ),
-
+     
   "amiga" : makeDic(
     'AmigaOS speech synthesizer (American English)', # shipped with the 1985 Amiga release; developed by SoftVoice Inc
     # All I had to go by for this was a screenshot on Marcos Miranda's "blog".  I once saw this synth demonstrated but never tried it.  My early background was the BBC Micro, not Amigas etc.  But I know some people are keen on Amigas so I might as well include it.
@@ -1465,8 +1465,8 @@ def LexFormats():
     "IPA symbols in Unicode, as used by an increasing number of dictionary programs, websites etc",
     ('.',syllable_separator,False),
     (syllable_separator,'',False),
-    ('\\u02c8',primary_stress),
-    ('\\u02cc',secondary_stress),
+    ('\u02c8',primary_stress),
+    ('\u02cc',secondary_stress),
     # NB the above two are "modifier", not "combining",
     # Unicode characters.  There IS a difference.  If
     # your software displays them as overprinting the
@@ -1477,90 +1477,90 @@ def LexFormats():
     ('?',text_question),
     ('!',text_exclamation),
     (',',text_comma),
-    ('\\u0251',a_as_in_ah),
-    ('\\u02d0',ipa_colon),
-    ('\\u0251\\u02d0',var3_a_as_in_ah),
-    ('\\u0251\\u0279',var4_a_as_in_ah),
-    ('a\\u02d0',var5_a_as_in_ah),
+    ('\u0251',a_as_in_ah),
+    ('\u02d0',ipa_colon),
+    ('\u0251\u02d0',var3_a_as_in_ah),
+    ('\u0251\u0279',var4_a_as_in_ah),
+    ('a\u02d0',var5_a_as_in_ah),
     ('\xe6',a_as_in_apple),
     ('a',a_as_in_apple,False),
-    ('\\u028c',u_as_in_but),
+    ('\u028c',u_as_in_but),
     ('\\u1d27',u_as_in_but,False), # 28c sometimes mistakenly written as 1d27
-    ('\\u0252',o_as_in_orange),
-    (var1_o_as_in_orange,'\\u0251',False),
-    ('\\u0254',var2_o_as_in_orange),
-    ('a\\u028a',o_as_in_now),
-    ('\xe6\\u0254',var1_o_as_in_now),
-    ('\\u0259',a_as_in_ago),
-    ('\\u0259\\u02d0',e_as_in_herd),
-    ('\\u025a',var1_a_as_in_ago),
-    ('a\\u026a',eye), ('\\u028c\\u026a',eye,False),
-    ('\\u0251e',var1_eye),
+    ('\u0252',o_as_in_orange),
+    (var1_o_as_in_orange,'\u0251',False),
+    ('\u0254',var2_o_as_in_orange),
+    ('a\u028a',o_as_in_now),
+    ('\xe6\u0254',var1_o_as_in_now),
+    ('\u0259',a_as_in_ago),
+    ('\u0259\u02d0',e_as_in_herd),
+    ('\u025a',var1_a_as_in_ago),
+    ('a\u026a',eye), ('\u028c\u026a',eye,False),
+    ('\u0251e',var1_eye),
     ('b',b),
-    ('t\\u0283',ch),
-    ('\\u02a7',ch,False),
+    ('t\u0283',ch),
+    ('\u02a7',ch,False),
     ('d',d),
     ('\xf0',th_as_in_them),
-    ('\\u025b',e_as_in_them),
+    ('\u025b',e_as_in_them),
     ('e',var1_e_as_in_them),
-    ('\\u025d',ar_as_in_year),
-    ('\\u025c\\u02d0',ar_as_in_year,False),
-    ('\\u025b\\u0259',a_as_in_air),
-    ('\\u025b\\u0279',var1_a_as_in_air),
-    ('e\\u02d0',var2_a_as_in_air),
-    ('\\u025b\\u02d0',var3_a_as_in_air),
-    ('e\\u0259',var4_a_as_in_air),
-    ('e\\u026a',a_as_in_ate),
-    ('\xe6\\u026a',var1_a_as_in_ate),
+    ('\u025d',ar_as_in_year),
+    ('\u025c\u02d0',ar_as_in_year,False),
+    ('\u025b\u0259',a_as_in_air),
+    ('\u025b\u0279',var1_a_as_in_air),
+    ('e\u02d0',var2_a_as_in_air),
+    ('\u025b\u02d0',var3_a_as_in_air),
+    ('e\u0259',var4_a_as_in_air),
+    ('e\u026a',a_as_in_ate),
+    ('\xe6\u026a',var1_a_as_in_ate),
     ('f',f),
-    ('\\u0261',g), ('g',g,False),
+    ('\u0261',g), ('g',g,False),
     ('h',h),
-    ('\\u026a',i_as_in_it),
-    ('\\u0268',var1_i_as_in_it),
-    ('\\u026a\\u0259',ear),
-    ('\\u026a\\u0279',var1_ear),
-    ('\\u026a\\u0279\\u0259',var2_ear), # ?
+    ('\u026a',i_as_in_it),
+    ('\u0268',var1_i_as_in_it),
+    ('\u026a\u0259',ear),
+    ('\u026a\u0279',var1_ear),
+    ('\u026a\u0279\u0259',var2_ear), # ?
     ('i',e_as_in_eat),
-    ('i\\u02d0',var1_e_as_in_eat),
-    ('d\\u0292',j_as_in_jump),
-    ('\\u02a4',j_as_in_jump,False),
+    ('i\u02d0',var1_e_as_in_eat),
+    ('d\u0292',j_as_in_jump),
+    ('\u02a4',j_as_in_jump,False),
     ('k',k),
     ('x',opt_scottish_loch),
     ('l',l),
-    ('d\\u026b',var1_l),
+    ('d\u026b',var1_l),
     ('m',m),
     ('n',n),
-    ('\\u014b',ng),
-    ('\\u0259\\u028a',o_as_in_go),
+    ('\u014b',ng),
+    ('\u0259\u028a',o_as_in_go),
     ('o',var1_o_as_in_go),
-    ('o\\u028a',var2_o_as_in_go),
-    ('\\u0259\\u0289',var1_u_as_in_but),
-    ('\\u0254\\u026a',oy_as_in_toy),
-    ('o\\u026a',var1_oy_as_in_toy),
+    ('o\u028a',var2_o_as_in_go),
+    ('\u0259\u0289',var1_u_as_in_but),
+    ('\u0254\u026a',oy_as_in_toy),
+    ('o\u026a',var1_oy_as_in_toy),
     ('p',p),
-    ('\\u0279',r), ('r',r,False),
+    ('\u0279',r), ('r',r,False),
     (var1_r,'r',False),
     ('s',s),
-    ('\\u0283',sh),
+    ('\u0283',sh),
     ('t',t),
-    ('\\u027e',var1_t),
-    ('\\u03b8',th_as_in_think),
-    ('\\u028a\\u0259',oor_as_in_poor),
-    ('\\u028a\\u0279',var1_oor_as_in_poor),
-    ('\\u028a',opt_u_as_in_pull),
-    ('\\u0289\\u02d0',oo_as_in_food),
-    ('u\\u02d0',var1_oo_as_in_food),
+    ('\u027e',var1_t),
+    ('\u03b8',th_as_in_think),
+    ('\u028a\u0259',oor_as_in_poor),
+    ('\u028a\u0279',var1_oor_as_in_poor),
+    ('\u028a',opt_u_as_in_pull),
+    ('\u0289\u02d0',oo_as_in_food),
+    ('u\u02d0',var1_oo_as_in_food),
     ('u',var2_oo_as_in_food),
-    ('\\u0254\\u02d0',close_to_or),
-    (var1_close_to_or,'\\u0254',False),
-    ('o\\u02d0',var2_close_to_or),
+    ('\u0254\u02d0',close_to_or),
+    (var1_close_to_or,'\u0254',False),
+    ('o\u02d0',var2_close_to_or),
     ('v',v),
     ('w',w),
-    ('\\u028d',var1_w),
+    ('\u028d',var1_w),
     ('j',y),
     ('z',z),
-    ('\\u0292',ge_of_blige_etc),
-    ('\\u0294',glottal_stop),
+    ('\u0292',ge_of_blige_etc),
+    ('\u0294',glottal_stop),
     lex_filename="words-ipa.html", # write-only for now
     lex_type = "HTML",
     lex_header = '<html><head><meta name="mobileoptimized" content="0"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body><table>',
@@ -1597,7 +1597,7 @@ def LexFormats():
     (var3_a_as_in_ah,'ar-',False),
     (var4_a_as_in_ah,'ar-',False),
     ('uh',u_as_in_but),
-    ('\\u0259:',e_as_in_herd),
+    ('\u0259:',e_as_in_herd),
     ('ai',eye),
     ('ch',ch),
     ('e',e_as_in_them),
@@ -1733,7 +1733,7 @@ def LexFormats():
     safe_to_drop_characters=True, # TODO: really?
     cleanup_func=lambda r:ifset("BRAILLE_UNICODE",ascii_braille_to_unicode,lambda x:x)(",7"+r+"7'"),
   ),
-
+  
   "latex-ipa" : makeDic(
     'IPA symbols for typesetting in LaTeX using the "tipa" package',
     ('.',syllable_separator,False),
@@ -1913,7 +1913,7 @@ def LexFormats():
       ("ya([1-9])ne0",r"an\1"),
       ("ye([1-9])ne0",r"yan\1"),("([wr])[eu]0yan",r"\1en"),
       ("yi([1-9])ne0",r"yin\1"),
-
+      
       ("yu0","yu5"),("eng0","eng5"), # they won't work unvoiced anyway
       ("0","5"), # comment out if the synth supports 'tone 0 for unvoiced'
       #("[euo]0","0"), # comment in if it expects consonants only when doing that
@@ -1923,83 +1923,83 @@ def LexFormats():
   "kana-approx" : makeDic(
   "Rough approximation using kana (for getting Japanese computer voices to speak some English words - works with some words better than others).  Set KANA_TYPE environment variable to hiragana or katakana (which can affect the sounds of some voices); default is hiragana", # for example on Mac OS 10.7+ (with Japanese voice installed in System Preferences) try PHONES_PIPE_COMMAND='say -v Kyoko' (this voice has a built-in converter from English as well, but lexconvert --phones kana-approx can work better with some complex words, although the built-in converter does seem to have access to slightly more phonemes and can therefore produce words like "to" better).  Default is hiragana because I find hiragana easier to read than katakana, although the Kyoko voice does seem to be able to say 'v' a little better when using kata.  Mac OS 10.7+'s Korean voices (Yuna and Narae) can also read kana, and you could try doing a makeVariantDic and adding in some Korean jamo letters for them (you'd be pushed to represent everything in jamo but kana+jamo seems more hopeful in theory), but again some words work better than others (not all phonetic combinations are supported and some words aren't clear at all).
     # This kana-approx format is 'write-only' for now (see comment in cleanup_regexps re possible reversal)
-    ('\\u30fc',primary_stress),
-    (secondary_stress,ifset('KANA_MORE_EMPH','\\u30fc'),False), # set KANA_MORE_EMPH environment variable if you want to try doubling the secondary-stressed vowels as well (doesn't always work very well; if it did, I'd put this line in a makeVariantDic called kana-approx-moreEmph or something)
+    ('\u30fc',primary_stress),
+    (secondary_stress,ifset('KANA_MORE_EMPH','\u30fc'),False), # set KANA_MORE_EMPH environment variable if you want to try doubling the secondary-stressed vowels as well (doesn't always work very well; if it did, I'd put this line in a makeVariantDic called kana-approx-moreEmph or something)
     # The following Unicode codepoints are hiragana; KANA_TYPE is handled by cleanup_func below
-    ('\\u3042',a_as_in_apple),
-    ('\\u3044',e_as_in_eat),
-    ('\\u3046',oo_as_in_food),
-    ('\\u3048',e_as_in_them),
-    ('\\u304a',o_as_in_orange),
-    ('\\u3042\\u3044',eye), # ai
-    ('\\u3042\\u304a',o_as_in_now), # ao
-    ('\\u3048\\u3044',a_as_in_ate), # ei
-    ('\\u304a\\u3044',oy_as_in_toy), # oi
-    ('\\u304a\\u3046',o_as_in_go), # ou
-    (a_as_in_ah,'\\u3042',False),
-    (a_as_in_ago,'\\u3046\\u304a',False), # TODO: \u3042, \u304a or \u3046 depending on the word?
-    (e_as_in_herd,'\\u3042',False), # TODO: really?
-    (i_as_in_it,'\\u3044',False), # TODO: really?
-    (u_as_in_but,'\\u3046',False), # TODO: really?
-    (ar_as_in_year,'\\u3048',False), # TODO: really?
-    (ear,'\\u3044\\u304a',False), # TODO: really?
-    (a_as_in_air,'\\u3048',False), # TODO: really?
-    (oor_as_in_poor,'\\u304a',False), # TODO: really?
-    (close_to_or,'\\u304a\\u30fc'), # TODO: really?
-    ('\\u3076',b), # bu (with vowel replacements later)
-    ('\\u3061\\u3047',ch), # chu (ditto)
-    ('\\u3065',d), # du (and so on)
-    ('\\u3066\\u3085',th_as_in_think), (th_as_in_them,'\\u3066\\u3085',False),
-    ('\\u3075',f),
-    ('\\u3050',g),
-    ('\\u306f',h), # ha (as hu == fu)
-    ('\\u3058\\u3085',j_as_in_jump), (ge_of_blige_etc,'\\u3058\\u3085',False),
-    ('\\u304f',k),
-    ('\\u308b',l), (r,'\\u308b',False),
-    ('\\u3080',m),
-    ('\\u306c',n),
-    ('\\u3093\\u3050',ng),
-    ('\\u3077',p),
-    ('\\u3059',s),
-    ('\\u3057\\u3085',sh),
-    ('\\u3064',t),
-    ('\\u308f',w), # use 'wa' (as 'wu' == 'u')
-    (v,ifset('KANA_V_AS_W','\\u308f','\\u3094'),False), # TODO: document KANA_V_AS_W variable.  Is vu always supported? (it doesn't seem to show up in all fonts)
-    ('\\u3086',y),
-    ('\\u305a',z),
+    ('\u3042',a_as_in_apple),
+    ('\u3044',e_as_in_eat),
+    ('\u3046',oo_as_in_food),
+    ('\u3048',e_as_in_them),
+    ('\u304a',o_as_in_orange),
+    ('\u3042\u3044',eye), # ai
+    ('\u3042\u304a',o_as_in_now), # ao
+    ('\u3048\u3044',a_as_in_ate), # ei
+    ('\u304a\u3044',oy_as_in_toy), # oi
+    ('\u304a\u3046',o_as_in_go), # ou
+    (a_as_in_ah,'\u3042',False),
+    (a_as_in_ago,'\u3046\u304a',False), # TODO: \u3042, \u304a or \u3046 depending on the word?
+    (e_as_in_herd,'\u3042',False), # TODO: really?
+    (i_as_in_it,'\u3044',False), # TODO: really?
+    (u_as_in_but,'\u3046',False), # TODO: really?
+    (ar_as_in_year,'\u3048',False), # TODO: really?
+    (ear,'\u3044\u304a',False), # TODO: really?
+    (a_as_in_air,'\u3048',False), # TODO: really?
+    (oor_as_in_poor,'\u304a',False), # TODO: really?
+    (close_to_or,'\u304a\u30fc'), # TODO: really?
+    ('\u3076',b), # bu (with vowel replacements later)
+    ('\u3061\u3047',ch), # chu (ditto)
+    ('\u3065',d), # du (and so on)
+    ('\u3066\u3085',th_as_in_think), (th_as_in_them,'\u3066\u3085',False),
+    ('\u3075',f),
+    ('\u3050',g),
+    ('\u306f',h), # ha (as hu == fu)
+    ('\u3058\u3085',j_as_in_jump), (ge_of_blige_etc,'\u3058\u3085',False),
+    ('\u304f',k),
+    ('\u308b',l), (r,'\u308b',False),
+    ('\u3080',m),
+    ('\u306c',n),
+    ('\u3093\u3050',ng),
+    ('\u3077',p),
+    ('\u3059',s),
+    ('\u3057\u3085',sh),
+    ('\u3064',t),
+    ('\u308f',w), # use 'wa' (as 'wu' == 'u')
+    (v,ifset('KANA_V_AS_W','\u308f','\u3094'),False), # TODO: document KANA_V_AS_W variable.  Is vu always supported? (it doesn't seem to show up in all fonts)
+    ('\u3086',y),
+    ('\u305a',z),
     lex_filename="words-kana-approx.txt",
     lex_type = "text",
     lex_header = "Kana approxmations (very approximate!)\n--------------------------------------\n",
     lex_entry_format = "%s ~= %s\n",
     word_separator=" ",phoneme_separator="",
-    clause_separator="\\u3002\n".encode('utf-8'),
-    cleanup_regexps=[("\\u306c$","\\u3093\\u30fc"), # TODO: or u"\u3093\u3093" ?
+    clause_separator="\u3002\n".encode('utf-8'),
+    cleanup_regexps=[("\u306c$","\u3093\u30fc"), # TODO: or u"\u3093\u3093" ?
        # now the vowel replacements (bu+a -> ba, etc) (in most cases these can be reversed into cvtOut_regexps if you want to use the kana-approx table to convert hiragana into approximate English phonemes (plus add a (u"\u3093\u30fc*",u"\u306c") and perhaps de-doubling rules to convert back to emphasis) but the result is unlikely to be any good)
-       ("\\u3076\\u3042","\\u3070"),("\\u3076\\u3044","\\u3073"),("\\u3076\\u3048","\\u3079"),("\\u3076\\u304a","\\u307c"),("\\u3076\\u3046","\\u3076"),
-       ("\\u3061\\u3085\\u3042","\\u3061\\u3083"),("\\u3061\\u3085\\u3046","\\u3061\\u3085"),("\\u3061\\u3085\\u3048","\\u3061\\u3047"),("\\u3061\\u3085\\u304a","\\u3061\\u3087"),("\\u3061\\u3085\\u3044","\\u3061"),
-       ("\\u3065\\u3042","\\u3060"),("\\u3065\\u3044","\\u3062"),("\\u3065\\u3048","\\u3067"),("\\u3065\\u304a","\\u3069"),("\\u3065\\u3046","\\u3065"),
-       ("\\u3066\\u3085\\u3042","\\u3066\\u3083"),("\\u3066\\u3085\\u3044","\\u3066\\u3043"),("\\u3066\\u3043\\u3046","\\u3066\\u3085"),("\\u3066\\u3085\\u3048","\\u3066\\u3047"),("\\u3066\\u3085\\u304a","\\u3066\\u3087"),
-       ("\\u3075\\u3042","\\u3075\\u3041"),("\\u3075\\u3044","\\u3075\\u3043"),("\\u3075\\u3048","\\u3075\\u3047"),("\\u3075\\u304a","\\u3075\\u3049"),("\\u3075\\u3046","\\u3075"),
-       ("\\u306f\\u3044","\\u3072"),("\\u306f\\u3046","\\u3075"),("\\u306f\\u3048","\\u3078"),("\\u306f\\u304a","\\u307b"),("\\u306f\\u3042","\\u306f"),
-       ("\\u3050\\u3042","\\u304c"),("\\u3050\\u3044","\\u304e"),("\\u3050\\u3048","\\u3052"),("\\u3050\\u304a","\\u3054"),("\\u3050\\u3046","\\u3050"),
-       ("\\u3058\\u3085\\u3042","\\u3058\\u3083"),("\\u3058\\u3085\\u3046","\\u3058\\u3085"),("\\u3058\\u3085\\u3048","\\u3058\\u3047"),("\\u3058\\u3085\\u304a","\\u3058\\u3087"),("\\u3058\\u3085\\u304a","\\u3058"),
-       ("\\u304f\\u3042","\\u304b"),("\\u304f\\u3044","\\u304d"),("\\u304f\\u3048","\\u3051"),("\\u304f\\u304a","\\u3053"),("\\u304f\\u3046","\\u304f"),
-       ("\\u308b\\u3042","\\u3089"),("\\u308b\\u3044","\\u308a"),("\\u308b\\u3048","\\u308c"),("\\u308b\\u304a","\\u308d"),("\\u308b\\u3046","\\u308b"),
-       ("\\u3080\\u3042","\\u307e"),("\\u3080\\u3044","\\u307f"),("\\u3080\\u3048","\\u3081"),("\\u3080\\u304a","\\u3082"),("\\u3080\\u3046","\\u3080"),
-       ("\\u306c\\u3042","\\u306a"),("\\u306c\\u3044","\\u306b"),("\\u306c\\u3048","\\u306d"),("\\u306c\\u304a","\\u306e"),("\\u306c\\u3046","\\u306c"),
-       ("\\u3077\\u3042","\\u3071"),("\\u3077\\u3044","\\u3074"),("\\u3077\\u3048","\\u307a"),("\\u3077\\u304a","\\u307d"),("\\u3077\\u3046","\\u3077"),
-       ("\\u3059\\u3042","\\u3055"),("\\u3059\\u3048","\\u305b"),("\\u3059\\u304a","\\u305d"),("\\u3059\\u3046","\\u3059"),
-       ("\\u3057\\u3085\\u3042","\\u3057\\u3083"),("\\u3057\\u3085\\u3046","\\u3057\\u3085"),("\\u3057\\u3085\\u3048","\\u3057\\u3047"),("\\u3057\\u3085\\u304a","\\u3057\\u3087"),("\\u3057\\u3085\\u3044","\\u3057"),
-       ("\\u3064\\u3042","\\u305f"),("\\u3064\\u3044","\\u3061"),("\\u3064\\u3048","\\u3066"),("\\u3064\\u304a","\\u3068"),("\\u3064\\u3046","\\u3064"),
-       ("\\u3086\\u3042","\\u3084"),("\\u3086\\u3048","\\u3044\\u3047"),("\\u3086\\u304a","\\u3088"),("\\u3086\\u3046","\\u3086"),
-       ("\\u305a\\u3042","\\u3056"),("\\u305a\\u3044","\\u3058"),("\\u305a\\u3048","\\u305c"),("\\u305a\\u304a","\\u305e"),("\\u305a\\u3046","\\u305a"),
-       ("\\u308f\\u3044","\\u3046\\u3043"),("\\u308f\\u3046","\\u3046"),("\\u308f\\u3048","\\u3046\\u3047"),("\\u308f\\u304a","\\u3092"),("\\u308f\\u3042","\\u308f"),
-       ('\\u3046\\u3043\\u3066\\u3085', '\\u3046\\u3043\\u3065'), # sounds a bit better for words like 'with'
-       ('\\u3085\\u3046','\\u3085'), # and 'the' (especially with a_as_in_ago mapping to u'\u3046\u304a'; it's hard to get a convincing 'the' though, especially in isolation)
-       ('\\u3050\\u3050','\\u3050'), # gugu -> gu, sometimes comes up with 'gl-' combinations
-       ('\\u30fc\\u30fc+','\\u30fc'), # in case we put 30fc in the table AND a stress mark has been applied to it
+       ("\u3076\u3042","\u3070"),("\u3076\u3044","\u3073"),("\u3076\u3048","\u3079"),("\u3076\u304a","\u307c"),("\u3076\u3046","\u3076"),
+       ("\u3061\u3085\u3042","\u3061\u3083"),("\u3061\u3085\u3046","\u3061\u3085"),("\u3061\u3085\u3048","\u3061\u3047"),("\u3061\u3085\u304a","\u3061\u3087"),("\u3061\u3085\u3044","\u3061"),
+       ("\u3065\u3042","\u3060"),("\u3065\u3044","\u3062"),("\u3065\u3048","\u3067"),("\u3065\u304a","\u3069"),("\u3065\u3046","\u3065"),
+       ("\u3066\u3085\u3042","\u3066\u3083"),("\u3066\u3085\u3044","\u3066\u3043"),("\u3066\u3043\u3046","\u3066\u3085"),("\u3066\u3085\u3048","\u3066\u3047"),("\u3066\u3085\u304a","\u3066\u3087"),
+       ("\u3075\u3042","\u3075\u3041"),("\u3075\u3044","\u3075\u3043"),("\u3075\u3048","\u3075\u3047"),("\u3075\u304a","\u3075\u3049"),("\u3075\u3046","\u3075"),
+       ("\u306f\u3044","\u3072"),("\u306f\u3046","\u3075"),("\u306f\u3048","\u3078"),("\u306f\u304a","\u307b"),("\u306f\u3042","\u306f"),
+       ("\u3050\u3042","\u304c"),("\u3050\u3044","\u304e"),("\u3050\u3048","\u3052"),("\u3050\u304a","\u3054"),("\u3050\u3046","\u3050"),
+       ("\u3058\u3085\u3042","\u3058\u3083"),("\u3058\u3085\u3046","\u3058\u3085"),("\u3058\u3085\u3048","\u3058\u3047"),("\u3058\u3085\u304a","\u3058\u3087"),("\u3058\u3085\u304a","\u3058"),
+       ("\u304f\u3042","\u304b"),("\u304f\u3044","\u304d"),("\u304f\u3048","\u3051"),("\u304f\u304a","\u3053"),("\u304f\u3046","\u304f"),
+       ("\u308b\u3042","\u3089"),("\u308b\u3044","\u308a"),("\u308b\u3048","\u308c"),("\u308b\u304a","\u308d"),("\u308b\u3046","\u308b"),
+       ("\u3080\u3042","\u307e"),("\u3080\u3044","\u307f"),("\u3080\u3048","\u3081"),("\u3080\u304a","\u3082"),("\u3080\u3046","\u3080"),
+       ("\u306c\u3042","\u306a"),("\u306c\u3044","\u306b"),("\u306c\u3048","\u306d"),("\u306c\u304a","\u306e"),("\u306c\u3046","\u306c"),
+       ("\u3077\u3042","\u3071"),("\u3077\u3044","\u3074"),("\u3077\u3048","\u307a"),("\u3077\u304a","\u307d"),("\u3077\u3046","\u3077"),
+       ("\u3059\u3042","\u3055"),("\u3059\u3048","\u305b"),("\u3059\u304a","\u305d"),("\u3059\u3046","\u3059"),
+       ("\u3057\u3085\u3042","\u3057\u3083"),("\u3057\u3085\u3046","\u3057\u3085"),("\u3057\u3085\u3048","\u3057\u3047"),("\u3057\u3085\u304a","\u3057\u3087"),("\u3057\u3085\u3044","\u3057"),
+       ("\u3064\u3042","\u305f"),("\u3064\u3044","\u3061"),("\u3064\u3048","\u3066"),("\u3064\u304a","\u3068"),("\u3064\u3046","\u3064"),
+       ("\u3086\u3042","\u3084"),("\u3086\u3048","\u3044\u3047"),("\u3086\u304a","\u3088"),("\u3086\u3046","\u3086"),
+       ("\u305a\u3042","\u3056"),("\u305a\u3044","\u3058"),("\u305a\u3048","\u305c"),("\u305a\u304a","\u305e"),("\u305a\u3046","\u305a"),
+       ("\u308f\u3044","\u3046\u3043"),("\u308f\u3046","\u3046"),("\u308f\u3048","\u3046\u3047"),("\u308f\u304a","\u3092"),("\u308f\u3042","\u308f"),
+       ('\u3046\u3043\u3066\u3085', '\u3046\u3043\u3065'), # sounds a bit better for words like 'with'
+       ('\u3085\u3046','\u3085'), # and 'the' (especially with a_as_in_ago mapping to u'\u3046\u304a'; it's hard to get a convincing 'the' though, especially in isolation)
+       ('\u3050\u3050','\u3050'), # gugu -> gu, sometimes comes up with 'gl-' combinations
+       ('\u30fc\u30fc+','\u30fc'), # in case we put 30fc in the table AND a stress mark has been applied to it
        ('^(.)$',r'\1\u30fc'), # lengthen any word that ends up as a single kana (otherwise can be clipped badly)
-    ('^([\\u3042\\u3070\\u3060\\u304c\\u304b\\u3089\\u307e\\u306a\\u3071\\u3055\\u305f\\u3084\\u3056\\u308f]\\u3044)$',r'\1\u30fc'), # ditto for -ai (TODO: -ao might need lengthening sometimes?? depends on context.  -ei, -oi, -ou seem OK)
+    ('^([\u3042\u3070\u3060\u304c\u304b\u3089\u307e\u306a\u3071\u3055\u305f\u3084\u3056\u308f]\u3044)$',r'\1\u30fc'), # ditto for -ai (TODO: -ao might need lengthening sometimes?? depends on context.  -ei, -oi, -ou seem OK)
     ],
     cleanup_func = hiragana_to_katakana
   ),
@@ -2066,7 +2066,7 @@ Set format to 'all' if you want to see the phonemes in ALL supported formats."""
    if not format in lexFormats and not format=="all": return "No such format "+repr(format)+" (use --formats to see a list of formats)"
    hadOneoff = False
    for response in getInputText(i+2,"text",'maybe'):
-    response = pipeThroughEspeak(response.replace('\\u2032'.encode('utf-8'),'').replace('\\u00b4'.encode('utf-8'),'').replace('\\u02b9'.encode('utf-8'),'').replace('\\u00b7'.encode('utf-8'),'')) # (remove any 2032 and b7 pronunciation marks before passing to eSpeak)
+    response = pipeThroughEspeak(response.replace('\u2032'.encode('utf-8'),'').replace('\u00b4'.encode('utf-8'),'').replace('\u02b9'.encode('utf-8'),'').replace('\u00b7'.encode('utf-8'),'')) # (remove any 2032 and b7 pronunciation marks before passing to eSpeak)
     if not '\n' in response.rstrip() and 'command' in response: return response.strip() # 'bad cmd' / 'cmd not found'
     if format=="all": formats = sorted(k for k in list(lexFormats.keys()) if not k=="example")
     else: formats = [format]
@@ -2097,13 +2097,13 @@ You can optionally set the RUBY_GRADINT_CGI environment variable to the URL of a
    if format=="example": return "The 'example' format cannot be used with --ruby; did you mean festival?" # as above
    elif format=="all": return "The --phones all option cannot be used with --ruby" # (well you could implement it if you want but the resulting ruby would be quite unwieldy)
    if not format in lexFormats: return "No such format "+repr(format)+" (use --formats to see a list of formats)"
-   text = getInputText(i+2,"text").replace('\\u2019'.encode('utf-8'),"'").replace('\\u2032'.encode('utf-8'),"'").replace('\\u00b4'.encode('utf-8'),"'").replace('\\u02b9'.encode('utf-8'),"'").replace('\\u00b7'.encode('utf-8'),'').replace('\\u00a0'.encode('utf-8'),' ')
+   text = getInputText(i+2,"text").replace('\u2019'.encode('utf-8'),"'").replace('\u2032'.encode('utf-8'),"'").replace('\u00b4'.encode('utf-8'),"'").replace('\u02b9'.encode('utf-8'),"'").replace('\u00b7'.encode('utf-8'),'').replace('\u00a0'.encode('utf-8'),' ')
    # eSpeak's basic idea of an alphabetical word (most versions?) -
    wordRegexps = [r"(?:[A-Z]+['?-])*(?:(?:(?<![A-z.])(?:[A-z]\.)+[A-z](?![A-z.]))|[A-Z]+[a-z](?![A-z])|[A-Z][A-Z]+(?![a-z][A-z])|[A-Z]?(?:[a-z]['?-]?)+|[A-Z])"]
    # A dot, when not part of an elipses, followed by a letter is pronounced "dot", and two of them are pronounced "dot dot":
    wordRegexps.append(r"(?<!\.\.)\.(?=[A-z])|(?<!\.)\.(?=\.[A-z])")
    # ! followed by a letter is pronounced "exclamation", and .! is "dotexclamation"; @ symbols similarly; copyright
-   atEtc = "(?:[@!:]|\\u00a9)*".encode('utf-8')
+   atEtc = "(?:[@!:]|\u00a9)*".encode('utf-8')
    wordRegexps.append(r"\.?[!@]+(?=[A-z])|(?<![A-z])@"+atEtc+"(?![A-z])|"+chr(0xa9).encode('utf-8')+atEtc)
    # : between numbers if NOT followed by 2 digits:
    wordRegexps.append(r"(?<![A-z]):(?![A-z]|[0-9][0-9])")
@@ -2233,7 +2233,7 @@ def writeFormatHeader(format):
    global writeFormatHeader_called
    if writeFormatHeader_called: print()
    print(format)
-   print(('-'*len(format)))
+   print('-'*len(format))
    writeFormatHeader_called = True
 writeFormatHeader_called = False
 
@@ -2251,7 +2251,7 @@ def mainopt_check_variants(i):
       if len(v)==1: continue
       v.sort()
       while True:
-         print(("Group",k))
+         print("Group",k)
          os.popen("espeak -x","w").write('\n'.join([markup_inline_word("espeak",w) for _,w in v]))
          if not eval(input("Again? 1/0: ")): break
 
@@ -2273,7 +2273,7 @@ def mainopt_check_for_similar_formats(i):
       if format1 in had and format2 in had: continue
       had.add(format1) ; had.add(format2)
       if "names" in had: break
-      print((diffs,"phoneme differences between",format1,"and",format2))
+      print(diffs,"phoneme differences between",format1,"and",format2)
 
 def festival_group_stress(pronunc):
    "Special-case cleanup_func for the Festival format"
@@ -2324,10 +2324,10 @@ E.g.: python lexconvert.py --convert festival cepstral"""
       except: pass
       assert not l, "File "+replHome(fname)+" already exists and is not empty; are you sure you want to overwrite it?  (Delete it first if so)" # (if you run with python -O then this is ignored, as are some other checks so be careful)
       outFile=open(fname,"w")
-   print(("Writing %s lexicon entries to %s file %s" % (fromFormat,toFormat,fname)))
+   print("Writing %s lexicon entries to %s file %s" % (fromFormat,toFormat,fname))
    try: convert_user_lexicon(fromFormat,toFormat,outFile)
    except Message:
-     print((" - error, deleting",fname))
+     print(" - error, deleting",fname)
      os.remove(fname) ; raise
 
 def mainopt_festival_dictionary_to_espeak(i):
@@ -2354,7 +2354,7 @@ Attempt to break 'words' into syllables for music lyrics (uses espeak to determi
       response = pipeThroughEspeak('\n'.join(words).replace("!","").replace(":","").replace(".",""))
       if not '\n' in response.rstrip() and 'command' in response: return response.strip() # 'bad cmd' / 'cmd not found'
       rrr = response.split("\n")
-      print((" ".join([hyphenate(word,sylcount(convert(line,"espeak","example"))) for word,line in zip(words,[x for x in rrr if x])])))
+      print(" ".join([hyphenate(word,sylcount(convert(line,"espeak","example"))) for word,line in zip(words,[x for x in rrr if x])]))
       sys.stdout.flush() # in case piped
 
 def wordSeparator(format):
@@ -2553,11 +2553,9 @@ def convert(pronunc,source,dest):
     "Convert pronunc from source to dest.  pronunc can be a string or a list; if a list then we'll recurse on each of the list elements and return a new list (this is meant for batch-converting clauses etc)"
     if source==dest: return pronunc # essential for --try experimentation with codes not yet supported by lexconvert
     if type(pronunc)==list: return [convert(p,source,dest) for p in pronunc]
-    if type(pronunc)!=str: pronunc=pronunc.decode('utf-8') # added by @quadrismegistus 6/2/2019 for python3 conversion
     func = checkSetting(source,'cvtOut_func')
     if func: pronunc=func(pronunc)
     for s,r in checkSetting(source,'cvtOut_regexps'):
-
         pronunc=re.sub(s,r,pronunc)
     ret = [] ; toAddAfter = None
     dictionary = make_dictionary(source,dest)
@@ -2746,7 +2744,7 @@ def convert_system_festival_dictionary_to_espeak(festival_location,check_existin
         if espeakPronunc: outFile.write(", not [["+espeakPronunc+"]]")
         elif unrelated_word: outFile.write(" (here to stop espeak's affix rules getting confused by Festival's \""+unrelated_word+"\")")
         outFile.write("\n")
-    print(("Corrected(?) %d entries out of %d" % (lines_output,total_lines)))
+    print("Corrected(?) %d entries out of %d" % (lines_output,total_lines))
     if add_user_dictionary_also: convert_user_lexicon("festival","espeak",outFile)
     outFile.close()
     os.system("espeak --compile=en")
@@ -2777,7 +2775,7 @@ def read_user_lexicon(fromFormat):
     try:
        lexFilename = getSetting(fromFormat,"lex_filename")
        lexfile = open(lexFilename)
-       if not os.environ.get("LEXCONVERT_OMIT_READING_FROM",""): print(("Reading from",lexFilename)) # TODO: document LEXCONVERT_OMIT_READING_FROM (might be useful for the --mac-uk option)
+       if not os.environ.get("LEXCONVERT_OMIT_READING_FROM",""): print("Reading from",lexFilename) # TODO: document LEXCONVERT_OMIT_READING_FROM (might be useful for the --mac-uk option)
     except KeyError: lexfile = None # lex_read_function without lex_filename is allowed, if the read function can take null param and fetch the lexicon itself
     except IOError: raise Message(fromFormat+"'s lexicon is expected to be in a file called "+replHome(lexFilename)+" which could not be read - please fix and try again")
     return readFunction(lexfile)
@@ -2788,7 +2786,7 @@ def replHome(fname):
    if h and fname.startswith(h+os.sep):
       return "~"+fname[len(h):]
    else: return fname
-
+    
 def get_macuk_lexicon(fromFormat):
     "Converts lexicon from fromFormat and returns a list suitable for MacBritish_System_Lexicon's readWithLex"
     return [(word,convert(pronunc,fromFormat,"mac-uk")) for word, pronunc in read_user_lexicon(fromFormat)]
@@ -2949,7 +2947,7 @@ def my_xreadlines():
    "On some platforms this might be a bit more responsive than sys.stdin.xreadlines"
    while True:
       # sys.stderr.write('got here\n')
-      try: yield eval(input())
+      try: yield input()
       except EOFError: return
       except KeyboardInterrupt: raise SystemExit
 
@@ -2967,7 +2965,7 @@ def write_bbcmicro_phones(clauses):
   for clause in clauses:
     global bbc_charsSoFar ; bbc_charsSoFar=0
     l=" ".join([markup_inline_word("bbcmicro",word) for word in clause])
-    print((l.replace(" \n","\n")))
+    print(l.replace(" \n","\n"))
     totalKeystrokes += len(l)+1 ; lines += 1
   print_bbc_warnings(totalKeystrokes,lines)
 def print_bbc_warnings(keyCount,lineCount):
@@ -3075,9 +3073,9 @@ def bbcKeystrokes(data,start):
   return '\n'.join(ret)+'\n'
 def print_bbclex_instructions(fname,size):
  """Print suitable instructions for a BBC Micro lexicon of the given filename and size (the exact nature of the instructions depends on the size).  If appropriate, create a .key file containing keystrokes for transferring to an emulator."""
- if os.environ.get("MAKE_SPEECH_ROM",0): print(("%s (%d bytes, hex %X) can now installed on an emulator (set in Roms.cfg or whatever), or loaded onto a chip.  The sound quality of this might be worse than that of the main-RAM version." % (fname,size,size))) # (at least on emulation - see comment on sound quality above)
+ if os.environ.get("MAKE_SPEECH_ROM",0): print("%s (%d bytes, hex %X) can now installed on an emulator (set in Roms.cfg or whatever), or loaded onto a chip.  The sound quality of this might be worse than that of the main-RAM version." % (fname,size,size)) # (at least on emulation - see comment on sound quality above)
  else:
-  print(("The size of this lexicon is %d bytes (hex %X)" % (size,size))) # (the default lexicon is 2204 bytes)
+  print("The size of this lexicon is %d bytes (hex %X)" % (size,size)) # (the default lexicon is 2204 bytes)
   bbcStart=None
   noSRAM_lex_offset=0x155F # (on the BBC Micro, SRAM means Sideways RAM, not Static RAM as it does elsewhere; for clarity we'd better say "Sideways RAM" in all output)
   SRAM_lex_offset=0x1683
@@ -3105,19 +3103,19 @@ def print_bbclex_instructions(fname,size):
       else:
         bbcStart = reloc_addr+noSRAM_lex_offset
         reloc_call = reloc_addr + 0xB00
-        print(("This lexicon is too big for Speech at its default address of &%X, but you could use RELOCAT to put a version at &%X and then initialise it with CALL %s (or do the suggested *SAVE, reset, and run *SP). Be sure to set HIMEM=&%X. Then *LOAD %s %X or change the relocated SP file from offset &%X.%s" % (noSRAM_default_addr,reloc_addr,bbcshortest(reloc_call),reloc_addr,fname,bbcStart,noSRAM_lex_offset,instr)))
+        print("This lexicon is too big for Speech at its default address of &%X, but you could use RELOCAT to put a version at &%X and then initialise it with CALL %s (or do the suggested *SAVE, reset, and run *SP). Be sure to set HIMEM=&%X. Then *LOAD %s %X or change the relocated SP file from offset &%X.%s" % (noSRAM_default_addr,reloc_addr,bbcshortest(reloc_call),reloc_addr,fname,bbcStart,noSRAM_lex_offset,instr))
     else: print("This lexicon is too big for Speech in main RAM even with relocation.")
   else: # fits at default location - no relocation needed
     bbcStart = noSRAM_default_addr+noSRAM_lex_offset
-    print(("You can load this lexicon by *LOAD %s %X or change the SPEECH file from offset &%X. Suggest you also set HIMEM=&%X for safety." % (fname,bbcStart,noSRAM_lex_offset,noSRAM_default_addr)))
+    print("You can load this lexicon by *LOAD %s %X or change the SPEECH file from offset &%X. Suggest you also set HIMEM=&%X for safety." % (fname,bbcStart,noSRAM_lex_offset,noSRAM_default_addr))
   if bbcStart: # we managed to fit it into main RAM
      keys = bbcKeystrokes(open(fname).read(),bbcStart)
      open(fname+".key","w").write(keys)
-     print(("For ease of transfer to emulators etc, a self-contained keystroke file for putting %s data at &%X has been written to %s.key" % (fname,bbcStart,fname)))
+     print("For ease of transfer to emulators etc, a self-contained keystroke file for putting %s data at &%X has been written to %s.key" % (fname,bbcStart,fname))
      if len(keys) > 32767: print("(This file looks too big for BeebEm to paste though)") # see comments elsewhere
   # Instructions for replacing lex in SRAM:
   if size > SRAM_max-SRAM_lex_offset: print("This lexicon is too big for Speech in Sideways RAM.") # unless you can patch Speech to run in SRAM but read its lexicon from main RAM, or run in main RAM but page in multiple banks of SRAM for the lexicon (but even then there'll be a limit)
-  else: print(("You can load this lexicon into Sideways RAM by *SRLOAD %s %X 7 (or whichever bank number you're using), or change the SP8000 file from offset &%X." % (fname,SRAM_lex_offset+0x8000,SRAM_lex_offset)))
+  else: print("You can load this lexicon into Sideways RAM by *SRLOAD %s %X 7 (or whichever bank number you're using), or change the SP8000 file from offset &%X." % (fname,SRAM_lex_offset+0x8000,SRAM_lex_offset))
   if not os.environ.get("SPEECH_DISK",""): print("If you want to append the default lexicon to this one, set SPEECH_DISK to the image of the original Speech disk before running lexconvert, e.g. export SPEECH_DISK=/usr/local/BeebEm3/diskimg/Speech.ssd")
   if size <= SRAM_max-SRAM_lex_offset: print("You can also set MAKE_SPEECH_ROM=1 (along with SPEECH_DISK) to create a SPEECH.ROM file instead")
  print("If you get 'Mistake in speech' when testing some words, try starting with '*SAY, ' (this seems to be a Speech bug)") # - can't track down which words it does and doesn't apply to
@@ -3125,7 +3123,7 @@ def print_bbclex_instructions(fname,size):
 
 def mainopt_version(i):
    # TODO: doc string for the help? (or would this option clutter it needlessly) - just print lexconvert's version number and nothing else
-   print((__doc__.split("\n")[0].split(" - ")[0]))
+   print(__doc__.split("\n")[0].split(" - ")[0])
 
 def main():
     """Introspect the module to find the mainopt_ functions, and either call one of them or print the help.  Returns the error code to send back to the OS."""
@@ -3139,9 +3137,9 @@ def main():
               sys.stderr.write(msg+"\n") ; return 1
            else: return 0
     html = ('--htmlhelp' in sys.argv) # (undocumented option used for my website, don't rely on it staying)
-    def htmlify(h): return re.sub('(--[A-Za-z-]*)',r'<kbd>\1</kbd>',h.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>'))
+    def htmlify(h): return re.sub('(--[2A-Za-z-]*)',r'<kbd>\1</kbd>',h.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('\n','<br>'))
     if not html: htmlify = lambda x:x
-    print((htmlify(__doc__)))
+    print(htmlify(__doc__))
     if html: missALine = "<p>"
     else: missALine = ""
     print(missALine)
@@ -3158,16 +3156,16 @@ def main():
                 ltype = checkSetting(k,"lex_type")
                 if ltype: ltype=" as "+ltype
                 types.append("lex-write"+ltype)
-          print(("\n"+k+" ("+", ".join(types)+")"))
-          print((getSetting(k,"doc")))
+          print("\n"+k+" ("+", ".join(types)+")")
+          print(getSetting(k,"doc"))
        return 0
     elif html:
        print("Available pronunciation formats:")
        if html: print('<table id="formats">')
        keys=list(lexFormats.keys()) ; keys.sort()
-       for k in keys: print(('<tr><td valign="top"><nobr>'+k+'</nobr></td><td valign="top">'+htmlify(getSetting(k,"doc"))+"</td></tr>"))
+       for k in keys: print('<tr><td valign="top"><nobr>'+k+'</nobr></td><td valign="top">'+htmlify(getSetting(k,"doc"))+"</td></tr>")
        print("</table><script><!-- try to be more readable on some smartphones\nif(((screen && screen.width<600) || navigator.userAgent.slice(-6)==\"Gecko/\" /* UC Browser? */) && document.getElementById && document.getElementById('formats').outerHTML) document.getElementById('formats').outerHTML = document.getElementById('formats').outerHTML.replace(/<table/g,'<dl').replace(/<.table/g,'<'+'/dl').replace(/<tr><td/g,'<dt').replace(/<.td><td/g,'<'+'/dt><dd').replace(/<.td><.tr/g,'<'+'/dd');\n//--></script>")
-    else: print(("Available pronunciation formats: "+", ".join(sorted(lexFormats.keys()))+"\n(Use --formats to see their descriptions)"))
+    else: print("Available pronunciation formats: "+", ".join(sorted(lexFormats.keys()))+"\n(Use --formats to see their descriptions)")
     print(missALine)
     print("Program options:")
     print(missALine)
@@ -3179,8 +3177,8 @@ def main():
        params,rest = desc.split("\n",1)
        if params.startswith('*'): params=params[1:]
        if params: opt += (' '+params)
-       if html: print(("<dt>"+htmlify(opt)+"</dt><dd>"+htmlify(rest)+"</dd>"))
-       else: print((opt+"\n"+rest+"\n"))
+       if html: print("<dt>"+htmlify(opt)+"</dt><dd>"+htmlify(rest)+"</dd>")
+       else: print(opt+"\n"+rest+"\n")
     if html: print("</dl>")
     return 0
 
@@ -3312,7 +3310,7 @@ class MacBritish_System_Lexicon(object):
         "Reads the text given in the constructor after setting up the lexicon with the given (word,phoneme) list"
         # self.check_redef(lex) # uncomment if you want to know about these
         textToPrint = ' '+self.textToAvoid+' '
-        tta = ' '+self.textToAvoid.replace('\\u2019',"'").replace('\\u2032','').replace('\\u00b4','').replace('\\u02b9','').replace('\\u00b7','').replace('\\u2014',' ')+' ' # (ignore pronunciation marks 2032 and b7 that might be in the text, but still print them in textToPrint; also normalise apostrophes but not in textToPrint, and be careful with dashes as lex'ing the word after a hyphen or em-dash won't work BUT we still want to support hyphenated words IN the lexicon, so em-dashes are replaced here and hyphens are included in nonWordBefore below)
+        tta = ' '+self.textToAvoid.replace('\u2019',"'").replace('\u2032','').replace('\u00b4','').replace('\u02b9','').replace('\u00b7','').replace('\u2014',' ')+' ' # (ignore pronunciation marks 2032 and b7 that might be in the text, but still print them in textToPrint; also normalise apostrophes but not in textToPrint, and be careful with dashes as lex'ing the word after a hyphen or em-dash won't work BUT we still want to support hyphenated words IN the lexicon, so em-dashes are replaced here and hyphens are included in nonWordBefore below)
         words2,phonemes2 = [],[] # keep only the ones actually used in the text (no point setting whole lexicon)
         nonWordBefore=r"(?i)(?<=[^A-Za-z"+chr(0)+"-])" # see below for why chr(0) is included, and see comment above for why hyphen is at the end; (?i) = ignore case
         nonWordAfter=r"(?=([^A-Za-z'"+chr(0x2019)+"-]|['"+chr(0x2019)+r"-][^A-Za-z]))" # followed by non-letter non-apostrophe, or followed by apostrophe non-letter (so not if followed by "'s", because the voice won't use our custom lex entry if "'s" is added to the lex'd word, TODO: automatically add "'s" versions to the lexicon via +s or +iz?) (also not if followed by hyphen-letters; hyphen before start is handled above, although TODO preceded by non-letter + hyphen might be OK)
@@ -3321,15 +3319,15 @@ class MacBritish_System_Lexicon(object):
           ww = ww.decode('utf-8') # so you can add words with accents etc (in utf-8) to the lexicon
           if ww.lower() in ttal and re.search(nonWordBefore+re.escape(ww)+nonWordAfter,tta):
             words2.append(ww) ; phonemes2.append(pp)
-        for k,v in list(self.setMultiple(words2,phonemes2).items()):
+        for k,v in self.setMultiple(words2,phonemes2).items():
            tta = re.sub(nonWordBefore+re.escape(k)+nonWordAfter,chr(0)+v,tta)
-           textToPrint = re.sub(nonWordBefore+'('+'[\\u2032\\u00b4\\u02b9\\u00b7]*'.join(re.escape(c) for c in k)+')'+nonWordAfter,chr(0)+r'\1'+chr(1),textToPrint)
+           textToPrint = re.sub(nonWordBefore+'('+'[\u2032\u00b4\u02b9\u00b7]*'.join(re.escape(c) for c in k)+')'+nonWordAfter,chr(0)+r'\1'+chr(1),textToPrint)
         tta = tta.replace(chr(0),'')
         term = os.environ.get("TERM","")
         if ("xterm" in term or term=="screen") and sys.stdout.isatty(): # we can probably underline words (inverse is more widely supported than underline, e.g. should work even on an old Linux console in case someone's using that to control an OS X server, but there might be a *lot* of words, which wouldn't be very good in inverse if user needs dark background and inverse is bright.  Unlike Annogen, we're dealing primarily with Latin letters.)
            import textwrap
            textwrap.len = lambda x: len(x.replace(chr(0),"").replace(chr(1),"")) # a 'hack' to make (at least the 2.x implementations of) textwrap ignore our chr(0) and chr(1) markers in their calculations.  Relies on textwrap calling len().
-           print((textwrap.fill(textToPrint,stdout_width_unix(),break_on_hyphens=False).encode('utf-8').replace(chr(0),"\x1b[4m").replace(chr(1),"\x1b[0m").strip())) # break_on_hyphens=False because we don't really want hyphenated NAMES to be split across lines, and anyway textwrap in (at least) Python 2.7 has a bug that sometimes causes a line breaks to be inserted before a syllable marker symbol like 'prime'
+           print(textwrap.fill(textToPrint,stdout_width_unix(),break_on_hyphens=False).encode('utf-8').replace(chr(0),"\x1b[4m").replace(chr(1),"\x1b[0m").strip()) # break_on_hyphens=False because we don't really want hyphenated NAMES to be split across lines, and anyway textwrap in (at least) Python 2.7 has a bug that sometimes causes a line breaks to be inserted before a syllable marker symbol like 'prime'
         # else don't print anything (saves confusion)
         os.popen(macSayCommand()+" -v \""+self.voice+"\"",'w').write(tta.encode('utf-8'))
     def setMultiple(self,words,phonemes):

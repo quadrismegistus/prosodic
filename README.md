@@ -105,6 +105,9 @@ The data above were produced when the meter was defined as the following constra
 To install PROSODIC, it's best to clone the github repository here. To do that, type this into the terminal:
 
 	git clone git@github.com:quadrismegistus/prosodic.git
+
+You can also install PROSODIC as a python 3 package using this command:
+	pip install git+git://github.com/quadrismegistus/prosodic.git
 	
 [If you don't have git, you can [get it here](https://git-scm.com/downloads).] Or, you can also [download the repository as a zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), and unzip it. Either method will create a directory called "prosodic." Enter that folder in the terminal, and boot up prosodic by typing:
 

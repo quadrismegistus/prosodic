@@ -12,6 +12,19 @@
 
 
 ############################################
+# PATHS
+
+# Relative paths are relative to dir_prosodic_home, which defauls to ~/prosodic_data
+# and which can be changed by editing the hidden variable ~/.path_prosodic_data
+
+path_dicts = 'dicts'     # directory to store dictionary TTS code/data
+path_corpora = 'corpora'
+path_meters = 'meters'
+path_results = 'results'
+path_tagged_results = 'tagged_results'
+
+
+############################################
 # METRICAL PARSING
 #
 # Set the Meter ID: the filename to its configuration file
@@ -217,39 +230,40 @@ output_fi='orth'		# since finnish pronunciation is essentially identical to its 
 ############################################
 
 
-############################################
-# PATHS USED BY PROSODIC
-#
-# If these are relative paths (no leading /),
-# they are defined from the point of view of
-# the root directory of PROSODIC.
-#
-# Folder used as the folder of corpora:
-# [it should contain folders, each of which contains text files]
-folder_corpora='corpora/'
-#
-# Folder to store results within (statistics, etc)
-folder_results='results/'
-#
-# Folder in which tagged samples (hand-parsed lines) are stored:
-folder_tagged_samples = 'tagged_samples/'
-############################################
+# ############################################
+# @DEPRECATED
+# # PATHS USED BY PROSODIC
+# #
+# # If these are relative paths (no leading /),
+# # they are defined from the point of view of
+# # the root directory of PROSODIC.
+# #
+# # Folder used as the folder of corpora:
+# # [it should contain folders, each of which contains text files]
+# folder_corpora='corpora/'
+# #
+# # Folder to store results within (statistics, etc)
+# folder_results='results/'
+# #
+# # Folder in which tagged samples (hand-parsed lines) are stored:
+# folder_tagged_samples = 'tagged_samples/'
+# ############################################
 
 ############################################
 # MAXIMUM ENTROPY settings
 #
 # Should negative weights be allowed?
-negative_weights_allowed = False
+maxent_negative_weights_allowed = False
 #
 # How many epochs should it run for at most?
-max_epochs = 10000
+maxent_max_epochs = 10000
 #
 # What should the step size be?
-step_size = 0.1
+maxent_step_size = 0.1
 #
 # How small does the gradient have to be before
 # we consider it converged?
-gradient_norm_tolerance = 1e-6
+maxent_gradient_norm_tolerance = 1e-6
 
 ############################################
 

@@ -510,7 +510,7 @@ class Text(entity):
 				yield parse_ent_mp(objectx)
 
 		if being.config['print_to_screen']:
-			print('>> parsing complete in:',time.time()-now,'seconds')
+			print('\n\n>> parsing complete in:',time.time()-now,'seconds')
 
 
 	def parse(self,meter=None,arbiter='Line',line_lim=None):

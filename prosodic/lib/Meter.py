@@ -110,8 +110,10 @@ class Meter:
 		self.name=config.get('name','')
 		self.id = config['id']
 		self.config=config
-		import prosodic
-		self.prosodic_config=prosodic.config
+		#import prosodic
+		#print(config)
+		#self.prosodic_config=prosodic.config
+		self.prosodic_config=config
 
 		if not constraints:
 			self.constraints.append(Constraint(id=0,name="foot-min",weight=1,meter=self))

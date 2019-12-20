@@ -79,14 +79,34 @@ def loadConfig(toprint=True,dir_prosodic=None):
 			print("\t"+"\t".join(str(x) for x in [k,v]))
 	return settings
 
-def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
+
+_here = os.path.abspath(os.path.dirname(__file__))
+#dir_mtree = os.path.join(_here,'metricaltree')
+home = os.path.expanduser("~")
+default_dir_prosodic_home=os.path.join(home,'prosodic_data')
+path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
+
+
+
+def get_path_prosodic_home():
+	if not os.path.exists(path_prosodic_home_dir_var):
+		return default_dir_prosodic_home
+	else:
+		with open(path_prosodic_home_dir_var) as f:
+			return f.read().strip()
+
+
+
+def loadConfigPy(toprint=True,dir_prosodic=None,config=None,dir_prosodic_home=None):
 	import imp
-	settings={'constraints':[]}
+	#settings={'constraints':[]}
+	settings={}
 	if not dir_prosodic: dir_prosodic=sys.path[0]
 
 	config=config if config else imp.load_source('config', os.path.join(dir_prosodic,'config.py'))
 
 	vnames = [x for x in dir(config) if not x.startswith('_')]
+
 
 	for vname in vnames:
 		vval=getattr(config,vname)
@@ -99,37 +119,59 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None):
 					cname+=str(v[0])
 					for i in range(1, min(3, len(v))):
 						cname+=';' + str(v[i])
+				if not 'constraints' in settings: settings['constraints']=[]
 				settings['constraints']+=[cname]
 		else:
 			settings[vname]=vval
 
+	# resolve paths?
+
+	path_prosodic_home_dir = get_path_prosodic_home() if not dir_prosodic_home else dir_prosodic_home
+	for sname,sval in settings.items():
+		if sname.startswith('path_') and not os.path.isabs(sval):
+			settings[sname] = os.path.abspath(os.path.join(path_prosodic_home_dir,sval))
+	settings['path_prosodic_data'] = path_prosodic_home_dir
 
 	if toprint:
 		print(">> loaded settings:")
+		formatstr='   {:<35} {:<50}'
+		print()
+		print(formatstr.format('[Name]', '[Value]'))
 		for k,v in sorted(settings.items()):
-			if type(v) == list:
-				print('\t',k)
-				for x in v:
-					print('\t\t',x)
-			else:
-				print('\t',k,'\t',v)
+			vstr=' | '.join([str(vx) for vx in v]) if type(v) in {list,tuple,dict} else str(v)
+			print(formatstr.format(k, vstr))
+		print()
 
 	#settings['constraints']=" ".join(settings['constraints'])
 	#settings['meters']=loadMeters()
 
 	return settings
 
-def loadMeters():
-	import meters
+def loadMeters(meter_dir,config={}):
+
+	# get all meters from a path
+	import os,imp
+	module_d={}
+	for fn in os.listdir(meter_dir):
+		if not fn.endswith('.py') or fn.startswith('_'): continue
+		idx=fn.replace('.py','').replace('-','_')
+		module_d[idx]=imp.load_source(idx, os.path.join(meter_dir,fn))
+
+
 	from Meter import Meter
+
 	d={}
-	for name,module in list(meters.d.items()):
+	for name,module in list(module_d.items()):
 		#d[name]=loadConfigPy(toprint=False,config=module)
 		#d[name]['id']=name
-		mconfig = loadConfigPy(toprint=False,config=module)
+		mconfig = {}
+		for k,v in config.items(): mconfig[k]=v
+		for k,v in loadConfigPy(toprint=False,config=module).items(): mconfig[k]=v
+
 		mconfig['id']=name
 		mobj = Meter(config=mconfig)
 		d[name]=mobj
+
 	return d
 
 def now(now=None,seconds=True):
@@ -300,8 +342,8 @@ def makeminlength(string,numspaces):
 			string += " "
 	return string
 
-def loadDict(lang):
-	return get_class('Dictionary.Dictionary')(lang)
+def loadDict(lang,config):
+	return get_class('Dictionary.Dictionary')(lang,config)
 
 def get_class( kls ):
 	parts = kls.split('.')

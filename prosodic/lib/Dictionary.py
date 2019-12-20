@@ -17,17 +17,15 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			for x in k[1:]:
 				char2phons.append(x)
 
-	def __init__(self,lang):
-		import prosodic
-		dirself=prosodic.dir_prosodic
-		libfolder=os.path.join(dirself,'lib')
-		dictsfolder=os.path.join(dirself,'dicts')
-		self.config=prosodic.config
+	def __init__(self,lang,config):
+		self.config=config
+		dictsfolder = config.get('path_dicts')
+		if not dictsfolder: return
+
 		self.unstressedWords=[]
 		self.maybestressedWords=[]
 
 		self.lang = lang
-		self.libfolder = libfolder
 		self.dictsfolder = os.path.join(dictsfolder,self.lang)
 		sys.path.append(self.dictsfolder)
 

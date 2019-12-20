@@ -4,7 +4,7 @@ import sys,glob,os,time,codecs
 import logging
 #logging.basicConfig(level=logging.DEBUG, format='#### %(levelname)s:\n%(message)s\n####\n')
 #logging.basicConfig(level=logging.INFO, format='## LOG #############\n%(message)s\n####################\n')
-#print '>> importing prosodic...'
+print('>> importing prosodic...')
 
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]
@@ -13,21 +13,37 @@ sys.path.insert(0,dir_prosodic)
 dir_imports=os.path.join(dir_prosodic,'lib')
 sys.path.append(dir_imports)
 
-dir_mtree=os.path.join(dir_prosodic,'metricaltree')
+dir_mtree=os.path.join(dir_prosodic,'..','metricaltree')
 sys.path.append(dir_mtree)
 
+# import setup
+import importlib.machinery
+dir_setup = os.path.abspath(os.path.join(dir_prosodic,'..'))
+path_setup = os.path.join(dir_setup,'setup.py')
+module_setup = importlib.machinery.SourceFileLoader('setup',path_setup).load_module()
+module_setup.configure_home_dir(force=False)
+
+path_setup = os.path.join(dir_prosodic)
+
 ## import necessary objects
-#toprintconfig=__name__=='__main__'
-toprintconfig=False
+toprintconfig=__name__=='__main__'
+#toprintconfig=True
 from tools import *
 config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
-config['meters']=loadMeters()
+
+import json
+os.environ['prosodic_config_json']=json.dumps(config)
+
+#default_dir_prosodic_home = os.path.abspath(os.path.expanduser('~/prosodic_data'))
+dir_prosodic_home = config.get('path_prosodic_data')
+dir_dicts = config.get('path_dicts', os.path.join(dir_prosodic_home, 'dicts'))
+dir_meters = config.get('path_meters', os.path.join(dir_prosodic_home, 'meters'))
+dir_results = config.get('path_results', os.path.join(dir_prosodic_home, 'results'))
+dir_tagged = config.get('path_tagged_samples', os.path.join(dir_prosodic_home, 'tagged_samples'))
+dir_corpus = config.get('path_corpora', os.path.join(dir_prosodic_home, 'corpora'))
+
+config['meters']=loadMeters(dir_meters,config)
 METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
-
-
-dir_corpus=os.path.join(dir_prosodic,config['folder_corpora'])
-dir_results=os.path.join(dir_prosodic,config['folder_results'])
-dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
 
 text=''
 
@@ -54,13 +70,13 @@ import ipa
 hdrbar="################################################"
 
 ## set defaults
-languages=['en','fi']
+languages=[lang for lang in os.listdir(dir_dicts) if os.path.isdir(os.path.join(dir_dicts,lang))] if dir_dicts else ['en','fi']
 lang=config['lang']
 
-## load defaults
+# load defaults
 dict={}
 for lng in languages:
-	dict[lng]=loadDict(lng)
+	dict[lng]=loadDict(lng,config)
 del lng
 
 
@@ -205,10 +221,10 @@ else:	## if not imported, go into interactive mode
 			skip=False
 
 		if text=="/exit":
-			for k,v in list(dict.items()):
-				#dict[k].save_tabbed()
-				dict[k].persist()
-				dict[k].close()
+			# for k,v in list(dict.items()):
+			# 	#dict[k].save_tabbed()
+			# 	dict[k].persist()
+			# 	dict[k].close()
 			print()
 			print(">> goodbye.")
 			exit()
@@ -292,10 +308,10 @@ else:	## if not imported, go into interactive mode
 
 				learner = MaxEntAnalyzer(data_aggregator)
 
-				step_size = float(config['step_size'])
-				negative_weights_allowed = bool(config['negative_weights_allowed'])
-				max_epochs = int(config['max_epochs'])
-				gradient_norm_tolerance = float(config['gradient_norm_tolerance'])
+				step_size = float(config.get('maxent_step_size'))
+				negative_weights_allowed = bool(config.get('maxent_negative_weights_allowed'))
+				max_epochs = int(config.get('maxent_max_epochs'))
+				gradient_norm_tolerance = float(config.get('maxent_gradient_norm_tolerance'))
 
 				learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
 				learner.report()

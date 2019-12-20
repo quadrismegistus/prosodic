@@ -1,0 +1,9 @@
+nltk
+numpy
+Pyphen
+pyparsing
+xlrd
+networkx
+statlib
+xlwt
+Levenshtein

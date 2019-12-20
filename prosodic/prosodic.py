@@ -16,6 +16,7 @@ sys.path.append(dir_imports)
 dir_mtree=os.path.join(dir_prosodic,'..','metricaltree')
 sys.path.append(dir_mtree)
 
+
 # import setup
 import importlib.machinery
 dir_setup = os.path.abspath(os.path.join(dir_prosodic,'..'))
@@ -41,6 +42,7 @@ dir_meters = config.get('path_meters', os.path.join(dir_prosodic_home, 'meters')
 dir_results = config.get('path_results', os.path.join(dir_prosodic_home, 'results'))
 dir_tagged = config.get('path_tagged_samples', os.path.join(dir_prosodic_home, 'tagged_samples'))
 dir_corpus = config.get('path_corpora', os.path.join(dir_prosodic_home, 'corpora'))
+dir_nlp_data = config.get('path_nlp_data', os.path.join(dir_prosodic_home, 'nlp_libraries'))
 
 config['meters']=loadMeters(dir_meters,config)
 METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
@@ -49,8 +51,9 @@ text=''
 
 
 
-if __name__ != '__main__':
-	config['print_to_screen']=False
+#print(__name__)
+#if __name__ != '__main__':
+#	config['print_to_screen']=False
 
 import entity
 from entity import being
@@ -63,8 +66,6 @@ from Phoneme import Phoneme
 from Word import Word
 from WordToken import WordToken
 from Meter import Meter
-from MaxEnt2 import DataAggregator
-from MaxEnt2 import MaxEntAnalyzer
 from Meter import get_meter
 import ipa
 hdrbar="################################################"
@@ -122,7 +123,12 @@ else:	## if not imported, go into interactive mode
 				pass
 
 			if arg2=='stanford_parser':
-				os.system('cd '+dir_mtree+' && '+'./get-deps.sh && cd '+dir_prosodic)
+				dir_get_deps=os.path.join(dir_mtree,'get-deps.sh')
+				if not os.path.exists(dir_nlp_data): os.makedirs(dir_nlp_data)
+				#cmd='cd '+dir_nlp_data+' && '+dir_get_deps+' && cd '+dir_prosodic
+				cmd=f'{dir_get_deps} "{dir_nlp_data}"'
+				print(cmd)
+				os.system(cmd)
 
 		else:
 			print("<error> file not found")
@@ -163,17 +169,15 @@ else:	## if not imported, go into interactive mode
 
 		msg+="\n"
 
-		msg+="\t\t/weight\trun maximum entropy on a pipe-delimited file\n"
-		msg+="\t\t/weight2\trun maximum entropy on a tab-delimited file\n"
-		try:
-			learner
-		except NameError:
-			pass
-		else:
-			if learner != None:
-				msg+="\t\t/weightsave\tsave the results of the last run of /weight or /weight2 \n"
-
-		msg+="\n"
+		# try:
+		# 	learner
+		# except NameError:
+		# 	pass
+		# else:
+		# 	if learner != None:
+		# 		msg+="\t\t/weightsave\tsave the results of the last run of /weight or /weight2 \n"
+		#
+		#
 
 		if obj:
 			msg+="\t\t/show\tshow annotations on input\n"
@@ -183,8 +187,12 @@ else:	## if not imported, go into interactive mode
 
 			msg+="\t\t/parse\tparse metrically\n"
 			msg+="\t\t/meter\tset the meter used for parsing\n"
-			msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n\n"
+			msg+="\t\t/eval\tevaluate this meter against a hand-tagged sample\n"
+			msg+="\t\t/maxent\tlearn weights for meter using maxent\n\n"# (pipe-delimited input file\n"
 			msg+="\t\t/save\tsave previous output to file (except for /weight and /weight2; see /weightsave)\n"
+
+
+			#msg+="\t\t/weight2\trun maximum entropy on a tab-delimited file\n"
 
 		if obj and obj.isParsed():
 			msg+="\t\t/scan\tprint out the scanned lines\n"
@@ -254,7 +262,10 @@ else:	## if not imported, go into interactive mode
 		elif text=="/parse":
 			obj.parse(meter=METER)
 
-		elif text.startswith("/weight"):
+		elif text.startswith("/maxent"):
+			from MaxEnt2 import DataAggregator
+			from MaxEnt2 import MaxEntAnalyzer
+
 
 			# Check if learner is defined
 			try:
@@ -262,59 +273,48 @@ else:	## if not imported, go into interactive mode
 			except NameError:
 				learner = None
 
-			if text.startswith("/weightsave"):
-				if not learner:
-					print("Cannot save weights as no weights have been trained. First train the MaxEnt learner with /weight or /weight2")
-				else:
-					# save the weights to a file
-					fn=text.replace('/weightsave','').strip()
-					if not fn:
-						fn=input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the default directory ['+config['folder_results']+'],\n\t- or as a full path.\n\n').strip()
+			data_path = text[len("/weight "):]
+			if data_path == "" or data_path is None or not os.path.exists(data_path):
+				print("You must enter an existing filename after the command i.e., /maxent <filename>")
+				continue
 
-					try:
-						ofn=None
-						dirname=os.path.dirname(fn)
-						if dirname:
-							ofn=fn
-						else:
-							dirname=config['folder_results']
-							ofn=os.path.join(dirname,fn)
+			with open(data_path) as f:
+				input_data = f.read()
+				tab_not_pipe = input_data.count('|') < input_data.count('\t')
 
-						if not os.path.exists(dirname): os.makedirs(dirname)
-						of=codecs.open(ofn,'w',encoding='utf-8')
+			data_aggregator = DataAggregator(METER, data_path, lang, is_tab_formatted=tab_not_pipe)
+			learner = MaxEntAnalyzer(data_aggregator)
+
+			step_size = float(config.get('maxent_step_size'))
+			negative_weights_allowed = bool(config.get('maxent_negative_weights_allowed'))
+			max_epochs = int(config.get('maxent_max_epochs'))
+			gradient_norm_tolerance = float(config.get('maxent_gradient_norm_tolerance'))
+
+			learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
+			learner.report()
+
+
+			## save
+			if not learner:
+				print("Cannot save weights as no weights have been trained. First train the MaxEnt learner with /weight or /weight2")
+			else:
+				# save the weights to a file
+				# fn=text.replace('/weightsave','').strip()
+				# if not fn:
+				# 	fn=input('\n>> please enter a file name to save output to,\n\t- either as a simple filename in the default directory ['+config['folder_results']+'],\n\t- or as a full path.\n\n').strip()
+				ofn = os.path.join(dir_results,'maxent',os.path.basename(data_path)+'.txt')
+
+				try:
+					dirname=os.path.dirname(ofn)
+					if not os.path.exists(dirname): os.makedirs(dirname)
+					with codecs.open(ofn,'w') as of:
 						output_str = learner.generate_save_string()
 						of.write(output_str)
 						of.close()
 						print(">> saving weights to: "+ofn)
-					except IOError as e:
-						print(e)
-						print("** [error: file not saved.]\n\n")
-
-			else:
-				if text.startswith("/weight2"):
-					data_path = text[len("/weight2 "):]
-					if data_path == "" or data_path is None:
-						print("You must enter the filename after the command i.e., /weight2 <filename>")
-						continue
-					aggregator = data_aggregator = DataAggregator(METER, data_path, lang, True)
-
-				else:
-					data_path = text[len("/weight "):]
-					if data_path == "" or data_path is None:
-						print("You must enter the filename after the command i.e., /weight <filename>")
-						continue
-					data_aggregator = DataAggregator(METER, data_path, lang)
-
-
-				learner = MaxEntAnalyzer(data_aggregator)
-
-				step_size = float(config.get('maxent_step_size'))
-				negative_weights_allowed = bool(config.get('maxent_negative_weights_allowed'))
-				max_epochs = int(config.get('maxent_max_epochs'))
-				gradient_norm_tolerance = float(config.get('maxent_gradient_norm_tolerance'))
-
-				learner.train(step = step_size, epochs=max_epochs, tolerance=gradient_norm_tolerance, only_positive_weights=not negative_weights_allowed)
-				learner.report()
+				except IOError as e:
+					print(e)
+					print("** [error: file not saved.]\n\n")
 
 		elif text=="/plot":
 			obj.plot()
@@ -362,13 +362,13 @@ else:	## if not imported, go into interactive mode
 
 
 		elif text=="/tree":
-			obj.om(obj.tree()+"\n\n",conscious=False)
+			obj.om(obj.tree()+"\n\n")
 			#print obj.tree()
 			print()
 
 		elif text=="/grid":
 			grid=obj.grid()
-			obj.om("\n"+grid+"\n",conscious=False)
+			obj.om("\n"+grid+"\n")
 			print()
 
 		elif text=="/show":
@@ -440,7 +440,7 @@ else:	## if not imported, go into interactive mode
 							matchstr=""
 						else:
 							matchstr=str(match)
-						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr, conscious=False)
+						wordobj.om(makeminlength(str(matchcount),int(being.linelen/6))+"\t"+makeminlength(str(wordobj),int(being.linelen))+"\t"+matchstr)
 
 			cmd = q
 

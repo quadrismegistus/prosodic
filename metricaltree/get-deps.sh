@@ -5,6 +5,8 @@
 DATE=2015-04-20
 VERSION=3.5.2
 
+echo "cd $1"
+cd "$1"
 wget "http://nlp.stanford.edu/software/stanford-parser-full-$DATE.zip"
 unzip "stanford-parser-full-$DATE.zip"
 mkdir "Stanford Library"

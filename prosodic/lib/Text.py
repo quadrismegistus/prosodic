@@ -39,8 +39,9 @@ class Text(entity):
 		self.stress_ambiguity=stress_ambiguity
 		self.dir_prosodic=prosodic.dir_prosodic
 		self.dir_results=prosodic.dir_results
-		self.dir_mtree = prosodic.dir_mtree
 		self.config=prosodic.config
+		self.dir_nlp_data = prosodic.dir_nlp_data
+		self.dir_mtree = prosodic.dir_mtree
 		self.meter=self.config['meters'][meter] if meter and meter in self.config['meters'] else None
 		self._sentences=[]
 		#self.meterd={]}
@@ -359,7 +360,7 @@ class Text(entity):
 					print('!! if that doesn\'t work:')
 					print('!! \t1) download: http://nlp.stanford.edu/software/stanford-parser-full-2015-04-20.zip')
 					print('!! \t2) unzip it')
-					print('!! \t3) move the unzipped directory to:',self.dir_mtree+'/Stanford Library/stanford-parser-full-2015-04-20/')
+					print('!! \t3) move the unzipped directory to:',self.dir_nlp_data+'/Stanford Library/stanford-parser-full-2015-04-20/')
 					print()
 				else:
 					print('!! text not parsed for unknown reason!')
@@ -384,7 +385,7 @@ class Text(entity):
 		if self.lang!='en': raise Exception("MetricalTree parsing only works currently for English text.")
 
 		import metricaltree as mtree
-		mtree.set_paths(self.dir_mtree)
+		mtree.set_paths(self.dir_nlp_data)
 
 		wordtoks = self.wordtokens()
 		toks = [wtok.token for wtok in wordtoks]
@@ -395,7 +396,7 @@ class Text(entity):
 		sents=[]
 		for pause in pauses:
 			sents.extend(mtree.split_sentences_from_tokens(pause))
-		parser = mtree.return_parser(self.dir_mtree)
+		parser = mtree.return_parser(self.dir_nlp_data)
 		trees = list(parser.lex_parse_sents(sents, verbose=False))
 		stats = parser.get_stats(trees,arto=True,format_pandas=False)
 		assert len(stats)==len(wordtoks)

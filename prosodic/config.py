@@ -22,6 +22,7 @@ path_corpora = 'corpora'
 path_meters = 'meters'
 path_results = 'results'
 path_tagged_results = 'tagged_results'
+path_nlp_data = 'nlp_libraries'
 
 
 ############################################
@@ -85,7 +86,7 @@ en_TTS_cache = 1
 # CONFIGURE METRICALTREE
 #
 # Parse text using metrical tree? (Only for English).
-parse_using_metrical_tree = False
+parse_using_metrical_tree = 1
 ############################################
 
 

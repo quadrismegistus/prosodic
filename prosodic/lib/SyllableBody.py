@@ -27,7 +27,7 @@ class SyllableBody(entity):
 		self.token=tok
 
 	def __repr__(self):
-		return "<"+self.classname()+"> ["+str(self)+"]"
+		return "<"+self.classname()+"> "#["+str(self)+"]"
 
 	def getShape(self):
 		shape = ""

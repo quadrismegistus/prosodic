@@ -120,15 +120,15 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		(The string just prior to this one will remain available at prosodic.being.omm).
 		"""
 
-		force_print=conscious
-		force_silence=not conscious
+		#force_silence = conscious == False
 
 		#import prosodic
 		#if (not conscious) and bool(being.config['print_to_screen']):
 
 		if not type(breath)==str: breath=str(breath)
 		being.om+=breath+"\n"
-		if not force_silence and bool(being.config['print_to_screen']):
+		#if not force_silence and bool(being.config['print_to_screen']):
+		if bool(being.config['print_to_screen']):
 			print(self.u2s(breath))
 
 		return breath
@@ -1263,11 +1263,13 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			if child.isBroken():
 				newline+="<<broken>>"
 			else:
-				string=self.u2s(child)
+				string=str(child)
+				#if 'Line' in string:
 				if (not "<" in string):
 					newline=makeminlength(newline,99)
 					newline+="["+string+"]"
 				elif string[0]!="<":
+				#else:
 					newline+="\t"+string
 				if len(child.feats):
 					if (not child.classname() in nofeatsplease):

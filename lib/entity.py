@@ -120,12 +120,17 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 		(The string just prior to this one will remain available at prosodic.being.omm).
 		"""
 
+		force_print=conscious
+		force_silence=not conscious
+
 		#import prosodic
-		if (not conscious) and bool(being.config['print_to_screen']):
-			if not type(breath) in [str,str]:
-				breath=str(breath)
-			being.om+=breath+"\n"
+		#if (not conscious) and bool(being.config['print_to_screen']):
+
+		if not type(breath)==str: breath=str(breath)
+		being.om+=breath+"\n"
+		if not force_silence and bool(being.config['print_to_screen']):
 			print(self.u2s(breath))
+
 		return breath
 
 	## features
@@ -1192,6 +1197,7 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				if type(child)==type([]): continue
 				ReportStr+=child.report()
 
+		self.om(ReportStr)
 		return ReportStr
 
 	def _getcorr_prepkey(self,key):

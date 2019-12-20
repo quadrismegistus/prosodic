@@ -69,7 +69,7 @@ def configure_home_dir():
 
 	# copy
 	import shutil
-	print '>> copying:',ipath_config,'-->',opath_config
+	print('>> copying:',ipath_config,'-->',opath_config)
 	shutil.copyfile(ipath_config,opath_config)
 	#print '>> copying:',ipath_meter,'-->',opath_meter
 	#shutil.copyfile(ipath_meter,opath_meter)
@@ -80,7 +80,7 @@ def configure_home_dir():
 		if fn.startswith('.'): continue
 		ifnfn=os.path.join(ipath_samples,fn)
 		ofnfn=os.path.join(opath_samples,fn)
-		print '>> copying:',ifnfn,'-->',ofnfn
+		print('>> copying:',ifnfn,'-->',ofnfn)
 		shutil.copyfile(ifnfn,ofnfn)
 
 	# copy corpora
@@ -115,7 +115,7 @@ with open("requirements.txt", "r") as fh:
 
 setup(
 	name='prosodic',
-	version='1.2.6',
+	version='1.3.0',
 	description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 	long_description=long_description,
 	long_description_content_type="text/markdown",
@@ -140,7 +140,7 @@ setup(
 	)
 
 
-# 
+#
 # nltk==3.4
 # numpy==1.15.4
 # Pyphen==0.9.5

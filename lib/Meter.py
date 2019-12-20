@@ -498,6 +498,6 @@ def parse_ent(ent,meter,init,toprint=True):
 		ent.scansion(meter=meter,conscious=True)
 	return ent
 
-def parse_ent_mp(xxx_todo_changeme):
-	(ent,meter,init,toprint) = xxx_todo_changeme
+def parse_ent_mp(input_tuple):
+	(ent,meter,init,toprint) = input_tuple
 	return parse_ent(ent,meter,init,toprint)

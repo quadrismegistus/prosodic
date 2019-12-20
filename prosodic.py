@@ -32,6 +32,10 @@ dir_tagged=os.path.join(dir_prosodic,config['folder_tagged_samples'])
 text=''
 
 
+
+if __name__ != '__main__':
+	config['print_to_screen']=False
+
 import entity
 from entity import being
 being.config=config
@@ -194,7 +198,7 @@ else:	## if not imported, go into interactive mode
 		## ask for input only if argument not received
 		if not skip:
 			try:
-				text=input(msg).strip().decode('utf-8',errors='ignore')
+				text=input(msg).strip() #.decode('utf-8',errors='ignore')
 			except (KeyboardInterrupt,EOFError) as e:
 				text='/exit'
 		else:
@@ -219,7 +223,7 @@ else:	## if not imported, go into interactive mode
 			contents = []
 			while True:
 				try:
-					line = input("").decode('utf-8',errors='ignore')
+					line = input("") #.decode('utf-8',errors='ignore')
 					contents.append(line)
 				except EOFError:
 					break
@@ -519,7 +523,7 @@ else:	## if not imported, go into interactive mode
 				if not os.path.exists(dirname): os.makedirs(dirname)
 				of=codecs.open(ofn,'w',encoding='utf-8')
 				if type(being.omm) in [str]:
-					being.omm=being.omm.decode('utf-8',errors='ignore')
+					being.omm=being.omm #.decode('utf-8',errors='ignore')
 				of.write(being.omm)
 				of.close()
 				print(">> saving previous output to: "+ofn)

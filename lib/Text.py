@@ -456,7 +456,7 @@ class Text(entity):
 		self.__boundParses={}
 		self.__parsed_ents={}
 
-	def iparse(self,meter=None,num_processes=1,arbiter='Line',line_lim=None):
+	def iparse(self,meter=None,num_processes=1,arbiter='Line',line_lim=None,toprint=True):
 		"""Parse this text metrically, yielding it line by line."""
 		from Meter import Meter,genDefault,parse_ent,parse_ent_mp
 		import multiprocessing as mp
@@ -480,13 +480,12 @@ class Text(entity):
 		ents = [e for e in ents if e.num_syll >= smin and e.num_syll<=smax]
 		#print '>> # of lines to parse after applying min/max line settings:',len(ents)
 
-		self.scansion_prepare(meter=meter,conscious=True)
+		self.scansion_prepare(meter=meter,conscious=toprint)
 
 		numents=len(ents)
 
 		#pool=mp.Pool(1)
-		toprint=being.config['print_to_screen']
-		objects = [(ent,meter,init,False) for ent in ents]
+		objects = [(ent,meter,init,toprint) for ent in ents]
 
 		if num_processes>1:
 			print('!! MULTIPROCESSING PARSING IS NOT WORKING YET !!')
@@ -598,7 +597,7 @@ class Text(entity):
 			num_syll=len(self.syllables())
 		return num_syll
 
-	def scansion(self,meter=None,conscious=False):
+	def scansion(self,meter=None,conscious=True):
 		"""Print out the parses and their violations in scansion format."""
 		meter=self.get_meter(meter)
 		self.scansion_prepare(meter=meter,conscious=conscious)

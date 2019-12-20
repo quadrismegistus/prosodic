@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
 	setup(
 		name='prosodic',
-		version='1.3.0',
+		version='1.3.1',
 		description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 		long_description=long_description,
 		long_description_content_type="text/markdown",

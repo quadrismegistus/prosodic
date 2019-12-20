@@ -746,8 +746,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 			cc=None
 			p=None
 			try:
-				from statlib import stats
-				(cc,p)=stats.pearsonr(xs,ys)
+				from scipy.stats import pearsonr
+				(cc,p)=pearsonr(xs,ys)
 
 				aa=makeminlength("    correlation coefficient: ",int(being.linelen/1.4))+str(cc)
 				bb=makeminlength("    p-value: ",int(being.linelen/1.4))+str(p)

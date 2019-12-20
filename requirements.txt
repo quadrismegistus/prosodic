@@ -4,6 +4,6 @@ Pyphen
 pyparsing
 xlrd
 networkx
-statlib
+scipy
 xlwt
 Levenshtein

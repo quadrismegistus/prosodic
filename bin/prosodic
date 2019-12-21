@@ -1,8 +1,17 @@
 #!/usr/bin/env python
-from prosodic import *
+import prosodic,os,sys
+#print(prosodic.__file__)
 
+path_to_prosodic_py = os.path.join(os.path.dirname(prosodic.__file__), 'prosodic.py')
 
-# #!/bin/bash
+#exec(path_to_prosodic_py,{'__name__':'__main__'})
+#print(sys.argv)
+argstr=' '.join(sys.argv[1:])
+cmd = f'python {path_to_prosodic_py} {argstr}'
+#
+# print(cmd)
+# os.system(cmd)
+
 #
 # MY_PATH="`dirname \"$0\"`"
 # #echo "$MY_PATH"

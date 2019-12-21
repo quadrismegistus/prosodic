@@ -21,7 +21,7 @@ path_dicts = 'dicts'     # directory to store dictionary TTS code/data
 path_corpora = 'corpora'
 path_meters = 'meters'
 path_results = 'results'
-path_tagged_results = 'tagged_results'
+path_tagged_samples = 'tagged_samples'
 path_nlp_data = 'nlp_libraries'
 
 

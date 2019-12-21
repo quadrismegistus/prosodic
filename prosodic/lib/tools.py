@@ -1092,11 +1092,11 @@ def configure_home_dir(force=False):
 	ipath_samples = os.path.join(_here,'tagged_samples')
 	ipath_corpora = os.path.join(_here,'corpora')
 
-	print(ipath_config)
-	print(ipath_meter)
-	print(ipath_dicts)
-	print(ipath_samples)
-	print(ipath_corpora)
+	# print(ipath_config)
+	# print(ipath_meter)
+	# print(ipath_dicts)
+	# print(ipath_samples)
+	# print(ipath_corpora)
 
 	opath_config = os.path.join(dir_prosodic_home,'config_default.py')
 	#opath_meter = os.path.join(dir_meter_home,'meter_default.py')

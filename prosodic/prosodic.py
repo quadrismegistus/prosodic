@@ -150,7 +150,7 @@ else:	## if not imported, go into interactive mode
 
 
 	## start clock
-	timestart=time.clock()
+	timestart=time.time()
 
 
 
@@ -217,10 +217,10 @@ else:	## if not imported, go into interactive mode
 		#"""
 		msg+="\t\t/exit\texit\n"
 		#msg+="#######################################################################\n\n"
-		msg+="\n>> ["+str(round((time.clock() - timestart),2))+"s] prosodic:"+lang+"$ "
+		msg+="\n>> ["+str(round((time.time() - timestart),2))+"s] prosodic:"+lang+"$ "
 
 	 	## restart timer
-		timestart=time.clock()
+		timestart=time.time()
 
 		## ask for input only if argument not received
 		if not skip:

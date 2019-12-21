@@ -1,10 +1,10 @@
-# PROSODIC
+# Prosodic
 
-PROSODIC is a a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. PROSODIC was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
+Prosodic is a a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
-## About PROSODIC
+## About Prosodic
 
-PROSODIC does two main things. First, it tokenizes text into words, and then converts each word into its stressed, syllabified, phonetic transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
+Prosodic does two main things. First, it tokenizes text into words, and then converts each word into its stressed, syllabified, phonetic transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
 
 ### Example of metrical parsing
 
@@ -26,7 +26,7 @@ Here's an example of the metrical parser in action, on Shakespeare's first sonne
 	pity the world or else this glutton be  				PI|ty.the|WORLD|or|ELSE|this|GLUT|ton|BE
 	to eat the world's due by the grave and thee			to|EAT|the|WORLD'S|due|BY|the|GRAVE|and|THEE
 
-Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)). It also gets some lines wrong: its interpretation of "feed'st thy light's flame," for example. But how accurate is it on average?
+Not bad, right? Prosodic not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)). It also gets some lines wrong: its interpretation of "feed'st thy light's flame," for example. But how accurate is it on average?
 
 #### Metrical annotation output
 
@@ -34,21 +34,21 @@ See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?
 
 ### Accuracy of metrical parser
 
-In preliminary tests, we ran PROSODIC against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)). For example, here is a line, and how it was parsed by a human, PROSODIC, and the "bare template" of its poem's meter (iambic).
+In preliminary tests, we ran Prosodic against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)). For example, here is a line, and how it was parsed by a human, Prosodic, and the "bare template" of its poem's meter (iambic).
 
 	Line:       Anxious  in  vain  to  find  the  distant  floor
 
 	Human:      ANxious  in  VAIN  to  FIND  the  DIStant  FLOOR
                 s   w    w   s     w   s     w    s  w     s
 
-	PROSODIC:   ANxious  in  VAIN  to  FIND  the  DIStant  FLOOR
+	Prosodic:   ANxious  in  VAIN  to  FIND  the  DIStant  FLOOR
                 s   w    w   s     w   s     w    s  w     s
 
 	Template:   anXIOUS  in  VAIN  to  FIND  the  DIStant  FLOOR
                 w   s    w   s     w   s     w    s  w     s
 	            *   *
 
-We can see that PROSODIC gets this line right; the template gets most of it right, missing only the trochaic inversion. By running all of the lines through in this way (using the `/eval` command of PROSODIC [see below]) we can see what percentage of syllables both PROSODIC and a template "correctly" capture—where "correct" is to agree with the human parse.
+We can see that Prosodic gets this line right; the template gets most of it right, missing only the trochaic inversion. By running all of the lines through in this way (using the `/eval` command of Prosodic [see below]) we can see what percentage of syllables both Prosodic and a template "correctly" capture—where "correct" is to agree with the human parse.
 
 <table>
 	<thead align=center>
@@ -58,7 +58,7 @@ We can see that PROSODIC gets this line right; the template gets most of it righ
 		<tr>
 			<th></th>
 			<th width=140>Another Human</th>
-			<th width=140>PROSODIC</th>
+			<th width=140>Prosodic</th>
 			<th width=140>Base Template (for this meter)</th>
 			<th width=140>Base Template (iambic meter)</th>
 		</tr>
@@ -95,52 +95,54 @@ We can see that PROSODIC gets this line right; the template gets most of it righ
 	</tbody>
 </table>
 
-The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect PROSODIC to do. But PROSODIC is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, PROSODIC is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," PROSODIC is nonetheless able to discover the basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), PROSODIC's parses were able to predict the overall meter in 200 poems with about 98% accuracy.
+The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect Prosodic to do. But Prosodic is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, Prosodic is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," Prosodic is nonetheless able to discover the basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), Prosodic's parses were able to predict the overall meter in 200 poems with about 98% accuracy.
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints are mentioned below, but are best documented in their confuration file, `config.py`.
 
-[One final note: these human annotations—made by literature Ph.D. students—embody certain assumptions about meter that are common in literary, but not linguistic circles. For instance, representing a trochaic inversion as a literal inversion of feet, "swws," is not how Kiparsky would represent it; for him, a trochaic inversion is simply a conventional, permissible violation of the iambic meter. However, PROSODIC doesn't necessarily commit itself to either of these theories or approaches: parses that conform to either theory can be generated using different sets of constraints.]
+[One final note: these human annotations—made by literature Ph.D. students—embody certain assumptions about meter that are common in literary, but not linguistic circles. For instance, representing a trochaic inversion as a literal inversion of feet, "swws," is not how Kiparsky would represent it; for him, a trochaic inversion is simply a conventional, permissible violation of the iambic meter. However, Prosodic doesn't necessarily commit itself to either of these theories or approaches: parses that conform to either theory can be generated using different sets of constraints.]
 
 
 ## Installation
 
 ### Quick start
 
-To install PROSODIC, it's best to clone the github repository here. To do that, type this into the terminal:
+To install Prosodic, it's best to install using pip. In a terminal, type:
 
-	git clone git@github.com:quadrismegistus/prosodic.git
+	pip install prosodic
 
-[If you don't have git, you can [get it here](https://git-scm.com/downloads).] Or, you can also [download the repository as a zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), and unzip it. Either method will create a directory called "prosodic." Enter that folder in the terminal, and boot up prosodic by typing:
+After installation, you should have access to the "prosodic" executable. Simply run:
 
-	python prosodic.py
+	prosodic
 
-PROSODIC can also be used as a python module within your own applications:
+to open up the interactive terminal interface.
+
+Prosodic can also be used as a python module within your own applications:
 
 	import prosodic as p
 	text = p.Text("Shall I compare thee to a summer's day?")
 	text.parse()
 
-Instructions on how to use PROSODIC in interactive mode, and as a python module, are below.
+Instructions on how to use Prosodic in interactive mode, and as a python module, are below.
 
 ### Dependencies
 
 #### Text to speech engine for parsing unknown English words
 
-By default, PROSODIC uses the CMU pronunciation dictionary to discover the syllable boundaries, stress pattern, and other information about English words necessary for metrical parsing. Lines with words not in this dictionary are, again by default, skipped when parsing. However, with a Text-to-Speech engine, it's possible to "sound out" unknown English words into a stressed, syllabified form that can then be parsed. PROSODIC supports two TTS engines: *espeak* (recommended), and *OpenMary*. I find that espeak produces better syllabifications than OpenMary (at least for English), and is simpler to use, but either will work just fine.
+By default, Prosodic uses the CMU pronunciation dictionary to discover the syllable boundaries, stress pattern, and other information about English words necessary for metrical parsing. Lines with words not in this dictionary are, again by default, skipped when parsing. However, with a Text-to-Speech engine, it's possible to "sound out" unknown English words into a stressed, syllabified form that can then be parsed. Prosodic supports two TTS engines: *espeak* (recommended), and *OpenMary*. I find that espeak produces better syllabifications than OpenMary (at least for English), and is simpler to use, but either will work just fine.
 
 ##### Setting up espeak
 
 [Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.py* file to "espeak." That's it!
 
-<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which PROSODIC draws from (if possible) before resorting to a TTS engine.</small>
+<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which Prosodic draws from (if possible) before resorting to a TTS engine.</small>
 
 ##### Setting up OpenMary
 
-OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) [select the "Run time package" link]. Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in PROSODIC, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. For espeak, this step isn't necessary.
+OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) [select the "Run time package" link]. Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in Prosodic, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. For espeak, this step isn't necessary.
 
 #### Python module dependencies
 
-By default, PROSODIC has no module dependencies. The modules it does use—[lexconvert](http://ssb22.user.srcf.net/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
+By default, Prosodic has no module dependencies. The modules it does use—[lexconvert](http://ssb22.user.srcf.net/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
 
 - If you'd like to use the built-in query language (available under "/query" in the interactive mode), you'll need to install pyparsing: `pip install pyparsing`.
 - If you're running OpenMary, you'll need to install the xml parser Beautiful Soup 4, and the unicode module unidecode: `pip install bs4` and `pip install unidecode`.
@@ -150,7 +152,7 @@ By default, PROSODIC has no module dependencies. The modules it does use—[lexc
 
 ## Usage
 
-There are two main ways of using PROSODIC: in interactive mode, and, for more Python-advanced users, as a Python module.
+There are two main ways of using Prosodic: in interactive mode, and, for more Python-advanced users, as a Python module.
 
 ### Interactive mode
 
@@ -175,11 +177,11 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 
 #### Loading text
 
-The first thing to do when using PROSODIC is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within PROSODIC's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot PROSODIC with: `python prosodic.py /path/to/my/file.txt`.
+The first thing to do when using Prosodic is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within Prosodic's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot Prosodic with: `python prosodic.py /path/to/my/file.txt`.
 
 #### Checking phonetic/phonological annotations
 
-Even before metrically parsing the text you've loaded (see below), you can run a few commands to test out how PROSODIC has interpreted the text in terms of its phonetics and phonology. The command `/show` will show the phonetic transcription and stress- and weight-profiles for each word:
+Even before metrically parsing the text you've loaded (see below), you can run a few commands to test out how Prosodic has interpreted the text in terms of its phonetics and phonology. The command `/show` will show the phonetic transcription and stress- and weight-profiles for each word:
 
     000001  of                      P:ʌv                                S:U     W:L
     000002  mans                    P:'mænz                             S:P     W:H
@@ -254,7 +256,7 @@ Lastly, the `/query` command allows you to query these phonological annotations.
 
 #### Metrically parsing text
 
-The command `/parse` will metrically parse whatever text is currently loaded into PROSODIC. Once the text is parsed, further commands become possible, all of which either view or save the data gleaned from the parser.
+The command `/parse` will metrically parse whatever text is currently loaded into Prosodic. Once the text is parsed, further commands become possible, all of which either view or save the data gleaned from the parser.
 
 The command `/scan` prints the best parse for each line, along with statistics on which constraints it violated. [This output, like any other output, can be saved to disk (and then opened with Excel) by using the `/save` command.] For instance, here are the first four lines of *Paradise Lost*, using the `/scan` command:
 
@@ -326,13 +328,13 @@ Finally, you can also save a variety of statistics from the metrical parser in t
 
 #### Evaluating the meter against a hand-parsed sample
 
-How well does PROSODIC do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic"). PROSODIC will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.py`), and save statistics to the same folder in tab-separated form. The spreadsheet used in the above accuracy table is provided, made by the Stanford Literary Lab's [poetry project](http://github.com/quadrismegistus/litlab-poetry) in 2014 and 2016.
+How well does Prosodic do when its metrical parses are compared with those that a human reader has annotated? The statistics above, in "Accuracy of metrical parser," were generated from the evaluation command: `/eval`. From there, you can select a spreadsheet (either a tab-separated text file or an excel document) saved in the `tagged_samples/` folder to use as the "ground truth", human-annotated parse. The `/eval` command will ask which columns in the file correspond to the line ("Of man's first disobedience and the fruit"), the parse ("wswswswwsws"), and (optionally) the meter of the line ("iambic"). Prosodic will then parse the lines under the "line" column (using, as always, the current configuration of metrical constraints in `config.py`), and save statistics to the same folder in tab-separated form. The spreadsheet used in the above accuracy table is provided, made by the Stanford Literary Lab's [poetry project](http://github.com/quadrismegistus/litlab-poetry) in 2014 and 2016.
 
 ### Configuration options
 
-All configuration of PROSODIC takes place in `config.py` in the root folder of PROSODIC. This file is well-commented and is the best source of documentation on how to use it. (It's best to edit this file inside a text editor that highlights the Python syntax, so you can visually see which settings are deactivated by being "commented-out," i.e. by having a "#" character at the start of their lines.) Here is a list of what you will find there.
+All configuration of Prosodic takes place in `config.py` in the root folder of Prosodic. This file is well-commented and is the best source of documentation on how to use it. (It's best to edit this file inside a text editor that highlights the Python syntax, so you can visually see which settings are deactivated by being "commented-out," i.e. by having a "#" character at the start of their lines.) Here is a list of what you will find there.
 
-* Technical options about how PROSODIC works:
+* Technical options about how Prosodic works:
 	* The paths used for corpora, results, and tagged samples
 	* The language used (currently, English or Finnish)
 	* Which Text-to-Speech engine, if any, is used for parsing unknown English words
@@ -358,9 +360,9 @@ All configuration of PROSODIC takes place in `config.py` in the root folder of P
 Again, please see the documentation within `config.py` for more information.
 
 
-### Running PROSODIC as a python module
+### Running Prosodic as a python module
 
-PROSODIC can also be run within other python applications.
+Prosodic can also be run within other python applications.
 
 	In [1]: import prosodic as p
 
@@ -380,13 +382,13 @@ For more information on this, please see [the Wiki](https://github.com/quadrisme
 
 ## How it works
 
-How does PROSODIC work? Here is an overview of its two major aspects: how words are tokenized, phonetically transcribed, syllabified, and stressed; and then how that information is used to find the optimal metrical parse according to a set of constraints.
+How does Prosodic work? Here is an overview of its two major aspects: how words are tokenized, phonetically transcribed, syllabified, and stressed; and then how that information is used to find the optimal metrical parse according to a set of constraints.
 
 ### From text, to words, to phonetics and phonology
 
-PROSODIC first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated. If the word is found in the [CMU pronunciation dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict), its syllabified, stressed, phonetic transcription is used. If not, a text-to-speech engine is used to "sound out" the unknown word, and then a syllabifier is used to break the stressed IPA transcription into syllables. For details on which text-to-speech engine and syllabifier are used, see above, "Text to speech engine for parsing unknown English words."
+Prosodic first encounters a piece of English or Finnish text. It tokenizes that text according to a user-defined tokenizer, set under the option "tokenizer" in `config.py`, defaulting to splitting lines into words by whitespace and hyphens. In Finnish text, a pure-Python implementation of Finnish IPA-transcription and syllabification is provided, built by Josh Falk. In English, the process is more complicated. If the word is found in the [CMU pronunciation dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict), its syllabified, stressed, phonetic transcription is used. If not, a text-to-speech engine is used to "sound out" the unknown word, and then a syllabifier is used to break the stressed IPA transcription into syllables. For details on which text-to-speech engine and syllabifier are used, see above, "Text to speech engine for parsing unknown English words."
 
-With these phonetic-phonological transcriptions, PROSODIC builds each word as a hierarchy of its constituent parts. For instance, the English word "love" is interpreted:
+With these phonetic-phonological transcriptions, Prosodic builds each word as a hierarchy of its constituent parts. For instance, the English word "love" is interpreted:
 
 	| (W1) <Word>	love	<'l ah v>
 	|     [numSyll=1]
@@ -500,7 +502,7 @@ The best parse (at the bottom) is iambic with a trochaic inversion; it violates 
 
 The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See `config.py` for a better description of these and other constraints.
 
-## Extending PROSODIC
+## Extending Prosodic
 
 ### Adding languages
 
@@ -519,7 +521,7 @@ Currently, Finnish is implemented by the latter method; English, by a combinatio
 
 To add entries to a language's dictionary, simply add an entry in the above format to the dictionary `[language_name].tsv` under the folder `[prosodic_dir]/dicts/[language_twoletter_code]`.
 
-To add a new language entirely, you can create a new dictionary in the above format and place it under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv`. Or, you can create a python file under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py`, which has a function `get(token,config={})`. This function must accept a word-token as its only argument, and PROSODIC's configuration settings as an optional keyword argument, and it must return a list of tuples in the form:
+To add a new language entirely, you can create a new dictionary in the above format and place it under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].tsv`. Or, you can create a python file under `[prosodic_dir]/dicts/[language_twoletter_code]/[language_name].py`, which has a function `get(token,config={})`. This function must accept a word-token as its only argument, and Prosodic's configuration settings as an optional keyword argument, and it must return a list of tuples in the form:
 
 	[
 		(

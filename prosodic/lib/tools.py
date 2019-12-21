@@ -1014,6 +1014,8 @@ home = os.path.expanduser("~")
 default_dir_prosodic_home=os.path.join(home,'prosodic_data')
 path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
 
+from distutils.dir_util import copy_tree
+from os.path import expanduser
 
 
 def get_path_prosodic_home():

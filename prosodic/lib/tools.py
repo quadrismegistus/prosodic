@@ -1043,7 +1043,7 @@ def configure_home_dir(force=False):
 
 
 	# get paths
-	raise Exception(str(os.listdir(_here)))
+	#raise Exception(str(os.listdir(_here)))
 	ipath_config = os.path.join(_here,'prosodic','config.py')
 	#ipath_meter = os.path.join(_here,'prosodic','meters','meter_default.py')
 	ipath_meter = os.path.join(_here,'meters')

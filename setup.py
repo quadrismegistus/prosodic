@@ -124,23 +124,21 @@ path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
 # 	shutil.copyfile(os.path.join(_here,'README.md'),'README_prosodic.txt')
 
 
-import sys,os
-path_to_lib = os.path.join(_here,'prosodic','lib')
-sys.path.append(path_to_lib)
-raise Exception(path_to_lib)
-from tools import *
+import sys,os,imp
+path_to_tools = os.path.join(_here,'prosodic','lib','tools.py')
+tools = imp.load_source('tools',path_to_lib)
 
 
 class PostDevelopCommand(develop):
 	"""Post-installation for development mode."""
 	def run(self):
-		configure_home_dir(force=True)
+		tools.configure_home_dir(force=True)
 		develop.run(self)
 
 class PostInstallCommand(install):
 	"""Post-installation for installation mode."""
 	def run(self):
-		configure_home_dir(force=True)
+		tools.configure_home_dir(force=True)
 		install.run(self)
 
 if __name__ == '__main__':

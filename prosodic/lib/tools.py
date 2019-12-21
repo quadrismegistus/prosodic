@@ -1008,7 +1008,7 @@ def wordtoks2str(wordtoks):
 
 
 
-_here = os.path.abspath(os.path.dirname(__file__))
+_here = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..'))
 #dir_mtree = os.path.join(_here,'metricaltree')
 home = os.path.expanduser("~")
 default_dir_prosodic_home=os.path.join(home,'prosodic_data')

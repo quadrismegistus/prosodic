@@ -136,7 +136,7 @@ OpenMary is another open-source TTS engine, written in Java and developed by two
 
 #### Python module dependencies
 
-By default, PROSODIC has no module dependencies. The modules it does use—[lexconvert](http://people.ds.cam.ac.uk/ssb22/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
+By default, PROSODIC has no module dependencies. The modules it does use—[lexconvert](http://ssb22.user.srcf.net/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
 
 - If you'd like to use the built-in query language (available under "/query" in the interactive mode), you'll need to install pyparsing: `pip install pyparsing`.
 - If you're running OpenMary, you'll need to install the xml parser Beautiful Soup 4, and the unicode module unidecode: `pip install bs4` and `pip install unidecode`.

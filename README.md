@@ -28,9 +28,9 @@ Here's an example of the metrical parser in action, on Shakespeare's first sonne
 
 Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)). It also gets some lines wrong: its interpretation of "feed'st thy light's flame," for example. But how accurate is it on average?
 
-#### Available data
+#### Metrical annotation output
 
-See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?dl=0) for a quick look of three output statistics files.
+See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?dl=0) for a quick look of the three output statistics files are produced in the metrical annotation process.
 
 ### Accuracy of metrical parser
 

@@ -18,7 +18,9 @@ sys.path.append(dir_mtree)
 
 
 # import setup
-import importlib.machinery
+#import importlib.machinery
+from tools import *
+
 dir_setup = os.path.abspath(os.path.join(dir_prosodic,'..'))
 path_setup = os.path.join(dir_setup,'setup.py')
 #module_setup = importlib.machinery.SourceFileLoader('setup',path_setup).load_module()
@@ -30,7 +32,7 @@ path_setup = os.path.join(dir_prosodic)
 ## import necessary objects
 toprintconfig=__name__=='__main__'
 #toprintconfig=True
-from tools import *
+
 config=loadConfigPy(toprint=toprintconfig,dir_prosodic=dir_prosodic)
 
 import json

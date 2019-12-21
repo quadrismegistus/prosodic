@@ -28,6 +28,10 @@ Here's an example of the metrical parser in action, on Shakespeare's first sonne
 
 Not bad, right? PROSODIC not only captures the sonnet's overall iambic meter, but also some of its variations. It accurately captures the trochaic inversions in the lines "*Mak*ing a *fam*ine *where* a*bun*dance *lies*" and "*Pi*ty the *world* or *else* this *glut*ton *be*." Also, depending on the constraints, it also captures the double-strong beat that can often follow a double-weak beat in the line "Thy *self* thy *foe* to thy *sweet self* too *cruel*" (see, for this metrical pattern, [Bruce Hayes' review of Derek Attridge's *The Rhythms of English Poetry* in *Language* 60.1, 1984](http://www.linguistics.ucla.edu/people/hayes/Papers/Hayes1984ReviewOfAttridge.pdf)). It also gets some lines wrong: its interpretation of "feed'st thy light's flame," for example. But how accurate is it on average?
 
+#### Available data
+
+See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?dl=0) for a quick look of three output statistics files.
+
 ### Accuracy of metrical parser
 
 In preliminary tests, we ran PROSODIC against a sample of 1800 hand-parsed lines of iambic, trochaic, anapestic, and dactylic verse ([included](https://github.com/quadrismegistus/prosodic/blob/master/tagged_samples/tagged-sample-litlab-2016.txt)). For example, here is a line, and how it was parsed by a human, PROSODIC, and the "bare template" of its poem's meter (iambic).
@@ -105,18 +109,18 @@ The data above were produced when the meter was defined as the following constra
 To install PROSODIC, it's best to clone the github repository here. To do that, type this into the terminal:
 
 	git clone git@github.com:quadrismegistus/prosodic.git
-	
+
 [If you don't have git, you can [get it here](https://git-scm.com/downloads).] Or, you can also [download the repository as a zip file](https://github.com/quadrismegistus/prosodic/archive/master.zip), and unzip it. Either method will create a directory called "prosodic." Enter that folder in the terminal, and boot up prosodic by typing:
 
 	python prosodic.py
-	
+
 PROSODIC can also be used as a python module within your own applications:
 
 	import prosodic as p
 	text = p.Text("Shall I compare thee to a summer's day?")
 	text.parse()
 
-Instructions on how to use PROSODIC in interactive mode, and as a python module, are below. 
+Instructions on how to use PROSODIC in interactive mode, and as a python module, are below.
 
 ### Dependencies
 
@@ -167,7 +171,7 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 			/save	save previous output to file
 			/exit	exit
 
-	>> [0.0s] prosodic:en$ 
+	>> [0.0s] prosodic:en$
 
 #### Loading text
 
@@ -280,10 +284,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		9	w	and       	
 		10	s	THE       	[*stress.s=>-u]
 		11	w	fruit     	[*stress.w=>-p]
-	
+
 		[*stress.s=>-u]: 4.0  [*stress.w=>-p]: 4.0  
 		--------------------
-	
+
 		--------------------
 		[parse #2 of 3]: 5.0 errors
 		1	w	of        	
@@ -296,10 +300,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		8	s	AND       	[*stress.s=>-u]
 		9	w	the       	
 		10	s	FRUIT     	
-	
+
 		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
 		--------------------
-	
+
 		--------------------
 		[parse #1 of 3]: 5.0 errors
 		1	w	of        	
@@ -312,10 +316,10 @@ The command `/report` is a more verbose version of `/scan`, printing each possib
 		8	s	ENCE      	[*stress.s=>-u]
 		9	w	and the   	[*footmin-none]
 		10	s	FRUIT     	
-	
+
 		[*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
 		--------------------
-	
+
 	==============================
 
 Finally, you can also save a variety of statistics from the metrical parser in tab-separated form by running the `/stats` command.
@@ -352,18 +356,18 @@ All configuration of PROSODIC takes place in `config.py` in the root folder of P
 	* How to display the phonetic output for words (IPA, orthography, CMU notation)
 
 Again, please see the documentation within `config.py` for more information.
-	
+
 
 ### Running PROSODIC as a python module
 
 PROSODIC can also be run within other python applications.
 
 	In [1]: import prosodic as p
-	
+
 	In [2]: t = p.Text("corpora/shakespeare/sonnet-001.txt")
-	
+
 	In [3]: t.parse()
-	
+
 	In [4]: for parse in t.bestParses():
 	   ...:     print parse
 	   ...:     
@@ -428,7 +432,7 @@ The number of *unbounded* parses for a given line then represents something abou
 	8	s	FOR       	[*stress.s=>-u]
 	9	w	a         	
 	10	s	HORSE     	
-	
+
 	[*stress.s=>-u]: 2.0  
 
 This parse only violates one constraint: it elevated an unstressed word, "for," to a metrically strong position. Compare this line to another of Shakespeare's, which has the same number of syllables, but is metrically more complex: "Never came poison from so sweet a place." Here, four parses survive:
@@ -445,10 +449,10 @@ This parse only violates one constraint: it elevated an unstressed word, "for," 
 	8	s	SWEET     	
 	9	w	a         	
 	10	s	PLACE     	
-	
+
 	[*strength.s=>-u]: 3.0  [*strength.w=>-p]: 3.0  [*stress.s=>-u]: 4.0  [*stress.w=>-p]: 4.0  
 	--------------------
-	
+
 	--------------------
 	[parse #3 of 4]: 13.0 errors
 	1	s	NEV       	
@@ -460,10 +464,10 @@ This parse only violates one constraint: it elevated an unstressed word, "for," 
 	7	s	SWEET     	
 	8	w	a         	
 	9	s	PLACE     	
-	
+
 	[*footmin-no-s-unless-preceded-by-ww]: 10.0  [*footmin-none]: 1.0  [*stress.s=>-u]: 2.0  
 	--------------------
-	
+
 	--------------------
 	[parse #2 of 4]: 9.0 errors
 	1	s	NEV       	
@@ -473,10 +477,10 @@ This parse only violates one constraint: it elevated an unstressed word, "for," 
 	5	s	SO        	[*stress.s=>-u]
 	6	w	sweet a   	[*stress.w=>-p][*footmin-none]
 	7	s	PLACE     	
-	
+
 	[*footmin-none]: 3.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 4.0  
 	--------------------
-	
+
 	--------------------
 	[parse #1 of 4]: 6.0 errors
 	1	s	NEV       	
@@ -488,7 +492,7 @@ This parse only violates one constraint: it elevated an unstressed word, "for," 
 	7	s	SWEET     	
 	8	w	a         	
 	9	s	PLACE     	[*posthoc-standardize-weakpos]
-	
+
 	[*footmin-none]: 1.0  [*posthoc-standardize-weakpos]: 1.0  [*stress.s=>-u]: 2.0  [*stress.w=>-p]: 2.0  
 	--------------------
 
@@ -509,7 +513,7 @@ There are two possible methods by which Prosodic can understand a language:
 		* befuddled	[tab] bɪ.'fə.dəld
 		* befuddles	[tab] bɪ.'fə.dəlz
 
-* using a python function which takes in a word-token as an input, and a stressed, syllabified, IPA format as its output. 
+* using a python function which takes in a word-token as an input, and a stressed, syllabified, IPA format as its output.
 
 Currently, Finnish is implemented by the latter method; English, by a combination of two, using the dictionary for recognized words, and a python function for unrecognized words.
 
@@ -525,7 +529,7 @@ To add a new language entirely, you can create a new dictionary in the above for
 		),
 		...
 	]
-	
+
 For example, `get("into", config={'add_elided_pronunciations':1})` might return:
 
 	[

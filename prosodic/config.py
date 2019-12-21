@@ -17,7 +17,6 @@
 # Relative paths are relative to dir_prosodic_home, which defauls to ~/prosodic_data
 # and which can be changed by editing the hidden variable ~/.path_prosodic_data
 
-path_dicts = 'dicts'     # directory to store dictionary TTS code/data
 path_corpora = 'corpora'
 path_meters = 'meters'
 path_results = 'results'

@@ -6,6 +6,7 @@ import logging
 #logging.basicConfig(level=logging.INFO, format='## LOG #############\n%(message)s\n####################\n')
 #print('>> importing prosodic...')
 
+
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]
 sys.path.insert(0,dir_prosodic)
@@ -40,7 +41,7 @@ os.environ['prosodic_config_json']=json.dumps(config)
 
 #default_dir_prosodic_home = os.path.abspath(os.path.expanduser('~/prosodic_data'))
 dir_prosodic_home = config.get('path_prosodic_data')
-dir_dicts = config.get('path_dicts', os.path.join(dir_prosodic_home, 'dicts'))
+dir_dicts = config.get('path_dicts', os.path.join(dir_prosodic, 'dicts'))
 dir_meters = config.get('path_meters', os.path.join(dir_prosodic_home, 'meters'))
 dir_results = config.get('path_results', os.path.join(dir_prosodic_home, 'results'))
 dir_tagged = config.get('path_tagged_samples', os.path.join(dir_prosodic_home, 'tagged_samples'))
@@ -80,7 +81,7 @@ lang=config['lang']
 # load defaults
 dict={}
 for lng in languages:
-	dict[lng]=loadDict(lng,config)
+	dict[lng]=loadDict(lng,config,dir_dicts=dir_dicts)
 del lng
 
 
@@ -134,7 +135,8 @@ else:	## if not imported, go into interactive mode
 				os.system(cmd)
 
 		else:
-			print("<error> file not found")
+			#print("<error> file not found")
+			obj = Text(' '.join(sys.argv[1:]),lang=lang)
 
 
 	except:

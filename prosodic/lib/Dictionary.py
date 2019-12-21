@@ -4,6 +4,7 @@ from tools import *
 from entity import *
 from Word import Word
 from Syllable import Syllable
+from SyllableBody import SyllableBody
 
 from ipa import ipa
 import codecs
@@ -17,9 +18,9 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			for x in k[1:]:
 				char2phons.append(x)
 
-	def __init__(self,lang,config):
+	def __init__(self,lang,config,dir_dicts=None):
 		self.config=config
-		dictsfolder = config.get('path_dicts')
+		dictsfolder = config.get('path_dicts') if not dir_dicts else dir_dicts
 		if not dictsfolder: return
 
 		self.unstressedWords=[]
@@ -61,8 +62,15 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			break
 
 		pyfile=os.path.join(self.dictsfolder,self.language+'.py')
+
+		self.getprep_syllabify_orth=None
+
 		if os.path.exists(pyfile):
 			self.getprep=get_class(self.language+'.get')
+			try:
+				self.getprep_syllabify_orth=get_class(self.language+'.syllabify_orth')
+			except AttributeError:
+				pass
 
 		self.cachefolder=os.path.join(self.dictsfolder,'_cache')
 		self.dictentries=None
@@ -95,9 +103,6 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		if build:
 			self.refresh()
 			self.boot()
-
-		if __name__=='__main__':
-			print(self.stats(prefix="\t").replace("[[time]]",str(round((time.clock() - timestart),2))))
 
 
 	def boot(self):		## NEEDS EXTENSION
@@ -287,6 +292,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			key=tuple(key)
 		if (not key in self.dict[classtype]):
 			if classtype in ['Phoneme','Onset','Nucleus','Coda','Rime','Syllable']:
+				#print('???',classtype,key)
 				self.dict[classtype][key]=get_class(classtype+'.'+classtype)(key,self.lang)
 				#return get_class(classtype+'.'+classtype)(key,self.lang)
 			elif classtype=="SyllableBody":
@@ -322,22 +328,22 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 
 			Vwaslast=False
 			k=-1
-			for phon in syll:
-				k+=1
-				if phon.isVowel():
-
-					if Vwaslast:
-						if self.haveAlready('Phoneme', (Vwaslast.phon,phon.phon)):
-							newphon=self.use('Phoneme',(Vwaslast.phon,phon.phon))
-						else:
-							newphon=get_class('Phoneme.Phoneme')([self.use('Phoneme',x) for x in [Vwaslast.phon,phon.phon]], self.lang)
-							#self.dict['Phoneme'][(Vwaslast.phon,phon.phon)]=newphon
-							self.dict['Phoneme'][Vwaslast.phon+phon.phon]=newphon
-						syll[k]=newphon
-						syll.remove(Vwaslast)
-						break
-					else:
-						Vwaslast=phon
+			# for phon in syll:
+			# 	k+=1
+			# 	if phon.isVowel():
+			#
+			# 		if Vwaslast:
+			# 			if self.haveAlready('Phoneme', (Vwaslast.phon,phon.phon)):
+			# 				newphon=self.use('Phoneme',(Vwaslast.phon,phon.phon))
+			# 			else:
+			# 				newphon=get_class('Phoneme.Phoneme')([self.use('Phoneme',x) for x in [Vwaslast.phon,phon.phon]], self.lang)
+			# 				#self.dict['Phoneme'][(Vwaslast.phon,phon.phon)]=newphon
+			# 				self.dict['Phoneme'][Vwaslast.phon+phon.phon]=newphon
+			# 			syll[k]=newphon
+			# 			syll.remove(Vwaslast)
+			# 			break
+			# 		else:
+			# 			Vwaslast=phon
 			sylls.append(tuple(syll))
 		#print sylls
 		return sylls
@@ -355,7 +361,19 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 				else:
 					coda.append(x)
 
-		return get_class('SyllableBody.SyllableBody')(self.use('Onset',onset),self.use('Rime', (self.use('Nucleus',nucleus),self.use('Coda',coda))), lang)
+		onset_obj=self.use('Onset',onset)
+		nucleus_obj=self.use('Nucleus',nucleus)
+		coda_obj=self.use('Coda',coda)
+		rime_obj=self.use('Rime',(nucleus_obj,coda_obj))
+		# print(['Onset',onset,onset_obj])
+		# print(['Nucleus',nucleus,nucleus_obj])
+		# print(['Coda',coda,coda_obj])
+		# print(['Rime',nucleus+coda,rime_obj])
+		# print()
+
+		obj=get_class('SyllableBody.SyllableBody')(onset_obj,rime_obj,lang)
+		return obj
+
 
 
 
@@ -429,17 +447,32 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		stressedipa=stressedipasylls_text[0]
 		sylls_text=stressedipasylls_text[1]
 
+		#if self.getprep and hasattr(self.getprep,'syllabify_orth'):
+		if self.getprep_syllabify_orth:
+			sylls_text = self.getprep_syllabify_orth(token)
+		print('!?!?',sylls_text)
+
 		stress=stressedipa2stress(stressedipa)
 		(prom_stress,prom_strength)=getStrengthStress(stress)
 		syllphons=self.ipa2phons(stressedipa)
+		syllbodies = [self.syllphon2syll(syllphon,self.lang) for syllphon in syllphons]
+		sylls = [Syllable((syllbodies[i],prom_strength[i],prom_stress[i]),self.lang,sylls_text[i]) for i in range(len(syllphons))]
 
-		sylls=[]
-
-		for i in range(len(syllphons)):
-			syllbody=self.use('SyllableBody',syllphons[i])
-			syll=self.use('Syllable',(syllbody,prom_strength[i],prom_stress[i]))
-			#print token,i,syllbody,syll,syllphons,stressedipa,stress,prom_stress,prom_strength
-			sylls.append(syll)
+		#
+		# sylls=[]
+		#
+		# for i in range(len(syllphons)):
+		# 	#syllbody=self.use('SyllableBody',syllphons[i])
+		# 	#syll=self.use('Syllable',(syllbody,prom_strength[i],prom_stress[i]))
+		#
+		# 	syllbody = SyllableBody()
+		#
+		# 	print('!>>',syllphons[i])
+		# 	syllbody = SyllableBody(syllphons[i])
+		#
+		# 	#print([i,syllphons[i],syllbody.phonemes(),syll.phonemes()])
+		# 	#print token,i,syllbody,syll,syllphons,stressedipa,stress,prom_stress,prom_strength
+		# 	sylls.append(syll)
 
 		word=Word(token,sylls,sylls_text)
 		word.ipa=stressedipa
@@ -538,6 +571,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 				wordobjs=words
 		else:
 			wordobjs=[words]
+
+
 
 		return self.maybeUnstress(wordobjs) if stress_ambiguity else wordobjs
 

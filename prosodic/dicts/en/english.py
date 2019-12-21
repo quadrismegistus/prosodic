@@ -103,7 +103,6 @@ def get(token,config={},toprint=False):
 			results+=[res]
 			iselision+=[False]
 
-
 		if config.get('add_elided_pronunciations',0):
 			for ipa2 in add_elisions(ipa):
 				num_sylls2=ipa2.count('.')+1
@@ -331,15 +330,25 @@ def syllabify_orth_with_hyphenate(token,num_sylls=None):
 		return l
 	return []
 
+nltk_ssp=None
+def syllabify_orth_with_nltk(token,num_sylls=None):
+	global nltk_ssp
+	if not nltk_ssp:
+		from nltk.tokenize import SyllableTokenizer
+		nltk_ssp = SyllableTokenizer()
+	return nltk_ssp.tokenize(token)
+
 def syllabify_orth_with_pyphen(token,num_sylls=None):
 	global Pyphen
 	if not Pyphen: Pyphen=pyphen.Pyphen(lang='en_US')
 	sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
-	if len(sylls)==num_sylls: return sylls
-	return []
+	#if len(sylls)==num_sylls: return sylls
+	#return []
+	return sylls
 
 def syllabify_orth(token,num_sylls=None):
-	return syllabify_orth_with_pyphen(token,num_sylls=num_sylls)
+	#print('hello')
+	return syllabify_orth_with_nltk(token,num_sylls=num_sylls)
 
 
 

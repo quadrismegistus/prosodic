@@ -81,6 +81,7 @@ def loadConfig(toprint=True,dir_prosodic=None):
 
 
 _here = os.path.abspath(os.path.dirname(__file__))
+dir_prosodic_code = os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
 #dir_mtree = os.path.join(_here,'metricaltree')
 home = os.path.expanduser("~")
 default_dir_prosodic_home=os.path.join(home,'prosodic_data')
@@ -95,15 +96,21 @@ def get_path_prosodic_home():
 		with open(path_prosodic_home_dir_var) as f:
 			return f.read().strip()
 
+def get_config_path(fn='config.py'):
+	path_prosodic_home = get_path_prosodic_home()
+	if os.path.exists(os.path.join(path_prosodic_home,fn)): return os.path.join(path_prosodic_home,fn)
+	return os.path.join(dir_prosodic_code,fn)
 
 
 def loadConfigPy(toprint=True,dir_prosodic=None,config=None,dir_prosodic_home=None):
 	import imp
 	#settings={'constraints':[]}
 	settings={}
-	if not dir_prosodic: dir_prosodic=sys.path[0]
+	if not dir_prosodic: dir_prosodic=dir_prosodic_code
 
-	config=config if config else imp.load_source('config', os.path.join(dir_prosodic,'config.py'))
+	#print('config path',get_config_path())
+
+	config=config if config else imp.load_source('config', get_config_path())
 
 	vnames = [x for x in dir(config) if not x.startswith('_')]
 
@@ -342,8 +349,8 @@ def makeminlength(string,numspaces):
 			string += " "
 	return string
 
-def loadDict(lang,config):
-	return get_class('Dictionary.Dictionary')(lang,config)
+def loadDict(lang,config,dir_dicts=None):
+	return get_class('Dictionary.Dictionary')(lang,config,dir_dicts=dir_dicts)
 
 def get_class( kls ):
 	parts = kls.split('.')

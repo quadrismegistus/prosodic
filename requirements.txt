@@ -6,4 +6,4 @@ xlrd
 networkx
 scipy
 xlwt
-Levenshtein
+python-Levenshtein

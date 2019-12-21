@@ -6,4 +6,9 @@ graft prosodic
 #graft prosodic
 graft metricaltree
 
+graft corpora/shakespeare
+graft meters
+graft dicts
+
 global-exclude .DS_Store
+global-exclude __pycache__

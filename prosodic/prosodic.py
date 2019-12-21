@@ -21,8 +21,9 @@ sys.path.append(dir_mtree)
 import importlib.machinery
 dir_setup = os.path.abspath(os.path.join(dir_prosodic,'..'))
 path_setup = os.path.join(dir_setup,'setup.py')
-module_setup = importlib.machinery.SourceFileLoader('setup',path_setup).load_module()
-module_setup.configure_home_dir(force=False)
+#module_setup = importlib.machinery.SourceFileLoader('setup',path_setup).load_module()
+#module_setup.configure_home_dir(force=False)
+configure_home_dir(force=False)
 
 path_setup = os.path.join(dir_prosodic)
 

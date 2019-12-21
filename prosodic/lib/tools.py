@@ -1030,6 +1030,45 @@ def is_configured():
 	path_to_home_dir=get_path_prosodic_home()
 	return (os.path.exists(path_to_home_dir) and os.path.isdir(path_to_home_dir))
 
+
+
+
+
+
+
+
+
+README_CONFIG="""# PROSODIC HOME DIRECTORY
+This is your home directory for Prosodic. [https://github.com/quadrismegistus/prosodic].
+
+## Configuration
+* In order to configure Prosodic, copy or rename 'config_default.py' to 'config.py', and edit that file according to its instructions.
+* [Note: 'config_default.py' will be overwritten if you update Prosodic, but 'config.py' will not be.]
+
+## Meters
+* To edit or create your own meter, copy or rename 'meters/meter_default.py' to 'meters/your_meter_name.py', and edit that file according to its instructions.
+* Then consider changing the default 'meter' setting in your config.py to 'your_meter_name'.
+* You can also select 'your_meter_name' from within Prosodic.
+* [Note: 'meters/meter_default.py' will be overwritten if you update Prosodic, but 'meters/your_meter_name.py' will not be.]
+
+## Tagged samples
+* To run Prosodic against your own tagged sample, create a file like 'tagged_samples/tagged-sample-litlab-2016.txt', which has at least a column for the line (e.g. "From fairest creatures we desire increase") and a column for the parse (e.g. "wswswswsws").
+* [Note: 'tagged_samples/tagged-sample-litlab-2016.txt' will be overwritten if you update Prosodic, but your own files will not be.]
+
+## Results
+* By default, results will be saved to the 'results' folder here.
+* You can change this option in the 'folder_results' option in 'config.py'.
+
+## Corpora and texts
+* By default, Prosodic will look for texts within the 'corpora' folder here.
+* You can change this option in the 'folder_corpora' option in config.py.
+
+## Etc
+* For more information, see Prosodic's website @ https://github.com/quadrismegistus/prosodic
+"""
+
+
+
 def configure_home_dir(force=False):
 	if not force and is_configured(): return
 

@@ -133,13 +133,13 @@ from tools import *
 class PostDevelopCommand(develop):
 	"""Post-installation for development mode."""
 	def run(self):
-		configure_home_dir()
+		configure_home_dir(force=True)
 		develop.run(self)
 
 class PostInstallCommand(install):
 	"""Post-installation for installation mode."""
 	def run(self):
-		configure_home_dir()
+		configure_home_dir(force=True)
 		install.run(self)
 
 if __name__ == '__main__':

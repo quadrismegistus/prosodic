@@ -126,7 +126,7 @@ path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
 
 import sys,os,imp
 path_to_tools = os.path.join(_here,'prosodic','lib','tools.py')
-tools = imp.load_source('tools',path_to_lib)
+tools = imp.load_source('tools',path_to_tools)
 
 
 class PostDevelopCommand(develop):

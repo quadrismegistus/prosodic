@@ -4,7 +4,7 @@ import sys,glob,os,time,codecs
 import logging
 #logging.basicConfig(level=logging.DEBUG, format='#### %(levelname)s:\n%(message)s\n####\n')
 #logging.basicConfig(level=logging.INFO, format='## LOG #############\n%(message)s\n####################\n')
-print('>> importing prosodic...')
+#print('>> importing prosodic...')
 
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]

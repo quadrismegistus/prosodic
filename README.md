@@ -108,13 +108,15 @@ The data above were produced when the meter was defined as the following constra
 
 To install Prosodic, it's best to install using pip. In a terminal, type:
 
-	pip install prosodic
+	pip install git+git://github.com/quadrismegistus/prosodic.git
 
 After installation, you should have access to the "prosodic" executable. Simply run:
 
 	prosodic
 
 to open up the interactive terminal interface.
+
+#### Quick start (within Python)
 
 Prosodic can also be used as a python module within your own applications:
 
@@ -124,39 +126,13 @@ Prosodic can also be used as a python module within your own applications:
 
 Instructions on how to use Prosodic in interactive mode, and as a python module, are below.
 
-### Dependencies
-
-#### Text to speech engine for parsing unknown English words
-
-By default, Prosodic uses the CMU pronunciation dictionary to discover the syllable boundaries, stress pattern, and other information about English words necessary for metrical parsing. Lines with words not in this dictionary are, again by default, skipped when parsing. However, with a Text-to-Speech engine, it's possible to "sound out" unknown English words into a stressed, syllabified form that can then be parsed. Prosodic supports two TTS engines: *espeak* (recommended), and *OpenMary*. I find that espeak produces better syllabifications than OpenMary (at least for English), and is simpler to use, but either will work just fine.
-
-##### Setting up espeak
-
-[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.py* file to "espeak." That's it!
-
-<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which Prosodic draws from (if possible) before resorting to a TTS engine.</small>
-
-##### Setting up OpenMary
-
-OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) [select the "Run time package" link]. Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in Prosodic, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. For espeak, this step isn't necessary.
-
-#### Python module dependencies
-
-By default, Prosodic has no module dependencies. The modules it does use—[lexconvert](http://ssb22.user.srcf.net/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
-
-- If you'd like to use the built-in query language (available under "/query" in the interactive mode), you'll need to install pyparsing: `pip install pyparsing`.
-- If you're running OpenMary, you'll need to install the xml parser Beautiful Soup 4, and the unicode module unidecode: `pip install bs4` and `pip install unidecode`.
-- If you'd like to be able to read evaluation data in spreadsheet form (*.xls, *.xlsx) (available under "/eval" in interactive mode), you'll need to install xlrd: `pip install xlrd`.
-
-
-
 ## Usage
 
 There are two main ways of using Prosodic: in interactive mode, and, for more Python-advanced users, as a Python module.
 
 ### Interactive mode
 
-You can enter the interactive mode of prosodic by running `python prosodic.py`. This will bring you to an interface like this:
+You can enter the interactive mode of prosodic by running `prosodic`. This will bring you to an interface like this:
 
 	################################################
 	## welcome to prosodic!                  v1.1 ##
@@ -177,7 +153,7 @@ You can enter the interactive mode of prosodic by running `python prosodic.py`. 
 
 #### Loading text
 
-The first thing to do when using Prosodic is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within Prosodic's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot Prosodic with: `python prosodic.py /path/to/my/file.txt`.
+The first thing to do when using Prosodic is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within Prosodic's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot Prosodic with: `prosodic /path/to/my/file.txt`.
 
 #### Checking phonetic/phonological annotations
 
@@ -332,7 +308,7 @@ How well does Prosodic do when its metrical parses are compared with those that 
 
 ### Configuration options
 
-All configuration of Prosodic takes place in `config.py` in the root folder of Prosodic. This file is well-commented and is the best source of documentation on how to use it. (It's best to edit this file inside a text editor that highlights the Python syntax, so you can visually see which settings are deactivated by being "commented-out," i.e. by having a "#" character at the start of their lines.) Here is a list of what you will find there.
+All configuration of Prosodic takes place in `config.py` in your prosodic data folder, which is by default the folder `prosodic_data` in your home folder. (If only `config_default.py` is there, copy that to `config.py`.) This file is fairly well documented and is the best source of documentation on how to use it. (It's best to edit this file inside a text editor that highlights the Python syntax, so you can visually see which settings are deactivated by being "commented-out," i.e. by having a "#" character at the start of their lines.) Here is a list of what you will find there.
 
 * Technical options about how Prosodic works:
 	* The paths used for corpora, results, and tagged samples
@@ -378,6 +354,35 @@ Prosodic can also be run within other python applications.
 	[...]
 
 For more information on this, please see [the Wiki](https://github.com/quadrismegistus/prosodic/wiki).
+
+
+
+### Dependencies
+
+#### Text to speech engine for parsing unknown English words
+
+By default, Prosodic uses the CMU pronunciation dictionary to discover the syllable boundaries, stress pattern, and other information about English words necessary for metrical parsing. Lines with words not in this dictionary are, again by default, skipped when parsing. However, with a Text-to-Speech engine, it's possible to "sound out" unknown English words into a stressed, syllabified form that can then be parsed. Prosodic supports two TTS engines: *espeak* (recommended), and *OpenMary*. I find that espeak produces better syllabifications than OpenMary (at least for English), and is simpler to use, but either will work just fine.
+
+##### Setting up espeak
+
+[Espeak](http://espeak.sourceforge.net/) is an open-source TTS engine for Windows and Unix systems (including Mac OS X). You can [download it for your operating system here](http://espeak.sourceforge.net/download.html). But if you're running Mac OS X, an even simpler way to install espeak is via the [HomeBrew package manager](http://brew.sh/). To do so, install homebrew if you haven't, and then run in a terminal: `brew install espeak`. After you've installed espeak, set the "en_TTS_ENGINE" flag in the *config.py* file to "espeak." That's it!
+
+<small>*Note:* Espeak produces *un*-syllabified IPA transcriptions of any given (real or unreal) word. To syllabify these, the [syllabifier](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py) from the [Penn Phonetics Toolkit (P2TK)](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/) is used. An extra plus from this pipeline is consistency: this same syllabifier is responsible for the syllable boundaries in the CMU pronunciation dictionary, which Prosodic draws from (if possible) before resorting to a TTS engine.</small>
+
+##### Setting up OpenMary
+
+OpenMary is another open-source TTS engine, written in Java and developed by two German research institutes: the [DFKI](http://www.dfki.de/web)'s [Language Technology Lab](http://www.dfki.de/lt/) and [Saarland University](http://www.uni-saarland.de/startseite.html)'s [Institute of Phonetics](http://www.coli.uni-saarland.de/groups/WB/Phonetics/). To install OpenMary, first [download it here](http://mary.dfki.de/download/index.html) [select the "Run time package" link]. Then, unzip the zip file, go into the unzipped folder, and start OpenMary as a server. To do that, type into the terminal after unzipping: `./marytts-5.2/bin/marytts-server.sh`. To use OpenMary in Prosodic, you'll have to make sure OpenMary is running as a server process beforehand; if not, you'll have to repeat the last command. For espeak, this step isn't necessary.
+
+#### Python module dependencies
+
+By default, Prosodic has no module dependencies. The modules it does use—[lexconvert](http://ssb22.user.srcf.net/gradint/lexconvert.html), [P2TK](https://www.ling.upenn.edu/phonetics/old_website_2015/p2tk/)'s [syllabify.py](https://p2tk.svn.sourceforge.net/svnroot/p2tk/python/syllabify/syllabifier.py), and a [python hyphenator for syllabifying English orthography](https://github.com/Kozea/Pyphen)—are small, and already included in the repository. However, there are a few exceptions, depending on what you want to do. To install these modules, first [install pip](https://pip.pypa.io/en/stable/installing/) if you haven't yet.
+
+- If you'd like to use the built-in query language (available under "/query" in the interactive mode), you'll need to install pyparsing: `pip install pyparsing`.
+- If you're running OpenMary, you'll need to install the xml parser Beautiful Soup 4, and the unicode module unidecode: `pip install bs4` and `pip install unidecode`.
+- If you'd like to be able to read evaluation data in spreadsheet form (*.xls, *.xlsx) (available under "/eval" in interactive mode), you'll need to install xlrd: `pip install xlrd`.
+
+
+
 
 
 ## How it works

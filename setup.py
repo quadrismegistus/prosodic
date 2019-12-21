@@ -37,7 +37,8 @@ This is your home directory for Prosodic. [https://github.com/quadrismegistus/pr
 """
 
 
-_here = os.path.abspath(os.path.dirname(__file__))
+_here = os.path.abspath(os.path.dirname(__file__),'..','..')
+print('!',_here)
 #dir_mtree = os.path.join(_here,'metricaltree')
 home = expanduser("~")
 default_dir_prosodic_home=os.path.join(home,'prosodic_data')

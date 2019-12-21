@@ -128,6 +128,7 @@ path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
 import sys,os
 path_to_lib = os.path.join(_here,'prosodic','lib')
 sys.path.append(path_to_lib)
+raise Exception(_here)
 from tools import *
 
 

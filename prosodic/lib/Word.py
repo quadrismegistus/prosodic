@@ -105,7 +105,8 @@ class Word(entity):
 #			return self.sylls_text
 
 	def setSyllText(self):
-		if (not self.sylls_text) and (len(self.children)):
+		if not self.children: Return
+		if not self.sylls_text or len(self.sylls_text)!=len(self.children):
 			self.setSyllText_byphonemes()
 
 	def addSuffix(self,phon):

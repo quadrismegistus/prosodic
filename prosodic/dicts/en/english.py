@@ -336,7 +336,10 @@ def syllabify_orth_with_nltk(token,num_sylls=None):
 	if not nltk_ssp:
 		from nltk.tokenize import SyllableTokenizer
 		nltk_ssp = SyllableTokenizer()
-	return nltk_ssp.tokenize(token)
+	l = nltk_ssp.tokenize(token)
+	if not num_sylls or len(l)==num_sylls:
+		return l
+	return []
 
 def syllabify_orth_with_pyphen(token,num_sylls=None):
 	global Pyphen

@@ -450,13 +450,13 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		#if self.getprep and hasattr(self.getprep,'syllabify_orth'):
 		if self.getprep_syllabify_orth:
 			sylls_text = self.getprep_syllabify_orth(token)
-		print('!?!?',sylls_text)
+		#print('!?!?',sylls_text)
 
 		stress=stressedipa2stress(stressedipa)
 		(prom_stress,prom_strength)=getStrengthStress(stress)
 		syllphons=self.ipa2phons(stressedipa)
 		syllbodies = [self.syllphon2syll(syllphon,self.lang) for syllphon in syllphons]
-		sylls = [Syllable((syllbodies[i],prom_strength[i],prom_stress[i]),self.lang,sylls_text[i]) for i in range(len(syllphons))]
+		sylls = [Syllable((syllbodies[i],prom_strength[i],prom_stress[i]),self.lang) for i in range(len(syllphons))]
 
 		#
 		# sylls=[]
@@ -482,7 +482,6 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		# when is word broken?
 		if not word.ipa:
 			word.broken=True
-
 
 		return word
 

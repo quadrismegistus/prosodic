@@ -6,6 +6,9 @@ import logging
 #logging.basicConfig(level=logging.INFO, format='## LOG #############\n%(message)s\n####################\n')
 #print('>> importing prosodic...')
 
+import warnings
+warnings.filterwarnings("ignore")
+
 
 #dir_prosodic=sys.path[0]
 dir_prosodic=os.path.split(globals()['__file__'])[0]

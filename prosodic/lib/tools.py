@@ -1095,7 +1095,7 @@ def configure_home_dir(force=False):
 	ipath_config = os.path.join(_here,'prosodic','config.py')
 	#ipath_meter = os.path.join(_here,'prosodic','meters','meter_default.py')
 	ipath_meter = os.path.join(_here,'meters')
-	ipath_dicts = os.path.join(_here,'dicts')
+	ipath_dicts = os.path.join(_here,'prosodic','dicts')
 	ipath_samples = os.path.join(_here,'tagged_samples')
 	ipath_corpora = os.path.join(_here,'corpora')
 
@@ -1125,7 +1125,7 @@ def configure_home_dir(force=False):
 	#print '>> copying:',ipath_meter,'-->',opath_meter
 	#shutil.copyfile(ipath_meter,opath_meter)
 	copy_tree(ipath_meter,opath_meter)
-	copy_tree(ipath_dicts,opath_dicts)
+	#copy_tree(ipath_dicts,opath_dicts)
 
 	# copy samples
 	for fn in os.listdir(ipath_samples):

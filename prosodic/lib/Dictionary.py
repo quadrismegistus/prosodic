@@ -77,7 +77,7 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		build=False
 
 		## language objects
-		timestart=time.clock()
+		timestart=time.time()
 		if being.persists:
 			if __name__=='__main__':
 				print("## booting ontology: " + self.language + " ...")

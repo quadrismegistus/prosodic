@@ -135,7 +135,7 @@ There are two main ways of using Prosodic: in interactive mode, and, for more Py
 You can enter the interactive mode of prosodic by running `prosodic`. This will bring you to an interface like this:
 
 	################################################
-	## welcome to prosodic!                  v1.1 ##
+	## welcome to prosodic!                  v1.3 ##
 	################################################
 
 

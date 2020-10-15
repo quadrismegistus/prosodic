@@ -2,6 +2,5 @@
 import prosodic,os,sys
 path_to_prosodic_py = os.path.join(os.path.dirname(prosodic.__file__), 'prosodic.py')
 argstr=' '.join(sys.argv[1:])
-cmd = f'python {path_to_prosodic_py} {argstr}'
-
+cmd = 'python '+path_to_prosodic_py+' '+argstr
 os.system(cmd)

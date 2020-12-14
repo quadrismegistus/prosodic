@@ -7,3 +7,4 @@ networkx
 scipy
 xlwt
 python-Levenshtein
+p_tqdm

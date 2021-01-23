@@ -1,6 +1,7 @@
 include requirements.txt
 include README.md
 include LICENSE.md
+include *.txt
 
 graft prosodic
 #graft prosodic

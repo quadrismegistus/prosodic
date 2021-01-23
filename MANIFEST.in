@@ -5,6 +5,7 @@ include LICENSE.md
 graft prosodic
 #graft prosodic
 graft metricaltree
+graft tagged_samples
 
 graft corpora/shakespeare
 graft meters

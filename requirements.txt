@@ -6,5 +6,5 @@ xlrd
 networkx
 scipy
 xlwt
-python-Levenshtein
+levenshtein
 p_tqdm

@@ -246,7 +246,7 @@ output_fi='orth'		# since finnish pronunciation is essentially identical to its 
 # folder_results='results/'
 # #
 # # Folder in which tagged samples (hand-parsed lines) are stored:
-# folder_tagged_samples = 'tagged_samples/'
+folder_tagged_samples = 'tagged_samples/'  # adding back temporarily? 1/23/2020
 # ############################################
 
 ############################################

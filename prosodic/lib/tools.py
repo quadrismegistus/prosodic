@@ -1097,7 +1097,10 @@ def configure_home_dir(force=False):
 	ipath_meter = os.path.join(_here,'meters')
 	ipath_dicts = os.path.join(_here,'prosodic','dicts')
 	ipath_samples = os.path.join(_here,'tagged_samples')
-	ipath_corpora = os.path.join(_here,'corpora')
+	ipath_corpora = os.path.join(_here,'..','corpora')
+
+	print('_here -->',_here)
+	print('here has files:',os.listdir(_here))
 
 	# print(ipath_config)
 	# print(ipath_meter)
@@ -1138,7 +1141,6 @@ def configure_home_dir(force=False):
 		shutil.copyfile(ifnfn,ofnfn)
 
 	# copy corpora
-
 	copy_tree(ipath_corpora,opath_corpora)
 
 	# write README

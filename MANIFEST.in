@@ -8,7 +8,7 @@ graft prosodic
 graft metricaltree
 graft tagged_samples
 
-graft corpora/shakespeare
+graft corpora
 graft meters
 graft dicts
 

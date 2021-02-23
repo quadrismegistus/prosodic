@@ -35,7 +35,7 @@ class PostInstallCommand(install):
 		install.run(self)
 
 if __name__ == '__main__':
-	with open("README.md", "r") as fh:
+	with open("README.md", "r", encoding="utf8") as fh:
 		long_description = fh.read()
 
 	with open("requirements.txt", "r") as fh:

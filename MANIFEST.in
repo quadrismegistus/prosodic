@@ -4,7 +4,6 @@ include LICENSE.md
 include *.txt
 
 graft prosodic
-#graft prosodic
 graft metricaltree
 graft tagged_samples
 
@@ -13,4 +12,4 @@ graft meters
 graft dicts
 
 global-exclude .DS_Store
-global-exclude __pycache__
+global-exclude *.py[cod]

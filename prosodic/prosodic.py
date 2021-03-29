@@ -146,7 +146,7 @@ else:	## if not imported, go into interactive mode
 		## welcome
 		print("")
 		print("################################################")
-		print("## welcome to prosodic!                  v1.3 ##")
+		print("## welcome to prosodic!                  v1.5 ##")
 		print("################################################")
 		print("")
 		text=""

@@ -88,11 +88,8 @@ for lng in languages:
 del lng
 
 
-## load config
-if __name__ != "__main__":
-	being.printout=False
-	#config['print_to_screen']=0
-else:	## if not imported, go into interactive mode
+def start_interactive_mode():
+	global lang
 	skip=False
 
 	## but do not go into interactive mode if only a single argument
@@ -595,3 +592,10 @@ else:	## if not imported, go into interactive mode
 		if cmd:
 			text=cmd
 			cmd=""
+
+## load config
+if __name__ != "__main__":
+	being.printout=False
+	#config['print_to_screen']=0
+else:	## if not imported, go into interactive mode
+	start_interactive_mode()

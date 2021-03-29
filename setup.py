@@ -58,7 +58,12 @@ if __name__ == '__main__':
 			'develop': PostDevelopCommand,
 			'install': PostInstallCommand,
 		},
-		scripts=['bin/prosodic'],
+		# scripts=['bin/prosodic'],
+		entry_points = {
+			'console_scripts': [
+				'prosodic=prosodic.prosodic:start_interactive_mode'
+			]
+		},
 		classifiers=[
 			#'Development Status :: 3 - Alpha',
 			#'Intended Audience :: Science/Research',

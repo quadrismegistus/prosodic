@@ -32,7 +32,7 @@ class PostInstallCommand(install):
 	"""Post-installation for installation mode."""
 	def run(self):
 		tools.configure_home_dir(force=True)
-		install.do_egg_install(self)
+		install.run(self)
 
 if __name__ == '__main__':
 	with open("README.md", "r", encoding="utf8") as fh:

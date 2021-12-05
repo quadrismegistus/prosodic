@@ -332,14 +332,21 @@ def syllabify_orth_with_hyphenate(token,num_sylls=None):
 
 nltk_ssp=None
 def syllabify_orth_with_nltk(token,num_sylls=None):
-	global nltk_ssp
-	if not nltk_ssp:
-		from nltk.tokenize import SyllableTokenizer
-		nltk_ssp = SyllableTokenizer()
-	l = nltk_ssp.tokenize(token)
-	if not num_sylls or len(l)==num_sylls:
-		return l
-	return []
+    global nltk_ssp
+    if not nltk_ssp:
+        from nltk.tokenize import SyllableTokenizer
+        nltk_ssp = SyllableTokenizer()
+    tokenl=token.lower()
+    l = nltk_ssp.tokenize(tokenl)
+    if tokenl!=token:
+        o=[]
+        i=0
+        for x in l:
+            xlen=len(x)
+            o+=[token[i:i+xlen]]
+            i+=xlen
+        l=o
+    return l
 
 def syllabify_orth_with_pyphen(token,num_sylls=None):
 	global Pyphen

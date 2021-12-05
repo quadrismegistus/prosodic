@@ -66,15 +66,15 @@ lang='en'
 # For instructions, please see the README.
 #
 # Use espeak for TTS (recommended):
-# [Note: syllabification done with CMU Syllabifier]
-#en_TTS_ENGINE = 'espeak'
+# [Note: syllabification done with NLTK]
+en_TTS_ENGINE = 'espeak'
 #
 # Use OpenMary for TTS:
 #en_TTS_ENGINE = 'openmary'
 #
 # Do not use TTS:
 # [Lines with unknown words will be skipped during metrical parsing]
-en_TTS_ENGINE = 'none'
+# en_TTS_ENGINE = 'none'
 #
 # Cache results of TTS for an unknown word so it's not necessary
 # to use TTS for that word again [Change to 0 to be false]

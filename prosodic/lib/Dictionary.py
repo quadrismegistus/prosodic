@@ -448,8 +448,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 		sylls_text=stressedipasylls_text[1]
 
 		#if self.getprep and hasattr(self.getprep,'syllabify_orth'):
-		if self.getprep_syllabify_orth:
-			sylls_text = self.getprep_syllabify_orth(token)
+		#if self.getprep_syllabify_orth:
+		#	sylls_text = self.getprep_syllabify_orth(token)
 		#print('!?!?',sylls_text)
 
 		stress=stressedipa2stress(stressedipa)
@@ -553,7 +553,8 @@ class Dictionary:	# cf Word, in that Text.py will really instantiate Dictionary_
 			return [Word(word,[],None)]
 
 		if not words:
-			return [Word(word,[],None)]
+			sylls_text=self.getprep_syllabify_orth(word)
+			return [Word(word,[],sylls_text)]
 
 		if type(words)==list:
 			if type(words[0])==tuple:	# New word needs to be built

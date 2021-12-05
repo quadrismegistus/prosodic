@@ -12,6 +12,9 @@ CMU_DICT={}
 CACHE_DICT_FN=os.path.join(DIR_ROOT,'english.tts-cache.tsv')
 CACHE_DICT_F=None
 
+from collections import defaultdict
+ORTH_CACHE=defaultdict(list)
+from tools import split_punct
 
 
 
@@ -356,9 +359,34 @@ def syllabify_orth_with_pyphen(token,num_sylls=None):
 	#return []
 	return sylls
 
-def syllabify_orth(token,num_sylls=None):
-	#print('hello')
-	return syllabify_orth_with_nltk(token,num_sylls=num_sylls)
+# def syllabify_orth(token,num_sylls=None):
+# 	#print('hello')
+# 	return syllabify_orth_with_nltk(token,num_sylls=num_sylls)
+
+# def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_pyphen):
+def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
+	key=(token,num_sylls)
+	if not key in ORTH_CACHE:
+		pref,tok,suf = split_punct(token)
+		l=func(tok)#,num_sylls=num_sylls) if (num_sylls and num_sylls>1) else func(tok)
+		if num_sylls:
+
+			while len(l)<num_sylls:
+				lastsyll=l[-1]
+				lastsyll_len_half=len(lastsyll)//2
+				lastsyll_a,lastsyll_b=lastsyll[:lastsyll_len_half],lastsyll[lastsyll_len_half:]
+				l=[sx for sx in l[:-1]] + [lastsyll_a, lastsyll_b]
+			while len(l)>num_sylls:
+				l2=l[:-1]
+				l2[-1]+=l[-1]
+				l=l2
+
+		l[0]=pref+l[0]
+		l[-1]+=suf
+
+		ORTH_CACHE[key]=l
+	return ORTH_CACHE[key]
+
 
 
 

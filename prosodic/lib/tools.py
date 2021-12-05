@@ -1,4 +1,35 @@
-import pickle,sys,os,codecs
+import pickle,sys,os,codecs,re,shutil
+
+def split_punct(tok):
+    toks=tokenize_agnostic(tok)
+    wordil=[]
+    
+    try:
+        for i,x in enumerate(toks):
+            if any(y.isalpha() for y in x): wordil+=[i]
+        pref=''.join([
+            x
+            for i,x in enumerate(toks)
+            if i<wordil[-1]
+        ])
+        suf=''.join([
+            x
+            for i,x in enumerate(toks)
+            if i>wordil[-1]
+        ])
+        words=''.join(
+            toks[wordil[0] : wordil[-1]+1]
+        ) if wordil else ''
+        return (pref,words,suf)
+    except IndexError:
+        return ('',tok,'')
+
+def zero_punc(token):
+    return ''.join(x for x in token if x.isalpha())
+
+def tokenize_agnostic(txt):
+    return re.findall(r"[\w']+|[.,!?; -—–\n]", txt)
+
 
 def slice(l,num_slices=None,slice_length=None,runts=True,random=False):
 	"""
@@ -151,6 +182,14 @@ def loadConfigPy(toprint=True,dir_prosodic=None,config=None,dir_prosodic_home=No
 
 	#settings['constraints']=" ".join(settings['constraints'])
 	#settings['meters']=loadMeters()
+
+	TTS_ENGINE=settings.get('en_TTS_ENGINE','')
+	if TTS_ENGINE=='espeak':
+		if not shutil.which('espeak'):
+			settings['en_TTS_ENGINE']='none'
+	elif TTS_ENGINE=='openmary':
+		if not shutil.which('openmary'):
+			settings['en_TTS_ENGINE']='none'
 
 	return settings
 

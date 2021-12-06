@@ -126,6 +126,10 @@ Prosodic can also be used as a python module within your own applications:
 
 Instructions on how to use Prosodic in interactive mode, and as a python module, are below.
 
+#### Example
+
+Check out [here](https://colab.research.google.com/drive/1Z9YcbqJuLlrLBuwTwH2YsFS3OsC3b4uO?usp=sharing) for an example of using Prosodic from within Python on Google Colab.
+
 ## Usage
 
 There are two main ways of using Prosodic: in interactive mode, and, for more Python-advanced users, as a Python module.

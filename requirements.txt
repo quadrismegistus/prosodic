@@ -1,4 +1,4 @@
-nltk==3.6.2
+nltk>=3.6.4
 numpy
 Pyphen
 pyparsing

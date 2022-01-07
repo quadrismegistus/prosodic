@@ -8,9 +8,9 @@ from copy import copy
 from tools import makeminlength
 from entity import being
 import os
+DEFAULT_METER='default_english'
 
-
-def genDefault(metername='default_english'):
+def genDefault(metername=DEFAULT_METER):
 	import prosodic
 	#metername = sorted(prosodic.config['meters'].keys())[0]
 	meters=prosodic.config['meters']
@@ -273,7 +273,8 @@ class Meter:
 
 			## give up?
 			if maxsec and time.time()-clockstart > maxsec:
-				print('!! Time limit ({0}s) elapsed in trying to parse line:'.format(maxsec), ' '.join(wtok.token for wtok in wordlist))
+				if self.prosodic_config.get('print_to_screen',None):
+					print('!! Time limit ({0}s) elapsed in trying to parse line:'.format(maxsec), ' '.join(wtok.token for wtok in wordlist))
 				return [],[]
 
 			_parses,_boundedParses = self.parseLine(slots)

@@ -44,7 +44,7 @@ class DependencyTree(Tree):
         self._preterm = False
         self._label = None
         super(DependencyTree, self).__init__(node, children)
-        if len(self) == 1 and isinstance(self[0], compat.string_types):
+        if len(self) == 1 and isinstance(self[0], str):
             self._preterm = True
         self.set_label()
 
@@ -403,7 +403,7 @@ class DependencyTreeParser(ParserI):
         # Windows is incompatible with NamedTemporaryFile() without passing in delete=False.
         with tempfile.NamedTemporaryFile(mode='wb', delete=False) as input_file:
             # Write the actual sentences to the temporary input file
-            if isinstance(input_, compat.text_type) and encoding:
+            if isinstance(input_, str) and encoding:
                 input_ = input_.encode(encoding)
             input_file.write(input_)
             input_file.flush()

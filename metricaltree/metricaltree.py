@@ -512,7 +512,7 @@ class MetricalTreeParser:
         if deptreeParser is None:
             sys.stderr.write('No deptreeParser provided, defaulting to PCFG\n')
             deptreeParser = 'PCFG'
-        if isinstance(deptreeParser, compat.string_types):
+        if isinstance(deptreeParser, str):
             deptreeParser = DependencyTreeParser(model_path='stanford-parser-full-%s/edu/stanford/nlp/models/lexparser/english%s.ser.gz' % (DATE, deptreeParser))
         elif not isinstance(deptreeParser, DependencyTreeParser):
             raise ValueError('Provided an invalid dependency tree parser')

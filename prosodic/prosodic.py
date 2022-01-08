@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import sys,glob,os,time,codecs
 import logging
@@ -47,10 +47,11 @@ dir_corpus = config.get('path_corpora', os.path.join(dir_prosodic_home, 'corpora
 dir_nlp_data = config.get('path_nlp_data', os.path.join(dir_prosodic_home, 'nlp_libraries'))
 
 config['meters']=loadMeters(dir_meters,config)
+
 METER=config['meter']=config['meters'][config['meter']] if 'meter' in config and config['meter'] else None
 
 text=''
-
+cmd=''
 
 
 #print(__name__)
@@ -83,8 +84,9 @@ for lng in languages:
 del lng
 
 
+
 def start_interactive_mode():
-	global lang
+	global lang,METER
 	skip=False
 
 	## but do not go into interactive mode if only a single argument
@@ -155,6 +157,7 @@ def start_interactive_mode():
 	obj=None
 	sameobj=None
 	while(text!="/exit"):
+		print(text)
 
 		if being.om:
 			being.omm=being.om

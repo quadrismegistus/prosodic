@@ -1,5 +1,7 @@
 *.py[cod]
 
+flask_session
+
 # C extensions
 *.so
 

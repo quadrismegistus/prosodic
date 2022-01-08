@@ -1,0 +1,592 @@
+
+
+<div class='popup-content'>
+<div id='meter_info'>
+  <div id='meter_title'>Current Meter</div>
+  <a href='#' onclick="clear_sess()">(Back to defaults)</a>
+  <ul id='meter_stats'>
+    <li><u>Position size</u>: maxW={{session['meter']['maxW'] if 'meter' in session and 'maxW' in session['meter'] else '2'}},
+      maxS={{session['meter']['maxS'] if 'meter' in session and 'maxS' in session['meter'] else '2'}}</li>
+    <li><u>Parsing constraints <em>([*name/weight]</em>)</u>:
+      <ul>
+      {% for constraint in session['meter']['constraints'] %}
+        <li class='constraint_{{loop.index}}'>[*{{constraint}}] (<a href="#" onclick="remove_constraint({{loop.index}},'{{constraint}}')">remove</a>)</li>
+      {% endfor %}
+      </ul>
+    </li>
+  </ul>
+</div>
+
+
+<div id='meter_form'>
+<div id='configure_meter_title'>Configure Meter</div>
+
+<form id='meter_config'>
+<!-- <form id='meter_config' method='POST'> -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+<div class="container">
+  <div id="accordion" class="panel-group">
+
+
+    <div class="panel">
+      <div class="panel-heading">
+      <h4 class="panel-title">
+        <a href="#panelBodyTwo" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Parameters on the size of metrical positions</a>
+        </h4>
+      </div>
+      <div id="panelBodyTwo" class="panel-collapse collapse">
+      <div class="panel-body">
+
+
+        <div class='param'>
+          <div>
+            <span class='title'>Maximum number of syllables allowed in <u>strong</u> metrical positions.</span>
+            Set to 1 for strictly syllabic meter; select 2 for foot-based meters, and to allow resolution.
+          </div>
+          <select id='maxS' name='maxS'>
+            <option value='1' {{ "selected" if 'meter' in session and 'maxS' in session['meter'] and session['meter']['maxS']==1 else ""}}>1 (allow only monosyllabic strong metrical positions)</option>
+            <option value='2' {{ "" if 'meter' in session and 'maxS' in session['meter'] and session['meter']['maxS']==1 else "selected"}}>2 (allow disyllabic strong metrical positions)</option>
+            <!-- <option value='3'>3 (allow trisyllabic strong metrical positions)</option> -->
+          </select>
+        </div>
+
+
+        <div class='param'>
+          <div>
+            <span class='title'>Maximum number of syllables allowed in <u>weak</u> metrical positions.</span>
+            Set to 1 for strictly syllabic meter; select 2 for foot-based meters, and to allow resolution.
+          </div>
+          <select id='maxW' name='maxW'>
+            <option value='1' {{ "selected" if 'meter' in session and 'maxW' in session['meter'] and session['meter']['maxW']==1 else ""}}>1 (allow only monosyllabic weak metrical positions)</option>
+            <option value='2' {{ "" if 'meter' in session and 'maxW' in session['meter'] and session['meter']['maxW']==1 else "selected"}}>2 (allow disyllabic weak metrical positions)</option>
+            <!-- <option value='3'>3 (allow trisyllabic weak metrical positions)</option> -->
+          </select>
+        </div>
+
+
+        <!-- <div class='param'>
+          <div>
+            <span class='title'>Minimum size of a metrical position.</span>
+            Allow a single mora to occupy a metrical position?
+          </div>
+          <select id='splitheavies' name='splitheavies'>
+            <option value='0' {{ "" if 'meter' in session and 'splitheavies' in session['meter'] and session['meter']['splitheavies']==1 else "selected"}}>No (each metrical position must be at least one syllable big)</option>
+            <option value='1' {{ "selected" if 'meter' in session and 'splitheavies' in session['meter'] and session['meter']['splitheavies']==1 else ""}}>Yes (allow a single syllable to occupy two metrical positions)</option>
+          </select>
+        </div> -->
+
+
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <div class="panel">
+      <div class="panel-heading">
+      <h4 class="panel-title">
+        <a href="#panelBodyOne" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion">Constraints on line length and headedness</a>
+        </h4>
+      </div>
+      <div id="panelBodyOne" class="panel-collapse collapse">
+      <div class="panel-body">
+
+        <p>These metrical parameters are subject to conscious control by the poet.
+          Kiparsky & Hanson (1996) call these "formally independent of phonological structure."</p>
+
+        <div class='param'>
+          <div>
+            <span class='title'>Number of feet in a line.</span>
+            How many feet should be in a line?
+          </div>
+
+          <!-- <input type='text' class='constraint' id='number_feet'></input> -->
+
+          <select class='constraint' id='number_feet' name='number_feet'>
+            <option value='number_feet!=2' {{ check_constraint('number_feet!=2','option') }}>2 (dimeter)</option>
+            <option value='number_feet!=3' {{ check_constraint('number_feet!=3','option')}}>3 (trimeter)</option>
+            <option value='number_feet!=4' {{ check_constraint('number_feet!=4','option')}}>4 (tetrameter)</option>
+            <option value='number_feet!=5' {{ check_constraint('number_feet!=5','option')}}>5 (pentameter)</option>
+            <option value='number_feet!=6' {{ check_constraint('number_feet!=6','option')}}>6 (hexameter)</option>
+            <option value='number_feet!=7' {{ check_constraint('number_feet!=7','option')}}>7 (heptameter)</option>
+          </select>
+          <br/>
+
+          <label for='number_feet_weight'>Constraint weight: </label>
+          <input type='text' class='constraint' id='number_feet_weight' name='number_feet_weight' style="width:2em;" value="{{ check_constraint('number_feet','weight')}}"></input>
+          <br/>
+
+          <label for='number_feet_check'>Active: </label>
+          <input type='checkbox' class='checkbox' id='number_feet_check' name='number_feet_check' {{ check_constraint('number_feet','checkbox')}}></input>
+
+        </div>
+
+
+          <!--  HEADEDNESS CONSTRAINT START-->
+          <div class='param'>
+            <div>
+              <span class='title'>Headedness of line.</span>
+              Should lines have a rising or falling rhythm?
+            </div>
+            <select id='headedness' name='headedness'>
+              <option value='headedness!=rising' {{ check_constraint('headedness!=rising','option')}}>Rising (e.g. iambic, anapestic)</option>
+              <option value='headedness!=falling' {{ check_constraint('headedness!=falling','option')}}>Falling (e.g. trochaic, dactylic)</option>
+            </select>
+            <br/>
+
+            <label for='headedness_weight'>Constraint weight: </label>
+            <input type='text' class='constraint' id='headedness_weight' name='headedness_weight' style="width:2em;" value="{{ check_constraint('headedness','weight')}}"></input>
+            <br/>
+
+            <label for='headedness_check'>Active: </label>
+            <input type='checkbox' class='checkbox' id='headedness_check' name='headedness_check' {{ check_constraint('headedness','checkbox')}}></input>
+          </div>
+          <!-- HEADEDNESS CONSTRAINT END -->
+
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="panel">
+      <div class="panel-heading">
+      <h4 class="panel-title">
+        <a href="#panelBodyThree" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on strong and weak syllables ("peaks" and "troughs")</a>
+        </h4>
+      </div>
+      <div id="panelBodyThree" class="panel-collapse collapse">
+      <div class="panel-body">
+
+        <!--  STRENGTH CONSTRAINT START-->
+        <div class='param'>
+          <div>
+            <span class='title'>Constraints on strong syllables ("peaks").</span>
+            A syllable is strong if it is a peak in a polysyllabic word:
+            the syllables in 'liberty', stressed-unstressed-unstressed,
+            are, in terms of <em>strength</em>, strong-weak-neutral, because
+            the first syllable is more stressed than its neighbor;
+            the second syllable less stressed; and the third equally stressed.
+          </div>
+          <select id='strength_strong' name='strength_strong'>
+            <option value='strength.w=>-p' {{ check_constraint('strength.w=>-p','option') }}>A weak metrical position must not contain any strong syllables ("peaks")</option>
+            <option value='strength.s=>p' {{ check_constraint('strength.s=>p','option') }}>A strong metrical position must contain at least one strong syllable ("peak")</option>
+          </select>
+          <br/>
+
+          <label for='strength_strong_weight'>Constraint weight: </label>
+          <input type='text' class='constraint' id='strength_strong_weight' name='strength_strong_weight' style="width:2em;" value="{{ check_constraint(['strength.w=>-p','strength.s=>p'],'weight') }}"></input>
+          <br/>
+
+          <label for='strength_strong_check'>Active: </label>
+          <input type='checkbox' class='checkbox' id='strength_strong_check' name='strength_strong_check' {{ check_constraint(['strength.w=>-p','strength.s=>p'],'checkbox') }}></input>
+        </div>
+        <!-- STRENGTH CONSTRAINT END -->
+
+        <!--  STRENGTH WEAK CONSTRAINT START-->
+        <div class='param'>
+          <div>
+            <span class='title'>Constraints on weak syllables ("troughs").</span>
+            A syllable is weak if it is a trough in a polysyllabic word:
+            the syllables in 'liberty', stressed-unstressed-unstressed,
+            are, in terms of <em>strength</em>, strong-weak-neutral, because
+            the first syllable is more stressed than its neighbor;
+            the second syllable less stressed; and the third equally stressed.
+          </div>
+          <select id='strength_weak' name='strength_weak'>
+            <option value='strength.s=>-u' {{ check_constraint('strength.s=>-u','option') }}>A strong metrical position must not contain any weak syllables ("troughs")</option>
+            <option value='strength.w=>u' {{ check_constraint('strength.w=>u','option') }}>A weak metrical position must contain at least one weak syllable ("trough")</option>
+          </select>
+          <br/>
+
+          <label for='strength_weak_weight'>Constraint weight: </label>
+          <input type='text' class='constraint' id='strength_weak_weight' name='strength_weak_weight' style="width:2em;" value="{{ check_constraint(['strength.s=>-u','strength.w=>u'],'weight') }}"></input>
+          <br/>
+
+          <label for='strength_weak_check'>Active: </label>
+          <input type='checkbox' class='checkbox' id='strength_weak_check' name='strength_weak_check' {{ check_constraint(['strength.s=>-u','strength.w=>u'],'checkbox') }}></input>
+        </div>
+        <!-- STRENGTH WEAK CONSTRAINT END -->
+
+
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+
+
+        <!-- PANEL START -->
+        <div class="panel">
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a href="#panelBodyStress" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on stressed and unstressed syllables</a>
+            </h4>
+          </div>
+          <div id="panelBodyStress" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>Constraints on stressed syllables.</span>
+                A stressed syllable is one with either primary or secondary stress within the word.
+              </div>
+              <select id='stress_stressed' name='stress_stressed'>
+                <option value='stress.w=>-p' {{ check_constraint('stress.w=>-p','option') }}>A weak metrical position must not contain any stressed syllables</option>
+                <option value='stress.s=>p' {{ check_constraint('stress.s=>p','option') }}>A strong metrical position must contain at least one stressed syllable</option>
+              </select>
+              <br/>
+
+              <label for='stress_stressed_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='stress_stressed_weight' name='stress_stressed_weight' style="width:2em;" value="{{ check_constraint(['stress.w=>-p','stress.s=>p'],'weight') }}"></input>
+              <br/>
+
+              <label for='stress_stressed_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='stress_stressed_check' name='stress_stressed_check' {{ check_constraint(['stress.w=>-p','stress.s=>p'],'checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>Constraints on unstressed syllables.</span>
+
+              </div>
+              <select id='stress_unstressed' name='stress_unstressed'>
+                <option value='stress.s=>-u' {{ check_constraint('stress.s=>-u','option') }}>A strong metrical position must not contain any unstressed syllables</option>
+                <option value='stress.w=>u' {{ check_constraint('stress.w=>u','option') }}>A weak metrical position must contain at least one unstressed syllable</option>
+              </select>
+              <br/>
+
+              <label for='stress_unstressed_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='stress_unstressed_weight' name='stress_unstressed_weight' style="width:2em;" value="{{ check_constraint(['stress.s=>-u','stress.w=>u'],'weight') }}"></input>
+              <br/>
+
+              <label for='stress_unstressed_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='stress_unstressed_check' name='stress_unstressed_check' {{ check_constraint(['stress.s=>-u','stress.w=>u'],'checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+            </div>
+          </div>
+        </div>
+        <!-- PANEL END -->
+
+
+
+
+        <div class="panel">
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a href="#panelBodyWeight" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on heavy and light syllables</a>
+            </h4>
+          </div>
+          <div id="panelBodyWeight" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>Constraints on heavy syllables.</span>
+                A heavy syllable is one that ends in a consonant(s), or which has a dipthong.
+              </div>
+              <select id='weight_heavy' name='weight_heavy'>
+                <option value='weight.w=>-p' {{ check_constraint('weight.w=>-p','option') }}>A weak metrical position must not contain any heavy syllables</option>
+                <option value='weight.s=>p' {{ check_constraint('weight.s=>p','option') }}>A strong metrical position must contain at least one heavy syllable</option>
+              </select>
+              <br/>
+
+              <label for='weight_heavy_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='weight_heavy_weight' name='weight_heavy_weight' style="width:2em;" value="{{ check_constraint(['weight.w=>-p','weight.s=>p'],'weight') }}"></input>
+              <br/>
+
+              <label for='weight_heavy_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='weight_heavy_check' name='weight_heavy_check' {{ check_constraint(['weight.w=>-p','weight.s=>p'],'checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>Constraints on unstressed syllables.</span>
+
+              </div>
+              <select id='weight_light' name='weight_light'>
+                <option value='weight.s=>-u' {{ check_constraint('weight.s=>-u','option') }}>A strong metrical position must not contain any light syllables</option>
+                <option value='weight.w=>u' {{ check_constraint('weight.w=>u','option') }}>A weak metrical position must contain at least one light syllable</option>
+              </select>
+              <br/>
+
+              <label for='weight_light_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='weight_light_weight' name='weight_light_weight' style="width:2em;" value="{{ check_constraint(['weight.s=>-u','weight.w=>u'],'weight') }}"></input>
+              <br/>
+
+              <label for='weight_light_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='weight_light_check' name='weight_light_check' {{ check_constraint(['weight.s=>-u','weight.w=>u'],'checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+
+        <!-- PANEL START -->
+        <div class="panel">
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a href="#panelBodyDisyllabOne" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on disyllabic positions (i): regulating maximum position size</a>
+            </h4>
+          </div>
+          <div id="panelBodyDisyllabOne" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>"W-Resolution."</span>
+                First syllable of a disyllabic metrical position must be light and unstressed. (i.e. Disyllabic metrical position must not contain more than a minimal foot.)
+              </div>
+
+              <label for='footmin-w-resolution_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-w-resolution_weight' name='footmin-w-resolution_weight' style="width:2em;" value="{{ check_constraint('footmin-w-resolution','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-w-resolution_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-w-resolution_check' name='footmin-w-resolution_check' {{ check_constraint('footmin-w-resolution','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START -->
+            <div class='param'>
+              <div>
+                <span class='title'>"noHX."</span>
+                First syllable of a disyllabic metrical position must not be heavy.
+              </div>
+
+              <label for='footmin-noHX_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-noHX_weight' name='footmin-noHX_weight' style="width:2em;" value="{{ check_constraint('footmin-noHX','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-noHX_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-noHX_check' name='footmin-noHX_check' {{ check_constraint('footmin-noHX','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START -->
+            <div class='param'>
+              <div>
+                <span class='title'>"noHX" (in metrically strong positions).</span>
+                First syllable of a disyllabic <em>strong</em> metrical position must not be heavy.
+              </div>
+
+              <label for='footmin-s-noHX_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-s-noHX_weight' name='footmin-s-noHX_weight' style="width:2em;" value="{{ check_constraint('footmin-s-noHX','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-s-noHX_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-s-noHX_check' name='footmin-s-noHX_check' {{ check_constraint('footmin-s-noHX','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START -->
+            <div class='param'>
+              <div>
+                <span class='title'>"noHX + noLH."</span>
+                Both first and second syllable of a disyllabic metrical position must not be heavy.
+              </div>
+
+              <label for='footmin-noLH-noHX_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-noLH-noHX_weight' name='footmin-noLH-noHX_weight' style="width:2em;" value="{{ check_constraint('footmin-noLH-noHX','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-noLH-noHX_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-noLH-noHX_check' name='footmin-noLH-noHX_check' {{ check_constraint('footmin-noLH-noHX','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+
+
+            </div>
+          </div>
+        </div>
+        <!-- PANEL END -->
+
+
+
+
+
+
+        <!-- PANEL START -->
+        <div class="panel">
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a href="#panelBodyDisyllabThree" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on disyllabic positions (ii): regulating the crossing of a word boundary</a>
+            </h4>
+          </div>
+          <div id="panelBodyDisyllabThree" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <p>These constraints determine the permissiveness of a disyllabic metrical position crossing a word boundary—that is, whether its two syllables might come from two different words.</p>
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>"F-Resolution."</span>
+                A disyllabic metrical position may cross a word boundary only if both words are function words, and the disyllabic metrical position is weak, not strong.
+              </div>
+
+              <label for='footmin-f-resolution_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-f-resolution_weight' name='footmin-f-resolution_weight' style="width:2em;" value="{{ check_constraint('footmin-f-resolution','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-f-resolution_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-f-resolution_check' name='footmin-f-resolution_check' {{ check_constraint('footmin-f-resolution','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>"BothNotFW."</span>
+                A disyllabic metrical position may cross a word boundary only if both words are function words.
+              </div>
+
+              <label for='footmin-wordbound-bothnotfw_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-wordbound-bothnotfw_weight' name='footmin-wordbound-bothnotfw_weight' style="width:2em;" value="{{ check_constraint('footmin-wordbound-bothnotfw','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-wordbound-bothnotfw_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-wordbound-bothnotfw_check' name='footmin-wordbound-bothnotfw_check' {{ check_constraint('footmin-wordbound-bothnotfw','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>"LexMono."</span>
+                A disyllabic metrical position may cross a word boundary only if neither word is a lexical monosyllable (i.e. function words and polysyllabic words are ok).
+              </div>
+
+              <label for='footmin-wordbound-lexmono_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-wordbound-lexmono_weight' name='footmin-wordbound-lexmono_weight' style="width:2em;" value="{{ check_constraint('footmin-wordbound-lexmono','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-wordbound-lexmono_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-wordbound-lexmono_check' name='footmin-wordbound-lexmono_check' {{ check_constraint('footmin-wordbound-lexmono','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+
+
+            </div>
+          </div>
+        </div>
+        <!-- PANEL END -->
+
+
+
+
+
+        <!-- PANEL START -->
+        <div class="panel">
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a href="#panelBodyDisyllabTwo" class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion">Constraints on disyllabic positions (iii): categorical regulations</a>
+            </h4>
+          </div>
+          <div id="panelBodyDisyllabTwo" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <!-- CONSTRAINT START-->
+            <div class='param'>
+              <div>
+                <span class='title'>"Footmin-None."</span>
+                A metrical position should not contain more than one syllable (use to discourage disyllabic positions).
+              </div>
+
+              <label for='footmin-none_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-none_weight' name='footmin-none_weight' style="width:2em;" value="{{ check_constraint('footmin-none','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-none_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-none_check' name='footmin-none_check' {{ check_constraint('footmin-none','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START -->
+            <div class='param'>
+              <div>
+                <span class='title'>"Footmin-No-S."</span>
+                A <em>strong</em> metrical position should not contain more than one syllable.
+              </div>
+
+              <label for='footmin-no-s_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-no-s_weight' name='footmin-no-s_weight' style="width:2em;" value="{{ check_constraint('footmin-no-s','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-no-s_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-no-s_check' name='footmin-no-s_check' {{ check_constraint('footmin-no-s','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+            <!-- CONSTRAINT START -->
+            <div class='param'>
+              <div>
+                <span class='title'>"Footmin-No-W."</span>
+                A <em>weak</em> metrical position should not contain more than one syllable.
+              </div>
+
+              <label for='footmin-no-w_weight'>Constraint weight: </label>
+              <input type='text' class='constraint' id='footmin-no-w_weight' name='footmin-no-w_weight' style="width:2em;" value="{{ check_constraint('footmin-no-w','weight') }}"></input>
+              <br/>
+
+              <label for='footmin-no-w_check'>Active: </label>
+              <input type='checkbox' class='checkbox' id='footmin-no-w_check' name='footmin-no-w_check' {{ check_constraint('footmin-no-w','checkbox') }}></input>
+            </div>
+            <!-- CONSTRAINT END -->
+
+
+
+            </div>
+          </div>
+        </div>
+        <!-- PANEL END -->
+  </div>
+</div>
+
+</div>
+
+
+<input type="button" value="Update Meter" onclick="send_data()"></input>
+<!-- <input type="submit" value="Update Meter"></input> -->
+
+
+
+
+
+</div>
+
+</div>

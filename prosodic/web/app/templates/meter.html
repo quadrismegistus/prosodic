@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id='meter_info'>
+  <div id='meter_title'>Current Meter</div>
+  <ul id='meter_stats'>
+    <li><u>Position size</u>: maxW={{session['meter']['maxW']}}, maxS={{session['meter']['maxS']}}</li>
+    <li><u>Parsing constraints <em>([*name/weight]</em>)</u>:
+      <ul>
+      {% for constraint in session['meter']['constraints'] %}
+        <li>[*{{constraint}}]</li>
+      {% endfor %}
+      </ul>
+    </li>
+  </ul>
+</div>
+
+
+{% include 'meter_form2.html' %}
+
+
+{% endblock %}

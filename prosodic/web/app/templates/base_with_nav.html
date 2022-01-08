@@ -1,0 +1,64 @@
+<html>
+  <head>
+    {% if title %}
+    <title>Prosodic: {{ title }}</title>
+    {% else %}
+    <title>Prosodic</title>
+    {% endif %}
+
+
+    <link rel="stylesheet" href="/static/magnific-popup.css">
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        // socket.on('connect', function() {
+        //     socket.emit('my event', {data: 'I\'m connected!'});
+        // });
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.4.2/b-colvis-1.4.2/b-flash-1.4.2/b-html5-1.4.2/b-print-1.4.2/fc-3.2.3/fh-3.1.3/sc-1.4.3/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.4.2/b-colvis-1.4.2/b-flash-1.4.2/b-html5-1.4.2/b-print-1.4.2/fc-3.2.3/fh-3.1.3/sc-1.4.3/datatables.min.js"></script>
+    <script type="text/javascript" src="/static/progressbar.js"></script>
+    <script src="https://unpkg.com/tippy.js@2.0.0-beta.2/dist/tippy.all.min.js"></script>
+
+    <script src="/static/jquery.magnific-popup.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+    <link rel="stylesheet" href="/static/style.css" />
+
+  </head>
+  <body>
+    <div id='header'>
+      <div id='title'>Prosodic [prə.'sɑ.dɪk]</div>
+      <div id='subtitle'>A metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.</div>
+
+      <div id='nav'>
+        <a href="/index">Home</a> | <a href="/parse">Parse text</a> | <a href="/meter">Configure meter</a>
+      </div>
+    </div>
+
+    <div id='content'>
+      <div id='content_nav'>
+        {% for constraint in session['meter']['constraints'] %}
+          <li>{{constraint}}</li>
+        {% endfor %}
+
+      </div>
+      <div id='content_body'>
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </body>
+</html>

@@ -171,7 +171,7 @@ class Meter:
 		wordlist = [w.children for w in wordtokens]
 
 		#import prosodic
-		if self.prosodic_config['resolve_optionality']:
+		if self.prosodic_config.get('resolve_optionality',True):
 			return list(product(*wordlist))	# [ [on, the1, ..], [on, the2, etc]
 		else:
 			return [ [ w[0] for w in wordlist ] ]

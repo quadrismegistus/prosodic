@@ -1,0 +1,156 @@
+body {
+  background-color: white;
+  padding:1em;
+  color:black;
+  /*font-family: monospace;*/
+  /*max-width:800px;*/
+
+}
+
+.meter_strong { text-decoration: underline; }
+/*.meter_weak { font-style: italic; }*/
+
+#title {
+  font-size:2em;
+  font-family:monospace;
+}
+#subtitle {
+  /*font-style: italic;*/
+}
+#header {
+  background-color: #D0D0D0;
+  border: 1px dashed black;
+  padding:1em;
+
+}
+
+
+#content {
+  margin: auto;
+  margin-top:1em;
+  /*border: 1px dashed black;*/
+  padding:0;
+}
+
+#content_body {
+  /* margin-left: 215px; */
+  padding:5px;
+
+}
+
+#content_nav {
+  width:200px;
+  border: 1px dashed black;
+  float:left;
+  padding:5px;
+}
+
+#nav_title {
+  font-size:1.2em;
+}
+
+#page_title {
+  font-size:1.4em;
+}
+
+#meter_title {
+  font-size:1.2em;
+
+}
+
+#meter_info { }
+
+ul { padding-left:2em;}
+
+
+
+.violation {
+color:red;
+}
+
+
+#table_lines {
+  margin: 0 auto;
+  width: 100%;
+  clear: both;
+  border-collapse: collapse;
+  table-layout: fixed;
+  word-wrap:break-word;
+}
+
+#progressbar {
+  float:right;
+  margin: 0px;
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.white-popup {
+  position: relative;
+  background: #FFF;
+  padding: 20px;
+  width:auto;
+  margin: 20px auto;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  max-height: 80%;
+  max-width: 80%;
+}
+
+a { color: navy; }
+
+
+#parse_button {
+  background-color: #D0D0D0; /* Green */
+ border: 1px solid black;
+ /*padding: 15px 32px;*/
+ margin:0;
+ margin-left:5px;
+ height:50px;
+ width:100px;
+ text-align: center;
+ text-decoration: none;
+ font-size:1.1em;
+ display: inline-block;
+ font-family: monospace;
+}
+
+#parse_input_row { width:600px; margin:auto; }
+
+#parse_text {
+  width:440px;
+  /* margin:auto; */
+  height:50px;
+  margin:1px;
+  float:left;
+}
+
+.hr {
+clear:both;
+margin:0;
+margin-bottom:2em;
+}
+
+
+/*h1,h2,h3,h4,h5 { margin:0; font-weight:normal}*/
+
+
+
+h1 { font-size:1.75em; font-weight:bold; }
+h2 { font-size:1.75em;}
+h3 { font-size:1.25em; text-decoration:underline;}
+h4 { font-size:1em;}
+
+
+p {margin-top:0;}
+input,select {margin:0;padding:0; display:inline;}
+div.param { border: 1px dotted black; padding:1em; margin-left:1em; margin-bottom:1em; }
+
+
+.title { font-weight:bold; }
+label { font-size:0.8em; display:inline;}
+.param div {margin-bottom:5px;}
+.param .checkbox {margin-left: 10px; display:inline; }
+
+.param .title { display: block;}

@@ -1,0 +1,65 @@
+<!-- extend from base layout -->
+{% extends "base.html" %}
+
+{% block nav %}
+  <div id='nav_title'>Meter</div>
+
+{% endblock %}
+
+{% block content %}
+  <div id='page_title'>Parse Text</div>
+  <script type='text/javascript'>
+  $(function() {
+
+    $('#parse_button').click(function() {
+      console.log('button clicked');
+      var text = $('#parse_text').val();
+      socket.emit('parse_text', {data: text});
+    });
+
+    // $("#parse_text").keypress(function(event) {
+    //     if (event.which == 13) {
+    //         event.preventDefault();
+    //         console.log('hit enter');
+    //         $("#parse_button").click();
+    //     }
+    // });
+
+  });
+
+  socket.on('parse_text_response', function(msg) {
+    $('#parse').html(msg.data);
+    tippy('[title]');
+    $('#table_lines').DataTable({
+      dom: 'B',
+      buttons: [
+        'copy', 'excel', 'pdf'
+      ],
+      // "scrollY": "555px",
+      // "scrollX": false,
+      "paging": false,
+      // "ordering": false,
+      // "autoWidth": false,
+      // "fixedHeader": {
+          // "header": false,
+          // "footer": false
+      // },
+      "columnDefs": [
+        { "width": "5px", "targets": 0 },
+        { "width": "200px", "targets": 1 },
+        { "width": "200px", "targets": 2 }
+      ]
+      // fixedColumns: true
+    });
+
+  });
+
+  </script>
+
+    <!-- <input type='text' id='parse_text'></input> -->
+    <textarea id='parse_text'></textarea>
+    <input type='submit' id='parse_button' value='Parse'></input>
+
+    <div id='parse'></div>
+
+{% endblock %}

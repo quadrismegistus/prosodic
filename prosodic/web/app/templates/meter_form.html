@@ -1,0 +1,76 @@
+<div id='meter_form'>
+<h1>Configure Meter</h1>
+
+<form id='meter_config'>
+
+<div class='param_class'>
+  <h2>Structure Parameters</h2>
+  <p>These metrical parameters are subject to conscious control by the poet.
+    Kiparsky & Hanson (1996) call these "formally independent of phonological structure."</p>
+
+  <div class='param'>
+    <div>
+      <span class='title'>Number of feet in a line.</span>
+      How many feet should be in a line?
+    </div>
+
+    <!-- <input type='text' class='constraint' id='number_feet'></input> -->
+
+    <select class='constraint' id='number_feet'>
+      <option value='2'>2 (dimeter)</option>
+      <option value='3'>3 (trimeter)</option>
+      <option value='4'>4 (tetrameter)</option>
+      <option value='5' selected>5 (pentameter)</option>
+      <option value='6'>6 (hexameter)</option>
+      <option value='7'>7 (heptameter)</option>
+    </select>
+
+    <input type='checkbox' class='checkbox' id='number_feet_check'></input>
+    <label for='number_feet_check'>Activate?</label>
+  </div>
+
+  <div class='param'>
+    <div>
+      <span class='title'>Headedness of line.</span>
+      Should lines have a rising or falling rhythm?
+    </div>
+    <select id='headedness'>
+      <option value='rising'>Rising (e.g. iambic, anapestic)</option>
+      <option value='falling'>Falling (e.g. trochaic, dactylic)</option>
+    </select>
+    <input type='checkbox' class='checkbox' id='headedness_check'></input>
+    <label for='headedness_check'>Activate?</label>
+  </div>
+
+
+</div>
+
+<div class='param_class collapse in'>
+  <h2>Realization Parameters</h2>
+  <p>By contrast, "realization parameters"--e.g., the size of a metrical position, which positions
+  are regulated, and other constraints--"determine the way the structure is
+  linguistically manifested, and are dependent on the prosodic givens of languge."</p>
+
+
+  <h3>Position Size</h3>
+  <p>...</p>
+
+  <div class='param'>
+    <div>
+      <span class='title'>Maximum number of syllables allowed in strong metrical positions.</span>
+      Set to 2 (or more) to allow for resolution.
+    </div>
+    <select id='headedness'>
+      <option value='rising'>Rising (e.g. iambic, anapestic)</option>
+      <option value='falling'>Falling (e.g. trochaic, dactylic)</option>
+    </select>
+    <input type='checkbox' class='checkbox' id='headedness_check'></input>
+    <label for='headedness_check'>Activate?</label>
+  </div>
+
+
+
+
+</div>
+
+</div>

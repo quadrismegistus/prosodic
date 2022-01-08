@@ -201,7 +201,6 @@ class MeterConstraint:
 					return self.weight
 
 			if name=='footmin-w-resolution':
-				#print([a.wordtoken, b.wordtoken, a.wordtoken is b.wordtoken,a.wordtoken==b.wordtoken])
 				if a.wordtoken is not b.wordtoken: return 0 # only applies within word-boundaries
 				firstsyll_islight=bool(a.feature('prom.weight',True)) == False
 				firstsyll_isstressed=bool(a.feature('prom.stress',True)) == True

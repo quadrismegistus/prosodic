@@ -2622,7 +2622,7 @@ def convert(pronunc,source,dest):
               if safe_to_drop==True: pass
               elif (not safe_to_drop) or not pronunc[:1] in maybe_bytes(safe_to_drop,pronunc) and not (pronunc[:1],debugInfo) in warnedAlready:
                  warnedAlready.add((pronunc[:1],debugInfo))
-                 sys.stderr.write("Warning: ignoring "+source+" character "+repr(pronunc[:1])+debugInfo+" (unsupported in "+dest+")\n")
+               #   sys.stderr.write("Warning: ignoring "+source+" character "+repr(pronunc[:1])+debugInfo+" (unsupported in "+dest+")\n")
               pronunc=pronunc[1:] # ignore
             elif pronunc[:lettersToTry] in dictionary:
                 debugInfo=" after "+as_printable(pronunc[:lettersToTry])

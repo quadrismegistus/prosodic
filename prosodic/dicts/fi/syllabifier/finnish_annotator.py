@@ -266,13 +266,7 @@ def stress_pattern(stresses):
 # return a string representing the sonority pattern
 # e.g. the sonority for taloiden is represented 'AAI'
 def sonority_pattern(sonorities):
-
-    result = ''
-
-    for s in sonorities:
-
-        result += s
-
+    result = ''.join(sonorities)
     return result
 
 # print a representation of the weights and stresses

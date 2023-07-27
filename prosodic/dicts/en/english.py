@@ -202,9 +202,6 @@ def add_elisions(_ipa):
 
 
 def espeak2ipa(token):
-	CMD='espeak -q -x '+token.replace("'","\\'").replace('"','\\"')
-	#CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
-	#print CMD
 	try:
 		# @HACK FOR MPI
 		#for k in os.environ.keys():
@@ -212,7 +209,7 @@ def espeak2ipa(token):
 		#		del os.environ[k]
 		##
 
-		res=subprocess.check_output(CMD.split()).strip()
+		res = subprocess.check_output(['espeak', '-q', '-x', token]).strip()
 		#print '>> espeak = ',[res]
 		return res.decode("utf-8")
 	except (OSError,subprocess.CalledProcessError) as e:

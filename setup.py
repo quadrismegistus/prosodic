@@ -43,12 +43,12 @@ if __name__ == '__main__':
 
 	setup(
 		name='prosodic',
-		version='1.6.1',
+		version='1.6.2',
 		description=('PROSODIC: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support.'),
 		long_description=long_description,
 		long_description_content_type="text/markdown",
 		author='Ryan Heuser',
-		author_email='heuser@stanford.edu',
+		author_email='ryan.heuser@princeton.edu',
 		url='https://github.com/quadrismegistus/prosodic',
 		license='MPL-2.0',
 		packages=['prosodic','metricaltree'],

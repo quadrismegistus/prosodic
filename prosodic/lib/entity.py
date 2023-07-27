@@ -1082,8 +1082,8 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 					G[n1][n2]['label']=str(count)+" ["+str(strfreq)+"%]"
 					G[n1][n2]['fontsize']=10
 					G[n1][n2]['penwidth']=G[n1][n2]['weight']*maxlinesize
-					G.node[n1]['width']=1
-					G.node[n2]['width']=1
+					G.nodes[n1]['width']=1
+					G.nodes[n2]['width']=1
 					G[n1][n2]['weight']=0
 					#G[n1][n2]['style']="setlinewidth("+str(int(G[n1][n2]['weight']*maxlinesize)+1)+")"
 					#print G[n1][n2]['style']
@@ -1103,18 +1103,21 @@ class entity(being):	## this class, like the godhead, never instantiates, but is
 				print(">> saved: "+fn+"")
 				#plt.savefig(fn)
 				#nx.write_dot(G,fn)
-				pyd=nx.to_pydot(G)
+
+				from networkx.drawing.nx_pydot import to_pydot
+				pyd=to_pydot(G)
 				pyd.set_rankdir('LR')
 
 				for node in pyd.get_node_list():
 					node.set_orientation('portrait')
 
 				import prosodic as p
-				fnfn=os.path.join(p.dir_prosodic,fn)
+				fnfn=os.path.join(p.dir_prosodic_home,fn)
 				_path=os.path.split(fnfn)[0]
 				if not os.path.exists(_path):
 					os.makedirs(_path)
 				pyd.write_png(fnfn, prog='dot')
+				print('>> saved:',fnfn)
 
 		else:
 			if not self.children:

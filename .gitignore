@@ -47,3 +47,5 @@ corpora/*
 !corpora/corppoetry_en/
 
 venv/
+
+*tts-cache*

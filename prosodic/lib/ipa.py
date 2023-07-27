@@ -18,7 +18,7 @@ ipa['t̪']=[False,True,False,False,False,False,False,None,False,False,False,Fals
 ipa['n']=[False,True,True,False,False,False,True,None,True,False,False,False,True,False,False,False,True,False,False,False,True,False,False,None,False,False,None,False]
 ipa['ɳ']=[False,True,True,False,False,False,True,None,True,False,False,False,True,False,False,False,True,False,False,False,False,False,False,None,False,False,None,False]
 ipa['ɲ']=[False,True,True,False,False,False,True,None,True,False,False,False,True,False,False,False,True,True,False,False,False,True,False,None,True,False,None,False]
-ipa['g']=[False,True,False,False,False,False,True,None,False,False,False,False,False,False,False,False,False,True,False,False,False,False,True,None,True,False,None,False]
+ipa['ɡ']=[False,True,False,False,False,False,True,None,False,False,False,False,False,False,False,False,False,True,False,False,False,False,True,None,True,False,None,False]
 ipa['f']=[False,True,False,False,False,False,False,None,True,True,False,False,False,False,False,False,False,False,True,True,True,False,False,None,False,False,None,False]
 ipa['v']=[False,True,False,False,False,False,True,None,True,True,False,False,False,False,False,False,False,False,True,True,True,False,False,None,False,False,None,False]
 ipa['ʃ']=[False,True,False,False,False,False,False,None,True,True,False,False,False,True,False,False,True,False,False,False,False,True,False,None,False,False,None,False]
@@ -171,7 +171,7 @@ ipa2cmu['ʒ'] = 'ZH'
 ipa2cmu['b'] = 'B'
 ipa2cmu['d'] = 'D'
 ipa2cmu['f'] = 'F'
-ipa2cmu['g'] = 'G'
+ipa2cmu['ɡ'] = 'G'
 ipa2cmu['ʤ'] = 'JH'
 ipa2cmu['k'] = 'K'
 ipa2cmu['l'] = 'L'
@@ -222,7 +222,7 @@ dZ	ʤ
 c	c
 J\	ɟ
 k	k
-g	g
+g	ɡ
 q	q
 p\	φ
 B	β 

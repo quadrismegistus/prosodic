@@ -11,6 +11,7 @@ from tools import *
 from operator import itemgetter
 from ipa import sampa2ipa
 from functools import reduce
+from tqdm.auto import tqdm
 #import prosodic
 
 DASHES=['--','–','—']
@@ -18,7 +19,7 @@ REPLACE_DASHES = True
 
 
 class Text(entity):
-	def __init__(self,filename=None,lang=None,meter=None,printout=None,limWord=False,linebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
+	def __init__(self,filename=None,name=None,lang=None,meter=None,printout=None,limWord=False,phrasebreak=None,use_dict=True,fix_phons_novowel=True,stress_ambiguity=True): #',;:.?!()[]{}<>'
 		## set language and other essential attributes
 		import prosodic
 
@@ -28,7 +29,7 @@ class Text(entity):
 		self.__boundParses={}
 		self.__parsed_ents={}
 		self.phrasebreak_punct = str(",;:.?!()[]{}<>")
-		self.phrasebreak=prosodic.config['linebreak'].strip()
+		self.phrasebreak=prosodic.config['linebreak'].strip() if phrasebreak is None else phrasebreak
 		self.limWord = limWord
 		self.isFromFile = False
 		self.feats = {}
@@ -84,6 +85,8 @@ class Text(entity):
 			self.dict=prosodic.dict[self.lang]
 			self.init_text(lines)
 
+
+		if name: self.name=name
 
 		## clean
 		self.children = [stanza for stanza in self.children if not stanza.empty()]
@@ -498,8 +501,8 @@ class Text(entity):
 		else:
 			now=time.time()
 			clock_snum=0
-			#for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
-			for ei,objectx in enumerate(objects):
+			# for ei,ent in enumerate(pool.imap(parse_ent_mp,objects)):
+			for ei,objectx in enumerate(tqdm(objects)):
 				clock_snum+=objectx[0].num_syll
 				if ei and not ei%100:
 					nownow=time.time()

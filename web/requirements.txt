@@ -1,5 +1,5 @@
 #click
-Flask
+Flask==2.0.3
 Flask-BasicAuth
 Flask-Login
 #flask-oidc
@@ -22,5 +22,5 @@ python-engineio==3.13.2
 python-socketio==4.6.0
 rsa
 six
-Werkzeug
+Werkzeug==2.0.3
 WTForms

@@ -1,5 +1,5 @@
 #click
-Flask==2.0.3
+Flask==2.2.5
 Flask-BasicAuth
 Flask-Login
 #flask-oidc

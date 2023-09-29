@@ -24,10 +24,11 @@ class Text(entity):
 		if self.__class__.__name__ == 'Text':
 			self.lang=lang if lang else (detect_lang(self._txt) if self._txt else '??')
 		
-		self._parent = parent
-		self._children = [] if children is None else children
-		self._attrs = kwargs
+		self.parent = parent
+		self.children = [] if children is None else children
+		self.attrs = kwargs
 		self._init = False
+		self.init()
 
 
 	
@@ -50,7 +51,11 @@ class Text(entity):
 				for i,word_row in line_df.iterrows():
 					word_d=dict(word_row)
 					word_d['word_lang'] = self.lang
-					word = Word(word_row.word_str, **word_d)
+					token = word_row.word_str
+					wordforms = self.lang_obj.get(token)
+					print(wordforms)
+					word = Word(token, children=wordforms, **word_d)
+					print(word.children)
 					line_words.append(word)
 				line = Line(children=line_words, **line_d)
 				for word in line_words: word.parent = line
@@ -58,7 +63,7 @@ class Text(entity):
 			stanza = Stanza(children=stanza_lines, parent=self, **stanza_d)
 			for line in stanza_lines: line.parent = stanza
 			text_stanzas.append(stanza)
-		self._children = text_stanzas
+		self.children = text_stanzas
 		return self
 
 	def __repr__(self):
@@ -801,3 +806,10 @@ class Text(entity):
 
 # 	def sentences(self):
 # 		return [sent for text in self.children for sent in text.sentences()]
+
+
+
+
+class Subtext(Text):
+	def init(self):
+		self._init=True

@@ -9,9 +9,9 @@ class entity:
     """
     def __init__(self, parent = None, children = [], **kwargs):
         logger.trace(self.__class__.__name__)
-        self._parent = None
-        self._children = []
-        self._attrs = kwargs
+        self.parent = parent
+        self.children = children
+        self.attrs = kwargs
         self._init = False
 
     def init(self):
@@ -21,9 +21,9 @@ class entity:
     def __getattr__(self, __name: str, **kwargs) -> Any:
         if __name.startswith('_'): return
         logger.trace(f'{self.__class__.__name__}.{__name}')
-        if hasattr(self,'attrs') and __name in self.attrs: 
+        if __name in self.attrs: 
             return self.attrs[__name]
-        if hasattr(self,'parent') and self.parent: 
+        if self.parent: 
             return getattr(self.parent, __name)
         return None
 
@@ -41,51 +41,33 @@ class entity:
         return self.parent.get_parent(parent_type)
 
     @cached_property
-    def children(self):
-        logger.trace(self.__class__.__name__)
-        self.init()
-        return self._children
-    
-    @cached_property
-    def parent(self):
-        logger.trace(self.__class__.__name__)
-        return self._parent
-    
-    @cached_property
-    def attrs(self):
-        logger.trace(self.__class__.__name__)
-        return self._attrs
-    
-
-    @cached_property
     def stanzas(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_children('Stanza')
     @cached_property
     def lines(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_children('Line')
     @cached_property
     def words(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_children('Word')
+    @cached_property
+    def wordforms(self):
+        return [w.children for w in self.words]
 
     @cached_property
     def text(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_parent('Text')
     @cached_property
     def stanza(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_parent('Stanza')
     @cached_property
     def line(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_parent('Line')
     @cached_property
     def word(self): 
-        logger.trace(self.__class__.__name__)
         return self.get_parent('Word')
+    @cached_property
+    def wordform(self): 
+        return self.get_parent('WordForm')
 
 
 

@@ -46,13 +46,13 @@ class EnglishLanguage(Language):
 
     @cache
     def get(self, token):
-        token=token.strip()
+        token_str=token.strip()
         ipa_l = self.phoneticize(token)
-        o=[]
+        l=[]
         for ipa in ipa_l:
-            sylls = self.syllabify(token, num_sylls=len(ipa))
-            o.append((ipa,sylls))
-        return o
+            sylls = self.syllabify(token_str, num_sylls=len(ipa))
+            l.append(WordForm(token_str, sylls_text=sylls, sylls_ipa=ipa))
+        return l
 
 
 

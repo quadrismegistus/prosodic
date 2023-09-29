@@ -1,12 +1,9 @@
 from .imports import *
 from .texts import Text
 
-class Stanza(Text):
+class Stanza(Subtext):
 	sep: str = ''
 	child_type: str = 'Line'
-
-	def init(self):
-		self._init=True
 
 	@cached_property
 	def lines(self):
@@ -16,9 +13,6 @@ class Stanza(Text):
 class Line(Stanza):
 	sep: str = ''
 	child_type: str = 'Word'
-
-	def init(self):
-		self._init=True
 
 	@cached_property
 	def words(self):

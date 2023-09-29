@@ -6,8 +6,18 @@ class Word(Text):
 	child_type: str = 'WordForm'
 
 	def init(self):
+		if self._init: return self
+		
+		self._children = []
+		sylls,ipa_l = self.lang_obj.get(self.txt)
+		for ipa in ipa_l:
+			wf = WordForm(self.txt, sylls_text = sylls, sylls_ipa = ipa)
+			self._children.append(wf)
 		self._init=True
+		return self
 
+
+class WordForm(Word):
 	pass
 
 

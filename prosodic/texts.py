@@ -9,30 +9,35 @@ class Text(entity):
 			txt: str = '',
 			filename: str = '',
 			lang: Optional[str] = None,
-			meter: Optional[str] = None,
 			parent: Optional[entity] = None,
 			children: Optional[list] = None,
 			**kwargs
 			):
-		
+		logger.trace(f'{self.__class__.__name__}({txt}, {filename}, {lang})')
+
 		if not txt and not filename and not children:
 			raise Exception('must provide either txt, filename, or children objects')
 
 		self._txt = get_txt(txt,filename)
 		self.fn = filename
-		self._lang=lang
-		self.meter=meter
-		self.parent=parent
-		self.children = [] if children is None else children
-		self.attrs = kwargs
+
+		if self.__class__.__name__ == 'Text':
+			self.lang=lang if lang else (detect_lang(self._txt) if self._txt else '??')
+		
+		self._parent = parent
+		self._children = [] if children is None else children
+		self._attrs = kwargs
 		self._init = False
-		self.init()
+
+
 	
 	def init(self):
+		if self._init: return self
+		self._init=True
 		from .lines import Stanza, Line
 		from .words import Word
+		logger.trace(self.__class__.__name__)
 
-		if self._init: return self
 
 		df = self.df_tokens = pd.DataFrame(tokenize_sentwords_iter(self.txt))
 		text_stanzas = []
@@ -53,29 +58,28 @@ class Text(entity):
 			stanza = Stanza(children=stanza_lines, parent=self, **stanza_d)
 			for line in stanza_lines: line.parent = stanza
 			text_stanzas.append(stanza)
-		self.children = text_stanzas
-		self._init = True
+		self._children = text_stanzas
 		return self
 
-	def __repr__(self): 
+	def __repr__(self):
 		attrstr=' '.join(f'{k}={v.strip() if type(v)==str else v}' for k,v in self.attrs.items())
 		attrstr=f' [{attrstr}]' if attrstr else ''
 		return f'({self.__class__.__name__}: {self.txt.strip()}){attrstr}'
 
-	@cached_property
-	def lang(self):
-		lang = self._lang if self._lang else detect_lang(self.txt)
-		assert type(lang) == str and lang and len(lang)==2
-		return lang
 
-	@cached_property
+
+	@property
 	def txt(self):
+		logger.trace(self.__class__.__name__)
 		if self._txt: txt = self._txt
-		if self.children: txt=self.sep.join(child.txt for child in self.children)
+		elif self.children: txt=self.sep.join(child.txt for child in self.children)
 		return clean_text(txt)
 
-	
-
+	@cached_property
+	def lang_obj(self):
+		logger.trace(self.__class__.__name__)
+		from .langs import English
+		if self.lang=='en': return English()
 
 
 

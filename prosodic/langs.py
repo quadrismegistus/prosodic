@@ -1,6 +1,25 @@
 from .imports import *
 
 
+def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], lib_fn='libespeak.dylib'):
+    for path in paths:
+        if not os.path.exists(path): continue
+        if 'espeak-ng' in paths: 
+            return path
+        for root,dirs,fns in os.walk(path):
+            if lib_fn in set(fns):
+                return os.path.join(root,lib_fn)
+    return ''
+
+def set_espeak_env():
+    path=get_espeak_env()
+    if path:
+        os.environ['PHONEMIZER_ESPEAK_LIBRARY']=path
+
+# set now
+set_espeak_env()
+
+
 class Language(entity):
     pronunciation_dictionary_filename = ''
     pronunciation_dictionary_filename_sep = '\t'
@@ -19,21 +38,88 @@ class Language(entity):
                         d[token].append(ipa.split('.'))
         return d
 
+    # def phoneme(self, ipastr):
+    #     pass
+
+
 
 @cache
 def English(): return EnglishLanguage()
 
 class EnglishLanguage(Language):
     pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
+    lang = 'en-us'
+    cache_fn = 'english_wordforms.sqlitedict'
 
     @cache
     def phoneticize(self, token):
-        return self.token2ipa.get(token.lower(), [])
+        if token in self.token2ipa: return self.token2ipa[token]
+        # otherwise tts...
+        ipa_str = self.phonemize(token.lower())
+        if not ipa_str:
+            logger.exception(f'no phonemes from phonemize, token = {token}')
+            return []
+        
+        ipa_sylls = self.syllabify_ipa(ipa_str)
+        return [ipa_sylls]
+
+
+    @cached_property
+    def phonemizer(self):
+        from phonemizer.backend import EspeakBackend
+        return EspeakBackend(
+            self.lang,
+            preserve_punctuation=False,
+            with_stress=True
+        )
+    
+
+    @cache
+    def phonemize(self, token):
+        from phonemizer.separator import Separator
+        logger.trace('phonemizing')
+        o=self.phonemizer.phonemize(
+            [token],
+            separator=Separator(phone=' ', word='|', syllable='.'),
+            strip=True
+        )
+        return o[0] if o else None
+
+    @cache
+    def syllabify_ipa(self, ipa_str_with_spaces_between_phonemes):
+        phn = ipa_str_with_spaces_between_phonemes
+        phns=phn.split()
+        sylls = []
+        syll = []
+        grid=self.syllabiphon._to_grid(phn)
+        bounds=self.syllabiphon.find_boundaries(grid)
+        for phon,seg,is_bound in zip(phns,grid,bounds):
+            if is_bound and syll:
+                sylls.append(syll)
+                syll=[]
+            syll.append(phon)
+        if syll: sylls.append(syll)
+        
+        def format_syll(phons):
+            o=''.join(phons)
+            if 'ˌ' in o: o="`"+o.replace("ˌ","")
+            elif "ˈ" in o: o="'"+o.replace("ˈ","")
+            return o
+        return [format_syll(syll) for syll in sylls]
+
+        
+
+
     
     @cached_property
     def syllabifier(self):
         from nltk.tokenize import SyllableTokenizer
         return SyllableTokenizer()
+    
+    @cached_property
+    def syllabiphon(self):
+        from syllabiphon.syllabify import Syllabify
+        return Syllabify()
     
     @cache
     def syllabify(self, token, num_sylls=None):
@@ -42,16 +128,33 @@ class EnglishLanguage(Language):
         l = fix_recasing(l, token)
         if num_sylls: l = fix_num_sylls(l, num_sylls)
         return l
+    
+    @cached_property
+    def cached(self):
+        from sqlitedict import SqliteDict
+        import pickle
         
+        return SqliteDict(
+            os.path.join(PATH_HOME_DATA, self.cache_fn),
+            autocommit=True,
+            encode=pickle.dumps,
+            decode=pickle.loads
+        )
 
     @cache
     def get(self, token):
-        token_str=token.strip()
-        ipa_l = self.phoneticize(token)
+        if token in self.cached: 
+            return self.cached.get(token)
+    
+        if not any(x.isalpha() for x in token): return []
+        tokenl = token.lower()
+        ipa_l = self.phoneticize(tokenl)
         l=[]
         for ipa in ipa_l:
-            sylls = self.syllabify(token_str, num_sylls=len(ipa))
-            l.append(WordForm(token_str, sylls_text=sylls, sylls_ipa=ipa))
+            sylls = self.syllabify(token, num_sylls=len(ipa))
+            
+            l.append(WordForm(token, sylls_text=sylls, sylls_ipa=ipa))
+        self.cached[token]=l
         return l
 
 

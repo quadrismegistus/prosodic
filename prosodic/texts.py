@@ -51,11 +51,9 @@ class Text(entity):
 				for i,word_row in line_df.iterrows():
 					word_d=dict(word_row)
 					word_d['word_lang'] = self.lang
-					token = word_row.word_str
+					token = word_row.word_str.strip()
 					wordforms = self.lang_obj.get(token)
-					print(wordforms)
 					word = Word(token, children=wordforms, **word_d)
-					print(word.children)
 					line_words.append(word)
 				line = Line(children=line_words, **line_d)
 				for word in line_words: word.parent = line

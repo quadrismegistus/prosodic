@@ -19,7 +19,7 @@ class entity:
         self._init=True
 
     def __getattr__(self, __name: str, **kwargs) -> Any:
-        if __name.startswith('_'): return
+        if __name.startswith('_'): raise AttributeError
         logger.trace(f'{self.__class__.__name__}.{__name}')
         if __name in self.attrs: 
             return self.attrs[__name]
@@ -51,7 +51,13 @@ class entity:
         return self.get_children('Word')
     @cached_property
     def wordforms(self):
-        return [w.children for w in self.words]
+        return self.get_children('WordForm')
+    @cached_property
+    def syllables(self):
+        return self.get_children('Syllable')
+    @cached_property
+    def phonemes(self):
+        return self.get_children('Phoneme')
 
     @cached_property
     def text(self): 

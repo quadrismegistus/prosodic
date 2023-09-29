@@ -3,6 +3,10 @@ PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
 PATH_REPO_DATA = os.path.join(PATH_REPO,'data')
 PATH_DICTS = os.path.join(PATH_REPO_DATA, 'dicts')
+PATH_HOME = os.path.expanduser('~/prosodic_data')
+PATH_HOME_DATA = os.path.join(PATH_HOME, 'data')
+os.makedirs(PATH_HOME_DATA, exist_ok=True)
+
 
 PATH_MTREE = os.path.join(PATH_REPO, 'metricaltree')
 sys.path.append(PATH_MTREE)
@@ -54,3 +58,5 @@ from .texts import *
 from .lines import *
 from .words import *
 from .langs import *
+from .syllables import *
+from .phonemes import *

@@ -9,6 +9,35 @@ class WordForm(Subtext):
 	child_type: str = 'Syllable'
 
 
+	def init(self):
+		from .syllables import Syllable
+		if self._init: return
+		self._init=True
+		self.children = []
+		if self.sylls_text and self.sylls_ipa:
+			for syll_str,syll_ipa in zip(self.sylls_text, self.sylls_ipa):
+				syll = Syllable(syll_str, syll_ipa=syll_ipa, syll_stress=get_stress(syll_ipa))
+				self.children.append(syll)
+		return self
+
+
+
+
+
+
+
+
+
+def get_stress(ipa):
+    if not ipa: return ''
+    if ipa[0]=='`': return 'S'
+    if ipa[0]=="'": return 'P'
+    return 'U'
+
+
+
+
+
 # class WordToken(entity):
 # 	def __init__(self,words,token,is_punct=False,sentence=None,line=None):
 # 		self.children=words

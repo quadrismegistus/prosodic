@@ -1,15 +1,19 @@
-nltk>=3.6.4
-numpy
-Pyphen
-pyparsing
-xlrd
-networkx
-scipy
-xlwt
-levenshtein
-p_tqdm
-nltk
-numpy
+ftfy
+langdetect
+pandas
+
+# nltk>=3.6.4
+# numpy
+# Pyphen
+# pyparsing
+# xlrd
+# networkx
+# scipy
+# xlwt
+# levenshtein
+# p_tqdm
+# nltk
+# numpy
 
 
 # Flask

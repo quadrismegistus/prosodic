@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+from .imports import *
+
 import os,pickle,glob,time,sys
 from tools import *
 from entity import *

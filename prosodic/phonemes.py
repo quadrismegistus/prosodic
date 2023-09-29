@@ -1,3 +1,4 @@
+from .imports import *
 
 
 class Phoneme(entity):

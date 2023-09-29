@@ -1,3 +1,4 @@
+from .imports import *
 
 class Syllable(entity):
 	def __init__(self,syllstrengthstress,lang,token=""):

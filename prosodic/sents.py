@@ -1,3 +1,4 @@
+from .imports import *
 from entity import entity,being
 from tools import makeminlength,wordtoks2str
 

@@ -81,7 +81,7 @@ color:red;
 
 #table_lines {
   margin: 0 auto;
-  width: 100%;
+  width: 100vw;
   clear: both;
   border-collapse: collapse;
   table-layout: fixed;

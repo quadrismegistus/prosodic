@@ -27,3 +27,8 @@ def clean_text(txt):
 
 def get_name(txt):
     return txt.strip().split('\n')[0].strip()
+
+def get_attr_str(attrs):
+    attrstr=' '.join(f'{k}={v.strip() if type(v)==str else v}' for k,v in attrs.items())
+    attrstr=f' [{attrstr}]' if attrstr else ''
+    return attrstr

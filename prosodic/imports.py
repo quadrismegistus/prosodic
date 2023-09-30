@@ -29,6 +29,8 @@ DEFAULT_LANG='en'
 LOG_FORMAT = '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>'
 LOG_LEVEL = 10
 DEFAULT_METER='default_english'
+METER_MAX_S = 2
+METER_MAX_W = 2
 
 
 # sys imports
@@ -44,6 +46,7 @@ import string
 
 # non-sys imports
 import ftfy
+import numpy as np
 import nltk
 import pandas as pd
 from langdetect import detect as detect_lang
@@ -65,3 +68,4 @@ from .words import *
 from .langs import *
 from .syllables import *
 from .phonemes import *
+from .parsing import *

@@ -16,9 +16,13 @@ class WordForm(Subtext):
 		self.children = []
 		if self.sylls_text and self.sylls_ipa:
 			for syll_str,syll_ipa in zip(self.sylls_text, self.sylls_ipa):
-				syll = Syllable(syll_str, syll_ipa=syll_ipa, syll_stress=get_stress(syll_ipa))
+				syll = Syllable(syll_str, syll_ipa=syll_ipa, syll_stress=get_stress(syll_ipa), parent=self)
 				self.children.append(syll)
 		return self
+	
+	@cached_property
+	def is_functionword(self):
+		return len(self.children)==1 and not self.children[0].is_stressed
 
 
 

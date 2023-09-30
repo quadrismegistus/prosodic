@@ -11,8 +11,17 @@ class entity:
         logger.trace(self.__class__.__name__)
         self.parent = parent
         self.children = children
-        self.attrs = kwargs
+        self._attrs = kwargs
         self._init = False
+
+    @property
+    def attrs(self):
+        return self._attrs
+
+    def __repr__(self):
+        attrstr=get_attr_str(self.attrs)
+        return f'({self.__class__.__name__}){attrstr}'
+
 
     def init(self):
         logger.trace(self.__class__.__name__)
@@ -21,8 +30,8 @@ class entity:
     def __getattr__(self, __name: str, **kwargs) -> Any:
         if __name.startswith('_'): raise AttributeError
         logger.trace(f'{self.__class__.__name__}.{__name}')
-        if __name in self.attrs: 
-            return self.attrs[__name]
+        if __name in self._attrs: 
+            return self._attrs[__name]
         if self.parent: 
             return getattr(self.parent, __name)
         return None
@@ -75,6 +84,24 @@ class entity:
     def wordform(self): 
         return self.get_parent('WordForm')
     
+
+    @cached_property
+    def next(self):
+        i=self.parent.children.index(self)
+        try:
+            return self.parent.children[i+1]
+        except IndexError:
+            return None
+    
+    @cached_property
+    def prev(self):
+        i=self.parent.children.index(self)
+        if i-1<0: return None
+        try:
+            return self.parent.children[i-1]
+        except IndexError:
+            return None
+
 
 
 

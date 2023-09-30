@@ -26,7 +26,7 @@ class Text(entity):
 		
 		self.parent = parent
 		self.children = [] if children is None else children
-		self.attrs = kwargs
+		self._attrs = kwargs
 		self._init = False
 		self.init()
 
@@ -65,8 +65,7 @@ class Text(entity):
 		return self
 
 	def __repr__(self):
-		attrstr=' '.join(f'{k}={v.strip() if type(v)==str else v}' for k,v in self.attrs.items())
-		attrstr=f' [{attrstr}]' if attrstr else ''
+		attrstr=get_attr_str(self.attrs)
 		return f'({self.__class__.__name__}: {self.txt.strip()}){attrstr}'
 
 

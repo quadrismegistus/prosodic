@@ -1,6 +1,5 @@
 from .imports import *
 
-
 class ParseTextUnit(entity):
     @cached_property
     def wordform_combos(self):
@@ -34,6 +33,12 @@ class ParseTextUnit(entity):
         # final bounding?
         unbound_parses, bound_parses = self.bound_parses(all_parses)
         return unbound_parses,bound_parses
+
+    def parse_slots_slow(self, slots, constraints=[]):
+        pass
+
+
+
 
     def parse_slots(self, slots, constraints=[]):
         num_slots = len(slots)
@@ -133,11 +138,8 @@ class Parse(entity):
     def __init__(self, num_total_slots:int, constraints:list=[], max_s=2, max_w=2):
         super().__init__()
         self.positions = []
-        self.constraints = constraints=[]
-        self.constraint_scores = {}
-        for constraint in self.constraints:
-            self.constraint_scores[constraint] = 0
-        self.constraint_names = [c.name for c in self.constraints]
+        self.constraints = constraints
+        self.constraint_names = [c.__name__ for c in self.constraints]
         self.num_slots = 0
         self.num_total_slots = num_total_slots
         self.is_bounded = False
@@ -156,7 +158,36 @@ class Parse(entity):
     def __eq__(self, other):
         return self.score == other.score
     
+    def __repr__(self):
+        attrstr=get_attr_str(self.attrs)
+        parse="|".join(m.token for m in self.positions)
+        return f'({self.__class__.__name__}: {parse}){attrstr}'
+    
+
     @property
+    def attrs(self):
+        return {
+            **self._attrs,
+            'meter':self.meter_str,
+            'score':self.score,
+            **{c:v for c,v in self.constraint_scores.items() if v!=np.nan and v}
+        }
+
+    @cached_property
+    def constraint_scores(self):
+        # logger.debug(self)
+        scores = [mpos.constraint_scores for mpos in self.positions]
+        d={}
+        for constraint in self.constraints:
+            cname=constraint.__name__
+            d[cname] = sum(
+                d.get(cname,0) 
+                for d in scores 
+                if d.get(cname) not in {np.nan,None}
+            )
+        return d
+
+    @cached_property
     def score(self):
         try:
             return sum(self.constraint_scores.values())
@@ -175,31 +206,18 @@ class Parse(entity):
         return other
 
     # return a list of all slots in the parse
-    def slots(self,by_word=False):
-        slots = []
-        last_word_i=None
-        for pos in self.positions:
-            for slot in pos.slots:
-                if not by_word:
-                    slots.append(slot)
-                else:
-                    if last_word_i==None or last_word_i != slot.i_word:
-                        slots.append([])
-                    slots[-1].append(slot)
-                    last_word_i=slot.i_word
-        return slots
+    @cached_property
+    def slots(self):
+        return [slot for mpos in self.positions for slot in mpos.slots]
 
 
-    def str_meter(self,word_sep=""):
-        str_meter=""
-        word_tok_now=None
-        for pos in self.positions:
-            for slot in pos.slots:
-                if word_sep and word_tok_now and slot.wordtoken != word_tok_now:
-                    str_meter+=word_sep
-                word_tok_now=slot.wordtoken
-                str_meter+=pos.meter_val
-        return str_meter
+    @property
+    def meter_str(self,word_sep=""):
+        return ''.join(
+            mpos.meter_val
+            for mpos in self.positions
+            for slot in mpos.slots
+        )
 
     # add an extra slot to the parse
     # returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
@@ -269,11 +287,12 @@ class Parse(entity):
         contains_greater_violation = False
         contains_lesser_violation = False
         for constraint in self.constraints:
-            mark = self.constraint_scores[constraint]
-            if mark > parse.constraint_scores[constraint]:
+            cname=constraint.__name__
+            mark = self.constraint_scores[cname]
+            if mark > parse.constraint_scores[cname]:
                 contains_greater_violation = True
 
-            if mark < parse.constraint_scores[constraint]:
+            if mark < parse.constraint_scores[cname]:
                 contains_lesser_violation = True
 
         if contains_greater_violation:
@@ -310,22 +329,48 @@ class ParseSlot(entity):
         self.featpaths={}
         self.word=unit.parent
 
+    @cached_property
+    def is_stressed(self): return self.unit.is_stressed
+    @cached_property
+    def is_heavy(self): return self.unit.is_heavy
+    @cached_property
+    def is_strong(self): return self.unit.is_strong
+    @cached_property
+    def is_weak(self): return self.unit.is_weak
+
+    @cached_property
+    def attrs(self):
+        return {**self._attrs, **{'is_stressed':self.is_stressed, 'is_heavy':self.is_heavy, 'is_strong':self.is_strong, 'is_weak':self.is_weak}}
+
+
+
 class ParsePosition(entity):
     def __init__(self, meter_val:str, parse:Parse, slots=[]): # meter_val represents whether the position is 's' or 'w'
         super().__init__()
         self.meter_val = meter_val
         self.parse=parse
         self.children=self.slots=slots
-        self.constraint_scores = {}
-        for constraint in parse.constraints:
-            self.constraint_scores[constraint] = 0
         for slot in self.slots: slot.meter_val=self.meter_val
+
+    @property
+    def constraints(self): return self.parse.constraints
+
+    @property
+    def is_prom(self): return self.meter_val=='s'
 
     def __copy__(self):
         other = ParsePosition(self.meter_val, parse=self, slots=self.slots[:])
         for k,v in list(self.constraint_scores.items()):
             other.constraint_scores[k]=copy(v)
         return other
+    
+    @cached_property
+    def constraint_scores(self):
+        # logger.debug(self)
+        d={}
+        for constraint in self.constraints:
+            d[constraint.__name__] = constraint(self)
+        return d
 
     @property
     def has_viol(self):
@@ -366,7 +411,7 @@ class ParsePosition(entity):
         return posfeats
 
     def __repr__(self):
-        return self.token
+        return f'ParsePosition({self.token})'
 
     @property
     def token(self):

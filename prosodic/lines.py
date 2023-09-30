@@ -1,12 +1,13 @@
 from .imports import *
 from .texts import Text
+from .parsing import ParseTextUnit
 
 class Stanza(Subtext):
 	sep: str = ''
 	child_type: str = 'Line'
 	
 
-class Line(Stanza):
+class Line(Stanza, ParseTextUnit):
 	sep: str = ''
 	child_type: str = 'Word'
 

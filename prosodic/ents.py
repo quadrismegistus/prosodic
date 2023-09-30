@@ -51,13 +51,13 @@ class entity:
         return self.get_children('Word')
     @cached_property
     def wordforms(self):
-        return self.get_children('WordForm')
+        return [w.children for w in self.words]
     @cached_property
     def syllables(self):
-        return self.get_children('Syllable')
+        return [s for w in self.words for s in (w.children[0].get_children('Syllable') if w.children else [])]
     @cached_property
     def phonemes(self):
-        return self.get_children('Phoneme')
+        return [s for w in self.words for s in (w.children[0].get_children('Phoneme') if w.children else [])]
 
     @cached_property
     def text(self): 
@@ -74,6 +74,8 @@ class entity:
     @cached_property
     def wordform(self): 
         return self.get_parent('WordForm')
+    
+
 
 
 

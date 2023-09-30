@@ -1,25 +1,4 @@
 from .imports import *
-from tools import *
-from copy import copy
-import string
-from entity import entity
-import logging
-from functools import total_ordering
-
-
-
-
-from tools import *
-#from Queue import Queue
-from MeterConstraint import MeterConstraint as Constraint
-from MeterSlot import MeterSlot as Slot
-from MeterPosition import MeterPosition as Position
-from Parse import Parse, Bounding
-from copy import copy
-from tools import makeminlength
-from entity import being
-import os
-DEFAULT_METER='default_english'
 
 def genDefault(metername=DEFAULT_METER):
 	import prosodic

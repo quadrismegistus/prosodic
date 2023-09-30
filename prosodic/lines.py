@@ -4,20 +4,12 @@ from .texts import Text
 class Stanza(Subtext):
 	sep: str = ''
 	child_type: str = 'Line'
-
-	@cached_property
-	def lines(self):
-		return [Line(line, parent=self) for line in self.txt.split('\n')]
 	
 
 class Line(Stanza):
 	sep: str = ''
 	child_type: str = 'Word'
 
-	@cached_property
-	def words(self):
-		from .words import Word
-		return [Word(tok, parent=self) for tok in self.tokens]
 	
 	
 

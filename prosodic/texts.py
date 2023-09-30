@@ -8,7 +8,7 @@ class Text(entity):
 	def __init__(self,
 			txt: str = '',
 			filename: str = '',
-			lang: Optional[str] = None,
+			lang: Optional[str] = DEFAULT_LANG,
 			parent: Optional[entity] = None,
 			children: Optional[list] = None,
 			**kwargs

@@ -322,8 +322,7 @@ class ParsePosition(entity):
         for slot in self.slots: slot.meter_val=self.meter_val
 
     def __copy__(self):
-        other = ParsePosition(self.meter, self.meter_val)
-        other.slots = self.slots[:]
+        other = ParsePosition(self.meter_val, parse=self, slots=self.slots[:])
         for k,v in list(self.constraint_scores.items()):
             other.constraint_scores[k]=copy(v)
         return other

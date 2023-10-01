@@ -1,3 +1,6 @@
+def test_nonsense():
+    assert 1 == 1
+
 # #encoding=utf-8
 
 # import prosodic as p

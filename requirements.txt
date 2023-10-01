@@ -6,7 +6,5 @@ syllabiphon @ git+https://github.com/dmort27/syllabiphon
 sqlitedict
 gruut-ipa
 numpy
-# mpire
-# multiprocess
 multiset
 nltk

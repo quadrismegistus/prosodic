@@ -20,7 +20,7 @@ class ParseList(UserList):
         return pd.DataFrame(l).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
 
 
-@profile
+#@profile
 def parse_mp(parse): return parse.init()
 
 
@@ -48,7 +48,7 @@ class ParseTextUnit(entity):
     @cached_property
     def slots(self): return self.slot_matrix[0]
 
-    @profile
+    #@profile
     def parse(self, 
               constraints=DEFAULT_CONSTRAINTS, 
               max_s=METER_MAX_S, 
@@ -78,9 +78,12 @@ class ParseTextUnit(entity):
             num_proc=num_proc, 
             progress=progress
         )
+        print(l)
         l.sort()
+        print(l)
         for i,px in enumerate(l): px.parse_rank=i+1
         l = self.bound_parses(l, progress=progress)
+        print(l)
         l = [
                 l[i] 
                 for i in pd.Series(
@@ -91,9 +94,12 @@ class ParseTextUnit(entity):
                 ).drop_duplicates(
                 ).index
             ]
+        print(l)
         l = ParseList(l)
                 # cache[parse_key] = l
+        print(l)
         self.parses_ = l
+        print(l)
         return l[0] if l else None
 
     @cached_property
@@ -118,7 +124,7 @@ class ParseTextUnit(entity):
     #     index_matches = pd.Series([px.meter_str for px in self.parses]).drop_duplicates().index
     #     return ParseList([self.parses[i] for i in index_matches])
 
-    @profile
+    #@profile
     def possible_parses(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
         all_parses = []
         for slots in self.slot_matrix:
@@ -132,7 +138,7 @@ class ParseTextUnit(entity):
             )
         return all_parses
     
-    @profile
+    #@profile
     def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True):
         objs = self.possible_parses(
             constraints=constraints,
@@ -148,7 +154,7 @@ class ParseTextUnit(entity):
             num_proc=num_proc
         )
     
-    @profile
+    #@profile
     def bound_parses(self, parses = None, progress=True):
         if self.bound_init: return
         if parses is None: parses = self.parses
@@ -266,7 +272,7 @@ class Parse(entity):
         if self.positions: self.init()
 
     @cached_property
-    @profile
+    #@profile
     def sort_key(self): 
         return (
             # (0 if not px.is_bounded else 1),
@@ -276,11 +282,11 @@ class Parse(entity):
             self.num_stressed_sylls,
         )
 
-    @profile
+    #@profile
     def __lt__(self,other):
         return self.sort_key < other.sort_key
 
-    @profile
+    #@profile
     def __eq__(self, other):
         logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
         return not (self<other) and not (other<self)
@@ -294,7 +300,7 @@ class Parse(entity):
         # preattr=f'({self.__class__.__name__}: {parse})'
         # return f'{preattr}{attrstr}'
     
-    @profile
+    #@profile
     def init(self):
         if self._init: return
         self._init=True
@@ -305,7 +311,7 @@ class Parse(entity):
         return self
     
     @cached_property
-    @profile
+    #@profile
     def num_stressed_sylls(self):
         return len([
             slot
@@ -315,13 +321,13 @@ class Parse(entity):
         ])
     
     @cached_property
-    @profile
+    #@profile
     def average_position_size(self):
         l = [len(mpos.children) for mpos in self.positions if mpos.children]
         return np.mean(l) if len(l) else np.nan
 
     @property
-    @profile
+    #@profile
     def attrs(self):
         return {
             **self._attrs,
@@ -335,7 +341,7 @@ class Parse(entity):
         }
 
     @cached_property
-    @profile
+    #@profile
     def constraint_viols(self):
         self.init()
         # logger.debug(self)
@@ -348,13 +354,13 @@ class Parse(entity):
         return d
     
     @cached_property
-    @profile
+    #@profile
     def constraint_scores(self):
         self.init()
         return {cname:safesum(cvals) for cname,cvals in self.constraint_viols.items()}
 
     @cached_property
-    @profile
+    #@profile
     def score(self):
         self.init()
         try:
@@ -380,7 +386,7 @@ class Parse(entity):
 
 
     @cached_property
-    @profile
+    #@profile
     def meter_str(self,word_sep=""):
         return ''.join(
             '+' if mpos.is_prom else '-'
@@ -389,7 +395,7 @@ class Parse(entity):
         )
     
     @cached_property
-    @profile
+    #@profile
     def stress_str(self,word_sep=""):
         return ''.join(
             '+' if slot.is_stressed else '-'
@@ -398,7 +404,7 @@ class Parse(entity):
         ).lower()
     
     # return a representation of the bounding relation between self and parse
-    @profile
+    #@profile
     def bounding_relation(self, parse):
         self.init()
         parse.init()
@@ -411,7 +417,7 @@ class Parse(entity):
         else:
             return Bounding.unequal
     
-    # @profile
+    # #@profile
     # def bounding_relation(self, parse):
     #     contains_greater_violation = False
     #     contains_lesser_violation = False
@@ -554,11 +560,11 @@ class ParsePosition(entity):
             other.constraint_scores[k]=copy(v)
         return other
     
-    @profile
+    #@profile
     def __repr__(self):
         return f'ParsePosition({self.token})'
     
-    @profile
+    #@profile
     def init(self):
         if self.viold and self.violset: return
         for constraint in self.constraints:
@@ -571,14 +577,14 @@ class ParsePosition(entity):
 
     
     @cached_property
-    @profile
+    #@profile
     def constraint_viols(self):
         self.init()
         return self.viold_
         
 
     @cached_property
-    @profile
+    #@profile
     def constraint_scores(self):
         return {cname:safesum(cvals) for cname,cvals in self.constraint_viols.items()}
 

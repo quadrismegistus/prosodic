@@ -12,6 +12,7 @@ class entity:
         self.parent = parent
         self.children = children
         self._attrs = kwargs
+        for k,v in self._attrs.items(): setattr(self,k,v)
         self._init = False
 
     @property

@@ -2,7 +2,7 @@ from .imports import *
 from .constraints import DEFAULT_CONSTRAINTS
 from .parsing import ParseList
 
-@profile
+#@profile
 def parse_line_mp(args):
 	from .lines import Line
 	line,kwargs = args
@@ -38,6 +38,7 @@ class Text(entity):
 		self.parent = parent
 		self.children = [] if children is None else children
 		self._attrs = kwargs
+		for k,v in self._attrs.items(): setattr(self,k,v)
 		self._init = False
 		self.init()
 
@@ -46,7 +47,7 @@ class Text(entity):
 		return self.__class__.__name__ == 'Text'
 
 
-	@profile
+	#@profile
 	def init(self):
 		if self._init: return self
 		self._init=True
@@ -82,7 +83,11 @@ class Text(entity):
 
 	@property
 	def attrs(self):
-		return {'txt':self.txt, **self._attrs}
+		print('######',self.__class__)
+		for k,v in self.__dict__.items():
+			print(k,'-->',v)
+		print(dir(self))
+		return {'txt':self._txt.strip(), **self._attrs}
 
 
 	@property
@@ -100,7 +105,7 @@ class Text(entity):
 		if self.lang=='en': return English()
 
 	# @cache
-	@profile
+	#@profile
 	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, force=False):
 		kwargs=dict(
 			constraints=constraints, 

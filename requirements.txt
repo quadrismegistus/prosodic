@@ -9,3 +9,4 @@ numpy
 # mpire
 # multiprocess
 multiset
+nltk

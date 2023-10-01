@@ -43,6 +43,7 @@ import itertools
 from copy import copy
 from functools import cached_property, lru_cache as cache, total_ordering
 import string
+import random
 
 # non-sys imports
 import ftfy
@@ -57,6 +58,7 @@ logger.add(
     format=LOG_FORMAT, 
     level=LOG_LEVEL
 )
+from tqdm import tqdm
 
 # local imports
 from .utils import *

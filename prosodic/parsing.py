@@ -1,4 +1,5 @@
 from .imports import *
+from .constraints import *
 
 class ParseTextUnit(entity):
     @cached_property
@@ -20,27 +21,85 @@ class ParseTextUnit(entity):
             for i,unit in enumerate(l):
                 l[i] = ParseSlot(i,unit)
         return ll
+    
+    @cached_property
+    def slots(self): return self.slot_matrix[0]
 
     
-    def parse(self, constraints=[]):
-        clockstart=time.time()
+    def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
+        self._bound_init = False
+        self.all_parses = self.parse_slots_slow(constraints=constraints, max_s=max_s, max_w=max_w)
+        for i,px in enumerate(self.all_parses): px.parse_rank=i+1
+        self._parse_init = True
+
+    @cached_property
+    def parses(self, **kwargs):
+        if not self.all_parses: self.parse(**kwargs)
+        if not self._bound_init:
+            self._bound_init = True
+            self.bound_parses(self.all_parses)
+        return [px for px in self.all_parses if not px.is_bounded]
+        
+
+    @cached_property
+    def bounded_parses(self, **kwargs):
+        if not self.all_parses: self.parse(**kwargs)
+        if not self._bound_init:
+            self._bound_init = True
+            self.bound_parses(self.all_parses)
+        return [px for px in self.all_parses if px.is_bounded]
+
+    @cached_property
+    def scansions(self, **kwargs):
+        if not self.all_parses: self.parse(**kwargs)
+        index_matches = pd.Series([px.meter_str for px in self.all_parses]).drop_duplicates().index
+        return [self.all_parses[i] for i in index_matches]
+
+
+    def possible_parses(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
         all_parses = []
-        all_bounded_parses = []
-        for slots_i,slots_combo in enumerate(self.slot_matrix):
-            _parses,_bounded_parses = self.parse_slots(slots_combo, constraints=constraints)
-            all_parses.extend(_parses)
-            all_bounded_parses.extend(_bounded_parses)
-        # final bounding?
-        unbound_parses, bound_parses = self.bound_parses(all_parses)
-        return unbound_parses,bound_parses
+        for slots in self.slot_matrix:
+            all_parses.extend(
+                get_possible_parse_objs(
+                    slots, 
+                    constraints=constraints, 
+                    max_s=max_s, 
+                    max_w=max_w
+                )
+            )
+        return all_parses
+    
+    def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
+        return list(
+            sorted(
+                # self.bound_parses(
+                    self.possible_parses(
+                        constraints=constraints,
+                        max_s=max_s,
+                        max_w=max_w
+                    )
+                # )
+            )
+        )
+    
+    def bound_parses(self, parses = None):
+        if parses is None: parses = self.all_parses
+        for parse_i,parse in enumerate(tqdm(parses, desc='Scanning parses')):
+            for comp_parse in parses[parse_i+1:]:
+                if comp_parse.is_bounded:
+                    continue
+                relation = parse.bounding_relation(comp_parse)
+                if relation == Bounding.bounded:
+                    parse.is_bounded = True
+                    parse.bounded_by = comp_parse
+                elif relation == Bounding.bounds:
+                    comp_parse.is_bounded = True
+                    comp_parse.bounded_by = parse
+        return parses
 
-    def parse_slots_slow(self, slots, constraints=[]):
-        pass
 
 
-
-
-    def parse_slots(self, slots, constraints=[]):
+    def parse_slots_fast(self, slots, constraints=[]):
         num_slots = len(slots)
         initial_parse = Parse(num_slots, constraints = constraints)
         parses = initial_parse.extend(slots[0])
@@ -112,30 +171,13 @@ class ParseTextUnit(entity):
                         parse.comparison_nums.add(comp_parse.parse_num)
                         
         return parses,bounded_parses
-    
-    def bound_parses(self, parses):
-        for parse_i,parse in enumerate(parses):
-            for comp_parse in parses[parse_i+1:]:
-                if comp_parse.is_bounded:
-                    continue
-                relation = parse.bounding_relation(comp_parse)
-                if relation == Bounding.bounded:
-                    parse.is_bounded = True
-                    parse.bounded_by = comp_parse
-                elif relation == Bounding.bounds:
-                    comp_parse.is_bounded = True
-                    comp_parse.bounded_by = parse
-        unbounded_parses = [parse for parse in parses if not parse.is_bounded]
-        bounded_parses = [parse for parse in parses if parse.is_bounded]
-        return unbounded_parses,bounded_parses
-
 
 
 
 @total_ordering
 class Parse(entity):
     str2int = {'w':'1','s':'2'}
-    def __init__(self, num_total_slots:int, constraints:list=[], max_s=2, max_w=2):
+    def __init__(self, num_total_slots:int, constraints:list=[]):
         super().__init__()
         self.positions = []
         self.constraints = constraints
@@ -150,42 +192,69 @@ class Parse(entity):
         self.parse_num = 0
         self.total_score = None
         self.pause_comparisons = False
-        self.max_s=max_s
-        self.max_w=max_w
 
     def __lt__(self,other):
-        return self.score < other.score
+        def get_sort_key(px):
+            return (
+                (0 if not px.is_bounded else 1),
+                px.score, 
+                px.num_stressed_sylls,
+                px.positions[0].is_prom
+            )
+        return get_sort_key(self) < get_sort_key(other)
+
     def __eq__(self, other):
-        return self.score == other.score
+        print('!?!?!')
+        print(self)
+        print(other)
+        return not (self<other) and not (other<self)
     
     def __repr__(self):
         attrstr=get_attr_str(self.attrs)
         parse="|".join(m.token for m in self.positions)
-        return f'({self.__class__.__name__}: {parse}){attrstr}'
+        preattr=f'({self.__class__.__name__}: {parse})'
+        return f'{preattr:65}{attrstr}'
     
+    def init(self):
+        if self._init: return
+        self._init=True
+        assert self.constraint_viols
+    
+    @cached_property
+    def num_stressed_sylls(self):
+        return len([
+            slot
+            for mpos in self.positions
+            for slot in mpos.slots
+            if slot.is_stressed
+        ])
 
-    @property
+    @cached_property
     def attrs(self):
         return {
             **self._attrs,
+            'rank':self.parse_rank,
             'meter':self.meter_str,
+            'stress':self.stress_str,
             'score':self.score,
+            'is_bounded':self.is_bounded,
             **{c:v for c,v in self.constraint_scores.items() if v!=np.nan and v}
         }
 
     @cached_property
-    def constraint_scores(self):
+    def constraint_viols(self):
         # logger.debug(self)
-        scores = [mpos.constraint_scores for mpos in self.positions]
+        scores = [mpos.constraint_viols for mpos in self.positions]
         d={}
+        nans=[np.nan for _ in range(len(self.slots))]
         for constraint in self.constraints:
             cname=constraint.__name__
-            d[cname] = sum(
-                d.get(cname,0) 
-                for d in scores 
-                if d.get(cname) not in {np.nan,None}
-            )
+            d[cname] = [x for score_d in scores for x in score_d.get(cname,nans)]
         return d
+    
+    @cached_property
+    def constraint_scores(self):
+        return {cname:safesum(cvals) for cname,cvals in self.constraint_viols.items()}
 
     @cached_property
     def score(self):
@@ -195,15 +264,15 @@ class Parse(entity):
             return '*'  # could be string if categorical
 
 
-    def __copy__(self):
-        other = Parse(self.num_slots, constraints=self.constraints)
-        other.num_slots = self.num_slots
-        for pos in self.positions:
-            other.positions.append(copy(pos))
-        other.comparison_nums = copy(self.comparison_nums)
-        for k,v in list(self.constraint_scores.items()):
-            other.constraint_scores[k]=copy(v)
-        return other
+    # def __copy__(self):
+    #     other = Parse(self.num_slots, constraints=self.constraints)
+    #     other.num_slots = self.num_slots
+    #     for pos in self.positions:
+    #         other.positions.append(copy(pos))
+    #     other.comparison_nums = copy(self.comparison_nums)
+    #     for k,v in list(self.constraint_scores.items()):
+    #         other.constraint_scores[k]=copy(v)
+    #     return other
 
     # return a list of all slots in the parse
     @cached_property
@@ -211,77 +280,22 @@ class Parse(entity):
         return [slot for mpos in self.positions for slot in mpos.slots]
 
 
-    @property
+    @cached_property
     def meter_str(self,word_sep=""):
         return ''.join(
-            mpos.meter_val
+            '+' if mpos.is_prom else '-'
             for mpos in self.positions
             for slot in mpos.slots
         )
-
-    # add an extra slot to the parse
-    # returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
-    def extend(self, slot):
-        #logging.debug('>> extending self (%s) with slot (%s)',self,slot)
-        self.total_score = None
-        self.num_slots += 1
-
-        extended_parses = [self]
-
-        # positions containing just the slot
-
-        s_pos = ParsePosition('s', parse=self)
-        s_pos.append(slot)
-        w_pos = ParsePosition('w', parse=self)
-        w_pos.append(slot)
-
-        if len(self.positions) == 0:
-            w_parse = copy(self)
-            self.positions.append(s_pos)
-            w_parse.positions.append(w_pos)
-            extended_parses.append(w_parse)
-
-        else:
-            last_pos = self.positions[-1]
-
-            if last_pos.meter_val == 's':
-                if len(last_pos.slots) < self.max_s:
-                    s_parse = copy(self) # parse with extended final 's' position
-                    s_parse.positions[-1].append(slot)
-                    extended_parses.append(s_parse)
-                self.positions.append(w_pos)
-
-            else:
-                if len(last_pos.slots) < self.max_w:
-                    w_parse = copy(self) # parse with extended final 'w' position
-                    w_parse.positions[-1].append(slot)
-                    extended_parses.append(w_parse)
-                self.positions.append(s_pos)
-
-            # assign violation scores for the (completed) penultimate position
-
-            ## extrametrical?
-            pos_i=len(self.positions)-2
-            for constraint in self.constraints:
-                v_score = constraint.violation_score(self.positions[-2], pos_i=pos_i,slot_i=self.num_slots-1,num_slots=self.total_slots,all_positions=self.positions,parse=self)
-                if v_score == "*":
-                    self.constraint_scores[constraint] = "*"
-                else:
-                    self.constraint_scores[constraint] += v_score
-
-        if self.num_slots == self.total_slots:
-
-            # assign violation scores for the (completed) ultimate position
-            for parse in extended_parses:
-                for constraint in self.constraints:
-                    v_score = constraint.violation_score(parse.positions[-1], pos_i=len(parse.positions)-1,slot_i=self.num_slots-1,num_slots=self.total_slots,all_positions=parse.positions,parse=parse)
-                    if v_score == "*":
-                        parse.constraint_scores[constraint] = "*"
-                    else:
-                        parse.constraint_scores[constraint] += v_score
-
-        return extended_parses
-
+    
+    @cached_property
+    def stress_str(self,word_sep=""):
+        return ''.join(
+            '+' if slot.is_stressed else '-'
+            for mpos in self.positions
+            for slot in mpos.slots
+        ).lower()
+    
     # return a representation of the bounding relation between self and parse
     def bounding_relation(self, parse):
         contains_greater_violation = False
@@ -305,17 +319,82 @@ class Parse(entity):
                 return Bounding.bounds # contains only lesser violations
             else:
                 return Bounding.equal # contains neither greater nor lesser violations
+
+    # # add an extra slot to the parse
+    # # returns a list of the parse with a new position added and (if it exists) the parse with the last position extended
+    # def extend(self, slot):
+    #     #logging.debug('>> extending self (%s) with slot (%s)',self,slot)
+    #     self.total_score = None
+    #     self.num_slots += 1
+
+    #     extended_parses = [self]
+
+    #     # positions containing just the slot
+
+    #     s_pos = ParsePosition('s', parse=self)
+    #     s_pos.append(slot)
+    #     w_pos = ParsePosition('w', parse=self)
+    #     w_pos.append(slot)
+
+    #     if len(self.positions) == 0:
+    #         w_parse = copy(self)
+    #         self.positions.append(s_pos)
+    #         w_parse.positions.append(w_pos)
+    #         extended_parses.append(w_parse)
+
+    #     else:
+    #         last_pos = self.positions[-1]
+
+    #         if last_pos.meter_val == 's':
+    #             if len(last_pos.slots) < self.max_s:
+    #                 s_parse = copy(self) # parse with extended final 's' position
+    #                 s_parse.positions[-1].append(slot)
+    #                 extended_parses.append(s_parse)
+    #             self.positions.append(w_pos)
+
+    #         else:
+    #             if len(last_pos.slots) < self.max_w:
+    #                 w_parse = copy(self) # parse with extended final 'w' position
+    #                 w_parse.positions[-1].append(slot)
+    #                 extended_parses.append(w_parse)
+    #             self.positions.append(s_pos)
+
+    #         # assign violation scores for the (completed) penultimate position
+
+    #         ## extrametrical?
+    #         pos_i=len(self.positions)-2
+    #         for constraint in self.constraints:
+    #             v_score = constraint.violation_score(self.positions[-2], pos_i=pos_i,slot_i=self.num_slots-1,num_slots=self.total_slots,all_positions=self.positions,parse=self)
+    #             if v_score == "*":
+    #                 self.constraint_scores[constraint] = "*"
+    #             else:
+    #                 self.constraint_scores[constraint] += v_score
+
+    #     if self.num_slots == self.total_slots:
+
+    #         # assign violation scores for the (completed) ultimate position
+    #         for parse in extended_parses:
+    #             for constraint in self.constraints:
+    #                 v_score = constraint.violation_score(parse.positions[-1], pos_i=len(parse.positions)-1,slot_i=self.num_slots-1,num_slots=self.total_slots,all_positions=parse.positions,parse=parse)
+    #                 if v_score == "*":
+    #                     parse.constraint_scores[constraint] = "*"
+    #                 else:
+    #                     parse.constraint_scores[constraint] += v_score
+
+    #     return extended_parses
+
+
     
-    def can_compare(self, parse):
-        return (
-            (self.num_slots == self.total_slots) 
-            or 
-            (
-                (self.positions[-1].meter_val == parse.positions[-1].meter_val) 
-                and 
-                (len(self.positions[-1].slots) == len(parse.positions[-1].slots))
-            )
-        )
+    # def can_compare(self, parse):
+    #     return (
+    #         (self.num_slots == self.total_slots) 
+    #         or 
+    #         (
+    #             (self.positions[-1].meter_val == parse.positions[-1].meter_val) 
+    #             and 
+    #             (len(self.positions[-1].slots) == len(parse.positions[-1].slots))
+    #         )
+    #     )
             
 
 
@@ -352,68 +431,37 @@ class ParsePosition(entity):
         self.children=self.slots=slots
         for slot in self.slots: slot.meter_val=self.meter_val
 
-    @property
-    def constraints(self): return self.parse.constraints
-
-    @property
-    def is_prom(self): return self.meter_val=='s'
-
     def __copy__(self):
         other = ParsePosition(self.meter_val, parse=self, slots=self.slots[:])
         for k,v in list(self.constraint_scores.items()):
             other.constraint_scores[k]=copy(v)
         return other
     
+    def __repr__(self):
+        return f'ParsePosition({self.token})'
+    
     @cached_property
-    def constraint_scores(self):
+    def constraint_viols(self):
         # logger.debug(self)
         d={}
         for constraint in self.constraints:
-            d[constraint.__name__] = constraint(self)
+            cname=constraint.__name__
+            d[cname] = l = constraint(self)
+            assert len(l) == len(self.slots)
         return d
 
-    @property
-    def has_viol(self):
-        return bool(sum(self.constraint_scores.values()))
+    @cached_property
+    def constraint_scores(self):
+        return {cname:safesum(cvals) for cname,cvals in self.constraint_viols.items()}
 
-    @property
-    def violated(self):
-        viold=[]
-        for c,viol in list(self.constraint_scores.items()):
-            if viol:
-                viold+=[c]
-        return viold
 
-    @property
-    def is_strong(self):
-        return self.meter_val.startswith("s")
+    @cached_property
+    def constraints(self): return self.parse.constraints
 
-    def append(self,slot):
-        #self.token = ""
-        self.slots.append(slot)
+    @cached_property
+    def is_prom(self): return self.meter_val=='s'
 
-    @property
-    def mstr(self):
-        return ''.join([self.meter_val for n in range(len(self.slots))])
-
-    def posfeats(self):
-        posfeats={'prom.meter':[]}
-        for slot in self.slots:
-            for k,v in list(slot.feats.items()):
-                if (not k in posfeats):
-                    posfeats[k]=[]
-                posfeats[k]+=[v]
-            posfeats['prom.meter']+=[self.meter_val]
-
-        for k,v in list(posfeats.items()):
-            posfeats[k]=tuple(v)
-
-        return posfeats
-
-    def __repr__(self):
-        return f'ParsePosition({self.token})'
-
-    @property
+    @cached_property
     def token(self):
         if not hasattr(self,'_token') or not self._token:
             token = '.'.join([slot.token for slot in self.slots])
@@ -426,9 +474,49 @@ class ParsePosition(entity):
 
 
 
+def getlenparse(l): return sum(len(x) for x in l)
 
+def iter_mpos(nsyll, starter=[], pos_types=None, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    if pos_types is None:
+        wtypes = ['w'*n for n in range(1,max_w+1)]
+        stypes = ['s'*n for n in range(1,max_s+1)]
+        pos_types=[[x] for x in wtypes + stypes]
+        
+    news=[]
+    for pos_type in pos_types:
+        if starter and starter[-1][-1]==pos_type[0][0]: continue
+        new = starter + pos_type
+        # if starter: print(starter[-1][-1], pos_type[0][0], new)
+        #if not is_ok_parse(new): continue
+        if getlenparse(new)<=nsyll:
+            news.append(new)
+    
+    # news = battle_parses(news)
+    if news: yield from news
+    # print('\n'.join('|'.join(x) for x in news))
+    for new in news: yield from iter_mpos(nsyll, starter=new, pos_types=pos_types)
 
+def get_possible_parses(nsyll, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    if max_s is None: max_s = nsyll
+    if max_w is None: max_w = nsyll
+    return [l for l in iter_mpos(nsyll,max_s=max_s,max_w=max_w) if getlenparse(l)==nsyll]
 
+def get_possible_parse_objs(slots, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    parse_objs = []
+    for parse_poss in get_possible_parses(len(slots), max_s=max_s, max_w=max_w):
+        slot_i=0
+        parse_obj = Parse(len(slots), constraints=constraints)
+        mpos_objs=[]
+        for mpos in parse_poss:
+            mpos_slots=[]
+            for slot_mval in mpos:
+                mpos_slots.append(slots[slot_i])
+                slot_i+=1
+            mpos_obj = ParsePosition(mpos[0], parse=parse_obj, slots=mpos_slots)
+            mpos_objs.append(mpos_obj)
+        parse_obj.children = parse_obj.positions = mpos_objs
+        parse_objs.append(parse_obj)
+    return parse_objs
 
 
 
@@ -521,7 +609,7 @@ class ParsePosition(entity):
 # 		x='<<Meter\n\tID: {5}\n\tName: {0}\n\tConstraints: \n\t\t{1}\n\tMaxS, MaxW: {2}, {3}\n\tAllow heavy syllable split across two positions: {4}\n>>'.format(self.name, constraints, self.posLimit[0], self.posLimit[1], bool(self.splitheavies), self.id)
 # 		return x
 
-# 	@property
+# 	@cached_property
 # 	def constraint_nameweights(self):
 # 		return ' '.join(c.name_weight for c in self.constraints)
 
@@ -1105,11 +1193,11 @@ class Bounding:
 # 		else:
 # 			return vals
 
-# 	@property
+# 	@cached_property
 # 	def totalCount(self):
 # 		return sum(self.constraintCounts.values())
 
-# 	@property
+# 	@cached_property
 # 	def constraintCounts(self):
 # 		#return dict((c,int(self.constraint_scores[c] / c.weight)) for c in self.constraint_scores)
 # 		cc={}
@@ -1121,7 +1209,7 @@ class Bounding:
 # 			cc[constraint]=cn
 # 		return cc
 
-# 	@property
+# 	@cached_property
 # 	def num_sylls(self):
 # 		return sum(len(pos.slots) for pos in self.positions)
 
@@ -1309,7 +1397,7 @@ class Bounding:
 # 		else:
 # 			return [(k,(v>0)) for (k,v) in list(self.constraint_scores.items())]
 
-# 	@property
+# 	@cached_property
 # 	def violated(self):
 # 		viold=[]
 # 		for c,viol in list(self.constraint_scores.items()):
@@ -1389,11 +1477,11 @@ class Bounding:
 # 			other.constraint_scores[k]=copy(v)
 # 		return other
 
-# 	@property
+# 	@cached_property
 # 	def has_viol(self):
 # 		return bool(sum(self.constraint_scores.values()))
 
-# 	@property
+# 	@cached_property
 # 	def violated(self):
 # 		viold=[]
 # 		for c,viol in list(self.constraint_scores.items()):
@@ -1401,7 +1489,7 @@ class Bounding:
 # 				viold+=[c]
 # 		return viold
 
-# 	@property
+# 	@cached_property
 # 	def isStrong(self):
 # 		return self.meterVal.startswith("s")
 
@@ -1409,11 +1497,11 @@ class Bounding:
 # 		#self.token = ""
 # 		self.slots.append(slot)
 
-# 	@property
+# 	@cached_property
 # 	def meterVal2(self):
 # 		return ''.join([self.meterVal for x in self.slots])
 
-# 	@property
+# 	@cached_property
 # 	def mstr(self):
 # 		return ''.join([self.meterVal for n in range(len(self.slots))])
 
@@ -1452,7 +1540,7 @@ class Bounding:
 # 	def __repr__(self):
 # 		return self.token
 
-# 	@property
+# 	@cached_property
 # 	def token(self):
 # 		if not hasattr(self,'_token') or not self._token:
 # 			token = '.'.join([slot.token for slot in self.slots])
@@ -1493,7 +1581,7 @@ class Bounding:
 # 		self.feat('prom.phrasal_strength',self.phrasal_strength)
 # 		self.feat('prom.phrasal_head',self.phrasal_head)
 
-# 	@property
+# 	@cached_property
 # 	def phrasal_strength(self):
 # 		if not self.wordtoken: return None
 # 		if self.word.numSyll>1 and self.stress != 'P': return None
@@ -1501,14 +1589,14 @@ class Bounding:
 # 		if self.wordtoken.feats.get('phrasal_stress_valley',''): return False
 # 		return None
 
-# 	@property
+# 	@cached_property
 # 	def phrasal_head(self):
 # 		if not self.wordtoken: return None
 # 		if self.word.numSyll>1 and self.stress != 'P': return None
 # 		if self.wordtoken.feats.get('phrasal_head',''): return True
 # 		return None
 
-# 	@property
+# 	@cached_property
 # 	def phrasal_stress(self):
 # 		if not self.wordtoken: return None
 # 		if self.word.numSyll>1 and self.stress != 'P': return None
@@ -1531,7 +1619,7 @@ class Bounding:
 # 			else:
 # 				return self.token.lower()
 
-# 	@property
+# 	@cached_property
 # 	def stress(self):
 # 		if self.feature('prom.stress')==1.0:
 # 			return "P"

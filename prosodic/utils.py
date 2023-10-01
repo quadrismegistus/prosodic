@@ -29,6 +29,13 @@ def get_name(txt):
     return txt.strip().split('\n')[0].strip()
 
 def get_attr_str(attrs):
-    attrstr=' '.join(f'{k}={v.strip() if type(v)==str else v}' for k,v in attrs.items())
+    strs=[f'{k}={v.strip() if type(v)==str else v}' for k,v in attrs.items()]
+    attrstr=' '.join(f'{x:<18}' for x in strs)
     attrstr=f' [{attrstr}]' if attrstr else ''
     return attrstr
+
+def safesum(l):
+    o=pd.Series(pd.to_numeric(l,errors='coerce')).sum()
+    o_int=int(o)
+    o_float = float(o)
+    return o_int if o_int==o_float else o_float

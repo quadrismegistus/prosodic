@@ -45,7 +45,7 @@ def safesum(l):
 
 def supermap(func, objs, num_proc=None, progress=True, desc=None):
     # import mpire
-    import multiprocess as mp
+    import multiprocessing as mp
     if progress and not desc: desc=f'Mapping {func.__name__} across {len(objs)} objects'
     if num_proc is None: num_proc=mp.cpu_count()//2 if mp.cpu_count()>1 else 1
     if num_proc == 1: return [func(obj) for obj in tqdm(objs,desc=desc,disable=not progress)]

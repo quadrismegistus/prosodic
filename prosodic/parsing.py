@@ -148,6 +148,8 @@ class ParseTextUnit(entity):
     @cached_property
     def best_parses(self, **kwargs): return self.unbounded_parses
     @cached_property
+    def num_parses(self, **kwargs): return len(self.unbounded_parses)
+    @cached_property
     def best_parse(self): return self.best_parses[0] if self.best_parses else None
     @cached_property
     def unbounded_parses(self): 
@@ -366,8 +368,8 @@ class Parse(entity):
         return (
             int(bool(self.is_bounded)),
             self.score, 
-            self.average_position_size,
             self.positions[0].is_prom,
+            self.average_position_size,
             self.num_stressed_sylls,
         )
     @cached_property
@@ -406,7 +408,6 @@ class Parse(entity):
         return self
     
     @cached_property
-    @profile
     def num_stressed_sylls(self):
         return len([
             slot
@@ -416,7 +417,6 @@ class Parse(entity):
         ])
     
     @cached_property
-    @profile
     def num_sylls(self):
         return len([
             slot
@@ -424,6 +424,29 @@ class Parse(entity):
             for slot in mpos.slots
         ])
     
+    @cached_property
+    def num_peaks(self):
+        return len([
+            mpos
+            for mpos in self.positions
+            if mpos.is_prom
+        ])
+    
+
+    @cached_property
+    def is_rising(self):
+        if not self.positions: return
+        return not self.positions[0].is_prom
+    
+    @cached_property
+    def nary_feet(self):
+        fsizes=[]
+        for i in range(1,len(self.positions)):
+            pos1,pos2=self.positions[i-1],self.positions[i]
+            if not pos2.is_prom: continue
+            fsizes.append(len(pos1.slots) + len(pos2.slots))
+        if not fsizes: return
+        return int(round(np.median(fsizes)))
     
     @cached_property
     @profile

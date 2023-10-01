@@ -2,16 +2,16 @@ from prosodic.imports import *
 
 def test_Text():
     x = 'Hello world!?!?!?!? !? ?!? –––_  -—- — “‘‘’ ewr ewr ’'
-    t = Text(x)
+    t = Text(x,init=False)
     assert t._txt == x
     assert t.txt == clean_text(x)
-    
 
     y='This is a reasonably sized english text'
-    assert Text(y).lang=='en'
+    assert Text(y,lang=None,init=False).lang=='en'
 
     y='Dieser Text soll lang genug sein'
-    assert Text(y).lang=='de'
+    assert Text(y,lang=None,init=False).lang=='de'
+    assert Text(y,init=False).lang==DEFAULT_LANG
 
     y='Ce texte est trop grande'
-    assert Text(y).lang=='fr'
+    assert Text(y,lang=None,init=False).lang=='fr'

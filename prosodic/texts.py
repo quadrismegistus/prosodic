@@ -22,6 +22,7 @@ class Text(entity):
 			lang: Optional[str] = DEFAULT_LANG,
 			parent: Optional[entity] = None,
 			children: Optional[list] = None,
+			init: bool = True,
 			**kwargs
 			):
 		if not txt and not filename and not children:
@@ -41,7 +42,7 @@ class Text(entity):
 		self.is_parsed = False
 		for k,v in self._attrs.items(): setattr(self,k,v)
 		self._init = False
-		self.init()
+		if init: self.init()
 
 	@cached_property
 	def is_text(self):

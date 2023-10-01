@@ -29,8 +29,9 @@ DEFAULT_LANG='en'
 LOG_FORMAT = '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>'
 LOG_LEVEL = 10
 DEFAULT_METER='default_english'
-METER_MAX_S = 2
-METER_MAX_W = 2
+METER_MAX_S = None
+METER_MAX_W = None
+METER_RESOLVE_OPTIONALITY = False
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 
 

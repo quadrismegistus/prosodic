@@ -1,5 +1,5 @@
 from .imports import *
-
+SYLL_SEP='.'
 
 
 class Word(Subtext):
@@ -33,14 +33,25 @@ class WordForm(entity):
 					parent=self
 				)
 				children.append(syll)
-		super().__init__(sylls_ipa=sylls_ipa, sylls_text=sylls_text, children=children)
+		token=''.join(sylls_text)
+		super().__init__(
+			sylls_ipa=sylls_ipa, 
+			sylls_text=sylls_text, 
+			token=token, 
+			children=children
+		)
+
+	@cached_property
+	def token_stress(self):
+		return SYLL_SEP.join(
+			syll.txt.upper() if syll.is_stressed else syll.txt.lower()
+			for syll in self.children
+		)
 
 	
 	@cached_property
 	def is_functionword(self):
 		return len(self.children)==1 and not self.children[0].is_stressed
-
-
 
 
 

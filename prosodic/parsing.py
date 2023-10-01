@@ -1,6 +1,63 @@
 from .imports import *
 from .constraints import *
 
+@total_ordering
+class WordFormList(UserList):
+    def __repr__(self):
+        return ' '.join(wf.token_stress for wf in self.data)
+    
+    @cached_property
+    def slots(self):
+        return [
+            syll
+            for wordform in self.data
+            for syll in wordform.children
+        ]
+
+    @cached_property
+    def df(self):
+        l=[
+            {
+                k:('.'.join(v) if type(v)==list else v)
+                for k,v in px.attrs.items()
+            }
+            for px in self.data
+            if px is not None
+        ]
+        return pd.DataFrame(l).set_index('token')
+
+    @cached_property
+    def num_stressed_sylls(self):
+        return sum(
+            int(syll.is_stressed)
+            for wordform in self.data
+            for syll in wordform.children
+        )
+    
+    @cached_property
+    def num_sylls(self):
+        return sum(
+            1
+            for wordform in self.data
+            for syll in wordform.children
+        )
+    
+    @cached_property
+    def first_syll(self):
+        for wordform in self.data:
+            for syll in wordform.children:
+                return syll
+    
+    @cached_property
+    def sort_key(self):
+        sylls_is_odd = int(bool(self.num_sylls % 2))
+        first_syll_stressed = 2 if self.first_syll is None else int(self.first_syll.is_stressed)
+        return (sylls_is_odd, self.num_sylls, self.num_stressed_sylls, first_syll_stressed)
+
+    def __lt__(self, other): return self.sort_key<other.sort_key
+    def __eq__(self, other): return self.sort_key==other.sort_key
+        
+
 
 
 class ParseList(UserList):
@@ -26,86 +83,65 @@ def parse_mp(parse): return parse.init()
 
 class ParseTextUnit(entity):
     @cached_property
-    def wordform_combos(self):
+    def wordform_matrix(self):
         ll = [l for l in self.wordforms if l]
-        return list(itertools.product(*ll))
-    
-    @cached_property
-    def slot_matrix(self):
-        ll = [
-            [
-                syll
-                for wordform in row
-                for syll in wordform.children
-            ]
-            for row in self.wordform_combos
-        ]
-        for l in ll:
-            for i,unit in enumerate(l):
-                l[i] = ParseSlot(i,unit)
+        ll = [WordFormList(l) for l in itertools.product(*ll)]
+        ll.sort()
         return ll
+
+    @cached_property
+    def slot_matrix(self): 
+        return [
+            wfl.slots 
+            for wfl in self.wordform_matrix
+        ]
+
+    
     
     @cached_property
     def slots(self): return self.slot_matrix[0]
 
+    @property
+    def bound_init(self):
+        return bool(hasattr(self,'_bound_init') and self._bound_init)
+
+
+    @cache
     #@profile
     def parse(self, 
-              constraints=DEFAULT_CONSTRAINTS, 
-              max_s=METER_MAX_S, 
-              max_w=METER_MAX_W, 
-              num_proc=1, 
-              progress=None,
-              force=False):
-        # from sqlitedict import SqliteDict
-        # parse_key=str((
-        #     self.txt.strip(), 
-        #     tuple(sorted([f.__name__ for f in constraints])),
-        #     max_s,
-        #     max_w,
-        # ))
-        # l = None
-        # with SqliteDict(PATH_PARSE_CACHE, autocommit=True) as cache:
-        #     if not force and parse_key in cache:
-        #         # logger.debug('found parse in cache')
-        #         l = cache[parse_key]
-        #     else:
-        self.bound_init = False
+            constraints=DEFAULT_CONSTRAINTS, 
+            max_s=METER_MAX_S, 
+            max_w=METER_MAX_W, 
+            resolve_optionality=METER_RESOLVE_OPTIONALITY,
+            num_proc=1, 
+            progress=None,
+            **kwargs):
         # logger.debug('parsing...')
+        self._bound_init = False
+        self._parses = []
+        slot_matrix=[self.slots] if not resolve_optionality else self.slot_matrix
         l = self.parse_slots_slow(
+            slot_matrix=slot_matrix,
             constraints=constraints, 
             max_s=max_s, 
             max_w=max_w, 
             num_proc=num_proc, 
             progress=progress
         )
-        print(l)
-        l.sort()
-        print(l)
-        for i,px in enumerate(l): px.parse_rank=i+1
+        # l.sort()
         l = self.bound_parses(l, progress=progress)
-        print(l)
-        l = [
-                l[i] 
-                for i in pd.Series(
-                    [
-                        px.meter_str 
-                        for px in l
-                    ]
-                ).drop_duplicates(
-                ).index
-            ]
-        print(l)
+        l.sort()
+        for i,px in enumerate(l): px.parse_rank=i+1
         l = ParseList(l)
-                # cache[parse_key] = l
-        print(l)
-        self.parses_ = l
-        print(l)
-        return l[0] if l else None
+        self._parses = l
+        return self.scansions
+        # return l[0] if l else None
 
     @cached_property
-    def parses(self, **kwargs):
-        if not self.parses_: self.parse(**kwargs)
-        return self.parses_
+    def all_parses(self, **kwargs):
+        if not hasattr(self,'_parses') or not self._parses: 
+            self.parse(**kwargs)
+        return self._parses
 
     @cached_property
     def best_parses(self, **kwargs): return self.unbounded_parses
@@ -114,20 +150,33 @@ class ParseTextUnit(entity):
     @cached_property
     def unbounded_parses(self): 
         if not self.bound_init: self.bound_parses()
-        return ParseList([px for px in self.parses if not px.is_bounded])
+        return ParseList([px for px in self.all_parses if not px.is_bounded])
     @cached_property
     def bounded_parses(self, **kwargs): 
         if not self.bound_init: self.bound_parses()
-        return ParseList([px for px in self.parses if px.is_bounded])
-    # @cached_property
-    # def scansions(self, **kwargs):
-    #     index_matches = pd.Series([px.meter_str for px in self.parses]).drop_duplicates().index
-    #     return ParseList([self.parses[i] for i in index_matches])
+        return ParseList([px for px in self.all_parses if px.is_bounded])
+    @cached_property
+    def parses(self): return self.scansions
+    @cached_property
+    def scansions(self, **kwargs):
+        index_matches = pd.Series(
+            [
+                px.meter_str 
+                for px in self.all_parses
+            ]).drop_duplicates().index
+        return ParseList([self.all_parses[i] for i in index_matches])
 
     #@profile
-    def possible_parses(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    def possible_parses(self,
+            slot_matrix=None,
+            constraints=DEFAULT_CONSTRAINTS,
+            max_s=METER_MAX_S, 
+            max_w=METER_MAX_W
+        ):
+        if slot_matrix is None: 
+            slot_matrix=self.slot_matrix
         all_parses = []
-        for slots in self.slot_matrix:
+        for slots in slot_matrix:
             all_parses.extend(
                 get_possible_parse_objs(
                     slots, 
@@ -139,8 +188,16 @@ class ParseTextUnit(entity):
         return all_parses
     
     #@profile
-    def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True):
+    def parse_slots_slow(self, 
+            slot_matrix=None, 
+            constraints=DEFAULT_CONSTRAINTS, 
+            max_s=METER_MAX_S, 
+            max_w=METER_MAX_W, 
+            num_proc=1, 
+            progress=True
+            ):
         objs = self.possible_parses(
+            slot_matrix=slot_matrix,
             constraints=constraints,
             max_s=max_s,
             max_w=max_w
@@ -170,7 +227,7 @@ class ParseTextUnit(entity):
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
                     comp_parse.bounded_by = parse
-        self.bound_init=True
+        self._bound_init = True
         return parses
 
 
@@ -257,7 +314,6 @@ class Parse(entity):
         super().__init__()
         self.positions = []
         self.constraints = constraints
-        self.constraint_names = [c.__name__ for c in self.constraints]
         self.num_slots = 0
         self.num_total_slots = num_total_slots
         self.is_bounded = False
@@ -268,6 +324,7 @@ class Parse(entity):
         self.parse_num = 0
         self.total_score = None
         self.pause_comparisons = False
+        self.parse_rank = None
 
         if self.positions: self.init()
 
@@ -275,12 +332,18 @@ class Parse(entity):
     #@profile
     def sort_key(self): 
         return (
-            # (0 if not px.is_bounded else 1),
+            int(bool(self.is_bounded)),
             self.score, 
             self.average_position_size,
             self.positions[0].is_prom,
             self.num_stressed_sylls,
         )
+    @cached_property
+    def constraint_names(self):
+        return [c.__name__ for c in self.constraints]
+    @cached_property
+    def constraint_d(self):
+        return dict(zip(self.constraint_names, self.constraints))
 
     #@profile
     def __lt__(self,other):
@@ -516,43 +579,29 @@ class Parse(entity):
     #             (len(self.positions[-1].slots) == len(parse.positions[-1].slots))
     #         )
     #     )
-            
+     
 
 
-class ParseSlot(entity):
-    def __init__(self, slot_i:int, unit:entity):
-        super().__init__()
-        self.i=slot_i                    # eg, could be one of 0-9 for a ten-syllable line
-        self.unit = unit
-        self.children=[unit]
-        self.token=unit.txt
-        self.featpaths={}
-        self.word=unit.parent
-
-    @cached_property
-    def is_stressed(self): return self.unit.is_stressed
-    @cached_property
-    def is_heavy(self): return self.unit.is_heavy
-    @cached_property
-    def is_strong(self): return self.unit.is_strong
-    @cached_property
-    def is_weak(self): return self.unit.is_weak
-
-    @cached_property
-    def attrs(self):
-        return {**self._attrs, **{'is_stressed':self.is_stressed, 'is_heavy':self.is_heavy, 'is_strong':self.is_strong, 'is_weak':self.is_weak}}
-
-
+       
 
 class ParsePosition(entity):
     def __init__(self, meter_val:str, parse:Parse, slots=[]): # meter_val represents whether the position is 's' or 'w'
-        super().__init__()
-        self.meter_val = meter_val
         self.parse=parse
-        self.children=self.slots=slots
-        for slot in self.slots: slot.meter_val=self.meter_val
-        self.viold={}
-        self.violset=set()
+        self.viold={}  # dict of lists of viols; length of these lists == length of `slots`
+        self.violset=set()   # set of all viols on this position
+        slots = [ParseSlot(slot,self) for slot in slots]
+        self.slots=slots
+        super().__init__(
+            meter_val=meter_val,
+            children=slots,
+        )
+        # init?
+        for cname,constraint in self.constraint_d.items():
+            slot_viols = [int(bool(vx)) for vx in constraint(self)]
+            assert len(slot_viols) == len(self.slots)
+            self.viold[cname] = slot_viols
+            if any(slot_viols): self.violset.add(cname)
+
 
     def __copy__(self):
         other = ParsePosition(self.meter_val, parse=self, slots=self.slots[:])
@@ -564,25 +613,12 @@ class ParsePosition(entity):
     def __repr__(self):
         return f'ParsePosition({self.token})'
     
-    #@profile
-    def init(self):
-        if self.viold and self.violset: return
-        for constraint in self.constraints:
-            cname=constraint.__name__
-            slot_viols = constraint(self)
-            assert len(slot_viols) == len(self.slots)
-            self.viold[cname] = slot_viols
-            if any(slot_viols): self.violset.add(cname)
-        return self
-
-    
     @cached_property
     #@profile
-    def constraint_viols(self):
-        self.init()
-        return self.viold_
-        
-
+    def constraint_viols(self): return self.viold
+    @cached_property
+    #@profile
+    def constraint_set(self): return self.violset
     @cached_property
     #@profile
     def constraint_scores(self):
@@ -591,6 +627,8 @@ class ParsePosition(entity):
 
     @cached_property
     def constraints(self): return self.parse.constraints
+    @cached_property
+    def constraint_d(self): return self.parse.constraint_d
 
     @cached_property
     def is_prom(self): return self.meter_val=='s'
@@ -602,6 +640,40 @@ class ParsePosition(entity):
             token=token.upper() if self.meter_val=='s' else token.lower()
             self._token=token
         return self._token
+
+
+
+
+class ParseSlot(entity):
+    def __init__(self, unit:'Syllable', mpos:'ParsePosition'):
+        self.unit = unit
+        self.position = mpos
+        super().__init__(children=[unit], token=unit.txt)
+    @cached_property
+    def meter_val(self): return self.position.meter_val
+    @cached_property
+    def wordform(self): return self.unit.parent
+    @cached_property
+    def syll(self): return self.unit
+    @cached_property
+    def is_stressed(self): return self.unit.is_stressed
+    @cached_property
+    def is_heavy(self): return self.unit.is_heavy
+    @cached_property
+    def is_strong(self): return self.unit.is_strong
+    @cached_property
+    def is_weak(self): return self.unit.is_weak
+    @cached_property
+    def attrs(self):
+        return {
+            **self._attrs, 
+            **{
+                'is_stressed':self.is_stressed, 
+                'is_heavy':self.is_heavy, 
+                'is_strong':self.is_strong, 
+                'is_weak':self.is_weak
+            }
+        }
 
 
 

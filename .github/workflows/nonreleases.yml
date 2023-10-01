@@ -1,10 +1,8 @@
 name: "non-release testing"
 
 on:
-    push: 
-        branches:
-            - "!main"
-            - "!develop"
+    pull:
+    push:
 
 jobs:
     tests:

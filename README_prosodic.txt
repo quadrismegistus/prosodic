@@ -1,10 +1,10 @@
 # Prosodic
 
-Prosodic is a a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
+Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
 ## About Prosodic
 
-Prosodic does two main things. First, it tokenizes text into words, and then converts each word into its stressed, syllabified, phonetic transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possibile parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
+Prosodic does two main things. First, it tokenizes text into words, and then converts each word into its stressed, syllabified, phonetic transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possible parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
 
 ### Example of metrical parsing
 
@@ -30,7 +30,7 @@ Not bad, right? Prosodic not only captures the sonnet's overall iambic meter, bu
 
 #### Metrical annotation output
 
-See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?dl=0) for a quick look of the three output statistics files are produced in the metrical annotation process.
+See [here](https://www.dropbox.com/sh/q13jsvsxem5lvdw/AACE0VSc0hL4UfEJDhWpFs5oa?dl=0) for a quick look at the three output statistics, files are produced in the metrical annotation process.
 
 ### Accuracy of metrical parser
 
@@ -95,7 +95,7 @@ We can see that Prosodic gets this line right; the template gets most of it righ
 	</tbody>
 </table>
 
-The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect Prosodic to do. But Prosodic is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic temlpate to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that, *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, Prosodic is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," Prosodic is nonetheless able to discover the basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), Prosodic's parses were able to predict the overall meter in 200 poems with about 98% accuracy.
+The extent to which two human taggers (both English literature Ph.D. students) agree is in the first column: given that metrical scansion inevitably varies from person to person, this might be taken as the upper threshold of what we could expect Prosodic to do. But Prosodic is not too far off, especially for the binary meters (iambic and trochaic). The ternary meters are more complicated: they depart more often from their metrical templates, as can be seen in the third column. But the third column of metrical templates assumes that we already know the meter of the poem (which, in this evaluation sample, we do). Not surprisingly, if we don't already know the meter, and simply apply an iambic template to every poem, then it works well for iambic poems, but not at all for poems of other meters—as can be seen in the fourth column. This means that *for parsing poems whose meter is unknown*, or for parsing free verse poems or even prose, Prosodic is especially useful. Parsing lines individually, and agnostic as to the meter of "the poem," Prosodic is nonetheless able to discover the basic contours of the metrical patterns in the lines. In [another research project](https://github.com/quadrismegistus/litlab-poetry), run out of the [Stanford Literary Lab](http://litlab.stanford.edu/), Prosodic's parses were able to predict the overall meter in 200 poems with about 98% accuracy.
 
 The data above were produced when the meter was defined as the following constraints and weights: `[*strength.s=>-u/3.0] [*strength.w=>-p/3.0] [*stress.s=>-u/2.0] [*stress.w=>-p/2.0] [*footmin-none/1.0] [*footmin-no-s-unless-preceded-by-ww/10.0] [*posthoc-no-final-ww/2.0] [*posthoc-standardize-weakpos/1.0] [*word-elision/1.0]`. These and other constraints are mentioned below, but are best documented in their confuration file, `config.py`.
 
@@ -108,7 +108,7 @@ The data above were produced when the meter was defined as the following constra
 
 To install Prosodic, it's best to install using pip. In a terminal, type:
 
-	pip install git+git://github.com/quadrismegistus/prosodic.git
+	pip install git+https://github.com/quadrismegistus/prosodic.git
 
 After installation, you should have access to the "prosodic" executable. Simply run:
 
@@ -125,6 +125,10 @@ Prosodic can also be used as a python module within your own applications:
 	text.parse()
 
 Instructions on how to use Prosodic in interactive mode, and as a python module, are below.
+
+#### Example
+
+Check out [here](https://colab.research.google.com/drive/1Z9YcbqJuLlrLBuwTwH2YsFS3OsC3b4uO?usp=sharing) for an example of using Prosodic from within Python on Google Colab.
 
 ## Usage
 
@@ -153,7 +157,7 @@ You can enter the interactive mode of prosodic by running `prosodic`. This will 
 
 #### Loading text
 
-The first thing to do when using Prosodic is to give it some text to work with. There's a few ways of doing this. The simplest way is to simply a type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines in at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within Prosodic's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot Prosodic with: `prosodic /path/to/my/file.txt`.
+The first thing to do when using Prosodic is to give it some text to work with. There are a few ways of doing this. The simplest way is to simply type in a line, one at a time. You can also type `/paste`, and then enter or copy/paste multiple lines at a time. You can also type `/text` to load a text, or `/corpus` to load a folder of text files. If you do, you'll be given instructions on how either to specify a relative path from within Prosodic's corpus folder, or an absolute path to another file or folder on your disk. You can also define the text you want to work with as an argument for the command you use to boot Prosodic with: `prosodic /path/to/my/file.txt`.
 
 #### Checking phonetic/phonological annotations
 

@@ -1,12 +1,10 @@
-nltk>=3.6.4
+ftfy
+langdetect
+pandas
+loguru
+syllabiphon @ git+https://github.com/dmort27/syllabiphon
+sqlitedict
+gruut-ipa
 numpy
-Pyphen
-pyparsing
-xlrd
-networkx
-scipy
-xlwt
-levenshtein
-p_tqdm
+multiset
 nltk
-numpy

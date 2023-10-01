@@ -36,6 +36,7 @@ METER_MAX_W = 2
 # sys imports
 import re
 from typing import Optional
+from collections import UserList
 import warnings
 warnings.filterwarnings('ignore')
 import time
@@ -50,6 +51,7 @@ import ftfy
 import numpy as np
 import nltk
 import pandas as pd
+pd.options.display.width=200
 from langdetect import detect as detect_lang
 from loguru import logger
 logger.remove()

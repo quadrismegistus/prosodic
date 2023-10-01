@@ -30,7 +30,7 @@ def get_name(txt):
 
 def get_attr_str(attrs):
     strs=[f'{k}={v.strip() if type(v)==str else v}' for k,v in attrs.items()]
-    attrstr=' '.join(f'{x:<18}' for x in strs)
+    attrstr=' '.join(f'{x}' for x in strs)
     attrstr=f' [{attrstr}]' if attrstr else ''
     return attrstr
 

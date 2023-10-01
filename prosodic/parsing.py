@@ -1,6 +1,23 @@
 from .imports import *
 from .constraints import *
 
+
+class ParseList(UserList):
+    def __repr__(self):
+        return repr(self.df)
+    @property
+    def df(self):
+        return pd.DataFrame(
+            [
+                {
+                    'parse':px.txt,
+                    **px.attrs
+                } 
+                for px in self.data
+            ]
+        ).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
+
+
 class ParseTextUnit(entity):
     @cached_property
     def wordform_combos(self):
@@ -27,33 +44,32 @@ class ParseTextUnit(entity):
 
     
     def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
-        self._bound_init = False
-        self.all_parses = self.parse_slots_slow(constraints=constraints, max_s=max_s, max_w=max_w)
-        for i,px in enumerate(self.all_parses): px.parse_rank=i+1
-        self._parse_init = True
+        self.bound_init = False
+        l =  self.parse_slots_slow(constraints=constraints, max_s=max_s, max_w=max_w)
+        for i,px in enumerate(l): px.parse_rank=i+1
+        self.parses_ = ParseList(l)
 
     @cached_property
     def parses(self, **kwargs):
-        if not self.all_parses: self.parse(**kwargs)
-        if not self._bound_init:
-            self._bound_init = True
-            self.bound_parses(self.all_parses)
-        return [px for px in self.all_parses if not px.is_bounded]
-        
+        if not self.parses_: self.parse(**kwargs)
+        return self.parses_
 
     @cached_property
-    def bounded_parses(self, **kwargs):
-        if not self.all_parses: self.parse(**kwargs)
-        if not self._bound_init:
-            self._bound_init = True
-            self.bound_parses(self.all_parses)
-        return [px for px in self.all_parses if px.is_bounded]
-
+    def best_parses(self, **kwargs): return self.unbounded_parses
+    @cached_property
+    def best_parse(self): return self.best_parses[0] if self.best_parses else None
+    @cached_property
+    def unbounded_parses(self): 
+        if not self.bound_init: self.bound_parses()
+        return ParseList([px for px in self.parses if not px.is_bounded])
+    @cached_property
+    def bounded_parses(self, **kwargs): 
+        if not self.bound_init: self.bound_parses()
+        return ParseList([px for px in self.parses if px.is_bounded])
     @cached_property
     def scansions(self, **kwargs):
-        if not self.all_parses: self.parse(**kwargs)
-        index_matches = pd.Series([px.meter_str for px in self.all_parses]).drop_duplicates().index
-        return [self.all_parses[i] for i in index_matches]
+        index_matches = pd.Series([px.meter_str for px in self.parses]).drop_duplicates().index
+        return ParseList([self.parses[i] for i in index_matches])
 
 
     def possible_parses(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
@@ -72,18 +88,16 @@ class ParseTextUnit(entity):
     def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
         return list(
             sorted(
-                # self.bound_parses(
-                    self.possible_parses(
-                        constraints=constraints,
-                        max_s=max_s,
-                        max_w=max_w
-                    )
-                # )
+                self.possible_parses(
+                    constraints=constraints,
+                    max_s=max_s,
+                    max_w=max_w
+                )
             )
         )
     
     def bound_parses(self, parses = None):
-        if parses is None: parses = self.all_parses
+        if parses is None: parses = self.parses
         for parse_i,parse in enumerate(tqdm(parses, desc='Scanning parses')):
             for comp_parse in parses[parse_i+1:]:
                 if comp_parse.is_bounded:
@@ -95,7 +109,7 @@ class ParseTextUnit(entity):
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
                     comp_parse.bounded_by = parse
-        return parses
+        return list(sorted(parses))
 
 
 
@@ -196,24 +210,26 @@ class Parse(entity):
     def __lt__(self,other):
         def get_sort_key(px):
             return (
-                (0 if not px.is_bounded else 1),
+                # (0 if not px.is_bounded else 1),
                 px.score, 
+                px.average_position_size,
+                px.positions[0].is_prom,
                 px.num_stressed_sylls,
-                px.positions[0].is_prom
             )
         return get_sort_key(self) < get_sort_key(other)
 
     def __eq__(self, other):
-        print('!?!?!')
-        print(self)
-        print(other)
+        logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
         return not (self<other) and not (other<self)
     
+    @cached_property
+    def txt(self): return "|".join(m.token for m in self.positions)
+
     def __repr__(self):
         attrstr=get_attr_str(self.attrs)
-        parse="|".join(m.token for m in self.positions)
+        parse=self.txt
         preattr=f'({self.__class__.__name__}: {parse})'
-        return f'{preattr:65}{attrstr}'
+        return f'{preattr}{attrstr}'
     
     def init(self):
         if self._init: return
@@ -228,8 +244,13 @@ class Parse(entity):
             for slot in mpos.slots
             if slot.is_stressed
         ])
-
+    
     @cached_property
+    def average_position_size(self):
+        l = [len(mpos.children) for mpos in self.positions if mpos.children]
+        return np.mean(l) if len(l) else np.nan
+
+    @property
     def attrs(self):
         return {
             **self._attrs,
@@ -237,7 +258,7 @@ class Parse(entity):
             'meter':self.meter_str,
             'stress':self.stress_str,
             'score':self.score,
-            'is_bounded':self.is_bounded,
+            **({'is_bounded':True} if self.is_bounded else {}),
             **{c:v for c,v in self.constraint_scores.items() if v!=np.nan and v}
         }
 

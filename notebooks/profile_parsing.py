@@ -22,4 +22,6 @@ for line in poem.lines:
     print(line)
 
 
-print(poem.parse(max_s=None, max_w=None))
+poem.parse(max_s=2, max_w=2, resolve_optionality=True)
+
+print(poem.df_parses)

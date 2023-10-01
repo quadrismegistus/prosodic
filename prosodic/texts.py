@@ -111,18 +111,19 @@ class Text(entity):
 
 	# @cache
 	@profile
-	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, force=False):
+	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, resolve_optionality=METER_RESOLVE_OPTIONALITY, categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS):
 		kwargs=dict(
 			constraints=constraints, 
 			max_s=max_s, 
 			max_w=max_w, 
 			num_proc=1, 
 			progress=False,
-			force=force
+			resolve_optionality=resolve_optionality,
+			categorical_constraints=categorical_constraints
 		)
 		parse_objs = self.lines
 		objs = [(line,kwargs) for line in parse_objs]
-		res = supermap(
+		supermap(
 			parse_line_mp,
 			objs,
 			num_proc=num_proc,
@@ -130,7 +131,7 @@ class Text(entity):
 			desc='Parsing lines'
 		)
 		self.is_parsed = True
-		return self.best_parses
+		return self.df_parses
 
 	@property
 	def best_parses(self):
@@ -138,6 +139,7 @@ class Text(entity):
 	
 	@property
 	def df_parses(self):
+		if not self.is_parsed: return self.parse()
 		odf=pd.DataFrame([l.parse_stats for l in self.lines])
 		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','txt','parse'])
 		return odf

@@ -60,4 +60,4 @@ def s_trough(mpos, score=1):
     if not mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_weak for slot in mpos.slots]
 
-DEFAULT_CONSTRAINTS = [w_peak, w_stress, s_unstress, unres_across, unres_within]
+DEFAULT_CONSTRAINTS = [w_peak, w_stress, s_unstress, unres_across, unres_within, foot_size]

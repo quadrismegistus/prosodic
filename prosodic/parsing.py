@@ -110,6 +110,7 @@ class ParseTextUnit(entity):
     @profile
     def parse(self, 
             constraints=DEFAULT_CONSTRAINTS, 
+            categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS,
             max_s=METER_MAX_S, 
             max_w=METER_MAX_W, 
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
@@ -130,7 +131,7 @@ class ParseTextUnit(entity):
             progress=progress
         )
         # l.sort()
-        l = self.bound_parses(l, progress=progress)
+        l = self.bound_parses(l, progress=progress, categorical_constraints=categorical_constraints)
         l.sort()
         for i,px in enumerate(l): px.parse_rank=i+1
         l = ParseList(l)
@@ -235,10 +236,14 @@ class ParseTextUnit(entity):
         )
     
     @profile
-    def bound_parses(self, parses = None, progress=True):
+    def bound_parses(self, parses = None, progress=True, categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS):
         if self.bound_init: return
-        if parses is None: parses = self.parses
+        if parses is None: parses = self.all_parses
         for parse_i,parse in enumerate(tqdm(parses, desc='Bounding parses', disable=not progress)):
+            for cname in categorical_constraints:
+                if cname in parse.violset:
+                    parse.is_bounded = True
+                    break
             if parse.is_bounded: continue
             for comp_parse in parses[parse_i+1:]:
                 if comp_parse.is_bounded:
@@ -348,6 +353,7 @@ class Parse(entity):
         self.total_score = None
         self.pause_comparisons = False
         self.parse_rank = None
+        self.violset = Multiset()
 
         if self.positions: self.init()
 

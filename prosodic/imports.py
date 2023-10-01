@@ -33,7 +33,7 @@ METER_MAX_S = 2
 METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = False
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
-
+DEFAULT_CATEGORICAL_CONSTRAINTS = ['foot_size']
 
 # sys imports
 import re
@@ -62,7 +62,7 @@ import ftfy
 import numpy as np
 import nltk
 import pandas as pd
-pd.options.display.width=150
+pd.options.display.width=200
 from langdetect import detect as detect_lang
 from loguru import logger
 logger.remove()

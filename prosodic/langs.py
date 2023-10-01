@@ -52,7 +52,7 @@ class EnglishLanguage(Language):
     cache_fn = 'english_wordforms.sqlitedict'
 
     @cache
-    #@profile
+    @profile
     def phoneticize(self, token):
         if token in self.token2ipa: return self.token2ipa[token]
         # otherwise tts...
@@ -66,7 +66,7 @@ class EnglishLanguage(Language):
 
 
     @cached_property
-    #@profile
+    @profile
     def phonemizer(self):
         from phonemizer.backend import EspeakBackend
         return EspeakBackend(
@@ -77,7 +77,7 @@ class EnglishLanguage(Language):
     
 
     @cache
-    #@profile
+    @profile
     def phonemize(self, token):
         from phonemizer.separator import Separator
         logger.trace('phonemizing')
@@ -89,7 +89,7 @@ class EnglishLanguage(Language):
         return o[0] if o else None
 
     @cache
-    #@profile
+    @profile
     def syllabify_ipa(self, ipa_str_with_spaces_between_phonemes):
         phn = ipa_str_with_spaces_between_phonemes
         phns=phn.split()
@@ -112,19 +112,19 @@ class EnglishLanguage(Language):
         return [format_syll(syll) for syll in sylls]
     
     @cached_property
-    #@profile
+    @profile
     def syllabifier(self):
         from nltk.tokenize import SyllableTokenizer
         return SyllableTokenizer()
     
     @cached_property
-    #@profile
+    @profile
     def syllabiphon(self):
         from syllabiphon.syllabify import Syllabify
         return Syllabify()
     
     @cache
-    #@profile
+    @profile
     def syllabify(self, token, num_sylls=None):
         tokenl=token.lower()
         l = self.syllabifier.tokenize(tokenl)
@@ -133,7 +133,7 @@ class EnglishLanguage(Language):
         return l
     
     @cached_property
-    #@profile
+    @profile
     def cached(self):
         from sqlitedict import SqliteDict
         import pickle
@@ -146,7 +146,7 @@ class EnglishLanguage(Language):
         )
 
     @cache
-    #@profile
+    @profile
     def get(self, token):
         if token in self.cached: 
             return self.cached.get(token)

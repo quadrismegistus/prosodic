@@ -49,3 +49,4 @@ corpora/*
 venv/
 
 *tts-cache*
+*.lprof

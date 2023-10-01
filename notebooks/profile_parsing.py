@@ -22,4 +22,4 @@ for line in poem.lines:
     print(line)
 
 
-print(poem.parse())
+print(poem.parse(max_s=None, max_w=None))

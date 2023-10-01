@@ -2,7 +2,7 @@ from .imports import *
 from .constraints import DEFAULT_CONSTRAINTS
 from .parsing import ParseList
 
-#@profile
+@profile
 def parse_line_mp(args):
 	from .lines import Line
 	line,kwargs = args
@@ -38,6 +38,7 @@ class Text(entity):
 		self.parent = parent
 		self.children = [] if children is None else children
 		self._attrs = kwargs
+		self.is_parsed = False
 		for k,v in self._attrs.items(): setattr(self,k,v)
 		self._init = False
 		self.init()
@@ -46,8 +47,18 @@ class Text(entity):
 	def is_text(self):
 		return self.__class__.__name__ == 'Text'
 
+	@cached_property
+	def df_words(self): 
+		odf=pd.DataFrame(tokenize_sentwords_iter(self.txt))
+		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','word_i','word_str'])
+		return odf
+	@property
+	def df_lines(self): 
+		odf=pd.DataFrame(l.attrs for l in self.lines)
+		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i'])
+		return odf
 
-	#@profile
+	@profile
 	def init(self):
 		if self._init: return self
 		self._init=True
@@ -55,8 +66,7 @@ class Text(entity):
 		from .words import Word
 		logger.trace(self.__class__.__name__)
 
-
-		df = self.df_tokens = pd.DataFrame(tokenize_sentwords_iter(self.txt))
+		df = self.df_words.reset_index()
 		text_stanzas = []
 		for stanza_i,stanza_df in df.groupby('stanza_i'):
 			stanza_d = {k:v for k,v in dict(stanza_df.iloc[0]).items() if k.split('_')[0] not in {'word','line'}}
@@ -80,14 +90,9 @@ class Text(entity):
 		self.children = text_stanzas
 		return self
 
-
 	@property
 	def attrs(self):
-		print('######',self.__class__)
-		for k,v in self.__dict__.items():
-			print(k,'-->',v)
-		print(dir(self))
-		return {'txt':self._txt.strip(), **self._attrs}
+		return {'txt':self.txt.strip(), **self._attrs}
 
 
 	@property
@@ -105,7 +110,7 @@ class Text(entity):
 		if self.lang=='en': return English()
 
 	# @cache
-	#@profile
+	@profile
 	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, force=False):
 		kwargs=dict(
 			constraints=constraints, 
@@ -124,7 +129,20 @@ class Text(entity):
 			progress=progress,
 			desc='Parsing lines'
 		)
-		return ParseList(res)
+		self.is_parsed = True
+		return self.best_parses
+
+	@property
+	def best_parses(self):
+		return ParseList([l.best_parse for l in self.lines])
+	
+	@property
+	def df_parses(self):
+		odf=pd.DataFrame([l.parse_stats for l in self.lines])
+		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','txt','parse'])
+		return odf
+	
+
 		
 
 

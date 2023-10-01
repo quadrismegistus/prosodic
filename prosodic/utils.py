@@ -33,7 +33,7 @@ def get_attr_str(attrs, sep=', '):
     attrstr=sep.join(strs)
     return attrstr
 
-#@profile
+@profile
 def safesum(l):
     # o=pd.Series(pd.to_numeric(l,errors='coerce')).sum()
     # o_int=int(o)

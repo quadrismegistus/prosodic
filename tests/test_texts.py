@@ -10,7 +10,7 @@ def test_Text():
     y='This is a reasonably sized english text'
     assert Text(y,lang=None,init=False).lang=='en'
 
-    y='Dieser Text soll lang genug sein'
+    y='Dieser Text ist nicht so klug'
     assert Text(y,lang=None,init=False).lang=='de'
     assert Text(y,init=False).lang==DEFAULT_LANG
 

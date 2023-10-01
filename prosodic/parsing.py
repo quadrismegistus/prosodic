@@ -265,78 +265,78 @@ class ParseTextUnit(entity):
 
 
 
-    def parse_slots_fast(self, slots, constraints=[]):
-        num_slots = len(slots)
-        initial_parse = Parse(num_slots, constraints = constraints)
-        parses = initial_parse.extend(slots[0])
-        parses[0].comparison_nums.add(1)
+    # def parse_slots_fast(self, slots, constraints=[]):
+    #     num_slots = len(slots)
+    #     initial_parse = Parse(num_slots, constraints = constraints)
+    #     parses = initial_parse.extend(slots[0])
+    #     parses[0].comparison_nums.add(1)
 
-        bounded_parses=[]
-        # for each slot num in number of slots
-        for slot_n in range(1, num_slots):
-            new_parses = []
-            # loop through current parses
-            for parse in parses:
-                # add to new_parses the result of parse.extend (several parses)
-                new_parses.append(parse.extend(slots[slot_n]))
+    #     bounded_parses=[]
+    #     # for each slot num in number of slots
+    #     for slot_n in range(1, num_slots):
+    #         new_parses = []
+    #         # loop through current parses
+    #         for parse in parses:
+    #             # add to new_parses the result of parse.extend (several parses)
+    #             new_parses.append(parse.extend(slots[slot_n]))
 
-            # loop through new parse set
-            for parse_set_index,parse_set in enumerate(new_parses):
-                for parse_index,parse in enumerate(parse_set):
-                    parse.comparison_parses = []
-                    if len(parse_set) > 1 and parse_index == 0:
-                        parse.comparison_nums.add(parse_set_index)
+    #         # loop through new parse set
+    #         for parse_set_index,parse_set in enumerate(new_parses):
+    #             for parse_index,parse in enumerate(parse_set):
+    #                 parse.comparison_parses = []
+    #                 if len(parse_set) > 1 and parse_index == 0:
+    #                     parse.comparison_nums.add(parse_set_index)
 
-                    for comparison_index in parse.comparison_nums:
-                        # should be a label break, but not supported in python
-                        # find better solution; redundant checking
-                        if parse.is_bounded:
-                            break
-                        try:
-                            for comparison_parse in new_parses[comparison_index]:
-                                if parse is comparison_parse:
-                                    continue
-                                if not comparison_parse.is_bounded:
-                                    if parse.can_compare(comparison_parse):
-                                        bounding_relation = parse.bounding_relation(comparison_parse)
-                                        if bounding_relation == Bounding.bounds:
-                                            comparison_parse.is_bounded = True
-                                            comparison_parse.bounded_by = parse
+    #                 for comparison_index in parse.comparison_nums:
+    #                     # should be a label break, but not supported in python
+    #                     # find better solution; redundant checking
+    #                     if parse.is_bounded:
+    #                         break
+    #                     try:
+    #                         for comparison_parse in new_parses[comparison_index]:
+    #                             if parse is comparison_parse:
+    #                                 continue
+    #                             if not comparison_parse.is_bounded:
+    #                                 if parse.can_compare(comparison_parse):
+    #                                     bounding_relation = parse.bounding_relation(comparison_parse)
+    #                                     if bounding_relation == Bounding.bounds:
+    #                                         comparison_parse.is_bounded = True
+    #                                         comparison_parse.bounded_by = parse
 
-                                        elif bounding_relation == Bounding.bounded:
-                                            parse.is_bounded = True
-                                            parse.bounded_by = comparison_parse
-                                            break
+    #                                     elif bounding_relation == Bounding.bounded:
+    #                                         parse.is_bounded = True
+    #                                         parse.bounded_by = comparison_parse
+    #                                         break
 
-                                        elif bounding_relation == Bounding.equal:
-                                            parse.comparison_parses.append(comparison_parse)
-                                    else:
-                                        parse.comparison_parses.append(comparison_parse)
-                        except IndexError:
-                            pass
+    #                                     elif bounding_relation == Bounding.equal:
+    #                                         parse.comparison_parses.append(comparison_parse)
+    #                                 else:
+    #                                     parse.comparison_parses.append(comparison_parse)
+    #                     except IndexError:
+    #                         pass
 
-            # reset parses
-            parses = []
-            parse_num = 0
-            for parse_set in new_parses:
-                for parse in parse_set:
-                    if parse.is_bounded:
-                        bounded_parses.append(parse)
-                    elif parse.score >= 1000:
-                        parse.unmetrical = True
-                        bounded_parses.append(parse)
-                    else:
-                        parse.parse_num = parse_num
-                        parse_num += 1
-                        parses.append(parse)
+    #         # reset parses
+    #         parses = []
+    #         parse_num = 0
+    #         for parse_set in new_parses:
+    #             for parse in parse_set:
+    #                 if parse.is_bounded:
+    #                     bounded_parses.append(parse)
+    #                 elif parse.score >= 1000:
+    #                     parse.unmetrical = True
+    #                     bounded_parses.append(parse)
+    #                 else:
+    #                     parse.parse_num = parse_num
+    #                     parse_num += 1
+    #                     parses.append(parse)
 
-            for parse in parses:
-                parse.comparison_nums = set()
-                for comp_parse in parse.comparison_parses:
-                    if not comp_parse.is_bounded:
-                        parse.comparison_nums.add(comp_parse.parse_num)
+    #         for parse in parses:
+    #             parse.comparison_nums = set()
+    #             for comp_parse in parse.comparison_parses:
+    #                 if not comp_parse.is_bounded:
+    #                     parse.comparison_nums.add(comp_parse.parse_num)
                         
-        return parses,bounded_parses
+    #     return parses,bounded_parses
 
 
 

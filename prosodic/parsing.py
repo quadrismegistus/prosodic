@@ -173,9 +173,12 @@ class ParseTextUnit(entity):
         if not hasattr(self,'_constraints'): self.parse()
         odx={**self.attrs}
         odx['parse'] = self.best_parse.txt
+        nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self._constraints]
-        odx['nparse']=len(self.best_parses)
-        odx['score']=np.mean([
+        odx['nsylls']=nsyll
+        odx['ncombo']=len(self.wordform_matrix) / nsyll * 10
+        odx['nparse']=len(self.best_parses) / nsyll * 10
+        odx['nviols']=np.mean([
             int(bool(x))
             for bp in self.best_parses
             for cnamex in bp.constraint_viols
@@ -411,6 +414,16 @@ class Parse(entity):
             for slot in mpos.slots
             if slot.is_stressed
         ])
+    
+    @cached_property
+    @profile
+    def num_sylls(self):
+        return len([
+            slot
+            for mpos in self.positions
+            for slot in mpos.slots
+        ])
+    
     
     @cached_property
     @profile

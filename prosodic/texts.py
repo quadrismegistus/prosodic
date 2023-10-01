@@ -48,12 +48,12 @@ class Text(entity):
 		return self.__class__.__name__ == 'Text'
 
 	@cached_property
-	def df_words(self): 
+	def words_df(self): 
 		odf=pd.DataFrame(tokenize_sentwords_iter(self.txt))
 		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','word_i','word_str'])
 		return odf
 	@property
-	def df_lines(self): 
+	def lines_df(self): 
 		odf=pd.DataFrame(l.attrs for l in self.lines)
 		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i'])
 		return odf
@@ -66,7 +66,7 @@ class Text(entity):
 		from .words import Word
 		logger.trace(self.__class__.__name__)
 
-		df = self.df_words.reset_index()
+		df = self.words_df.reset_index()
 		text_stanzas = []
 		for stanza_i,stanza_df in df.groupby('stanza_i'):
 			stanza_d = {k:v for k,v in dict(stanza_df.iloc[0]).items() if k.split('_')[0] not in {'word','line'}}
@@ -131,18 +131,22 @@ class Text(entity):
 			desc='Parsing lines'
 		)
 		self.is_parsed = True
-		return self.df_parses
+		return self.parses_df
 
 	@property
 	def best_parses(self):
 		return ParseList([l.best_parse for l in self.lines])
 	
 	@property
-	def df_parses(self):
+	def parses_df_exact(self):
 		if not self.is_parsed: return self.parse()
 		odf=pd.DataFrame([l.parse_stats for l in self.lines])
 		odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','txt','parse'])
 		return odf
+	
+	@property
+	def parses_df(self):
+		return self.parses_df_exact.fillna(0).round(1).applymap(lambda x: x if x else '')
 	
 
 		

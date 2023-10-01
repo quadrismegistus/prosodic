@@ -1,0 +1,23 @@
+name: "latest-release"
+
+on:
+  push:
+    branches:
+        - "develop"
+
+jobs:
+  tests:
+    uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+
+  pre-release:
+    name: "Pre Release"
+    needs: [tests]
+    runs-on: "ubuntu-latest"
+    steps:
+        - name: "Releasing"
+          uses: "marvinpinto/action-automatic-releases@latest"
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "latest"
+            prerelease: true
+            title: "Development Build"

@@ -1,0 +1,23 @@
+name: "stable-release"
+
+on:
+  push:
+    branches:
+        - "main"
+
+jobs:
+  tests:
+    uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+
+  pre-release:
+    name: "Release"
+    needs: [tests]
+    runs-on: "ubuntu-latest"
+    steps:
+        - name: "Releasing"
+          uses: "marvinpinto/action-automatic-releases@latest"
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "stable"
+            prerelease: false
+            title: "Stable Build"

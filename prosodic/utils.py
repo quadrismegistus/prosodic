@@ -28,17 +28,19 @@ def clean_text(txt):
 def get_name(txt):
     return txt.strip().split('\n')[0].strip()
 
-def get_attr_str(attrs):
-    strs=[f'{k}={v.strip() if type(v)==str else v}' for k,v in attrs.items()]
-    attrstr=' '.join(f'{x}' for x in strs)
-    attrstr=f' [{attrstr}]' if attrstr else ''
+def get_attr_str(attrs, sep=', '):
+    strs=[f'{k}={repr(v)}' for k,v in attrs.items()]
+    attrstr=sep.join(strs)
     return attrstr
 
+@profile
 def safesum(l):
-    o=pd.Series(pd.to_numeric(l,errors='coerce')).sum()
-    o_int=int(o)
-    o_float = float(o)
-    return o_int if o_int==o_float else o_float
+    # o=pd.Series(pd.to_numeric(l,errors='coerce')).sum()
+    # o_int=int(o)
+    # o_float = float(o)
+    # return o_int if o_int==o_float else o_float
+    l = [x for x in l if type(x) in {int,float,np.float64,np.float32}]
+    return sum(l)
 
 
 def supermap(func, objs, num_proc=None, progress=True, desc=None):

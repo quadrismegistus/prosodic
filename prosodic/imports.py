@@ -31,6 +31,7 @@ LOG_LEVEL = 10
 DEFAULT_METER='default_english'
 METER_MAX_S = 2
 METER_MAX_W = 2
+PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 
 
 # sys imports
@@ -45,6 +46,15 @@ from copy import copy
 from functools import cached_property, lru_cache as cache, total_ordering
 import string
 import random
+
+# patches
+import builtins
+try:
+    builtins.profile
+except AttributeError:
+    # No line profiler, provide a pass-through version
+    def profile(func): return func
+    builtins.profile = profile
 
 # non-sys imports
 import ftfy
@@ -61,6 +71,7 @@ logger.add(
     level=LOG_LEVEL
 )
 from tqdm import tqdm
+from multiset import Multiset
 
 # local imports
 from .utils import *

@@ -2,10 +2,16 @@ from .imports import *
 from .constraints import DEFAULT_CONSTRAINTS
 from .parsing import ParseList
 
-def parse_mp_line(args): 
+@profile
+def parse_line_mp(args):
+	from .lines import Line
 	line,kwargs = args
-	return line.parse(**kwargs)
-
+	# line = Line(line_str)
+	# logger.debug(line)
+	parse=line.parse(**kwargs)
+	# logger.debug(parse)
+	return parse
+    
 class Text(entity):
 	sep: str = ''
 	child_type: str = 'Stanza'
@@ -18,12 +24,12 @@ class Text(entity):
 			children: Optional[list] = None,
 			**kwargs
 			):
-		logger.trace(f'{self.__class__.__name__}({txt}, {filename}, {lang})')
-
 		if not txt and not filename and not children:
 			raise Exception('must provide either txt, filename, or children objects')
 
 		self._txt = get_txt(txt,filename)
+		if self.is_text: self._txt=self._txt.strip()
+		
 		self.fn = filename
 
 		if self.__class__.__name__ == 'Text':
@@ -35,8 +41,12 @@ class Text(entity):
 		self._init = False
 		self.init()
 
+	@cached_property
+	def is_text(self):
+		return self.__class__.__name__ == 'Text'
 
-	
+
+	@profile
 	def init(self):
 		if self._init: return self
 		self._init=True
@@ -69,17 +79,18 @@ class Text(entity):
 		self.children = text_stanzas
 		return self
 
-	def __repr__(self):
-		attrstr=get_attr_str(self.attrs)
-		return f'({self.__class__.__name__}: {self.txt.strip()}){attrstr}'
 
+	@property
+	def attrs(self):
+		return {'txt':self.txt, **self._attrs}
 
 
 	@property
 	def txt(self):
 		logger.trace(self.__class__.__name__)
-		if self._txt: txt = self._txt
+		if hasattr(self,'_txt') and self._txt: txt = self._txt
 		elif self.children: txt=self.sep.join(child.txt for child in self.children)
+		else: txt=''
 		return clean_text(txt)
 
 	@cached_property
@@ -88,19 +99,21 @@ class Text(entity):
 		from .langs import English
 		if self.lang=='en': return English()
 
-	@cache
-	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True):
+	# @cache
+	@profile
+	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, force=False):
 		kwargs=dict(
 			constraints=constraints, 
 			max_s=max_s, 
 			max_w=max_w, 
 			num_proc=1, 
-			progress=False
+			progress=False,
+			force=force
 		)
 		parse_objs = self.lines
 		objs = [(line,kwargs) for line in parse_objs]
 		res = supermap(
-			parse_mp_line,
+			parse_line_mp,
 			objs,
 			num_proc=num_proc,
 			progress=progress,

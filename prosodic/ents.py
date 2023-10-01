@@ -7,7 +7,7 @@ class entity:
     """
     Root entity class
     """
-    def __init__(self, parent = None, children = [], **kwargs):
+    def __init__(self, children = [], parent = None, **kwargs):
         logger.trace(self.__class__.__name__)
         self.parent = parent
         self.children = children
@@ -20,21 +20,21 @@ class entity:
 
     def __repr__(self):
         attrstr=get_attr_str(self.attrs)
-        return f'({self.__class__.__name__}){attrstr}'
+        return f'{self.__class__.__name__}({attrstr})'
 
 
     def init(self):
         logger.trace(self.__class__.__name__)
         self._init=True
 
-    def __getattr__(self, __name: str, **kwargs) -> Any:
-        if __name.startswith('_'): raise AttributeError
-        logger.trace(f'{self.__class__.__name__}.{__name}')
-        if __name in self._attrs: 
-            return self._attrs[__name]
-        if self.parent: 
-            return getattr(self.parent, __name)
-        return None
+    # def __getattr__(self, __name: str, **kwargs) -> Any:
+    #     if __name.startswith('_'): raise AttributeError
+    #     logger.trace(f'{self.__class__.__name__}.{__name}')
+    #     if __name in self._attrs: 
+    #         return self._attrs[__name]
+    #     if self.parent: 
+    #         return getattr(self.parent, __name)
+    #     return None
 
     def get_children(self, child_type=None):
         logger.trace(self.__class__.__name__)

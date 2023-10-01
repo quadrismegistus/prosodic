@@ -7,6 +7,25 @@ class Word(Subtext):
 
 class WordForm(Subtext):
 	child_type: str = 'Syllable'
+	def __init__(self,*x,**y):
+		self.sylls_text=None
+		self.sylls_ipa=None
+		super().__init__(self,*x,**y)
+	# def __init__(self, sylls_ipa, sylls_text=[], syll_sep='.'):
+	# 	self.sylls_ipa=(
+	# 		sylls_ipa.split(syll_sep) 
+	# 		if type(sylls_ipa)==str 
+	# 		else sylls_ipa
+	# 	)
+	# 	self.sylls_text=(
+	# 		sylls_text.split(syll_sep) 
+	# 		if type(sylls_text)==str 
+	# 		else (
+	# 			sylls_text
+	# 			if sylls_text
+	# 			else sylls_ipa
+	# 		)
+	# 	)
 
 
 	def init(self):
@@ -16,7 +35,12 @@ class WordForm(Subtext):
 		self.children = []
 		if self.sylls_text and self.sylls_ipa:
 			for syll_str,syll_ipa in zip(self.sylls_text, self.sylls_ipa):
-				syll = Syllable(syll_str, syll_ipa=syll_ipa, syll_stress=get_stress(syll_ipa), parent=self)
+				syll = Syllable(
+					syll_str, 
+					syll_ipa=syll_ipa, 
+					syll_stress=get_stress(syll_ipa), 
+					parent=self
+				)
 				self.children.append(syll)
 		return self
 	

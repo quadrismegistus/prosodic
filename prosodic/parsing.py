@@ -18,6 +18,9 @@ class ParseList(UserList):
         ).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
 
 
+def parse_mp(parse): return parse.init()
+
+
 class ParseTextUnit(entity):
     @cached_property
     def wordform_combos(self):
@@ -43,11 +46,21 @@ class ParseTextUnit(entity):
     def slots(self): return self.slot_matrix[0]
 
     
-    def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True, bound=False):
         self.bound_init = False
-        l =  self.parse_slots_slow(constraints=constraints, max_s=max_s, max_w=max_w)
+        l = self.parse_slots_slow(
+            constraints=constraints, 
+            max_s=max_s, 
+            max_w=max_w, 
+            num_proc=num_proc, 
+            progress=progress
+        )
+        l.sort()
         for i,px in enumerate(l): px.parse_rank=i+1
+
+        if bound: l = self.bound_parses(l, progress=progress)
         self.parses_ = ParseList(l)
+        return self.parses_[0]
 
     @cached_property
     def parses(self, **kwargs):
@@ -85,20 +98,24 @@ class ParseTextUnit(entity):
             )
         return all_parses
     
-    def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W):
-        return list(
-            sorted(
-                self.possible_parses(
-                    constraints=constraints,
-                    max_s=max_s,
-                    max_w=max_w
-                )
-            )
+    def parse_slots_slow(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True):
+        objs = self.possible_parses(
+            constraints=constraints,
+            max_s=max_s,
+            max_w=max_w
+        )
+        return supermap(
+            parse_mp,
+            objs,
+            desc='Applying constraints',
+            progress=progress,
+            num_proc=num_proc
         )
     
-    def bound_parses(self, parses = None):
+    def bound_parses(self, parses = None, progress=True):
+        if self.bound_init: return
         if parses is None: parses = self.parses
-        for parse_i,parse in enumerate(tqdm(parses, desc='Scanning parses')):
+        for parse_i,parse in enumerate(tqdm(parses, desc='Bounding parses', disable=not progress)):
             for comp_parse in parses[parse_i+1:]:
                 if comp_parse.is_bounded:
                     continue
@@ -109,7 +126,8 @@ class ParseTextUnit(entity):
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
                     comp_parse.bounded_by = parse
-        return list(sorted(parses))
+        self.bound_init=True
+        return parses
 
 
 
@@ -234,7 +252,8 @@ class Parse(entity):
     def init(self):
         if self._init: return
         self._init=True
-        assert self.constraint_viols
+        self.constraint_viols # trigger
+        return self
     
     @cached_property
     def num_stressed_sylls(self):

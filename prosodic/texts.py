@@ -1,5 +1,10 @@
 from .imports import *
+from .constraints import DEFAULT_CONSTRAINTS
+from .parsing import ParseList
 
+def parse_mp_line(args): 
+	line,kwargs = args
+	return line.parse(**kwargs)
 
 class Text(entity):
 	sep: str = ''
@@ -83,6 +88,26 @@ class Text(entity):
 		from .langs import English
 		if self.lang=='en': return English()
 
+	@cache
+	def parse(self, constraints=DEFAULT_CONSTRAINTS, max_s=METER_MAX_S, max_w=METER_MAX_W, num_proc=1, progress=True):
+		kwargs=dict(
+			constraints=constraints, 
+			max_s=max_s, 
+			max_w=max_w, 
+			num_proc=1, 
+			progress=False
+		)
+		parse_objs = self.lines
+		objs = [(line,kwargs) for line in parse_objs]
+		res = supermap(
+			parse_mp_line,
+			objs,
+			num_proc=num_proc,
+			progress=progress,
+			desc='Parsing lines'
+		)
+		return ParseList(res)
+		
 
 
 # 	def init_text(self,lines_or_file):

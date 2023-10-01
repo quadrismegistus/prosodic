@@ -51,7 +51,7 @@ import ftfy
 import numpy as np
 import nltk
 import pandas as pd
-pd.options.display.width=200
+pd.options.display.width=150
 from langdetect import detect as detect_lang
 from loguru import logger
 logger.remove()

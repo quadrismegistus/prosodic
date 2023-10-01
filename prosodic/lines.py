@@ -7,7 +7,7 @@ class Stanza(Subtext):
 	child_type: str = 'Line'
 	
 
-class Line(Stanza, ParseTextUnit):
+class Line(ParseTextUnit, Stanza):
 	sep: str = ''
 	child_type: str = 'Word'
 

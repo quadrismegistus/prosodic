@@ -39,3 +39,25 @@ def safesum(l):
     o_int=int(o)
     o_float = float(o)
     return o_int if o_int==o_float else o_float
+
+
+def supermap(func, objs, num_proc=None, progress=True, desc=None):
+    # import mpire
+    import multiprocess as mp
+    if progress and not desc: desc=f'Mapping {func.__name__} across {len(objs)} objects'
+    if num_proc is None: num_proc=mp.cpu_count()//2 if mp.cpu_count()>1 else 1
+    if num_proc == 1: return [func(obj) for obj in tqdm(objs,desc=desc,disable=not progress)]
+    # with mpire.WorkerPool(n_jobs=num_proc) as pool:
+    with mp.Pool(num_proc) as pool:
+        iterr=pool.map(
+            func, 
+            objs, 
+        )
+        iterr = tqdm(
+            iterr,
+            total = len(objs),
+            desc = desc,
+            disable = not progress
+        )
+        return list(iterr)
+    return [None] * len(objs)

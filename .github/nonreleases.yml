@@ -2,7 +2,8 @@ name: "non-release testing"
 
 on:
     pull:
+    push:
 
 jobs:
     tests:
-      uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+        uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests

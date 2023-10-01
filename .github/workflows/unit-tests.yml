@@ -36,13 +36,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt install scrot
           pip install -U pip wheeel
           pip install -r requirements.txt
           pip install -r dev-requirements.txt
 
       - name: Run pytest
-        run: pytest --headless --cov=prosodic --cov-report=xml
+        run: pytest --cov=prosodic --cov-report=xml
 
       - name: Upload test coverage to Codecov
         uses: codecov/codecov-action@v3

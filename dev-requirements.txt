@@ -1,1 +1,2 @@
-pytest
+pytest-cov
+pytest>=7.2

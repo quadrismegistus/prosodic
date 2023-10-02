@@ -62,6 +62,8 @@ def test_feet():
         assert l1.parse_stats.get(pk)
         assert l2.parse_stats.get(pk)
 
+    assert 'Parse(' in repr(l1.best_parse)
+    assert 'Parse(' in repr(l2.best_parse)
     # # parsing higher max s and max w will still yield same best parses
     # # even without categorical constraints
     # lx = Line(tstr)

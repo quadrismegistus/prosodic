@@ -1,5 +1,6 @@
 import os,sys; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
+import tempfile
 
 def test_Text():
     x = 'Hello world!?!?!?!? !? ?!? –––_  -—- — “‘‘’ ewr ewr ’'
@@ -16,3 +17,10 @@ def test_Text():
 
     y='Ce texte est trop grande'
     assert Text(y,lang=None,init=False).lang=='fr'
+
+
+    with tempfile.TemporaryDirectory() as tdir:
+        oline='A slumber did my spirit seal'
+        fn=os.path.join(tdir,'test.txt')
+        with open(fn,'w') as of: of.write(oline)
+        assert Text(filename=fn)._txt==oline

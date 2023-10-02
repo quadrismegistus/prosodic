@@ -4,7 +4,7 @@ from .constraints import *
 class ParseTextUnit(entity):
     def parse(self, meter=None, **meter_kwargs):
         if meter is None: meter=Meter(**meter_kwargs)
-        return MeterLine(self, meter=meter)
+        return meter.parse(self)
 
 
 ## METER
@@ -75,7 +75,7 @@ class MeterLine(entity):
             disable=not progress,
         )
         parses = [px.init() for px in parses]
-        if bound: parses = self.bound_parses(parses, progress=progress)
+        if bound: self.bound_parses(parses, progress=progress)
         parses.sort()
         for i,px in enumerate(parses): px.parse_rank=i+1
         self._parses = ParseList(parses)
@@ -160,11 +160,11 @@ class MeterLine(entity):
     
     @cached_property
     def parse_stats(self):
-        if not hasattr(self,'_constraints'): self.parse()
+        if not self._parses: self.parse()
         odx={**self.attrs}
         odx['parse'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
-        cnames = [f.__name__ for f in self._constraints]
+        cnames = [f.__name__ for f in self.meter.constraints]
         odx['nsylls']=nsyll
         odx['ncombo']=len(self.wordform_matrix) / nsyll * 10
         odx['nparse']=len(self.best_parses) / nsyll * 10

@@ -54,6 +54,14 @@ def test_feet():
     assert len(l1.best_parses) == len(l2.best_parses)
     assert_frame_equal(l1.best_parses.df, l2.best_parses.df)
 
+    # test out dfparses
+    assert l1.parse_stats
+    assert l2.parse_stats
+    pkeys = ['parse','nsylls','ncombo','nparse','nviols']
+    for pk in pkeys: 
+        assert l1.parse_stats.get(pk)
+        assert l2.parse_stats.get(pk)
+
     # # parsing higher max s and max w will still yield same best parses
     # # even without categorical constraints
     # lx = Line(tstr)

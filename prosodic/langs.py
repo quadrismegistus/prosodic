@@ -176,7 +176,6 @@ def fix_num_sylls(sylls, num, unknown='?'):
 
 def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], lib_fn='libespeak.dylib'):
     for path in paths:
-        print(path, os.listdir(path))
         if not os.path.exists(path): continue
         if 'espeak-ng' in os.listdir(path): 
             return path

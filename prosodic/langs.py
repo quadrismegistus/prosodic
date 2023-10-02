@@ -174,7 +174,7 @@ def fix_num_sylls(sylls, num, unknown='?'):
 
 
 
-def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], lib_fn='libespeak.dylib'):
+def get_espeak_env(paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
     for path in paths:
         if not os.path.exists(path): continue
         if 'espeak-ng' in os.listdir(path): 
@@ -184,8 +184,8 @@ def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], 
                 return os.path.join(root,lib_fn)
     return ''
 
-def set_espeak_env():
-    path=get_espeak_env()
+def set_espeak_env(paths=ESPEAK_PATHS):
+    path=get_espeak_env(paths)
     if path:
         os.environ['PHONEMIZER_ESPEAK_LIBRARY']=path
 

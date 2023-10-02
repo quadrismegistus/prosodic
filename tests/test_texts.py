@@ -37,4 +37,4 @@ def test_Text():
     l1 = Line('test\n')
     l2 = Line('ing')
     t = Text(children=[l1,l2])
-assert t.txt=='test\ning'
+    assert t.txt=='test\ning'

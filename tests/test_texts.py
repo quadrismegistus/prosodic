@@ -24,3 +24,17 @@ def test_Text():
         fn=os.path.join(tdir,'test.txt')
         with open(fn,'w') as of: of.write(oline)
         assert Text(filename=fn)._txt==oline
+
+    try:
+        Text()
+        assert 0 # ought to fail
+    except Exception:
+        assert 1 # pass
+
+
+    t=Text('    ererer e   e  ').txt == 'ererer e   e'
+
+    l1 = Line('test\n')
+    l2 = Line('ing')
+    t = Text(children=[l1,l2])
+assert t.txt=='test\ning'

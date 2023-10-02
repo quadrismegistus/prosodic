@@ -30,8 +30,4 @@ def test_espeak():
         lib_fn='libespeak.dylib'
         with open(os.path.join(opath,lib_fn),'w') as of: of.write('')
         assert get_espeak_env([tdir]) == os.path.join(opath,lib_fn)
-        set_espeak_env([tdir])
-
-    
-set_espeak_env()
     

@@ -35,6 +35,11 @@ def test_Text():
     t=Text('    ererer e   e  ').txt == 'ererer e   e'
 
     l1 = Line('test\n')
-    l2 = Line('ing')
+    l2 = Line('ing two')
     t = Text(children=[l1,l2])
-    assert t.txt=='test\ning'
+    assert t.txt=='test\ning two'
+
+    assert len(t.lines_df) == 2
+    assert len(t.words_df) == 3
+    assert t.attrs
+    

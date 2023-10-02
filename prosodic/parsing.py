@@ -409,27 +409,12 @@ class ParsePosition(entity):
             self.viold[cname] = slot_viols
             if any(slot_viols): self.violset.add(cname)
 
-
-    def __copy__(self):
-        other = ParsePosition(self.meter_val, parse=self, slots=self.slots[:])
-        for k,v in list(self.constraint_scores.items()):
-            other.constraint_scores[k]=copy(v)
-        return other
-    
-    @profile
-    def __repr__(self):
-        return f'ParsePosition({self.token})'
-    
     @cached_property
     @profile
     def constraint_viols(self): return self.viold
     @cached_property
     @profile
     def constraint_set(self): return self.violset
-    @cached_property
-    @profile
-    def constraint_scores(self):
-        return {cname:safesum(cvals) for cname,cvals in self.constraint_viols.items()}
 
 
     @cached_property
@@ -472,17 +457,18 @@ class ParseSlot(entity):
     def is_strong(self): return self.unit.is_strong
     @cached_property
     def is_weak(self): return self.unit.is_weak
-    @cached_property
-    def attrs(self):
-        return {
-            **self._attrs, 
-            **{
-                'is_stressed':self.is_stressed, 
-                'is_heavy':self.is_heavy, 
-                'is_strong':self.is_strong, 
-                'is_weak':self.is_weak
-            }
-        }
+
+    # @cached_property
+    # def attrs(self):
+    #     return {
+    #         **self._attrs, 
+    #         **{
+    #             'is_stressed':self.is_stressed, 
+    #             'is_heavy':self.is_heavy, 
+    #             'is_strong':self.is_strong, 
+    #             'is_weak':self.is_weak
+    #         }
+    #     }
 
 
 

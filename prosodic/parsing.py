@@ -2,8 +2,8 @@ from .imports import *
 from .constraints import *
 
 class ParseTextUnit(entity):
-    @cache
-    def parse(self, meter=None):
+    def parse(self, meter=None, **meter_kwargs):
+        if meter is None: meter=Meter(**meter_kwargs)
         return MeterLine(self, meter=meter)
 
 

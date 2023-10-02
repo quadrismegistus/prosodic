@@ -1,6 +1,13 @@
 from .imports import *
 from .constraints import *
 
+class ParseTextUnit(entity):
+    @cache
+    def parse(self, meter=None):
+        return MeterLine(self, meter=meter)
+
+
+## METER
 class Meter(entity):
     def __init__(self,
             constraints=DEFAULT_CONSTRAINTS, 
@@ -10,112 +17,138 @@ class Meter(entity):
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
             ):
         self.constraints = constraints
-        self.categorical_constraints = categorical_constraints,
+        self.categorical_constraints = categorical_constraints
         self.max_s=max_s
         self.max_w=max_w
         self.resolve_optionality=resolve_optionality
+
+    def parse(self, text_or_line:entity):
+        if isinstance(text_or_line, MeterLine):
+            return text_or_line
+        if isinstance(text_or_line, ParseTextUnit):
+            return self.parse_line(text_or_line)
+        elif text_or_line.is_text:
+            return self.parse_text(text_or_line)
+        logger.error(f'What type of entity is this? -> {text_or_line}')
     
+    def parse_line(self, line):
+        assert isinstance(line, ParseTextUnit)
+        return MeterLine(line, meter=self)
 
+
+class MeterLine(entity):
+    def __init__(self, line_or_parseable_entity:ParseTextUnit, meter:Meter=None):
+        if meter is None: meter = Meter()
+        assert isinstance(meter, Meter)
+
+        line = line_or_parseable_entity
+        assert isinstance(line, ParseTextUnit)
+        
+        super().__init__(children=[line], parent=meter)
+        self.line = line
+        self.meter = meter
+        self._bound_init = False
+        self._parses = []
     
-
-
-class ParseList(UserList):
-    def __repr__(self):
-        return repr(self.df)
-    @property
-    def df(self):
-        l=[
-            {
-                'parse':px.txt,
-                **px.attrs
-            } 
-            for px in self.data
-            if px is not None
-        ]
-        if not l: return pd.DataFrame().rename_axis('parse')
-        return pd.DataFrame(l).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
-
-
-@profile
-def parse_mp(parse): return parse.init()
-
-
-class ParseTextUnit(entity):
     @cached_property
     def wordform_matrix(self):
-        ll = [l for l in self.wordforms if l]
+        from .words import WordFormList
+        ll = [l for l in self.line.wordforms if l]
         ll = [WordFormList(l) for l in itertools.product(*ll)]
         ll.sort()
         return ll
 
     @cached_property
     def slot_matrix(self): 
-        return [
-            wfl.slots 
-            for wfl in self.wordform_matrix
-        ]
-
-    
-    
-    @cached_property
-    def slots(self): return self.slot_matrix[0]
-
-    @property
-    def bound_init(self):
-        return bool(hasattr(self,'_bound_init') and self._bound_init)
-
+        lim = 1 if not self.meter.resolve_optionality else None
+        wfm = self.wordform_matrix[:lim]
+        return [wfl.slots for wfl in wfm]
 
     # @cache
     @profile
-    def parse(self, 
-            
-            num_proc=1, 
-            progress=None,
-            **kwargs):
-        # logger.debug('parsing...')
-        self._bound_init = False
-        self._parses = []
-        self._constraints = constraints
-        slot_matrix=[self.slots] if not resolve_optionality else self.slot_matrix
-        l = self.parse_slots_slow(
-            slot_matrix=slot_matrix,
-            constraints=constraints, 
-            max_s=max_s, 
-            max_w=max_w, 
-            num_proc=num_proc, 
-            progress=progress
+    def parse(self, progress=None, bound=True, **kwargs):
+        parses = self.possible_parses()
+        if progress is None: progress = len(parses)>10000
+        parses = tqdm(
+            parses,
+            desc='Applying constraints',
+            disable=not progress,
         )
-        # l.sort()
-        l = self.bound_parses(l, progress=progress, categorical_constraints=categorical_constraints)
-        l.sort()
-        for i,px in enumerate(l): px.parse_rank=i+1
-        l = ParseList(l)
-        self._parses = l
+        parses = [px.init() for px in parses]
+        if bound: parses = self.bound_parses(parses, progress=progress)
+        parses.sort()
+        for i,px in enumerate(parses): px.parse_rank=i+1
+        self._parses = ParseList(parses)
         return self.scansions
-        # return l[0] if l else None
+
+    @profile
+    def possible_parses(self,slot_matrix=None):
+        if slot_matrix is None: 
+            slot_matrix=self.slot_matrix
+        all_parses = []
+        for slots in slot_matrix:
+            all_parses.extend(
+                get_possible_parse_objs(
+                    slots, 
+                    constraints=self.meter.constraints, 
+                    max_s=self.meter.max_s, 
+                    max_w=self.meter.max_w
+                )
+            )
+        return all_parses
+    
+    
+    
+    @profile
+    def bound_parses(self, parses = None, progress=True):
+        if self._bound_init: return
+        if parses is None: parses = self.all_parses
+        iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
+        for parse_i,parse in enumerate(iterr):
+            for cname in self.meter.categorical_constraints:
+                if cname in parse.violset:
+                    parse.is_bounded = True
+                    break
+            if parse.is_bounded: continue
+            for comp_parse in parses[parse_i+1:]:
+                if comp_parse.is_bounded:
+                    continue
+                relation = parse.bounding_relation(comp_parse)
+                if relation == Bounding.bounded:
+                    parse.is_bounded = True
+                    parse.bounded_by = comp_parse
+                elif relation == Bounding.bounds:
+                    comp_parse.is_bounded = True
+                    comp_parse.bounded_by = parse
+        self._bound_init = True
+        return parses
+
+
 
     @cached_property
     def all_parses(self, **kwargs):
-        if not hasattr(self,'_parses') or not self._parses: 
-            self.parse(**kwargs)
+        if not self._parses: self.parse(**kwargs)
         return self._parses
-
     @cached_property
-    def best_parses(self, **kwargs): return self.unbounded_parses
+    def best_parses(self, **kwargs): 
+        return self.unbounded_parses
     @cached_property
-    def num_parses(self, **kwargs): return len(self.unbounded_parses)
+    def num_parses(self, **kwargs): 
+        return len(self.unbounded_parses)
     @cached_property
-    def best_parse(self): return self.best_parses[0] if self.best_parses else None
+    def best_parse(self): 
+        return self.best_parses[0] if self.best_parses else None
     @cached_property
     def unbounded_parses(self): 
-        if not self.bound_init: self.bound_parses()
+        if not self._bound_init: self.bound_parses()
         return ParseList([px for px in self.all_parses if not px.is_bounded])
     @cached_property
     def bounded_parses(self, **kwargs): 
-        if not self.bound_init: self.bound_parses()
+        if not self._bound_init: self.bound_parses()
         return ParseList([px for px in self.all_parses if px.is_bounded])
     @cached_property
-    def parses(self): return self.scansions
+    def parses(self): 
+        return self.scansions
     @cached_property
     def scansions(self, **kwargs):
         index_matches = pd.Series(
@@ -149,76 +182,6 @@ class ParseTextUnit(entity):
             ]) * 10
         
         return odx
-
-    @profile
-    def possible_parses(self,
-            slot_matrix=None,
-            constraints=DEFAULT_CONSTRAINTS,
-            max_s=METER_MAX_S, 
-            max_w=METER_MAX_W
-        ):
-        if slot_matrix is None: 
-            slot_matrix=self.slot_matrix
-        all_parses = []
-        for slots in slot_matrix:
-            all_parses.extend(
-                get_possible_parse_objs(
-                    slots, 
-                    constraints=constraints, 
-                    max_s=max_s, 
-                    max_w=max_w
-                )
-            )
-        return all_parses
-    
-    @profile
-    def parse_slots_slow(self, 
-            slot_matrix=None, 
-            constraints=DEFAULT_CONSTRAINTS, 
-            max_s=METER_MAX_S, 
-            max_w=METER_MAX_W, 
-            num_proc=1, 
-            progress=True
-            ):
-        objs = self.possible_parses(
-            slot_matrix=slot_matrix,
-            constraints=constraints,
-            max_s=max_s,
-            max_w=max_w
-        )
-        if progress is None: progress = len(objs)>10000
-        return supermap(
-            parse_mp,
-            objs,
-            desc='Applying constraints',
-            progress=progress,
-            num_proc=num_proc
-        )
-    
-    @profile
-    def bound_parses(self, parses = None, progress=True, categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS):
-        if self.bound_init: return
-        if parses is None: parses = self.all_parses
-        for parse_i,parse in enumerate(tqdm(parses, desc='Bounding parses', disable=not progress)):
-            for cname in categorical_constraints:
-                if cname in parse.violset:
-                    parse.is_bounded = True
-                    break
-            if parse.is_bounded: continue
-            for comp_parse in parses[parse_i+1:]:
-                if comp_parse.is_bounded:
-                    continue
-                relation = parse.bounding_relation(comp_parse)
-                if relation == Bounding.bounded:
-                    parse.is_bounded = True
-                    parse.bounded_by = comp_parse
-                elif relation == Bounding.bounds:
-                    comp_parse.is_bounded = True
-                    comp_parse.bounded_by = parse
-        self._bound_init = True
-        return parses
-
-
 
 
 @total_ordering
@@ -571,3 +534,37 @@ def get_possible_parse_objs(slots, constraints=DEFAULT_CONSTRAINTS, max_s=METER_
         parse_obj.children = parse_obj.positions = mpos_objs
         parse_objs.append(parse_obj)
     return parse_objs
+
+
+
+
+
+
+
+class ParseList(UserList):
+    def __repr__(self):
+        return repr(self.df)
+    @property
+    def df(self):
+        l=[
+            {
+                'parse':px.txt,
+                **px.attrs
+            } 
+            for px in self.data
+            if px is not None
+        ]
+        if not l: return pd.DataFrame().rename_axis('parse')
+        return pd.DataFrame(l).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
+
+
+
+
+
+# class representing the potential bounding relations between to parses
+class Bounding:
+    bounds = 0 # first parse harmonically bounds the second
+    bounded = 1 # first parse is harmonically bounded by the second
+    equal = 2 # the same constraint violation scores
+    unequal = 3 # unequal scores; neither set of violations is a subset of the other
+

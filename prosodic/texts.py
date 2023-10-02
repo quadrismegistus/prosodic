@@ -2,16 +2,7 @@ from .imports import *
 from .constraints import DEFAULT_CONSTRAINTS
 from .parsing import ParseList
 
-@profile
-def parse_line_mp(args):
-	from .lines import Line
-	line,kwargs = args
-	# line = Line(line_str)
-	# logger.debug(line)
-	parse=line.parse(**kwargs)
-	# logger.debug(parse)
-	return parse
-    
+
 class Text(entity):
 	sep: str = ''
 	child_type: str = 'Stanza'
@@ -43,10 +34,6 @@ class Text(entity):
 		for k,v in self._attrs.items(): setattr(self,k,v)
 		self._init = False
 		if init: self.init()
-
-	@cached_property
-	def is_text(self):
-		return self.__class__.__name__ == 'Text'
 
 	@cached_property
 	def words_df(self): 
@@ -149,3 +136,18 @@ class Text(entity):
 	def parses_df(self):
 		return self.parses_df_exact.fillna(0).round(1).applymap(lambda x: x if x else '')
 	
+
+
+@profile
+def parse_line_mp(args):
+	from .lines import Line
+	line,kwargs = args
+	# line = Line(line_str)
+	# logger.debug(line)
+	parse=line.parse(**kwargs)
+	# logger.debug(parse)
+	return parse
+    
+
+class Subtext(Text): 
+	def init(self): return self

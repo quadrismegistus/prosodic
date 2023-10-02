@@ -8,7 +8,7 @@ from prosodic.imports import *
 def test_feet():
     # iambic test
     tstr = 'embrace ' * 5
-    l = Line(tstr)
+    l = Line(tstr).parse()
     assert l.num_parses == 1
     assert l.best_parse.is_rising == True
     assert l.best_parse.nary_feet == 2
@@ -16,7 +16,7 @@ def test_feet():
 
     # trochaic test
     tstr = 'dungeon ' * 5
-    l = Line(tstr)
+    l = Line(tstr).parse()
     assert l.num_parses == 1
     assert l.best_parse.is_rising == False
     assert l.best_parse.nary_feet == 2
@@ -24,14 +24,14 @@ def test_feet():
 
     # anapestic
     tstr = 'disembark ' * 4
-    l = Line(tstr)
+    l = Line(tstr).parse()
     assert l.best_parse.is_rising == True
     assert l.best_parse.nary_feet == 3
     assert l.best_parse.foot_type == 'anapestic'
 
     # dactylic test
     tstr = 'dangerous ' * 4
-    l = Line(tstr)
+    l = Line(tstr).parse()
     assert l.best_parse.is_rising == False
     assert l.best_parse.nary_feet == 3
     assert l.best_parse.foot_type == 'dactylic'

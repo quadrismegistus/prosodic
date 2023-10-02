@@ -102,3 +102,7 @@ class entity:
             return self.parent.children[i-1]
         except IndexError:
             return None
+        
+    @cached_property
+    def is_text(self):
+        return self.__class__.__name__ == 'Text'

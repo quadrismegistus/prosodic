@@ -50,3 +50,4 @@ venv/
 
 *tts-cache*
 *.lprof
+.coverage*

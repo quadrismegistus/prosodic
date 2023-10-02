@@ -1,24 +1,6 @@
 from .imports import *
 
 
-def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], lib_fn='libespeak.dylib'):
-    for path in paths:
-        if not os.path.exists(path): continue
-        if 'espeak-ng' in paths: 
-            return path
-        for root,dirs,fns in os.walk(path):
-            if lib_fn in set(fns):
-                return os.path.join(root,lib_fn)
-    return ''
-
-def set_espeak_env():
-    path=get_espeak_env()
-    if path:
-        os.environ['PHONEMIZER_ESPEAK_LIBRARY']=path
-
-# set now
-set_espeak_env()
-
 
 class Language(entity):
     pronunciation_dictionary_filename = ''
@@ -189,3 +171,23 @@ def fix_num_sylls(sylls, num, unknown='?'):
         for x in sylls
     ]
 
+
+
+
+def get_espeak_env(paths=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng'], lib_fn='libespeak.dylib'):
+    for path in paths:
+        if not os.path.exists(path): continue
+        if 'espeak-ng' in paths: 
+            return path
+        for root,dirs,fns in os.walk(path):
+            if lib_fn in set(fns):
+                return os.path.join(root,lib_fn)
+    return ''
+
+def set_espeak_env():
+    path=get_espeak_env()
+    if path:
+        os.environ['PHONEMIZER_ESPEAK_LIBRARY']=path
+
+# set now
+set_espeak_env()

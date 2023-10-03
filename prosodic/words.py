@@ -1,57 +1,126 @@
 from .imports import *
 SYLL_SEP='.'
 
+@cache
+def Word(token, lang=DEFAULT_LANG):
+    return WordType(token, lang=lang)
 
-class Word(Subtext):
-	child_type: str = 'WordForm'
+class WordToken(entity):
+    def __init__(self, token, lang=DEFAULT_LANG, parent=None, **kwargs):
+        self.word = word = Word(token, lang=lang)
+        super().__init__(
+            children=[word],
+            parent=parent,
+            txt=token,
+            **kwargs
+        )
+
+
+class WordType(entity):
+    child_type: str = 'WordForm'
+    
+    def __init__(self, token:str, lang:str=DEFAULT_LANG, parent=None, **kwargs):
+        if lang not in LANGS: 
+            raise Exception(f'Language {lang} not recognized')
+        
+        tokenx = token.strip()
+        if any(x.isspace() for x in tokenx):
+            logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
+            tokenx=''.join(x if not x.isspace() else '-' for x in tokenx)
+        
+        lang_obj = LANGS[lang]()
+        wordforms = lang_obj.get(tokenx)
+        super().__init__(
+            children=wordforms, 
+            parent=parent,
+            txt=token, 
+            **kwargs
+        )
+
+    @property
+    def forms(self): return self.children
+    @property
+    def form(self): return self.children[0] if self.children else None
+    @property
+    def num_forms(self): return len(self.children)
+    @property
+    def is_punc(self): 
+        return True if not any([x.isalpha() for x in self.txt]) else None
+
+    @cached_property
+    def num_sylls(self): 
+        x=np.median([form.num_sylls for form in self.forms])
+        return None if np.isnan(x) else int(round(x))
+
+    @cached_property
+    def num_stressed_sylls(self): 
+        x=np.median([form.num_stressed_sylls for form in self.forms])
+        return None if np.isnan(x) else int(round(x))
+
+    @cached_property
+    def attrs(self):
+        return {
+            **self._attrs,
+            'num_forms':self.num_forms,
+            'num_sylls':self.num_sylls,
+            'num_stressed_sylls':self.num_stressed_sylls,
+            'is_punc':self.is_punc,
+        }
+    
+
+
 
 class WordForm(entity):
-	child_type: str = 'Syllable'
-	def __init__(self, sylls_ipa, sylls_text=[], syll_sep='.'):
-		from .syllables import Syllable
-		sylls_ipa=(
-			sylls_ipa.split(syll_sep) 
-			if type(sylls_ipa)==str 
-			else sylls_ipa
-		)
-		sylls_text=(
-			sylls_text.split(syll_sep) 
-			if type(sylls_text)==str 
-			else (
-				sylls_text
-				if sylls_text
-				else sylls_ipa
-			)
-		)
-		children=[]
-		if sylls_text and sylls_ipa:
-			for syll_str,syll_ipa in zip(sylls_text, sylls_ipa):
-				syll = Syllable(
-					syll_str, 
-					syll_ipa=syll_ipa, 
-					syll_stress=get_stress(syll_ipa), 
-					parent=self
-				)
-				children.append(syll)
-		token=''.join(sylls_text)
-		super().__init__(
-			sylls_ipa=sylls_ipa, 
-			sylls_text=sylls_text, 
-			token=token, 
-			children=children
-		)
+    child_type: str = 'Syllable'
+    def __init__(self, sylls_ipa, sylls_text=[], syll_sep='.'):
+        from .syllables import Syllable
+        sylls_ipa=(
+            sylls_ipa.split(syll_sep) 
+            if type(sylls_ipa)==str 
+            else sylls_ipa
+        )
+        sylls_text=(
+            sylls_text.split(syll_sep) 
+            if type(sylls_text)==str 
+            else (
+                sylls_text
+                if sylls_text
+                else sylls_ipa
+            )
+        )
+        children=[]
+        if sylls_text and sylls_ipa:
+            for syll_str,syll_ipa in zip(sylls_text, sylls_ipa):
+                syll = Syllable(
+                    syll_str, 
+                    syll_ipa=syll_ipa, 
+                    syll_stress=get_stress(syll_ipa), 
+                    parent=self
+                )
+                children.append(syll)
+        token=''.join(sylls_text)
+        super().__init__(
+            sylls_ipa=sylls_ipa, 
+            sylls_text=sylls_text, 
+            token=token, 
+            children=children
+        )
 
-	@cached_property
-	def token_stress(self):
-		return SYLL_SEP.join(
-			syll.txt.upper() if syll.is_stressed else syll.txt.lower()
-			for syll in self.children
-		)
+    @cached_property
+    def token_stress(self):
+        return SYLL_SEP.join(
+            syll.txt.upper() if syll.is_stressed else syll.txt.lower()
+            for syll in self.children
+        )
 
-	
-	@cached_property
-	def is_functionword(self):
-		return len(self.children)==1 and not self.children[0].is_stressed
+    
+    @cached_property
+    def is_functionword(self):
+        return len(self.children)==1 and not self.children[0].is_stressed
+    @cached_property
+    def num_sylls(self): return len(self.children)
+    @cached_property
+    def num_stressed_sylls(self): return len([syll for syll in self.children if syll.is_stressed])
 
 
 

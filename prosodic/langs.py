@@ -2,9 +2,12 @@ from .imports import *
 
 
 
-class Language(entity):
+class Language:
     pronunciation_dictionary_filename = ''
     pronunciation_dictionary_filename_sep = '\t'
+
+    def __getitem__(self, token): return self.get(token)
+    def get(self, token): return []
 
     @cached_property
     def token2ipa(self):
@@ -130,6 +133,7 @@ class EnglishLanguage(Language):
     @cache
     @profile
     def get(self, token):
+        from .words import WordForm
         if token in self.cached: 
             return self.cached.get(token)
     
@@ -140,6 +144,7 @@ class EnglishLanguage(Language):
         for ipa in ipa_l:
             sylls = self.syllabify(token, num_sylls=len(ipa))
             l.append(WordForm(sylls_ipa=ipa, sylls_text=sylls))
+        l.sort(key=lambda w: w.num_stressed_sylls)
         self.cached[token]=l
         return l
 
@@ -191,3 +196,6 @@ def set_espeak_env(paths=ESPEAK_PATHS):
 
 # set now
 set_espeak_env()
+
+
+LANGS = {'en':English}

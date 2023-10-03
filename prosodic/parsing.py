@@ -1,12 +1,6 @@
 from .imports import *
 from .constraints import *
 
-class ParseTextUnit(entity):
-    def parse(self, meter=None, **meter_kwargs):
-        if meter is None: meter=Meter(**meter_kwargs)
-        return meter.parse(self)
-
-
 ## METER
 class Meter(entity):
     def __init__(self,
@@ -22,27 +16,76 @@ class Meter(entity):
         self.max_w=max_w
         self.resolve_optionality=resolve_optionality
 
-    def parse(self, text_or_line:entity):
-        if isinstance(text_or_line, MeterLine):
-            return text_or_line
-        if isinstance(text_or_line, ParseTextUnit):
-            return self.parse_line(text_or_line)
-        elif text_or_line.is_text:
-            return self.parse_text(text_or_line)
-        logger.error(f'What type of entity is this? -> {text_or_line}')
+    def __getitem__(self, text_or_line):
+        return self.get(text_or_line)
+
+    def get(self, text_or_line:entity):
+        x=text_or_line
+        if isinstance(x, MeterLine): return x
+        if isinstance(x, MeterText): return x
+        if x.is_parseable: return MeterLine(x)
+        if x.is_text: return MeterText(x)
+        logger.error(f'What type of entity is this? -> {x}')
+
+class MeterText(entity):
+    def __init__(self, text:Text, meter:Meter=None, parse_unit_attr='lines'):
+        if meter is None: meter = Meter()
+        assert isinstance(meter, Meter)
+        assert text.is_text
+        super().__init__(children=[text], parent=meter)
+        self.text = text
+        self.meter = meter
+        self._bound_init = False
+        self._parses = []
+        self.parse_unit_attr=parse_unit_attr
+
+    @cached_property
+    def units(self): 
+        return [
+            self.meter[unit]
+            for unit in getattr(self,self.parse_unit_attr)
+        ]
+
+    # @cache
+    @profile
+    def parse(self, force=False, progress=True):
+        if not force and self._parses: return
+        self._parses = []
+        iterr = tqdm(
+            self.units, 
+            desc=f'Parsing {self.parse_unit_attr}',
+            disable=not progress
+        )
+        for line in iterr:
+            pline = self.meter[line]
+            res = pline.parse(progress=False)
+            self._parses.append(res)
+        return self.parses_df
+
+    @property
+    def best_parses(self):
+        return ParseList([l.best_parse for l in self.units])
     
-    def parse_line(self, line):
-        assert isinstance(line, ParseTextUnit)
-        return MeterLine(line, meter=self)
+    @property
+    def parses_df(self):
+        if not self._parses: return self.parse()
+        odf=pd.DataFrame([l.parse_stats for l in self.units])
+        odf=odf.set_index(['stanza_i','sent_i','sentpart_i','line_i','txt','parse'])
+        return odf
+    
+    # @property
+    # def parses_df(self):
+        # return self.parses_df_exact.fillna(0).round(1).applymap(lambda x: x if x else '')
 
 
 class MeterLine(entity):
-    def __init__(self, line_or_parseable_entity:ParseTextUnit, meter:Meter=None):
+    def __init__(self, line_or_parseable_entity:'Parseable', meter:Meter=None):
         if meter is None: meter = Meter()
         assert isinstance(meter, Meter)
 
         line = line_or_parseable_entity
-        assert isinstance(line, ParseTextUnit)
+        assert isinstance(line, Parseable)
+        assert line.is_parseable
         
         super().__init__(children=[line], parent=meter)
         self.line = line
@@ -161,7 +204,7 @@ class MeterLine(entity):
     @cached_property
     def parse_stats(self):
         if not self._parses: self.parse()
-        odx={**self.attrs}
+        odx={**self.line.attrs, **self.attrs}
         odx['parse'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self.meter.constraints]
@@ -527,22 +570,11 @@ def get_possible_parse_objs(slots, constraints=DEFAULT_CONSTRAINTS, max_s=METER_
 
 
 
-class ParseList(UserList):
-    def __repr__(self):
-        return repr(self.df)
-    @property
+class ParseList(entity):
+    index_name='parse'
+    @cached_property
     def df(self):
-        l=[
-            {
-                'parse':px.txt,
-                **px.attrs
-            } 
-            for px in self.data
-            if px is not None
-        ]
-        if not l: return pd.DataFrame().rename_axis('parse')
-        return pd.DataFrame(l).set_index('parse').fillna(0).applymap(lambda x: x if type(x)==str else int(x))
-
+        return super().df.fillna(0).applymap(lambda x: x if type(x)==str else int(x))
 
 
 

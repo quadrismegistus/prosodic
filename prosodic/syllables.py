@@ -1,6 +1,6 @@
 from .imports import *
 
-class Syllable(Subtext):
+class Syllable(entity):
     child_type = 'Phoneme'
     
     def init(self):
@@ -23,14 +23,15 @@ class Syllable(Subtext):
     @cached_property
     def attrs(self):
         return {
-            **self._attrs, 
-            **dict(syll_weight='H' if self.is_heavy else 'L'),
-            **dict(
-                is_stressed=self.is_stressed,
-                is_heavy=self.is_heavy,
-                is_strong=self.is_strong,
-                is_weak=self.is_weak,
-            )
+            **self._attrs,
+            'txt':self.syll_text, 
+            # **dict(syll_weight='H' if self.is_heavy else 'L'),
+            # **dict(
+            #     is_stressed=self.is_stressed,
+            #     is_heavy=self.is_heavy,
+            #     is_strong=self.is_strong,
+            #     is_weak=self.is_weak,
+            # )
         }
 
     

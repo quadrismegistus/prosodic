@@ -29,7 +29,7 @@ def get_name(txt):
     return txt.strip().split('\n')[0].strip()
 
 def get_attr_str(attrs, sep=', '):
-    strs=[f'{k}={repr(v)}' for k,v in attrs.items()]
+    strs=[f'{k}={repr(v)}' for k,v in attrs.items() if v is not None]
     attrstr=sep.join(strs)
     return attrstr
 

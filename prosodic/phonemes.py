@@ -1,6 +1,6 @@
 from .imports import *
 
-class PhonemeClass(Subtext): 
+class PhonemeClass(entity): 
 	pass
 
 @cache

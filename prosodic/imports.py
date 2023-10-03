@@ -48,6 +48,7 @@ from copy import copy
 from functools import cached_property, lru_cache as cache, total_ordering
 import string
 import random
+import textwrap
 
 # patches
 import builtins
@@ -82,8 +83,28 @@ from .ents import *
 from .tokenizers import *
 from .texts import *
 from .lines import *
-from .words import *
 from .langs import *
+from .words import *
 from .syllables import *
 from .phonemes import *
 from .parsing import *
+
+
+
+
+sonnet="""
+Those hours, that with gentle work did frame
+The lovely gaze where every eye doth dwell,
+Will play the tyrants to the very same
+And that unfair which fairly doth excel;
+For never-resting time leads summer on
+To hideous winter, and confounds him there;
+Sap checked with frost, and lusty leaves quite gone,
+Beauty o’er-snowed and bareness every where:
+Then were not summer’s distillation left,
+A liquid prisoner pent in walls of glass,
+Beauty’s effect with beauty were bereft,
+Nor it, nor no remembrance what it was:
+But flowers distill’d, though they with winter meet,
+Leese but their show; their substance still lives sweet.
+"""

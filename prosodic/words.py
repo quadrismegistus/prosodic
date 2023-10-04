@@ -1,6 +1,70 @@
 from .imports import *
 SYLL_SEP='.'
 
+class SyllableList(EntityList): pass
+class WordTypeList(EntityList): pass
+
+@total_ordering
+class WordFormList(EntityList):
+    def __repr__(self):
+        return ' '.join(wf.token_stress for wf in self.data)
+    
+    @cached_property
+    def slots(self):
+        return [
+            syll
+            for wordform in self.data
+            for syll in wordform.children
+        ]
+
+    @cached_property
+    def df(self):
+        l=[
+            {
+                k:('.'.join(v) if type(v)==list else v)
+                for k,v in px.attrs.items()
+            }
+            for px in self.data
+            if px is not None
+        ]
+        return setindex(pd.DataFrame(l))
+
+    @cached_property
+    def num_stressed_sylls(self):
+        return sum(
+            int(syll.is_stressed)
+            for wordform in self.data
+            for syll in wordform.children
+        )
+    
+    @cached_property
+    def num_sylls(self):
+        return sum(
+            1
+            for wordform in self.data
+            for syll in wordform.children
+        )
+    
+    @cached_property
+    def first_syll(self):
+        for wordform in self.data:
+            for syll in wordform.children:
+                return syll
+    
+    @cached_property
+    def sort_key(self):
+        sylls_is_odd = int(bool(self.num_sylls % 2))
+        first_syll_stressed = 2 if self.first_syll is None else int(self.first_syll.is_stressed)
+        return (sylls_is_odd, self.num_sylls, self.num_stressed_sylls, first_syll_stressed)
+
+    def __lt__(self, other): return self.sort_key<other.sort_key
+    def __eq__(self, other): return self.sort_key==other.sort_key
+        
+
+
+
+
+
 @cache
 @profile
 def Word(token, lang=DEFAULT_LANG):
@@ -9,8 +73,9 @@ def Word(token, lang=DEFAULT_LANG):
     lang_obj = LANGS[lang]()
     return lang_obj.get(token)
 
-class WordToken(entity):
+class WordToken(Entity):
     child_type='WordType'
+    list_type=WordTypeList
 
     prefix='wordtoken'
     @profile
@@ -24,8 +89,9 @@ class WordToken(entity):
         )
 
 
-class WordType(entity):
+class WordType(Entity):
     child_type: str = 'WordForm'
+    list_type=WordFormList
     
     prefix='word'
     @profile
@@ -69,10 +135,10 @@ class WordType(entity):
     
 
 
-
-class WordForm(entity):
+class WordForm(Entity):
     prefix='wordform'
     child_type: str = 'Syllable'
+    list_type = SyllableList
 
     @profile
     def __init__(self, txt:str, sylls_ipa=[], sylls_text=[], syll_sep='.'):
@@ -123,64 +189,6 @@ class WordForm(entity):
     @cached_property
     def num_stressed_sylls(self): return len([syll for syll in self.children if syll.is_stressed])
 
-
-
-@total_ordering
-class WordFormList(UserList):
-    def __repr__(self):
-        return ' '.join(wf.token_stress for wf in self.data)
-    
-    @cached_property
-    def slots(self):
-        return [
-            syll
-            for wordform in self.data
-            for syll in wordform.children
-        ]
-
-    @cached_property
-    def df(self):
-        l=[
-            {
-                k:('.'.join(v) if type(v)==list else v)
-                for k,v in px.attrs.items()
-            }
-            for px in self.data
-            if px is not None
-        ]
-        return pd.DataFrame(l).set_index('token')
-
-    @cached_property
-    def num_stressed_sylls(self):
-        return sum(
-            int(syll.is_stressed)
-            for wordform in self.data
-            for syll in wordform.children
-        )
-    
-    @cached_property
-    def num_sylls(self):
-        return sum(
-            1
-            for wordform in self.data
-            for syll in wordform.children
-        )
-    
-    @cached_property
-    def first_syll(self):
-        for wordform in self.data:
-            for syll in wordform.children:
-                return syll
-    
-    @cached_property
-    def sort_key(self):
-        sylls_is_odd = int(bool(self.num_sylls % 2))
-        first_syll_stressed = 2 if self.first_syll is None else int(self.first_syll.is_stressed)
-        return (sylls_is_odd, self.num_sylls, self.num_stressed_sylls, first_syll_stressed)
-
-    def __lt__(self, other): return self.sort_key<other.sort_key
-    def __eq__(self, other): return self.sort_key==other.sort_key
-        
 
 
 

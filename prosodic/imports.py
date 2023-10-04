@@ -79,7 +79,7 @@ DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 # sys imports
 import re
 from typing import Optional
-from collections import UserList
+from collections import UserList, Counter
 import warnings
 warnings.filterwarnings('ignore')
 import time
@@ -127,6 +127,7 @@ from .langs import *
 from .words import *
 from .syllables import *
 from .phonemes import *
+from .meter import *
 from .parsing import *
 
 

@@ -2,19 +2,21 @@ from .imports import *
 from .meter import ParseableText
 from .texts import Text
 
+class WordTokenList(EntityList): pass
+
 class Line(ParseableText, Text):
     line_sep = '\n'
     sep: str = ''
-    child_type: str = 'Word'
+    child_type: str = 'WordToken'
     is_parseable = True
     prefix='line'
+    list_type=WordTokenList
 
     @profile
     def __init__(self, txt:str='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
         from .words import WordToken
         if not txt and not children and tokens_df is None:
             raise Exception('Must provide either txt, children, or tokens_df')
-        self._txt=txt
         if not children:
             if tokens_df is None: tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
             children=[
@@ -30,5 +32,5 @@ class Line(ParseableText, Text):
                 if 'word_str' in word_d and 'word_ispunc'
             ]
         
-        entity.__init__(self, children=children, parent=parent, **kwargs)
-        self._parses=[]
+        Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
+        ParseableText.__init__(self)

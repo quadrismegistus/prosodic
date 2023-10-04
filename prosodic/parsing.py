@@ -3,7 +3,7 @@ from .constraints import *
 
 
 # @total_ordering
-# class Parse(entity):
+# class Parse(Entity):
 #     str2int = {'w':'1','s':'2'}
 #     def __init__(self, num_total_slots:int, constraints:list=[]):
 #         super().__init__()
@@ -25,7 +25,7 @@ from .constraints import *
 #             self.violset.update(mpos.violset)
 
 @total_ordering
-class Parse(entity):
+class Parse(Entity):
     prefix='parse'
     def __init__(self, wordforms_or_str, scansion:str='', meter:'Meter'=None, parent=None):
         
@@ -96,10 +96,13 @@ class Parse(entity):
             self.num_stressed_sylls,
         )
     @cached_property
-    def constraints(self): return self.meter.constraints
+    def constraints(self): 
+        return self.meter.constraints
+
     @cached_property
     def constraint_names(self):
         return [c.__name__ for c in self.constraints]
+
     @cached_property
     def constraint_d(self):
         return dict(zip(self.constraint_names, self.constraints))
@@ -155,14 +158,24 @@ class Parse(entity):
     
     @cached_property
     def nary_feet(self):
-        fsizes=[]
-        for i in range(1,len(self.positions)):
+        return int(np.median(self.foot_sizes))
+
+    @cached_property
+    def feet(self):
+        feet=[]
+        for i in range(1, self.num_positions, 2):
             pos1,pos2=self.positions[i-1],self.positions[i]
-            if not pos2.is_prom: continue
-            fsizes.append(len(pos1.slots) + len(pos2.slots))
-        if not fsizes: return
-        return int(round(np.median(fsizes)))
+            feet.append(pos1.meter_str+pos2.meter_str)
+        return feet
     
+    @cached_property
+    def foot_counts(self): return Counter(self.feet)
+    @cached_property
+    def foot_sizes(self): return [len(ft) for ft in self.feet]
+    
+    @cached_property
+    def num_positions(self): return len(self.positions)
+        
     @cached_property
     def foot_type(self):
         if self.nary_feet==2:
@@ -258,7 +271,7 @@ class Parse(entity):
             return Bounding.unequal
     
 
-class ParsePosition(entity):
+class ParsePosition(Entity):
     prefix='meterpos'
     # @profile
     def __init__(self, meter_val:str, children=[], parent=None): # meter_val represents whether the position is 's' or 'w'
@@ -288,6 +301,7 @@ class ParsePosition(entity):
             'num':self.num,
             # **{k:sum(v) for k,v in self.viold.items()}
         }
+        
 
     @cached_property
     # @profile
@@ -310,11 +324,15 @@ class ParsePosition(entity):
         token = '.'.join([slot.txt for slot in self.slots])
         token=token.upper() if self.is_prom else token.lower()
         return token
+    
+    @cached_property
+    def meter_str(self): return self.meter_val * self.num_slots
+    @cached_property
+    def num_slots(self): return len(self.slots)
 
 
 
-
-class ParseSlot(entity):
+class ParseSlot(Entity):
     prefix='meterslot'
     # @profile
     def __init__(self, unit:'Syllable'):
@@ -367,13 +385,22 @@ class ParseSlot(entity):
 
 
 
-class ParseList(entity):
+class ParseList(EntityList):
     index_name='parse'
     prefix='parselist'
 
     @cached_property
+    def num_parses(self): return len(self.unbounded)
+    @cached_property
+    def num_all_parses(self): return len(self.data)
+
+    @cached_property
     def attrs(self):
-        return {**self._attrs, 'num_parses':len(self.unbounded), 'num_all_parses':len(self.data)}
+        return {
+            **self._attrs, 
+            'num_parses':self.num_parses, 
+            'num_all_parses':self.num_all_parses
+        }
     
     @cached_property
     def unbounded(self): 
@@ -382,7 +409,8 @@ class ParseList(entity):
     def bounded(self): 
         return ParseList(children=[px for px in self.data if px.is_bounded])
 
-
+    @cached_property
+    def best_parse(self): return self.data[0] if self.data else None
 
 
 # class representing the potential bounding relations between to parses

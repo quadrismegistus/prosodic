@@ -1,26 +1,30 @@
 from .imports import *
 
-class Text(entity):
+class StanzaList(EntityList): pass
+class LineList(EntityList): pass
+
+class Text(Entity):
     sep: str = ''
     child_type: str = 'Stanza'
     prefix='text'
     parse_unit_attr='lines'
+    list_type = StanzaList
 
     @profile
     def __init__(self,
             txt: str = '',
             filename: str = '',
             lang: Optional[str] = DEFAULT_LANG,
-            parent: Optional[entity] = None,
+            parent: Optional[Entity] = None,
             children: Optional[list] = [],
             tokens_df: Optional[pd.DataFrame] = None,
             init: bool = True,
             **kwargs
             ):
         from .lines import Stanza
-        if not txt and not filename and tokens_df is None:
+        if not txt and not filename and not children and tokens_df is None:
             raise Exception('must provide either txt string or filename or token dataframe')
-        self._txt = txt = get_txt(txt,filename).strip()
+        txt = get_txt(txt,filename)
         self._fn = filename
         self.lang=lang if lang else detect_lang(txt)
         
@@ -31,7 +35,12 @@ class Text(entity):
                 for i,stanza_df in tokens_df.groupby('stanza_i')
             ]
         
-        super().__init__(children=children, parent=parent, **kwargs)
+        super().__init__(
+            txt, 
+            children=children, 
+            parent=parent, 
+            **kwargs
+        )
         self._parses=[]
         self._mtr=None
 
@@ -68,7 +77,7 @@ class Text(entity):
     @property
     def best_parses(self):
         from .parsing import ParseList
-        return ParseList(children=[l.best_parse for l in self.parseable_units])
+        return ParseList([l.best_parse for l in self.parseable_units])
     
     @property
     def parse_stats(self):
@@ -84,18 +93,18 @@ class Stanza(Text):
     sep: str = ''
     child_type: str = 'Line'
     prefix='stanza'
+    list_type = LineList
 
     @profile
     def __init__(self, txt:str='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
         from .lines import Line
         if not txt and not children and tokens_df is None:
             raise Exception('Must provide either txt, children, or tokens_df')
-        self._txt=txt
         if not children:
             if tokens_df is None: tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
             children = [
                 Line(parent=self, tokens_df=line_df)                
                 for line_i,line_df in tokens_df.groupby('line_i')
             ]
-        entity.__init__(self, children=children, parent=parent, **kwargs)
+        Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
     

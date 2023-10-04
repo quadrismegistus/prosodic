@@ -5,6 +5,7 @@ import tempfile
 def test_Text():
     x = 'Hello world!?!?!?!? !? ?!? –––_  -—- — “‘‘’ ewr ewr ’'
     t = Text(x,init=False)
+    print([t._txt, t.txt])
     assert t._txt == x
     assert t.txt == clean_text(x)
 
@@ -35,11 +36,14 @@ def test_Text():
     t=Text('    ererer e   e  ').txt == 'ererer e   e'
 
     l1 = Line('test\n')
+    assert l1._txt == 'test\n'
+    assert l1.txt == 'test\n'
     l2 = Line('ing two')
-    t = Text(children=[l1,l2])
+    t = Stanza(children=[l1,l2])
     assert t.txt=='test\ning two'
 
-    assert len(t.lines_df) == 2
-    assert len(t.words_df) == 3
+    assert len(t.lines) == 2
+    assert len(t.lines.df) == 3 # 3 sylls
+    assert len(t.words) == 3
     assert t.attrs
     

@@ -1,9 +1,9 @@
 # from .imports import *
-# from entity import entity,being
+# from Entity import Entity,being
 # from tools import makeminlength,wordtoks2str
 
 
-# class Sentence(entity):
+# class Sentence(Entity):
 # 	def __init__(self,wordtokens,tree):
 # 		self.children=wordtokens
 # 		self.tree=tree

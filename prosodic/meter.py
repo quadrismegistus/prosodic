@@ -2,7 +2,7 @@ from .imports import *
 from .constraints import *
 
 ## METER
-class Meter(entity):
+class Meter(Entity):
     prefix='meter'
     
     def __init__(self,
@@ -12,13 +12,8 @@ class Meter(entity):
             max_w=METER_MAX_W, 
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
             ):
-        self.constraints = [
-            x for x in [
-                CONSTRAINTS.get(cname) if type(cname)==str else cname 
-                for cname in constraints
-            ] if x is not None
-        ]
-        self.categorical_constraints = categorical_constraints
+        self.constraints = get_constraints(constraints)
+        self.categorical_constraints = get_constraints(categorical_constraints)
         self.max_s=max_s
         self.max_w=max_w
         self.resolve_optionality=resolve_optionality
@@ -26,8 +21,23 @@ class Meter(entity):
 
     def __getitem__(self, text_or_line):
         return self.get(text_or_line)
+    @cached_property
+    def constraint_names(self):
+        return tuple(c.__name__ for c in self.constraints)
+    @cached_property
+    def categorical_constraint_names(self):
+        return tuple(c.__name__ for c in self.categorical_constraints)
+    @cached_property
+    def attrs(self):
+        return {
+            'constraints':self.constraint_names,
+            'categorical_constraints':self.categorical_constraint_names,
+            'max_s':self.max_s,
+            'max_w':self.max_w,
+            'resolve_optionality':self.resolve_optionality
+        }
 
-    def get(self, text_or_line:entity):
+    def get(self, text_or_line:Entity):
         x=text_or_line
         if isinstance(x, MeterLine): return x
         if isinstance(x, MeterText): return x
@@ -36,14 +46,19 @@ class Meter(entity):
                 return MeterLine(x)
             else:
                 return MeterText(x)
-        logger.error(f'What type of entity is this? -> {x}')
+        logger.error(f'What type of Entity is this? -> {x}')
 
 
 
 
 
-class ParseableText(entity):
+class ParseableText(Entity):
     prefix='parsedtxt'
+
+    def __init__(self):
+        self._parses=[]
+        self._boundedparses=[]
+        self._bestparses=[]
 
     @cached_property
     def attrs(self):
@@ -56,41 +71,43 @@ class ParseableText(entity):
         from .words import WordFormList
         lim = 1 if not self.meter.resolve_optionality else None
         ll = [l for l in self.wordforms if l]
-        ll = [WordFormList(l) for l in itertools.product(*ll)][:lim]
+        ll = [WordFormList(l) for l in itertools.product(*ll)]
         ll.sort()
-        return ll
+        return ll[:lim]
 
-    @cached_property
-    def slot_matrix(self): 
-        return [wfl.slots for wfl in wfm]
-
-    @cache
+    # @cache
     # @profile
     def parse(self, progress=None, bound=True, **meter_kwargs):
         from .parsing import ParseList
-        self.set_meter(**meter_kwargs)
-        parses = list(self.iter_parses(progress=progress))
+        meter = self.set_meter(**meter_kwargs)
+        logger.debug(f'Set meter to: {meter}')
+        parses = list(self.iter_parses(progress=progress, meter=meter))
+        logger.debug(f'Returned {len(parses)} parses')
         if bound: self.bound_parses(parses, progress=progress)
         parses.sort()
         for i,px in enumerate(parses): px.parse_rank=i+1
-        self._parses = ParseList(
-            children=parses, 
-        )
-        return self._parses
+        self._parses = ParseList(parses)
+        self._bestparses = ParseList([px for px in parses if not px.is_bounded])
+        self._boundedparses = ParseList([px for px in parses if px.is_bounded])
+        return self._bestparses
 
     # @profile
-    def iter_parses(self, progress=True):
+    def iter_parses(self, progress=True, meter=None):
+        if meter is None: meter=self.meter
         from .parsing import Parse
         all_parses = []
         combos = [
             (wfl,scansion)
             for wfl in self.wordform_matrix
-            for scansion in get_possible_scansions(wfl.num_sylls)    
+            for scansion in get_possible_scansions(wfl.num_sylls, max_s=meter.max_s, max_w=meter.max_w)
         ]
+        wfl=self.wordform_matrix[0]
+        logger.debug(f'Generated {len(combos)} from a wordfrom matrix of size {len(self.wordform_matrix), wfl, wfl.num_sylls, meter.max_s, meter.max_s, len(get_possible_scansions(wfl.num_sylls))}')
         iterr=tqdm(combos, disable=not progress)
         for wfl,scansion in iterr:
-            parse = Parse(wfl, scansion, meter=self.meter, parent=self)
+            parse = Parse(wfl, scansion, meter=meter, parent=self)
             all_parses.append(parse)
+        logger.debug(f'Returning {len(all_parses)} parses')
         return all_parses
     
     
@@ -121,33 +138,33 @@ class ParseableText(entity):
 
 
 
-    @cached_property
+    @property
     def all_parses(self, **kwargs):
         if not self._parses: self.parse(**kwargs)
         return self._parses
-    @cached_property
-    def best_parses(self, **kwargs): 
-        return self.unbounded_parses
-    @cached_property
+    @property
+    def best_parses(self): 
+        if not self._bestparses: self.parse()
+        return self._bestparses
+    @property
     def num_parses(self, **kwargs): 
         return len(self.unbounded_parses)
-    @cached_property
+    @property
     def best_parse(self): 
         return self.best_parses[0] if self.best_parses else None
-    @cached_property
+    @property
     def unbounded_parses(self): 
-        from .parsing import ParseList
-        if hasattr(self,'_bound_init') and not self._bound_init: self.bound_parses()
-        return ParseList(children=[px for px in self.all_parses if not px.is_bounded])
-    @cached_property
+        return self.best_parses
+
+    @property
     def bounded_parses(self, **kwargs): 
-        from .parsing import ParseList
-        if not self._bound_init: self.bound_parses()
-        return ParseList(children=[px for px in self.all_parses if px.is_bounded])
-    @cached_property
+        if not self._boundedparses: self.parse()
+        return self._boundedparses
+
+    @property
     def parses(self): 
         return self.scansions
-    @cached_property
+    @property
     def scansions(self, **kwargs):
         from .parsing import ParseList
         index_matches = pd.Series(
@@ -157,10 +174,13 @@ class ParseableText(entity):
             ]).drop_duplicates().index
         return ParseList(children=[self.all_parses[i] for i in index_matches])
     
-    @cached_property
+    @property
     def parse_stats(self):
         if not self._parses: self.parse()
-        odx={**self.parent.prefix_attrs, **self.prefix_attrs}
+        odx={
+            **(self.parent.prefix_attrs if self.parent else {}), 
+            **self.prefix_attrs
+        }
         odx['bestparse_txt'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self.meter.constraints]

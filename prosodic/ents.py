@@ -1,19 +1,21 @@
 from typing import Any
 from .imports import *
 
-class entity(UserList):
+class Entity(UserList):
     child_type = 'Text'
     is_parseable = False
     index_name=None
     prefix='ent'
+    list_type = None
 
     """
-    Root entity class
+    Root Entity class
     """
     def __init__(self, txt:str='', children = [], parent = None, **kwargs):
         self.parent = parent
         for child in children: child.parent = self
-        self.children = children
+        if self.list_type is None: self.list_type=EntityList
+        self.children = self.list_type(children)
         self._attrs = kwargs
         self._txt=txt
         self._mtr=None
@@ -61,7 +63,7 @@ class entity(UserList):
         if indent: myself=textwrap.indent(myself, '|' + (' ' * (indent-1)))
         lines = [myself]
         for child in self.children:
-            if isinstance(child,entity) and not child.__class__.__name__.startswith('Phoneme'):
+            if isinstance(child,Entity) and not child.__class__.__name__.startswith('Phoneme'):
                 lines.append(child.show(indent=indent+4))
         dblbreakfor=self.__class__.__name__ in {'Text','Stanza','Line'}
         breakstr='\n|\n' if dblbreakfor else '\n'
@@ -84,7 +86,7 @@ class entity(UserList):
     def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
         if not incl_phons and self.child_type=='Phoneme': return [{**self.prefix_attrs}]
-        good_children = [c for c in self.children if isinstance(c,entity)]
+        good_children = [c for c in self.children if isinstance(c,Entity)]
         if not multiple_wordforms and self.child_type=='WordForm' and good_children:
             good_children=good_children[:1]
         if good_children:
@@ -134,9 +136,14 @@ class entity(UserList):
     def get_children(self, child_type=None):
         logger.trace(self.__class__.__name__)
         if child_type is None or child_type == self.child_type:
-            return self.children
+            o = self.children
+        elif self.children:
+            child = self.children[0]
+            list_type = child.list_type
+            o = list_type([x for child in self.children for x in child.get_children(child_type)])
         else:
-            return [x for child in self.children for x in child.get_children(child_type)]
+            o = []
+        return o
     
     def get_parent(self, parent_type=None):
         logger.trace(self.__class__.__name__)
@@ -152,7 +159,7 @@ class entity(UserList):
         return self.get_children('Line')
     @cached_property
     def words(self): 
-        return self.get_children('Word')
+        return self.get_children('WordType')
     @cached_property
     def wordforms(self):
         return [
@@ -220,3 +227,14 @@ class entity(UserList):
 
 
 
+
+class EntityList(Entity):
+    def __init__(self, children=[], parent=None, **kwargs):
+        self.parent = parent
+        self.children = list(children)
+        self._attrs = kwargs
+        self._txt=None
+        for k,v in self._attrs.items(): setattr(self,k,v)
+
+    @cached_property
+    def txt(self): return None

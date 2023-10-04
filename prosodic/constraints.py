@@ -69,3 +69,10 @@ CONSTRAINTS = {
     'unres_within':unres_within,
     'foot_size':foot_size
 }
+
+def get_constraints(names_or_funcs):
+    l=[
+        CONSTRAINTS.get(cname) if type(cname)==str else cname 
+        for cname in names_or_funcs
+    ]
+    return [x for x in l if x is not None]

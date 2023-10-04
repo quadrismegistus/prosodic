@@ -1,11 +1,10 @@
 from .imports import *
 
-class PhonemeClass(entity): 
+class PhonemeClass(Entity): 
 	prefix='phon'
 	@profile
 	def __init__(self, phon_str, **kwargs):
-		self._txt=phon_str
-		super().__init__(**kwargs)
+		super().__init__(phon_str, **kwargs)
 
 @cache
 @profile

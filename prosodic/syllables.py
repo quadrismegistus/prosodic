@@ -1,10 +1,12 @@
 from .imports import *
 
+class PhonemeList(EntityList): pass
 
 
-class Syllable(entity):
+class Syllable(Entity):
     prefix='syll'
     child_type = 'Phoneme'
+    list_type = PhonemeList
     
     @profile
     def __init__(self, txt:str, ipa=None, parent=None, children=[], **kwargs):

@@ -27,7 +27,7 @@ from .constraints import *
 @total_ordering
 class Parse(entity):
     prefix='parse'
-    def __init__(self, wordforms_or_str, scansion:str='', meter:'Meter'=None):
+    def __init__(self, wordforms_or_str, scansion:str='', meter:'Meter'=None, parent=None):
         
         # wordforms
         assert wordforms_or_str
@@ -70,7 +70,8 @@ class Parse(entity):
             )
             self.positions.append(mpos)
 
-        super().__init__(children=self.positions)
+        self.line=parent
+        super().__init__(children=self.positions, parent=parent)
         self.is_bounded = False
         self.bounded_by = None
         self.unmetrical = False
@@ -185,6 +186,7 @@ class Parse(entity):
     def attrs(self):
         return {
             **self._attrs,
+            'line_num':self.line.num if self.line else None,
             'txt':self.txt,
             'rank':self.parse_rank,
             'meter':self.meter_str,
@@ -366,9 +368,18 @@ class ParseSlot(entity):
 
 class ParseList(entity):
     index_name='parse'
+    prefix='parselist'
+
     @cached_property
-    def df(self):
-        return super().df.fillna(0).applymap(lambda x: x if type(x)==str else int(x))
+    def attrs(self):
+        return {**self._attrs, 'num_parses':len(self.unbounded), 'num_all_parses':len(self.data)}
+    
+    @cached_property
+    def unbounded(self): 
+        return ParseList(children=[px for px in self.data if not px.is_bounded])
+    @cached_property
+    def bounded(self): 
+        return ParseList(children=[px for px in self.data if px.is_bounded])
 
 
 

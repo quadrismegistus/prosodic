@@ -31,3 +31,4 @@ class Line(ParseableText, Text):
             ]
         
         entity.__init__(self, children=children, parent=parent, **kwargs)
+        self._parses=[]

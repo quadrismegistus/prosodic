@@ -96,3 +96,13 @@ def iter_mpos(nsyll, starter=[], pos_types=None, max_s=METER_MAX_S, max_w=METER_
     # print('\n'.join('|'.join(x) for x in news))
     for new in news: yield from iter_mpos(nsyll, starter=new, pos_types=pos_types)
 
+
+
+
+
+# class representing the potential bounding relations between to parses
+class Bounding:
+    bounds = 0 # first parse harmonically bounds the second
+    bounded = 1 # first parse is harmonically bounded by the second
+    equal = 2 # the same constraint violation scores
+    unequal = 3 # unequal scores; neither set of violations is a subset of the other

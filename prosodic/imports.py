@@ -67,7 +67,8 @@ DF_COLS_RENAME = {
     'meterslot_s_unstress':'*s_unstress',
     'meterslot_unres_across':'*unres_across',
     'meterslot_unres_within':'*unres_within',
-    'meterslot_foot_size':'*foot_size'
+    'meterslot_foot_size':'*foot_size',
+    'parse_line_num':'line_num'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 

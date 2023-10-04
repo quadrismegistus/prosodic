@@ -19,6 +19,9 @@ class entity(UserList):
         self._mtr=None
         for k,v in self._attrs.items(): setattr(self,k,v)
 
+    def __hash__(self):
+        return hash((self.txt, tuple(sorted(self.attrs.items()))))
+
     def __eq__(self, other):
         return self is other
 

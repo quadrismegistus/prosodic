@@ -3,6 +3,8 @@ from .constraints import *
 
 ## METER
 class Meter(entity):
+    prefix='meter'
+    
     def __init__(self,
             constraints=DEFAULT_CONSTRAINTS, 
             categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS,
@@ -10,7 +12,12 @@ class Meter(entity):
             max_w=METER_MAX_W, 
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
             ):
-        self.constraints = constraints
+        self.constraints = [
+            x for x in [
+                CONSTRAINTS.get(cname) if type(cname)==str else cname 
+                for cname in constraints
+            ] if x is not None
+        ]
         self.categorical_constraints = categorical_constraints
         self.max_s=max_s
         self.max_w=max_w
@@ -36,6 +43,14 @@ class Meter(entity):
 
 
 class ParseableText(entity):
+    prefix='parsedtxt'
+
+    @cached_property
+    def attrs(self):
+        odx=super().attrs
+        odx['txt']=self.txt.strip()
+        return odx
+    
     @cached_property
     def wordform_matrix(self):
         from .words import WordFormList
@@ -49,16 +64,16 @@ class ParseableText(entity):
     def slot_matrix(self): 
         return [wfl.slots for wfl in wfm]
 
-    # @cache
+    @cache
     # @profile
-    def parse(self, progress=None, bound=True, **kwargs):
+    def parse(self, progress=None, bound=True, **meter_kwargs):
         from .parsing import ParseList
+        self.set_meter(**meter_kwargs)
         parses = list(self.iter_parses(progress=progress))
         if bound: self.bound_parses(parses, progress=progress)
         parses.sort()
         for i,px in enumerate(parses): px.parse_rank=i+1
         self._parses = ParseList(
-            self.txt,
             children=parses, 
         )
         return self._parses
@@ -74,7 +89,7 @@ class ParseableText(entity):
         ]
         iterr=tqdm(combos, disable=not progress)
         for wfl,scansion in iterr:
-            parse = Parse(wfl, scansion, meter=self.meter)
+            parse = Parse(wfl, scansion, meter=self.meter, parent=self)
             all_parses.append(parse)
         return all_parses
     
@@ -82,7 +97,7 @@ class ParseableText(entity):
     
     # @profile
     def bound_parses(self, parses = None, progress=True):
-        if not hasattr(self,'_bound_init') or not self._bound_init: return
+        if hasattr(self,'_bound_init') and not self._bound_init: return
         if parses is None: parses = self.all_parses
         iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
         for parse_i,parse in enumerate(iterr):
@@ -121,28 +136,31 @@ class ParseableText(entity):
         return self.best_parses[0] if self.best_parses else None
     @cached_property
     def unbounded_parses(self): 
-        if not self._bound_init: self.bound_parses()
-        return ParseList([px for px in self.all_parses if not px.is_bounded])
+        from .parsing import ParseList
+        if hasattr(self,'_bound_init') and not self._bound_init: self.bound_parses()
+        return ParseList(children=[px for px in self.all_parses if not px.is_bounded])
     @cached_property
     def bounded_parses(self, **kwargs): 
+        from .parsing import ParseList
         if not self._bound_init: self.bound_parses()
-        return ParseList([px for px in self.all_parses if px.is_bounded])
+        return ParseList(children=[px for px in self.all_parses if px.is_bounded])
     @cached_property
     def parses(self): 
         return self.scansions
     @cached_property
     def scansions(self, **kwargs):
+        from .parsing import ParseList
         index_matches = pd.Series(
             [
                 px.meter_str 
                 for px in self.all_parses
             ]).drop_duplicates().index
-        return ParseList([self.all_parses[i] for i in index_matches])
+        return ParseList(children=[self.all_parses[i] for i in index_matches])
     
     @cached_property
     def parse_stats(self):
         if not self._parses: self.parse()
-        odx={**self.line.attrs, **self.attrs}
+        odx={**self.attrs}
         odx['parse'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self.meter.constraints]

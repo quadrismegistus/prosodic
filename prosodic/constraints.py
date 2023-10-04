@@ -61,3 +61,11 @@ def s_trough(mpos):
     return [slot.is_weak for slot in mpos.slots]
 
 DEFAULT_CONSTRAINTS = [w_peak, w_stress, s_unstress, unres_across, unres_within, foot_size]
+CONSTRAINTS = {
+    'w_peak':w_peak,
+    'w_stress':w_stress,
+    's_unstres':s_unstress,
+    'unres_across':unres_across,
+    'unres_within':unres_within,
+    'foot_size':foot_size
+}

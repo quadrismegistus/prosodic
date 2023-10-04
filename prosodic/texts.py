@@ -50,8 +50,10 @@ class Text(entity):
     @cached_property
     def parseable_units(self): return getattr(self,self.parse_unit_attr)
 
-    def parse(self, force=False, progress=True):
+    @cache
+    def parse(self, force=False, progress=True, **meter_kwargs):
         if not force and self._parses: return
+        self.set_meter(**meter_kwargs)
         self._parses = []
         iterr = tqdm(
             self.parseable_units, 
@@ -59,27 +61,21 @@ class Text(entity):
             disable=not progress
         )
         for pline in iterr:
-            res = pline.parse(progress=False)
-            self._parses.append(res)
-        return self.parses_df
+            pline.parse(progress=False)
+            self._parses.append(pline._parses)
+        return self.best_parses
 
     @property
     def best_parses(self):
-        return ParseList([l.best_parse for l in self.parseable_units])
+        from .parsing import ParseList
+        return ParseList(children=[l.best_parse for l in self.parseable_units])
     
     @property
-    def parses_df(self):
+    def parse_stats(self):
         if not self._parses: return self.parse()
         odf=pd.DataFrame([l.parse_stats for l in self.parseable_units])
         odf=setindex(odf, DF_INDEX + ['txt','parse'])
         return odf
-
-    @property
-    def best_parses(self): return self.mtr.best_parses
-    @property
-    def best_parse(self): return self.mtr.best_parse
-    @property
-    def parses_df(self): return self.mtr.parses_df
 
 
 

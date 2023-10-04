@@ -41,6 +41,7 @@ DF_INDEX=[
     'line_txt',
     'parse_rank',
     'parse_txt',
+    'bestparse_txt',
     'parse_meter',
     'parse_stress',
     'sent_num',
@@ -68,7 +69,8 @@ DF_COLS_RENAME = {
     'meterslot_unres_across':'*unres_across',
     'meterslot_unres_within':'*unres_within',
     'meterslot_foot_size':'*foot_size',
-    'parse_line_num':'line_num'
+    'parse_line_num':'line_num',
+    'parse_stanza_num':'stanza_num'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 

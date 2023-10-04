@@ -186,6 +186,7 @@ class Parse(entity):
     def attrs(self):
         return {
             **self._attrs,
+            'stanza_num':self.line.parent.num if self.line and self.line.parent else None,
             'line_num':self.line.num if self.line else None,
             'txt':self.txt,
             'rank':self.parse_rank,

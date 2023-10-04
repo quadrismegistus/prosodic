@@ -160,21 +160,21 @@ class ParseableText(entity):
     @cached_property
     def parse_stats(self):
         if not self._parses: self.parse()
-        odx={**self.attrs}
-        odx['parse'] = self.best_parse.txt
+        odx={**self.parent.prefix_attrs, **self.prefix_attrs}
+        odx['bestparse_txt'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self.meter.constraints]
-        odx['nsylls']=nsyll
-        odx['ncombo']=len(self.wordform_matrix) / nsyll * 10
-        odx['nparse']=len(self.best_parses) / nsyll * 10
-        odx['nviols']=np.mean([
+        odx['bestparse_nsylls']=nsyll
+        odx['parses_ncombo']=len(self.wordform_matrix) / nsyll * 10
+        odx['parses_nparse']=len(self.best_parses) / nsyll * 10
+        odx['parses_nviols']=np.mean([
             int(bool(x))
             for bp in self.best_parses
             for cnamex in bp.constraint_viols
             for x in bp.constraint_viols[cnamex]
         ]) * 10
         for cname in cnames:
-            odx[f'{cname}']=np.mean([
+            odx[f'parses_{cname}']=np.mean([
                 int(bool(x))
                 for bp in self.best_parses
                 for x in bp.constraint_viols.get(cname,[])

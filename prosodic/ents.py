@@ -5,26 +5,47 @@ class entity(UserList):
     child_type = 'Text'
     is_parseable = False
     index_name=None
+    prefix='ent'
 
     """
     Root entity class
     """
-    def __init__(self, children = [], parent = None, **kwargs):
+    def __init__(self, txt:str='', children = [], parent = None, **kwargs):
         logger.trace(self.__class__.__name__)
         self.parent = parent
+        for child in children: child.parent = self
         self.children = children
         self._attrs = kwargs
+        self._txt=txt
         for k,v in self._attrs.items(): setattr(self,k,v)
-        self._init = False
+
+    def __eq__(self, other):
+        return self is other
 
     @cached_property
     def attrs(self):
-        return {'num':self.num, **self._attrs}
+        odx={'num':self.num}
+        if self.__class__.__name__ not in {'Text','Stanza'} and self.txt:
+            odx['txt']=self.txt
+        return {**odx, **self._attrs}
+        
     @cached_property
     def prefix_attrs(self):
-        prefix=self.__class__.__name__.lower()
-        return {f'{prefix}_{k}':v for k,v in self.attrs.items() if v is not None}
+        def getkey(k):
+            o=f'{self.prefix}_{k}'
+            o=DF_COLS_RENAME.get(o,o)
+            return o
+        return {getkey(k):v for k,v in self.attrs.items() if v is not None}
     
+    @cached_property
+    def txt(self):
+        if self._txt: 
+            txt = self._txt
+        elif self.children: 
+            txt=''.join(child.txt for child in self.children)
+        else: 
+            txt=''
+        return clean_text(txt)
 
     @cached_property
     def data(self): return self.children
@@ -37,18 +58,28 @@ class entity(UserList):
         if indent: myself=textwrap.indent(myself, '|' + (' ' * (indent-1)))
         lines = [myself]
         for child in self.children:
-            if isinstance(child,entity):
+            if isinstance(child,entity) and not child.__class__.__name__.startswith('Phoneme'):
                 lines.append(child.show(indent=indent+4))
         dblbreakfor=self.__class__.__name__ in {'Text','Stanza','Line'}
         breakstr='\n|\n' if dblbreakfor else '\n'
-        return breakstr.join(lines)
+        o=breakstr.join(lines)
+        if not indent: 
+            print(o)
+        else:
+            return o
     
     def _repr_html_(self): return self.df._repr_html_()
-    def __repr__(self): return repr(self.data)
+    def __repr__(self): return f'{self.__class__.__name__}({get_attr_str(self.attrs)})'
     
     @cached_property
-    def ld(self):
+    def ld(self): return self.get_ld()
+
+    def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
+        if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
+        if not incl_phons and self.child_type=='Phoneme': return [{**self.prefix_attrs}]
         good_children = [c for c in self.children if isinstance(c,entity)]
+        if not multiple_wordforms and self.child_type=='WordForm' and good_children:
+            good_children=good_children[:1]
         if good_children:
             return [
                 {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}
@@ -57,16 +88,25 @@ class entity(UserList):
             ]
         else:
             return [{**self.prefix_attrs}]
+        
+    
 
     @cached_property
     def df(self):
-        return pd.DataFrame(self.ld).set_index([
-            'stanza_num',
-            'line_num',
-            'wordtoken_sent_num',
-            'wordtoken_sentpart_num',
-            'wordtoken_num',
-        ])
+        odf=pd.DataFrame(self.ld)
+        for c in DF_BADCOLS:
+            if c in set(odf.columns):
+                odf=odf.drop(c,axis=1)
+        for c in odf:
+            if c.endswith('_num'):
+                odf[c]=odf[c].fillna(0).apply(int)
+            else:
+                odf[c]=odf[c].fillna('')
+        odf=setindex(
+            odf,
+            DF_INDEX
+        )
+        return odf
     
     
     

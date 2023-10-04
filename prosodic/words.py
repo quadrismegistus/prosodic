@@ -2,10 +2,16 @@ from .imports import *
 SYLL_SEP='.'
 
 @cache
+@profile
 def Word(token, lang=DEFAULT_LANG):
-    return WordType(token, lang=lang)
+    if lang not in LANGS: 
+        raise Exception(f'Language {lang} not recognized')
+    lang_obj = LANGS[lang]()
+    return lang_obj.get(token)
 
 class WordToken(entity):
+    prefix='wordtoken'
+    @profile
     def __init__(self, token, lang=DEFAULT_LANG, parent=None, **kwargs):
         self.word = word = Word(token, lang=lang)
         super().__init__(
@@ -18,22 +24,13 @@ class WordToken(entity):
 
 class WordType(entity):
     child_type: str = 'WordForm'
-    
-    def __init__(self, token:str, lang:str=DEFAULT_LANG, parent=None, **kwargs):
-        if lang not in LANGS: 
-            raise Exception(f'Language {lang} not recognized')
-        
-        tokenx = token.strip()
-        if any(x.isspace() for x in tokenx):
-            logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
-            tokenx=''.join(x if not x.isspace() else '-' for x in tokenx)
-        
-        lang_obj = LANGS[lang]()
-        wordforms = lang_obj.get(tokenx)
+    prefix='word'
+    @profile
+    def __init__(self, token:str, children:list, parent=None, **kwargs):
         super().__init__(
-            children=wordforms, 
+            children=children, 
             parent=parent,
-            txt=token, 
+            txt=token,
             **kwargs
         )
 
@@ -60,10 +57,10 @@ class WordType(entity):
     @cached_property
     def attrs(self):
         return {
-            **self._attrs,
+            **super().attrs,
             'num_forms':self.num_forms,
-            'num_sylls':self.num_sylls,
-            'num_stressed_sylls':self.num_stressed_sylls,
+            # 'num_sylls':self.num_sylls,
+            # 'num_stressed_sylls':self.num_stressed_sylls,
             'is_punc':self.is_punc,
         }
     
@@ -71,8 +68,11 @@ class WordType(entity):
 
 
 class WordForm(entity):
+    prefix='wordform'
     child_type: str = 'Syllable'
-    def __init__(self, sylls_ipa, sylls_text=[], syll_sep='.'):
+
+    @profile
+    def __init__(self, txt:str, sylls_ipa=[], sylls_text=[], syll_sep='.'):
         from .syllables import Syllable
         sylls_ipa=(
             sylls_ipa.split(syll_sep) 
@@ -93,16 +93,14 @@ class WordForm(entity):
             for syll_str,syll_ipa in zip(sylls_text, sylls_ipa):
                 syll = Syllable(
                     syll_str, 
-                    syll_ipa=syll_ipa, 
-                    syll_stress=get_stress(syll_ipa), 
+                    ipa=syll_ipa, 
                     parent=self
                 )
                 children.append(syll)
-        token=''.join(sylls_text)
         super().__init__(
-            sylls_ipa=sylls_ipa, 
-            sylls_text=sylls_text, 
-            token=token, 
+            # sylls_ipa=sylls_ipa, 
+            # sylls_text=sylls_text, 
+            txt=txt,
             children=children
         )
 

@@ -34,7 +34,7 @@ def English(): return EnglishLanguage()
 class EnglishLanguage(Language):
     pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
     lang = 'en-us'
-    cache_fn = 'english_wordforms.sqlitedict'
+    cache_fn = 'english_wordtypes'
 
     @cache
     @profile
@@ -129,24 +129,43 @@ class EnglishLanguage(Language):
             encode=pickle.dumps,
             decode=pickle.loads
         )
+        # import shelve
+        # return shelve.open(
+        #     os.path.join(PATH_HOME_DATA, self.cache_fn), 
+        #     flag = 'c', 
+        #     protocol=None, 
+        #     writeback = False
+        # )
 
     @cache
     @profile
     def get(self, token):
-        from .words import WordForm
-        if token in self.cached: 
-            return self.cached.get(token)
-    
-        if not any(x.isalpha() for x in token): return []
-        tokenl = token.lower()
-        ipa_l = self.phoneticize(tokenl)
-        l=[]
-        for ipa in ipa_l:
-            sylls = self.syllabify(token, num_sylls=len(ipa))
-            l.append(WordForm(sylls_ipa=ipa, sylls_text=sylls))
-        l.sort(key=lambda w: w.num_stressed_sylls)
-        self.cached[token]=l
-        return l
+        from .words import WordForm, WordType
+        tokenx = token.strip()
+        if any(x.isspace() for x in tokenx):
+            logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
+            tokenx=''.join(x if not x.isspace() else '-' for x in tokenx)
+        
+        if tokenx in self.cached: 
+            # logger.debug(f'found token {tokenx} in cache')
+            return self.cached.get(tokenx)
+
+        wordforms = []
+
+        if any(x.isalpha() for x in token): 
+            tokenl = tokenx.lower()
+            ipa_l = self.phoneticize(tokenl)
+            for ipa in ipa_l:
+                sylls = self.syllabify(tokenx, num_sylls=len(ipa))
+                wf=WordForm(tokenx, sylls_ipa=ipa, sylls_text=sylls)
+                wordforms.append(wf)
+            wordforms.sort(key=lambda w: w.num_stressed_sylls)
+        # else:
+            # wf = WordForm(tokenx)
+            # wordforms.append(wf)
+        wordtype = WordType(tokenx, children=wordforms)
+        self.cached[tokenx]=wordtype
+        return wordtype
 
 
 

@@ -2,10 +2,12 @@ from .imports import *
 
 
 
-class Stanza(TextPart):
+class Stanza(entity):
     sep: str = ''
     child_type: str = 'Line'
+    prefix='stanza'
 
+    @profile
     def __init__(self, txt:str='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
         if not txt and not children and tokens_df is None:
             raise Exception('Must provide either txt, children, or tokens_df')
@@ -19,12 +21,14 @@ class Stanza(TextPart):
         super().__init__(children=children, parent=parent, **kwargs)
     
 
-class Line(TextPart):
+class Line(entity):
     line_sep = '\n'
     sep: str = ''
     child_type: str = 'Word'
     is_parseable = True
+    prefix='line'
 
+    @profile
     def __init__(self, txt:str='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
         from .words import WordToken
         if not txt and not children and tokens_df is None:
@@ -46,17 +50,3 @@ class Line(TextPart):
             ]
         
         super().__init__(children=children, parent=parent, **kwargs)
-
-
-
-    def init(self):
-        if self._init or self.children: return self
-        if self.txt:
-            line = Text(self.txt.replace('\n','  '), **self._attrs).lines[0]
-            self._txt = line._txt
-            self._attrs = line._attrs
-            self.children = line.children
-
-        
-        self._init=True
-        return self

@@ -1,18 +1,11 @@
 from .imports import *
-
-class TextPart(entity):
-    @cached_property
-    def txt(self):
-        logger.trace(self.__class__.__name__)
-        if hasattr(self,'_txt') and self._txt: txt = self._txt
-        elif self.children: txt=self.sep.join(child.txt for child in self.children)
-        else: txt=''
-        return clean_text(txt)
     
-class Text(TextPart):
+class Text(entity):
     sep: str = ''
     child_type: str = 'Stanza'
+    prefix='text'
 
+    @profile
     def __init__(self,
             txt: str = '',
             filename: str = '',

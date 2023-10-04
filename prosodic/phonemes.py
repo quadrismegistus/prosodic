@@ -1,12 +1,23 @@
 from .imports import *
 
 class PhonemeClass(entity): 
-	pass
+	prefix='phon'
+	@profile
+	def __init__(self, phon_str, **kwargs):
+		self._txt=phon_str
+		super().__init__(**kwargs)
 
 @cache
-def Phoneme(phon):
+@profile
+def get_phoneme_featuretable():
 	import panphon
 	ft = panphon.FeatureTable()
+	return ft
+
+@cache
+@profile
+def Phoneme(phon):
+	ft=get_phoneme_featuretable()
 	phonl = ft.word_fts(phon)
 	if not phonl: 
 		# logger.error(f'What is this phoneme? {phon}')

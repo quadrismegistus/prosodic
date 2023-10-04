@@ -18,10 +18,9 @@ But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
 poem = Text(poemstr)
-for line in poem.lines:
-    print(line)
+print(poem.df)
 
 
-poem.parse(max_s=2, max_w=2, resolve_optionality=True)
+# poem.parse(max_s=2, max_w=2, resolve_optionality=True)
 
-print(poem.parses_df)
+# print(poem.parses_df)

@@ -1,38 +1,39 @@
 from .imports import *
 
+
+
 class Syllable(entity):
+    prefix='syll'
     child_type = 'Phoneme'
     
-    def init(self):
+    @profile
+    def __init__(self, txt:str, ipa=None, parent=None, children=[], **kwargs):
         from .phonemes import Phoneme
         from gruut_ipa import Pronunciation
-        
-        if self._init: return
-        self._init=True
-        
-        self.children = []
-        if self.syll_ipa:
-            sipa=''.join(x for x in self.syll_ipa if x.isalpha())
+        assert ipa or children
+        if ipa and not children:
+            sipa=''.join(x for x in ipa if x.isalpha())
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
-            for phon in phones:
-                phonobj = Phoneme(phon)
-                self.children.append(phonobj)
-        return self
+            children = [Phoneme(phon) for phon in phones]
+        super().__init__(txt=txt, ipa=ipa, children=children, parent=parent, **kwargs)
     
     @cached_property
-    def attrs(self):
-        return {
-            **self._attrs,
-            'txt':self.syll_text, 
-            # **dict(syll_weight='H' if self.is_heavy else 'L'),
-            # **dict(
-            #     is_stressed=self.is_stressed,
-            #     is_heavy=self.is_heavy,
-            #     is_strong=self.is_strong,
-            #     is_weak=self.is_weak,
-            # )
-        }
+    def stress(self): return get_stress(self.ipa)
+    
+    # @cached_property
+    # def attrs(self):
+    #     return {
+    #         **self._attrs,
+    #         'txt':self.syll_text, 
+    #         # **dict(syll_weight='H' if self.is_heavy else 'L'),
+    #         # **dict(
+    #         #     is_stressed=self.is_stressed,
+    #         #     is_heavy=self.is_heavy,
+    #         #     is_strong=self.is_strong,
+    #         #     is_weak=self.is_weak,
+    #         # )
+    #     }
 
     
     @cached_property
@@ -49,7 +50,7 @@ class Syllable(entity):
     
     @cached_property
     def is_stressed(self):
-        return self.syll_stress in {'S','P'}
+        return self.stress in {'S','P'}
     
     @cached_property
     def is_heavy(self):

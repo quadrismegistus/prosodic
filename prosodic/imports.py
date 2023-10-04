@@ -35,6 +35,26 @@ METER_RESOLVE_OPTIONALITY = True
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 DEFAULT_CATEGORICAL_CONSTRAINTS = ['foot_size']
 ESPEAK_PATHS=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng']
+DF_INDEX=[
+    'stanza_num',
+    'line_num',
+    'line_txt',
+    'sent_num',
+    'sentpart_num',
+    'wordtoken_num',
+    'wordtoken_txt',
+    'wordform_num',
+    'syll_num',
+    'syll_txt',
+    'syll_ipa'
+]
+DF_COLS_RENAME = {
+    'wordtoken_sent_num':'sent_num',
+    'wordtoken_sentpart_num':'sentpart_num',
+}
+DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
+
+
 
 # sys imports
 import re

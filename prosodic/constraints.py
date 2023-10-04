@@ -50,12 +50,12 @@ def unres_across(mpos):
                 ol.append(False)
     return ol
         
-@profile
+#@profile
 def w_peak(mpos, score=1):
     if mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_strong for slot in mpos.slots]
 
-@profile
+#@profile
 def s_trough(mpos, score=1):
     if not mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_weak for slot in mpos.slots]

@@ -33,7 +33,7 @@ def get_attr_str(attrs, sep=', '):
     attrstr=sep.join(strs)
     return attrstr
 
-@profile
+# @profile
 def safesum(l):
     # o=pd.Series(pd.to_numeric(l,errors='coerce')).sum()
     # o_int=int(o)
@@ -46,3 +46,8 @@ def safesum(l):
 def supermap(func, objs, progress=True, desc=None):
     if progress and not desc: desc=f'Mapping {func.__name__} across {len(objs)} objects'
     return [func(obj) for obj in tqdm(objs,desc=desc,disable=not progress)]
+
+def setindex(df, cols=[]):
+    if not cols: return df
+    cols=[c for c in cols if c in set(df.columns)]
+    return df.set_index(cols) if cols else df

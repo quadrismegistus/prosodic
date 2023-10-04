@@ -28,7 +28,7 @@ def Phoneme(phon):
 			phond = {}
 	else:
 		phond = phonl[0].data
-	phonobj = PhonemeClass(phon,**{f'phon_{k}':v for k,v in phond.items()})
+	phonobj = PhonemeClass(phon,**phond)
 	return phonobj
 
 

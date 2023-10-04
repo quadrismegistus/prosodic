@@ -21,28 +21,26 @@ class Syllable(entity):
     @cached_property
     def stress(self): return get_stress(self.ipa)
     
-    # @cached_property
-    # def attrs(self):
-    #     return {
-    #         **self._attrs,
-    #         'txt':self.syll_text, 
-    #         # **dict(syll_weight='H' if self.is_heavy else 'L'),
-    #         # **dict(
-    #         #     is_stressed=self.is_stressed,
-    #         #     is_heavy=self.is_heavy,
-    #         #     is_strong=self.is_strong,
-    #         #     is_weak=self.is_weak,
-    #         # )
-    #     }
+    @cached_property
+    def attrs(self):
+        return {
+            **self._attrs,
+            'num':self.num,
+            'txt':self.txt, 
+            'is_stressed':self.is_stressed, 
+            'is_heavy':self.is_heavy, 
+            'is_strong':self.is_strong, 
+            'is_weak':self.is_weak,
+        }
 
     
     @cached_property
     def has_consonant_ending(self):
-        return self.children[-1].phon_cons
+        return self.children[-1].cons>0
     
     @cached_property
     def num_vowels(self):
-        return sum(1 for phon in self.children if phon.phon_cons<=0)
+        return sum(1 for phon in self.children if phon.cons<=0)
     
     @cached_property
     def has_dipthong(self):

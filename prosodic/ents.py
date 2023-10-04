@@ -11,12 +11,12 @@ class entity(UserList):
     Root entity class
     """
     def __init__(self, txt:str='', children = [], parent = None, **kwargs):
-        logger.trace(self.__class__.__name__)
         self.parent = parent
         for child in children: child.parent = self
         self.children = children
         self._attrs = kwargs
         self._txt=txt
+        self._mtr=None
         for k,v in self._attrs.items(): setattr(self,k,v)
 
     def __eq__(self, other):
@@ -25,7 +25,7 @@ class entity(UserList):
     @cached_property
     def attrs(self):
         odx={'num':self.num}
-        if self.__class__.__name__ not in {'Text','Stanza'} and self.txt:
+        if self.__class__.__name__ not in {'Text','Stanza','MeterLine','MeterText','Meter'} and self.txt:
             odx['txt']=self.txt
         return {**odx, **self._attrs}
         
@@ -68,7 +68,11 @@ class entity(UserList):
         else:
             return o
     
-    def _repr_html_(self): return self.df._repr_html_()
+    def _repr_html_(self): 
+        def blank(x):
+            if x in {0,None,np.nan}: return ''
+            return x
+        return self.df.applymap(blank)._repr_html_()
     def __repr__(self): return f'{self.__class__.__name__}({get_attr_str(self.attrs)})'
     
     @cached_property
@@ -106,15 +110,15 @@ class entity(UserList):
             odf,
             DF_INDEX
         )
+        def unbool(x):
+            if x is True: return 1
+            if x is False: return 0
+            if x is None: return 0
+            return x
+        odf=odf.applymap(unbool)
         return odf
     
     
-    
-
-    def init(self):
-        logger.trace(self.__class__.__name__)
-        self._init=True
-
     # def __getattr__(self, __name: str, **kwargs) -> Any:
     #     if __name.startswith('_'): raise AttributeError
     #     logger.trace(f'{self.__class__.__name__}.{__name}')
@@ -148,8 +152,10 @@ class entity(UserList):
         return self.get_children('Word')
     @cached_property
     def wordforms(self):
-        if self.child_type=='WordForm': return self.children
-        return [w.children for w in self.words]
+        return [
+            w.get_children('WordForm') 
+            for w in self.words
+        ]
     @cached_property
     def syllables(self):
         return [s for w in self.words for s in (w.children[0].get_children('Syllable') if w.children else [])]
@@ -211,44 +217,3 @@ class entity(UserList):
 
 
 
-
-class Parseable(entity):
-    @cache
-    def parse(self, meter=None, **meter_kwargs):
-        from .parsing import Meter
-        if meter is None: meter=Meter(**meter_kwargs)
-        m = self._metertext = meter[self]
-        return m.parse()
-    @property
-    def has_metertext(self): 
-        return hasattr(self,'_metertext') and self._metertext is not None
-    @property
-    def metertext(self):
-        if not self.has_metertext: self.parse()
-        if self.has_metertext: return self._metertext
-    @property
-    def best_parses(self): return self.metertext.best_parses
-    @property
-    def best_parse(self): return self.metertext.best_parse
-    @property
-    def parses_df(self): return self.metertext.parses_df
-
-
-
-
-# class EntityList(UserList):
-#     index_name=None
-
-#     def _repr_html_(self): return self.df._repr_html_()
-#     def __repr__(self): return repr(self.df)
-    
-#     @property
-#     def df(self):
-#         l=[px.attrs for px in self.data if px is not None]
-#         odf=pd.DataFrame(l)
-#         if len(odf) and self.index_name and self.index_name in set(odf.columns):
-#             odf=odf.set_index(self.index_name)
-#         return odf
-    
-#     @property
-#     def l(self): return self.data

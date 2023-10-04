@@ -10,6 +10,8 @@ def Word(token, lang=DEFAULT_LANG):
     return lang_obj.get(token)
 
 class WordToken(entity):
+    child_type='WordType'
+
     prefix='wordtoken'
     @profile
     def __init__(self, token, lang=DEFAULT_LANG, parent=None, **kwargs):
@@ -24,6 +26,7 @@ class WordToken(entity):
 
 class WordType(entity):
     child_type: str = 'WordForm'
+    
     prefix='word'
     @profile
     def __init__(self, token:str, children:list, parent=None, **kwargs):

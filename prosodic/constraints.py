@@ -8,7 +8,7 @@ def s_unstress(mpos):
     if not mpos.is_prom: return [None]*len(mpos.slots)
     return [not slot.is_stressed for slot in mpos.slots]
 
-def unres_within(mpos, score=1):
+def unres_within(mpos):
     slots = mpos.slots
     if len(slots)<2: return [None]*len(mpos.slots)
     ol=[None]
@@ -38,7 +38,7 @@ def unres_across(mpos):
     for si in range(1,len(slots)):
         slot1,slot2=slots[si-1],slots[si]
         unit1,unit2=slot1.unit,slot2.unit
-        wf1,wf2=unit1.parent,unit2.parent
+        wf1,wf2=unit1.wordform,unit2.wordform
         if wf1 is wf2: 
             ol.append(None)
         else:
@@ -51,12 +51,12 @@ def unres_across(mpos):
     return ol
         
 #@profile
-def w_peak(mpos, score=1):
+def w_peak(mpos):
     if mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_strong for slot in mpos.slots]
 
 #@profile
-def s_trough(mpos, score=1):
+def s_trough(mpos):
     if not mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_weak for slot in mpos.slots]
 

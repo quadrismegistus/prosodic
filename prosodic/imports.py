@@ -39,18 +39,35 @@ DF_INDEX=[
     'stanza_num',
     'line_num',
     'line_txt',
+    'parse_rank',
+    'parse_txt',
+    'parse_meter',
+    'parse_stress',
     'sent_num',
     'sentpart_num',
+    'meterpos_num',
+    'meterpos_txt',
+    'meterpos_val',
     'wordtoken_num',
     'wordtoken_txt',
     'wordform_num',
     'syll_num',
     'syll_txt',
-    'syll_ipa'
+    'syll_ipa',
+    'meterslot_num',
+    'meterslot_txt'
+
 ]
 DF_COLS_RENAME = {
     'wordtoken_sent_num':'sent_num',
     'wordtoken_sentpart_num':'sentpart_num',
+    'meterpos_meter_val':'meterpos_val',
+    'meterslot_w_peak':'*w_peak',
+    'meterslot_w_stress':'*w_stress',
+    'meterslot_s_unstress':'*s_unstress',
+    'meterslot_unres_across':'*unres_across',
+    'meterslot_unres_within':'*unres_within',
+    'meterslot_foot_size':'*foot_size'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 

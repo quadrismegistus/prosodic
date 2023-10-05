@@ -41,3 +41,17 @@ def test_finnish():
     assert len(wtype.wordforms)==1
     assert len(wtype.syllables)==4
     assert wtype.wordforms[0].num_stressed_sylls == 2
+
+    words=[
+        'kiitos',
+        'anteeksi',
+        'näkemiin',
+        'hei',
+        'kyllä'
+    ]
+    for w in words:
+        print(w)
+        wtype = Finnish().get(w)
+        assert wtype.wordforms
+        assert wtype.syllables
+        assert wtype.phonemes

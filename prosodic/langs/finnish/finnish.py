@@ -1,7 +1,8 @@
 from prosodic.imports import *
 from prosodic.langs.langs import Language
 from prosodic.words import WordForm, WordType
-sys.path.insert(0,os.path.dirname(__file__))
+dirself=os.path.dirname(__file__)
+sys.path.insert(0,dirself)
 from finnish_annotator import make_annotation
 #from tools import get_class
 

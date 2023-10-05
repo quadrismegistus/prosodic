@@ -15,14 +15,14 @@ INITIAL = 1
 SUFFIX = 2
 COMPOUND = 3
 
-import sys
 
-dirself=""
-for path in sys.path:
-	if os.path.sep+"fi" in path:
-		dirself=path
-
-user_files = [os.path.join(dirself,'presyllabified.txt'), os.path.join(dirself,'initial.txt'), os.path.join(dirself,'suffix.txt'), os.path.join(dirself,'compound.txt')] # default values, in case user input is ill-formed or unavailable
+dirself=os.path.dirname(__file__)
+user_files = [
+    os.path.join(dirself,'presyllabified.txt'), 
+    os.path.join(dirself,'initial.txt'), 
+    os.path.join(dirself,'suffix.txt'), 
+    os.path.join(dirself,'compound.txt')
+] # default values, in case user input is ill-formed or unavailable
 config_file = os.path.join(dirself,'config.txt')
 
 initial_compounds = []
@@ -124,28 +124,28 @@ class Annotation:
         self.sonorities = make_sonorities(self.split_sylls)
         self.stresses = make_stresses(self.weights)
 
-    def join(self, annotation):
-        self.word += annotation.word
-        self.syllables += annotation.syllables
-        self.weights += annotation.weights
-        self.sonorities += annotation.sonorities
+    # def join(self, annotation):
+    #     self.word += annotation.word
+    #     self.syllables += annotation.syllables
+    #     self.weights += annotation.weights
+    #     self.sonorities += annotation.sonorities
 
-        # only concatenate stresses if there is something to concatenate
-        if len(annotation.stresses[0]) > 0:
+    #     # only concatenate stresses if there is something to concatenate
+    #     if len(annotation.stresses[0]) > 0:
 
-            total_stresses = []
+    #         total_stresses = []
             
-            for i in range(len(self.stresses)):
+    #         for i in range(len(self.stresses)):
 
-                for j in range(len(annotation.stresses)):
+    #             for j in range(len(annotation.stresses)):
 
-                    total_stresses += [deepcopy(self.stresses[i])]
-                    total_stresses[-1] += [Stress.secondary]
+    #                 total_stresses += [deepcopy(self.stresses[i])]
+    #                 total_stresses[-1] += [Stress.secondary]
 
-                    # replace initial (primary) stress of annotation with secondary stress
-                    total_stresses[-1] += annotation.stresses[j][1:]
+    #                 # replace initial (primary) stress of annotation with secondary stress
+    #                 total_stresses[-1] += annotation.stresses[j][1:]
 
-            self.stresses = total_stresses
+    #         self.stresses = total_stresses
 
 # if the final word in the list of words starts with a word in the list of compound-initial words, split the word and apply the function again
 # (i.e., split off all initial words in initial_compounds)
@@ -206,75 +206,75 @@ def make_annotation(word):
 
     return annotations[0]
 
-# print a representation of an annotation for a word
-def print_annotation(word_annotation):
-    print(annotation_string(word_annotation))
-    print(pattern_string(word_annotation))
-    print()
+# # print a representation of an annotation for a word
+# def print_annotation(word_annotation):
+#     print(annotation_string(word_annotation))
+#     print(pattern_string(word_annotation))
+#     print()
 
-# annotate and print the annotation for a word
-def mark(word):
+# # annotate and print the annotation for a word
+# def mark(word):
 
-    print_annotation(make_annotation(word))
+#     print_annotation(make_annotation(word))
 
-def annotation_string(word_annotation):
+# def annotation_string(word_annotation):
     
-    result = ''
+#     result = ''
 
-    for i in range(len(word_annotation.stresses)):
+#     for i in range(len(word_annotation.stresses)):
 
-        result += SYLLABLE_SEPARATOR
+#         result += SYLLABLE_SEPARATOR
     
-        for j in range(len(word_annotation.syllables)):
+#         for j in range(len(word_annotation.syllables)):
 
-            # mark stresses
-            if word_annotation.stresses[i][j] == Stress.primary:
-                result += '´'
+#             # mark stresses
+#             if word_annotation.stresses[i][j] == Stress.primary:
+#                 result += '´'
                 
-            elif word_annotation.stresses[i][j] == Stress.secondary:
-                result += '`'
+#             elif word_annotation.stresses[i][j] == Stress.secondary:
+#                 result += '`'
 
-            # add syllable content and separator
-            result += word_annotation.syllables[j] + SYLLABLE_SEPARATOR
+#             # add syllable content and separator
+#             result += word_annotation.syllables[j] + SYLLABLE_SEPARATOR
 
-        result += '\n'
+#         result += '\n'
         
-    return result[:-1] # remove final newline
+#     return result[:-1] # remove final newline
 
-# return a string representing the weight pattern
-# e.g. the weights for ".´ny.ky.`en.nus.te." are represented 'LLHHL'
-def syll_pattern(weights):
+# # return a string representing the weight pattern
+# # e.g. the weights for ".´ny.ky.`en.nus.te." are represented 'LLHHL'
+# def syll_pattern(weights):
     
-    result = ''
+#     result = ''
     
-    for w in weights:
+#     for w in weights:
 
-        result += Weight.dict[w]
+#         result += Weight.dict[w]
             
-    return result
+#     return result
 
-# return a string representing the stress pattern
-# e.g. the stresses for ".´ny.ky.`en.nus.te." are represented 'PUSUU'
-def stress_pattern(stresses):
+# # return a string representing the stress pattern
+# # e.g. the stresses for ".´ny.ky.`en.nus.te." are represented 'PUSUU'
+# def stress_pattern(stresses):
     
-    result = ''
+#     result = ''
     
-    for i in range(len(stresses)):
+#     for i in range(len(stresses)):
 
-        for s in stresses[i]:
+#         for s in stresses[i]:
 
-            result += Stress.dict[s]
+#             result += Stress.dict[s]
 
-        result += ', '
+#         result += ', '
             
-    return result[:-2] # remove last comma and space
+#     return result[:-2] # remove last comma and space
 
-# return a string representing the sonority pattern
-# e.g. the sonority for taloiden is represented 'AAI'
-def sonority_pattern(sonorities):
-    result = ''.join(sonorities)
-    return result
+# # return a string representing the sonority pattern
+# # e.g. the sonority for taloiden is represented 'AAI'
+# def sonority_pattern(sonorities):
+#     result = ''.join(sonorities)
+#     return result
 
-# print a representation of the weights and stresses
-def pattern_string(word_annotation):
-    return 'Weight: ' + syll_pattern(word_annotation.weights) + '   Stress: ' + stress_pattern(word_annotation.stresses) + '   Sonority: ' + sonority_pattern(word_annotation.sonorities)
+# # print a representation of the weights and stresses
+# def pattern_string(word_annotation):
+#     return 'Weight: ' + syll_pattern(word_annotation.weights) + '   Stress: ' + stress_pattern(word_annotation.stresses) + '   Sonority: ' + sonority_pattern(word_annotation.sonorities)

@@ -1,50 +1,50 @@
-# coding=utf-8
-from finnish_annotator import mark
+# # coding=utf-8
+# from finnish_annotator import mark
 
-import string
-import sys
+# import string
+# import sys
 
-def remove_punct(word):
+# def remove_punct(word):
 
-    start = 0
+#     start = 0
 
-    while start < len(word) and word[start] in string.punctuation:
+#     while start < len(word) and word[start] in string.punctuation:
 
-        start += 1
+#         start += 1
 
-    end = len(word)-1
+#     end = len(word)-1
 
-    while end >= 0 and word[end] in string.punctuation:
+#     while end >= 0 and word[end] in string.punctuation:
 
-        end -= 1
+#         end -= 1
 
-    return word[start:end+1]
+#     return word[start:end+1]
 
-if len(sys.argv) != 2:
+# if len(sys.argv) != 2:
 
-    print("Please enter a single argument for the file to annotate")
+#     print("Please enter a single argument for the file to annotate")
 
-else:
+# else:
 
-    filename = sys.argv[1]
+#     filename = sys.argv[1]
 
-    try:
+#     try:
 
-        f = open(filename, 'r')
-        entries = f.readlines()
-        f.close()
+#         f = open(filename, 'r')
+#         entries = f.readlines()
+#         f.close()
 
-        for i in range(len(entries)-1):
-            entries[i] = entries[i][:-1]
+#         for i in range(len(entries)-1):
+#             entries[i] = entries[i][:-1]
 
-        for entry in entries:
+#         for entry in entries:
 
-            words = entry.split(' ')
+#             words = entry.split(' ')
 
-            for word in words:
+#             for word in words:
 
-                mark(remove_punct(word))
+#                 mark(remove_punct(word))
 
-    except IOError:
+#     except IOError:
 
-        print("File (" + filename + ") could not be opened")
+#         print("File (" + filename + ") could not be opened")

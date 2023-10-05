@@ -31,3 +31,13 @@ def test_espeak():
         with open(os.path.join(opath,lib_fn),'w') as of: of.write('')
         assert get_espeak_env([tdir]) == os.path.join(opath,lib_fn)
     
+
+def test_finnish():
+    assert LANGS['fi']() is Finnish()
+    assert isinstance(Finnish(), FinnishLanguage)
+    wtype = Finnish().get('kalevala')
+    assert isinstance(wtype,Entity)
+    assert wtype.is_wordtype
+    assert len(wtype.wordforms)==1
+    assert len(wtype.syllables)==4
+    assert wtype.wordforms[0].num_stressed_sylls == 2

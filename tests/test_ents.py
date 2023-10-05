@@ -54,11 +54,13 @@ def test_get_children():
     stanza = t.stanzas[0]
     assert stanza.parent is t
     assert stanza.text is t
+    assert stanza.stanzas == [stanza]
 
     line = t.lines[0]
     assert line.parent is stanza
     assert line.stanza is stanza
     assert line.text is t
+    assert line.stanzas == []
 
     wordtoken = t.wordtokens[0]
     assert wordtoken.parent is line
@@ -114,6 +116,13 @@ def test_i():
     assert l2.i is None
     assert l2.num is None
     assert l2.next is None
+    assert l2.prev is None
+
+    t=Stanza('hello\nworld')
+    l1,l2=t.children
+    l1.i, l2.i  # instantiate
+    t.children = []
+    assert l1.next is None
     assert l2.prev is None
 
 
@@ -198,3 +207,11 @@ def test_types():
     assert not wform.is_phon
     assert not syll.is_phon
     assert phon.is_phon
+
+def test_exceptions():
+    t = Text(children=[1,2])
+    assert t.children.data == []
+
+    t = Text('', children=[Entity()])
+    assert not t._txt
+    assert not t.txt

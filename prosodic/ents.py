@@ -13,12 +13,15 @@ class Entity(UserList):
     """
     def __init__(self, txt:str='', children = [], parent = None, **kwargs):
         self.parent = parent
+        newchildren=[]
         for child in children: 
             if not isinstance(child,Entity): 
-                logger.warn(f'{child} is not an Entity')
+                logger.warning(f'{child} is not an Entity')
                 continue
+            newchildren.append(child)
             if not child.is_wordtype:   # don't do this for wordtypes since each wordtype is a single/shared python object
                 child.parent = self
+        children = newchildren
         if self.list_type is None: self.list_type=EntityList
         self.children = self.list_type(children)
         self._attrs = kwargs

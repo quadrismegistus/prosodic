@@ -124,28 +124,28 @@ class Annotation:
         self.sonorities = make_sonorities(self.split_sylls)
         self.stresses = make_stresses(self.weights)
 
-    # def join(self, annotation):
-    #     self.word += annotation.word
-    #     self.syllables += annotation.syllables
-    #     self.weights += annotation.weights
-    #     self.sonorities += annotation.sonorities
+    def join(self, annotation):
+        self.word += annotation.word
+        self.syllables += annotation.syllables
+        self.weights += annotation.weights
+        self.sonorities += annotation.sonorities
 
-    #     # only concatenate stresses if there is something to concatenate
-    #     if len(annotation.stresses[0]) > 0:
+        # only concatenate stresses if there is something to concatenate
+        if len(annotation.stresses[0]) > 0:
 
-    #         total_stresses = []
+            total_stresses = []
             
-    #         for i in range(len(self.stresses)):
+            for i in range(len(self.stresses)):
 
-    #             for j in range(len(annotation.stresses)):
+                for j in range(len(annotation.stresses)):
 
-    #                 total_stresses += [deepcopy(self.stresses[i])]
-    #                 total_stresses[-1] += [Stress.secondary]
+                    total_stresses += [deepcopy(self.stresses[i])]
+                    total_stresses[-1] += [Stress.secondary]
 
-    #                 # replace initial (primary) stress of annotation with secondary stress
-    #                 total_stresses[-1] += annotation.stresses[j][1:]
+                    # replace initial (primary) stress of annotation with secondary stress
+                    total_stresses[-1] += annotation.stresses[j][1:]
 
-    #         self.stresses = total_stresses
+            self.stresses = total_stresses
 
 # if the final word in the list of words starts with a word in the list of compound-initial words, split the word and apply the function again
 # (i.e., split off all initial words in initial_compounds)

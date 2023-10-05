@@ -28,9 +28,6 @@ def safesum(l):
     return sum(l)
 
 
-def supermap(func, objs, progress=True, desc=None):
-    if progress and not desc: desc=f'Mapping {func.__name__} across {len(objs)} objects'
-    return [func(obj) for obj in tqdm(objs,desc=desc,disable=not progress)]
 
 def setindex(df, cols=[]):
     if not cols: return df

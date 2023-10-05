@@ -13,7 +13,12 @@ class Entity(UserList):
     """
     def __init__(self, txt:str='', children = [], parent = None, **kwargs):
         self.parent = parent
-        for child in children: child.parent = self
+        for child in children: 
+            if not isinstance(child,Entity): 
+                logger.warn(f'{child} is not an Entity')
+                continue
+            if not child.is_wordtype:   # don't do this for wordtypes since each wordtype is a single/shared python object
+                child.parent = self
         if self.list_type is None: self.list_type=EntityList
         self.children = self.list_type(children)
         self._attrs = kwargs
@@ -87,24 +92,22 @@ class Entity(UserList):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
         if not incl_phons and self.child_type=='Phoneme': return [{**self.prefix_attrs}]
         good_children = [c for c in self.children if isinstance(c,Entity)]
-        logger.debug(f'good children of {type(self)} -> {good_children}')
+        # logger.debug(f'good children of {type(self)} -> {good_children}')
         if not multiple_wordforms and self.child_type=='WordForm' and good_children:
             good_children=good_children[:1]
-            logger.debug(f'good children now {good_children}')
+            # logger.debug(f'good children now {good_children}')
         if good_children:
             return [
                 {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}
                 for child in good_children
-                for grandchild_d in child.ld
+                for grandchild_d in child.get_ld(incl_phons=incl_phons, incl_sylls=incl_sylls, multiple_wordforms=multiple_wordforms)
             ]
         else:
             return [{**self.prefix_attrs}]
         
     
-
-    @cached_property
-    def df(self):
-        odf=pd.DataFrame(self.ld)
+    def get_df(self, **kwargs):
+        odf=pd.DataFrame(self.get_ld(**kwargs))
         for c in DF_BADCOLS:
             if c in set(odf.columns):
                 odf=odf.drop(c,axis=1)
@@ -125,6 +128,8 @@ class Entity(UserList):
         odf=odf.applymap(unbool)
         return odf
     
+    @cached_property
+    def df(self): return self.get_df()
     
     # def __getattr__(self, __name: str, **kwargs) -> Any:
     #     if __name.startswith('_'): raise AttributeError
@@ -135,18 +140,6 @@ class Entity(UserList):
     #         return getattr(self.parent, __name)
     #     return None
 
-    def get_children(self, child_type=None):
-        logger.trace(self.__class__.__name__)
-        if child_type is None or child_type == self.child_type:
-            o = self.children
-        elif self.children:
-            child = self.children[0]
-            list_type = child.list_type
-            o = list_type([x for child in self.children for x in child.get_children(child_type)])
-        else:
-            o = []
-        return o
-    
     def get_parent(self, parent_type=None):
         logger.trace(self.__class__.__name__)
         if not hasattr(self,'parent') or not self.parent: return
@@ -155,25 +148,40 @@ class Entity(UserList):
 
     @cached_property
     def stanzas(self): 
-        return self.get_children('Stanza')
+        if self.is_text: return self.children
+        if self.is_stanza: return [self]
+        return []
     @cached_property
     def lines(self): 
-        return self.get_children('Line')
+        if self.is_stanza: return self.children
+        if self.is_line: return [self]
+        return [line for stanza in self.stanzas for line in stanza.children]
     @cached_property
-    def words(self): 
-        return self.get_children('WordType')
+    def wordtokens(self): 
+        if self.is_line: return self.children
+        if self.is_wordtoken: return [self]
+        return [wt for line in self.lines for wt in line.children]
+    @cached_property
+    def wordtypes(self): 
+        if self.is_wordtoken: return self.children
+        if self.is_wordtype: return [self]
+        return [wtype for token in self.wordtokens for wtype in token.children]
     @cached_property
     def wordforms(self):
-        return [
-            w.get_children('WordForm') 
-            for w in self.words
-        ]
+        if self.is_wordtype: return self.children[:1]
+        return [wtype.children[0] for wtype in self.wordtypes if wtype.children]
+    @cached_property
+    def wordforms_all(self):
+        if self.is_wordtype: return self.children
+        return [wtype.children for wtype in self.wordtypes]
     @cached_property
     def syllables(self):
-        return [s for w in self.words for s in (w.children[0].get_children('Syllable') if w.children else [])]
+        if self.is_wordform: return self.children
+        return [syll for wf in self.wordforms for syll in wf.children]
     @cached_property
     def phonemes(self):
-        return [s for w in self.words for s in (w.children[0].get_children('Phoneme') if w.children else [])]
+        if self.is_syll: return self.children
+        return [phon for syll in self.syllables for phon in syll.children]
 
     @cached_property
     def text(self): 
@@ -185,11 +193,17 @@ class Entity(UserList):
     def line(self): 
         return self.get_parent('Line')
     @cached_property
-    def word(self): 
-        return self.get_parent('Word')
+    def wordtoken(self): 
+        return self.get_parent('WordToken')
+    @cached_property
+    def wordtype(self): 
+        return self.get_parent('WordType')
     @cached_property
     def wordform(self): 
         return self.get_parent('WordForm')
+    @cached_property
+    def syllable(self): 
+        return self.get_parent('Syllable')
     
     @cached_property
     def i(self):
@@ -222,9 +236,21 @@ class Entity(UserList):
             return None
         
     @cached_property
-    def is_text(self):
-        return self.__class__.__name__ == 'Text'
-    
+    def is_text(self): return self.__class__.__name__ == 'Text'
+    @cached_property
+    def is_stanza(self): return self.__class__.__name__ == 'Stanza'
+    @cached_property
+    def is_line(self): return self.__class__.__name__ == 'Line'
+    @cached_property
+    def is_wordtoken(self): return self.__class__.__name__ == 'WordToken'
+    @cached_property
+    def is_wordtype(self): return self.__class__.__name__ == 'WordType'
+    @cached_property
+    def is_wordform(self): return self.__class__.__name__ == 'WordForm'
+    @cached_property
+    def is_syll(self): return self.__class__.__name__ == 'Syllable'
+    @cached_property
+    def is_phon(self): return self.__class__.__name__ == 'PhonemeClass'
 
 
 

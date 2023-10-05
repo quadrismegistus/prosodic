@@ -73,7 +73,7 @@ DF_COLS_RENAME = {
     'parse_stanza_num':'stanza_num'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
-
+LANGS = {}
 
 
 # sys imports
@@ -129,7 +129,6 @@ from .syllables import *
 from .phonemes import *
 from .meter import *
 from .parsing import *
-
 
 
 

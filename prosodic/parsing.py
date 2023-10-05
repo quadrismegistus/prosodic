@@ -113,8 +113,9 @@ class Parse(Entity):
 
     # @profile
     def __eq__(self, other):
-        logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
-        return not (self<other) and not (other<self)
+        # logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
+        # return not (self<other) and not (other<self)
+        return self is other
     
     @cached_property
     def txt(self): return " ".join(m.txt for m in self.positions)

@@ -58,7 +58,9 @@ class WordFormList(EntityList):
         return (sylls_is_odd, self.num_sylls, self.num_stressed_sylls, first_syll_stressed)
 
     def __lt__(self, other): return self.sort_key<other.sort_key
-    def __eq__(self, other): return self.sort_key==other.sort_key
+    def __eq__(self, other): 
+        # return self.sort_key==other.sort_key
+        return self is other
         
 
 

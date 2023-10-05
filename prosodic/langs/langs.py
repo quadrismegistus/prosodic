@@ -1,10 +1,13 @@
-from .imports import *
+from ..imports import *
 
 
 
 class Language:
     pronunciation_dictionary_filename = ''
     pronunciation_dictionary_filename_sep = '\t'
+    cache_fn='lang_wordtypes.sqlitedict'
+    lang_espeak = None
+    lang = None
 
     def __getitem__(self, token): return self.get(token)
     def get(self, token): return []
@@ -26,15 +29,18 @@ class Language:
     # def phoneme(self, ipastr):
     #     pass
 
+    @cached_property
+    @profile
+    def cached(self):
+        from sqlitedict import SqliteDict
+        import pickle
+        return SqliteDict(
+            os.path.join(PATH_HOME_DATA, self.cache_fn),
+            autocommit=True,
+            encode=pickle.dumps,
+            decode=pickle.loads
+        )
 
-
-@cache
-def English(): return EnglishLanguage()
-
-class EnglishLanguage(Language):
-    pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
-    lang = 'en-us'
-    cache_fn = 'english_wordtypes'
 
     @cache
     @profile
@@ -117,30 +123,12 @@ class EnglishLanguage(Language):
         if num_sylls: l = fix_num_sylls(l, num_sylls)
         return l
     
-    @cached_property
-    @profile
-    def cached(self):
-        from sqlitedict import SqliteDict
-        import pickle
-        
-        return SqliteDict(
-            os.path.join(PATH_HOME_DATA, self.cache_fn),
-            autocommit=True,
-            encode=pickle.dumps,
-            decode=pickle.loads
-        )
-        # import shelve
-        # return shelve.open(
-        #     os.path.join(PATH_HOME_DATA, self.cache_fn), 
-        #     flag = 'c', 
-        #     protocol=None, 
-        #     writeback = False
-        # )
+    
 
     @cache
     @profile
     def get(self, token):
-        from .words import WordForm, WordType
+        from ..words import WordForm, WordType
         tokenx = token.strip()
         if any(x.isspace() for x in tokenx):
             logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
@@ -163,7 +151,7 @@ class EnglishLanguage(Language):
         # else:
             # wf = WordForm(tokenx)
             # wordforms.append(wf)
-        wordtype = WordType(tokenx, children=wordforms)
+        wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
         self.cached[tokenx]=wordtype
         return wordtype
 
@@ -216,5 +204,3 @@ def set_espeak_env(paths=ESPEAK_PATHS):
 # set now
 set_espeak_env()
 
-
-LANGS = {'en':English}

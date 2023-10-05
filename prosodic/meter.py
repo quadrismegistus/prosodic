@@ -70,7 +70,7 @@ class ParseableText(Entity):
     def wordform_matrix(self):
         from .words import WordFormList
         lim = 1 if not self.meter.resolve_optionality else None
-        ll = [l for l in self.wordforms if l]
+        ll = [l for l in self.wordforms_all if l]
         ll = [WordFormList(l) for l in itertools.product(*ll)]
         ll.sort()
         return ll[:lim]

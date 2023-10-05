@@ -55,6 +55,6 @@ def test_Text():
 
     assert len(t.lines) == 2
     assert len(t.lines.df) == 3 # 3 sylls
-    assert len(t.words) == 3
+    assert len(t.wordtokens) == 3
     assert t.attrs
     

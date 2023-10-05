@@ -32,6 +32,17 @@ def test_Text():
     except Exception:
         assert 1 # pass
 
+    try:
+        Stanza()
+        assert 0 # ought to fail
+    except Exception:
+        assert 1 # pass
+
+    try:
+        Line()
+        assert 0 # ought to fail
+    except Exception:
+        assert 1 # pass
 
     t=Text('    ererer e   e  ').txt == 'ererer e   e'
 

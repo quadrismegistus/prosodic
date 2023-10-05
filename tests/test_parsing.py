@@ -65,3 +65,12 @@ def test_feet():
     # assert len(l1.all_parses) < len(l2.all_parses)
     # assert len(l1.best_parses) == len(l2.best_parses)
     # assert_frame_equal(l1.best_parses.df, l2.best_parses.df)
+
+
+def test_text_parsing():
+    t = Text(sonnet)
+    assert len(t.lines) == 14
+    t.parse()
+    assert len(t.best_parses) >= 14  # sylls
+    assert len(t.best_parses.df.reset_index().drop_duplicates('line_num')) == 14
+    assert len(t.parse_stats) == 14

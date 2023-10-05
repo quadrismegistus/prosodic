@@ -87,8 +87,10 @@ class Entity(UserList):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
         if not incl_phons and self.child_type=='Phoneme': return [{**self.prefix_attrs}]
         good_children = [c for c in self.children if isinstance(c,Entity)]
+        logger.debug(f'good children of {type(self)} -> {good_children}')
         if not multiple_wordforms and self.child_type=='WordForm' and good_children:
             good_children=good_children[:1]
+            logger.debug(f'good children now {good_children}')
         if good_children:
             return [
                 {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}

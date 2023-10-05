@@ -91,7 +91,7 @@ class WordToken(Entity):
 
 class WordType(Entity):
     child_type: str = 'WordForm'
-    list_type=WordFormList
+    list_type=list
     
     prefix='word'
     @profile

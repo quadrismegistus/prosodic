@@ -86,3 +86,10 @@ def test_categorical_constraints():
     line.parse(categorical_constraints='', max_s=None, max_w=None)
     assert any([px.meter_str.count('---') for px in line.unbounded_parses])
     assert any([px.meter_str.count('+++') for px in line.unbounded_parses])
+
+
+def test_standalone_parsing():
+    p1=Parse('my horse my horse my kingdom for a horse')
+    p2=Parse('the horse the horse the kingdom for a horse')
+    # assert set(p1.violset) == {'s_unstress'}  # my is currently stressed!?
+    assert set(p2.violset) == {'s_unstress'}

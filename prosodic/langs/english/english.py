@@ -1,5 +1,5 @@
 from prosodic.imports import *
-from prosodic.langs.langs import Language
+from prosodic.langs.langs import *
 
 class EnglishLanguage(Language):
     pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
@@ -7,7 +7,7 @@ class EnglishLanguage(Language):
     lang = 'en'
     cache_fn = 'english_wordtypes.sqlitedict'
     path_maybestressed = os.path.join(os.path.dirname(__file__), 'maybestressed.txt')
-    path_unstressed = os.path.join(os.path.dirname(__file__), 'maybestressed.txt')
+    path_unstressed = os.path.join(os.path.dirname(__file__), 'unstressed.txt')
 
     @cached_property
     def token2ipa(self):
@@ -27,7 +27,7 @@ class EnglishLanguage(Language):
             with open(self.path_maybestressed) as f:
                 maybewords=set(f.read().strip().split())
                 for w in maybewords:
-                    if w in d:
+                    if w in d and d[w]:
                         ipa_l = d[w]
                         d[w] = ensure_maybe_stressed(ipa_l)
 
@@ -35,7 +35,7 @@ class EnglishLanguage(Language):
             with open(self.path_unstressed) as f:
                 unwords=set(f.read().strip().split())
                 for w in unwords:
-                    if w in d:
+                    if w in d and d[w]:
                         ipa_l = d[w]
                         d[w] = ensure_unstressed(ipa_l)
         

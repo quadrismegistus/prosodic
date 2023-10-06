@@ -91,7 +91,7 @@ def test_categorical_constraints():
 def test_standalone_parsing():
     p1=Parse('my horse my horse my kingdom for a horse')
     p2=Parse('the horse the horse the kingdom for a horse')
-    # assert set(p1.violset) == {'s_unstress'}  # my is currently stressed!?
+    assert set(p1.violset) == {'s_unstress'}  # my is currently stressed!?
     assert set(p2.violset) == {'s_unstress'}
 
     l = Text('the horse the horse the kingdom for a horse').wordforms

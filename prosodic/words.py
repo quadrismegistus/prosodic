@@ -197,35 +197,3 @@ class WordForm(Entity):
 
 
 
-def get_stress(ipa):
-    if not ipa: return ''
-    if ipa[0]=='`': return 'S'
-    if ipa[0]=="'": return 'P'
-    return 'U'
-
-
-
-def unstress(ipa):
-    if not ipa: return ''
-    if ipa[0] in {'`', "'"}: ipa=ipa[1:]
-    return ipa
-
-def stress(ipa, primary=True):
-    if not ipa: return ''
-    ipa = unstress(ipa)
-    sstr = "'" if primary else '`'
-    return sstr+ipa
-
-
-def ensure_maybe_stressed(ipa_l):
-    if any(any(get_stress(syllipa)!='U') for ipa in ipa_l for syllipa in ipa):
-        ipa_l.append([unstress(syllipa) for syllipa in ipa_l[0]])
-    else:
-        ipa_l.append([stress(syllipa,primary=not i) for i,syllipa in enumerate(ipa_l[0])])
-
-def ensure_unstressed(ipa_l):
-    return [
-        [unstress(syllipa) for syllipa in ipa_l[0]]
-    ]
-
-

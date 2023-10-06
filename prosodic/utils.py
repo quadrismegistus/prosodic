@@ -88,3 +88,12 @@ class Bounding:
     bounded = 1 # first parse is harmonically bounded by the second
     equal = 2 # the same constraint violation scores
     unequal = 3 # unequal scores; neither set of violations is a subset of the other
+
+
+def get_stress(ipa):
+    if not ipa: return ''
+    if ipa[0]=='`': return 'S'
+    if ipa[0]=="'": return 'P'
+    return 'U'
+
+

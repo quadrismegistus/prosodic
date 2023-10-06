@@ -185,6 +185,35 @@ def fix_num_sylls(sylls, num, unknown='?'):
 
 
 
+def unstress(ipa):
+    if not ipa: return ''
+    if ipa[0] in {'`', "'"}: ipa=ipa[1:]
+    return ipa
+
+def stress(ipa, primary=True):
+    if not ipa: return ''
+    ipa = unstress(ipa)
+    sstr = "'" if primary else '`'
+    return sstr+ipa
+
+
+def ensure_maybe_stressed(ipa_l):
+    if any(get_stress(syllipa)!='U' for ipa in ipa_l for syllipa in ipa):
+        ipa_l.append([unstress(syllipa) for syllipa in ipa_l[0]])
+    else:
+        ipa_l.append([stress(syllipa,primary=not i) for i,syllipa in enumerate(ipa_l[0])])
+    ipa_l = [tuple(x) for x in ipa_l]
+    return [list(x) for x in set(ipa_l)]
+
+def ensure_unstressed(ipa_l):
+    return [
+        [unstress(syllipa) for syllipa in ipa_l[0]]
+    ]
+
+
+
+
+
 
 def get_espeak_env(paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
     for path in paths:
@@ -203,4 +232,6 @@ def set_espeak_env(paths=ESPEAK_PATHS):
 
 # set now
 set_espeak_env()
+
+
 

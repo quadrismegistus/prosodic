@@ -65,5 +65,12 @@ def test_english():
         assert wtype.syllables
         assert wtype.phonemes
 
-        assert len(English().get('the').wordforms) == 1
-        assert len(English().get('in').wordforms) == 2
+    assert len(English().get('the').wordforms_all[0]) == 1
+    assert len(English().get('in').wordforms_all[0]) == 2
+    assert len(Word('in').wordforms_all[0]) == 2
+
+
+def test_stresses():
+    assert ensure_maybe_stressed([['\'maɪ']]) == [["'maɪ"], ['maɪ']]
+    assert ensure_unstressed([['\'maɪ']]) == [['maɪ']]
+    assert ensure_unstressed([["'maɪ"], ['maɪ']]) == [['maɪ']]

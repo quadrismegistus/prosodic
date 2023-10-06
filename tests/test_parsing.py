@@ -74,3 +74,9 @@ def test_text_parsing():
     assert len(t.best_parses) >= 14  # sylls
     assert len(t.best_parses.df.reset_index().drop_duplicates('line_num')) == 14
     assert len(t.parse_stats) == 14
+
+
+def test_categorical_constraints():
+    t = Text('the the the the')
+    t.parse(categorical_constraints=('foot_size'), max_s=4, max_w=4)
+    assert not any([px.nary_feet>3 for line in t.lines for px in line.all_parses])

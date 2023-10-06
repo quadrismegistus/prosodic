@@ -19,8 +19,6 @@ class Meter(Entity):
         self.resolve_optionality=resolve_optionality
         super().__init__()
 
-    def __getitem__(self, text_or_line):
-        return self.get(text_or_line)
     @cached_property
     def constraint_names(self):
         return tuple(c.__name__ for c in self.constraints)
@@ -36,17 +34,6 @@ class Meter(Entity):
             'max_w':self.max_w,
             'resolve_optionality':self.resolve_optionality
         }
-
-    def get(self, text_or_line:Entity):
-        x=text_or_line
-        if isinstance(x, MeterLine): return x
-        if isinstance(x, MeterText): return x
-        if isinstance(x,ParseableText):
-            if x.is_parseable: 
-                return MeterLine(x)
-            else:
-                return MeterText(x)
-        logger.error(f'What type of Entity is this? -> {x}')
 
 
 

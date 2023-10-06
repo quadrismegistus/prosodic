@@ -203,6 +203,7 @@ def ensure_maybe_stressed(ipa_l):
     else:
         ipa_l.append([stress(syllipa,primary=not i) for i,syllipa in enumerate(ipa_l[0])])
     ipa_l = [tuple(x) for x in ipa_l]
+    ipa_l.sort(key=lambda ipal: sum(int(syllipa!='U') for syllipa in ipal))
     return [list(x) for x in set(ipa_l)]
 
 def ensure_unstressed(ipa_l):

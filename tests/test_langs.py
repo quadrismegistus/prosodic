@@ -71,6 +71,6 @@ def test_english():
 
 
 def test_stresses():
-    assert ensure_maybe_stressed([['\'maɪ']]) == [["'maɪ"], ['maɪ']]
+    assert ensure_maybe_stressed([['\'maɪ']]) == [['maɪ'], ["'maɪ"]]
     assert ensure_unstressed([['\'maɪ']]) == [['maɪ']]
     assert ensure_unstressed([["'maɪ"], ['maɪ']]) == [['maɪ']]

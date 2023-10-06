@@ -69,6 +69,8 @@ def test_english():
     assert len(English().get('in').wordforms_all[0]) == 2
     assert len(Word('in').wordforms_all[0]) == 2
 
+    assert len(English().get('hel lo').syllables) == 2
+
 
 def test_stresses():
     assert ensure_maybe_stressed([['\'maɪ']]) == [['maɪ'], ["'maɪ"]]

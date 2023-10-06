@@ -11,16 +11,7 @@ class EnglishLanguage(Language):
 
     @cached_property
     def token2ipa(self):
-        d={}
-        fn=self.pronunciation_dictionary_filename
-        if fn and os.path.exists(fn):
-            with open(fn) as f:
-                for ln in f:
-                    ln=ln.strip()
-                    if ln and self.pronunciation_dictionary_filename_sep in ln:
-                        token,ipa=ln.split(self.pronunciation_dictionary_filename_sep, 1)
-                        if not token in d: d[token]=[]
-                        d[token].append(ipa.split('.'))
+        d=super().token2ipa
         
         # maybe's and unstressed
         if self.path_maybestressed and os.path.exists(self.path_maybestressed):

@@ -64,3 +64,6 @@ def test_english():
         assert wtype.wordforms
         assert wtype.syllables
         assert wtype.phonemes
+
+        assert len(English().get('the').wordforms) == 1
+        assert len(English().get('in').wordforms) == 2

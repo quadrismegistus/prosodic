@@ -135,6 +135,7 @@ def test_parselist():
 
     l = Line('my horse my horse my kingdom for a horse')
     assert len(l.unbounded_parses)==1
+    assert len(l.bounded_parses)>1
 
 def test_constraints():
     l=Line('hello world ' * 3)

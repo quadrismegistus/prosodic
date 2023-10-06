@@ -71,6 +71,7 @@ CONSTRAINTS = {
 }
 
 def get_constraints(names_or_funcs):
+    if type(names_or_funcs)==str: names_or_funcs=names_or_funcs.strip().split()
     l=[
         CONSTRAINTS.get(cname) if type(cname)==str else cname 
         for cname in names_or_funcs

@@ -47,8 +47,9 @@ class Text(Entity):
 
     ### parsing ###
     def set_meter(self, **meter_kwargs):
-        from .meter import Meter
+        from .meter import Meter        
         self._mtr = meter = Meter(**meter_kwargs)
+        logger.debug(f'Set meter to: {meter}')
         return meter
 
     @property
@@ -59,10 +60,10 @@ class Text(Entity):
     @cached_property
     def parseable_units(self): return getattr(self,self.parse_unit_attr)
 
-    @cache
+    # @cache
     def parse(self, force=False, progress=True, **meter_kwargs):
         if not force and self._parses: return
-        self.set_meter(**meter_kwargs)
+        meter = self.set_meter(**meter_kwargs)
         self._parses = []
         iterr = tqdm(
             self.parseable_units, 
@@ -70,7 +71,7 @@ class Text(Entity):
             disable=not progress
         )
         for pline in iterr:
-            pline.parse(progress=False)
+            pline.parse(progress=False, meter=meter)
             self._parses.append(pline._parses)
         return self.best_parses
 

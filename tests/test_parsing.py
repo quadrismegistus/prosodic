@@ -77,6 +77,12 @@ def test_text_parsing():
 
 
 def test_categorical_constraints():
-    t = Text('the the the the')
-    t.parse(categorical_constraints=('foot_size'), max_s=4, max_w=4)
-    assert not any([px.nary_feet>3 for line in t.lines for px in line.all_parses])
+    line = Line('dangerous ' * 3)
+    line.parse(categorical_constraints='foot_size', max_s=None, max_w=None)
+    
+    assert not any([px.meter_str.count('---') for px in line.unbounded_parses])
+    assert not any([px.meter_str.count('+++') for px in line.unbounded_parses])
+
+    line.parse(categorical_constraints='', max_s=None, max_w=None)
+    assert any([px.meter_str.count('---') for px in line.unbounded_parses])
+    assert any([px.meter_str.count('+++') for px in line.unbounded_parses])

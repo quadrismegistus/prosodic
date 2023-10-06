@@ -97,16 +97,13 @@ class Parse(Entity):
         )
     @cached_property
     def constraints(self): 
-        return self.meter.constraints
-
-    @cached_property
-    def constraint_names(self):
-        return [c.__name__ for c in self.constraints]
-
+        return self.meter.constraints + self.meter.categorical_constraints
     @cached_property
     def constraint_d(self):
-        return dict(zip(self.constraint_names, self.constraints))
-
+        return dict((c.__name__,c) for c in self.constraints)
+    @cached_property
+    def categorical_constraint_d(self):
+        return dict((c.__name__,c) for c in self.meter.categorical_constraints)
     # @profile
     def __lt__(self,other):
         return self.sort_key < other.sort_key
@@ -218,9 +215,12 @@ class Parse(Entity):
         scores = [mpos.constraint_viols for mpos in self.positions]
         d={}
         nans=[np.nan for _ in range(len(self.slots))]
-        for constraint in self.constraints:
-            cname=constraint.__name__
-            d[cname] = [x for score_d in scores for x in score_d.get(cname,nans)]
+        catcts=set(self.categorical_constraint_d.keys())
+        for cname,constraint in self.constraint_d.items():
+            d[cname] = cscores = [x for score_d in scores for x in score_d.get(cname,nans)]
+            if cname in catcts and any(cscores):
+                logger.debug(f'Bounding {self.meter_str} because violates categorical constraint {cname}')
+                self.is_bounded = True 
         return d
     
     @cached_property
@@ -287,7 +287,7 @@ class ParsePosition(Entity):
             num_slots=len(self.slots)
         )
         # init?
-        for cname,constraint in self.constraint_d.items():
+        for cname,constraint in self.parse.constraint_d.items():
             slot_viols = [int(bool(vx)) for vx in constraint(self)]
             assert len(slot_viols) == len(self.slots)
             self.viold[cname] = slot_viols
@@ -310,12 +310,6 @@ class ParsePosition(Entity):
     @cached_property
     # @profile
     def constraint_set(self): return self.violset
-
-
-    @cached_property
-    def constraints(self): return self.parse.constraints
-    @cached_property
-    def constraint_d(self): return self.parse.constraint_d
 
     @cached_property
     def is_prom(self): return self.meter_val=='s'

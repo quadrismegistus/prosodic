@@ -55,22 +55,27 @@ class ParseableText(Entity):
     
     @cached_property
     def wordform_matrix(self):
+        return self.get_wordform_matrix()
+    
+    def get_wordform_matrix(self, resolve_optionality=METER_RESOLVE_OPTIONALITY):
         from .words import WordFormList
-        lim = 1 if not self.meter.resolve_optionality else None
+        lim = 1 if not resolve_optionality else None
         ll = [l for l in self.wordforms_all if l]
         ll = [WordFormList(l) for l in itertools.product(*ll)]
         ll.sort()
         return ll[:lim]
+    
+    
 
     # @cache
     # @profile
-    def parse(self, progress=None, bound=True, **meter_kwargs):
+    def parse(self, progress=None, bound=True, meter=None, **meter_kwargs):
         from .parsing import ParseList
-        meter = self.set_meter(**meter_kwargs)
-        logger.debug(f'Set meter to: {meter}')
+        logger.debug([progress,bound,meter,meter_kwargs])
+        if meter is None: meter = self.set_meter(**meter_kwargs)
         parses = list(self.iter_parses(progress=progress, meter=meter))
         logger.debug(f'Returned {len(parses)} parses')
-        if bound: self.bound_parses(parses, progress=progress)
+        if bound: self.bound_parses(parses, progress=progress, meter=meter)
         parses.sort()
         for i,px in enumerate(parses): px.parse_rank=i+1
         self._parses = ParseList(parses)
@@ -79,16 +84,19 @@ class ParseableText(Entity):
         return self._bestparses
 
     # @profile
-    def iter_parses(self, progress=True, meter=None):
-        if meter is None: meter=self.meter
+    def iter_parses(self, progress=True, meter=None, **meter_kwargs):
+        logger.debug([progress,meter,meter_kwargs])
+        if meter is None: meter=self.set_meter(**meter_kwargs)
+
         from .parsing import Parse
+        wfm = self.get_wordform_matrix(resolve_optionality=meter.resolve_optionality)
         all_parses = []
         combos = [
             (wfl,scansion)
-            for wfl in self.wordform_matrix
+            for wfl in wfm
             for scansion in get_possible_scansions(wfl.num_sylls, max_s=meter.max_s, max_w=meter.max_w)
         ]
-        wfl=self.wordform_matrix[0]
+        wfl=wfm[0]
         logger.debug(f'Generated {len(combos)} from a wordfrom matrix of size {len(self.wordform_matrix), wfl, wfl.num_sylls, meter.max_s, meter.max_s, len(get_possible_scansions(wfl.num_sylls))}')
         iterr=tqdm(combos, disable=not progress)
         for wfl,scansion in iterr:
@@ -100,15 +108,13 @@ class ParseableText(Entity):
     
     
     # @profile
-    def bound_parses(self, parses = None, progress=True):
+    def bound_parses(self, parses = None, progress=True, meter=None, **meter_kwargs):
         if hasattr(self,'_bound_init') and not self._bound_init: return
+        if meter is None: meter = self.set_meter(**meter_kwargs)
         if parses is None: parses = self.all_parses
+        logger.debug(f'Bounding {len(parses)} with meter {meter}')
         iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
         for parse_i,parse in enumerate(iterr):
-            for cname in self.meter.categorical_constraints:
-                if cname in parse.violset:
-                    parse.is_bounded = True
-                    break
             if parse.is_bounded: continue
             for comp_parse in parses[parse_i+1:]:
                 if comp_parse.is_bounded:

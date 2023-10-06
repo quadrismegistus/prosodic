@@ -63,6 +63,7 @@ def s_trough(mpos):
 DEFAULT_CONSTRAINTS = [w_peak, w_stress, s_unstress, unres_across, unres_within, foot_size]
 CONSTRAINTS = {
     'w_peak':w_peak,
+    's_trough':s_trough,
     'w_stress':w_stress,
     's_unstres':s_unstress,
     'unres_across':unres_across,

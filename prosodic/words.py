@@ -17,17 +17,17 @@ class WordFormList(EntityList):
             for syll in wordform.children
         ]
 
-    @cached_property
-    def df(self):
-        l=[
-            {
-                k:('.'.join(v) if type(v)==list else v)
-                for k,v in px.attrs.items()
-            }
-            for px in self.data
-            if px is not None
-        ]
-        return setindex(pd.DataFrame(l))
+    # @cached_property
+    # def df(self):
+    #     l=[
+    #         {
+    #             k:('.'.join(v) if type(v)==list else v)
+    #             for k,v in px.attrs.items()
+    #         }
+    #         for px in self.data
+    #         if px is not None
+    #     ]
+    #     return setindex(pd.DataFrame(l))
 
     @cached_property
     def num_stressed_sylls(self):

@@ -17,3 +17,14 @@ def test_WordFormList():
     assert len(l.wordform_matrix)==2
     assert not l.wordform_matrix[0][0].children[0].is_stressed
     
+def test_word():
+    try:
+        Word('szia',lang='hu')
+        assert 0, 'Testing exception failed'
+    except Exception:
+        assert 1
+
+    word = Word('hello')
+    assert word.num_sylls == 2
+    assert word.num_stressed_sylls == 1
+    

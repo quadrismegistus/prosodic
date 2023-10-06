@@ -105,6 +105,8 @@ def test_standalone_parsing():
     l = list(Text('the horse the horse the kingdom for a horse').wordforms.data)
     p5 = Parse(l)
     assert p5.score == p4.score
+    assert p5 != p4
+    assert p5 is not p4
 
 
     assert len(p5.slots) == len(p4.slots) == len(p3.slots) == len(p2.slots) == len(p1.slots) == 10
@@ -116,8 +118,17 @@ def test_standalone_parsing():
     p7=Parse('my horse my horse my kingdom for a horse', 'ww'*5)
     assert p7.foot_type == ''    
 
+    
+
 
 def test_parselist():
     parses = Line('hello world ' * 3).parses
     assert parses.bounded
     assert parses.unbounded
+
+def test_constraints():
+    l=Line('hello world ' * 3)
+    ckey=list(CONSTRAINTS.keys())
+    l.parse(constraints=ckey)
+    assert len(l.best_parses)
+

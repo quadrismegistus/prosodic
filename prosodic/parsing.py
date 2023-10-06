@@ -237,9 +237,6 @@ class Parse(Entity):
         return safesum(self.constraint_scores.values())
 
     # return a list of all slots in the parse
-    @cached_property
-    def slots(self):
-        return [slot for mpos in self.positions for slot in mpos.slots]
 
     @cached_property
     # @profile

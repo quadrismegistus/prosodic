@@ -60,7 +60,7 @@ class Text(Entity):
     @cached_property
     def parseable_units(self): return getattr(self,self.parse_unit_attr)
 
-    # @cache
+    @cache
     def parse(self, force=False, progress=True, **meter_kwargs):
         if not force and self._parses: return
         meter = self.set_meter(**meter_kwargs)

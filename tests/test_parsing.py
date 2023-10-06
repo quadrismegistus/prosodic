@@ -90,7 +90,9 @@ def test_categorical_constraints():
 
 def test_standalone_parsing():
     p1=Parse('my horse my horse my kingdom for a horse')
+    assert p1.num_peaks == 5
     p2=Parse('the horse the horse the kingdom for a horse')
+    assert p2.num_peaks == 5
     assert set(p1.violset) == {'s_unstress'}  # my is currently stressed!?
     assert set(p2.violset) == {'s_unstress'}
 
@@ -116,7 +118,8 @@ def test_standalone_parsing():
     assert p1.score < p6.score
 
     p7=Parse('my horse my horse my kingdom for a horse', 'ww'*5)
-    assert p7.foot_type == ''    
+    assert p7.foot_type == ''
+    
 
     
 
@@ -126,9 +129,16 @@ def test_parselist():
     assert parses.bounded
     assert parses.unbounded
 
+    l = Line('my horse my horse my kingdom for a horse')
+    l.parse()
+    assert l.num_parses == 1
+
+    l = Line('my horse my horse my kingdom for a horse')
+    assert len(l.unbounded_parses)==1
+
 def test_constraints():
     l=Line('hello world ' * 3)
-    ckey=list(CONSTRAINTS.keys())
+    ckey=tuple(CONSTRAINTS.keys())
     l.parse(constraints=ckey)
     assert len(l.best_parses)
 

@@ -67,7 +67,7 @@ class ParseableText(Entity):
     
     
 
-    # @cache
+    @cache
     # @profile
     def parse(self, progress=None, bound=True, meter=None, **meter_kwargs):
         from .parsing import ParseList

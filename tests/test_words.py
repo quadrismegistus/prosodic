@@ -16,6 +16,11 @@ def test_WordFormList():
     l = Line('disaster in embrace')
     assert len(l.wordform_matrix)==2
     assert not l.wordform_matrix[0][0].children[0].is_stressed
+
+    wfl = l.wordforms
+    wfl2 = Line('disaster in embrace').wordforms
+    assert wfl != wfl2
+    assert wfl is not wfl2
     
 def test_word():
     try:

@@ -2,7 +2,7 @@ import os,sys; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
 
 def test_show():
-    t = Text('the hello world')
+    t = Text('in hello world')
     x = t.show()
     assert x is None
     x = t.show(indent=1)
@@ -13,7 +13,7 @@ def test_show():
     assert '<table' in html
 
 def test_get_ld():
-    t = Text('the hello world')
+    t = Text('in hello world')
 
     ld1 = t.get_ld(incl_phons=False, incl_sylls=False, multiple_wordforms=False)
     ld2 = t.get_ld(incl_phons=False, incl_sylls=False, multiple_wordforms=True)
@@ -23,7 +23,7 @@ def test_get_ld():
     assert len(ld1) < len(ld2) < len(ld3) < len(ld4)
 
 def test_get_df():
-    t = Text('the hello world')
+    t = Text('in hello world')
 
     df1 = t.get_df(incl_phons=False, incl_sylls=False, multiple_wordforms=False)
     df2 = t.get_df(incl_phons=False, incl_sylls=False, multiple_wordforms=True)
@@ -55,9 +55,9 @@ def test_get_children():
     assert len(w.syllables)==2
     assert len(w.phonemes)==5
 
-    w = Word('a')
-    assert len(w.syllables) == 1
-    assert len(w.phonemes) == 1
+    w = Word('hello')
+    assert len(w.syllables) == 2
+    assert len(w.phonemes) == 5
 
     t = Text('hello')
     stanza = t.stanzas[0]

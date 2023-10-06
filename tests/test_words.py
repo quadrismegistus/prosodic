@@ -5,15 +5,15 @@ from pandas.testing import assert_frame_equal
 def test_WordFormList():
     # parsing not done yet so these are just testing the ordering of slot/word combos
 
-    l = Line('of door')
+    l = Line('in door')
     assert len(l.wordform_matrix)==2
     assert not l.wordform_matrix[0][0].children[0].is_stressed
 
-    l = Line('of duty')
+    l = Line('in duty')
     assert len(l.wordform_matrix)==2
     assert not l.wordform_matrix[0][0].children[0].is_stressed
 
-    l = Line('disaster of embrace')
+    l = Line('disaster in embrace')
     assert len(l.wordform_matrix)==2
     assert not l.wordform_matrix[0][0].children[0].is_stressed
     

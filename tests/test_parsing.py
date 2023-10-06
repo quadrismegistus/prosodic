@@ -118,6 +118,6 @@ def test_standalone_parsing():
 
 
 def test_parselist():
-    parses = Text('hello world ' * 3).parses
+    parses = Line('hello world ' * 3).parses
     assert parses.bounded
     assert parses.unbounded

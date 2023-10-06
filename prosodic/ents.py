@@ -151,40 +151,66 @@ class Entity(UserList):
 
     @cached_property
     def stanzas(self): 
-        if self.is_text: return self.children
-        if self.is_stanza: return [self]
-        return []
+        from .texts import StanzaList
+        if self.is_text: o=self.children
+        elif self.is_stanza: o=[self]
+        else: o=[]
+        return StanzaList(o)
+    
     @cached_property
     def lines(self): 
-        if self.is_stanza: return self.children
-        if self.is_line: return [self]
-        return [line for stanza in self.stanzas for line in stanza.children]
+        from .texts import LineList
+        if self.is_stanza: o=self.children
+        elif self.is_line: o=[self]
+        else: o=[line for stanza in self.stanzas for line in stanza.children]
+        return LineList(o)
+    
     @cached_property
     def wordtokens(self): 
-        if self.is_line: return self.children
-        if self.is_wordtoken: return [self]
-        return [wt for line in self.lines for wt in line.children]
+        from .lines import WordTokenList
+        if self.is_line: o=self.children
+        elif self.is_wordtoken: o=[self]
+        else:o=[wt for line in self.lines for wt in line.children]
+        return WordTokenList(o)
+    
     @cached_property
     def wordtypes(self): 
-        if self.is_wordtoken: return self.children
-        if self.is_wordtype: return [self]
-        return [wtype for token in self.wordtokens for wtype in token.children]
+        from .words import WordTypeList
+        if self.is_wordtoken: o=self.children
+        elif self.is_wordtype: o=[self]
+        else: o=[wtype for token in self.wordtokens for wtype in token.children]
+        return WordTypeList(o)
+    
     @cached_property
     def wordforms(self):
-        if self.is_wordtype: return self.children[:1]
-        return [wtype.children[0] for wtype in self.wordtypes if wtype.children]
+        from .words import WordFormList
+        if self.is_wordtype: o = self.children[:1]
+        elif self.is_wordtype: o=[self]
+        else: o = [wtype.children[0] for wtype in self.wordtypes if wtype.children]
+        return WordFormList(o)
+
     @cached_property
     def wordforms_all(self):
-        if self.is_wordtype: return self.children
-        return [wtype.children for wtype in self.wordtypes]
+        if self.is_wordtype: o=self.children
+        if self.is_wordform: o=[self]
+        else: o = [wtype.children for wtype in self.wordtypes]
+        return o
+    
     @cached_property
     def syllables(self):
-        if self.is_wordform: return self.children
-        return [syll for wf in self.wordforms for syll in wf.children]
+        from .words import SyllableList
+        if self.is_wordform: o=self.children
+        if self.is_syll: o=[self]
+        else: o = [syll for wf in self.wordforms for syll in wf.children]
+        return SyllableList(o)
+    
     @cached_property
     def phonemes(self):
-        if self.is_syll: return self.children
-        return [phon for syll in self.syllables for phon in syll.children]
+        from .syllables import PhonemeList
+        if self.is_syll: o=self.children
+        if self.is_phon: o=[self]
+        else: o = [phon for syll in self.syllables for phon in syll.children]
+        return PhonemeList(o)
 
     @cached_property
     def text(self): 

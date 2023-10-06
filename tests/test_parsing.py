@@ -93,3 +93,31 @@ def test_standalone_parsing():
     p2=Parse('the horse the horse the kingdom for a horse')
     # assert set(p1.violset) == {'s_unstress'}  # my is currently stressed!?
     assert set(p2.violset) == {'s_unstress'}
+
+    l = Text('the horse the horse the kingdom for a horse').wordforms
+    p3 = Parse(l)
+    assert p3.score == p2.score
+
+    l = list(Text('the horse the horse the kingdom for a horse').wordforms)
+    p4 = Parse(l)
+    assert p3.score == p4.score
+
+    l = list(Text('the horse the horse the kingdom for a horse').wordforms.data)
+    p5 = Parse(l)
+    assert p5.score == p4.score
+
+
+    assert len(p5.slots) == len(p4.slots) == len(p3.slots) == len(p2.slots) == len(p1.slots) == 10
+
+    p6=Parse('my horse my horse my kingdom for a horse', 'sw'*5)
+    assert p1 < p6
+    assert p1.score < p6.score
+
+    p7=Parse('my horse my horse my kingdom for a horse', 'ww'*5)
+    assert p7.foot_type == ''    
+
+
+def test_parselist():
+    parses = Text('hello world ' * 3).parses
+    assert parses.bounded
+    assert parses.unbounded

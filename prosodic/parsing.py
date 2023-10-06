@@ -160,10 +160,13 @@ class Parse(Entity):
 
     @cached_property
     def feet(self):
-        feet=[]
-        for i in range(1, self.num_positions, 2):
-            pos1,pos2=self.positions[i-1],self.positions[i]
-            feet.append(pos1.meter_str+pos2.meter_str)
+        if self.num_positions == 1:
+            feet = [self.positions[0].meter_str]
+        else:
+            feet=[]
+            for i in range(1, self.num_positions, 2):
+                pos1,pos2=self.positions[i-1],self.positions[i]
+                feet.append(pos1.meter_str+pos2.meter_str)
         return feet
     
     @cached_property
@@ -231,10 +234,7 @@ class Parse(Entity):
     @cached_property
     # @profile
     def score(self):
-        try:
-            return sum(self.constraint_scores.values())
-        except ValueError:
-            return '*'  # could be string if categorical
+        return safesum(self.constraint_scores.values())
 
     # return a list of all slots in the parse
     @cached_property

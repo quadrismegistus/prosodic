@@ -39,6 +39,15 @@ def test_get_children():
     assert len(t.syllables) >= (14*2*10)
     assert len(t.phonemes) >= (14*2*10)
 
+    assert type(t.stanzas) == StanzaList
+    assert type(t.lines) == LineList
+    assert type(t.wordtokens) == WordTokenList
+    assert type(t.wordtypes) == WordTypeList
+    assert type(t.wordforms) == WordFormList
+    assert type(t.wordforms_all) == list
+    assert type(t.syllables) == SyllableList
+    assert type(t.phonemes) == PhonemeList
+
 
     w = Word('hello')
     syll = w.syllables[0]
@@ -54,13 +63,13 @@ def test_get_children():
     stanza = t.stanzas[0]
     assert stanza.parent is t
     assert stanza.text is t
-    assert stanza.stanzas == [stanza]
+    assert stanza.stanzas.data == [stanza]
 
     line = t.lines[0]
     assert line.parent is stanza
     assert line.stanza is stanza
     assert line.text is t
-    assert line.stanzas == []
+    assert line.stanzas.data == []
 
     wordtoken = t.wordtokens[0]
     assert wordtoken.parent is line

@@ -112,22 +112,24 @@ class ParseableText(Entity):
         if hasattr(self,'_bound_init') and not self._bound_init: return
         if meter is None: meter = self.set_meter(**meter_kwargs)
         if parses is None: parses = self.all_parses
-        logger.debug(f'Bounding {len(parses)} with meter {meter}')
-        iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
-        for parse_i,parse in enumerate(iterr):
-            if parse.is_bounded: continue
-            for comp_parse in parses[parse_i+1:]:
-                if comp_parse.is_bounded:
-                    continue
-                relation = parse.bounding_relation(comp_parse)
-                if relation == Bounding.bounded:
-                    parse.is_bounded = True
-                    parse.bounded_by = comp_parse
-                elif relation == Bounding.bounds:
-                    comp_parse.is_bounded = True
-                    comp_parse.bounded_by = parse
-        self._bound_init = True
-        return parses
+        return parses.bound(meter=meter, progress=progress)
+        
+        # logger.debug(f'Bounding {len(parses)} with meter {meter}')
+        # iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
+        # for parse_i,parse in enumerate(iterr):
+        #     if parse.is_bounded: continue
+        #     for comp_parse in parses[parse_i+1:]:
+        #         if comp_parse.is_bounded:
+        #             continue
+        #         relation = parse.bounding_relation(comp_parse)
+        #         if relation == Bounding.bounded:
+        #             parse.is_bounded = True
+        #             parse.bounded_by = comp_parse
+        #         elif relation == Bounding.bounds:
+        #             comp_parse.is_bounded = True
+        #             comp_parse.bounded_by = parse
+        # self._bound_init = True
+        # return parses
 
 
 

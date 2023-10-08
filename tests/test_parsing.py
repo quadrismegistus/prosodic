@@ -120,7 +120,8 @@ def test_standalone_parsing():
     p7=Parse('my horse my horse my kingdom for a horse', 'ww'*5)
     assert p7.foot_type == ''
     
-
+    x=p7.html()
+    assert '<span class="violation"' in x
     
 
 

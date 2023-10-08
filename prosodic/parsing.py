@@ -152,6 +152,20 @@ class Parse(Entity):
     @cached_property
     def is_rising(self):
         if not self.positions: return
+        # return not self.positions[0].is_prom
+        try:
+            if self.nary_feet==3:
+                if self.slots[3].is_prom:
+                    return False  #swws
+                else:
+                    return True   #wssw
+            elif self.nary_feet==2:
+                if self.slots[3].is_prom:
+                    return True  #wsws
+                else:
+                    return False   #swsw
+        except IndexError:
+            pass
         return not self.positions[0].is_prom
     
     @cached_property
@@ -267,6 +281,36 @@ class Parse(Entity):
             return Bounding.equal
         else:
             return Bounding.unequal
+        
+
+    def _repr_html_(self): return self.html()
+    def html(self, viols=True, between_words=' ',between_sylls='',line_id='ID'):
+        last_word = None
+        output=[]
+        line_num=0 if self.line is None else self.line.num
+        for pos in self.positions:
+            violated=bool(pos.violset)
+            if viols and violated:
+                viol_str=' '.join(pos.violset)
+                viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
+                output.append(f'<span class="violation" title="{viol_title}" id="viol__line_{line_num}">')
+
+            for slot in pos.slots:
+                spclass='meter_' + ('strong' if pos.is_prom else 'weak')
+                stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
+                slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
+                if last_word != slot.unit.wordform:
+                    output.append(between_words + slotstr)
+                    last_word=slot.unit.wordform
+                else:
+                    output.append(between_sylls + slotstr)
+
+            if viols and violated:
+                output.append(f'</span><script type="text/javascript">tippy("#viol__line_{line_num}")</script>')
+            if pos.is_prom and self.is_rising: output.append('|')
+            elif not pos.is_prom and not self.is_rising: output.append('|')
+        if output and output[-1]=='|': output.pop()
+        return ''.join(output)
     
 
 class ParsePosition(Entity):

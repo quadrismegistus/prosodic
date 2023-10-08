@@ -74,3 +74,17 @@ i
 we
 they
 is
+thou
+thee
+you
+me
+him
+her
+them
+thy
+your
+their
+his
+her
+hers
+theirs

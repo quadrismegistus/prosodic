@@ -60,16 +60,17 @@ def s_trough(mpos):
     if not mpos.is_prom: return [None]*len(mpos.slots)
     return [slot.is_weak for slot in mpos.slots]
 
-DEFAULT_CONSTRAINTS = [w_peak, w_stress, s_unstress, unres_across, unres_within, foot_size]
+DEFAULT_CONSTRAINTS_NAMES = ['w_peak', 'w_stress', 's_unstress', 'unres_across', 'unres_within']
 CONSTRAINTS = {
     'w_peak':w_peak,
     's_trough':s_trough,
     'w_stress':w_stress,
-    's_unstres':s_unstress,
+    's_unstress':s_unstress,
     'unres_across':unres_across,
     'unres_within':unres_within,
     'foot_size':foot_size
 }
+DEFAULT_CONSTRAINTS = [CONSTRAINTS[cname] for cname in DEFAULT_CONSTRAINTS_NAMES]
 
 def get_constraints(names_or_funcs):
     if type(names_or_funcs)==str: names_or_funcs=names_or_funcs.strip().split()

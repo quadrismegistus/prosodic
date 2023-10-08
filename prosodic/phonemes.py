@@ -6,6 +6,13 @@ class PhonemeClass(Entity):
 	def __init__(self, phon_str, **kwargs):
 		super().__init__(phon_str, **kwargs)
 
+	@cached_property
+	def is_vowel(self):
+		if hasattr(self,'cons') and self.cons>0: return False
+		if hasattr(self,'cons') and self.cons<1: return True
+		return None
+
+
 @cache
 @profile
 def get_phoneme_featuretable():

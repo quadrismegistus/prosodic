@@ -9,3 +9,8 @@ numpy
 multiset
 nltk
 phonemizer
+dash
+dash_extensions
+quart
+dash_bootstrap_components
+orjson

@@ -82,6 +82,7 @@ class Language:
     @cache
     @profile
     def syllabify_ipa(self, ipa_str_with_spaces_between_phonemes):
+        from ..phonemes import Phoneme
         phn = ipa_str_with_spaces_between_phonemes
         phns=phn.split()
         sylls = []
@@ -100,7 +101,20 @@ class Language:
             if 'ˌ' in o: o="`"+o.replace("ˌ","")
             elif "ˈ" in o: o="'"+o.replace("ˈ","")
             return o
-        return [format_syll(syll) for syll in sylls]
+        sylls = [format_syll(syll) for syll in sylls]
+        osylls = []
+        osyll=[]
+        for syll in sylls:
+            osyll.extend([sx for sx in syll])
+            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+                osylls.append(''.join(osyll))
+                osyll=[]
+        if osyll: 
+            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+                osylls.append(''.join(osyll))
+            elif osylls:
+                osylls[-1]+=''.join(osyll)
+        return osylls
     
     @cached_property
     @profile

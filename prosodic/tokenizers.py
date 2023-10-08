@@ -45,6 +45,7 @@ def tokenize_sentwords_iter(
     linepart_i=1
     linepart_ii=0
     start_offset=0
+    txt=clean_text(txt)
     if sents is None: sents=tokenize_sents_txt(txt)
     for sent_i, sent in enumerate(sents):
         tokens=tokenize_words_txt(sent)

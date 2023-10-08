@@ -1,0 +1,33 @@
+.container { max-width:none; width:100%; height:100%; margin:0; padding:0;}
+
+#header { 
+    margin: 0 auto; width:fit-content; height:100%;
+}
+#mainrow {
+    height:100%;
+}
+
+#inputtext {
+    width:100%;
+    height: 50vh;
+    border: 1px solid #f7f7f7;;
+    background-color: #fafafa;
+    font-style: italic;
+    flex-grow:1;
+    margin-bottom:.5rem;
+}
+
+#logo {
+    font-size:2rem;
+    text-decoration: none;
+}
+
+#layout {
+    height:100vh;
+    width:100vw;
+    min-height:100vh;
+    max-height:100vh;
+    max-width:100vw;
+    min-width:100vw;
+    padding:.5rem;
+}

@@ -96,4 +96,3 @@ def get_stress(ipa):
     if ipa[0]=="'": return 'P'
     return 'U'
 
-

@@ -68,7 +68,7 @@ class Parse(Entity):
         self.total_score = None
         self.pause_comparisons = False
         self.parse_rank = None
-        self.violset=Multiset()
+        # self.violset=Multiset()
         self.num_slots_positioned=0
         if not positions:
             for mpos_str in self.positions_ls: self.extend(mpos_str)
@@ -102,9 +102,15 @@ class Parse(Entity):
             num = len(self.positions) + 1
         )
         self.positions.append(mpos)
-        self.violset.update(mpos.violset)
+        self.constraint_viols  # init and bound
         return self
     
+    @property
+    def violset(self):
+        s=Multiset()
+        for mpos in self.positions:
+            s.update(mpos.violset)
+        return s
     
     def __copy__(self):
         new = Parse(
@@ -117,23 +123,23 @@ class Parse(Entity):
         new._attrs = copy(self._attrs)
         new.is_bounded = self.is_bounded
         new.num_slots_positioned = self.num_slots_positioned
+        # new.violset = copy(self.violset)
         return new
 
 
-    def branch(self, max_s=METER_MAX_S, max_w=METER_MAX_W):
+    def branch(self):
+        if self.is_bounded: return []
         if not self.positions: 
             logger.error('needs to start with some positions')
             return
         mval=self.positions[-1].meter_val
-        if mval == 's':
-            otypes = ['w'*n for n in range(1,max_w+1)]
-        elif mval == 'w':
-            otypes = ['s'*n for n in range(1,max_s+1)]
-        else:
-            otypes = []
+        otypes = self.meter.get_pos_types(self.wordforms.num_sylls)
+        otypes = [x for x in otypes if x[0]!=mval]
         o = [copy(self).extend(posstr) for posstr in otypes]
         o = [x for x in o if x is not None]
-        return o if o else [self]
+        o = o if o else [self]
+        o = [p for p in o if not p.is_bounded]
+        return o
     
     @property
     def is_complete(self): return self.num_slots_positioned == len(self.wordforms.slots)
@@ -332,11 +338,13 @@ class Parse(Entity):
     # return a representation of the bounding relation between self and parse
     # @profile
     def bounding_relation(self, parse):
-        if self.violset < parse.violset:
+        selfviolset = self.violset
+        parseviolset = parse.violset
+        if selfviolset < parseviolset:
             return Bounding.bounds
-        elif self.violset > parse.violset:
+        elif selfviolset > parseviolset:
             return Bounding.bounded
-        elif self.violset == parse.violset:
+        elif selfviolset == parseviolset:
             return Bounding.equal
         else:
             return Bounding.unequal
@@ -518,10 +526,10 @@ class ParseList(EntityList):
     
     @property
     def unbounded(self): 
-        return ParseList(children=[px for px in self.data if not px.is_bounded])
+        return ParseList(children=[px for px in self.data if px is not None and not px.is_bounded])
     @cached_property
     def bounded(self): 
-        return ParseList(children=[px for px in self.data if px.is_bounded])
+        return ParseList(children=[px for px in self.data if px is not None and px.is_bounded])
 
     @cached_property
     def best_parse(self): return self.data[0] if self.data else None
@@ -529,7 +537,7 @@ class ParseList(EntityList):
     def bound(self, progress=True, meter=None, **meter_kwargs):
         parses = [p for p in self.data if not p.is_bounded]
         if meter is None: meter = Meter(**meter_kwargs)
-        logger.debug(f'Bounding {len(parses)} with meter {meter}')
+        # logger.debug(f'Bounding {len(parses)} with meter {meter}')
         iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
         for parse_i,parse in enumerate(iterr):
             parse.constraint_viols  # init

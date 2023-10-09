@@ -34,6 +34,14 @@ class Meter(Entity):
             'max_w':self.max_w,
             'resolve_optionality':self.resolve_optionality
         }
+    
+    @cache
+    def get_pos_types(self, nsylls=None):
+        max_w=nsylls if self.max_w is None else self.max_w
+        max_s=nsylls if self.max_s is None else self.max_s
+        wtypes = ['w'*n for n in range(1,max_w+1)]
+        stypes = ['s'*n for n in range(1,max_s+1)]
+        return wtypes + stypes
 
 
 
@@ -69,7 +77,7 @@ class ParseableText(Entity):
 
     @cache
     # @profile
-    def parse(self, progress=None, bound=True, meter=None, **meter_kwargs):
+    def parse_all(self, progress=None, bound=True, meter=None, **meter_kwargs):
         from .parsing import ParseList
         logger.debug([progress,bound,meter,meter_kwargs])
         if meter is None: meter = self.set_meter(**meter_kwargs)
@@ -81,6 +89,37 @@ class ParseableText(Entity):
         self._parses = ParseList(parses)
         self._bestparses = ParseList([px for px in parses if not px.is_bounded])
         self._boundedparses = ParseList([px for px in parses if px.is_bounded])
+        return self._bestparses
+    
+    @cache
+    def parse(self, meter=None, **meter_kwargs):
+        from .parsing import ParseList, Parse
+        if meter is None: meter=self.set_meter(**meter_kwargs)
+        parses = ParseList([
+            Parse(wfl, pos, meter=meter, parent=self)
+            for wfl in self.wordform_matrix
+            for pos in meter.get_pos_types(nsylls=wfl.num_sylls)
+        ])
+        i=0
+        while True:
+            i+=1
+            # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
+            parses = ParseList([
+                newparse
+                for parse in parses
+                for newparse in parse.branch()
+                if not parse.is_bounded and newparse is not None
+            ])
+            parses.bound(meter=meter, progress=False)
+            if all(p.is_complete for p in parses): break
+            if i>1000: 
+                logger.error('!')
+                break
+        parses.bound(meter=meter, progress=False)
+        parses.data.sort()
+        self._parses = parses
+        self._bestparses = parses.unbounded
+        self._boundedparses = parses.bounded
         return self._bestparses
 
     # @profile
@@ -109,9 +148,11 @@ class ParseableText(Entity):
     
     # @profile
     def bound_parses(self, parses = None, progress=True, meter=None, **meter_kwargs):
+        from .parsing import ParseList
         if hasattr(self,'_bound_init') and not self._bound_init: return
         if meter is None: meter = self.set_meter(**meter_kwargs)
         if parses is None: parses = self.all_parses
+        if type(parses) is list: parses=ParseList(parses)
         return parses.bound(meter=meter, progress=progress)
         
         # logger.debug(f'Bounding {len(parses)} with meter {meter}')

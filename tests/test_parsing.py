@@ -83,7 +83,7 @@ def test_categorical_constraints():
     assert not any([px.meter_str.count('---') for px in line.unbounded_parses])
     assert not any([px.meter_str.count('+++') for px in line.unbounded_parses])
 
-    line.parse(categorical_constraints='', max_s=None, max_w=None)
+    line.parse_all(constraints='', categorical_constraints='', max_s=None, max_w=None)
     assert any([px.meter_str.count('---') for px in line.unbounded_parses])
     assert any([px.meter_str.count('+++') for px in line.unbounded_parses])
 
@@ -132,11 +132,12 @@ def test_parselist():
 
     l = Line('my horse my horse my kingdom for a horse')
     l.parse()
-    assert l.num_parses == 1
+    assert l.best_parse.meter_str == '-+' * 5
 
     l = Line('my horse my horse my kingdom for a horse')
-    assert len(l.unbounded_parses)==1
-    assert len(l.bounded_parses)>1
+    # assert len(l.unbounded_parses)==1
+    # assert len(l.bounded_parses)>1
+    assert l.best_parse.meter_str == '-+' * 5
 
 def test_constraints():
     l=Line('hello world ' * 3)

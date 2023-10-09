@@ -67,7 +67,7 @@ class WordFormList(EntityList):
 
 
 
-@cache
+# @cache
 @profile
 def Word(token, lang=DEFAULT_LANG):
     if lang not in LANGS: 

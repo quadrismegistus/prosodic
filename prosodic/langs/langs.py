@@ -139,7 +139,7 @@ class Language:
     
     
 
-    @cache
+    # @cache
     @profile
     def get(self, token):
         from ..words import WordForm, WordType
@@ -148,12 +148,11 @@ class Language:
             logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
             tokenx=''.join(x if not x.isspace() else '-' for x in tokenx)
         
-        if tokenx in self.cached: 
+        # if tokenx in self.cached: 
             # logger.debug(f'found token {tokenx} in cache')
-            return self.cached.get(tokenx)
-
+            # wordforms = self.cached.get(tokenx)
+        # else:
         wordforms = []
-
         if any(x.isalpha() for x in token): 
             tokenl = tokenx.lower()
             ipa_l = self.phoneticize(tokenl)
@@ -162,11 +161,9 @@ class Language:
                 wf=WordForm(tokenx, sylls_ipa=ipa, sylls_text=sylls)
                 wordforms.append(wf)
             wordforms.sort(key=lambda w: w.num_stressed_sylls)
-        # else:
-            # wf = WordForm(tokenx)
-            # wordforms.append(wf)
+            # self.cached[tokenx] = wordforms
         wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
-        self.cached[tokenx]=wordtype
+        # self.cached[tokenx]=wordtype
         return wordtype
 
 

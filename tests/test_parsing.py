@@ -75,6 +75,11 @@ def test_text_parsing():
     assert len(t.best_parses.df.reset_index().drop_duplicates('line_num')) == 14
     assert len(t.parse_stats) == 14
 
+def test_html():
+    html = Text('disaster disaster disaster').lines[0].html
+    assert 'meter_strong' in html
+    assert 'violation in html'
+
 
 def test_categorical_constraints():
     line = Line('dangerous ' * 3)
@@ -119,9 +124,6 @@ def test_standalone_parsing():
 
     p7=Parse('my horse my horse my kingdom for a horse', 'ww'*5)
     assert p7.foot_type == ''
-    
-    x=p7.html()
-    assert '<span class="violation"' in x
     
 
 

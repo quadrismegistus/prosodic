@@ -96,3 +96,10 @@ def get_stress(ipa):
     if ipa[0]=="'": return 'P'
     return 'U'
 
+
+def get_initial_whitespace(xstr):
+    o=[]
+    for i,x in enumerate(xstr):
+        if x == x.strip(): break
+        o.append(x)
+    return ''.join(o)

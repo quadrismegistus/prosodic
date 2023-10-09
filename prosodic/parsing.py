@@ -351,33 +351,32 @@ class Parse(Entity):
         
 
     def _repr_html_(self): return repr(self)
-    def html(self, viols=True, between_words=' ',between_sylls='',line_id='ID'):
-        last_word = None
-        output=[]
-        line_num=0 if self.line is None else self.line.num
-        for pos in self.positions:
-            violated=bool(pos.violset)
-            if viols and violated:
-                viol_str=' '.join(pos.violset)
-                viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
-                output.append(f'<span class="violation" title="{viol_title}" id="viol__line_{line_num}">')
+    # def html(self, viols=True, between_words=' ',between_sylls='',line_id='ID'):
+    #     last_word = None
+    #     output=[]
+    #     line_num=0 if self.line is None else self.line.num
+    #     for pos in self.positions:
+    #         violated=bool(pos.violset)
+    #         if viols and violated:
+    #             viol_str=' '.join(pos.violset)
+    #             viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
+    #             output.append(f'<span class="violation" title="{viol_title}" id="viol__line_{line_num}">')
 
-            for slot in pos.slots:
-                spclass='meter_' + ('strong' if pos.is_prom else 'weak')
-                stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
-                slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
-                if last_word != slot.unit.wordform:
-                    output.append(between_words + slotstr)
-                    last_word=slot.unit.wordform
-                else:
-                    output.append(between_sylls + slotstr)
+    #         for slot in pos.slots:
+    #             spclass='meter_' + ('strong' if pos.is_prom else 'weak')
+    #             stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
+    #             slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
+    #             if last_word and last_word is not slot.unit.wordtoken:
+    #                 output.append(between_words)
+    #             output.append(slotstr)
+    #             last_word  = slot.unit.wordtoken
 
-            if viols and violated:
-                output.append(f'</span><script type="text/javascript">tippy("#viol__line_{line_num}")</script>')
-            if pos.is_prom and self.is_rising: output.append('|')
-            elif not pos.is_prom and not self.is_rising: output.append('|')
-        if output and output[-1]=='|': output.pop()
-        return ''.join(output)
+    #         if viols and violated:
+    #             output.append(f'</span><script type="text/javascript">tippy("#viol__line_{line_num}")</script>')
+    #         if pos.is_prom and self.is_rising: output.append('|')
+    #         elif not pos.is_prom and not self.is_rising: output.append('|')
+    #     if output and output[-1]=='|': output.pop()
+    #     return ''.join(output)
     
 
 class ParsePosition(Entity):
@@ -455,7 +454,7 @@ class ParseSlot(Entity):
     def __init__(self, unit:'Syllable', position=None, **kwargs):
         self.unit = unit
         self.viold = {}
-        super().__init__(children=[unit], parent=position, **kwargs)
+        super().__init__(children=[], parent=position, **kwargs)
 
     def __copy__(self):
         new = ParseSlot(unit=self.unit)

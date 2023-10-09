@@ -77,14 +77,12 @@ def test_get_children():
     assert wordtoken.stanza is stanza
     assert wordtoken.text is t
 
-    # wordtypes do not have parents, though wordtokens have them as children
-    # from wordtype, can only go down (to children) from here
     wordtype = t.wordtypes[0]
-    assert wordtype.parent is None
-    assert wordtype.wordtoken is None
-    assert wordtype.line is None
-    assert wordtype.stanza is None
-    assert wordtype.text is None
+    assert wordtype.parent is wordtoken
+    assert wordtype.wordtoken is wordtoken
+    assert wordtype.line is line
+    assert wordtype.stanza is stanza
+    assert wordtype.text is t
     assert wordtype.children
     
     wordform = t.wordforms[0]

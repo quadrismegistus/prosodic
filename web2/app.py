@@ -28,7 +28,7 @@ async def ws():
         numtoiter = len(t.parseable_units)
         remainings=[]
         for i,parsed_line in enumerate(t.parse_iter(constraints=constraints)):
-            html = parsed_line.best_parse.html()
+            html = parsed_line.html
             resd = parsed_line.parse_stats
             data = {}
             data['row'] = [

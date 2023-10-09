@@ -19,8 +19,8 @@ class Entity(UserList):
                 logger.warning(f'{child} is not an Entity')
                 continue
             newchildren.append(child)
-            if not child.is_wordtype:   # don't do this for wordtypes since each wordtype is a single/shared python object
-                child.parent = self
+            # if not child.is_wordtype:   # don't do this for wordtypes since each wordtype is a single/shared python object
+            child.parent = self
         children = newchildren
         if self.list_type is None: self.list_type=EntityList
         self.children = self.list_type(children)

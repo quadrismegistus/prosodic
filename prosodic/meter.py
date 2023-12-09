@@ -101,14 +101,14 @@ class ParseableText(Entity):
             for pos in meter.get_pos_types(nsylls=wfl.num_sylls)
         ])
         i=0
-        while True:
+        while True and len(parses):
             i+=1
             # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
             parses = ParseList([
                 newparse
                 for parse in parses
                 for newparse in parse.branch()
-                if not parse.is_bounded and newparse is not None
+                if not parse.is_bounded and newparse is not None and parse is not None
             ])
             parses.bound(meter=meter, progress=False)
             if all(p.is_complete for p in parses): break

@@ -17,22 +17,22 @@ default_dir_prosodic_home=os.path.join(home,'prosodic_data')
 path_prosodic_home_dir_var = os.path.join(home,'.path_prosodic_data')
 
 
-import sys,os,imp
-path_to_tools = os.path.join(_here,'prosodic','lib','tools.py')
-tools = imp.load_source('tools',path_to_tools)
+# import sys,os,imp
+# path_to_tools = os.path.join(_here,'prosodic','lib','tools.py')
+# tools = imp.load_source('tools',path_to_tools)
 
 
-class PostDevelopCommand(develop):
-	"""Post-installation for development mode."""
-	def run(self):
-		tools.configure_home_dir(force=True)
-		develop.run(self)
+# class PostDevelopCommand(develop):
+# 	"""Post-installation for development mode."""
+# 	def run(self):
+# 		tools.configure_home_dir(force=True)
+# 		develop.run(self)
 
-class PostInstallCommand(install):
-	"""Post-installation for installation mode."""
-	def run(self):
-		tools.configure_home_dir(force=True)
-		install.run(self)
+# class PostInstallCommand(install):
+# 	"""Post-installation for installation mode."""
+# 	def run(self):
+# 		tools.configure_home_dir(force=True)
+# 		install.run(self)
 
 if __name__ == '__main__':
 	with open("README.md", "r", encoding="utf8") as fh:
@@ -55,13 +55,13 @@ if __name__ == '__main__':
 		install_requires=requirements,
 		include_package_data=True,
 		cmdclass={
-			'develop': PostDevelopCommand,
-			'install': PostInstallCommand,
+			# 'develop': PostDevelopCommand,
+			# 'install': PostInstallCommand,
 		},
 		# scripts=['bin/prosodic'],
 		entry_points = {
 			'console_scripts': [
-				'prosodic=prosodic.prosodic:start_interactive_mode'
+				'prosodic=prosodic.prosodic:cli'
 			]
 		},
 		classifiers=[

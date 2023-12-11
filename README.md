@@ -1,18 +1,37 @@
-# Prosodic
+# Prosodic 2
 
-Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), beginning in the summer of 2010. Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
+Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/). Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
-Prosodic does two main things. First, it tokenizes text into words, and then converts each word into its stressed, syllabified, phonetic transcription. Second, if desired, it finds the best available metrical parse for each line of text. In the style of Optimality Theory, (almost) all logically possible parses are attempted, but the best parses are those that least violate a set of user-defined constraints. The default metrical constraints are those proposed by Kiparsky and Hanson in their paper "A Parametric Theory of Poetic Meter" (Language, 1996). See below for how these and other constraints are implemented.
+"Prosodic 2", in this `develop` branch, is a near-total rewrite of Prosodic.
 
+## Install
 
-```python
-import prosodic as ps
+```
+pip install git+https://github.com/quadrismegistus/prosodic@develop
 ```
 
+## Usage
+
+### Use in GUI
+
+In a terminal, run:
+
+```
+prosodic
+```
+
+Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+
+### Use in code
+
+#### Texts
 
 
 ```python
-# get a text
+# import prosodic
+import prosodic as ps
+
+# load a text
 text = ps.Text("""
 Those hours, that with gentle work did frame
 The lovely gaze where every eye doth dwell,
@@ -318,9 +337,9 @@ random_line
       <th>word_num_forms</th>
       <th>syll_is_stressed</th>
       <th>syll_is_heavy</th>
-      <th>word_is_punc</th>
       <th>syll_is_strong</th>
       <th>syll_is_weak</th>
+      <th>word_is_punc</th>
     </tr>
     <tr>
       <th>line_num</th>
@@ -344,94 +363,118 @@ random_line
   </thead>
   <tbody>
     <tr>
-      <th rowspan="12" valign="top">7</th>
-      <th rowspan="12" valign="top">Sap checked with frost, and lusty leaves quite gone,</th>
-      <th rowspan="12" valign="top">1</th>
-      <th rowspan="12" valign="top">1</th>
+      <th rowspan="11" valign="top">5</th>
+      <th rowspan="11" valign="top">For never-resting time leads summer on</th>
+      <th rowspan="11" valign="top">1</th>
+      <th rowspan="11" valign="top">1</th>
       <th>1</th>
-      <th>\nSap</th>
+      <th>\nFor</th>
       <th>1</th>
       <th>1</th>
-      <th>Sap</th>
-      <th>'sæp</th>
+      <th>For</th>
+      <th>fɔːr</th>
+      <td>en</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">2</th>
+      <th rowspan="2" valign="top">never</th>
+      <th rowspan="2" valign="top">1</th>
+      <th>1</th>
+      <th>ne</th>
+      <th>'nɛ</th>
       <td>en</td>
       <td>1</td>
       <td>1</td>
+      <td>0</td>
       <td>1</td>
-      <td></td>
-      <td></td>
+      <td>0</td>
       <td></td>
     </tr>
     <tr>
       <th>2</th>
-      <th>checked</th>
-      <th>1</th>
-      <th>1</th>
-      <th>checked</th>
-      <th>'ʧɛkt</th>
+      <th>ver</th>
+      <th>vɛː</th>
       <td>en</td>
       <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>1</td>
-      <td>1</td>
-      <td></td>
-      <td></td>
       <td></td>
     </tr>
     <tr>
       <th>3</th>
-      <th>with</th>
+      <th>-</th>
+      <th>0</th>
+      <th>0</th>
+      <th></th>
+      <th></th>
+      <td>en</td>
+      <td>0</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">4</th>
+      <th rowspan="2" valign="top">resting</th>
+      <th rowspan="2" valign="top">1</th>
       <th>1</th>
-      <th>1</th>
-      <th>with</th>
-      <th>wɪð</th>
+      <th>res</th>
+      <th>'rɛ</th>
+      <td>en</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <th>ting</th>
+      <th>stɪŋ</th>
       <td>en</td>
       <td>1</td>
       <td>0</td>
       <td>1</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <th>frost</th>
-      <th>1</th>
-      <th>1</th>
-      <th>frost</th>
-      <th>'frɔːst</th>
-      <td>en</td>
+      <td>0</td>
       <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td></td>
-      <td></td>
       <td></td>
     </tr>
     <tr>
       <th>5</th>
-      <th>,</th>
-      <th>0</th>
-      <th>0</th>
-      <th></th>
-      <th></th>
+      <th>time</th>
+      <th>1</th>
+      <th>1</th>
+      <th>time</th>
+      <th>'taɪm</th>
       <td>en</td>
-      <td>0</td>
-      <td></td>
-      <td></td>
       <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>
     <tr>
       <th>6</th>
-      <th>and</th>
+      <th>leads</th>
       <th>1</th>
       <th>1</th>
-      <th>and</th>
-      <th>ænd</th>
+      <th>leads</th>
+      <th>'liːdz</th>
       <td>en</td>
       <td>1</td>
-      <td>0</td>
+      <td>1</td>
       <td>1</td>
       <td></td>
       <td></td>
@@ -439,88 +482,43 @@ random_line
     </tr>
     <tr>
       <th rowspan="2" valign="top">7</th>
-      <th rowspan="2" valign="top">lusty</th>
+      <th rowspan="2" valign="top">summer</th>
       <th rowspan="2" valign="top">1</th>
       <th>1</th>
-      <th>lus</th>
-      <th>'lə</th>
+      <th>sum</th>
+      <th>'sə</th>
       <td>en</td>
       <td>1</td>
       <td>1</td>
       <td>0</td>
-      <td></td>
       <td>1</td>
       <td>0</td>
+      <td></td>
     </tr>
     <tr>
       <th>2</th>
-      <th>ty</th>
-      <th>stiː</th>
+      <th>mer</th>
+      <th>mɛː</th>
       <td>en</td>
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td></td>
       <td>0</td>
       <td>1</td>
+      <td></td>
     </tr>
     <tr>
       <th>8</th>
-      <th>leaves</th>
+      <th>on</th>
       <th>1</th>
       <th>1</th>
-      <th>leaves</th>
-      <th>'liːvz</th>
+      <th>on</th>
+      <th>ɑn</th>
       <td>en</td>
       <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <th>quite</th>
-      <th>1</th>
-      <th>1</th>
-      <th>quite</th>
-      <th>'kwaɪt</th>
-      <td>en</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>10</th>
-      <th>gone</th>
-      <th>1</th>
-      <th>1</th>
-      <th>gone</th>
-      <th>'ɡɔːn</th>
-      <td>en</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>11</th>
-      <th>,</th>
-      <th>0</th>
-      <th>0</th>
-      <th></th>
-      <th></th>
-      <td>en</td>
       <td>0</td>
-      <td></td>
-      <td></td>
       <td>1</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>
@@ -536,62 +534,51 @@ random_line
 random_line.show()
 ```
 
-    Line(num=7, txt='Sap checked with frost, and lusty leaves quite gone,')
+    Line(num=5, txt='For never-resting time leads summer on')
     |
-    |   WordToken(num=1, txt='\nSap', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='Sap', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='Sap')
-    |               Syllable(ipa="'sæp", num=1, txt='Sap', is_stressed=True, is_heavy=True)
+    |   WordToken(num=1, txt='\nFor', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='For', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='For')
+    |               Syllable(ipa='fɔːr', num=1, txt='For', is_stressed=False, is_heavy=True)
     |
-    |   WordToken(num=2, txt=' checked', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='checked', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='checked')
-    |               Syllable(ipa="'ʧɛkt", num=1, txt='checked', is_stressed=True, is_heavy=True)
+    |   WordToken(num=2, txt=' never', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='never', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='never')
+    |               Syllable(ipa="'nɛ", num=1, txt='ne', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='vɛː', num=2, txt='ver', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
     |
-    |   WordToken(num=3, txt=' with', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='with', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='with')
-    |               Syllable(ipa='wɪð', num=1, txt='with', is_stressed=False, is_heavy=True)
+    |   WordToken(num=3, txt='-', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='-', lang='en', num_forms=0, is_punc=True)
     |
-    |   WordToken(num=4, txt=' frost', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='frost', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='frost')
-    |               Syllable(ipa="'frɔːst", num=1, txt='frost', is_stressed=True, is_heavy=True)
+    |   WordToken(num=4, txt='resting', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='resting', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='resting')
+    |               Syllable(ipa="'rɛ", num=1, txt='res', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='stɪŋ', num=2, txt='ting', is_stressed=False, is_heavy=True, is_strong=False, is_weak=True)
     |
-    |   WordToken(num=5, txt=',', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt=',', lang='en', num_forms=0, is_punc=True)
+    |   WordToken(num=5, txt=' time', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='time', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='time')
+    |               Syllable(ipa="'taɪm", num=1, txt='time', is_stressed=True, is_heavy=True)
     |
-    |   WordToken(num=6, txt=' and', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='and', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='and')
-    |               Syllable(ipa='ænd', num=1, txt='and', is_stressed=False, is_heavy=True)
+    |   WordToken(num=6, txt=' leads', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='leads', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='leads')
+    |               Syllable(ipa="'liːdz", num=1, txt='leads', is_stressed=True, is_heavy=True)
     |
-    |   WordToken(num=7, txt=' lusty', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='lusty', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='lusty')
-    |               Syllable(ipa="'lə", num=1, txt='lus', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
-    |               Syllable(ipa='stiː', num=2, txt='ty', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
+    |   WordToken(num=7, txt=' summer', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='summer', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='summer')
+    |               Syllable(ipa="'sə", num=1, txt='sum', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='mɛː', num=2, txt='mer', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
     |
-    |   WordToken(num=8, txt=' leaves', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='leaves', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='leaves')
-    |               Syllable(ipa="'liːvz", num=1, txt='leaves', is_stressed=True, is_heavy=True)
-    |
-    |   WordToken(num=9, txt=' quite', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='quite', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='quite')
-    |               Syllable(ipa="'kwaɪt", num=1, txt='quite', is_stressed=True, is_heavy=True)
-    |
-    |   WordToken(num=10, txt=' gone', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='gone', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='gone')
-    |               Syllable(ipa="'ɡɔːn", num=1, txt='gone', is_stressed=True, is_heavy=True)
-    |
-    |   WordToken(num=11, txt=',', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt=',', lang='en', num_forms=0, is_punc=True)
+    |   WordToken(num=8, txt=' on', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='on', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='on')
+    |               Syllable(ipa='ɑn', num=1, txt='on', is_stressed=False, is_heavy=True)
 
 
-## Parsing
+#### Parsing
 
 
 ```python
@@ -611,6 +598,9 @@ text.set_meter(
     resolve_optionality=True
 )
 ```
+
+    [32m2023-12-10 22:44:41.267[0m | [36mget_meter[0m | [34m[1msetting meter to: Meter(constraints=('w_peak', 's_trough', 'w_stress', 's_unstress', 'unres_across', 'unres_within', 'foot_size'), categorical_constraints=(), max_s=2, max_w=2, resolve_optionality=True)[0m | [36mtexts.py[0m:[36m73[0m
+
 
 
 ```python
@@ -734,15 +724,8 @@ first_line.parse()
 
 ```python
 # that shows its best (or unbounded) parses
-first_line.parse() is first_line.parses is first_line.unbounded_parses
+assert first_line.parse() is first_line.parses is first_line.unbounded_parses
 ```
-
-
-
-
-    True
-
-
 
 
 ```python
@@ -1559,7 +1542,7 @@ first_line.parses.df_syll
 text.parse()
 ```
 
-    Parsing lines: 100%|██████████| 14/14 [00:00<00:00, 50317.27it/s]
+    Parsing lines: 100%|██████████| 14/14 [00:02<00:00,  5.45it/s]
 
 
 
@@ -1867,17 +1850,10 @@ text.parse()
 
 ```python
 # this is the same as what's now stored on text.best_parses
-text.parse() is text.parses is text.best_parses
+assert text.parse() is text.parses is text.best_parses
 ```
 
-    Parsing lines: 100%|██████████| 14/14 [00:00<00:00, 36449.57it/s]
-
-
-
-
-
-    True
-
+    Parsing lines: 100%|██████████| 14/14 [00:00<00:00, 56516.13it/s]
 
 
 

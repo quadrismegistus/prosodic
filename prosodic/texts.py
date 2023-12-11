@@ -10,6 +10,14 @@ class Text(Entity):
     parse_unit_attr='lines'
     list_type = StanzaList
 
+    cached_properties_to_clear = [
+        'best_parses',
+        'all_parses',
+        'unbounded_parses',
+        'parse_stats',
+        'meter',
+    ]
+
     @profile
     def __init__(self,
             txt: str = '',
@@ -46,16 +54,40 @@ class Text(Entity):
 
 
     ### parsing ###
-    def set_meter(self, **meter_kwargs):
-        from .meter import Meter        
-        self._mtr = meter = Meter(**meter_kwargs)
-        logger.debug(f'Set meter to: {meter}')
-        return meter
+    # def set_meter(self, **meter_kwargs):
+    #     from .meter import Meter        
+    #     self._mtr = meter = Meter(**meter_kwargs)
+    #     logger.debug(f'set meter to: {meter}')
 
-    @property
-    def meter(self):
-        if self._mtr is None: self.set_meter()
+
+    def get_meter(self, meter=None,**meter_kwargs):
+        from .meter import Meter
+        if meter is not None:
+            self._mtr = meter     
+        elif self._mtr is None:
+            if self.text and self.text._mtr is not None:
+                self._mtr = self.text._mtr
+                logger.trace(f'meter inherited from text: {self._mtr}')
+            else:
+                self._mtr = Meter(**meter_kwargs)
+                logger.debug(f'setting meter to: {self._mtr}')
+        elif not meter_kwargs:
+            logger.trace(f'no change in meter')
+        else:
+            newmeter = Meter(**meter_kwargs)
+            if self._mtr.attrs != newmeter.attrs:
+                self._mtr = newmeter
+                logger.debug(f'resetting meter to: {self._mtr}')
+            else:
+                logger.trace(f'no change in meter')
         return self._mtr
+
+    def set_meter(self, **meter_kwargs):
+        self.get_meter(**meter_kwargs)
+
+    @cached_property
+    def meter(self):
+        return self.get_meter()
     
     @cached_property
     def parseable_units(self): 
@@ -63,36 +95,61 @@ class Text(Entity):
 
     # @cache
     def parse(self, **meter_kwargs):
+        if self._parses and self._mtr and (not meter_kwargs or Meter(**meter_kwargs).attrs == self._mtr.attrs):
+            return self._parses
+        
         self._parses=[]
-        list(self.parse_iter(**meter_kwargs))
+        deque(self.parse_iter(**meter_kwargs), maxlen=0)
         return self.best_parses
 
     def parse_iter(self, progress=True, **meter_kwargs):
-        meter = self.set_meter(**meter_kwargs)
+        meter = self.get_meter(**meter_kwargs)
         self._parses = []
+        self.clear_cached_properties()
         iterr = tqdm(
             self.parseable_units, 
             desc=f'Parsing {self.parse_unit_attr}',
-            disable=not progress
+            disable=not progress,
+            position=0
         )
         for pline in iterr:
             pline.parse(progress=False, meter=meter)
             yield pline
             self._parses.append(pline._parses)
 
-    @property
-    def best_parses(self):
-        from .parsing import ParseList
-        return ParseList([l.best_parse for l in self.parseable_units])
     
-    @property
-    def parse_stats(self):
+
+    def _concat_line_parses(self, attr):
+        from .parsing import ParseList
+        return ParseList([
+            parse
+            for line in self.parseable_units
+            for parse in getattr(line,attr)
+        ])
+
+
+    def _concat_line_dfs(self, attr):
         if not self._parses: self.parse()
-        odf=pd.DataFrame([
-            l.parse_stats
-            for l in self.parseable_units
+        odf=pd.concat([
+            getattr(line,attr).df
+            for line in self.parseable_units
         ])
         return setindex(odf, DF_INDEX)
+    
+    @property
+    def parses(self): return self.best_parses
+    
+    @cached_property
+    def best_parses(self):
+        return self._concat_line_parses('best_parses')
+
+    @cached_property
+    def unbounded_parses(self):
+        return self._concat_line_parses('unbounded_parses')
+    
+    @cache
+    def parse_stats(self, norm=False):
+        return self._concat_line_dfs('parse_stats' if not norm else 'parse_stats_norm')
 
 
 

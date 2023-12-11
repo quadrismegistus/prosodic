@@ -61,7 +61,7 @@ if __name__ == '__main__':
 		# scripts=['bin/prosodic'],
 		entry_points = {
 			'console_scripts': [
-				'prosodic=prosodic.prosodic:cli'
+				'prosodic=web.app:cli'
 			]
 		},
 		classifiers=[

@@ -103,3 +103,7 @@ def get_initial_whitespace(xstr):
         if x == x.strip(): break
         o.append(x)
     return ''.join(o)
+
+def unique(l):
+    from ordered_set import OrderedSet
+    return list(OrderedSet(l))

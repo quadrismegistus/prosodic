@@ -532,12 +532,14 @@ class ParseList(EntityList):
 
     @cached_property
     def best_parse(self): return self.data[0] if self.data else None
+    # @property
+    # def best_parses(self): return ParseList([self.best_parse])
 
     def bound(self, progress=True, meter=None, **meter_kwargs):
         parses = [p for p in self.data if not p.is_bounded]
         if meter is None: meter = Meter(**meter_kwargs)
         # logger.debug(f'Bounding {len(parses)} with meter {meter}')
-        iterr = tqdm(parses, desc='Bounding parses', disable=not progress)
+        iterr = tqdm(parses, desc='Bounding parses', disable=not progress,position=0)
         for parse_i,parse in enumerate(iterr):
             parse.constraint_viols  # init
             if parse.is_bounded: continue
@@ -553,6 +555,50 @@ class ParseList(EntityList):
                     comp_parse.bounded_by = parse
         self._bound_init = True
         return self.unbounded
+    
+    def rank(self):
+        self.data.sort()
+        for i,parse in enumerate(self.data):
+            parse.parse_rank = i+1
+    
+    @cached_property
+    def lines(self):
+        return LineList(
+            unique(
+                parse.line
+                for parse in self.data
+            )
+        )
+
+    def stats(self, norm=False):
+        return setindex(
+            pd.DataFrame([
+                line.parse_stats if not norm else line.parse_stats_norm
+                for line in self.lines
+            ]),
+            DF_INDEX
+        )
+    
+    @cached_property
+    def df(self):
+        index = [
+            i
+            for i in self.df_syll.index.names
+            if not i.startswith('meter')   # meterpos_ and metersyll_ are by syll
+        ]
+        aggby = {
+            col:np.median if col.startswith('parse') else np.sum
+            for col in self.df_syll.columns
+        }
+        dropcols = {
+            'parselist_num_parses',
+            'parselist_num_all_parses'
+        }
+        odf = self.df_syll.groupby(index).agg(aggby)
+        return odf[[c for c in odf if c not in dropcols]]
+    @cached_property
+    def df_syll(self):
+        return self.get_df()
 
 
 # class representing the potential bounding relations between to parses

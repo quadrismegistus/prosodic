@@ -89,6 +89,7 @@ from functools import cached_property, lru_cache as cache, total_ordering
 import string
 import random
 import textwrap
+from collections import deque
 
 # patches
 import builtins

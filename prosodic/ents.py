@@ -7,6 +7,7 @@ class Entity(UserList):
     index_name=None
     prefix='ent'
     list_type = None
+    cached_properties_to_clear = []
 
     """
     Root Entity class
@@ -65,6 +66,17 @@ class Entity(UserList):
     @cached_property
     def l(self): return self.children
 
+    def clear_cached_properties(self):
+        for prop in self.cached_properties_to_clear:
+            if prop in self.__dict__:
+                del self.__dict__[prop]
+            elif hasattr(self,prop):
+                try:
+                    func = getattr(self,prop)
+                    func.clear_cache()
+                except AttributeError:
+                    pass
+
     def show(self, indent=0):
         attrstr=get_attr_str(self.attrs)
         myself=f'{self.__class__.__name__}({attrstr})'
@@ -81,11 +93,11 @@ class Entity(UserList):
         else:
             return o
     
-    def _repr_html_(self): 
+    def _repr_html_(self, df=None): 
         def blank(x):
-            if x in {0,None,np.nan}: return ''
+            if x in {None,np.nan}: return ''
             return x
-        return self.df.applymap(blank)._repr_html_()
+        return (self.df if df is None else df).applymap(blank)._repr_html_()
     def __repr__(self): return f'{self.__class__.__name__}({get_attr_str(self.attrs)})'
     
     @cached_property
@@ -157,6 +169,14 @@ class Entity(UserList):
         else: o=[]
         return StanzaList(o)
     
+    @property
+    def line_r(self):
+        return random.choice(self.lines) if self.lines else None
+    @property
+    def word_r(self):
+        return random.choice(self.words) if self.words else None
+    
+    
     @cached_property
     def lines(self): 
         from .texts import LineList
@@ -172,6 +192,10 @@ class Entity(UserList):
         elif self.is_wordtoken: o=[self]
         else:o=[wt for line in self.lines for wt in line.children]
         return WordTokenList(o)
+    
+    @property
+    def words(self):
+        return self.wordtokens
     
     @cached_property
     def wordtypes(self): 

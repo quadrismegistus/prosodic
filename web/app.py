@@ -4,12 +4,11 @@ from prosodic.imports import *
 from quart import websocket, Quart, render_template, jsonify
 import orjson
 
+import click
+
+
 def jsonify(x): return orjson.dumps(x, option=orjson.OPT_SERIALIZE_NUMPY).decode('utf-8')
 def unjsonify(x): return orjson.loads(x)
-
-
-
-
 
 app = Quart(__name__, static_url_path="/static", static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 
@@ -59,5 +58,13 @@ async def index():
         enumerate=enumerate
     )
 
+def main(port=5000, debug=True):
+    app.run(port=port, debug=debug)
+
+@click.command()
+def cli():
+    """Simple program that greets NAME for a total of COUNT times."""
+    main()
+
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    main()

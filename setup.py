@@ -51,7 +51,7 @@ if __name__ == '__main__':
 		author_email='ryan.heuser@princeton.edu',
 		url='https://github.com/quadrismegistus/prosodic',
 		license='MPL-2.0',
-		packages=['prosodic','metricaltree'],
+		packages=['prosodic','metricaltree','web'],
 		install_requires=requirements,
 		include_package_data=True,
 		cmdclass={

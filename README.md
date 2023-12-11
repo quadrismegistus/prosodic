@@ -6,9 +6,30 @@ Prosodic is a metrical-phonological parser written in Python. Currently, it can 
 
 ## Install
 
+### 1. Install python package
+
 ```
 pip install git+https://github.com/quadrismegistus/prosodic@develop
 ```
+
+
+### 2. Install espeak
+
+Install espeak, free TTS software, to 'sound out' unknown words. See [here](http://espeak.sourceforge.net/download.html) for all downloads.
+
+#### On Mac
+Install [homebrew](brew.sh) if not already installed. Then:
+```
+brew install espeak
+```
+
+#### On Linux
+```
+apt-get install espeak
+```    
+    
+#### On Windows
+Download and install from http://espeak.sourceforge.net/download.html.
 
 ## Usage
 

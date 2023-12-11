@@ -20,7 +20,9 @@ In a terminal, run:
 prosodic
 ```
 
-Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/). It should look like this:
+
+<img width="1895" alt="prosodic-gui" src="https://github.com/quadrismegistus/prosodic/assets/733853/105d9144-0a66-493d-9a91-a975c853b4a2">
 
 ### Use in code
 

@@ -34,10 +34,10 @@ async def ws():
                 parsed_line.parent.num, 
                 parsed_line.num, 
                 f'<span class="parsestr">{html}</span>',
-                round(resd.get('parses_nparse', -1),1),
-                round(resd.get('parses_nviols', -1),1),
+                round(resd.get('n_parse', -1),1),
+                round(resd.get('n_viols', -1),1),
             ] + [
-                round(resd.get(f'parses_{cname}', 0),1)
+                round(resd.get(f'{cname}', 0),1)
                 for cname in CONSTRAINTS
             ]
             data['progress'] = (i+1) / len(t.parseable_units)

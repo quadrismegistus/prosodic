@@ -573,9 +573,6 @@ text.set_meter(
 )
 ```
 
-    [32m2023-12-10 22:44:41.267[0m | [36mget_meter[0m | [34m[1msetting meter to: Meter(constraints=('w_peak', 's_trough', 'w_stress', 's_unstress', 'unres_across', 'unres_within', 'foot_size'), categorical_constraints=(), max_s=2, max_w=2, resolve_optionality=True)[0m | [36mtexts.py[0m:[36m73[0m
-
-
 
 ```python
 # parse a single line

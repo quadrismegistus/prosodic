@@ -9,11 +9,9 @@ numpy
 multiset
 nltk
 phonemizer
-dash
-dash_extensions
 quart
-dash_bootstrap_components
 orjson
 ordered-set
 click
 Werkzeug==2.2.2
+editdistance @ git+https://github.com/roy-ht/editdistance

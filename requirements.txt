@@ -16,3 +16,4 @@ dash_bootstrap_components
 orjson
 ordered-set
 click
+Werkzeug==2.2.2

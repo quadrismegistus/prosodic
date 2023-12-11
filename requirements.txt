@@ -14,3 +14,4 @@ orjson
 ordered-set
 click
 Werkzeug==2.2.2
+editdistance @ git+https://github.com/roy-ht/editdistance

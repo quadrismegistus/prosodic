@@ -694,7 +694,7 @@ first_line.best_parse
 
 
 
-Parse(stanza_num=1, line_num=1, txt='those HO urs THAT with GEN tle WORK did FRAME', rank=1, meter='-+-+-+-+-+', stress='-+-+-+-+-+', score=0, is_bounded=0)
+    Parse(stanza_num=1, line_num=1, txt='those HO urs THAT with GEN tle WORK did FRAME', rank=1, meter='-+-+-+-+-+', stress='-+-+-+-+-+', score=0, is_bounded=0)
 
 
 
@@ -2448,14 +2448,8 @@ iambic_parse = ps.Parse(line_str, scansion='wswswsws')
 trochaic_parse = ps.Parse(line_str, scansion='swswswswsw')
 
 # assert iambic is a better fit
-iambic_parse < trochaic_parse
+assert iambic_parse < trochaic_parse
 ```
-
-
-
-
-    True
-
 
 
 
@@ -2467,7 +2461,7 @@ iambic_parse
 
 
 
-Parse(txt='a HORSE a HORSE my KING dom FOR', meter='-+-+-+-+', stress='-+-+-+--', score=1, is_bounded=0)
+    Parse(txt='a HORSE a HORSE my KING dom FOR', meter='-+-+-+-+', stress='-+-+-+--', score=1, is_bounded=0)
 
 
 
@@ -2480,6 +2474,6 @@ trochaic_parse
 
 
 
-Parse(txt='A horse A horse MY king DOM for A horse', meter='+-+-+-+-+-', stress='-+-+-+---+', score=10, is_bounded=0)
+    Parse(txt='A horse A horse MY king DOM for A horse', meter='+-+-+-+-+-', stress='-+-+-+---+', score=10, is_bounded=0)
 
 

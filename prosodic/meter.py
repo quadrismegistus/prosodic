@@ -206,29 +206,8 @@ class ParseableText(Entity):
                 ]) * 10
         return odx
     
-    
-    
     @cached_property
-    def html(self):
-        wordtokend = {wt:[] for wt in self.wordtokens}
-        for slot in self.best_parse.slots:
-            wordtokend[slot.unit.wordtoken].append(slot)
-        output=[]
-        for wordtoken in wordtokend:
-            prefstr=get_initial_whitespace(wordtoken.txt)
-            output.append(prefstr)
-            wordtoken_slots = wordtokend[wordtoken]
-            if wordtoken_slots:
-                for slot in wordtoken_slots:
-                    pos=slot.parent
-                    spclass='meter_' + ('strong' if slot.is_prom else 'weak')
-                    stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
-                    slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
-                    if pos.violset:
-                        viol_str=' '.join(pos.violset)
-                        viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
-                        slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.num}">{slotstr}</span>'
-                    output.append(slotstr)
-            else:
-                output.append(wordtoken.txt)
-        return ''.join(output)    
+    def html(self): return self.to_html()
+
+    def to_html(self, **kwargs):
+        return self.best_parse.to_html(**kwargs)

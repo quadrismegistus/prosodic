@@ -350,34 +350,41 @@ class Parse(Entity):
             return Bounding.unequal
         
 
-    def _repr_html_(self): return repr(self)
-    # def html(self, viols=True, between_words=' ',between_sylls='',line_id='ID'):
-    #     last_word = None
-    #     output=[]
-    #     line_num=0 if self.line is None else self.line.num
-    #     for pos in self.positions:
-    #         violated=bool(pos.violset)
-    #         if viols and violated:
-    #             viol_str=' '.join(pos.violset)
-    #             viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
-    #             output.append(f'<span class="violation" title="{viol_title}" id="viol__line_{line_num}">')
+    def _repr_html_(self): 
+        return f'{self.to_html(as_str=True)} <div style="margin-left:2em">[{repr(self)}]</div>'
 
-    #         for slot in pos.slots:
-    #             spclass='meter_' + ('strong' if pos.is_prom else 'weak')
-    #             stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
-    #             slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
-    #             if last_word and last_word is not slot.unit.wordtoken:
-    #                 output.append(between_words)
-    #             output.append(slotstr)
-    #             last_word  = slot.unit.wordtoken
+    @cached_property
+    def html(self): return self.to_html()
 
-    #         if viols and violated:
-    #             output.append(f'</span><script type="text/javascript">tippy("#viol__line_{line_num}")</script>')
-    #         if pos.is_prom and self.is_rising: output.append('|')
-    #         elif not pos.is_prom and not self.is_rising: output.append('|')
-    #     if output and output[-1]=='|': output.pop()
-    #     return ''.join(output)
-    
+    @cached_property
+    def wordtokens(self): return self.line.wordtokens
+
+    def to_html(self, as_str=False, css=HTML_CSS):
+        wordtokend = {wt:[] for wt in self.wordtokens}
+        for slot in self.slots:
+            wordtokend[slot.unit.wordtoken].append(slot)
+        output=[]
+        for wordtoken in wordtokend:
+            prefstr=get_initial_whitespace(wordtoken.txt)
+            output.append(prefstr)
+            wordtoken_slots = wordtokend[wordtoken]
+            if wordtoken_slots:
+                for slot in wordtoken_slots:
+                    pos=slot.parent
+                    spclass='meter_' + ('strong' if slot.is_prom else 'weak')
+                    stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
+                    slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
+                    if pos.violset:
+                        viol_str=' '.join(pos.violset)
+                        viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
+                        slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.line.num}">{slotstr}</span>'
+                    output.append(slotstr)
+            else:
+                output.append(wordtoken.txt)
+        out = ''.join(output)
+        out = f'<style>{css}</style><div>{out}</div>'
+        return out if as_str else HTML(out)
+
 
 class ParsePosition(Entity):
     prefix='meterpos'

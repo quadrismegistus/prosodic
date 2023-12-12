@@ -74,10 +74,12 @@ DF_COLS_RENAME = {
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
-
+HTML_CSS='''.violation { color:red; }
+.meter_strong { font-weight:bold; }'''
 
 # sys imports
 import re
+from IPython.display import HTML,Markdown,display
 from typing import Optional
 from collections import UserList, Counter
 import warnings
@@ -149,3 +151,11 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+
+HTML('''
+<style>
+.violation { color:red; }
+.meter_strong { font-weight:bold; }
+</style>  
+''')

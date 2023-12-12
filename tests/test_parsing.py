@@ -159,3 +159,12 @@ def test_constraints():
     l.parse(constraints=ckey)
     assert len(l.best_parses)
 
+
+
+def test_parse_iter():
+    text = Text(sonnet)
+    for parsed_line in text.parse_iter():
+        break
+    assert parsed_line.is_parseable
+    assert parsed_line._parses
+    assert parsed_line is text.lines[0]

@@ -51,8 +51,9 @@ def tokenize_sentwords_iter(
         tokens=tokenize_words_txt(sent)
         for tok_i,word_str in enumerate(tokens):
             # word_tok=to_token(word_str)
-            if sep_stanza in word_str: stanza_i+=1
-            if sep_line in word_str: line_i+=1
+            numlinebreaks=word_str.count(sep_line)
+            if numlinebreaks>1: stanza_i+=1
+            if numlinebreaks: line_i+=1
             is_punc=int(not any(x.isalpha() for x in word_str))
             odx_word=dict(
                 **(dict(para_i=para_i) if para_i is not None else {}),

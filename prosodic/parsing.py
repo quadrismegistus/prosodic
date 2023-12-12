@@ -284,6 +284,7 @@ class Parse(Entity):
     # @profile
     def attrs(self):
         return {
+            **(self.stanza.prefix_attrs if self.line and self.line.stanza else {}),
             **(self.line.prefix_attrs if self.line else {}),
             **self._attrs,
             # 'stanza_num':self.line.parent.num if self.line and self.line.parent else None,

@@ -119,8 +119,6 @@ class ParseableText(Entity):
             parses.bound(meter=meter, progress=False)
             parses.rank()
             self._parses = parses
-            self._unboundedparses = parses.unbounded
-            self._boundedparses = parses.bounded
         return self._parses
 
     
@@ -136,31 +134,22 @@ class ParseableText(Entity):
 
 
     @cached_property
-    def all_parses(self, **kwargs):
-        if not self._parses: self.parse(**kwargs)
-        return self._parses
-    @cached_property
     def num_parses(self, **kwargs): 
         return len(self.unbounded_parses)
     @cached_property
-    def best_parse(self): 
-        return self.unbounded_parses[0] if self.unbounded_parses else None
-    @cached_property
-    def unbounded_parses(self): 
-        if not self._parses: self.parse()
-        return self._unboundedparses
-
-    @cached_property
-    def bounded_parses(self, **kwargs): 
-        if not self._parses: self.parse()
-        return self._boundedparses
-
+    def best_parse(self):
+        return self.parses[0] if self.parses else None
+    
     @cached_property
     def parses(self): 
-        return self.unbounded_parses
+        if not self._parses: self.parse()
+        return self._parses
     
     @cached_property
     def scansions(self, **kwargs):
+        """
+        Unique scansions
+        """
         from .parsing import ParseList
         index_matches = pd.Series(
             [

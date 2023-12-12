@@ -70,14 +70,14 @@ class Text(Entity):
                 logger.trace(f'meter inherited from text: {self._mtr}')
             else:
                 self._mtr = Meter(**meter_kwargs)
-                logger.debug(f'setting meter to: {self._mtr}')
+                logger.trace(f'setting meter to: {self._mtr}')
         elif not meter_kwargs:
             logger.trace(f'no change in meter')
         else:
             newmeter = Meter(**meter_kwargs)
             if self._mtr.attrs != newmeter.attrs:
                 self._mtr = newmeter
-                logger.debug(f'resetting meter to: {self._mtr}')
+                logger.trace(f'resetting meter to: {self._mtr}')
             else:
                 logger.trace(f'no change in meter')
         return self._mtr

@@ -74,8 +74,13 @@ DF_COLS_RENAME = {
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
-HTML_CSS='''.violation { color:red; }
-.meter_strong { font-weight:bold; }'''
+HTML_CSS='''.violation { color:#f43838; }
+.meter_strong { text-decoration: overline;}
+.miniquote { margin-left:1.5em;margin-top:.5em;font-family:monospace;}
+.parse {font-family:monospace;}
+.stress_strong { text-decoration: underline; text-underline-offset: 3px; }
+.stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
+'''
 
 # sys imports
 import re
@@ -151,11 +156,3 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
-
-
-HTML('''
-<style>
-.violation { color:red; }
-.meter_strong { font-weight:bold; }
-</style>  
-''')

@@ -349,9 +349,11 @@ class Parse(Entity):
         else:
             return Bounding.unequal
         
+    def bounds(self, parse):
+        return self.bounding_relation(parse) == Bounding.bounds
 
     def _repr_html_(self): 
-        return f'{self.to_html(as_str=True)} <div style="margin-left:2em">[{repr(self)}]</div>'
+        return self.to_html(as_str=True, blockquote=True)
 
     @cached_property
     def html(self): return self.to_html()
@@ -359,7 +361,7 @@ class Parse(Entity):
     @cached_property
     def wordtokens(self): return self.line.wordtokens
 
-    def to_html(self, as_str=False, css=HTML_CSS):
+    def to_html(self, as_str=False, css=HTML_CSS, blockquote=False):
         wordtokend = {wt:[] for wt in self.wordtokens}
         for slot in self.slots:
             wordtokend[slot.unit.wordtoken].append(slot)
@@ -382,7 +384,8 @@ class Parse(Entity):
             else:
                 output.append(wordtoken.txt)
         out = ''.join(output)
-        out = f'<style>{css}</style><div>{out}</div>'
+        out = f'<style>{css}</style><div class="parse">{out}</div>'
+        if blockquote: out+=f'<div class="miniquote">{self.__repr__(bad_keys={"txt"})}</div>'
         return out if as_str else HTML(out)
 
 

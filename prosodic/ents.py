@@ -98,7 +98,15 @@ class Entity(UserList):
             if x in {None,np.nan}: return ''
             return x
         return (self.df if df is None else df).applymap(blank)._repr_html_()
-    def __repr__(self, attrs=None): return f'{self.__class__.__name__}({get_attr_str(self.attrs if attrs is None else attrs)})'
+    
+    
+    def __repr__(self, attrs=None, bad_keys=None): 
+        d = {
+            k:v
+            for k,v in (attrs if attrs is not None else self.attrs).items()
+            if not bad_keys or not k in bad_keys
+        }
+        return f'{self.__class__.__name__}({get_attr_str(d)})'
     
     @cached_property
     def ld(self): return self.get_ld()

@@ -74,7 +74,7 @@ class Text(Entity):
         elif not meter_kwargs:
             logger.trace(f'no change in meter')
         else:
-            newmeter = Meter(**meter_kwargs)
+            newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
             if self._mtr.attrs != newmeter.attrs:
                 self._mtr = newmeter
                 logger.trace(f'resetting meter to: {self._mtr}')
@@ -90,31 +90,31 @@ class Text(Entity):
         return self.get_meter()
     
     @cached_property
+    def best_parse(self):
+        if not self._parses: self.parse()
+        return self._parses[0]
+    
+    
+    
+    @cached_property
     def parseable_units(self): 
         return getattr(self,self.parse_unit_attr)
 
+    def needs_parsing(self, meter=None, **meter_kwargs):
+        from .meter import Meter
+        if not self._parses: return True
+        if not self._mtr: return True
+        if meter is not None and meter.attrs != self._mtr.attrs: return True
+        if meter_kwargs and Meter(**{**self._mtr.attrs,**meter_kwargs}).attrs != self._mtr.attrs: return True
+        return False
+
     # @cache
-    def parse(self, **meter_kwargs):
-        if not self._parses or not self._mtr or (meter_kwargs and Meter(**meter_kwargs).attrs != self._mtr.attrs):
-            self._parses=[]
-            deque(self.parse_iter(**meter_kwargs), maxlen=0)
+    def parse(self, num_proc=1, progress=True, meter=None, **meter_kwargs):
+        if self.needs_parsing(meter=meter,**meter_kwargs):
+            meter = self.get_meter(meter=meter,**meter_kwargs)
+            self.clear_cached_properties()
+            meter.parse(self, num_proc=num_proc, progress=progress)
         return self._parses
-
-    def parse_iter(self, progress=True, **meter_kwargs):
-        meter = self.get_meter(**meter_kwargs)
-        self._parses = []
-        self.clear_cached_properties()
-        iterr = tqdm(
-            self.parseable_units, 
-            desc=f'Parsing {self.parse_unit_attr}',
-            disable=not progress,
-            position=0
-        )
-        for pline in iterr:
-            pline.parse(progress=False, meter=meter)
-            yield pline
-            self._parses.append(pline._parses)
-
     
 
     def _concat_line_parses(self, attr):
@@ -135,16 +135,9 @@ class Text(Entity):
         return setindex(odf, DF_INDEX)
     
     @property
-    def parses(self): return self.best_parses
-    
-    @cached_property
-    def best_parses(self):
-        from .parsing import ParseList
-        return ParseList(line.best_parse for line in self.parseable_units)
-
-    @cached_property
-    def unbounded_parses(self):
-        return self._concat_line_parses('unbounded_parses')
+    def parses(self): 
+        if not self._parses: self.parse()
+        return self._parses
     
     @cache
     def parse_stats(self, norm=False):
@@ -175,3 +168,4 @@ class Stanza(Text):
             ]
         Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
     
+

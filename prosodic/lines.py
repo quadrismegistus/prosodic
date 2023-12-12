@@ -1,16 +1,16 @@
 from .imports import *
-from .meter import ParseableText
 from .texts import Text
 
 class WordTokenList(EntityList): pass
 
-class Line(ParseableText, Text):
+class Line(Text):
     line_sep = '\n'
     sep: str = ''
     child_type: str = 'WordToken'
     is_parseable = True
     prefix='line'
     list_type=WordTokenList
+    is_parseable = False
 
     @profile
     def __init__(self, txt:str='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
@@ -32,5 +32,6 @@ class Line(ParseableText, Text):
                 if 'word_str' in word_d and 'word_ispunc'
             ]
         
-        Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
-        ParseableText.__init__(self)
+        super().__init__(txt=txt, children=children, parent=parent, **kwargs)
+        self.is_parseable = True
+        if self.txt and self.txt.startswith('\n'): self.txt = self.txt[1:]

@@ -36,6 +36,8 @@ class Entity(UserList):
     def __eq__(self, other):
         return self is other
 
+    def __bool__(self): return True
+
     @cached_property
     def attrs(self):
         odx={'num':self.num}
@@ -268,12 +270,12 @@ class Entity(UserList):
     
     @cached_property
     def i(self):
-        if self.parent is None: return None
-        if not self.parent.children: return None
+        if self.parent is None: return 0
+        if not self.parent.children: return 0
         try:
             return self.parent.children.index(self)
         except IndexError:
-            return None
+            return 0
     @cached_property
     def num(self):
         return self.i+1 if self.i is not None else None

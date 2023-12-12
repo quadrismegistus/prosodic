@@ -70,7 +70,8 @@ DF_COLS_RENAME = {
     'meterslot_unres_within':'*unres_within',
     'meterslot_foot_size':'*foot_size',
     'parse_line_num':'line_num',
-    'parse_stanza_num':'stanza_num'
+    'parse_stanza_num':'stanza_num',
+    'parse_line_txt':'line_txt'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
@@ -97,6 +98,7 @@ import string
 import random
 import textwrap
 from collections import deque
+import multiprocessing as mp
 
 # patches
 import builtins

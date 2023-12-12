@@ -1,5 +1,6 @@
 from .imports import *
 from .constraints import *
+from .texts import Text
 
 ## METER
 class Meter(Entity):
@@ -11,12 +12,14 @@ class Meter(Entity):
             max_s=METER_MAX_S, 
             max_w=METER_MAX_W, 
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
+            exhaustive=False
             ):
         self.constraints = get_constraints(constraints)
         self.categorical_constraints = get_constraints(categorical_constraints)
         self.max_s=max_s
         self.max_w=max_w
         self.resolve_optionality=resolve_optionality
+        self.exhaustive=exhaustive
         super().__init__()
 
     @cached_property
@@ -32,7 +35,8 @@ class Meter(Entity):
             'categorical_constraints':self.categorical_constraint_names,
             'max_s':self.max_s,
             'max_w':self.max_w,
-            'resolve_optionality':self.resolve_optionality
+            'resolve_optionality':self.resolve_optionality,
+            'exhaustive':self.exhaustive
         }
     
     @cache
@@ -43,160 +47,116 @@ class Meter(Entity):
         stypes = ['s'*n for n in range(1,max_s+1)]
         return wtypes + stypes
     
-
-
-
-
-class ParseableText(Entity):
-    prefix='parsedtxt'
-    cached_properties_to_clear = [
-        'all_parses',
-        'best_parses',
-        'num_parses',
-        'best_parse',
-        'unbounded_parses',
-        'parses',
-        'scansions',
-        'parse_stats',
-        'parse_stats_norm',
-        'html'
-    ]
-
-    def __init__(self):
-        self._parses=[]
-        self._boundedparses=[]
-        self._unboundedparses=[]
-
-    @cached_property
-    def attrs(self):
-        odx=super().attrs
-        odx['txt']=self.txt.strip()
-        return odx
-    
-    @cached_property
-    def wordform_matrix(self):
-        return self.get_wordform_matrix()
-    
-    @cache
-    def get_wordform_matrix(self, resolve_optionality=METER_RESOLVE_OPTIONALITY):
+    def get_wordform_matrix(self, line):
         from .words import WordFormList
-        lim = 1 if not resolve_optionality else None
-        ll = [l for l in self.wordforms_all if l]
+        lim = 1 if not self.resolve_optionality else None
+        ll = [l for l in line.wordforms_all if l]
         ll = [WordFormList(l) for l in itertools.product(*ll)]
         ll.sort()
         return ll[:lim]
-    
 
 
-
-
-
-    def parse(self, meter=None, **meter_kwargs):
-        from .parsing import ParseList, Parse
-        if not self._parses or not self._mtr or (meter_kwargs and Meter(**meter_kwargs).attrs != self._mtr.attrs):
-            meter = self.get_meter(meter=meter,**meter_kwargs)
-            self.clear_cached_properties()
-            parses = ParseList([
-                Parse(wfl, pos, meter=meter, parent=self)
-                for wfl in self.wordform_matrix
-                for pos in meter.get_pos_types(nsylls=wfl.num_sylls)
-            ])
-            i=0
-            while True and len(parses):
-                i+=1
-                # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
-                parses = ParseList([
-                    newparse
-                    for parse in parses
-                    for newparse in parse.branch()
-                    if not parse.is_bounded and newparse is not None and parse is not None
-                ])
-                parses.bound(meter=meter, progress=False)
-                if all(p.is_complete for p in parses): break
-                if i>1000: 
-                    logger.error('!')
-                    break
-            parses.bound(meter=meter, progress=False)
-            parses.rank()
-            self._parses = parses
-        return self._parses
-
-    
-    
-    # @profile
-    def bound_parses(self, parses = None, progress=True, meter=None, **meter_kwargs):
-        from .parsing import ParseList
-        if hasattr(self,'_bound_init') and not self._bound_init: return
-        meter = self.get_meter(meter=meter,**meter_kwargs)
-        if parses is None: parses = self.all_parses
-        if type(parses) is list: parses=ParseList(parses)
-        return parses.bound(meter=meter, progress=progress)
-
-
-    @cached_property
-    def num_parses(self, **kwargs): 
-        return len(self.unbounded_parses)
-    @cached_property
-    def best_parse(self):
-        return self.parses[0] if self.parses else None
-    
-    @cached_property
-    def parses(self): 
-        if not self._parses: self.parse()
-        return self._parses
-    
-    @cached_property
-    def scansions(self, **kwargs):
-        """
-        Unique scansions
-        """
-        from .parsing import ParseList
-        index_matches = pd.Series(
-            [
-                px.meter_str 
-                for px in self.all_parses
-            ]).drop_duplicates().index
-        return ParseList(children=[self.all_parses[i] for i in index_matches])
-    
-    def parse_stats(self, norm=False):
-        if not self._parses: self.parse()
-        odx={
-            **(self.parent.prefix_attrs if self.parent else {}), 
-            **self.prefix_attrs
-        }
-        odx['bestparse_txt'] = self.best_parse.txt
-        nsyll = self.best_parse.num_sylls
-        cnames = [f.__name__ for f in self.meter.constraints]
-        odx['bestparse_nsylls']=nsyll
-        odx['n_combo']=len(self.wordform_matrix)
-        odx['n_parse']=len(self.best_parses)
-        if not norm:
-            odx['n_viols']=np.median([
-                parse.score
-                for parse in self.unbounded_parses
-            ])
-            for cname in cnames:
-                odx['*'+cname] = np.median([
-                    parse.constraint_scores.get(cname,0)
-                    for parse in self.unbounded_parses
-                ])
+    def parse(self, text_or_line, **kwargs):
+        if type(text_or_line) is Text:
+            return self.parse_text(text_or_line, **kwargs)
+        elif text_or_line.is_parseable:
+            return self.parse_line(text_or_line, **kwargs)
         else:
-            odx[f'n_viols']=np.mean([
-                int(bool(x))
-                for bp in self.unbounded_parses
-                for cnamex in bp.constraint_viols
-                for x in bp.constraint_viols[cnamex]
-            ]) * 10
-            for cname in cnames:
-                odx[f'n_{cname}']=np.mean([
-                    int(bool(x))
-                    for bp in self.unbounded_parses
-                    for x in bp.constraint_viols.get(cname,[])
-                ]) * 10
-        return odx
-    
-    @cached_property
-    def html(self): return self.to_html()
+            raise Exception(f'Object {text_or_line} not parseable')
 
-    def to_html(self, **kwargs):
-        return self.best_parse.to_html(**kwargs)
+    def parse_line(self, line, **kwargs):
+        assert line.is_parseable
+        if self.exhaustive:
+            return self.parse_line_exhaustively(line)
+        else:
+            return self.parse_line_fast(line)        
+
+
+    def parse_line_fast(self, line):
+        from .parsing import ParseList, Parse
+        assert line.is_parseable
+        parses = ParseList([
+            Parse(wfl, pos, meter=self, parent=line)
+            for wfl in self.get_wordform_matrix(line)
+            for pos in self.get_pos_types(nsylls=wfl.num_sylls)
+        ])
+        for n in range(1000): 
+            # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
+            parses = ParseList([
+                newparse
+                for parse in parses
+                for newparse in parse.branch()
+                if not parse.is_bounded and newparse is not None and parse is not None
+            ])
+            parses.bound(progress=False)
+            if all(p.is_complete for p in parses): break
+        else:
+            logger.error(f'did not complete parsing: {line}')
+        parses.bound(progress=False)
+        parses.rank()
+        line._parses = parses
+        return line._parses
+    
+
+    ### slower, exhaustive parser
+    def parse_line_exhaustively(self, line, progress=None):
+        from .parsing import ParseList,Parse
+        assert line.is_parseable
+
+        def iter_parses():
+            wfm = self.get_wordform_matrix(line)
+            all_parses = []
+            combos = [
+                (wfl,scansion)
+                for wfl in wfm
+                for scansion in get_possible_scansions(wfl.num_sylls, max_s=self.max_s, max_w=self.max_w)
+            ]
+            wfl=wfm[0]
+            logger.trace(f'Generated {len(combos)} from a wordfrom matrix of size {len(wfm), wfl, wfl.num_sylls, self.max_s, self.max_s, len(get_possible_scansions(wfl.num_sylls))}')
+            iterr=tqdm(combos, disable=not progress,position=0)
+            for wfl,scansion in iterr:
+                parse = Parse(wfl, scansion, meter=self, parent=line)
+                all_parses.append(parse)
+            logger.trace(f'Returning {len(all_parses)} parses')
+            return all_parses
+        
+        parses = ParseList(iter_parses())
+        parses.bound(progress=False)
+        parses.rank()
+        line._parses = parses
+        return line._parses
+    
+    def parse_text(self, text, num_proc=1, progress=True):
+        from .parsing import ParseList
+        assert type(text) is Text
+        text._parses=ParseList()
+        for parsed_line in self.parse_text_iter(text, num_proc=num_proc, progress=progress):
+            text._parses.extend(parsed_line._parses)
+        return text._parses
+
+    def parse_text_iter(self, text, progress=True, num_proc=1, **kwargs):
+        assert type(text) is Text
+        
+        def get_iterr(iterr):
+            return tqdm(
+                iterr,
+                desc=f'Parsing {text.parse_unit_attr}',
+                disable=not progress,
+                position=0,
+                total = len(text.parseable_units)
+            )
+        if num_proc<2:
+            for pline in get_iterr(text.parseable_units):
+                self.parse_line(pline, progress=False, **kwargs)
+                yield pline
+        else:
+            with mp.Pool(num_proc) as pool:
+                objs = [(unit,self) for unit in text.parseable_units]
+                iterr = pool.imap(_parse_iter, objs)
+                yield from get_iterr(iterr)
+
+
+def _parse_iter(obj):
+    line,meter = obj
+    line.parse(meter=meter,progress=False)
+    return line

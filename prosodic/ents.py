@@ -70,12 +70,12 @@ class Entity(UserList):
         for prop in self.cached_properties_to_clear:
             if prop in self.__dict__:
                 del self.__dict__[prop]
-            elif hasattr(self,prop):
-                try:
-                    func = getattr(self,prop)
-                    func.clear_cache()
-                except AttributeError:
-                    pass
+            # elif hasattr(self,prop):
+            #     try:
+            #         func = getattr(self,prop)
+            #         func.clear_cache()
+            #     except AttributeError:
+            #         pass
 
     def show(self, indent=0):
         attrstr=get_attr_str(self.attrs)

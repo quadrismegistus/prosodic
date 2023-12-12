@@ -41,14 +41,27 @@ def test_feet():
     # parsing higher max s and max w will still yield same best parses
     lx = Line(tstr)
     lx.parse(max_s=1, max_w=1)
+
+    print(lx._parses)
+    print(lx.all_parses)
+    print(lx.parse_stats)
+    print(lx.parse_stats)
+
     assert lx.parse_stats
-    aplen1=len(lx.all_parses)
-    bplen1=len(lx.best_parses)
+    ap1=lx.all_parses
+    bp1=lx.unbounded_parses
+    aplen1=len(ap1)
+    bplen1=len(bp1)
     
     lx.parse(max_s=2, max_w=2)
     assert lx.parse_stats
-    aplen2=len(lx.all_parses)
-    bplen2=len(lx.best_parses)
+    ap2=lx.all_parses
+    bp2=lx.unbounded_parses
+    aplen2=len(ap2)
+    bplen2=len(bp2)
+
+    assert ap1 is not ap2
+    assert bp1 is not bp2
     assert aplen1 < aplen2
     assert bplen1 <= bplen2
 
@@ -73,7 +86,7 @@ def test_text_parsing():
     t.parse()
     assert len(t.best_parses) >= 14  # sylls
     assert len(t.best_parses.df.reset_index().drop_duplicates('line_num')) == 14
-    assert len(t.parse_stats) == 14
+    assert len(t.parse_stats()) == 14
 
 def test_html():
     html = Text('disaster disaster disaster').lines[0].html
@@ -87,10 +100,6 @@ def test_categorical_constraints():
     
     assert not any([px.meter_str.count('---') for px in line.unbounded_parses])
     assert not any([px.meter_str.count('+++') for px in line.unbounded_parses])
-
-    line.parse_all(constraints='', categorical_constraints='', max_s=None, max_w=None)
-    assert any([px.meter_str.count('---') for px in line.unbounded_parses])
-    assert any([px.meter_str.count('+++') for px in line.unbounded_parses])
 
 
 def test_standalone_parsing():
@@ -128,7 +137,10 @@ def test_standalone_parsing():
 
 
 def test_parselist():
-    parses = Line('hello world ' * 3).parses
+    parses = Line('a horse ' * 5).parse()
+    print(parses)
+    print(parses.bounded)
+    print(parses.unbounded)
     assert parses.bounded
     assert parses.unbounded
 

@@ -51,3 +51,4 @@ venv/
 *tts-cache*
 *.lprof
 .coverage*
+notebooks/dev

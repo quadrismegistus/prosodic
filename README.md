@@ -39,7 +39,8 @@ prosodic
 
 Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/). It should look like this:
 
-<img alt="prosodic-gui" src="https://github.com/quadrismegistus/prosodic/assets/733853/105d9144-0a66-493d-9a91-a975c853b4a2" width="800"/>
+<img width="800" alt="prosodic-gui2" src="https://github.com/quadrismegistus/prosodic/assets/733853/8acd4225-7425-43a9-8f68-aa5c1ff567f2">
+
 
 ### Use in code
 

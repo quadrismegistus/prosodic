@@ -100,8 +100,9 @@ class Text(Entity):
     def parseable_units(self): 
         return getattr(self,self.parse_unit_attr)
 
-    def needs_parsing(self, meter=None, **meter_kwargs):
+    def needs_parsing(self, force=False, meter=None, **meter_kwargs):
         from .meter import Meter
+        if force: return True
         if not self._parses: return True
         if not self._mtr: return True
         if meter is not None and meter.attrs != self._mtr.attrs: return True
@@ -109,12 +110,15 @@ class Text(Entity):
         return False
 
     # @cache
-    def parse(self, num_proc=1, progress=True, meter=None, **meter_kwargs):
-        if self.needs_parsing(meter=meter,**meter_kwargs):
+    def parse(self, **kwargs):
+        deque(self.parse_iter(**kwargs), maxlen=0)
+        return self._parses
+    
+    def parse_iter(self, num_proc=1, progress=True, force=False, meter=None, **meter_kwargs):
+        if self.needs_parsing(force=force,meter=meter,**meter_kwargs):
             meter = self.get_meter(meter=meter,**meter_kwargs)
             self.clear_cached_properties()
-            meter.parse(self, num_proc=num_proc, progress=progress)
-        return self._parses
+            yield from meter.parse_iter(self, num_proc=num_proc, progress=progress)
     
 
     def _concat_line_parses(self, attr):

@@ -117,13 +117,7 @@ nltk.download('punkt',quiet=True)
 import pandas as pd
 pd.options.display.width=200
 from langdetect import detect as detect_lang
-from loguru import logger
-logger.remove()
-logger.add(
-    sink=sys.stderr,
-    format=LOG_FORMAT, 
-    level=LOG_LEVEL
-)
+from logmap import logmap, logger
 from tqdm import tqdm
 from multiset import Multiset
 

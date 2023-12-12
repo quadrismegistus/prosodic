@@ -57,10 +57,13 @@ class Meter(Entity):
 
 
     def parse(self, text_or_line, **kwargs):
+        return ParseList(self.parse_iter(text_or_line, **kwargs))
+        
+    def parse_iter(self, text_or_line, **kwargs):
         if type(text_or_line) is Text:
-            return self.parse_text(text_or_line, **kwargs)
+            yield from self.parse_text_iter(text_or_line, **kwargs)
         elif text_or_line.is_parseable:
-            return self.parse_line(text_or_line, **kwargs)
+            yield from self.parse_line(text_or_line, **kwargs)
         else:
             raise Exception(f'Object {text_or_line} not parseable')
 
@@ -127,33 +130,32 @@ class Meter(Entity):
         return line._parses
     
     def parse_text(self, text, num_proc=1, progress=True):
+        iterr=self.parse_text_iter(text, num_proc=num_proc, progress=progress)
+        deque(iterr,maxlen=0)
+
+    def parse_text_iter(self, text, progress=True, num_proc=1, **kwargs):
         from .parsing import ParseList
         assert type(text) is Text
         text._parses=ParseList()
-        for parsed_line in self.parse_text_iter(text, num_proc=num_proc, progress=progress):
-            text._parses.extend(parsed_line._parses)
-        return text._parses
-
-    def parse_text_iter(self, text, progress=True, num_proc=1, **kwargs):
-        assert type(text) is Text
-        
-        def get_iterr(iterr):
-            return tqdm(
-                iterr,
-                desc=f'Parsing {text.parse_unit_attr}',
-                disable=not progress,
-                position=0,
-                total = len(text.parseable_units)
-            )
-        if num_proc<2:
-            for pline in get_iterr(text.parseable_units):
-                self.parse_line(pline, progress=False, **kwargs)
-                yield pline
-        else:
-            with mp.Pool(num_proc) as pool:
-                objs = [(unit,self) for unit in text.parseable_units]
-                iterr = pool.imap(_parse_iter, objs)
-                yield from get_iterr(iterr)
+        with logmap(f'parsing {text}') as lm:
+            def get_iterr(iterr):
+                return tqdm(
+                    iterr,
+                    desc=f'Parsing {text.parse_unit_attr}',
+                    disable=not progress,
+                    position=0,
+                    total = len(text.parseable_units)
+                )
+            objs = [(unit,self) for unit in text.parseable_units]
+            for parsed_line in lm.imap(
+                    _parse_iter,
+                    objs,
+                    progress=progress,
+                    desc=f'parsing {len(objs)} {text.parse_unit_attr}',
+                    num_proc=num_proc
+                ):
+                text._parses.extend(parsed_line._parses)
+                yield parsed_line
 
 
 def _parse_iter(obj):

@@ -95,12 +95,10 @@ class Text(Entity):
 
     # @cache
     def parse(self, **meter_kwargs):
-        if self._parses and self._mtr and (not meter_kwargs or Meter(**meter_kwargs).attrs == self._mtr.attrs):
-            return self._parses
-        
-        self._parses=[]
-        deque(self.parse_iter(**meter_kwargs), maxlen=0)
-        return self.best_parses
+        if not self._parses or not self._mtr or (meter_kwargs and Meter(**meter_kwargs).attrs != self._mtr.attrs):
+            self._parses=[]
+            deque(self.parse_iter(**meter_kwargs), maxlen=0)
+        return self._parses
 
     def parse_iter(self, progress=True, **meter_kwargs):
         meter = self.get_meter(**meter_kwargs)
@@ -141,7 +139,8 @@ class Text(Entity):
     
     @cached_property
     def best_parses(self):
-        return self._concat_line_parses('best_parses')
+        from .parsing import ParseList
+        return ParseList(line.best_parse for line in self.parseable_units)
 
     @cached_property
     def unbounded_parses(self):
@@ -149,7 +148,10 @@ class Text(Entity):
     
     @cache
     def parse_stats(self, norm=False):
-        return self._concat_line_dfs('parse_stats' if not norm else 'parse_stats_norm')
+        return pd.DataFrame(
+            line.parse_stats(norm=norm)
+            for line in self.parseable_units
+        )
 
 
 

@@ -27,9 +27,18 @@ from .constraints import *
 @total_ordering
 class Parse(Entity):
     prefix='parse'
-    def __init__(self, wordforms_or_str, scansion:str='', meter:'Meter'=None, parent=None, positions=None):
+    def __init__(
+            self, 
+            wordforms_or_str, 
+            scansion:str='', 
+            meter:'Meter'=None, 
+            parent=None, 
+            positions=None, 
+            is_bounded=False,
+            bounded_by=None):
         from .meter import Meter
         if not positions: positions = []
+        self.positions = positions
 
         # meter
         if meter is None:
@@ -61,12 +70,9 @@ class Parse(Entity):
         self.positions_ls = copy(scansion)
         
         # divide positions
-        super().__init__(children=[], parent=parent)
-        self.positions = positions
-        self.children = self.positions
         self.line=parent
-        self.is_bounded = False
-        self.bounded_by = None
+        self.is_bounded = is_bounded
+        self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
         self.unmetrical = False
         self.comparison_nums = set()
         self.comparison_parses = []
@@ -77,8 +83,47 @@ class Parse(Entity):
         # self.violset=Multiset()
         self.num_slots_positioned=0
         if not positions:
+            super().__init__(children=[], parent=parent)
             for mpos_str in self.positions_ls: self.extend(mpos_str)
+        else:
+            super().__init__(children=positions, parent=parent)
+        self.children = self.positions
+        self.init()
+
+    def init(self):
+        for pos in self.positions:
+            pos.parse = self
+            pos.init()
     
+    def to_json(self):
+        return super().to_json(**{
+            'line':self.line.to_json(),
+            'meter':self.meter.to_json(),
+            'is_bounded':self.is_bounded,
+            'rank':self.parse_rank,
+            'meter':self.meter_str,
+            'stress':self.stress_str,
+            'score':self.score,
+            'bounded_by':list(self.bounded_by),
+        })
+    
+    def from_json(json_d):
+        line = Entity.from_json(json_d['line'])
+        meter = Entity.from_json(json_d['meter'])
+        positions = [Entity.from_json(d) for d in json_d['children']]
+        slot_iter = (slot for pos in positions for slot in pos.slots)
+        syll_iter = (syll for word in line.wordforms for syll in word.children)
+        for syll,slot in zip(syll_iter,slot_iter):
+            slot.unit = syll
+        return Parse(
+            line.wordforms,
+            positions=positions,
+            parent=line,
+            meter=meter,
+            is_bounded=json_d['is_bounded'],
+            bounded_by=json_d['bounded_by']
+        )
+
     @property
     def slots(self):
         return [slot for mpos in self.positions for slot in mpos.slots]
@@ -367,7 +412,10 @@ class Parse(Entity):
     def html(self): return self.to_html()
 
     @cached_property
-    def wordtokens(self): return self.line.wordtokens
+    def wordtokens(self): 
+        if self.line: return self.line.wordtokens
+        return WordTokenList(WordToken(wf.txt) for wf in self.wordforms)
+
 
     def to_html(self, as_str=False, css=HTML_CSS, blockquote=False):
         wordtokend = {wt:[] for wt in self.wordtokens}
@@ -393,7 +441,7 @@ class Parse(Entity):
                 output.append(wordtoken.txt)
         out = ''.join(output)
         out = f'<style>{css}</style><div class="parse">{out}</div>'
-        if blockquote: out+=f'<div class="miniquote">{self.__repr__(bad_keys={"txt"})}</div>'
+        if blockquote: out+=f'<div class="miniquote">⎿ {self.__repr__(bad_keys={"txt","line_txt"})}</div>'
         return out if as_str else HTML(out)
 
 
@@ -412,7 +460,10 @@ class ParsePosition(Entity):
             num_slots=len(self.slots),
             **kwargs
         )
-        # init?
+        if self.parse: self.init()
+    
+    def init(self):
+        assert self.parse
         for cname,constraint in self.parse.constraint_d.items():
             slot_viols = [int(bool(vx)) for vx in constraint(self)]
             assert len(slot_viols) == len(self.slots)
@@ -420,7 +471,7 @@ class ParsePosition(Entity):
             if any(slot_viols): self.violset.add(cname)
             for viol,slot in zip(slot_viols, self.slots):
                 slot.viold[cname]=viol
-    
+
     def __copy__(self):
         new = ParsePosition(
             self.meter_val, 
@@ -432,6 +483,18 @@ class ParsePosition(Entity):
         new._attrs = copy(self._attrs)
         return new
     
+    def to_json(self):
+        return super().to_json(meter_val=self.meter_val)
+    
+    def from_json(json_d):
+        return ParsePosition(
+            json_d['meter_val'],
+            children=[
+                ParseSlot.from_json(d)
+                for d in json_d['children']
+            ]
+        )
+
     @cached_property
     def attrs(self):
         return {
@@ -469,16 +532,23 @@ class ParsePosition(Entity):
 class ParseSlot(Entity):
     prefix='meterslot'
     # @profile
-    def __init__(self, unit:'Syllable', position=None, **kwargs):
+    def __init__(self, unit:'Syllable'=None, parent=None, children=[], viold={}, **kwargs):
         self.unit = unit
-        self.viold = {}
-        super().__init__(children=[], parent=position, **kwargs)
+        self.viold = {**viold}
+        super().__init__(children=[], parent=parent, **kwargs)
 
     def __copy__(self):
         new = ParseSlot(unit=self.unit)
         new.viold = copy(self.viold)
         new._attrs = copy(self._attrs)
         return new
+    
+    def to_json(self):
+        return super().to_json(
+            # unit=self.unit.to_json(), 
+            viold=self.viold
+        )
+    
     
     @cached_property
     def meter_val(self): return self.parent.meter_val
@@ -573,10 +643,10 @@ class ParseList(EntityList):
                 relation = parse.bounding_relation(comp_parse)
                 if relation == Bounding.bounded:
                     parse.is_bounded = True
-                    parse.bounded_by = comp_parse
+                    parse.bounded_by.append((comp_parse.meter_str,comp_parse.stress_str))
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
-                    comp_parse.bounded_by = parse
+                    comp_parse.bounded_by.append((parse.meter_str,parse.stress_str))
         self._bound_init = True
         return self.unbounded
     

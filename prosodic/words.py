@@ -96,6 +96,8 @@ class WordToken(Entity):
 
     def to_json(self): 
         return super().to_json(lang=self.lang)
+    
+    
 
 
 class WordType(Entity):
@@ -115,7 +117,9 @@ class WordType(Entity):
     def to_json(self):
         return super().to_json(lang=self.lang)
 
-
+    @property
+    def wtoken(self): 
+        return WordToken(self.txt, lang=self.lang, children=self.children)
 
     @property
     def forms(self): return self.children
@@ -195,6 +199,11 @@ class WordForm(Entity):
             sylls_text=self.sylls_text,
         )
     
+    @property
+    def wtoken(self): 
+        if self.parent: return self.parent.wtoken
+        return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
+    
     @cached_property
     def syllables(self): return self.children
 
@@ -217,7 +226,13 @@ class WordForm(Entity):
 
 
 
-
+    def to_hash(self):
+        return hashstr(
+            self._txt,
+            self.parent.lang,
+            self.sylls_ipa,
+            self.sylls_text,
+        )
 
 
 

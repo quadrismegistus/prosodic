@@ -32,8 +32,11 @@ class Entity(UserList):
         self._mtr=None
         for k,v in self._attrs.items(): setattr(self,k,v)
 
+    def to_hash(self):
+        return hashstr(self.txt, tuple(sorted(self.attrs.items())))
+
     def __hash__(self):
-        return hash((self.txt, tuple(sorted(self.attrs.items()))))
+        return hash(self.to_hash())
 
     def __eq__(self, other):
         return self is other
@@ -41,20 +44,20 @@ class Entity(UserList):
     def __bool__(self): return True
 
     def to_json(self, no_txt=False, yes_txt=False, **kwargs):
+        txt=(self._txt if not yes_txt else self.txt) if not no_txt else None
         return {
             '_class':self.__class__.__name__,
-            **({'txt':(self._txt if not yes_txt else self.txt)} if not no_txt else {}),
+            **({'txt':txt} if txt is not None and (yes_txt or txt) else {}),
             'children':[kid.to_json() for kid in self.children],
             **kwargs
         }
 
     @staticmethod
     def from_json(json_d):
-        from .imports import INITCLASSES, CHILDCLASSES, CHILDCLASSLISTS
+        from .imports import GLOBALS
         classname=json_d['_class']
-        classx = INITCLASSES[classname]
-        childclassx = CHILDCLASSES[classname]
-        listclassx = CHILDCLASSLISTS[classname]
+        classx = GLOBALS[classname]
+        childx = GLOBALS.get(classname,Entity)
         children = json_d['children']
 
         inpd = {
@@ -65,7 +68,7 @@ class Entity(UserList):
 
         if children:
             children = list(
-                childclassx.from_json(d)
+                childx.from_json(d)
                 for d in json_d['children']
             )
         return classx(children=tuple(children), **inpd)
@@ -364,18 +367,19 @@ class Entity(UserList):
             decode=orjson.loads
         )
 
-    def get_key(self, key):
-        key=f'{self.__class__.__name__}(key={key})'
-        return key
-
-    def from_cache(self,key):
-        key=self.get_key(key)
+    def from_json_cache(self,key=None):
+        if hasattr(key,'to_hash'): 
+            key=key.to_hash()
+        elif key:
+            key=hashstr(key)
+        if key:
+            key=hashstr(self.to_hash(), key)
+        else:
+            key=self.to_hash()
         if self.use_cache and key in self.json_cache:
-            children = self.from_json(self.json_cache[key])
-            return [x for x in children]
-        return None
+            return self.from_json(self.json_cache[key])
         
-    def to_cache(self, key):
+    def to_json_cache(self, key):
         key=self.get_key(key)
         data = self.to_json()
         self.json_cache[key] = data

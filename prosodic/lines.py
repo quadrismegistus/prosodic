@@ -43,13 +43,20 @@ class Line(Text):
                         if 'word_str' in word_d and 'word_ispunc'
                     ]
             Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
+            self._parses = []
             self.is_parseable = True
             if needs_caching and self.use_cache:
                 self.to_cache(txt)
         
         
 
-    
+    def only_wordforms(self, wordforms):
+        from .words import WordFormList
+        line = Line(txt=self._txt, children=copy(self.children), parent=self.parent)
+        wordformset = {wf.to_hash() for wf in wordforms}
+        for wtype in self.wordtypes:
+            wtype.children = WordFormList(wf for wf in wtype.children if wf.to_hash() in wordformset)
+        return line    
 
     def to_json(self):
         return Entity.to_json(self,yes_txt=True)

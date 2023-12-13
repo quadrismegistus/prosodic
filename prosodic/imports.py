@@ -79,7 +79,7 @@ DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
 HTML_CSS='''.violation { color:#f43838; }
 .meter_strong { text-decoration: overline;}
-.miniquote { margin-left:1.5em;margin-top:.5em;font-family:monospace;}
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
 .parse {font-family:monospace;}
 .stress_strong { text-decoration: underline; text-underline-offset: 3px; }
 .stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
@@ -102,6 +102,8 @@ import textwrap
 from collections import deque
 import multiprocessing as mp
 from pprint import pprint
+from copy import copy
+
 
 # patches
 import builtins
@@ -158,6 +160,9 @@ But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
 
+GLOBALS = globals()
+
+
 INITCLASSES = {
     'Text':Text,
     'Stanza':Stanza,
@@ -167,6 +172,12 @@ INITCLASSES = {
     'WordForm':WordForm,
     'Syllable':Syllable,
     'Phoneme':Phoneme,
+
+    'WordFormList':WordFormList,
+    'Parse':Parse,
+    'ParsePosition':ParsePosition,
+    'ParseSlot':ParseSlot,
+    'ParseList':ParseList
 }
 
 CHILDCLASSES = {
@@ -178,6 +189,9 @@ CHILDCLASSES = {
     'WordForm':Syllable,
     'Syllable':PhonemeClass,
     'Phoneme':None,
+
+    'WordFormList':WordForm,
+    'ParseList':Parse
 }
 
 CHILDCLASSLISTS = {

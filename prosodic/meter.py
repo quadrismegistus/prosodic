@@ -12,7 +12,8 @@ class Meter(Entity):
             max_s=METER_MAX_S, 
             max_w=METER_MAX_W, 
             resolve_optionality=METER_RESOLVE_OPTIONALITY,
-            exhaustive=False
+            exhaustive=False,
+            **kwargs
             ):
         self.constraints = get_constraints(constraints)
         self.categorical_constraints = get_constraints(categorical_constraints)
@@ -21,6 +22,9 @@ class Meter(Entity):
         self.resolve_optionality=resolve_optionality
         self.exhaustive=exhaustive
         super().__init__()
+
+    def to_json(self):
+        return super().to_json(**self.attrs)
 
     @cached_property
     def constraint_names(self):
@@ -70,14 +74,19 @@ class Meter(Entity):
     def parse_line(self, line, **kwargs):
         assert line.is_parseable
         if line.needs_parsing(meter=self):
+            if self.use_cache:
+                parses = self.from_json_cache(line)
+                if parses:
+                    line._parses = parses
+                    return parses
+                
             if self.exhaustive:
                 return self.parse_line_exhaustively(line)
             else:
                 return self.parse_line_fast(line)
         else:
             return line._parses
-
-
+        
     def parse_line_fast(self, line):
         from .parsing import ParseList, Parse
         assert line.is_parseable

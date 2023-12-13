@@ -124,9 +124,8 @@ def is_numeric(x:object) -> bool:
 
 
 
-def hashstr(input_string, length=None):
+def hashstr(*inputs, length=None):
     import hashlib
-    # Create a SHA-256 hash of the input string
+    input_string = str(inputs)
     sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
-    # Truncate the hash to the specified length
     return sha256_hash[:length]

@@ -5,6 +5,7 @@ from .texts import Text
 ## METER
 class Meter(Entity):
     prefix='meter'
+    use_cache = USE_CACHE
     
     def __init__(self,
             constraints=DEFAULT_CONSTRAINTS, 
@@ -73,19 +74,22 @@ class Meter(Entity):
 
     def parse_line(self, line, **kwargs):
         assert line.is_parseable
-        if line.needs_parsing(meter=self):
-            if self.use_cache:
-                parses = self.from_json_cache(line)
-                if parses:
-                    line._parses = parses
-                    return parses
-                
-            if self.exhaustive:
-                return self.parse_line_exhaustively(line)
-            else:
-                return self.parse_line_fast(line)
-        else:
+        if not line.needs_parsing(meter=self):
             return line._parses
+        if self.use_cache:
+            parses = self.from_json_cache(line)
+            if parses:
+                line._parses = parses
+                return parses
+            
+        if self.exhaustive:
+            parses = self.parse_line_exhaustive(line)
+        else:
+            parses = self.parse_line_fast(line)
+        
+        if self.use_cache:
+            self.to_json_cache(line, parses)
+        return parses
         
     def parse_line_fast(self, line):
         from .parsing import ParseList, Parse
@@ -114,7 +118,7 @@ class Meter(Entity):
     
 
     ### slower, exhaustive parser
-    def parse_line_exhaustively(self, line, progress=None):
+    def parse_line_exhaustive(self, line, progress=None):
         from .parsing import ParseList,Parse
         assert line.is_parseable
 
@@ -159,14 +163,15 @@ class Meter(Entity):
                         position=0,
                         total = len(text.parseable_units)
                     )
-                objs = [(unit,self) for unit in text.parseable_units]
-                for parsed_line in lm.imap(
+                objs = [(unit.to_json(),self.to_json()) for unit in text.parseable_units]
+                for parsed_line_json in lm.imap(
                         _parse_iter,
                         objs,
                         progress=progress,
                         desc=f'parsing {len(objs)} {text.parse_unit_attr}',
                         num_proc=num_proc
                     ):
+                    parsed_line = from_json(parsed_line_json)
                     yield parsed_line
                     text._parses.append(parsed_line._parses)
         else:
@@ -174,6 +179,7 @@ class Meter(Entity):
 
 
 def _parse_iter(obj):
-    line,meter = obj
+    line_json,meter_json = obj
+    line,meter = from_json(line_json), from_json(meter_json)
     line.parse(meter=meter,progress=False)
-    return line
+    return line.to_json()

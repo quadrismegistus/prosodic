@@ -129,3 +129,21 @@ def hashstr(*inputs, length=None):
     input_string = str(inputs)
     sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
     return sha256_hash[:length]
+
+
+
+def from_json(json_d):
+    from .imports import GLOBALS
+    if not '_class' in json_d:
+        pprint(json_d)
+        raise Exception
+    classname=json_d['_class']
+    classx = GLOBALS[classname]
+    return classx.from_json(json_d)
+
+def to_json(obj, fn=None):
+    data = obj.to_json()
+    if fn:
+        os.makedirs(os.path.dirname(fn), exist_ok=True)
+        with open(fn,'wb') as of:
+            of.write(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY))

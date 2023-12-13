@@ -33,7 +33,7 @@ class Entity(UserList):
         for k,v in self._attrs.items(): setattr(self,k,v)
 
     def to_hash(self):
-        return hashstr(self.txt, tuple(sorted(self.attrs.items())))
+        return hashstr(self.txt, tuple(sorted(self._attrs.items())))
 
     def __hash__(self):
         return hash(self.to_hash())
@@ -54,19 +54,17 @@ class Entity(UserList):
 
     @staticmethod
     def from_json(json_d):
-        from .imports import GLOBALS
+        from .imports import GLOBALS, CHILDCLASSES
         classname=json_d['_class']
         classx = GLOBALS[classname]
-        childx = GLOBALS.get(classname,Entity)
+        childx = CHILDCLASSES.get(classname)
         children = json_d['children']
-
         inpd = {
             k:v 
             for k,v in json_d.items()
             if k not in {'children','_class'}
         }
-
-        if children:
+        if children and childx:
             children = list(
                 childx.from_json(d)
                 for d in json_d['children']
@@ -367,22 +365,32 @@ class Entity(UserList):
             decode=orjson.loads
         )
 
-    def from_json_cache(self,key=None):
+    def get_key(self,key):
         if hasattr(key,'to_hash'): 
             key=key.to_hash()
         elif key:
             key=hashstr(key)
-        if key:
-            key=hashstr(self.to_hash(), key)
-        else:
-            key=self.to_hash()
-        if self.use_cache and key in self.json_cache:
-            return self.from_json(self.json_cache[key])
+        return key
+
+    def from_json_cache(self,obj=None,init=True):
+        if obj is None: obj=self
+        key=self.get_key(obj)
+        if key and self.use_cache and key in self.json_cache:
+            datstr=self.json_cache[key]
+            return from_json(datstr) if init else datstr
         
-    def to_json_cache(self, key):
-        key=self.get_key(key)
-        data = self.to_json()
-        self.json_cache[key] = data
+    def children_from_json_cache(self):
+        res=self.from_json_cache()
+        return None if res is None else res.children
+        
+    def to_json_cache(self, key_obj=None, val_obj=None, force=False):
+        if key_obj is None: key_obj=self
+        if val_obj is None: val_obj=key_obj
+        key=self.get_key(key_obj)
+        if key and (force or not key in self.json_cache):
+            data = val_obj.to_json()
+            # print(f'caching {pprint(data)} to {key}')
+            self.json_cache[key] = data
         
 
 

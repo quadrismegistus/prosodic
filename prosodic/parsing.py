@@ -20,7 +20,7 @@ from .constraints import *
 #         self.total_score = None
 #         self.pause_comparisons = False
 #         self.parse_rank = None
-#         self.violset=Multiset()
+#         self.violset=Multiseft()
 #         for mpos in self.positions: 
 #             self.violset.update(mpos.violset)
 
@@ -43,6 +43,7 @@ class Parse(Entity):
         # meter
         if meter is None:
             meter = Meter()
+        self.meter_obj=self.meter=meter
         
         # wordforms
         assert wordforms_or_str
@@ -58,7 +59,6 @@ class Parse(Entity):
             self.wordforms = wordforms_or_str
 
         
-        self.meter=meter
         
         # slots
         # self.slots = [ParseSlot(slot) for slot in self.wordforms.slots]
@@ -96,24 +96,27 @@ class Parse(Entity):
             pos.init()
     
     def to_json(self):
-        return super().to_json(**{
+        return {
+            '_class':self.__class__.__name__,
+            'children':[pos.to_json() for pos in self.positions],
             'line':self.line.to_json(),
-            'meter':self.meter.to_json(),
+            'meter':self.meter_obj.to_json(),
             'is_bounded':self.is_bounded,
             'rank':self.parse_rank,
-            'meter':self.meter_str,
-            'stress':self.stress_str,
+            'meter_str':self.meter_str,
+            'stress_str':self.stress_str,
             'score':self.score,
             'bounded_by':list(self.bounded_by),
-        })
+        }
     
     def from_json(json_d):
-        line = Entity.from_json(json_d['line'])
-        meter = Entity.from_json(json_d['meter'])
-        positions = [Entity.from_json(d) for d in json_d['children']]
+        line = from_json(json_d['line'])
+        meter = from_json(json_d['meter'])
+        positions = [from_json(d) for d in json_d['children']]
         slot_iter = (slot for pos in positions for slot in pos.slots)
         syll_iter = (syll for word in line.wordforms for syll in word.children)
         for syll,slot in zip(syll_iter,slot_iter):
+            print([syll,slot])
             slot.unit = syll
         return Parse(
             line.wordforms,
@@ -486,14 +489,14 @@ class ParsePosition(Entity):
     def to_json(self):
         return super().to_json(meter_val=self.meter_val)
     
-    def from_json(json_d):
-        return ParsePosition(
-            json_d['meter_val'],
-            children=[
-                ParseSlot.from_json(d)
-                for d in json_d['children']
-            ]
-        )
+    # def from_json(json_d):
+    #     return ParsePosition(
+    #         json_d['meter_val'],
+    #         children=[
+    #             ParseSlot.from_json(d)
+    #             for d in json_d['children']
+    #         ]
+    #     )
 
     @cached_property
     def attrs(self):
@@ -533,6 +536,10 @@ class ParseSlot(Entity):
     prefix='meterslot'
     # @profile
     def __init__(self, unit:'Syllable'=None, parent=None, children=[], viold={}, **kwargs):
+        if unit is None and children:
+            assert len(children)==1
+            unit = children[0]
+            
         self.unit = unit
         self.viold = {**viold}
         super().__init__(children=[], parent=parent, **kwargs)
@@ -606,7 +613,8 @@ class ParseList(EntityList):
     @cached_property
     def attrs(self):
         return {
-            **self._attrs, 
+            **self.line.prefix_attrs,
+            **self._attrs,
             'num_parses':self.num_parses,
             # 'num_all_parses':self.num_all_parses
         }
@@ -686,24 +694,22 @@ class ParseList(EntityList):
     
     @cached_property
     def df(self):
+        df = self.df_syll[[c for c in self.df_syll if not c.endswith('_txt') and not c.startswith('parselist_')]]
         index = [
             i
-            for i in self.df_syll.index.names
-            if not i.startswith('meter')   # meterpos_ and metersyll_ are by syll
+            for i in df.index.names
+            if not i.startswith('meter')# meterpos_ and metersyll_ are by syll
         ]
         aggby = {
             col:np.median if 'parse' in col else np.sum
-            for col in self.df_syll.columns
-        }
-        dropcols = {
-            'parselist_num_parses',
-            'parselist_num_all_parses'
+            for col in df
         }
         odf = self.df_syll.groupby(index).agg(aggby)
-        return odf[[c for c in odf if c not in dropcols]]
+        return odf
+
     @cached_property
     def df_syll(self):
-        return self.get_df()
+        return self.get_df().assign(**self._attrs)
     
     @cached_property
     def scansions(self, **kwargs):

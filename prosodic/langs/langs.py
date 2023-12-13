@@ -6,7 +6,7 @@ class Language:
     cache_fn='lang_wordtypes.sqlitedict'
     lang_espeak = None
     lang = None
-    use_cache = True
+    use_cache = False
 
     def __getitem__(self, token): return self.get(token)
     def get(self, token): return []

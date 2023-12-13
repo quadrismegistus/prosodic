@@ -7,6 +7,7 @@ PATH_HOME = os.path.expanduser('~/prosodic_data')
 PATH_HOME_DATA = os.path.join(PATH_HOME, 'data')
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
+USE_CACHE=True
 
 PATH_MTREE = os.path.join(PATH_REPO, 'metricaltree')
 sys.path.append(PATH_MTREE)
@@ -44,6 +45,8 @@ DF_INDEX=[
     'bestparse_txt',
     'parse_meter',
     'parse_stress',
+    'parse_meter_str',
+    'parse_stress_str',
     'sent_num',
     'sentpart_num',
     'meterpos_num',
@@ -191,7 +194,9 @@ CHILDCLASSES = {
     'Phoneme':None,
 
     'WordFormList':WordForm,
-    'ParseList':Parse
+    'ParseList':Parse,
+    'Parse':ParsePosition,
+    'ParsePosition':ParseSlot
 }
 
 CHILDCLASSLISTS = {

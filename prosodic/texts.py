@@ -9,7 +9,7 @@ class Text(Entity):
     prefix='text'
     parse_unit_attr='lines'
     list_type = StanzaList
-    use_cache=True
+    use_cache=USE_CACHE
 
     cached_properties_to_clear = [
         'best_parses',
@@ -27,20 +27,20 @@ class Text(Entity):
             parent: Optional[Entity] = None,
             children: Optional[list] = [],
             tokens_df: Optional[pd.DataFrame] = None,
-            use_cache=True,
+            use_cache=USE_CACHE,
             **kwargs
             ):
         from .lines import Stanza
         if not txt and not filename and not children and tokens_df is None:
             raise Exception('must provide either txt string or filename or token dataframe')
         txt = get_txt(txt,filename)
+        self._txt = txt
         self._fn = filename
         self.lang=lang if lang else detect_lang(txt)
         self.use_cache = use_cache
-        key=hashstr((self.lang, txt))
         if not children:
             if self.use_cache: 
-                children = self.from_cache(key)
+                children = self.children_from_json_cache()
             if not children:
                 with logmap(f'building text with {len(txt.split()):,} words') as lm:
                     if tokens_df is None: 
@@ -49,8 +49,6 @@ class Text(Entity):
                         Stanza(parent=self, tokens_df=stanza_df)                
                         for i,stanza_df in lm.iter_progress(tokens_df.groupby('stanza_i'), desc='iterating stanzas')
                     ]
-                    self.to_cache(key)
-        
         super().__init__(
             txt, 
             children=children, 
@@ -59,6 +57,10 @@ class Text(Entity):
         )
         self._parses=[]
         self._mtr=None
+        if self.use_cache: self.to_json_cache()
+
+    def to_hash(self):
+        return hashstr(self._txt)
 
     def to_json(self):
         return super().to_json(no_txt=True)

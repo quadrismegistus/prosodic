@@ -81,15 +81,21 @@ class WordToken(Entity):
 
     prefix='wordtoken'
     @profile
-    def __init__(self, token, lang=DEFAULT_LANG, parent=None, **kwargs):
-        if token.startswith('\n'): token=token[1:]
-        self.word = word = Word(token, lang=lang)
+    def __init__(self, txt, lang=DEFAULT_LANG, parent=None, children=[], **kwargs):
+        if txt.startswith('\n'): txt=txt[1:]
+        self.lang = lang
+        if not children: 
+            children=WordTypeList([Word(txt, lang=lang)])
+        self.word = children[0]
         super().__init__(
-            children=[word],
+            children=children,
             parent=parent,
-            txt=token,
+            txt=txt,
             **kwargs
         )
+
+    def to_json(self): 
+        return super().to_json(lang=self.lang)
 
 
 class WordType(Entity):
@@ -98,13 +104,18 @@ class WordType(Entity):
     
     prefix='word'
     @profile
-    def __init__(self, token:str, children:list, parent=None, **kwargs):
+    def __init__(self, txt:str, children:list, parent=None, **kwargs):
         super().__init__(
             children=children, 
             parent=parent,
-            txt=token,
+            txt=txt,
             **kwargs
         )
+
+    def to_json(self):
+        return super().to_json(lang=self.lang)
+
+
 
     @property
     def forms(self): return self.children
@@ -144,7 +155,7 @@ class WordForm(Entity):
     list_type = SyllableList
 
     @profile
-    def __init__(self, txt:str, sylls_ipa=[], sylls_text=[], syll_sep='.'):
+    def __init__(self, txt:str, sylls_ipa=[], sylls_text=[], children=[], syll_sep='.'):
         from .syllables import Syllable
         sylls_ipa=(
             sylls_ipa.split(syll_sep) 
@@ -160,21 +171,33 @@ class WordForm(Entity):
                 else sylls_ipa
             )
         )
-        children=[]
-        if sylls_text and sylls_ipa:
-            for syll_str,syll_ipa in zip(sylls_text, sylls_ipa):
-                syll = Syllable(
-                    syll_str, 
-                    ipa=syll_ipa, 
-                    parent=self
-                )
-                children.append(syll)
+        if not children:
+            if sylls_text and sylls_ipa:
+                children = [
+                    Syllable(
+                        syll_str, 
+                        ipa=syll_ipa,
+                    )
+                    for syll_str,syll_ipa in zip(sylls_text, sylls_ipa)
+                ]
         super().__init__(
             # sylls_ipa=sylls_ipa, 
             # sylls_text=sylls_text, 
             txt=txt,
             children=children
         )
+        self.sylls_ipa = sylls_ipa
+        self.sylls_text = sylls_text
+
+    def to_json(self):
+        return super().to_json(
+            sylls_ipa=self.sylls_ipa,
+            sylls_text=self.sylls_text,
+        )
+    
+    @cached_property
+    def syllables(self): return self.children
+
 
     @cached_property
     def token_stress(self):

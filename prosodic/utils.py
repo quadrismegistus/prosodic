@@ -120,3 +120,13 @@ def is_numeric(x:object) -> bool:
     """
     import numbers
     return isinstance(x, numbers.Number)
+
+
+
+
+def hashstr(input_string, length=None):
+    import hashlib
+    # Create a SHA-256 hash of the input string
+    sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
+    # Truncate the hash to the specified length
+    return sha256_hash[:length]

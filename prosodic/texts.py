@@ -9,6 +9,7 @@ class Text(Entity):
     prefix='text'
     parse_unit_attr='lines'
     list_type = StanzaList
+    use_cache=True
 
     cached_properties_to_clear = [
         'best_parses',
@@ -26,7 +27,7 @@ class Text(Entity):
             parent: Optional[Entity] = None,
             children: Optional[list] = [],
             tokens_df: Optional[pd.DataFrame] = None,
-            init: bool = True,
+            use_cache=True,
             **kwargs
             ):
         from .lines import Stanza
@@ -35,15 +36,20 @@ class Text(Entity):
         txt = get_txt(txt,filename)
         self._fn = filename
         self.lang=lang if lang else detect_lang(txt)
-        
+        self.use_cache = use_cache
+        key=hashstr((self.lang, txt))
         if not children:
-            with logmap(f'building text with {len(txt.split()):,} words') as lm:
-                if tokens_df is None: 
-                    tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
-                children = [
-                    Stanza(parent=self, tokens_df=stanza_df)                
-                    for i,stanza_df in lm.iter_progress(tokens_df.groupby('stanza_i'), desc='iterating stanzas')
-                ]
+            if self.use_cache: 
+                children = self.from_cache(key)
+            if not children:
+                with logmap(f'building text with {len(txt.split()):,} words') as lm:
+                    if tokens_df is None: 
+                        tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
+                    self.children = children = [
+                        Stanza(parent=self, tokens_df=stanza_df)                
+                        for i,stanza_df in lm.iter_progress(tokens_df.groupby('stanza_i'), desc='iterating stanzas')
+                    ]
+                    self.to_cache(key)
         
         super().__init__(
             txt, 
@@ -54,6 +60,8 @@ class Text(Entity):
         self._parses=[]
         self._mtr=None
 
+    def to_json(self):
+        return super().to_json(no_txt=True)
 
     ### parsing ###
     # def set_meter(self, **meter_kwargs):
@@ -180,3 +188,5 @@ class Stanza(Text):
         Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
     
 
+    def to_json(self):
+        return Entity.to_json(self,no_txt=True)

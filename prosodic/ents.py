@@ -8,6 +8,8 @@ class Entity(UserList):
     prefix='ent'
     list_type = None
     cached_properties_to_clear = []
+    use_cache = False
+    
 
     """
     Root Entity class
@@ -37,6 +39,37 @@ class Entity(UserList):
         return self is other
 
     def __bool__(self): return True
+
+    def to_json(self, no_txt=False, yes_txt=False, **kwargs):
+        return {
+            '_class':self.__class__.__name__,
+            **({'txt':(self._txt if not yes_txt else self.txt)} if not no_txt else {}),
+            'children':[kid.to_json() for kid in self.children],
+            **kwargs
+        }
+
+    @staticmethod
+    def from_json(json_d):
+        from .imports import INITCLASSES, CHILDCLASSES, CHILDCLASSLISTS
+        classname=json_d['_class']
+        classx = INITCLASSES[classname]
+        childclassx = CHILDCLASSES[classname]
+        listclassx = CHILDCLASSLISTS[classname]
+        children = json_d['children']
+
+        inpd = {
+            k:v 
+            for k,v in json_d.items()
+            if k not in {'children','_class'}
+        }
+
+        if children:
+            children = list(
+                childclassx.from_json(d)
+                for d in json_d['children']
+            )
+        return classx(children=tuple(children), **inpd)
+
 
     @cached_property
     def attrs(self):
@@ -112,6 +145,11 @@ class Entity(UserList):
     
     @cached_property
     def ld(self): return self.get_ld()
+
+    @cached_property
+    def child_class(self):
+        from .imports import CLASSES
+        return CLASSES.get(self.child_type)
 
     def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
@@ -316,13 +354,39 @@ class Entity(UserList):
     def is_phon(self): return self.__class__.__name__ == 'PhonemeClass'
 
 
+    @cached_property
+    def json_cache(self):
+        from sqlitedict import SqliteDict
+        return SqliteDict(
+            os.path.join(PATH_HOME_DATA, f'json_cache.{self.__class__.__name__}.sqlitedict'),
+            autocommit=True,
+            encode=orjson.dumps,
+            decode=orjson.loads
+        )
+
+    def get_key(self, key):
+        key=f'{self.__class__.__name__}(key={key})'
+        return key
+
+    def from_cache(self,key):
+        key=self.get_key(key)
+        if self.use_cache and key in self.json_cache:
+            children = self.from_json(self.json_cache[key])
+            return [x for x in children]
+        return None
+        
+    def to_cache(self, key):
+        key=self.get_key(key)
+        data = self.to_json()
+        self.json_cache[key] = data
+        
 
 
 
 class EntityList(Entity):
     def __init__(self, children=[], parent=None, **kwargs):
         self.parent = parent
-        self.children = list(children)
+        self.children = [x for x in children]
         self._attrs = kwargs
         self._txt=None
         for k,v in self._attrs.items(): setattr(self,k,v)

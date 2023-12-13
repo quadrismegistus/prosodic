@@ -17,3 +17,4 @@ Werkzeug==2.2.2
 editdistance @ git+https://github.com/roy-ht/editdistance
 logmap @ git+https://github.com/quadrismegistus/logmap
 loguru
+orjson

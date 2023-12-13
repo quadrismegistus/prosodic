@@ -51,6 +51,7 @@ DF_INDEX=[
     'meterpos_val',
     'wordtoken_num',
     'wordtoken_txt',
+    'word_lang',
     'wordform_num',
     'syll_num',
     'syll_txt',
@@ -100,6 +101,7 @@ import random
 import textwrap
 from collections import deque
 import multiprocessing as mp
+from pprint import pprint
 
 # patches
 import builtins
@@ -122,6 +124,7 @@ from langdetect import detect as detect_lang
 from logmap import logmap, logger
 from tqdm import tqdm
 from multiset import Multiset
+import orjson
 
 # local imports
 from .utils import *
@@ -154,3 +157,36 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+INITCLASSES = {
+    'Text':Text,
+    'Stanza':Stanza,
+    'Line':Line,
+    'WordToken':WordToken,
+    'WordType':WordType,
+    'WordForm':WordForm,
+    'Syllable':Syllable,
+    'Phoneme':Phoneme,
+}
+
+CHILDCLASSES = {
+    'Text':Stanza,
+    'Stanza':Line,
+    'Line':WordToken,
+    'WordToken':WordType,
+    'WordType':WordForm,
+    'WordForm':Syllable,
+    'Syllable':PhonemeClass,
+    'Phoneme':None,
+}
+
+CHILDCLASSLISTS = {
+    'Text':StanzaList,
+    'Stanza':LineList,
+    'Line':WordTokenList,
+    'WordToken':WordTypeList,
+    'WordType':WordFormList,
+    'WordForm':SyllableList,
+    'Syllable':PhonemeList,
+    'Phoneme':None,
+}

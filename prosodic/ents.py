@@ -58,17 +58,17 @@ class Entity(UserList):
         classname=json_d['_class']
         classx = GLOBALS[classname]
         childx = CHILDCLASSES.get(classname)
-        children = json_d['children']
+        children = json_d.get('children',[])
         inpd = {
             k:v 
             for k,v in json_d.items()
             if k not in {'children','_class'}
         }
         if children and childx:
-            children = list(
+            children = [
                 childx.from_json(d)
                 for d in json_d['children']
-            )
+            ]
         return classx(children=tuple(children), **inpd)
 
 
@@ -364,6 +364,10 @@ class Entity(UserList):
             encode=orjson.dumps,
             decode=orjson.loads
         )
+        
+    def children_from_json_cache(self):
+        res=self.from_json_cache()
+        return None if res is None else res.children
 
     def get_key(self,key):
         if hasattr(key,'to_hash'): 
@@ -372,16 +376,13 @@ class Entity(UserList):
             key=hashstr(key)
         return key
 
-    def from_json_cache(self,obj=None,init=True):
+    def from_json_cache(self,obj=None,as_dict=False):
         if obj is None: obj=self
         key=self.get_key(obj)
         if key and self.use_cache and key in self.json_cache:
-            datstr=self.json_cache[key]
-            return from_json(datstr) if init else datstr
-        
-    def children_from_json_cache(self):
-        res=self.from_json_cache()
-        return None if res is None else res.children
+            dat=self.json_cache[key]
+            return from_json(dat) if not as_dict else dat
+
         
     def to_json_cache(self, key_obj=None, val_obj=None, force=False):
         if key_obj is None: key_obj=self

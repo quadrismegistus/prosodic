@@ -166,6 +166,9 @@ class Text(Entity):
                 for line in self.parseable_units
             )
 
+    @cached_property
+    def line1(self):
+        return self.lines[0] if self.lines else None
 
 
 

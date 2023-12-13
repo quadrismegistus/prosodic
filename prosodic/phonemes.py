@@ -15,6 +15,7 @@ class PhonemeClass(Entity):
 	def to_json(self):
 		resd=super().to_json()
 		resd['_class']='Phoneme'
+		resd.pop('children')
 		return resd
 
 

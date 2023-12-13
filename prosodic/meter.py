@@ -77,7 +77,7 @@ class Meter(Entity):
         if not line.needs_parsing(meter=self):
             return line._parses
         if self.use_cache:
-            parses = self.from_json_cache(line)
+            parses = self.parses_from_json_cache(line)
             if parses:
                 line._parses = parses
                 return parses
@@ -90,7 +90,15 @@ class Meter(Entity):
         if self.use_cache:
             self.to_json_cache(line, parses)
         return parses
-        
+    
+    def parses_from_json_cache(self,line, as_dict=False):
+        from .parsing import ParseList
+        key=self.get_key(line)
+        if key and self.use_cache and key in self.json_cache:
+            dat=self.json_cache[key]
+            if as_dict: return  dat
+            return ParseList.from_json(dat,line=line)
+
     def parse_line_fast(self, line):
         from .parsing import ParseList, Parse
         assert line.is_parseable

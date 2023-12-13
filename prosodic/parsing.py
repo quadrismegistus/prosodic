@@ -99,7 +99,7 @@ class Parse(Entity):
         return {
             '_class':self.__class__.__name__,
             'children':[pos.to_json() for pos in self.positions],
-            'line':self.line.to_json(),
+            'wordforms':self.wordforms.to_json(),
             'meter':self.meter_obj.to_json(),
             'is_bounded':self.is_bounded,
             'rank':self.parse_rank,
@@ -109,17 +109,18 @@ class Parse(Entity):
             'bounded_by':list(self.bounded_by),
         }
     
-    def from_json(json_d):
-        line = from_json(json_d['line'])
+    @staticmethod
+    def from_json(json_d, line=None):
+        wordforms = from_json(json_d['wordforms'])
         meter = from_json(json_d['meter'])
         positions = [from_json(d) for d in json_d['children']]
-        slot_iter = (slot for pos in positions for slot in pos.slots)
-        syll_iter = (syll for word in line.wordforms for syll in word.children)
-        for syll,slot in zip(syll_iter,slot_iter):
-            print([syll,slot])
+        slots = [slot for pos in positions for slot in pos.slots]
+        sylls = [syll for word in wordforms for syll in word.children]
+        assert len(slots) == len(sylls)
+        for syll,slot in zip(sylls,slots):
             slot.unit = syll
         return Parse(
-            line.wordforms,
+            wordforms,
             positions=positions,
             parent=line,
             meter=meter,
@@ -467,6 +468,10 @@ class ParsePosition(Entity):
     
     def init(self):
         assert self.parse
+        if any (not slot.unit for slot in self.slots):
+            print(self.slots)
+            print([slot.__dict__ for slot in self.slots])
+            raise Exception
         for cname,constraint in self.parse.constraint_d.items():
             slot_viols = [int(bool(vx)) for vx in constraint(self)]
             assert len(slot_viols) == len(self.slots)
@@ -536,13 +541,18 @@ class ParseSlot(Entity):
     prefix='meterslot'
     # @profile
     def __init__(self, unit:'Syllable'=None, parent=None, children=[], viold={}, **kwargs):
+        # print(unit,parent,children,viold,kwargs)
         if unit is None and children:
             assert len(children)==1
             unit = children[0]
             
         self.unit = unit
         self.viold = {**viold}
-        super().__init__(children=[], parent=parent, **kwargs)
+        super().__init__(
+            children=[], 
+            parent=parent, 
+            **kwargs
+        )
 
     def __copy__(self):
         new = ParseSlot(unit=self.unit)
@@ -551,10 +561,12 @@ class ParseSlot(Entity):
         return new
     
     def to_json(self):
-        return super().to_json(
-            # unit=self.unit.to_json(), 
+        d=super().to_json(
+            unit=self.unit.to_hash(),
             viold=self.viold
         )
+        d.pop('children')
+        return d
     
     
     @cached_property
@@ -604,6 +616,15 @@ class ParseSlot(Entity):
 class ParseList(EntityList):
     index_name='parse'
     prefix='parselist'
+
+    @staticmethod
+    def from_json(json_d, line=None):
+        parses = [
+            Parse.from_json(d, line=line)
+            for d in json_d['children']
+        ]
+        return ParseList(parses, parent=line)
+
 
     @cached_property
     def num_parses(self): return self.num_unbounded
@@ -694,7 +715,11 @@ class ParseList(EntityList):
     
     @cached_property
     def df(self):
-        df = self.df_syll[[c for c in self.df_syll if not c.endswith('_txt') and not c.startswith('parselist_')]]
+        df = self.df_syll[[
+            c for c in self.df_syll 
+            if not c.endswith('_txt') 
+            and not c.startswith('parselist_')
+        ]]
         index = [
             i
             for i in df.index.names

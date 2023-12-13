@@ -124,7 +124,7 @@ def is_numeric(x:object) -> bool:
 
 
 
-def hashstr(*inputs, length=None):
+def hashstr(*inputs, length=HASHSTR_LEN):
     import hashlib
     input_string = str(inputs)
     sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()

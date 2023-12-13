@@ -7,7 +7,8 @@ PATH_HOME = os.path.expanduser('~/prosodic_data')
 PATH_HOME_DATA = os.path.join(PATH_HOME, 'data')
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-USE_CACHE=True
+USE_CACHE=False
+HASHSTR_LEN=12
 
 PATH_MTREE = os.path.join(PATH_REPO, 'metricaltree')
 sys.path.append(PATH_MTREE)

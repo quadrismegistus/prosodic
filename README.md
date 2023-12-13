@@ -6,7 +6,7 @@ Prosodic is a metrical-phonological parser written in Python. Currently, it can 
 
 Supports Python>=3.8.
 
-## Usage
+## Quickstart
 
 ### Install
 
@@ -18,7 +18,6 @@ For now, pip-install directly from this develop branch:
 pip install git+https://github.com/quadrismegistus/prosodic@develop
 ```
 
-
 #### 2. Install espeak
 
 Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) software, to ‘sound out’ unknown words.
@@ -29,9 +28,11 @@ Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) softw
 
 * *Windows*: Download and install from http://espeak.sourceforge.net/download.html.
 
-### Using Prosodic as a web app
+### Usage
 
-Prosodic has a new GUI (graphical user interface). In a terminal, after installing, run:
+#### Web app
+
+Prosodic has a new GUI (graphical user interface) in a web app. After installing, run:
 
 ```
 prosodic
@@ -39,12 +40,11 @@ prosodic
 
 Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/). It should look like this:
 
-<img width="800" alt="prosodic-gui2" src="https://github.com/quadrismegistus/prosodic/assets/733853/8acd4225-7425-43a9-8f68-aa5c1ff567f2">
+<img alt="prosodic-gui2" src="https://github.com/quadrismegistus/prosodic/assets/733853/8acd4225-7425-43a9-8f68-aa5c1ff567f2" width="800"/>
 
+#### Python
 
-### Use in code
-
-#### Texts
+##### Read texts
 
 
 ```python
@@ -92,6 +92,7 @@ text
 <th></th>
 <th></th>
 <th></th>
+<th>text_num</th>
 <th>word_lang</th>
 <th>word_num_forms</th>
 <th>syll_is_stressed</th>
@@ -119,6 +120,7 @@ text
 <th></th>
 <th></th>
 <th></th>
+<th></th>
 </tr>
 </thead>
 <tbody>
@@ -129,11 +131,12 @@ text
 <th rowspan="5" valign="top">1</th>
 <th rowspan="5" valign="top">1</th>
 <th>1</th>
-<th>\nThose</th>
+<th>Those</th>
 <th>1</th>
 <th>1</th>
 <th>Those</th>
 <th>ðoʊz</th>
+<td>1</td>
 <td>en</td>
 <td>1</td>
 <td>0</td>
@@ -149,6 +152,7 @@ text
 <th>1</th>
 <th>ho</th>
 <th>'aʊ</th>
+<td>1</td>
 <td>en</td>
 <td>2</td>
 <td>1</td>
@@ -161,6 +165,7 @@ text
 <th>2</th>
 <th>urs</th>
 <th>ɛːz</th>
+<td>1</td>
 <td>en</td>
 <td>2</td>
 <td>0</td>
@@ -174,6 +179,7 @@ text
 <th>1</th>
 <th>hours</th>
 <th>'aʊrz</th>
+<td>1</td>
 <td>en</td>
 <td>2</td>
 <td>1</td>
@@ -189,6 +195,7 @@ text
 <th>0</th>
 <th></th>
 <th></th>
+<td>1</td>
 <td>en</td>
 <td>0</td>
 <td></td>
@@ -208,6 +215,7 @@ text
 <th>...</th>
 <th>...</th>
 <th>...</th>
+<td>...</td>
 <td>...</td>
 <td>...</td>
 <td>...</td>
@@ -227,6 +235,7 @@ text
 <th>2</th>
 <th>tance</th>
 <th>stəns</th>
+<td>1</td>
 <td>en</td>
 <td>1</td>
 <td>0</td>
@@ -242,6 +251,7 @@ text
 <th>1</th>
 <th>still</th>
 <th>'stɪl</th>
+<td>1</td>
 <td>en</td>
 <td>1</td>
 <td>1</td>
@@ -257,6 +267,7 @@ text
 <th>1</th>
 <th>lives</th>
 <th>'lɪvz</th>
+<td>1</td>
 <td>en</td>
 <td>1</td>
 <td>1</td>
@@ -272,6 +283,7 @@ text
 <th>1</th>
 <th>sweet</th>
 <th>'swiːt</th>
+<td>1</td>
 <td>en</td>
 <td>1</td>
 <td>1</td>
@@ -287,6 +299,7 @@ text
 <th>0</th>
 <th></th>
 <th></th>
+<td>1</td>
 <td>en</td>
 <td>0</td>
 <td></td>
@@ -297,19 +310,23 @@ text
 </tr>
 </tbody>
 </table>
-<p>195 rows × 7 columns</p>
+<p>195 rows × 8 columns</p>
 </div>
 
 
 
+#### Parse texts
+
 
 ```python
-# get lines
-first_line = text.lines[0]
-last_line = text.lines[-1]
-random_line = text.line_r
-random_line
+# parse with default options
+text.parse()
 ```
+
+    parsing Text(num=1) @ 2023-12-12 17:47:06,388
+    ￨ parsing 14 lines: 100%|██████████| 14/14 [00:02<00:00,  6.37it/s]
+    ⎿ 2.2 seconds @ 2023-12-12 17:47:08,606
+
 
 
 
@@ -326,28 +343,24 @@ random_line
 <th></th>
 <th></th>
 <th></th>
-<th></th>
-<th></th>
-<th></th>
-<th>word_lang</th>
-<th>word_num_forms</th>
-<th>syll_is_stressed</th>
-<th>syll_is_heavy</th>
-<th>syll_is_strong</th>
-<th>syll_is_weak</th>
-<th>word_is_punc</th>
+<th>parse_score</th>
+<th>parse_is_bounded</th>
+<th>meterpos_num_slots</th>
+<th>*w_peak</th>
+<th>*w_stress</th>
+<th>*s_unstress</th>
+<th>*unres_across</th>
+<th>*unres_within</th>
 </tr>
 <tr>
+<th>stanza_num</th>
 <th>line_num</th>
 <th>line_txt</th>
-<th>sent_num</th>
-<th>sentpart_num</th>
-<th>wordtoken_num</th>
-<th>wordtoken_txt</th>
-<th>wordform_num</th>
-<th>syll_num</th>
-<th>syll_txt</th>
-<th>syll_ipa</th>
+<th>parse_rank</th>
+<th>parse_txt</th>
+<th>parse_meter</th>
+<th>parse_stress</th>
+<th></th>
 <th></th>
 <th></th>
 <th></th>
@@ -359,222 +372,188 @@ random_line
 </thead>
 <tbody>
 <tr>
-<th rowspan="11" valign="top">5</th>
-<th rowspan="11" valign="top">For never-resting time leads summer on</th>
 <th rowspan="11" valign="top">1</th>
-<th rowspan="11" valign="top">1</th>
+<th rowspan="3" valign="top">1</th>
+<th rowspan="3" valign="top">Those hours, that with gentle work did frame</th>
 <th>1</th>
-<th>\nFor</th>
-<th>1</th>
-<th>1</th>
-<th>For</th>
-<th>fɔːr</th>
-<td>en</td>
-<td>1</td>
+<th>those HO urs THAT with GEN tle WORK did FRAME</th>
+<th>-+-+-+-+-+</th>
+<th>-+-+-+-+-+</th>
+<td>0.0</td>
+<td>0.0</td>
+<td>10</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<th rowspan="2" valign="top">2</th>
-<th rowspan="2" valign="top">never</th>
-<th rowspan="2" valign="top">1</th>
-<th>1</th>
-<th>ne</th>
-<th>'nɛ</th>
-<td>en</td>
-<td>1</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
 <td>0</td>
-<td></td>
+<td>0</td>
+<td>0</td>
 </tr>
 <tr>
 <th>2</th>
-<th>ver</th>
-<th>vɛː</th>
-<td>en</td>
-<td>1</td>
+<th>those HOURS that.with GEN tle WORK did FRAME</th>
+<th>-+--+-+-+</th>
+<th>-+--+-+-+</th>
+<td>0.0</td>
+<td>0.0</td>
+<td>11</td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
-<td>1</td>
-<td></td>
+<td>0</td>
+<td>0</td>
 </tr>
 <tr>
 <th>3</th>
-<th>-</th>
-<th>0</th>
-<th>0</th>
-<th></th>
-<th></th>
-<td>en</td>
+<th>those HOURS that.with GEN tle WORK did FRAME</th>
+<th>-+--+-+-+</th>
+<th>-+--+-+-+</th>
+<td>0.0</td>
+<td>0.0</td>
+<td>11</td>
 <td>0</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
 </tr>
 <tr>
-<th rowspan="2" valign="top">4</th>
-<th rowspan="2" valign="top">resting</th>
-<th rowspan="2" valign="top">1</th>
+<th rowspan="2" valign="top">2</th>
+<th rowspan="2" valign="top">The lovely gaze where every eye doth dwell,</th>
 <th>1</th>
-<th>res</th>
-<th>'rɛ</th>
-<td>en</td>
-<td>1</td>
-<td>1</td>
+<th>the LO vely GAZE where E very EYE doth DWELL</th>
+<th>-+-+-+-+-+</th>
+<th>-+-+-+-+-+</th>
+<td>0.0</td>
+<td>0.0</td>
+<td>10</td>
 <td>0</td>
-<td>1</td>
 <td>0</td>
-<td></td>
-</tr>
-<tr>
-<th>2</th>
-<th>ting</th>
-<th>stɪŋ</th>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-</tr>
-<tr>
-<th>5</th>
-<th>time</th>
-<th>1</th>
-<th>1</th>
-<th>time</th>
-<th>'taɪm</th>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<th>6</th>
-<th>leads</th>
-<th>1</th>
-<th>1</th>
-<th>leads</th>
-<th>'liːdz</th>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<th rowspan="2" valign="top">7</th>
-<th rowspan="2" valign="top">summer</th>
-<th rowspan="2" valign="top">1</th>
-<th>1</th>
-<th>sum</th>
-<th>'sə</th>
-<td>en</td>
-<td>1</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td>0</td>
-<td></td>
 </tr>
 <tr>
 <th>2</th>
-<th>mer</th>
-<th>mɛː</th>
-<td>en</td>
+<th>the LO vely GAZE where E ve.ry EYE doth DWELL</th>
+<th>-+-+-+--+-+</th>
+<th>-+-+-+--+-+</th>
+<td>1.0</td>
+<td>0.0</td>
+<td>13</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
 <td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td></td>
 </tr>
 <tr>
-<th>8</th>
-<th>on</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th rowspan="4" valign="top">13</th>
+<th rowspan="4" valign="top">But flowers distill'd, though they with winter meet,</th>
 <th>1</th>
-<th>1</th>
-<th>on</th>
-<th>ɑn</th>
-<td>en</td>
+<th>but FLO wers DIS.TILL'D though THEY with WIN ter MEET</th>
+<th>-+-++-+-+-+</th>
+<th>-+--+-+-+-+</th>
+<td>2.0</td>
+<td>0.0</td>
+<td>13</td>
+<td>0</td>
+<td>0</td>
 <td>1</td>
 <td>0</td>
 <td>1</td>
-<td></td>
-<td></td>
-<td></td>
+</tr>
+<tr>
+<th>2</th>
+<th>but FLO wers.dis TILL'D though THEY with WIN ter MEET</th>
+<th>-+--+-+-+-+</th>
+<th>-+--+-+-+-+</th>
+<td>2.0</td>
+<td>0.0</td>
+<td>13</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+<td>0</td>
+</tr>
+<tr>
+<th>3</th>
+<th>but FLO.WERS dis TILL'D though THEY with WIN ter MEET</th>
+<th>-++-+-+-+-+</th>
+<th>-+--+-+-+-+</th>
+<td>2.0</td>
+<td>0.0</td>
+<td>13</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>4</th>
+<th>but FLO wers DIS till'd THOUGH they.with WIN ter MEET</th>
+<th>-+-+-+--+-+</th>
+<th>-+--+---+-+</th>
+<td>4.0</td>
+<td>0.0</td>
+<td>13</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<th>14</th>
+<th>Leese but their show; their substance still lives sweet.</th>
+<th>1</th>
+<th>LEESE but.their SHOW their SUBS tance STILL lives SWEET</th>
+<th>+--+-+-+-+</th>
+<th>+--+-+-+++</th>
+<td>1.0</td>
+<td>0.0</td>
+<td>12</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
 </tr>
 </tbody>
 </table>
+<p>37 rows × 8 columns</p>
 </div>
 
 
 
+## Documentation
 
-```python
-# show all known data under an entity
-random_line.show()
-```
+### Texts
 
-    Line(num=5, txt='For never-resting time leads summer on')
-    |
-    |   WordToken(num=1, txt='\nFor', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='For', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='For')
-    |               Syllable(ipa='fɔːr', num=1, txt='For', is_stressed=False, is_heavy=True)
-    |
-    |   WordToken(num=2, txt=' never', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='never', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='never')
-    |               Syllable(ipa="'nɛ", num=1, txt='ne', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
-    |               Syllable(ipa='vɛː', num=2, txt='ver', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
-    |
-    |   WordToken(num=3, txt='-', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='-', lang='en', num_forms=0, is_punc=True)
-    |
-    |   WordToken(num=4, txt='resting', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='resting', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='resting')
-    |               Syllable(ipa="'rɛ", num=1, txt='res', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
-    |               Syllable(ipa='stɪŋ', num=2, txt='ting', is_stressed=False, is_heavy=True, is_strong=False, is_weak=True)
-    |
-    |   WordToken(num=5, txt=' time', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='time', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='time')
-    |               Syllable(ipa="'taɪm", num=1, txt='time', is_stressed=True, is_heavy=True)
-    |
-    |   WordToken(num=6, txt=' leads', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='leads', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='leads')
-    |               Syllable(ipa="'liːdz", num=1, txt='leads', is_stressed=True, is_heavy=True)
-    |
-    |   WordToken(num=7, txt=' summer', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='summer', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='summer')
-    |               Syllable(ipa="'sə", num=1, txt='sum', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
-    |               Syllable(ipa='mɛː', num=2, txt='mer', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
-    |
-    |   WordToken(num=8, txt=' on', sent_num=1, sentpart_num=1)
-    |       WordType(num=1, txt='on', lang='en', num_forms=1)
-    |           WordForm(num=1, txt='on')
-    |               Syllable(ipa='ɑn', num=1, txt='on', is_stressed=False, is_heavy=True)
+#### Stanzas
 
+#### Lines
 
-#### Parsing
+### Meters
+
+### Parses
 
 
 ```python
@@ -595,9 +574,6 @@ text.set_meter(
 )
 ```
 
-    [32m2023-12-10 22:44:41.267[0m | [36mget_meter[0m | [34m[1msetting meter to: Meter(constraints=('w_peak', 's_trough', 'w_stress', 's_unstress', 'unres_across', 'unres_within', 'foot_size'), categorical_constraints=(), max_s=2, max_w=2, resolve_optionality=True)[0m | [36mtexts.py[0m:[36m73[0m
-
-
 
 ```python
 # parse a single line
@@ -605,104 +581,16 @@ first_line.parse()
 ```
 
 
+    ---------------------------------------------------------------------------
+
+    NameError                                 Traceback (most recent call last)
+
+    Cell In[4], line 2
+          1 # parse a single line
+    ----> 2 first_line.parse()
 
 
-<div>
-
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th>parse_score</th>
-<th>parse_is_bounded</th>
-<th>meterpos_num_slots</th>
-<th>*w_peak</th>
-<th>meterslot_s_trough</th>
-<th>*w_stress</th>
-<th>*s_unstress</th>
-<th>*unres_across</th>
-<th>*unres_within</th>
-<th>*foot_size</th>
-</tr>
-<tr>
-<th>stanza_num</th>
-<th>line_num</th>
-<th>parse_rank</th>
-<th>parse_txt</th>
-<th>parse_meter</th>
-<th>parse_stress</th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">1</th>
-<th>1</th>
-<th>those HO urs THAT with GEN tle WORK did FRAME</th>
-<th>-+-+-+-+-+</th>
-<th>-+-+-+-+-+</th>
-<td>0.0</td>
-<td>0.0</td>
-<td>10</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-</tr>
-<tr>
-<th>2</th>
-<th>those HOURS that.with GEN tle WORK did FRAME</th>
-<th>-+--+-+-+</th>
-<th>-+--+-+-+</th>
-<td>0.0</td>
-<td>0.0</td>
-<td>11</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-</tr>
-<tr>
-<th>3</th>
-<th>those HOURS that.with GEN tle WORK did FRAME</th>
-<th>-+--+-+-+</th>
-<th>-+--+-+-+</th>
-<td>0.0</td>
-<td>0.0</td>
-<td>11</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-</tr>
-</tbody>
-</table>
-</div>
-
+    NameError: name 'first_line' is not defined
 
 
 
@@ -2513,4 +2401,54 @@ trochaic_parse
 
 Parse(txt='A horse A horse MY king DOM for A horse', meter='+-+-+-+-+-', stress='-+-+-+---+', score=10, is_bounded=0)
 
+
+
+
+```python
+# show all known data under an entity
+random_line.show()
+```
+
+    Line(num=5, txt='For never-resting time leads summer on')
+    |
+    |   WordToken(num=1, txt='\nFor', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='For', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='For')
+    |               Syllable(ipa='fɔːr', num=1, txt='For', is_stressed=False, is_heavy=True)
+    |
+    |   WordToken(num=2, txt=' never', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='never', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='never')
+    |               Syllable(ipa="'nɛ", num=1, txt='ne', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='vɛː', num=2, txt='ver', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
+    |
+    |   WordToken(num=3, txt='-', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='-', lang='en', num_forms=0, is_punc=True)
+    |
+    |   WordToken(num=4, txt='resting', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='resting', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='resting')
+    |               Syllable(ipa="'rɛ", num=1, txt='res', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='stɪŋ', num=2, txt='ting', is_stressed=False, is_heavy=True, is_strong=False, is_weak=True)
+    |
+    |   WordToken(num=5, txt=' time', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='time', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='time')
+    |               Syllable(ipa="'taɪm", num=1, txt='time', is_stressed=True, is_heavy=True)
+    |
+    |   WordToken(num=6, txt=' leads', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='leads', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='leads')
+    |               Syllable(ipa="'liːdz", num=1, txt='leads', is_stressed=True, is_heavy=True)
+    |
+    |   WordToken(num=7, txt=' summer', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='summer', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='summer')
+    |               Syllable(ipa="'sə", num=1, txt='sum', is_stressed=True, is_heavy=False, is_strong=True, is_weak=False)
+    |               Syllable(ipa='mɛː', num=2, txt='mer', is_stressed=False, is_heavy=False, is_strong=False, is_weak=True)
+    |
+    |   WordToken(num=8, txt=' on', sent_num=1, sentpart_num=1)
+    |       WordType(num=1, txt='on', lang='en', num_forms=1)
+    |           WordForm(num=1, txt='on')
+    |               Syllable(ipa='ɑn', num=1, txt='on', is_stressed=False, is_heavy=True)
 

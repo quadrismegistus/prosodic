@@ -270,12 +270,12 @@ class Entity(UserList):
     
     @cached_property
     def i(self):
-        if self.parent is None: return 0
-        if not self.parent.children: return 0
+        if self.parent is None: return None
+        if not self.parent.children: return None
         try:
             return self.parent.children.index(self)
         except IndexError:
-            return 0
+            return None
     @cached_property
     def num(self):
         return self.i+1 if self.i is not None else None

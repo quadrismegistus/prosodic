@@ -40,12 +40,12 @@ def test_feet():
     
     # parsing higher max s and max w will still yield same best parses
     lx = Line(tstr)
+    assert not lx._parses
     lx.parse(max_s=1, max_w=1)
-
-    print(lx._parses)
-    print(lx.all_parses)
-    print(lx.parse_stats)
-    print(lx.parse_stats)
+    assert lx._parses
+    p1=lx._parses
+    lx.parse(max_s=1, max_w=1)
+    assert lx._parses is p1
 
     assert lx.parse_stats
     ap1=lx.all_parses

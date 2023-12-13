@@ -37,11 +37,13 @@ class Text(Entity):
         self.lang=lang if lang else detect_lang(txt)
         
         if not children:
-            if tokens_df is None: tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
-            children = [
-                Stanza(parent=self, tokens_df=stanza_df)                
-                for i,stanza_df in tokens_df.groupby('stanza_i')
-            ]
+            with logmap(f'building text with {len(txt.split()):,} words') as lm:
+                if tokens_df is None: 
+                    tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
+                children = [
+                    Stanza(parent=self, tokens_df=stanza_df)                
+                    for i,stanza_df in lm.iter_progress(tokens_df.groupby('stanza_i'), desc='iterating stanzas')
+                ]
         
         super().__init__(
             txt, 
@@ -107,6 +109,7 @@ class Text(Entity):
         if not self._mtr: return True
         if meter is not None and meter.attrs != self._mtr.attrs: return True
         if meter_kwargs and Meter(**{**self._mtr.attrs,**meter_kwargs}).attrs != self._mtr.attrs: return True
+        if not self.is_parseable and len(self._parses) != len(self.parseable_units): return True
         return False
 
     # @cache
@@ -145,10 +148,13 @@ class Text(Entity):
     
     @cache
     def parse_stats(self, norm=False):
-        return pd.DataFrame(
-            line.parse_stats(norm=norm)
-            for line in self.parseable_units
-        )
+        if self.is_parseable:
+            return self.parses.stats(norm=norm)
+        else:
+            return pd.DataFrame(
+                line.parse_stats(norm=norm)
+                for line in self.parseable_units
+            )
 
 
 
@@ -165,7 +171,8 @@ class Stanza(Text):
         if not txt and not children and tokens_df is None:
             raise Exception('Must provide either txt, children, or tokens_df')
         if not children:
-            if tokens_df is None: tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
+            if tokens_df is None: 
+                tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
             children = [
                 Line(parent=self, tokens_df=line_df)                
                 for line_i,line_df in tokens_df.groupby('line_i')

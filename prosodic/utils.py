@@ -107,3 +107,16 @@ def get_initial_whitespace(xstr):
 def unique(l):
     from ordered_set import OrderedSet
     return list(OrderedSet(l))
+
+
+def is_numeric(x:object) -> bool:
+    """Checks if the given object is a numeric value.
+
+    Args:
+        x (object): The object to be checked.
+
+    Returns:
+        bool: True if the object is a numeric value, False otherwise.
+    """
+    import numbers
+    return isinstance(x, numbers.Number)

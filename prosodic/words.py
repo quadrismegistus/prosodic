@@ -82,6 +82,7 @@ class WordToken(Entity):
     prefix='wordtoken'
     @profile
     def __init__(self, token, lang=DEFAULT_LANG, parent=None, **kwargs):
+        if token.startswith('\n'): token=token[1:]
         self.word = word = Word(token, lang=lang)
         super().__init__(
             children=[word],

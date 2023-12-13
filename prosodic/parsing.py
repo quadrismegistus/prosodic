@@ -529,7 +529,7 @@ class ParseList(EntityList):
     prefix='parselist'
 
     @cached_property
-    def num_parses(self): return len(self.unbounded)
+    def num_parses(self): return self.num_unbounded
     @cached_property
     def num_all_parses(self): return len(self.data)
 
@@ -537,8 +537,8 @@ class ParseList(EntityList):
     def attrs(self):
         return {
             **self._attrs, 
-            'num_parses':self.num_parses, 
-            'num_all_parses':self.num_all_parses
+            'num_parses':self.num_parses,
+            # 'num_all_parses':self.num_all_parses
         }
     
     @cached_property
@@ -558,7 +558,10 @@ class ParseList(EntityList):
     @cached_property
     def num_all(self): return len(self.data)
 
-    def bound(self, progress=True):
+    @cached_property
+    def parses(self): return self
+
+    def bound(self, progress=False):
         parses = [p for p in self.data if not p.is_bounded]
         iterr = tqdm(parses, desc='Bounding parses', disable=not progress,position=0)
         for parse_i,parse in enumerate(iterr):
@@ -582,6 +585,12 @@ class ParseList(EntityList):
         for i,parse in enumerate(self.data):
             parse.parse_rank = i+1
     
+    @cached_property
+    def line(self):
+        for parse in self.data:
+            if parse.line:
+                return parse.line
+
     @cached_property
     def lines(self):
         return LineList(
@@ -613,7 +622,7 @@ class ParseList(EntityList):
             if not i.startswith('meter')   # meterpos_ and metersyll_ are by syll
         ]
         aggby = {
-            col:np.median if col.startswith('parse') else np.sum
+            col:np.median if 'parse' in col else np.sum
             for col in self.df_syll.columns
         }
         dropcols = {
@@ -648,34 +657,83 @@ class ParseList(EntityList):
         }
         odx['bestparse_txt'] = self.best_parse.txt
         nsyll = self.best_parse.num_sylls
-        cnames = [f.__name__ for f in self.meter.constraints]
+        cnames = [f.__name__ for f in self.best_parse.meter.constraints]
         odx['bestparse_nsylls']=nsyll
-        odx['n_combo']=len(self.wordform_matrix)
-        odx['n_parse']=len(self.best_parses)
+        odx['n_combo']=len(self.best_parse.meter.get_wordform_matrix(self))
+        odx['n_parse']=self.num_unbounded
         if not norm:
             odx['n_viols']=np.median([
                 parse.score
-                for parse in self.unbounded_parses
+                for parse in self.unbounded
             ])
             for cname in cnames:
                 odx['*'+cname] = np.median([
                     parse.constraint_scores.get(cname,0)
-                    for parse in self.unbounded_parses
+                    for parse in self.unbounded
                 ])
         else:
             odx[f'n_viols']=np.mean([
                 int(bool(x))
-                for bp in self.unbounded_parses
+                for bp in self.unbounded
                 for cnamex in bp.constraint_viols
                 for x in bp.constraint_viols[cnamex]
-            ]) * 10
+            ])
             for cname in cnames:
                 odx[f'n_{cname}']=np.mean([
                     int(bool(x))
-                    for bp in self.unbounded_parses
+                    for bp in self.unbounded
                     for x in bp.constraint_viols.get(cname,[])
-                ]) * 10
+                ])
         return odx
+
+
+class ParseListList(EntityList):
+    index_name='parse'
+    prefix='parselists'
+
+    def __getattr__(self, attr):
+        results = [getattr(plist,attr) for plist in self.data if hasattr(plist,attr)]
+        if not results: return
+        res = results[0]
+        if callable(res):
+            def f(*x,**y):
+                return self.combine([res(*x,**y) for res in results])
+            return f
+        else:
+            return self.combine(results)
+
+
+    def combine(self, results):
+        if not results: return
+        res = results[0]
+        if res is None:
+            return
+        elif is_numeric(res):
+            return np.median(results)
+        elif isinstance(res, ParseList):
+            return ParseList(parse for parselist in results for parse in parselist)
+        elif isinstance(res,pd.DataFrame):
+            return pd.concat(results)
+        elif isinstance(res,dict) or isinstance(res,pd.Series):
+            return pd.DataFrame(results)
+
+        raise Exception(f'what is this? {results}')
+    
+    @cached_property
+    def best_parse(self):
+        return min(self.parses.data)
+    
+    @cached_property
+    def lines(self):
+        return LineList(pl.line for pl in self.data)
+
+    @cached_property
+    def attrs(self):
+        return {
+            **self._attrs, 
+            'num_parsed':len(self.data),
+        }
+
 
 
 # class representing the potential bounding relations between to parses
@@ -691,3 +749,8 @@ def get_iambic_parse(nsyll):
         x='w' if not o or o[-1]=='s' else 's'
         o.append(x)
     return o
+
+
+
+
+

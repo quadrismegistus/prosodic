@@ -69,10 +69,13 @@ class Meter(Entity):
 
     def parse_line(self, line, **kwargs):
         assert line.is_parseable
-        if self.exhaustive:
-            return self.parse_line_exhaustively(line)
+        if line.needs_parsing(meter=self):
+            if self.exhaustive:
+                return self.parse_line_exhaustively(line)
+            else:
+                return self.parse_line_fast(line)
         else:
-            return self.parse_line_fast(line)        
+            return line._parses
 
 
     def parse_line_fast(self, line):
@@ -134,28 +137,31 @@ class Meter(Entity):
         deque(iterr,maxlen=0)
 
     def parse_text_iter(self, text, progress=True, num_proc=1, **kwargs):
-        from .parsing import ParseList
+        from .parsing import ParseListList
         assert type(text) is Text
-        text._parses=ParseList()
-        with logmap(f'parsing {text}') as lm:
-            def get_iterr(iterr):
-                return tqdm(
-                    iterr,
-                    desc=f'Parsing {text.parse_unit_attr}',
-                    disable=not progress,
-                    position=0,
-                    total = len(text.parseable_units)
-                )
-            objs = [(unit,self) for unit in text.parseable_units]
-            for parsed_line in lm.imap(
-                    _parse_iter,
-                    objs,
-                    progress=progress,
-                    desc=f'parsing {len(objs)} {text.parse_unit_attr}',
-                    num_proc=num_proc
-                ):
-                text._parses.extend(parsed_line._parses)
-                yield parsed_line
+        if text.needs_parsing(meter=self):
+            text._parses=ParseListList()
+            with logmap(f'parsing {text}') as lm:
+                def get_iterr(iterr):
+                    return tqdm(
+                        iterr,
+                        desc=f'Parsing {text.parse_unit_attr}',
+                        disable=not progress,
+                        position=0,
+                        total = len(text.parseable_units)
+                    )
+                objs = [(unit,self) for unit in text.parseable_units]
+                for parsed_line in lm.imap(
+                        _parse_iter,
+                        objs,
+                        progress=progress,
+                        desc=f'parsing {len(objs)} {text.parse_unit_attr}',
+                        num_proc=num_proc
+                    ):
+                    yield parsed_line
+                    text._parses.append(parsed_line._parses)
+        else:
+            yield from text.parseable_units
 
 
 def _parse_iter(obj):

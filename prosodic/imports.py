@@ -71,7 +71,8 @@ DF_COLS_RENAME = {
     'meterslot_foot_size':'*foot_size',
     'parse_line_num':'line_num',
     'parse_stanza_num':'stanza_num',
-    'parse_line_txt':'line_txt'
+    'parse_line_txt':'line_txt',
+    'parselist_num_parses':'line_numparse'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
@@ -116,6 +117,7 @@ import nltk
 nltk.download('punkt',quiet=True)
 import pandas as pd
 pd.options.display.width=200
+pd.options.display.max_rows=10
 from langdetect import detect as detect_lang
 from logmap import logmap, logger
 from tqdm import tqdm

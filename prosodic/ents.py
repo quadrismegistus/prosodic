@@ -32,6 +32,9 @@ class Entity(UserList):
         self._mtr=None
         for k,v in self._attrs.items(): setattr(self,k,v)
 
+    def __iter__(self):
+        yield from self.children
+
     def to_hash(self):
         return hashstr(self.txt, tuple(sorted(self._attrs.items())))
 

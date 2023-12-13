@@ -35,7 +35,8 @@ class Parse(Entity):
             parent=None, 
             positions=None, 
             is_bounded=False,
-            bounded_by=None):
+            bounded_by=None,
+            rank=None):
         from .meter import Meter
         if not positions: positions = []
         self.positions = positions
@@ -79,7 +80,7 @@ class Parse(Entity):
         self.parse_num = 0
         self.total_score = None
         self.pause_comparisons = False
-        self.parse_rank = None
+        self.parse_rank = rank
         # self.violset=Multiset()
         self.num_slots_positioned=0
         if not positions:
@@ -112,20 +113,21 @@ class Parse(Entity):
     @staticmethod
     def from_json(json_d, line=None):
         wordforms = from_json(json_d['wordforms'])
+        if line: wordforms = line.match_wordforms(wordforms)
         meter = from_json(json_d['meter'])
         positions = [from_json(d) for d in json_d['children']]
         slots = [slot for pos in positions for slot in pos.slots]
         sylls = [syll for word in wordforms for syll in word.children]
         assert len(slots) == len(sylls)
-        for syll,slot in zip(sylls,slots):
-            slot.unit = syll
+        for syll,slot in zip(sylls,slots): slot.unit = syll
         return Parse(
             wordforms,
             positions=positions,
             parent=line,
             meter=meter,
             is_bounded=json_d['is_bounded'],
-            bounded_by=json_d['bounded_by']
+            bounded_by=json_d['bounded_by'],
+            rank=json_d['rank']
         )
 
     @property
@@ -616,6 +618,7 @@ class ParseSlot(Entity):
 class ParseList(EntityList):
     index_name='parse'
     prefix='parselist'
+    show_bounded = False
 
     @staticmethod
     def from_json(json_d, line=None):
@@ -640,6 +643,13 @@ class ParseList(EntityList):
             # 'num_all_parses':self.num_all_parses
         }
     
+    @cached_property
+    def all(self): 
+        return ParseList(
+            children=[px for px in self.data if px is not None],
+            show_bounded=True
+        )
+
     @cached_property
     def unbounded(self): 
         return ParseList(children=[px for px in self.data if px is not None and not px.is_bounded])
@@ -710,7 +720,7 @@ class ParseList(EntityList):
     
 
     def _repr_html_(self): 
-        df=self.unbounded.df if self.num_unbounded else self.df
+        df=self.unbounded.df if not self.show_bounded and self.num_unbounded else self.df
         return super()._repr_html_(df=df)
     
     @cached_property

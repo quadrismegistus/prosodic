@@ -47,39 +47,20 @@ class Line(Text):
             self.is_parseable = True
             if needs_caching and self.use_cache:
                 self.to_cache(txt)
-        
-    # def parse(self, force=False, meter=None, **meter_kwargs):
-    #     if self.needs_parsing(force=force,meter=meter,**meter_kwargs):
-    #         meter = self.get_meter(meter=meter,**meter_kwargs)
-    #         self.clear_cached_properties()
-    #         return meter.parse_line(self)
 
-    # # def only_wordforms(self, wordforms):
-    #     from .words import WordFormList
-    #     line = Line.from_json(self.to_json())
-    #     print()
-    #     pprint(wordforms)
-    #     wordformset = {wf.to_hash() for wf in wordforms}
-    #     pprint(wordformset)
-    #     for wtype in self.wordtypes:
-    #         print(wtype, wtype.children, wtype.to_hash())
-    #         wtype.children = [
-    #             wf 
-    #             for wf in wtype.children 
-    #             if wf.to_hash() in wordformset
-    #         ]
-    #     return line    
+    def match_wordforms(self, wordforms):
+        from .words import WordFormList
+        wordforms_ll = [l for l in self.wordforms_all if l]
+        assert len(wordforms) == len(wordforms_ll)
+
+        def iterr():
+            for correct_wf, target_wfl in zip(wordforms, wordforms_ll):
+                targets = [wf for wf in target_wfl if wf.to_hash() == correct_wf.to_hash()]
+                assert len(targets)==1
+                yield targets[0]
+        return WordFormList(iterr())
+
 
     def to_json(self):
-        return Entity.to_json(self,yes_txt=True)
+        return super().to_json(txt=self.txt)
     
-    # # @staticmethod
-    # # def from_json(json_d):
-    # #     from .words import WordType,WordTypeList
-    # #     return Line(
-    # #         txt=json_d['txt'],
-    # #         children=WordTypeList(
-    # #             WordType.from_json(d)
-    # #             for d in json_d['children']
-    # #         )
-    # #     )

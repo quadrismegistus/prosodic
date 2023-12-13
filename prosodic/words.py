@@ -61,6 +61,7 @@ class WordFormList(EntityList):
     def __eq__(self, other): 
         # return self.sort_key==other.sort_key
         return self is other
+    
         
 
 
@@ -225,11 +226,9 @@ class WordForm(Entity):
     def num_stressed_sylls(self): return len([syll for syll in self.children if syll.is_stressed])
 
 
-
     def to_hash(self):
         return hashstr(
             self._txt,
-            self.parent.lang,
             self.sylls_ipa,
             self.sylls_text,
         )

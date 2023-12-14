@@ -47,8 +47,8 @@ def test_Text():
     t=Text('    ererer e   e  ').txt == 'ererer e   e'
 
     l1 = Line('test\n')
-    assert l1._txt == 'test\n'
-    assert l1.txt == 'test\n'
+    assert l1._txt == 'test'
+    assert l1.txt == 'test'
     l2 = Line('ing two')
     t = Stanza(children=[l1,l2])
     assert t.txt=='test\ning two'

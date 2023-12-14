@@ -773,7 +773,7 @@ class ParseList(EntityList):
         nsyll = self.best_parse.num_sylls
         cnames = [f.__name__ for f in self.best_parse.meter.constraints]
         odx['bestparse_nsylls']=nsyll
-        odx['n_combo']=len(self.best_parse.meter.get_wordform_matrix(self))
+        odx['n_combo']=len(self.best_parse.meter.get_wordform_matrix(self.line))
         odx['n_parse']=self.num_unbounded
         if not norm:
             odx['n_viols']=np.median([

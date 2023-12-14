@@ -5,7 +5,7 @@ class WordTokenList(EntityList): pass
 
 class Line(Text):
     line_sep = '\n'
-    sep: str = ''
+    sep: str = '\n'
     child_type: str = 'WordToken'
     is_parseable = True
     prefix='line'
@@ -38,6 +38,17 @@ class Line(Text):
         Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self.is_parseable = True
+
+    @cached_property
+    def wordform_matrix(self): return self.get_wordform_matrix()
+    
+    def get_wordform_matrix(self, resolve_optionality=True):
+        from .words import WordFormList
+        lim = 1 if not resolve_optionality else None
+        ll = [l for l in self.wordforms_all if l]
+        ll = [WordFormList(l) for l in itertools.product(*ll)]
+        ll.sort()
+        return ll[:lim]
 
     def match_wordforms(self, wordforms):
         from .words import WordFormList

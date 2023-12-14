@@ -135,6 +135,7 @@ class Text(Entity):
     
     def parse_iter(self, num_proc=None, progress=True, force=False, meter=None, **meter_kwargs):
         if self.needs_parsing(force=force,meter=meter,**meter_kwargs):
+            m1 = self.meter
             meter = self.get_meter(meter=meter,**meter_kwargs)
             self.clear_cached_properties()
             yield from meter.parse_iter(self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs)
@@ -193,7 +194,7 @@ class Stanza(Text):
             raise Exception('Must provide either txt, children, or tokens_df')
         if not children:
             if tokens_df is None: 
-                tokens_df = tokenize_words_df(txt)
+                tokens_df = tokenize_sentwords_df(txt)
             children = [
                 Line(parent=self, tokens_df=line_df)                
                 for line_i,line_df in tokens_df.groupby('line_i')
@@ -203,3 +204,4 @@ class Stanza(Text):
 
     def to_json(self):
         return Entity.to_json(self,no_txt=True)
+    

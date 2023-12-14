@@ -9,6 +9,7 @@ class Entity(UserList):
     list_type = None
     cached_properties_to_clear = []
     use_cache = False
+    sep=''
     
 
     """
@@ -95,7 +96,7 @@ class Entity(UserList):
         if self._txt: 
             txt = self._txt
         elif self.children: 
-            txt=''.join(child.txt for child in self.children)
+            txt=self.child_class.sep.join(child.txt for child in self.children)
         else: 
             txt=''
         return clean_text(txt)
@@ -152,8 +153,8 @@ class Entity(UserList):
 
     @cached_property
     def child_class(self):
-        from .imports import CLASSES
-        return CLASSES.get(self.child_type)
+        from .imports import GLOBALS
+        return GLOBALS.get(self.child_type)
 
     def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]

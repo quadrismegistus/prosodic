@@ -53,13 +53,9 @@ class Meter(Entity):
         return wtypes + stypes
     
     def get_wordform_matrix(self, line):
-        from .words import WordFormList
-        lim = 1 if not self.resolve_optionality else None
-        ll = [l for l in line.wordforms_all if l]
-        ll = [WordFormList(l) for l in itertools.product(*ll)]
-        ll.sort()
-        return ll[:lim]
-
+        return line.get_wordform_matrix(
+            resolve_optionality=self.resolve_optionality
+        )
 
     def parse(self, text_or_line, **kwargs):
         return ParseList(self.parse_iter(text_or_line, **kwargs))
@@ -74,8 +70,8 @@ class Meter(Entity):
 
     def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
-        if not line.needs_parsing(force=force,meter=self):
-            return line._parses
+        # if not line.needs_parsing(force=force,meter=self):
+        #     return line._parses
         
         if not force and self.use_cache:
             parses = self.parses_from_json_cache(line)
@@ -92,6 +88,9 @@ class Meter(Entity):
             self.to_json_cache(line, parses)
         return parses
     
+    def get_key(self, line):
+        return hashstr(self.to_hash(), line.to_hash())
+
     def parses_from_json_cache(self,line, as_dict=False):
         from .parsing import ParseList
         key=self.get_key(line)
@@ -166,7 +165,7 @@ class Meter(Entity):
         numlines=len(text.parseable_units)
         # if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
         if not use_mp: num_proc=1
-        if num_proc is None: num_proc=mp.cpu_count()-1
+        if num_proc is None: num_proc=mp.cpu_count()//2
         desc=f'parsing {numlines} {text.parse_unit_attr}'
         if num_proc>1: desc+=f' [{num_proc}x]'
         with logmap(desc) as lm:

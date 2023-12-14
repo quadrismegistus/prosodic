@@ -39,16 +39,22 @@ class Text(Entity):
         self.lang=lang if lang else detect_lang(txt)
         self.use_cache = use_cache
         if not children:
-            if self.use_cache: 
-                children = self.children_from_json_cache()
-            if not children:
-                with logmap(f'building text with {len(txt.split()):,} words') as lm:
-                    if tokens_df is None: 
-                        tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
-                    self.children = children = [
-                        Stanza(parent=self, tokens_df=stanza_df)                
-                        for i,stanza_df in lm.iter_progress(tokens_df.groupby('stanza_i'), desc='iterating stanzas')
-                    ]
+            with logmap(f'building text with {len(txt.split()):,} words') as lm:
+                if self.use_cache:
+                    children = self.children_from_json_cache()
+                
+                if children: 
+                    lm.log(f'found {len(children)} cached stanzas')
+                else:
+                    if tokens_df is None: tokens_df = tokenize_sentwords_df(txt)
+                    with logmap('building stanzas') as lm2:
+                        children = [
+                            Stanza(parent=self, tokens_df=stanza_df)                
+                            for i,stanza_df in lm2.iter_progress(
+                                tokens_df.groupby('stanza_i'), 
+                                desc='iterating stanzas'
+                            )
+                        ]
         super().__init__(
             txt, 
             children=children, 
@@ -132,6 +138,8 @@ class Text(Entity):
             meter = self.get_meter(meter=meter,**meter_kwargs)
             self.clear_cached_properties()
             yield from meter.parse_iter(self, num_proc=num_proc, progress=progress)
+        else:
+            yield from self.parseable_units
     
 
     def _concat_line_parses(self, attr):
@@ -185,7 +193,7 @@ class Stanza(Text):
             raise Exception('Must provide either txt, children, or tokens_df')
         if not children:
             if tokens_df is None: 
-                tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
+                tokens_df = tokenize_words_df(txt)
             children = [
                 Line(parent=self, tokens_df=line_df)                
                 for line_i,line_df in tokens_df.groupby('line_i')

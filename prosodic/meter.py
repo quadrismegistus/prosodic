@@ -64,18 +64,19 @@ class Meter(Entity):
     def parse(self, text_or_line, **kwargs):
         return ParseList(self.parse_iter(text_or_line, **kwargs))
         
-    def parse_iter(self, text_or_line, **kwargs):
+    def parse_iter(self, text_or_line, force=False, **kwargs):
         if type(text_or_line) is Text:
-            yield from self.parse_text_iter(text_or_line, **kwargs)
+            yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
         elif text_or_line.is_parseable:
-            yield from self.parse_line(text_or_line, **kwargs)
+            yield from self.parse_line(text_or_line, force=force, **kwargs)
         else:
             raise Exception(f'Object {text_or_line} not parseable')
 
-    def parse_line(self, line, **kwargs):
+    def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
-        if not line.needs_parsing(meter=self):
+        if not line.needs_parsing(force=force,meter=self):
             return line._parses
+        
         if self.use_cache:
             parses = self.parses_from_json_cache(line)
             if parses:
@@ -99,7 +100,7 @@ class Meter(Entity):
             if as_dict: return  dat
             return ParseList.from_json(dat,line=line)
 
-    def parse_line_fast(self, line):
+    def parse_line_fast(self, line, force=False):
         from .parsing import ParseList, Parse
         assert line.is_parseable
         parses = ParseList([
@@ -153,41 +154,71 @@ class Meter(Entity):
         line._parses = parses
         return line._parses
     
-    def parse_text(self, text, num_proc=1, progress=True):
+    def parse_text(self, text, num_proc=None, progress=True):
         iterr=self.parse_text_iter(text, num_proc=num_proc, progress=progress)
         deque(iterr,maxlen=0)
 
-    def parse_text_iter(self, text, progress=True, num_proc=1, **kwargs):
-        from .parsing import ParseListList
+
+    def parse_text_iter(self, text, progress=True, force=False, num_proc=None, **kwargs):
+        from .parsing import ParseList
         assert type(text) is Text
-        if text.needs_parsing(meter=self):
-            text._parses=ParseListList()
-            with logmap(f'parsing {text}') as lm:
-                def get_iterr(iterr):
-                    return tqdm(
-                        iterr,
-                        desc=f'Parsing {text.parse_unit_attr}',
-                        disable=not progress,
-                        position=0,
-                        total = len(text.parseable_units)
-                    )
-                objs = [(unit.to_json(),self.to_json()) for unit in text.parseable_units]
-                for parsed_line_json in lm.imap(
-                        _parse_iter,
-                        objs,
-                        progress=progress,
-                        desc=f'parsing {len(objs)} {text.parse_unit_attr}',
-                        num_proc=num_proc
-                    ):
-                    parsed_line = from_json(parsed_line_json)
-                    yield parsed_line
-                    text._parses.append(parsed_line._parses)
+        text._parses=ParseList()
+        desc=f'parsing {len(text.parseable_units)} {text.parse_unit_attr}'
+        if num_proc is not None: 
+            iterr = self._parse_text_iter_mp(
+                text, 
+                progress=progress,
+                force=force,
+                num_proc=num_proc,
+                desc=desc,
+            )
         else:
-            yield from text.parseable_units
+            iterr = (
+                self.parse_line(line, force=force, **kwargs)
+                for line in lm.iter_progress(
+                    text.parseable_units,
+                    desc=desc,
+                )
+            )
+        
+        for i,parselist in enumerate(iterr):
+            line = text.parseable_units[i]
+            line._parses = parselist
+            text._parses.extend(parselist)
+            yield line
+
+    def _parse_text_iter_mp(
+            self, 
+            text, 
+            force=False, 
+            progress=True, 
+            num_proc=1, 
+            **progress_kwargs):
+        from .parsing import ParseList
+        with logmap('multiprocessing parsing') as lm:
+            objs = [
+                (line.to_json(),self.to_json(),force or not self.use_cache)
+                for line in text.parseable_units
+            ]
+            iterr = lm.imap(
+                _parse_iter,
+                objs,
+                progress=progress,
+                num_proc=num_proc if num_proc else mp.cpu_count()-1,
+                **progress_kwargs
+            )
+            for i,parselist_json in enumerate(iterr):
+                line = text.parseable_units[i]
+                yield ParseList.from_json(parselist_json,line=line)
 
 
 def _parse_iter(obj):
-    line_json,meter_json = obj
+    line_json,meter_json,force = obj
     line,meter = from_json(line_json), from_json(meter_json)
-    line.parse(meter=meter,progress=False)
-    return line.to_json()
+    if not force:
+        parse_data = meter.parses_from_json_cache(line, as_dict=True)
+        if parse_data:
+            return parse_data
+    
+    parses = meter.parse_line(line,force=True)
+    return parses.to_json()

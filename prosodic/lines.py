@@ -18,35 +18,26 @@ class Line(Text):
         from .words import WordToken
         if not txt and not children and tokens_df is None:
             raise Exception('Must provide either txt, children, or tokens_df')
-        with logmap(f'init line: {txt}',level='trace') as lm:
-            needs_caching=False
-            txt=txt.strip()
-        
-            if not children:
-                if self.use_cache: 
-                    children = self.from_cache(txt)
-                    lm.log(f'got from cache: {children}')
-                if not children:
-                    needs_caching = True
-                    if tokens_df is None: 
-                        tokens_df = pd.DataFrame(tokenize_sentwords_iter(txt))
-                    children=[
-                        WordToken(
-                            txt=word_d.get('word_str',''),
-                            lang=lang,
-                            parent=self,
-                            # is_punc=word_d.get('word_ispunc'),
-                            sent_num=word_d.get('sent_i'),
-                            sentpart_num=word_d.get('sent_i'),
-                        )
-                        for word_d in tokens_df.to_dict('records')
-                        if 'word_str' in word_d and 'word_ispunc'
-                    ]
-            Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
-            self._parses = []
-            self.is_parseable = True
-            if needs_caching and self.use_cache:
-                self.to_cache(txt)
+        txt=txt.strip()
+    
+        if not children:
+            if tokens_df is None: 
+                tokens_df = tokenize_sentwords_df(txt)
+            children=[
+                WordToken(
+                    txt=word_d.get('word_str',''),
+                    lang=lang,
+                    parent=self,
+                    # is_punc=word_d.get('word_ispunc'),
+                    sent_num=word_d.get('sent_i'),
+                    sentpart_num=word_d.get('sent_i'),
+                )
+                for word_d in tokens_df.to_dict('records')
+                if 'word_str' in word_d# and 'word_ispunc'
+            ]
+        Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
+        self._parses = []
+        self.is_parseable = True
 
     def match_wordforms(self, wordforms):
         from .words import WordFormList
@@ -62,5 +53,5 @@ class Line(Text):
 
 
     def to_json(self):
-        return super().to_json(txt=self.txt)
+        return Entity.to_json(self,txt=self.txt)
     

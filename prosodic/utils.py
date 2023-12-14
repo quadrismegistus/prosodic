@@ -132,14 +132,14 @@ def hashstr(*inputs, length=HASHSTR_LEN):
 
 
 
-def from_json(json_d):
+def from_json(json_d, **kwargs):
     from .imports import GLOBALS
     if not '_class' in json_d:
         pprint(json_d)
         raise Exception
     classname=json_d['_class']
     classx = GLOBALS[classname]
-    return classx.from_json(json_d)
+    return classx.from_json(json_d, **kwargs)
 
 def to_json(obj, fn=None):
     data = obj.to_json()

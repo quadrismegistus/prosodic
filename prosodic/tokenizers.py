@@ -31,6 +31,11 @@ def tokenize_words_txt(txt):
         #     o+=[x]
     return o
 
+def tokenize_sentwords_df(txt):
+    with logmap('tokenizing'):
+        return pd.DataFrame(tokenize_sentwords_iter(txt))
+
+
 def tokenize_sentwords_iter(
         txt,
         sents=None,

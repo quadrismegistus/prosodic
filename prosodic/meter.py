@@ -163,53 +163,59 @@ class Meter(Entity):
         from .parsing import ParseList
         assert type(text) is Text
         text._parses=ParseList()
-        desc=f'parsing {len(text.parseable_units)} {text.parse_unit_attr}'
-        if num_proc is not None: 
-            iterr = self._parse_text_iter_mp(
-                text, 
-                progress=progress,
-                force=force,
-                num_proc=num_proc,
-                desc=desc,
-            )
-        else:
-            iterr = (
-                self.parse_line(line, force=force, **kwargs)
-                for line in lm.iter_progress(
-                    text.parseable_units,
-                    desc=desc,
+        numlines=len(text.parseable_units)
+        desc=f'parsing {numlines} {text.parse_unit_attr}'
+        if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
+        with logmap(desc) as lm:
+            if num_proc > 1: 
+                iterr = self._parse_text_iter_mp(
+                    text, 
+                    progress=progress,
+                    force=force,
+                    num_proc=num_proc,
+                    lm=lm,
+                    desc='parsing',
                 )
-            )
+            else:
+                iterr = (
+                    self.parse_line(line, force=force, **kwargs)
+                    for line in lm.iter_progress(
+                        text.parseable_units,
+                        desc='parsing',
+                    )
+                )
         
-        for i,parselist in enumerate(iterr):
-            line = text.parseable_units[i]
-            line._parses = parselist
-            text._parses.extend(parselist)
-            yield line
+            for i,parselist in enumerate(iterr):
+                line = text.parseable_units[i]
+                line._parses = parselist
+                text._parses.extend(parselist)
+                yield line
+                lm.log(f'stanza {line.stanza.num}, line {line.num}: {padmin(line.best_parse.txt,65)}')
 
     def _parse_text_iter_mp(
             self, 
             text, 
             force=False, 
             progress=True, 
-            num_proc=1, 
+            num_proc=1,
+            lm=None,
             **progress_kwargs):
         from .parsing import ParseList
-        with logmap('multiprocessing parsing') as lm:
-            objs = [
-                (line.to_json(),self.to_json(),force or not self.use_cache)
-                for line in text.parseable_units
-            ]
-            iterr = lm.imap(
-                _parse_iter,
-                objs,
-                progress=progress,
-                num_proc=num_proc if num_proc else mp.cpu_count()-1,
-                **progress_kwargs
-            )
-            for i,parselist_json in enumerate(iterr):
-                line = text.parseable_units[i]
-                yield ParseList.from_json(parselist_json,line=line)
+        assert lm
+        objs = [
+            (line.to_json(),self.to_json(),force or not self.use_cache)
+            for line in text.parseable_units
+        ]
+        iterr = lm.imap(
+            _parse_iter,
+            objs,
+            progress=progress,
+            num_proc=num_proc,
+            **progress_kwargs
+        )
+        for i,parselist_json in enumerate(iterr):
+            line = text.parseable_units[i]
+            yield ParseList.from_json(parselist_json,line=line)
 
 
 def _parse_iter(obj):

@@ -133,7 +133,7 @@ class Text(Entity):
         deque(self.parse_iter(**kwargs), maxlen=0)
         return self._parses
     
-    def parse_iter(self, num_proc=1, progress=True, force=False, meter=None, **meter_kwargs):
+    def parse_iter(self, num_proc=None, progress=True, force=False, meter=None, **meter_kwargs):
         if self.needs_parsing(force=force,meter=meter,**meter_kwargs):
             meter = self.get_meter(meter=meter,**meter_kwargs)
             self.clear_cached_properties()

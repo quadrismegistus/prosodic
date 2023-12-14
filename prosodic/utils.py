@@ -147,3 +147,10 @@ def to_json(obj, fn=None):
         os.makedirs(os.path.dirname(fn), exist_ok=True)
         with open(fn,'wb') as of:
             of.write(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY))
+
+def padmin(xstr,lim=40):
+    if len(xstr)<lim:
+        xstr = xstr + (' '*(lim - len(xstr)))
+    else:
+        xstr = xstr[:lim]
+    return xstr

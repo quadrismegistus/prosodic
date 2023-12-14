@@ -107,3 +107,66 @@ def get_initial_whitespace(xstr):
 def unique(l):
     from ordered_set import OrderedSet
     return list(OrderedSet(l))
+
+
+def is_numeric(x:object) -> bool:
+    """Checks if the given object is a numeric value.
+
+    Args:
+        x (object): The object to be checked.
+
+    Returns:
+        bool: True if the object is a numeric value, False otherwise.
+    """
+    import numbers
+    return isinstance(x, numbers.Number)
+
+
+
+
+def hashstr(*inputs, length=HASHSTR_LEN):
+    import hashlib
+    input_string = str(inputs)
+    sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
+    return sha256_hash[:length]
+
+
+
+def from_json(json_d, **kwargs):
+    from .imports import GLOBALS
+    if not '_class' in json_d:
+        pprint(json_d)
+        raise Exception
+    classname=json_d['_class']
+    classx = GLOBALS[classname]
+    return classx.from_json(json_d, **kwargs)
+
+def to_json(obj, fn=None):
+    data = obj.to_json()
+    if fn:
+        os.makedirs(os.path.dirname(fn), exist_ok=True)
+        with open(fn,'wb') as of:
+            of.write(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY))
+
+def padmin(xstr,lim=40):
+    xstr=str(xstr)
+    if len(xstr)<lim:
+        xstr = xstr + (' '*(lim - len(xstr)))
+    else:
+        xstr = xstr[:lim]
+    return xstr
+
+
+def ensure_dir(fn):
+    dirname=os.path.dirname(fn)
+    if dirname: os.makedirs(dirname, exist_ok=True)
+
+def encode_cache(x): return zlib.compress(orjson.dumps(x,option=orjson.OPT_SERIALIZE_NUMPY))
+def decode_cache(x): return orjson.loads(zlib.decompress(x))
+
+def CompressedSqliteDict(fn, *args, flag='c', **kwargs):
+    from sqlitedict import SqliteDict
+    ensure_dir(fn)
+    kwargs['encode']=encode_cache
+    kwargs['decode']=decode_cache
+    return SqliteDict(fn, *args, flag=flag, **kwargs)

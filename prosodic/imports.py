@@ -1,4 +1,5 @@
 import os,sys
+sys.path.insert(0,os.path.expanduser('~/github/logmap'))
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
 PATH_REPO_DATA = os.path.join(PATH_REPO,'data')
@@ -7,6 +8,8 @@ PATH_HOME = os.path.expanduser('~/prosodic_data')
 PATH_HOME_DATA = os.path.join(PATH_HOME, 'data')
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
+USE_CACHE=False
+HASHSTR_LEN=None
 
 PATH_MTREE = os.path.join(PATH_REPO, 'metricaltree')
 sys.path.append(PATH_MTREE)
@@ -44,6 +47,8 @@ DF_INDEX=[
     'bestparse_txt',
     'parse_meter',
     'parse_stress',
+    'parse_meter_str',
+    'parse_stress_str',
     'sent_num',
     'sentpart_num',
     'meterpos_num',
@@ -51,6 +56,7 @@ DF_INDEX=[
     'meterpos_val',
     'wordtoken_num',
     'wordtoken_txt',
+    'word_lang',
     'wordform_num',
     'syll_num',
     'syll_txt',
@@ -70,13 +76,15 @@ DF_COLS_RENAME = {
     'meterslot_unres_within':'*unres_within',
     'meterslot_foot_size':'*foot_size',
     'parse_line_num':'line_num',
-    'parse_stanza_num':'stanza_num'
+    'parse_stanza_num':'stanza_num',
+    'parse_line_txt':'line_txt',
+    'parselist_num_parses':'line_numparse'
 }
 DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
 LANGS = {}
 HTML_CSS='''.violation { color:#f43838; }
 .meter_strong { text-decoration: overline;}
-.miniquote { margin-left:1.5em;margin-top:.5em;font-family:monospace;}
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
 .parse {font-family:monospace;}
 .stress_strong { text-decoration: underline; text-underline-offset: 3px; }
 .stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
@@ -84,12 +92,12 @@ HTML_CSS='''.violation { color:#f43838; }
 
 # sys imports
 import re
-from IPython.display import HTML,Markdown,display
 from typing import Optional
 from collections import UserList, Counter
 import warnings
 warnings.filterwarnings('ignore')
 import time
+import zlib
 import itertools
 from copy import copy
 from functools import cached_property, lru_cache as cache, total_ordering
@@ -97,6 +105,10 @@ import string
 import random
 import textwrap
 from collections import deque
+import multiprocessing as mp
+from pprint import pprint
+from copy import copy
+
 
 # patches
 import builtins
@@ -114,16 +126,12 @@ import nltk
 nltk.download('punkt',quiet=True)
 import pandas as pd
 pd.options.display.width=200
+pd.options.display.max_rows=10
 from langdetect import detect as detect_lang
-from loguru import logger
-logger.remove()
-logger.add(
-    sink=sys.stderr,
-    format=LOG_FORMAT, 
-    level=LOG_LEVEL
-)
+from logmap import logmap, logger
 from tqdm import tqdm
 from multiset import Multiset
+import orjson
 
 # local imports
 from .utils import *
@@ -156,3 +164,50 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+GLOBALS = globals()
+
+
+INITCLASSES = {
+    'Text':Text,
+    'Stanza':Stanza,
+    'Line':Line,
+    'WordToken':WordToken,
+    'WordType':WordType,
+    'WordForm':WordForm,
+    'Syllable':Syllable,
+    'Phoneme':Phoneme,
+
+    'WordFormList':WordFormList,
+    'Parse':Parse,
+    'ParsePosition':ParsePosition,
+    'ParseSlot':ParseSlot,
+    'ParseList':ParseList
+}
+
+CHILDCLASSES = {
+    'Text':Stanza,
+    'Stanza':Line,
+    'Line':WordToken,
+    'WordToken':WordType,
+    'WordType':WordForm,
+    'WordForm':Syllable,
+    'Syllable':PhonemeClass,
+    'Phoneme':None,
+
+    'WordFormList':WordForm,
+    'ParseList':Parse,
+    'Parse':ParsePosition,
+    'ParsePosition':ParseSlot
+}
+
+CHILDCLASSLISTS = {
+    'Text':StanzaList,
+    'Stanza':LineList,
+    'Line':WordTokenList,
+    'WordToken':WordTypeList,
+    'WordType':WordFormList,
+    'WordForm':SyllableList,
+    'Syllable':PhonemeList,
+    'Phoneme':None,
+}

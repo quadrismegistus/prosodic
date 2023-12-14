@@ -20,30 +20,46 @@ from .constraints import *
 #         self.total_score = None
 #         self.pause_comparisons = False
 #         self.parse_rank = None
-#         self.violset=Multiset()
+#         self.violset=Multiseft()
 #         for mpos in self.positions: 
 #             self.violset.update(mpos.violset)
 
 @total_ordering
 class Parse(Entity):
     prefix='parse'
-    def __init__(self, wordforms_or_str, scansion:str='', meter:'Meter'=None, parent=None, positions=None):
+    def __init__(
+            self, 
+            wordforms_or_str, 
+            scansion:str='', 
+            meter:'Meter'=None, 
+            parent=None, 
+            positions=None, 
+            is_bounded=False,
+            bounded_by=None,
+            rank=None):
+        from .meter import Meter
         if not positions: positions = []
+        self.positions = positions
+
+        # meter
+        if meter is None:
+            meter = Meter()
+        self.meter_obj=self.meter=meter
         
         # wordforms
         assert wordforms_or_str
-        if type(wordforms_or_str)==str:
-            self.wordforms = Line(wordforms_or_str).wordform_matrix[0]
+        if hasattr(wordforms_or_str,'is_parseable') and wordforms_or_str.is_parseable:
+            parent = wordforms_or_str
+            self.wordforms = meter.get_wordform_matrix(parent)[0]
+        elif type(wordforms_or_str)==str:
+            parent = Line(wordforms_or_str)
+            self.wordforms = meter.get_wordform_matrix(parent)[0]
         elif type(wordforms_or_str)==list:
             self.wordforms = WordFormList(wordforms_or_str)
         else:
             self.wordforms = wordforms_or_str
 
-        # meter
-        if meter is None:
-            from .meter import Meter
-            meter = Meter()
-        self.meter=meter
+        
         
         # slots
         # self.slots = [ParseSlot(slot) for slot in self.wordforms.slots]
@@ -55,24 +71,65 @@ class Parse(Entity):
         self.positions_ls = copy(scansion)
         
         # divide positions
-        super().__init__(children=[], parent=parent)
-        self.positions = positions
-        self.children = self.positions
         self.line=parent
-        self.is_bounded = False
-        self.bounded_by = None
+        self.is_bounded = is_bounded
+        self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
         self.unmetrical = False
         self.comparison_nums = set()
         self.comparison_parses = []
         self.parse_num = 0
         self.total_score = None
         self.pause_comparisons = False
-        self.parse_rank = None
+        self.parse_rank = rank
         # self.violset=Multiset()
         self.num_slots_positioned=0
         if not positions:
+            super().__init__(children=[], parent=parent)
             for mpos_str in self.positions_ls: self.extend(mpos_str)
+        else:
+            super().__init__(children=positions, parent=parent)
+        self.children = self.positions
+        self.init()
+
+    def init(self):
+        for pos in self.positions:
+            pos.parse = self
+            pos.init()
     
+    def to_json(self):
+        return {
+            '_class':self.__class__.__name__,
+            'children':[pos.to_json() for pos in self.positions],
+            'wordforms':self.wordforms.to_json(),
+            'meter':self.meter_obj.to_json(),
+            'is_bounded':self.is_bounded,
+            'rank':self.parse_rank,
+            'meter_str':self.meter_str,
+            'stress_str':self.stress_str,
+            'score':self.score,
+            'bounded_by':list(self.bounded_by),
+        }
+    
+    @staticmethod
+    def from_json(json_d, line=None):
+        wordforms = from_json(json_d['wordforms'])
+        if line: wordforms = line.match_wordforms(wordforms)
+        meter = from_json(json_d['meter'])
+        positions = [from_json(d) for d in json_d['children']]
+        slots = [slot for pos in positions for slot in pos.slots]
+        sylls = [syll for word in wordforms for syll in word.children]
+        assert len(slots) == len(sylls)
+        for syll,slot in zip(sylls,slots): slot.unit = syll
+        return Parse(
+            wordforms,
+            positions=positions,
+            parent=line,
+            meter=meter,
+            is_bounded=json_d['is_bounded'],
+            bounded_by=json_d['bounded_by'],
+            rank=json_d['rank']
+        )
+
     @property
     def slots(self):
         return [slot for mpos in self.positions for slot in mpos.slots]
@@ -278,9 +335,11 @@ class Parse(Entity):
     # @profile
     def attrs(self):
         return {
+            **(self.stanza.prefix_attrs if self.line and self.line.stanza else {}),
+            **(self.line.prefix_attrs if self.line else {}),
             **self._attrs,
-            'stanza_num':self.line.parent.num if self.line and self.line.parent else None,
-            'line_num':self.line.num if self.line else None,
+            # 'stanza_num':self.line.parent.num if self.line and self.line.parent else None,
+            # 'line_num':self.line.num if self.line else None,
             'txt':self.txt,
             'rank':self.parse_rank,
             'meter':self.meter_str,
@@ -359,7 +418,10 @@ class Parse(Entity):
     def html(self): return self.to_html()
 
     @cached_property
-    def wordtokens(self): return self.line.wordtokens
+    def wordtokens(self): 
+        if self.line: return self.line.wordtokens
+        return WordTokenList(WordToken(wf.txt) for wf in self.wordforms)
+
 
     def to_html(self, as_str=False, css=HTML_CSS, blockquote=False):
         wordtokend = {wt:[] for wt in self.wordtokens}
@@ -375,18 +437,25 @@ class Parse(Entity):
                     pos=slot.parent
                     spclass='meter_' + ('strong' if slot.is_prom else 'weak')
                     stclass='stress_' + ('strong' if slot.unit.is_stressed else 'weak')
-                    slotstr=f'<span class="{spclass} {stclass}">{slot.unit.txt}</span>'
-                    if pos.violset:
-                        viol_str=' '.join(pos.violset)
-                        viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
-                        slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.line.num}">{slotstr}</span>'
+                    vclass=' violation' if pos.violset else ''
+                    slotstr=f'<span class="{spclass} {stclass}{vclass}">{slot.unit.txt}</span>'
                     output.append(slotstr)
+                    # viol_str=' '.join(pos.violset)
+                    # viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
+                    # slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.line.num}">{slotstr}</span>'
             else:
                 output.append(wordtoken.txt)
         out = ''.join(output)
         out = f'<style>{css}</style><div class="parse">{out}</div>'
-        if blockquote: out+=f'<div class="miniquote">{self.__repr__(bad_keys={"txt"})}</div>'
-        return out if as_str else HTML(out)
+        if blockquote: out+=f'<div class="miniquote">⎿ {self.__repr__(bad_keys={"txt","line_txt"})}</div>'
+        if not as_str: 
+            try:
+                from IPython.display import HTML,Markdown,display
+                out=HTML(out)
+            except ModuleNotFoundError:
+                pass
+        return out
+
 
 
 class ParsePosition(Entity):
@@ -404,7 +473,14 @@ class ParsePosition(Entity):
             num_slots=len(self.slots),
             **kwargs
         )
-        # init?
+        if self.parse: self.init()
+    
+    def init(self):
+        assert self.parse
+        if any (not slot.unit for slot in self.slots):
+            print(self.slots)
+            print([slot.__dict__ for slot in self.slots])
+            raise Exception
         for cname,constraint in self.parse.constraint_d.items():
             slot_viols = [int(bool(vx)) for vx in constraint(self)]
             assert len(slot_viols) == len(self.slots)
@@ -412,7 +488,7 @@ class ParsePosition(Entity):
             if any(slot_viols): self.violset.add(cname)
             for viol,slot in zip(slot_viols, self.slots):
                 slot.viold[cname]=viol
-    
+
     def __copy__(self):
         new = ParsePosition(
             self.meter_val, 
@@ -424,6 +500,18 @@ class ParsePosition(Entity):
         new._attrs = copy(self._attrs)
         return new
     
+    def to_json(self):
+        return super().to_json(meter_val=self.meter_val)
+    
+    # def from_json(json_d):
+    #     return ParsePosition(
+    #         json_d['meter_val'],
+    #         children=[
+    #             ParseSlot.from_json(d)
+    #             for d in json_d['children']
+    #         ]
+    #     )
+
     @cached_property
     def attrs(self):
         return {
@@ -461,16 +549,34 @@ class ParsePosition(Entity):
 class ParseSlot(Entity):
     prefix='meterslot'
     # @profile
-    def __init__(self, unit:'Syllable', position=None, **kwargs):
+    def __init__(self, unit:'Syllable'=None, parent=None, children=[], viold={}, **kwargs):
+        # print(unit,parent,children,viold,kwargs)
+        if unit is None and children:
+            assert len(children)==1
+            unit = children[0]
+            
         self.unit = unit
-        self.viold = {}
-        super().__init__(children=[], parent=position, **kwargs)
+        self.viold = {**viold}
+        super().__init__(
+            children=[], 
+            parent=parent, 
+            **kwargs
+        )
 
     def __copy__(self):
         new = ParseSlot(unit=self.unit)
         new.viold = copy(self.viold)
         new._attrs = copy(self._attrs)
         return new
+    
+    def to_json(self):
+        d=super().to_json(
+            unit=self.unit.to_hash(),
+            viold=self.viold
+        )
+        d.pop('children')
+        return d
+    
     
     @cached_property
     def meter_val(self): return self.parent.meter_val
@@ -519,21 +625,39 @@ class ParseSlot(Entity):
 class ParseList(EntityList):
     index_name='parse'
     prefix='parselist'
+    show_bounded = False
+
+    @staticmethod
+    def from_json(json_d, line=None):
+        parses = [
+            Parse.from_json(d, line=line)
+            for d in json_d['children']
+        ]
+        return ParseList(parses, parent=line)
+
 
     @cached_property
-    def num_parses(self): return len(self.unbounded)
+    def num_parses(self): return self.num_unbounded
     @cached_property
     def num_all_parses(self): return len(self.data)
 
     @cached_property
     def attrs(self):
         return {
-            **self._attrs, 
-            'num_parses':self.num_parses, 
-            'num_all_parses':self.num_all_parses
+            **self.line.prefix_attrs,
+            **self._attrs,
+            'num_parses':self.num_parses,
+            # 'num_all_parses':self.num_all_parses
         }
     
-    @property
+    @cached_property
+    def all(self): 
+        return ParseList(
+            children=[px for px in self.data if px is not None],
+            show_bounded=True
+        )
+
+    @cached_property
     def unbounded(self): 
         return ParseList(children=[px for px in self.data if px is not None and not px.is_bounded])
     @cached_property
@@ -542,13 +666,19 @@ class ParseList(EntityList):
 
     @cached_property
     def best_parse(self): return self.data[0] if self.data else None
-    # @property
-    # def best_parses(self): return ParseList([self.best_parse])
+    
+    @cached_property
+    def num_unbounded(self): return len(self.unbounded)
+    @cached_property
+    def num_bounded(self): return len(self.bounded)
+    @cached_property
+    def num_all(self): return len(self.data)
 
-    def bound(self, progress=True, meter=None, **meter_kwargs):
+    @cached_property
+    def parses(self): return self
+
+    def bound(self, progress=False):
         parses = [p for p in self.data if not p.is_bounded]
-        if meter is None: meter = Meter(**meter_kwargs)
-        # logger.debug(f'Bounding {len(parses)} with meter {meter}')
         iterr = tqdm(parses, desc='Bounding parses', disable=not progress,position=0)
         for parse_i,parse in enumerate(iterr):
             parse.constraint_viols  # init
@@ -559,10 +689,10 @@ class ParseList(EntityList):
                 relation = parse.bounding_relation(comp_parse)
                 if relation == Bounding.bounded:
                     parse.is_bounded = True
-                    parse.bounded_by = comp_parse
+                    parse.bounded_by.append((comp_parse.meter_str,comp_parse.stress_str))
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
-                    comp_parse.bounded_by = parse
+                    comp_parse.bounded_by.append((parse.meter_str,parse.stress_str))
         self._bound_init = True
         return self.unbounded
     
@@ -571,6 +701,12 @@ class ParseList(EntityList):
         for i,parse in enumerate(self.data):
             parse.parse_rank = i+1
     
+    @cached_property
+    def line(self):
+        for parse in self.data:
+            if parse.line:
+                return parse.line
+
     @cached_property
     def lines(self):
         return LineList(
@@ -589,26 +725,136 @@ class ParseList(EntityList):
             DF_INDEX
         )
     
+
+    def _repr_html_(self): 
+        df=self.unbounded.df if not self.show_bounded and self.num_unbounded else self.df
+        return super()._repr_html_(df=df)
+    
     @cached_property
     def df(self):
+        df = self.df_syll[[
+            c for c in self.df_syll 
+            if not c.endswith('_txt') 
+            and not c.startswith('parselist_')
+        ]]
         index = [
             i
-            for i in self.df_syll.index.names
-            if not i.startswith('meter')   # meterpos_ and metersyll_ are by syll
+            for i in df.index.names
+            if not i.startswith('meter')# meterpos_ and metersyll_ are by syll
         ]
         aggby = {
-            col:np.median if col.startswith('parse') else np.sum
-            for col in self.df_syll.columns
-        }
-        dropcols = {
-            'parselist_num_parses',
-            'parselist_num_all_parses'
+            col:np.median if 'parse' in col else np.sum
+            for col in df
         }
         odf = self.df_syll.groupby(index).agg(aggby)
-        return odf[[c for c in odf if c not in dropcols]]
+        return odf
+
     @cached_property
-    def df_syll(self):
-        return self.get_df()
+    def df_syll(self, bad_keys={'line_numparse'}):
+        odf=self.get_df().assign(**self._attrs)
+        return odf[[c for c in odf if not bad_keys or c not in bad_keys]]
+    
+    @cached_property
+    def scansions(self, **kwargs):
+        """
+        Unique scansions
+        """
+        from .parsing import ParseList
+        index_matches = pd.Series(
+            [
+                px.meter_str 
+                for px in self
+            ]).drop_duplicates().index
+        return ParseList(children=[self.parses[i] for i in index_matches])
+    
+    @cached_property
+    def num_lines(self):
+        return len(self.lines)
+    
+    def stats(self, norm=False):
+        odx={
+            **(self.parent.prefix_attrs if self.parent else {}), 
+            **self.prefix_attrs
+        }
+        odx['bestparse_txt'] = self.best_parse.txt
+        nsyll = self.best_parse.num_sylls
+        cnames = [f.__name__ for f in self.best_parse.meter.constraints]
+        odx['bestparse_nsylls']=nsyll
+        odx['n_combo']=len(self.best_parse.meter.get_wordform_matrix(self.line))
+        odx['n_parse']=self.num_unbounded
+        if not norm:
+            odx['n_viols']=np.median([
+                parse.score
+                for parse in self.unbounded
+            ])
+            for cname in cnames:
+                odx['*'+cname] = np.median([
+                    parse.constraint_scores.get(cname,0)
+                    for parse in self.unbounded
+                ])
+        else:
+            odx[f'n_viols']=np.mean([
+                int(bool(x))
+                for bp in self.unbounded
+                for cnamex in bp.constraint_viols
+                for x in bp.constraint_viols[cnamex]
+            ])
+            for cname in cnames:
+                odx[f'n_{cname}']=np.mean([
+                    int(bool(x))
+                    for bp in self.unbounded
+                    for x in bp.constraint_viols.get(cname,[])
+                ])
+        return odx
+
+
+class ParseListList(EntityList):
+    index_name='parse'
+    prefix='parselists'
+
+    def __getattr__(self, attr):
+        results = [getattr(plist,attr) for plist in self.data if hasattr(plist,attr)]
+        if not results: return
+        res = results[0]
+        if callable(res):
+            def f(*x,**y):
+                return self.combine([res(*x,**y) for res in results])
+            return f
+        else:
+            return self.combine(results)
+
+
+    def combine(self, results):
+        if not results: return
+        res = results[0]
+        if res is None:
+            return
+        elif is_numeric(res):
+            return np.median(results)
+        elif isinstance(res, ParseList):
+            return ParseList(parse for parselist in results for parse in parselist)
+        elif isinstance(res,pd.DataFrame):
+            return pd.concat(results)
+        elif isinstance(res,dict) or isinstance(res,pd.Series):
+            return pd.DataFrame(results)
+
+        raise Exception(f'what is this? {results}')
+    
+    @cached_property
+    def best_parse(self):
+        return min(self.parses.data)
+    
+    @cached_property
+    def lines(self):
+        return LineList(pl.line for pl in self.data)
+
+    @cached_property
+    def attrs(self):
+        return {
+            **self._attrs, 
+            'num_parsed':len(self.data),
+        }
+
 
 
 # class representing the potential bounding relations between to parses
@@ -624,3 +870,8 @@ def get_iambic_parse(nsyll):
         x='w' if not o or o[-1]=='s' else 's'
         o.append(x)
     return o
+
+
+
+
+

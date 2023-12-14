@@ -38,58 +38,36 @@ def test_feet():
     assert l.best_parse.nary_feet == 3
     assert l.best_parse.foot_type == 'dactylic'
     
-    # parsing higher max s and max w will still yield same best parses
     lx = Line(tstr)
-    lx.parse(max_s=1, max_w=1)
+    assert not lx._parses
+    mopts1=dict(max_s=1, max_w=1)
+    lx.parse(**mopts1)
+    assert lx._parses
+    p1=lx._parses
+    m1=lx.meter
+    lx.parse(**mopts1)
+    m2=lx.meter
+    assert m1 is m2
+    assert lx._parses is p1
 
-    print(lx._parses)
-    print(lx.all_parses)
-    print(lx.parse_stats)
-    print(lx.parse_stats)
-
-    assert lx.parse_stats
-    ap1=lx.all_parses
-    bp1=lx.unbounded_parses
-    aplen1=len(ap1)
-    bplen1=len(bp1)
-    
     lx.parse(max_s=2, max_w=2)
-    assert lx.parse_stats
-    ap2=lx.all_parses
-    bp2=lx.unbounded_parses
-    aplen2=len(ap2)
-    bplen2=len(bp2)
-
-    assert ap1 is not ap2
-    assert bp1 is not bp2
-    assert aplen1 < aplen2
-    assert bplen1 <= bplen2
-
-    # test out dfparses
-    assert 'Parse(' in repr(lx.best_parse)
-    # # parsing higher max s and max w will still yield same best parses
-    # # even without categorical constraints
-    # lx = Line(tstr)
-    # constraints = [w_peak, w_stress, s_unstress, unres_across, unres_within]
-    # m1 = Meter(max_s=2, max_w=2, constraints=constraints)
-    # m2 = Meter(max_s=None, max_w=None, constraints=constraints)
-    # l1 = lx.parse(meter=m1)
-    # l2 = lx.parse(meter=m2)
-    # assert len(l1.all_parses) < len(l2.all_parses)
-    # assert len(l1.best_parses) == len(l2.best_parses)
-    # assert_frame_equal(l1.best_parses.df, l2.best_parses.df)
+    m3=lx.meter
+    p2=lx._parses
+    assert m2 is not m3
+    assert p1 is not p2
 
 
 def test_text_parsing():
     t = Text(sonnet)
     assert len(t.lines) == 14
     t.parse()
-    assert len(t.best_parses) >= 14  # sylls
-    assert len(t.best_parses.df.reset_index().drop_duplicates('line_num')) == 14
+    assert len(t.parses.unbounded) >= 14
+    assert t.parses.num_lines == 14
+    assert len(t.parses.unbounded.df.reset_index().drop_duplicates('line_num')) == 14
     assert len(t.parse_stats()) == 14
 
 def test_html():
-    html = Text('disaster disaster disaster').lines[0].html
+    html = Text('disaster disaster disaster').line1.best_parse.to_html(as_str=True)
     assert 'meter_strong' in html
     assert 'violation in html'
 
@@ -98,8 +76,8 @@ def test_categorical_constraints():
     line = Line('dangerous ' * 3)
     line.parse(categorical_constraints='foot_size', max_s=None, max_w=None)
     
-    assert not any([px.meter_str.count('---') for px in line.unbounded_parses])
-    assert not any([px.meter_str.count('+++') for px in line.unbounded_parses])
+    assert not any([px.meter_str.count('---') for px in line.parses.unbounded])
+    assert not any([px.meter_str.count('+++') for px in line.parses.unbounded])
 
 
 def test_standalone_parsing():
@@ -149,7 +127,7 @@ def test_parselist():
     assert l.best_parse.meter_str == '-+' * 5
 
     l = Line('my horse my horse my kingdom for a horse')
-    # assert len(l.unbounded_parses)==1
+    # assert len(l.parses.unbounded)==1
     # assert len(l.bounded_parses)>1
     assert l.best_parse.meter_str == '-+' * 5
 
@@ -157,5 +135,14 @@ def test_constraints():
     l=Line('hello world ' * 3)
     ckey=tuple(CONSTRAINTS.keys())
     l.parse(constraints=ckey)
-    assert len(l.best_parses)
+    assert len(l.parses.unbounded)
 
+
+
+def test_parse_iter():
+    text = Text(sonnet)
+    for parsed_line in text.parse_iter():
+        break
+    assert parsed_line.is_parseable
+    assert parsed_line._parses
+    assert parsed_line is text.lines[0]

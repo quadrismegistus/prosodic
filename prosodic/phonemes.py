@@ -3,14 +3,21 @@ from .imports import *
 class PhonemeClass(Entity): 
 	prefix='phon'
 	@profile
-	def __init__(self, phon_str, **kwargs):
-		super().__init__(phon_str, **kwargs)
+	def __init__(self, txt, **kwargs):
+		super().__init__(txt, **kwargs)
 
 	@cached_property
 	def is_vowel(self):
 		if hasattr(self,'cons') and self.cons>0: return False
 		if hasattr(self,'cons') and self.cons<1: return True
 		return None
+	
+	def to_json(self):
+		resd=super().to_json()
+		resd['_class']='Phoneme'
+		resd.pop('children')
+		return resd
+
 
 
 @cache
@@ -22,7 +29,8 @@ def get_phoneme_featuretable():
 
 @cache
 @profile
-def Phoneme(phon):
+def Phoneme(txt, **kwargs):
+	phon = txt
 	ft=get_phoneme_featuretable()
 	phonl = ft.word_fts(phon)
 	if not phonl: 
@@ -41,9 +49,9 @@ def Phoneme(phon):
 
 @cache
 def get_ipa_info():
-	ipakey = ['approx','cons','son','syll','constr','spread','voice','long','cont_acoust','cont_artic','delrel','lat','nas','strid','tap','trill','coronal','dorsal','labial','labiodental','ant','dist','back','front','high','low','tense','round']
 	ipa = {}
-	ipa['p'] = [False,True,False,False,False,False,False,None,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False,None,False,False,None,False]
+	ipakey = ['approx','cons','son','syll','constr','spread','voice','long','cont_acoust','cont_artic','delrel','lat','nas','strid','tap','trill','coronal','dorsal','labial','labiodental','ant','dist','back','front','high','low','tense','round']
+	ipa['p']=[False,True,False,False,False,False,False,None,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False,None,False,False,None,False]
 	ipa['m']=[False,True,True,False,False,False,True,None,True,False,False,False,True,False,False,False,False,False,True,False,True,False,False,None,False,False,None,False]
 	ipa['pʰ']=[False,True,False,False,False,True,False,None,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False,None,False,False,None,False]
 	ipa['t']=[False,True,False,False,False,False,False,None,False,False,False,False,False,False,False,False,True,False,False,False,True,False,False,None,False,False,None,False]

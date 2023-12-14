@@ -20,6 +20,12 @@ class Syllable(Entity):
             children = [Phoneme(phon) for phon in phones]
         super().__init__(txt=txt, ipa=ipa, children=children, parent=parent, **kwargs)
     
+    def to_json(self):
+        return super().to_json(ipa=self.ipa)
+
+
+
+
     @cached_property
     def stress(self): return get_stress(self.ipa)
     

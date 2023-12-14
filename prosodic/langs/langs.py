@@ -1,13 +1,12 @@
 from ..imports import *
 
-
-
 class Language:
     pronunciation_dictionary_filename = ''
     pronunciation_dictionary_filename_sep = '\t'
     cache_fn='lang_wordtypes.sqlitedict'
     lang_espeak = None
     lang = None
+    use_cache = False
 
     def __getitem__(self, token): return self.get(token)
     def get(self, token): return []
@@ -37,8 +36,10 @@ class Language:
         return SqliteDict(
             os.path.join(PATH_HOME_DATA, self.cache_fn),
             autocommit=True,
-            encode=pickle.dumps,
-            decode=pickle.loads
+            encode=orjson.dumps,
+            decode=orjson.loads
+            # encode=pickle.dumps,
+            # decode=pickle.loads
         )
 
 
@@ -148,9 +149,11 @@ class Language:
             logger.error(f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing')
             tokenx=''.join(x if not x.isspace() else '-' for x in tokenx)
         
-        # if tokenx in self.cached: 
-            # logger.debug(f'found token {tokenx} in cache')
+        if self.use_cache and tokenx in self.cached: 
+            logger.trace(f'found token {tokenx} in cache')
             # wordforms = self.cached.get(tokenx)
+            return WordType.from_json(self.cached[tokenx])
+        
         # else:
         wordforms = []
         if any(x.isalpha() for x in token): 
@@ -163,7 +166,8 @@ class Language:
             wordforms.sort(key=lambda w: w.num_stressed_sylls)
             # self.cached[tokenx] = wordforms
         wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
-        # self.cached[tokenx]=wordtype
+        if self.use_cache:
+            self.cached[tokenx]=wordtype.to_json()
         return wordtype
 
 

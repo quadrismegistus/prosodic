@@ -1,7 +1,6 @@
 ftfy
 langdetect
 pandas
-loguru
 syllabiphon @ git+https://github.com/dmort27/syllabiphon
 sqlitedict
 gruut-ipa
@@ -15,3 +14,6 @@ ordered-set
 click
 Werkzeug==2.2.2
 editdistance @ git+https://github.com/roy-ht/editdistance
+logmap @ git+https://github.com/quadrismegistus/logmap
+loguru
+orjson

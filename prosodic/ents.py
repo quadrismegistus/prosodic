@@ -8,6 +8,9 @@ class Entity(UserList):
     prefix='ent'
     list_type = None
     cached_properties_to_clear = []
+    use_cache = False
+    sep=''
+    
 
     """
     Root Entity class
@@ -30,11 +33,48 @@ class Entity(UserList):
         self._mtr=None
         for k,v in self._attrs.items(): setattr(self,k,v)
 
+    def __iter__(self):
+        yield from self.children
+
+    def to_hash(self):
+        return hashstr(self.txt, tuple(sorted(self._attrs.items())))
+
     def __hash__(self):
-        return hash((self.txt, tuple(sorted(self.attrs.items()))))
+        return hash(self.to_hash())
 
     def __eq__(self, other):
         return self is other
+
+    def __bool__(self): return True
+
+    def to_json(self, no_txt=False, yes_txt=False, **kwargs):
+        txt=(self._txt if not yes_txt else self.txt) if not no_txt else None
+        return {
+            '_class':self.__class__.__name__,
+            **({'txt':txt} if txt is not None and (yes_txt or txt) else {}),
+            'children':[kid.to_json() for kid in self.children],
+            **kwargs
+        }
+
+    @staticmethod
+    def from_json(json_d):
+        from .imports import GLOBALS, CHILDCLASSES
+        classname=json_d['_class']
+        classx = GLOBALS[classname]
+        childx = CHILDCLASSES.get(classname)
+        children = json_d.get('children',[])
+        inpd = {
+            k:v 
+            for k,v in json_d.items()
+            if k not in {'children','_class'}
+        }
+        if children and childx:
+            children = [
+                childx.from_json(d)
+                for d in json_d['children']
+            ]
+        return classx(children=tuple(children), **inpd)
+
 
     @cached_property
     def attrs(self):
@@ -56,7 +96,7 @@ class Entity(UserList):
         if self._txt: 
             txt = self._txt
         elif self.children: 
-            txt=''.join(child.txt for child in self.children)
+            txt=self.child_class.sep.join(child.txt for child in self.children)
         else: 
             txt=''
         return clean_text(txt)
@@ -110,6 +150,11 @@ class Entity(UserList):
     
     @cached_property
     def ld(self): return self.get_ld()
+
+    @cached_property
+    def child_class(self):
+        from .imports import GLOBALS
+        return GLOBALS.get(self.child_type)
 
     def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
         if not incl_sylls and self.child_type=='Syllable': return [{**self.prefix_attrs}]
@@ -314,13 +359,51 @@ class Entity(UserList):
     def is_phon(self): return self.__class__.__name__ == 'PhonemeClass'
 
 
+    def get_json_cache(self, flag='c', autocommit=True):
+        return CompressedSqliteDict(
+            os.path.join(PATH_HOME_DATA, f'json_cache.{self.__class__.__name__}.sqlitedict'),
+            flag=flag,
+            autocommit=autocommit
+        )
+
+    @cached_property
+    def json_cache(self): return self.get_json_cache()
+        
+    def children_from_json_cache(self):
+        res=self.from_json_cache()
+        return None if res is None else res.children
+
+    def get_key(self,key):
+        if hasattr(key,'to_hash'): 
+            key=key.to_hash()
+        elif key:
+            key=hashstr(key)
+        return key
+
+    def from_json_cache(self,obj=None,as_dict=False):
+        if obj is None: obj=self
+        key=self.get_key(obj)
+        if key and self.use_cache and key in self.json_cache:
+            dat=self.json_cache[key]
+            return from_json(dat) if not as_dict else dat
+
+        
+    def to_json_cache(self, key_obj=None, val_obj=None, force=False):
+        if key_obj is None: key_obj=self
+        if val_obj is None: val_obj=key_obj
+        key=self.get_key(key_obj)
+        if key and (force or not key in self.json_cache):
+            data = val_obj.to_json()
+            # print(f'caching {pprint(data)} to {key}')
+            self.json_cache[key] = data
+        
 
 
 
 class EntityList(Entity):
     def __init__(self, children=[], parent=None, **kwargs):
         self.parent = parent
-        self.children = list(children)
+        self.children = [x for x in children]
         self._attrs = kwargs
         self._txt=None
         for k,v in self._attrs.items(): setattr(self,k,v)

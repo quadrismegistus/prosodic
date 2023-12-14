@@ -448,7 +448,14 @@ class Parse(Entity):
         out = ''.join(output)
         out = f'<style>{css}</style><div class="parse">{out}</div>'
         if blockquote: out+=f'<div class="miniquote">⎿ {self.__repr__(bad_keys={"txt","line_txt"})}</div>'
-        return out if as_str else HTML(out)
+        if not as_str: 
+            try:
+                from IPython.display import HTML,Markdown,display
+                out=HTML(out)
+            except ModuleNotFoundError:
+                pass
+        return out
+
 
 
 class ParsePosition(Entity):

@@ -92,7 +92,6 @@ HTML_CSS='''.violation { color:#f43838; }
 
 # sys imports
 import re
-from IPython.display import HTML,Markdown,display
 from typing import Optional
 from collections import UserList, Counter
 import warnings

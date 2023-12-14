@@ -8,7 +8,7 @@ Supports Python>=3.8.
 
 ## Quickstart
 
-### Install
+### Install  
 
 #### 1. Install python package
 

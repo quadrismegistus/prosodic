@@ -77,7 +77,7 @@ class Meter(Entity):
         if not line.needs_parsing(force=force,meter=self):
             return line._parses
         
-        if self.use_cache:
+        if not force and self.use_cache:
             parses = self.parses_from_json_cache(line)
             if parses:
                 line._parses = parses
@@ -159,15 +159,18 @@ class Meter(Entity):
         deque(iterr,maxlen=0)
 
 
-    def parse_text_iter(self, text, progress=True, force=False, num_proc=None, **kwargs):
+    def parse_text_iter(self, text, progress=True, force=False, num_proc=None, use_mp=True, **kwargs):
         from .parsing import ParseList
         assert type(text) is Text
         text._parses=ParseList()
         numlines=len(text.parseable_units)
+        # if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
+        if not use_mp: num_proc=1
+        if num_proc is None: num_proc=mp.cpu_count()-1
         desc=f'parsing {numlines} {text.parse_unit_attr}'
-        if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
+        if num_proc>1: desc+=f' [{num_proc}x]'
         with logmap(desc) as lm:
-            if num_proc > 1: 
+            if num_proc>1:
                 iterr = self._parse_text_iter_mp(
                     text, 
                     progress=progress,
@@ -190,7 +193,7 @@ class Meter(Entity):
                 line._parses = parselist
                 text._parses.extend(parselist)
                 yield line
-                lm.log(f'stanza {line.stanza.num}, line {line.num}: {padmin(line.best_parse.txt,65)}')
+                lm.log(f'stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt}', linelim=75)
 
     def _parse_text_iter_mp(
             self, 

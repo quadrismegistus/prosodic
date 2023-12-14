@@ -47,7 +47,9 @@ class Line(Text):
         def iterr():
             for correct_wf, target_wfl in zip(wordforms, wordforms_ll):
                 targets = [wf for wf in target_wfl if wf.to_hash() == correct_wf.to_hash()]
-                assert len(targets)==1
+                if len(targets)!=1:
+                    pprint([correct_wf,target_wfl,targets])
+                    raise Exception('too many candidates')
                 yield targets[0]
         return WordFormList(iterr())
 

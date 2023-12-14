@@ -1,4 +1,5 @@
 import os,sys
+sys.path.insert(0,os.path.expanduser('~/github/logmap'))
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
 PATH_REPO_DATA = os.path.join(PATH_REPO,'data')
@@ -97,6 +98,7 @@ from collections import UserList, Counter
 import warnings
 warnings.filterwarnings('ignore')
 import time
+import zlib
 import itertools
 from copy import copy
 from functools import cached_property, lru_cache as cache, total_ordering

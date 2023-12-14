@@ -125,7 +125,7 @@ class Text(Entity):
         if not self._mtr: return True
         if meter is not None and meter.attrs != self._mtr.attrs: return True
         if meter_kwargs and Meter(**{**self._mtr.attrs,**meter_kwargs}).attrs != self._mtr.attrs: return True
-        if not self.is_parseable and len(self._parses) != len(self.parseable_units): return True
+        if not self.is_parseable and self._parses.num_lines != len(self.parseable_units): return True
         return False
 
     # @cache
@@ -137,7 +137,7 @@ class Text(Entity):
         if self.needs_parsing(force=force,meter=meter,**meter_kwargs):
             meter = self.get_meter(meter=meter,**meter_kwargs)
             self.clear_cached_properties()
-            yield from meter.parse_iter(self, num_proc=num_proc, progress=progress)
+            yield from meter.parse_iter(self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs)
         else:
             yield from self.parseable_units
     

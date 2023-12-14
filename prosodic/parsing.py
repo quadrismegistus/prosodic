@@ -743,8 +743,9 @@ class ParseList(EntityList):
         return odf
 
     @cached_property
-    def df_syll(self):
-        return self.get_df().assign(**self._attrs)
+    def df_syll(self, bad_keys={'line_numparse'}):
+        odf=self.get_df().assign(**self._attrs)
+        return odf[[c for c in odf if not bad_keys or c not in bad_keys]]
     
     @cached_property
     def scansions(self, **kwargs):
@@ -759,7 +760,9 @@ class ParseList(EntityList):
             ]).drop_duplicates().index
         return ParseList(children=[self.parses[i] for i in index_matches])
     
-
+    @cached_property
+    def num_lines(self):
+        return len(self.lines)
     
     def stats(self, norm=False):
         odx={

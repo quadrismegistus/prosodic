@@ -149,8 +149,24 @@ def to_json(obj, fn=None):
             of.write(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY))
 
 def padmin(xstr,lim=40):
+    xstr=str(xstr)
     if len(xstr)<lim:
         xstr = xstr + (' '*(lim - len(xstr)))
     else:
         xstr = xstr[:lim]
     return xstr
+
+
+def ensure_dir(fn):
+    dirname=os.path.dirname(fn)
+    if dirname: os.makedirs(dirname, exist_ok=True)
+
+def encode_cache(x): return zlib.compress(orjson.dumps(x,option=orjson.OPT_SERIALIZE_NUMPY))
+def decode_cache(x): return orjson.loads(zlib.decompress(x))
+
+def CompressedSqliteDict(fn, *args, flag='c', **kwargs):
+    from sqlitedict import SqliteDict
+    ensure_dir(fn)
+    kwargs['encode']=encode_cache
+    kwargs['decode']=decode_cache
+    return SqliteDict(fn, *args, flag=flag, **kwargs)

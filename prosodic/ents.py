@@ -358,15 +358,15 @@ class Entity(UserList):
     def is_phon(self): return self.__class__.__name__ == 'PhonemeClass'
 
 
-    @cached_property
-    def json_cache(self):
-        from sqlitedict import SqliteDict
-        return SqliteDict(
+    def get_json_cache(self, flag='c', autocommit=True):
+        return CompressedSqliteDict(
             os.path.join(PATH_HOME_DATA, f'json_cache.{self.__class__.__name__}.sqlitedict'),
-            autocommit=True,
-            encode=orjson.dumps,
-            decode=orjson.loads
+            flag=flag,
+            autocommit=autocommit
         )
+
+    @cached_property
+    def json_cache(self): return self.get_json_cache()
         
     def children_from_json_cache(self):
         res=self.from_json_cache()

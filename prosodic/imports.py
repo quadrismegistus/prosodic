@@ -37,7 +37,7 @@ METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = True
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
-ESPEAK_PATHS=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng', '/usr/bin/espeak-ng']
+ESPEAK_PATHS=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng', '/usr/bin/espeak']
 DF_INDEX=[
     'stanza_num',
     'line_num',

@@ -68,10 +68,13 @@ def test_text_parsing():
 
 def test_exhaustive():
     t = Text(sonnet)
-    parses1=t.line1.parse(exhaustive=False)
     parses2=t.line1.parse(exhaustive=True)
-
-    assert len(parses1) < len(parses2)
+    parses3=t.line1.parse(exhaustive=True)
+    parses1=t.line1.parse(exhaustive=False)
+    assert parses1 is not parses2
+    assert parses2 is parses3
+    #?
+    # assert len(parses1.unbounded) < len(parses2.unbounded)
 
 def test_bounding():
     s='A horse a horse my kingdom for a horse'

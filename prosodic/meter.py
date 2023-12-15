@@ -78,7 +78,7 @@ class Meter(Entity):
             if parses:
                 line._parses = parses
                 return parses
-            
+
         if self.exhaustive:
             parses = self.parse_line_exhaustive(line)
         else:
@@ -136,7 +136,11 @@ class Meter(Entity):
             combos = [
                 (wfl,scansion)
                 for wfl in wfm
-                for scansion in get_possible_scansions(wfl.num_sylls, max_s=self.max_s, max_w=self.max_w)
+                for scansion in get_possible_scansions(
+                    wfl.num_sylls, 
+                    max_s=self.max_s, 
+                    max_w=self.max_w
+                )
             ]
             wfl=wfm[0]
             logger.trace(f'Generated {len(combos)} from a wordfrom matrix of size {len(wfm), wfl, wfl.num_sylls, self.max_s, self.max_s, len(get_possible_scansions(wfl.num_sylls))}')

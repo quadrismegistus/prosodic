@@ -143,23 +143,6 @@ class Text(Entity):
             yield from self.parseable_units
     
 
-    def _concat_line_parses(self, attr):
-        from .parsing import ParseList
-        return ParseList([
-            parse
-            for line in self.parseable_units
-            for parse in getattr(line,attr)
-        ])
-
-
-    def _concat_line_dfs(self, attr):
-        if not self._parses: self.parse()
-        odf=pd.concat([
-            getattr(line,attr).df
-            for line in self.parseable_units
-        ])
-        return setindex(odf, DF_INDEX)
-    
     @property
     def parses(self): 
         if not self._parses: self.parse()

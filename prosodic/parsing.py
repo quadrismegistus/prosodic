@@ -450,13 +450,14 @@ class Parse(Entity):
         if blockquote:
             out += f'<div class="miniquote">⎿ {
                 self.__repr__(bad_keys={"txt", "line_txt"})}</div>'
-        if not as_str:
-            try:
-                from IPython.display import HTML, Markdown, display
-                out = HTML(out)
-            except ModuleNotFoundError:
-                pass
-        return out
+        return to_html(out,as_str=as_str)
+    
+    @cached_property
+    def wordtoken2slots(self):
+        wordtokend = defaultdict(list)
+        for slot in self.slots: 
+            wordtokend[slot.unit.wordtoken].append(slot)
+        return wordtokend
 
 
 class ParsePosition(Entity):

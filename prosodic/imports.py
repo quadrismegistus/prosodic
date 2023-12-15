@@ -120,6 +120,8 @@ HTML_CSS = '''.violation { color:#f43838; }
 .parse {font-family:monospace;}
 .stress_strong { text-decoration: underline; text-underline-offset: 3px; }
 .stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
+.parse { line-height:2em; }
+.parselist { margin-bottom:1em; }
 '''
 
 # sys imports

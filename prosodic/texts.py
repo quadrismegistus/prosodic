@@ -210,6 +210,12 @@ class Text(Entity):
                 line.parse_stats(norm=norm)
                 for line in self.parseable_units
             )
+    
+    def to_html(self, as_str=False, blockquote=False):
+        html_strs = (line.to_html(blockquote=blockquote,as_str=True) for line in self.children)
+        html = '</li>\n<li>'.join(html_strs)
+        html = f'<ol class="parselist"><li>{html}</li></ol>'
+        return to_html(html,as_str=as_str)
 
 
 class Stanza(Text):
@@ -239,3 +245,5 @@ class Stanza(Text):
     def parses(self):
         from .parsing import ParseList
         return ParseList(p for p in self.parent.parses if p.stanza is self)
+
+    

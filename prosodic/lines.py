@@ -71,3 +71,6 @@ class Line(Text):
 
     def to_json(self):
         return Entity.to_json(self, txt=self.txt)
+
+    def to_html(self, blockquote=False,**kwargs):
+        return self.best_parse.to_html(blockquote=blockquote,**kwargs)

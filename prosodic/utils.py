@@ -170,3 +170,19 @@ def CompressedSqliteDict(fn, *args, flag='c', **kwargs):
     kwargs['encode'] = encode_cache
     kwargs['decode'] = decode_cache
     return SqliteDict(fn, *args, flag=flag, **kwargs)
+
+def to_html(html, as_str=False, **kwargs):
+    if type(html) is not str:
+        if hasattr(html,'to_html'):
+            return html.to_html(as_str=as_str, **kwargs)
+        logger.error(f'what type of data is this? {html}')
+        return
+    
+    if as_str:
+        return html
+
+    try:
+        from IPython.display import HTML, Markdown, display
+        return HTML(html)
+    except ModuleNotFoundError:
+        return html

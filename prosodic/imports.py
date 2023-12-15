@@ -67,7 +67,8 @@ ESPEAK_PATHS = [
     '/opt/homebrew/Cellar/espeak/',
     '/usr/lib/espeak/',
     '/usr/lib/x86_64-linux-gnu/',
-    '/usr/lib/'
+    '/usr/lib/',
+    '/usr/local/lib/'
 ]
 DF_INDEX = [
     'stanza_num',

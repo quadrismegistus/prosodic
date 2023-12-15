@@ -248,7 +248,7 @@ If you have placed espeak at another location than those listed above,
 set the environment variable PATH_ESPEAK. From within python:
 
     import os
-    os.environ["PATH_ESPEAK"]="/my/path/to/espeak"
+    os.environ["PATH_ESPEAK"]="/my/path/to/libespeak.dylib"
     import prosodic
 
 For more information on espeak: http://espeak.sourceforge.net
@@ -259,7 +259,6 @@ def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fns={'libespeak.dylib','libes
     stored = os.environ.get('PATH_ESPEAK')
     if stored: return stored
     paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
-    if paths != ESPEAK_PATHS: paths.extend(ESPEAK_PATHS)
     for path in paths:
         if not os.path.exists(path): continue
         if os.path.isdir(path) and 'espeak-ng' in set(os.listdir(path)): 

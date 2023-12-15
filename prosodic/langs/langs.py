@@ -240,7 +240,7 @@ Please install espeak:
     * On Mac: brew install espeak
         [install homebrew first if necessary: https://brew.sh/]
 
-    * On Linux: apt-get install espeak-ng
+    * On Linux: apt-get install espeak
 
     * On Windows: download and install from http://espeak.sourceforge.net/download.html
 

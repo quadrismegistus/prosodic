@@ -229,10 +229,37 @@ def ensure_unstressed(ipa_l):
 
 
 
+def get_espeak_error_msg(paths):
+    pathstr='\n    * '.join(paths)
+    return f'''
+Cannot find espeak at any of the following paths: 
+    * {pathstr}
+
+Please install espeak:
+
+    * On Mac: brew install espeak
+        [install homebrew first if necessary: https://brew.sh/]
+
+    * On Linux: apt-get install espeak
+
+    * On Windows: download and install from http://espeak.sourceforge.net/download.html
+
+If you have placed espeak at another location than those listed above, 
+set the environment variable PATH_ESPEAK. From within python:
+
+    import os
+    os.environ["PATH_ESPEAK"]="/my/path/to/espeak"
+    import prosodic
+
+For more information on espeak: http://espeak.sourceforge.net
+'''
 
 
-
-def get_espeak_env(paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
+def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
+    stored = os.environ.get('PATH_ESPEAK')
+    if stored: return stored
+    paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
+    if paths != ESPEAK_PATHS: paths.extend(ESPEAK_PATHS)
     for path in paths:
         if not os.path.exists(path): continue
         if 'espeak-ng' in os.listdir(path): 
@@ -240,12 +267,14 @@ def get_espeak_env(paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
         for root,dirs,fns in os.walk(path):
             if lib_fn in set(fns):
                 return os.path.join(root,lib_fn)
+    logger.warning(get_espeak_error_msg(paths))
     return ''
 
-def set_espeak_env(paths=ESPEAK_PATHS):
-    path=get_espeak_env(paths)
+def set_espeak_env(path_or_paths=ESPEAK_PATHS):
+    path=get_espeak_env(path_or_paths)
     if path:
         os.environ['PHONEMIZER_ESPEAK_LIBRARY']=path
+        os.environ['PATH_ESPEAK'] = path
 
 # set now
 set_espeak_env()

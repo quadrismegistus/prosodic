@@ -37,7 +37,11 @@ METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = True
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
-ESPEAK_PATHS=['/opt/homebrew/Cellar/espeak', '/usr/bin/espeak-ng', '/usr/bin/espeak']
+ESPEAK_PATHS=[
+    '/opt/homebrew/Cellar/espeak', 
+    '/usr/bin/espeak-ng', 
+    '/usr/bin/espeak'
+]
 DF_INDEX=[
     'stanza_num',
     'line_num',
@@ -106,7 +110,7 @@ import random
 import textwrap
 from collections import deque
 import multiprocessing as mp
-from pprint import pprint
+from pprint import pprint,pformat
 from copy import copy
 
 

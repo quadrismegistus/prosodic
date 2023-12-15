@@ -38,9 +38,10 @@ METER_RESOLVE_OPTIONALITY = True
 PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA,'parse_cache.sqlitedict')
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
 ESPEAK_PATHS=[
-    '/opt/homebrew/Cellar/espeak', 
-    '/usr/bin/espeak-ng', 
-    '/usr/bin/espeak'
+    '/opt/homebrew/Cellar/espeak/',
+    '/usr/lib/espeak/',
+    '/usr/lib/x86_64-linux-gnu/',
+    '/usr/lib/'
 ]
 DF_INDEX=[
     'stanza_num',

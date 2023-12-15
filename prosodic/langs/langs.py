@@ -255,7 +255,7 @@ For more information on espeak: http://espeak.sourceforge.net
 '''
 
 
-def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
+def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fns={'libespeak.dylib','libespeak.so'}):
     stored = os.environ.get('PATH_ESPEAK')
     if stored: return stored
     paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
@@ -265,8 +265,10 @@ def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
         if os.path.isdir(path) and 'espeak-ng' in set(os.listdir(path)): 
             return path
         for root,dirs,fns in os.walk(path):
-            if lib_fn in set(fns):
-                return os.path.join(root,lib_fn)
+            fns=set(fns)
+            for lib_fn in lib_fns:
+                if lib_fn in fns:
+                    return os.path.join(root,lib_fn)
     logger.warning(get_espeak_error_msg(paths))
     return ''
 

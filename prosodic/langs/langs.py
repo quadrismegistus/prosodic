@@ -240,7 +240,7 @@ Please install espeak:
     * On Mac: brew install espeak
         [install homebrew first if necessary: https://brew.sh/]
 
-    * On Linux: apt-get install espeak
+    * On Linux: apt-get install espeak-ng
 
     * On Windows: download and install from http://espeak.sourceforge.net/download.html
 
@@ -262,7 +262,7 @@ def get_espeak_env(path_or_paths=ESPEAK_PATHS, lib_fn='libespeak.dylib'):
     if paths != ESPEAK_PATHS: paths.extend(ESPEAK_PATHS)
     for path in paths:
         if not os.path.exists(path): continue
-        if 'espeak-ng' in os.listdir(path): 
+        if os.path.isdir(path) and 'espeak-ng' in set(os.listdir(path)): 
             return path
         for root,dirs,fns in os.walk(path):
             if lib_fn in set(fns):

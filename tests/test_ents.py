@@ -222,3 +222,9 @@ def test_exceptions():
     t = Text('', children=[Entity()])
     assert not t._txt
     assert not t.txt
+
+
+
+def test_jsons():
+    obj = Line('hello')
+    assert from_json(to_json(obj)).to_hash() == obj.to_hash()

@@ -109,21 +109,6 @@ def unique(l):
     return list(OrderedSet(l))
 
 
-def is_numeric(x:object) -> bool:
-    """Checks if the given object is a numeric value.
-
-    Args:
-        x (object): The object to be checked.
-
-    Returns:
-        bool: True if the object is a numeric value, False otherwise.
-    """
-    import numbers
-    return isinstance(x, numbers.Number)
-
-
-
-
 def hashstr(*inputs, length=HASHSTR_LEN):
     import hashlib
     input_string = str(inputs)
@@ -148,13 +133,6 @@ def to_json(obj, fn=None):
         with open(fn,'wb') as of:
             of.write(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY))
 
-def padmin(xstr,lim=40):
-    xstr=str(xstr)
-    if len(xstr)<lim:
-        xstr = xstr + (' '*(lim - len(xstr)))
-    else:
-        xstr = xstr[:lim]
-    return xstr
 
 
 def ensure_dir(fn):

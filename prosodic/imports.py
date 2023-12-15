@@ -133,6 +133,9 @@ import pandas as pd
 pd.options.display.width=200
 pd.options.display.max_rows=10
 from langdetect import detect as detect_lang
+import logging
+logger = logging.getLogger()
+while logger.hasHandlers(): logger.removeHandler(logger.handlers[0])
 from logmap import logmap, logger
 from tqdm import tqdm
 from multiset import Multiset

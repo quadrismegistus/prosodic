@@ -232,7 +232,7 @@ def ensure_unstressed(ipa_l):
 def get_espeak_error_msg(paths):
     pathstr='\n    * '.join(paths)
     return f'''
-Cannot find espeak at any of the following paths: 
+Cannot find espeak library ("libespeak.dylib" or "libespeak.so") at any of the following paths: 
     * {pathstr}
 
 Please install espeak:

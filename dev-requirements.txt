@@ -1,2 +1,4 @@
 pytest-cov
 pytest>=7.2
+nbformat
+nbclient

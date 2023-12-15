@@ -52,3 +52,4 @@ venv/
 *.lprof
 .coverage*
 notebooks/dev
+docs

@@ -63,7 +63,6 @@
 # 	def grid(self,nspace=10):
 
 
-
 # 		GRID_LINES=[]
 
 # 		for LINE in self.lines():
@@ -145,8 +144,6 @@
 # 			GRID_LINES+=['\n'.join(grid_lines)]
 
 # 		return '\n\n\n'.join(GRID_LINES)
-
-
 
 
 # def find_phrasal_heads(tree):

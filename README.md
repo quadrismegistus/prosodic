@@ -68,31 +68,10 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """)
-```
 
-    building text with 104 words @ 2023-12-15 14:13:39,046
-    ￨ tokenizing @ 2023-12-15 14:13:39,047
-    ￨ ⎿ 0 seconds @ 2023-12-15 14:13:39,051
-    ￨ building stanzas @ 2023-12-15 14:13:39,052
-    ￨ ￨ iterating stanzas: 100%|██████████| 1/1 [00:01<00:00,  1.06s/it]
-    ￨ ⎿ 1.1 seconds @ 2023-12-15 14:13:40,120
-    ⎿ 1.1 seconds @ 2023-12-15 14:13:40,120
-
-
-
-```python
 # can also load by filename
 shaksonnets = prosodic.Text(filename='corpora/corppoetry_en/en.shakespeare.txt')
 ```
-
-    building text with 17,513 words @ 2023-12-15 14:13:40,125
-    ￨ tokenizing @ 2023-12-15 14:13:40,125
-    ￨ ⎿ 0.1 seconds @ 2023-12-15 14:13:40,226
-    ￨ building stanzas @ 2023-12-15 14:13:40,226
-    ￨ ￨ iterating stanzas: 100%|██████████| 154/154 [00:01<00:00, 84.70it/s]
-    ￨ ⎿ 1.8 seconds @ 2023-12-15 14:13:42,047
-    ⎿ 1.9 seconds @ 2023-12-15 14:13:42,047
-
 
 #### Stanzas, lines, words, syllables, phonemes
 

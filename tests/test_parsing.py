@@ -60,12 +60,20 @@ def test_feet():
 def test_text_parsing():
     t = Text(sonnet)
     assert len(t.lines) == 14
-    t.parse()
+    t.parse(num_proc=1)
     assert len(t.parses.unbounded) >= 14
     assert t.parses.num_lines == 14
     assert len(t.parses.unbounded.df.reset_index().drop_duplicates('line_num')) == 14
     assert len(t.parse_stats()) == 14
 
+def test_exhaustive():
+    t = Text(sonnet)
+    parses1=t.line1.parse(exhaustive=False)
+    parses2=t.line1.parse(exhaustive=True)
+
+    assert len(parses1) < len(parses2)
+
+def test_bounding():
     s='A horse a horse my kingdom for a horse'
     p1=Parse(s, 'ws' * 5)
     p2=Parse(s, 'sw' * 5)

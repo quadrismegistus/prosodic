@@ -66,6 +66,12 @@ def test_text_parsing():
     assert len(t.parses.unbounded.df.reset_index().drop_duplicates('line_num')) == 14
     assert len(t.parse_stats()) == 14
 
+    s='A horse a horse my kingdom for a horse'
+    p1=Parse(s, 'ws' * 5)
+    p2=Parse(s, 'sw' * 5)
+    assert p1.bounds(p2)
+
+
 def test_html():
     html = Text('disaster disaster disaster').line1.best_parse.to_html(as_str=True)
     assert 'meter_strong' in html
@@ -116,11 +122,19 @@ def test_standalone_parsing():
 
 def test_parselist():
     parses = Line('a horse ' * 5).parse()
-    print(parses)
-    print(parses.bounded)
-    print(parses.unbounded)
     assert parses.bounded
     assert parses.unbounded
+    assert len(parses) == len(parses.all)
+    assert len(parses.bounded) < len(parses)
+
+    parses = Text(sonnet).parses
+    ps1=parses.stats(norm=False)
+    ps2=parses.stats(norm=True)
+    assert set(ps1.keys()) == set(ps2.keys())
+    assert set(ps1.values()) != set(ps2.values())
+
+    html=parses._repr_html_()
+    assert '</table>' in html
 
     l = Line('my horse my horse my kingdom for a horse')
     l.parse()
@@ -146,3 +160,8 @@ def test_parse_iter():
     assert parsed_line.is_parseable
     assert parsed_line._parses
     assert parsed_line is text.lines[0]
+
+
+def test_scansion():
+    t = Text('into '*3)
+    assert len(t.parses) > len(t.parses.scansions)

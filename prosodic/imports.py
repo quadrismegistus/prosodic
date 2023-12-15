@@ -98,7 +98,7 @@ HTML_CSS='''.violation { color:#f43838; }
 # sys imports
 import re
 from typing import Optional
-from collections import UserList, Counter
+from collections import UserList, Counter, defaultdict
 import warnings
 warnings.filterwarnings('ignore')
 import time

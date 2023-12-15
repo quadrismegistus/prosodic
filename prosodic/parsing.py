@@ -417,14 +417,8 @@ class Parse(Entity):
     @cached_property
     def html(self): return self.to_html()
 
-    @cached_property
-    def wordtokens(self): 
-        if self.line: return self.line.wordtokens
-        return WordTokenList(WordToken(wf.txt) for wf in self.wordforms)
-
-
     def to_html(self, as_str=False, css=HTML_CSS, blockquote=False):
-        wordtokend = {wt:[] for wt in self.wordtokens}
+        wordtokend=defaultdict(list)
         for slot in self.slots:
             wordtokend[slot.unit.wordtoken].append(slot)
         output=[]
@@ -800,60 +794,13 @@ class ParseList(EntityList):
                 for x in bp.constraint_viols[cnamex]
             ])
             for cname in cnames:
-                odx[f'n_{cname}']=np.mean([
+                odx[f'*{cname}']=np.mean([
                     int(bool(x))
                     for bp in self.unbounded
                     for x in bp.constraint_viols.get(cname,[])
                 ])
         return odx
 
-
-class ParseListList(EntityList):
-    index_name='parse'
-    prefix='parselists'
-
-    def __getattr__(self, attr):
-        results = [getattr(plist,attr) for plist in self.data if hasattr(plist,attr)]
-        if not results: return
-        res = results[0]
-        if callable(res):
-            def f(*x,**y):
-                return self.combine([res(*x,**y) for res in results])
-            return f
-        else:
-            return self.combine(results)
-
-
-    def combine(self, results):
-        if not results: return
-        res = results[0]
-        if res is None:
-            return
-        elif is_numeric(res):
-            return np.median(results)
-        elif isinstance(res, ParseList):
-            return ParseList(parse for parselist in results for parse in parselist)
-        elif isinstance(res,pd.DataFrame):
-            return pd.concat(results)
-        elif isinstance(res,dict) or isinstance(res,pd.Series):
-            return pd.DataFrame(results)
-
-        raise Exception(f'what is this? {results}')
-    
-    @cached_property
-    def best_parse(self):
-        return min(self.parses.data)
-    
-    @cached_property
-    def lines(self):
-        return LineList(pl.line for pl in self.data)
-
-    @cached_property
-    def attrs(self):
-        return {
-            **self._attrs, 
-            'num_parsed':len(self.data),
-        }
 
 
 

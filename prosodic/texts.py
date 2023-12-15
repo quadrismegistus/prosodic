@@ -150,11 +150,9 @@ class Text(Entity):
     def meter(self):
         return self.get_meter()
 
-    @cached_property
+    @property
     def best_parse(self):
-        if not self._parses:
-            self.parse()
-        return self._parses[0]
+        return self.parses.best
 
     @cached_property
     def parseable_units(self):
@@ -181,9 +179,16 @@ class Text(Entity):
         deque(self.parse_iter(**kwargs), maxlen=0)
         return self._parses
 
-    def parse_iter(self, num_proc=None, progress=True, force=False, meter=None, **meter_kwargs):
+    def reset_meter(self, **meter_kwargs):
+        from .meter import DEFAULT_METER_KWARGS
+        meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
+        self.set_meter(**meter_kwargs)
+
+    def parse_iter(self, num_proc=None, progress=True, force=False, meter=None, defaults=False, **meter_kwargs):
+        from .meter import DEFAULT_METER_KWARGS
+        if defaults:
+            meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         if self.needs_parsing(force=force, meter=meter, **meter_kwargs):
-            m1 = self.meter
             meter = self.get_meter(meter=meter, **meter_kwargs)
             self.clear_cached_properties()
             yield from meter.parse_iter(self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs)
@@ -205,10 +210,6 @@ class Text(Entity):
                 line.parse_stats(norm=norm)
                 for line in self.parseable_units
             )
-
-    @cached_property
-    def line1(self):
-        return self.lines[0] if self.lines else None
 
 
 class Stanza(Text):
@@ -233,3 +234,8 @@ class Stanza(Text):
 
     def to_json(self):
         return Entity.to_json(self, no_txt=True)
+
+    @cached_property
+    def parses(self):
+        from .parsing import ParseList
+        return ParseList(p for p in self.parent.parses if p.stanza is self)

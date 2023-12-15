@@ -120,19 +120,25 @@ class Entity(UserList):
             #     except AttributeError:
             #         pass
 
-    def show(self, indent=0):
+    def show(self, indent=0, maxlines=None, incl_phons=False):
         attrstr = get_attr_str(self.attrs)
         myself = f'{self.__class__.__name__}({attrstr})'
         if indent:
             myself = textwrap.indent(myself, '|' + (' ' * (indent-1)))
         lines = [myself]
         for child in self.children:
-            if isinstance(child, Entity) and not child.__class__.__name__.startswith('Phoneme'):
-                lines.append(child.show(indent=indent+4))
-        dblbreakfor = self.__class__.__name__ in {'Text', 'Stanza', 'Line'}
+            if isinstance(child, Entity) and (incl_phons or not child.__class__.__name__.startswith('Phoneme')):
+                lines.append(child.show(
+                    indent=indent+4,
+                    incl_phons=incl_phons
+                ).replace('PhonemeClass', 'Phoneme'))
+        # self.__class__.__name__ in {'Text', 'Stanza', 'Line'}
+        dblbreakfor = False
         breakstr = '\n|\n' if dblbreakfor else '\n'
         o = breakstr.join(lines)
         if not indent:
+            if maxlines:
+                o = '\n'.join(o.split('\n')[:maxlines])
             print(o)
         else:
             return o
@@ -207,6 +213,18 @@ class Entity(UserList):
 
     @cached_property
     def df(self): return self.get_df()
+
+    def __getattr__(self, __name: str, **kwargs) -> Any:
+        if __name.startswith('line') and __name != 'line':
+            rest = __name[4:]
+            if rest and rest.isdigit():
+                i = int(rest)-1
+                try:
+                    return self.lines[i]
+                except IndexError:
+                    logger.warning('no line at that number')
+                    return None
+        return None
 
     # def __getattr__(self, __name: str, **kwargs) -> Any:
     #     if __name.startswith('_'): raise AttributeError

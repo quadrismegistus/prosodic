@@ -1,16 +1,5 @@
 from logmap import logmap, logger
 from pprint import pprint, pformat
-from .parsing import *
-from .meter import *
-from .phonemes import *
-from .syllables import *
-from .words import *
-from .langs import *
-from .lines import *
-from .texts import *
-from .tokenizers import *
-from .ents import *
-from .utils import *
 import orjson
 from multiset import Multiset
 from tqdm import tqdm
@@ -148,9 +137,9 @@ except AttributeError:
 nltk.download('punkt', quiet=True)
 pd.options.display.width = 200
 pd.options.display.max_rows = 10
-logger = logging.getLogger()
-while logger.hasHandlers():
-    logger.removeHandler(logger.handlers[0])
+logging.logger = logging.getLogger()
+while logging.logger.hasHandlers():
+    logging.logger.removeHandler(logging.logger.handlers[0])
 
 # local imports
 
@@ -171,6 +160,27 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+
+
+
+
+from .utils import *
+from .tokenizers import *
+from .ents import *
+from .texts import *
+from .lines import *
+from .words import *
+from .syllables import *
+from .phonemes import *
+from .langs import *
+from .parsing import *
+from .meter import *
+
+
+
+
+
 
 GLOBALS = globals()
 

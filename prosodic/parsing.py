@@ -2,28 +2,6 @@ from .imports import *
 from .constraints import *
 
 
-# @total_ordering
-# class Parse(Entity):
-#     str2int = {'w':'1','s':'2'}
-#     def __init__(self, num_total_slots:int, constraints:list=[]):
-#         super().__init__()
-#         self.positions = []
-#         self.constraints = constraints
-#         self.num_slots = 0
-#         self.num_total_slots = num_total_slots
-#         self.is_bounded = False
-#         self.bounded_by = None
-#         self.unmetrical = False
-#         self.comparison_nums = set()
-#         self.comparison_parses = []
-#         self.parse_num = 0
-#         self.total_score = None
-#         self.pause_comparisons = False
-#         self.parse_rank = None
-#         self.violset=Multiseft()
-#         for mpos in self.positions:
-#             self.violset.update(mpos.violset)
-
 @total_ordering
 class Parse(Entity):
     prefix = 'parse'
@@ -332,6 +310,22 @@ class Parse(Entity):
             return 'anapestic' if self.is_rising else 'dactylic'
         logger.error('foot type?')
         return ''
+
+    @property
+    def is_iambic(self):
+        return self.foot_type == 'iambic'
+
+    @property
+    def is_trochaic(self):
+        return self.foot_type == 'trochaic'
+
+    @property
+    def is_anapestic(self):
+        return self.foot_type == 'anapestic'
+
+    @property
+    def is_dactylic(self):
+        return self.foot_type == 'dactylic'
 
     @property
     # @profile
@@ -657,6 +651,10 @@ class ParseList(EntityList):
             children=[px for px in self.data if px is not None],
             show_bounded=True
         )
+
+    @cached_property
+    def best(self):
+        return self.data[0] if self.data else None
 
     @cached_property
     def unbounded(self):

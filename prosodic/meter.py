@@ -3,6 +3,14 @@ from .constraints import *
 from .texts import Text
 
 # METER
+DEFAULT_METER_KWARGS = dict(
+    constraints=DEFAULT_CONSTRAINTS,
+    categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS,
+    max_s=METER_MAX_S,
+    max_w=METER_MAX_W,
+    resolve_optionality=METER_RESOLVE_OPTIONALITY,
+    exhaustive=False,
+)
 
 
 class Meter(Entity):
@@ -10,14 +18,13 @@ class Meter(Entity):
     use_cache = USE_CACHE
 
     def __init__(self,
-                 constraints=DEFAULT_CONSTRAINTS,
-                 categorical_constraints=DEFAULT_CATEGORICAL_CONSTRAINTS,
-                 max_s=METER_MAX_S,
-                 max_w=METER_MAX_W,
-                 resolve_optionality=METER_RESOLVE_OPTIONALITY,
-                 exhaustive=False,
-                 **kwargs
-                 ):
+                 constraints=DEFAULT_METER_KWARGS['constraints'],
+                 categorical_constraints=DEFAULT_METER_KWARGS['categorical_constraints'],
+                 max_s=DEFAULT_METER_KWARGS['max_s'],
+                 max_w=DEFAULT_METER_KWARGS['max_w'],
+                 resolve_optionality=DEFAULT_METER_KWARGS['resolve_optionality'],
+                 exhaustive=DEFAULT_METER_KWARGS['exhaustive'],
+                 **kwargs):
         self.constraints = get_constraints(constraints)
         self.categorical_constraints = get_constraints(categorical_constraints)
         self.max_s = max_s

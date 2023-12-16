@@ -438,8 +438,10 @@ class Entity(UserList):
 
     def get_json_cache(self, flag='c', autocommit=True):
         return CompressedSqliteDict(
-            os.path.join(PATH_HOME_DATA, f'json_cache.{
-                         self.__class__.__name__}.sqlitedict'),
+            os.path.join(
+                PATH_HOME_DATA,
+                f'json_cache.{self.__class__.__name__}.sqlitedict'
+            ),
             flag=flag,
             autocommit=autocommit
         )

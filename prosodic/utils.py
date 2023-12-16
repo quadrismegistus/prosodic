@@ -159,7 +159,8 @@ def to_json(obj, fn=None):
     os.makedirs(os.path.dirname(fn), exist_ok=True)
     with open(fn, "wb") as of:
         of.write(
-            orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY)
+            orjson.dumps(data, option=orjson.OPT_INDENT_2 |
+                         orjson.OPT_SERIALIZE_NUMPY)
         )
 
 
@@ -202,3 +203,17 @@ def to_html(html, as_str=False, **kwargs):
         return HTML(html)
     except ModuleNotFoundError:
         return html
+
+
+def enable_caching():
+    global USE_CACHE
+    USE_CACHE = True
+
+
+def caching_is_enabled():
+    return USE_CACHE
+
+
+def disable_caching():
+    global USE_CACHE
+    USE_CACHE = False

@@ -268,8 +268,5 @@ class Stanza(Text):
     def to_json(self):
         return Entity.to_json(self, no_txt=True)
 
-    @cached_property
-    def parses(self):
-        from .parsing import ParseList
-
-        return ParseList(p for p in self.parent.parses if p.stanza is self)
+    def _repr_html_(self, as_df=False, df=None):
+        return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)

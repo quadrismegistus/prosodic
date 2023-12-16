@@ -13,27 +13,18 @@ DEFAULT_METER_KWARGS = dict(
 )
 
 
-def enable_caching():
-    global USE_CACHE
-    USE_CACHE = True
-
-
-def disable_caching():
-    global USE_CACHE
-    USE_CACHE = False
-
-
 class Meter(Entity):
     prefix = 'meter'
 
-    def __init__(self,
-                 constraints=DEFAULT_METER_KWARGS['constraints'],
-                 categorical_constraints=DEFAULT_METER_KWARGS['categorical_constraints'],
-                 max_s=DEFAULT_METER_KWARGS['max_s'],
-                 max_w=DEFAULT_METER_KWARGS['max_w'],
-                 resolve_optionality=DEFAULT_METER_KWARGS['resolve_optionality'],
-                 exhaustive=DEFAULT_METER_KWARGS['exhaustive'],
-                 **kwargs):
+    def __init__(
+            self,
+            constraints=DEFAULT_METER_KWARGS['constraints'],
+            categorical_constraints=DEFAULT_METER_KWARGS['categorical_constraints'],
+            max_s=DEFAULT_METER_KWARGS['max_s'],
+            max_w=DEFAULT_METER_KWARGS['max_w'],
+            resolve_optionality=DEFAULT_METER_KWARGS['resolve_optionality'],
+            exhaustive=DEFAULT_METER_KWARGS['exhaustive'],
+            **kwargs):
         self.constraints = get_constraints(constraints)
         self.categorical_constraints = get_constraints(categorical_constraints)
         self.max_s = max_s
@@ -41,6 +32,9 @@ class Meter(Entity):
         self.resolve_optionality = resolve_optionality
         self.exhaustive = exhaustive
         super().__init__()
+
+    @property
+    def use_cache(self): return caching_is_enabled()
 
     def to_json(self):
         return super().to_json(**self.attrs)
@@ -81,7 +75,7 @@ class Meter(Entity):
         return ParseList(self.parse_iter(text_or_line, **kwargs))
 
     def parse_iter(self, text_or_line, force=False, **kwargs):
-        if type(text_or_line) is Text:
+        if type(text_or_line) in {Text, Stanza}:
             yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
         elif text_or_line.is_parseable:
             yield from self.parse_line(text_or_line, force=force, **kwargs)
@@ -187,9 +181,15 @@ class Meter(Entity):
 
     def parse_text_iter(self, text, progress=True, force=False, num_proc=None, use_mp=True, **kwargs):
         from .parsing import ParseList
-        assert type(text) is Text
+        assert type(text) in {Text, Stanza}
         text._parses = ParseList()
-        numlines = len(text.parseable_units)
+        lines = text.parseable_units
+        numlines = len(lines)
+
+        # reset parses for stanzas
+        for stanza in unique(line.stanza for line in lines):
+            stanza._parses = ParseList()
+
         # if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
         if not use_mp:
             num_proc = 1
@@ -212,14 +212,15 @@ class Meter(Entity):
                 iterr = (
                     self.parse_line(line, force=force, **kwargs)
                     for line in lm.iter_progress(text.parseable_units,
-                        desc='parsing',
-                    )
+                                                 desc='parsing',
+                                                 )
                 )
 
             for i, parselist in enumerate(iterr):
                 line = text.parseable_units[i]
                 line._parses = parselist
                 text._parses.extend(parselist)
+                line.stanza._parses.extend(parselist)
                 yield line
                 lm.log(f'stanza {line.stanza.num:02}, line {
                        line.num:02}: {line.best_parse.txt}', linelim=75)

@@ -1,36 +1,44 @@
-import os,sys; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 
 def test_show():
     t = Text('in hello world')
-    x = t.show()
+    x = t.inspect()
     assert x is None
-    x = t.show(indent=1)
+    x = t.inspect(indent=1)
     assert x is not None
     assert 'Text(' in x
 
-    html=t._repr_html_()
+    html = t._repr_html_()
     assert '<table' in html
+
 
 def test_get_ld():
     t = Text('in hello world')
 
-    ld1 = t.get_ld(incl_phons=False, incl_sylls=False, multiple_wordforms=False)
+    ld1 = t.get_ld(incl_phons=False, incl_sylls=False,
+                   multiple_wordforms=False)
     ld2 = t.get_ld(incl_phons=False, incl_sylls=False, multiple_wordforms=True)
     ld3 = t.get_ld(incl_phons=False, incl_sylls=True, multiple_wordforms=True)
     ld4 = t.get_ld(incl_phons=True, incl_sylls=True, multiple_wordforms=True)
 
     assert len(ld1) < len(ld2) < len(ld3) < len(ld4)
 
+
 def test_get_df():
     t = Text('in hello world')
 
-    df1 = t.get_df(incl_phons=False, incl_sylls=False, multiple_wordforms=False)
+    df1 = t.get_df(incl_phons=False, incl_sylls=False,
+                   multiple_wordforms=False)
     df2 = t.get_df(incl_phons=False, incl_sylls=False, multiple_wordforms=True)
     df3 = t.get_df(incl_phons=False, incl_sylls=True, multiple_wordforms=True)
     df4 = t.get_df(incl_phons=True, incl_sylls=True, multiple_wordforms=True)
 
     assert len(df1) < len(df2) < len(df3) < len(df4)
+
 
 def test_get_children():
     t = Text(sonnet + '\n\n' + sonnet)
@@ -48,12 +56,11 @@ def test_get_children():
     assert type(t.syllables) == SyllableList
     assert type(t.phonemes) == PhonemeList
 
-
     w = Word('hello')
     syll = w.syllables[0]
     assert syll.wordtype is w
-    assert len(w.syllables)==2
-    assert len(w.phonemes)==5
+    assert len(w.syllables) == 2
+    assert len(w.phonemes) == 5
 
     w = Word('hello')
     assert len(w.syllables) == 2
@@ -84,11 +91,11 @@ def test_get_children():
     assert wordtype.stanza is stanza
     assert wordtype.text is t
     assert wordtype.children
-    
+
     wordform = t.wordforms[0]
     assert wordform.parent is wordtype
     assert wordform.wordtype is wordtype
-    
+
     syll = t.syllables[0]
     assert syll.parent is wordform
     assert syll.wordform is wordform
@@ -102,20 +109,20 @@ def test_get_children():
 
 
 def test_i():
-    t=Text('hello')
+    t = Text('hello')
     wf = t.wordforms[0]
-    syll=wf.children[0]
+    syll = wf.children[0]
     assert syll.i is not None
     assert syll.num is not None
     assert syll.next is not None
     assert syll.prev is None
-    syll=wf.children[1]
+    syll = wf.children[1]
     assert syll.next is None
     assert syll.prev is not None
 
-    t=Stanza('hello\nworld')
-    l1,l2=t.children
-    t.children=[]
+    t = Stanza('hello\nworld')
+    l1, l2 = t.children
+    t.children = []
     assert l1.i is None
     assert l1.num is None
     assert l1.next is None
@@ -125,8 +132,8 @@ def test_i():
     assert l2.next is None
     assert l2.prev is None
 
-    t=Stanza('hello\nworld')
-    l1,l2=t.children
+    t = Stanza('hello\nworld')
+    l1, l2 = t.children
     l1.i, l2.i  # instantiate
     t.children = []
     assert l1.next is None
@@ -134,14 +141,14 @@ def test_i():
 
 
 def test_types():
-    text=Text('ok')
-    stanza=text.children[0]
-    line=stanza.children[0]
-    wtoken=line.children[0]
-    wtype=wtoken.children[0]
-    wform=wtype.children[0]
-    syll=wform.children[0]
-    phon=syll.children[0]
+    text = Text('ok')
+    stanza = text.children[0]
+    line = stanza.children[0]
+    wtoken = line.children[0]
+    wtype = wtoken.children[0]
+    wform = wtype.children[0]
+    syll = wform.children[0]
+    phon = syll.children[0]
 
     assert text.is_text
     assert not stanza.is_text
@@ -215,14 +222,14 @@ def test_types():
     assert not syll.is_phon
     assert phon.is_phon
 
+
 def test_exceptions():
-    t = Text(children=[1,2])
+    t = Text(children=[1, 2])
     assert t.children.data == []
 
     t = Text('', children=[Entity()])
     assert not t._txt
     assert not t.txt
-
 
 
 def test_jsons():

@@ -117,9 +117,9 @@ LANGS = {}
 HTML_CSS = """
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
-.parse { line-height:2.5em; font-family:Georgia, serif; letter-spacing:.2em;}
+.parse { line-height:2.5em; letter-spacing:.2em;}
 .parselist { list-style-type: none; }
-.parselist li { padding-left:2em; font-family:Georgia, serif;}
+.parselist li { padding-left:2em;}
 .parselist li:nth-child(5n) { list-style-type: decimal; }
 .viol_y { color: #f43838; }
 .mtr_s { text-decoration: overline; text-decoration-offset:5px; }

@@ -131,3 +131,6 @@ class Line(Text):
         out = "".join(spans)
         out = f'<style>{css}</style><div class="parse">{out}</div>'
         return to_html(out, as_str=as_str)
+
+    def stats(self, by='parse', **kwargs):
+        return self.parses.stats(by=by, **kwargs)

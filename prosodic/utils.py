@@ -128,7 +128,6 @@ def get_initial_whitespace(xstr):
 
 def unique(l):
     from ordered_set import OrderedSet
-
     return list(OrderedSet(l))
 
 
@@ -140,9 +139,17 @@ def hashstr(*inputs, length=HASHSTR_LEN):
     return sha256_hash[:length]
 
 
+def read_json(fn):
+    if not os.path.exists(fn):
+        return {}
+    with open(fn) as f:
+        return orjson.loads(f.read())
+
+
 def from_json(json_d, **kwargs):
     from .imports import GLOBALS
-
+    if type(json_d) == str:
+        json_d = read_json(json_d)
     if not "_class" in json_d:
         pprint(json_d)
         raise Exception
@@ -151,17 +158,29 @@ def from_json(json_d, **kwargs):
     return classx.from_json(json_d, **kwargs)
 
 
+def load(fn, **kwargs):
+    return from_json(fn, **kwargs)
+
+
 def to_json(obj, fn=None):
-    data = obj.to_json()
+    if hasattr(obj, 'to_json'):
+        data = obj.to_json()
+    else:
+        data = obj
+
     if not fn:
         return data
-
-    os.makedirs(os.path.dirname(fn), exist_ok=True)
-    with open(fn, "wb") as of:
-        of.write(
-            orjson.dumps(data, option=orjson.OPT_INDENT_2 |
-                         orjson.OPT_SERIALIZE_NUMPY)
-        )
+    else:
+        fdir = os.path.dirname(fn)
+        if fdir:
+            os.makedirs(fdir, exist_ok=True)
+        with open(fn, "wb") as of:
+            of.write(
+                orjson.dumps(
+                    data,
+                    option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
+                )
+            )
 
 
 def ensure_dir(fn):

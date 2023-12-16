@@ -35,7 +35,7 @@ PATH_HOME = os.path.expanduser("~/prosodic_data")
 PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-USE_CACHE = False
+USE_CACHE = True
 HASHSTR_LEN = None
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
@@ -117,12 +117,15 @@ LANGS = {}
 HTML_CSS = """
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
-.parse { line-height:2.5em; letter-spacing:.2em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
 .parselist { list-style-type: none; }
 .parselist li { padding-left:2em;}
 .parselist li:nth-child(5n) { list-style-type: decimal; }
-.viol_y { color: #f43838; }
-.mtr_s { text-decoration: overline; text-decoration-offset:5px; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
 """

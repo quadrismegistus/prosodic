@@ -1,0 +1,155 @@
+---
+title: "Getting started"
+format:
+  html:
+    code-fold: false
+jupyter: python3
+---
+
+## Texts
+
+Contained in `prosodic.text`.
+
+### Reading texts
+
+#### Loading by string
+
+You can load any text with a string:
+
+```{python}
+#| label: reading-texts
+
+# import
+import prosodic
+
+sonnetV = prosodic.Text(
+"""Those hours, that with gentle work did frame
+The lovely gaze where every eye doth dwell,
+Will play the tyrants to the very same
+And that unfair which fairly doth excel;
+For never-resting time leads summer on
+To hideous winter, and confounds him there;
+Sap checked with frost, and lusty leaves quite gone,
+Beauty o’er-snowed and bareness every where:
+Then were not summer’s distillation left,
+A liquid prisoner pent in walls of glass,
+Beauty’s effect with beauty were bereft,
+Nor it, nor no remembrance what it was:
+But flowers distill’d, though they with winter meet,
+Leese but their show; their substance still lives sweet."""
+)
+```
+
+
+#### Loading texts by filename
+
+Can also read texts (especially larger ones) by filename:
+
+```{python}
+#| label: reading-texts-filename
+sonnets = prosodic.Text(
+  filename='../corpora/corppoetry_en/en.shakespeare.txt'
+)
+```
+
+### Displaying texts
+
+In a notebook environmnent, texts objects will display a by-syllable dataframe of the text structure it contains, stored at `text.df`
+
+```{python}
+#| label: showing-texts
+
+# these will display the same, but former actually points to the dataframe
+sonnetV.df          
+sonnetV
+```
+
+
+
+## Parsing texts
+
+### Displaying parsed texts
+
+In a notebook environmnent, the simplest way to view the parse is to to render it:
+
+```{python}
+sonnetV.render()
+```
+
+This is actually calling `.parse()` below and then returning each of its lines' `.best_parse`.
+
+### Displaying lists of parses
+
+```{python}
+# parse with default options by just reaching for best parse
+plausible_parses = sonnetV.parse()
+
+# this displays dataframe at plausible_parses.df
+plausible_parses
+```
+
+### Customizing meter
+
+```{python}
+# parse with different options
+sonnetV.parse(constraints=('w_peak','s_unstress'))
+sonnetV.render()
+```
+
+### Saving parse output
+
+```{python}
+# sonnet.parse(...opts...)    # if you want to customize meter
+
+# then get parselist object
+parses = sonnetV.parses
+
+# you can save pandas dataframe
+parses.df.to_csv('my_parse_output.csv')
+
+# or you can also save the object itself (as json)
+parses.save('my_parse_list.json')
+
+# and then re-load it later on:
+parses2 = prosodic.load('my_parse_list.json')
+```
+
+## Example: Comparing Shakespeare's sonnets
+
+```{python}
+# load sonnets
+sonnets = prosodic.Text(filename='../corpora/corppoetry_en/en.shakespeare.txt')
+
+# parse beforehand if customizing
+# sonnets.parse(...opts...)
+
+# look at parse dataframe
+df_by_parse = sonnets.parses.df
+df_by_parse
+```
+
+
+
+```{python}
+# so we can groupby stanza and average
+df_by_stanza = df_by_parse.groupby('stanza_num').mean()
+
+# let's also sort by violation score
+df_by_stanza.sort_values('parse_score', inplace=True)
+
+# now take a look
+df_by_stanza
+```
+
+
+```{python}
+# now we can look at "best" sonnet
+sonnets.stanza84
+```
+
+
+
+```{python}
+# now we can look at "worst" sonnet
+sonnets.stanza51
+```

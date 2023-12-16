@@ -72,7 +72,10 @@ class Meter(Entity):
         )
 
     def parse(self, text_or_line, **kwargs):
-        return ParseList(self.parse_iter(text_or_line, **kwargs))
+        return ParseList(
+            self.parse_iter(text_or_line, **kwargs),
+            type=self.__class__.__name__.lower()
+        )
 
     def parse_iter(self, text_or_line, force=False, **kwargs):
         if type(text_or_line) in {Text, Stanza}:
@@ -129,7 +132,7 @@ class Meter(Entity):
                 for parse in parses
                 for newparse in parse.branch()
                 if not parse.is_bounded and newparse is not None and parse is not None
-            ])
+            ], type='line')
             parses.bound(progress=False)
             if all(p.is_complete for p in parses):
                 break
@@ -168,7 +171,7 @@ class Meter(Entity):
             logger.trace(f'Returning {len(all_parses)} parses')
             return all_parses
 
-        parses = ParseList(iter_parses())
+        parses = ParseList(iter_parses(), type='line')
         parses.bound(progress=False)
         parses.rank()
         line._parses = parses
@@ -182,13 +185,13 @@ class Meter(Entity):
     def parse_text_iter(self, text, progress=True, force=False, num_proc=None, use_mp=True, **kwargs):
         from .parsing import ParseList
         assert type(text) in {Text, Stanza}
-        text._parses = ParseList()
+        text._parses = ParseList(type='text')
         lines = text.parseable_units
         numlines = len(lines)
 
         # reset parses for stanzas
         for stanza in unique(line.stanza for line in lines):
-            stanza._parses = ParseList()
+            stanza._parses = ParseList(type='text')
 
         # if num_proc is None: num_proc = 1 if numlines<=14 else mp.cpu_count()-1
         if not use_mp:

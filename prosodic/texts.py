@@ -210,6 +210,7 @@ class Text(Entity):
                 self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs
             )
         else:
+            print('not needed')
             yield from self.parseable_units
 
     @property

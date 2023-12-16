@@ -50,14 +50,20 @@ class Entity(UserList):
 
     def __bool__(self): return True
 
-    def to_json(self, no_txt=False, yes_txt=False, **kwargs):
+    def to_json(self, fn=None, no_txt=False, yes_txt=False, **kwargs):
         txt = (self._txt if not yes_txt else self.txt) if not no_txt else None
-        return {
+        return to_json({
             '_class': self.__class__.__name__,
             **({'txt': txt} if txt is not None and (yes_txt or txt) else {}),
             'children': [kid.to_json() for kid in self.children],
             **kwargs
-        }
+        }, fn=fn)
+
+    def save(self, fn, **kwargs):
+        return self.to_json(fn=fn, **kwargs)
+
+    def render(self, as_str=False):
+        return self.to_html(as_str=as_str)
 
     @staticmethod
     def from_json(json_d):
@@ -86,12 +92,19 @@ class Entity(UserList):
         return {**odx, **self._attrs}
 
     @cached_property
-    def prefix_attrs(self):
+    def prefix_attrs(self, with_parent=True):
         def getkey(k):
             o = f'{self.prefix}_{k}'
             o = DF_COLS_RENAME.get(o, o)
             return o
-        return {getkey(k): v for k, v in self.attrs.items() if v is not None}
+        odx = {
+            getkey(k): v
+            for k, v in self.attrs.items()
+            if v is not None
+        }
+        if with_parent and self.parent:
+            return {**self.parent.prefix_attrs, **odx}
+        return odx
 
     @cached_property
     def txt(self):
@@ -153,7 +166,7 @@ class Entity(UserList):
     def __repr__(self, attrs=None, bad_keys=None):
         d = {
             k: v
-            for k, v in (attrs if attrs is not None else self.attrs).items()
+            for k, v in (attrs if attrs is not None else (self.attrs if self.attrs is not None else self._attrs)).items()
         }
         return f'{self.__class__.__name__}({get_attr_str(d, bad_keys=bad_keys)})'
 

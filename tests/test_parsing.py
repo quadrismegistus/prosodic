@@ -4,6 +4,7 @@ from prosodic.imports import *
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+disable_caching()
 
 
 def test_feet():
@@ -74,6 +75,14 @@ def test_exhaustive():
     parses1 = t.line1.parse(exhaustive=False)
     assert parses1 is not parses2
     assert parses2 is parses3
+
+    line = Line('A horse, a horse, my kingdom for a horse!')
+    line.parse(exhaustive=True, max_s=10, max_w=10)
+    assert line.parses.num_all == 1024
+
+    line.parse(exhaustive=False, max_s=10, max_w=10)
+    assert line.parses.num_all < 1024
+
     # ?
     # assert len(parses1.unbounded) < len(parses2.unbounded)
 

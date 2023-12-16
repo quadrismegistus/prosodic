@@ -330,7 +330,7 @@ def get_ipa_info():
                   None, None, None, None, None, None, None, None, None, True, False, False, True, False, False]
     ipa['ã'] = [None, False, True, True, None, None, None, False, None, None, None, None, True,
                  None, None, None, None, None, None, None, None, None, False, False, False, True, False, None]
-
+  
     return {
         key: dict(zip(ipakey, vals))
         for key, vals in ipa.items()

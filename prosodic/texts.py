@@ -11,7 +11,7 @@ class LineList(EntityList):
 
 class Text(Entity):
     """
-    Primarily the class one begins from, to create 
+    Primarily the class one begins from, to create
     a multi-line text in prosodic. You can.
 
     Arguments:
@@ -26,32 +26,34 @@ class Text(Entity):
     Yields:
         _description_
     """
-    sep: str = ''
-    child_type: str = 'Stanza'
-    prefix = 'text'
-    parse_unit_attr = 'lines'
+
+    sep: str = ""
+    child_type: str = "Stanza"
+    prefix = "text"
+    parse_unit_attr = "lines"
     list_type = StanzaList
     use_cache = USE_CACHE
 
     cached_properties_to_clear = [
-        'best_parses',
-        'all_parses',
-        'unbounded_parses',
-        'parse_stats',
-        'meter',
+        "best_parses",
+        "all_parses",
+        "unbounded_parses",
+        "parse_stats",
+        "meter",
     ]
 
     @profile
-    def __init__(self,
-                 txt: str = '',
-                 filename: str = '',
-                 lang: Optional[str] = DEFAULT_LANG,
-                 parent: Optional[Entity] = None,
-                 children: Optional[list] = [],
-                 tokens_df: Optional[pd.DataFrame] = None,
-                 use_cache=USE_CACHE,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        txt: str = "",
+        filename: str = "",
+        lang: Optional[str] = DEFAULT_LANG,
+        parent: Optional[Entity] = None,
+        children: Optional[list] = [],
+        tokens_df: Optional[pd.DataFrame] = None,
+        use_cache=USE_CACHE,
+        **kwargs,
+    ):
         """
         Initializes an instance of the class.
 
@@ -72,38 +74,34 @@ class Text(Entity):
             None
         """
         from .lines import Stanza
+
         if not txt and not filename and not children and tokens_df is None:
             raise Exception(
-                'must provide either txt string or filename or token dataframe')
+                "must provide either txt string or filename or token dataframe"
+            )
         txt = get_txt(txt, filename)
         self._txt = txt
         self._fn = filename
         self.lang = lang if lang else detect_lang(txt)
         self.use_cache = use_cache
         if not children:
-            with logmap(f'building text with {len(txt.split()):,} words') as lm:
+            with logmap(f"building text with {len(txt.split()):,} words") as lm:
                 if self.use_cache:
                     children = self.children_from_json_cache()
 
                 if children:
-                    lm.log(f'found {len(children)} cached stanzas')
+                    lm.log(f"found {len(children)} cached stanzas")
                 else:
                     if tokens_df is None:
                         tokens_df = tokenize_sentwords_df(txt)
-                    with logmap('building stanzas') as lm2:
+                    with logmap("building stanzas") as lm2:
                         children = [
                             Stanza(parent=self, tokens_df=stanza_df)
                             for i, stanza_df in lm2.iter_progress(
-                                tokens_df.groupby('stanza_i'),
-                                desc='iterating stanzas'
+                                tokens_df.groupby("stanza_i"), desc="iterating stanzas"
                             )
                         ]
-        super().__init__(
-            txt,
-            children=children,
-            parent=parent,
-            **kwargs
-        )
+        super().__init__(txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self._mtr = None
         if self.use_cache:
@@ -123,24 +121,25 @@ class Text(Entity):
 
     def get_meter(self, meter=None, **meter_kwargs):
         from .meter import Meter
+
         if meter is not None:
             self._mtr = meter
         elif self._mtr is None:
             if self.text and self.text._mtr is not None:
                 self._mtr = self.text._mtr
-                logger.trace(f'meter inherited from text: {self._mtr}')
+                logger.trace(f"meter inherited from text: {self._mtr}")
             else:
                 self._mtr = Meter(**meter_kwargs)
-                logger.trace(f'setting meter to: {self._mtr}')
+                logger.trace(f"setting meter to: {self._mtr}")
         elif not meter_kwargs:
-            logger.trace(f'no change in meter')
+            logger.trace(f"no change in meter")
         else:
             newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
             if self._mtr.attrs != newmeter.attrs:
                 self._mtr = newmeter
-                logger.trace(f'resetting meter to: {self._mtr}')
+                logger.trace(f"resetting meter to: {self._mtr}")
             else:
-                logger.trace(f'no change in meter')
+                logger.trace(f"no change in meter")
         return self._mtr
 
     def set_meter(self, **meter_kwargs):
@@ -160,6 +159,7 @@ class Text(Entity):
 
     def needs_parsing(self, force=False, meter=None, **meter_kwargs):
         from .meter import Meter
+
         if force:
             return True
         if not self._parses:
@@ -168,9 +168,14 @@ class Text(Entity):
             return True
         if meter is not None and meter.attrs != self._mtr.attrs:
             return True
-        if meter_kwargs and Meter(**{**self._mtr.attrs, **meter_kwargs}).attrs != self._mtr.attrs:
+        if (
+            meter_kwargs
+            and Meter(**{**self._mtr.attrs, **meter_kwargs}).attrs != self._mtr.attrs
+        ):
             return True
-        if not self.is_parseable and self._parses.num_lines != len(self.parseable_units):
+        if not self.is_parseable and self._parses.num_lines != len(
+            self.parseable_units
+        ):
             return True
         return False
 
@@ -181,17 +186,29 @@ class Text(Entity):
 
     def reset_meter(self, **meter_kwargs):
         from .meter import DEFAULT_METER_KWARGS
+
         meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         self.set_meter(**meter_kwargs)
 
-    def parse_iter(self, num_proc=None, progress=True, force=False, meter=None, defaults=False, **meter_kwargs):
+    def parse_iter(
+        self,
+        num_proc=None,
+        progress=True,
+        force=False,
+        meter=None,
+        defaults=False,
+        **meter_kwargs,
+    ):
         from .meter import DEFAULT_METER_KWARGS
+
         if defaults:
             meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         if self.needs_parsing(force=force, meter=meter, **meter_kwargs):
             meter = self.get_meter(meter=meter, **meter_kwargs)
             self.clear_cached_properties()
-            yield from meter.parse_iter(self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs)
+            yield from meter.parse_iter(
+                self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs
+            )
         else:
             yield from self.parseable_units
 
@@ -207,34 +224,44 @@ class Text(Entity):
             return self.parses.stats(norm=norm)
         else:
             return pd.DataFrame(
-                line.parse_stats(norm=norm)
-                for line in self.parseable_units
+                line.parse_stats(norm=norm) for line in self.parseable_units
             )
-    
+
     def to_html(self, as_str=False, blockquote=False):
-        html_strs = (line.to_html(blockquote=blockquote,as_str=True) for line in self.children)
-        html = '</li>\n<li>'.join(html_strs)
+        html_strs = (
+            line.to_html(blockquote=blockquote, as_str=True) for line in self.lines
+        )
+        html = "</li>\n<li>".join(html_strs)
         html = f'<ol class="parselist"><li>{html}</li></ol>'
-        return to_html(html,as_str=as_str)
+        return to_html(html, as_str=as_str)
 
 
 class Stanza(Text):
-    sep: str = ''
-    child_type: str = 'Line'
-    prefix = 'stanza'
+    sep: str = ""
+    child_type: str = "Line"
+    prefix = "stanza"
     list_type = LineList
 
     @profile
-    def __init__(self, txt: str = '', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs):
+    def __init__(
+        self,
+        txt: str = "",
+        children=[],
+        parent=None,
+        tokens_df=None,
+        lang=DEFAULT_LANG,
+        **kwargs,
+    ):
         from .lines import Line
+
         if not txt and not children and tokens_df is None:
-            raise Exception('Must provide either txt, children, or tokens_df')
+            raise Exception("Must provide either txt, children, or tokens_df")
         if not children:
             if tokens_df is None:
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
                 Line(parent=self, tokens_df=line_df)
-                for line_i, line_df in tokens_df.groupby('line_i')
+                for line_i, line_df in tokens_df.groupby("line_i")
             ]
         Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
 
@@ -244,6 +271,5 @@ class Stanza(Text):
     @cached_property
     def parses(self):
         from .parsing import ParseList
-        return ParseList(p for p in self.parent.parses if p.stanza is self)
 
-    
+        return ParseList(p for p in self.parent.parses if p.stanza is self)

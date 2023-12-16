@@ -13,9 +13,18 @@ DEFAULT_METER_KWARGS = dict(
 )
 
 
+def enable_caching():
+    global USE_CACHE
+    USE_CACHE = True
+
+
+def disable_caching():
+    global USE_CACHE
+    USE_CACHE = False
+
+
 class Meter(Entity):
     prefix = 'meter'
-    use_cache = USE_CACHE
 
     def __init__(self,
                  constraints=DEFAULT_METER_KWARGS['constraints'],
@@ -156,8 +165,8 @@ class Meter(Entity):
                 )
             ]
             wfl = wfm[0]
-            logger.trace(f'Generated {len(combos)} from a wordfrom matrix of size {len(
-                wfm), wfl, wfl.num_sylls, self.max_s, self.max_s, len(get_possible_scansions(wfl.num_sylls))}')
+            logger.trace(
+                f'Generated {len(combos)} from a wordfrom matrix of size {len(wfm), wfl, wfl.num_sylls, self.max_s, self.max_s, len(get_possible_scansions(wfl.num_sylls))}')
             iterr = tqdm(combos, disable=not progress, position=0)
             for wfl, scansion in iterr:
                 parse = Parse(wfl, scansion, meter=self, parent=line)
@@ -202,8 +211,7 @@ class Meter(Entity):
             else:
                 iterr = (
                     self.parse_line(line, force=force, **kwargs)
-                    for line in lm.iter_progress(
-                        text.parseable_units,
+                    for line in lm.iter_progress(text.parseable_units,
                         desc='parsing',
                     )
                 )

@@ -26,118 +26,134 @@ from typing import Optional
 import re
 import os
 import sys
+
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
-PATH_REPO_DATA = os.path.join(PATH_REPO, 'data')
-PATH_DICTS = os.path.join(PATH_REPO_DATA, 'dicts')
-PATH_HOME = os.path.expanduser('~/prosodic_data')
-PATH_HOME_DATA = os.path.join(PATH_HOME, 'data')
+PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
+PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
+PATH_HOME = os.path.expanduser("~/prosodic_data")
+PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
 USE_CACHE = False
 HASHSTR_LEN = None
 
-PATH_MTREE = os.path.join(PATH_REPO, 'metricaltree')
+PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
-DASHES = ['--', '–', '—']
+DASHES = ["--", "–", "—"]
 REPLACE_DASHES = True
 PSTRESS_THRESH_DEFAULT = 2
-TOKENIZER = r'[^\s+]+'
+TOKENIZER = r"[^\s+]+"
 SEPS_PHRASE = set(',:;–—()[].!?"“”’‘')
-SEP_STANZA = '\n\n'
-SEP_PARA = '\n\n'
-SEP_LINE = '\n'
+SEP_STANZA = "\n\n"
+SEP_PARA = "\n\n"
+SEP_LINE = "\n"
 DEFAULT_PARSE_MAXSEC = 30
 DEFAULT_LINE_LIM = None
-DEFAULT_PROCESSORS = {'tokenize': 'combined'}
+DEFAULT_PROCESSORS = {"tokenize": "combined"}
 MAX_SYLL_IN_PARSE_UNIT = 14
 MIN_SYLL_IN_PARSE_UNIT = None
 MIN_WORDS_IN_PHRASE = 2
 MAX_WORDS_IN_PHRASE = 15
-DEFAULT_LANG = 'en'
-LOG_FORMAT = '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>'
+DEFAULT_LANG = "en"
+LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>"
 LOG_LEVEL = 10
-DEFAULT_METER = 'default_english'
+DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = True
-PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA, 'parse_cache.sqlitedict')
+PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA, "parse_cache.sqlitedict")
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
 ESPEAK_PATHS = [
-    '/opt/homebrew/Cellar/espeak/',
-    '/usr/lib/espeak/',
-    '/usr/lib/x86_64-linux-gnu/',
-    '/usr/lib/',
-    '/usr/local/lib/'
+    "/opt/homebrew/Cellar/espeak/",
+    "/usr/lib/espeak/",
+    "/usr/lib/x86_64-linux-gnu/",
+    "/usr/lib/",
+    "/usr/local/lib/",
 ]
 DF_INDEX = [
-    'stanza_num',
-    'line_num',
-    'line_txt',
-    'parse_rank',
-    'parse_txt',
-    'bestparse_txt',
-    'parse_meter',
-    'parse_stress',
-    'parse_meter_str',
-    'parse_stress_str',
-    'sent_num',
-    'sentpart_num',
-    'meterpos_num',
-    'meterpos_txt',
-    'meterpos_val',
-    'wordtoken_num',
-    'wordtoken_txt',
-    'word_lang',
-    'wordform_num',
-    'syll_num',
-    'syll_txt',
-    'syll_ipa',
-    'meterslot_num',
-    'meterslot_txt'
-
+    "stanza_num",
+    "line_num",
+    "line_txt",
+    "parse_rank",
+    "parse_txt",
+    "bestparse_txt",
+    "parse_meter",
+    "parse_stress",
+    "parse_meter_str",
+    "parse_stress_str",
+    "sent_num",
+    "sentpart_num",
+    "meterpos_num",
+    "meterpos_txt",
+    "meterpos_val",
+    "wordtoken_num",
+    "wordtoken_txt",
+    "word_lang",
+    "wordform_num",
+    "syll_num",
+    "syll_txt",
+    "syll_ipa",
+    "meterslot_num",
+    "meterslot_txt",
 ]
 DF_COLS_RENAME = {
-    'wordtoken_sent_num': 'sent_num',
-    'wordtoken_sentpart_num': 'sentpart_num',
-    'meterpos_meter_val': 'meterpos_val',
-    'meterslot_w_peak': '*w_peak',
-    'meterslot_w_stress': '*w_stress',
-    'meterslot_s_unstress': '*s_unstress',
-    'meterslot_unres_across': '*unres_across',
-    'meterslot_unres_within': '*unres_within',
-    'meterslot_foot_size': '*foot_size',
-    'parse_line_num': 'line_num',
-    'parse_stanza_num': 'stanza_num',
-    'parse_line_txt': 'line_txt',
-    'parselist_num_parses': 'line_numparse'
+    "wordtoken_sent_num": "sent_num",
+    "wordtoken_sentpart_num": "sentpart_num",
+    "meterpos_meter_val": "meterpos_val",
+    "meterslot_w_peak": "*w_peak",
+    "meterslot_w_stress": "*w_stress",
+    "meterslot_s_unstress": "*s_unstress",
+    "meterslot_unres_across": "*unres_across",
+    "meterslot_unres_within": "*unres_within",
+    "meterslot_foot_size": "*foot_size",
+    "parse_line_num": "line_num",
+    "parse_stanza_num": "stanza_num",
+    "parse_line_txt": "line_txt",
+    "parselist_num_parses": "line_numparse",
 }
-DF_BADCOLS = ['word_txt', 'word_num', 'wordform_txt']
+DF_BADCOLS = ["word_txt", "word_num", "wordform_txt"]
 LANGS = {}
-HTML_CSS = '''.violation { color:#f43838; }
-.meter_strong { text-decoration: overline;}
+HTML_CSS = """
+
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
-.parse {font-family:monospace;}
-.stress_strong { text-decoration: underline; text-underline-offset: 3px; }
-.stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
-.parse { line-height:2em; }
-.parselist { margin-bottom:1em; }
-'''
+.parse { line-height:2.5em; font-family:Georgia, serif; letter-spacing:.2em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em; font-family:Georgia, serif;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.viol_y { color: #f43838; }
+.mtr_s { text-decoration: overline; text-decoration-offset:5px; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+"""
+
+# .str_s { text-decoration: underline dotted; text-underline-offset: 3px; }
+# .str_s.mtr_s { text-decoration: overline; text-underline-offset: 3px; }
+# .viol_y { color:#f43838; }
+# .str_s.mtr_s.viol_y { text-decoration: underline overline; text-decoration-color: #f43838; text-underline-offset: 3px; }
+# .str_s.mtr_s.viol_n { text-decoration: underline overline; text-underline-offset: 3px; }
+# .str_s.mtr_w.viol_y { text-decoration: underline dotted; text-decoration-color: #f43838; text-underline-offset: 3px; }
+# .str_s.mtr_w.viol_n { text-decoration: underline dotted; text-underline-offset: 3px; }
+# .str_w.mtr_w.viol_y { text-decoration: none; color: #f43838; }
+# .str_w.mtr_w.viol_n { text-decoration: none; }
+# .mtr_s.viol_y { text-decoration: overline; text-decoration-color: #f43838; text-underline-offset: .5em; }
+# .mtr_s.viol_n { text-decoration: overline; text-underline-offset: .5em; }
 
 # sys imports
-warnings.filterwarnings('ignore')
-
+warnings.filterwarnings("ignore")
 
 # patches
 try:
     builtins.profile
 except AttributeError:
     # No line profiler, provide a pass-through version
-    def profile(func): return func
+    def profile(func):
+        return func
+
     builtins.profile = profile
 
 # non-sys imports
-nltk.download('punkt', quiet=True)
+nltk.download("punkt", quiet=True)
 pd.options.display.width = 200
 pd.options.display.max_rows = 10
 logging.logger = logging.getLogger()
@@ -145,7 +161,6 @@ while logging.logger.hasHandlers():
     logging.logger.removeHandler(logging.logger.handlers[0])
 
 # local imports
-
 
 sonnet = """
 Those hours, that with gentle work did frame
@@ -164,10 +179,6 @@ But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
 
-
-
-
-
 from .utils import *
 from .tokenizers import *
 from .ents import *
@@ -180,54 +191,46 @@ from .langs import *
 from .parsing import *
 from .meter import *
 
-
-
-
-
-
 GLOBALS = globals()
 
-
 INITCLASSES = {
-    'Text': Text,
-    'Stanza': Stanza,
-    'Line': Line,
-    'WordToken': WordToken,
-    'WordType': WordType,
-    'WordForm': WordForm,
-    'Syllable': Syllable,
-    'Phoneme': Phoneme,
-
-    'WordFormList': WordFormList,
-    'Parse': Parse,
-    'ParsePosition': ParsePosition,
-    'ParseSlot': ParseSlot,
-    'ParseList': ParseList
+    "Text": Text,
+    "Stanza": Stanza,
+    "Line": Line,
+    "WordToken": WordToken,
+    "WordType": WordType,
+    "WordForm": WordForm,
+    "Syllable": Syllable,
+    "Phoneme": Phoneme,
+    "WordFormList": WordFormList,
+    "Parse": Parse,
+    "ParsePosition": ParsePosition,
+    "ParseSlot": ParseSlot,
+    "ParseList": ParseList,
 }
 
 CHILDCLASSES = {
-    'Text': Stanza,
-    'Stanza': Line,
-    'Line': WordToken,
-    'WordToken': WordType,
-    'WordType': WordForm,
-    'WordForm': Syllable,
-    'Syllable': PhonemeClass,
-    'Phoneme': None,
-
-    'WordFormList': WordForm,
-    'ParseList': Parse,
-    'Parse': ParsePosition,
-    'ParsePosition': ParseSlot
+    "Text": Stanza,
+    "Stanza": Line,
+    "Line": WordToken,
+    "WordToken": WordType,
+    "WordType": WordForm,
+    "WordForm": Syllable,
+    "Syllable": PhonemeClass,
+    "Phoneme": None,
+    "WordFormList": WordForm,
+    "ParseList": Parse,
+    "Parse": ParsePosition,
+    "ParsePosition": ParseSlot,
 }
 
 CHILDCLASSLISTS = {
-    'Text': StanzaList,
-    'Stanza': LineList,
-    'Line': WordTokenList,
-    'WordToken': WordTypeList,
-    'WordType': WordFormList,
-    'WordForm': SyllableList,
-    'Syllable': PhonemeList,
-    'Phoneme': None,
+    "Text": StanzaList,
+    "Stanza": LineList,
+    "Line": WordTokenList,
+    "WordToken": WordTypeList,
+    "WordType": WordFormList,
+    "WordForm": SyllableList,
+    "Syllable": PhonemeList,
+    "Phoneme": None,
 }

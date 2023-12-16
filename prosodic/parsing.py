@@ -421,7 +421,15 @@ class Parse(Entity):
     @cached_property
     def html(self): return self.to_html()
 
-    def to_html(self, as_str=False, css=HTML_CSS, blockquote=False):
+    def to_html(self, as_str=False, css=HTML_CSS, blockquote=True):
+        assert self.line
+        out = self.line.to_html(as_str=True, css=css)
+        if blockquote:
+            reprstr = get_attr_str(self.attrs, bad_keys={"txt", "line_txt"})
+            out += f'<div class="miniquote">⎿ {reprstr}</div>'
+        return to_html(out, as_str=as_str)
+
+    def to_html_no_line(self):
         wordtokend = defaultdict(list)
         for slot in self.slots:
             wordtokend[slot.unit.wordtoken].append(slot)
@@ -450,12 +458,12 @@ class Parse(Entity):
         if blockquote:
             out += f'<div class="miniquote">⎿ {
                 self.__repr__(bad_keys={"txt", "line_txt"})}</div>'
-        return to_html(out,as_str=as_str)
-    
+        return to_html(out, as_str=as_str)
+
     @cached_property
     def wordtoken2slots(self):
         wordtokend = defaultdict(list)
-        for slot in self.slots: 
+        for slot in self.slots:
             wordtokend[slot.unit.wordtoken].append(slot)
         return wordtokend
 

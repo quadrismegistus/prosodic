@@ -154,9 +154,8 @@ class Entity(UserList):
         d = {
             k: v
             for k, v in (attrs if attrs is not None else self.attrs).items()
-            if not bad_keys or not k in bad_keys
         }
-        return f'{self.__class__.__name__}({get_attr_str(d)})'
+        return f'{self.__class__.__name__}({get_attr_str(d, bad_keys=bad_keys)})'
 
     @cached_property
     def ld(self): return self.get_ld()

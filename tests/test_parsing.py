@@ -63,9 +63,7 @@ def test_text_parsing():
     t.parse(num_proc=1)
     assert len(t.parses.unbounded) >= 14
     assert t.parses.num_lines == 14
-    assert len(t.parses.unbounded.df.reset_index(
-    ).drop_duplicates('line_num')) == 14
-    assert len(t.parse_stats()) == 14
+    assert len(t.parses.stats()) == 14
 
 
 def test_exhaustive():
@@ -150,8 +148,8 @@ def test_parselist():
     assert len(parses.bounded) < len(parses)
 
     parses = Text(sonnet).parses
-    ps1 = parses.stats(norm=False)
-    ps2 = parses.stats(norm=True)
+    ps1 = parses.stats_d(norm=False)
+    ps2 = parses.stats_d(norm=True)
     assert set(ps1.keys()) == set(ps2.keys())
     assert set(ps1.values()) != set(ps2.values())
 

@@ -526,6 +526,16 @@ class Parse(Entity):
         odx["*total"] = np.mean(scores) if norm else sum(scores)
         return odx
 
+    def get_df(self, *x, **y):
+        df = super().get_df(*x, **y)
+        df.columns = [
+            c.replace("meterslot_syll_", "syll_").replace(
+                "meterslot_wordtoken_", "wordtoken_"
+            )
+            for c in df
+        ]
+        return setindex(df.reset_index(), DF_INDEX).sort_index()
+
 
 class ParsePosition(Entity):
     prefix = "meterpos"
@@ -591,7 +601,7 @@ class ParsePosition(Entity):
     def attrs(self):
         return {
             **self._attrs,
-            # 'num':self.num,
+            "num": self.num,
             # **{k:sum(v) for k,v in self.viold.items()}
         }
 
@@ -703,8 +713,13 @@ class ParseSlot(Entity):
     @cached_property
     def attrs(self):
         return {
+            **{
+                k: v
+                for k, v in self.unit.prefix_attrs.items()
+                if k.split("_")[0] in {"wordtoken", "syll"}
+            },
             **self._attrs,
-            # 'num':self.num,
+            "num": self.num,
             **self.viold,
             # 'is_stressed':self.is_stressed,
             # 'is_heavy':self.is_heavy,
@@ -742,8 +757,16 @@ class ParseList(EntityList):
             # 'num_all_parses':self.num_all_parses
         }
 
+    @cached_property
+    def meter(self):
+        for parse in self:
+            if parse.meter:
+                return parse.meter
+
     def to_json(self, fn=None):
-        return Entity.to_json(self.scansions, fn=fn, type=self.type)
+        return Entity.to_json(
+            self.scansions if not self.meter.exhaustive else self, fn=fn, type=self.type
+        )
 
     @cached_property
     def all(self):
@@ -758,7 +781,8 @@ class ParseList(EntityList):
         return ParseList(
             children=[
                 px for px in self.scansions if px is not None and not px.is_bounded
-            ]
+            ],
+            type=self.type,
         )
 
     @cached_property
@@ -766,6 +790,7 @@ class ParseList(EntityList):
         return ParseList(
             [px for px in self.scansions if px is not None and px.is_bounded],
             show_bounded=True,
+            type=self.type,
         )
 
     @cached_property
@@ -847,7 +872,7 @@ class ParseList(EntityList):
 
     def _get_groupby(self, by=None):
         if by is None:
-            by = "parse" if self.type != "text" else "line"
+            by = "parse"  # if self.type != "text" else "line"
         if by == "stanza":
             groupby = ["stanza_num"]
         elif by == "line":
@@ -873,6 +898,11 @@ class ParseList(EntityList):
     def stats(self, norm=None, incl_bounded=None, by=None, **kwargs):
         if incl_bounded is None:
             incl_bounded = self.show_bounded
+        if by == "syll":
+            odf = self.df_syll
+            if not incl_bounded:
+                odf = odf[odf.parse_is_bounded == 0]
+            return odf
         odf = pd.DataFrame(
             parse.stats_d(norm=norm)
             for parse in self
@@ -923,9 +953,15 @@ class ParseList(EntityList):
     def df_raw(self):
         return self.stats(norm=False)
 
+    def get_df(self, *x, **y):
+        l = self.unbounded if not self.show_bounded else self.scansions
+        l = [p.get_df() for p in l]
+        return pd.concat(l) if l else pd.DataFrame()
+
     @cached_property
     def df_syll(self, bad_keys={"line_numparse"}):
-        odf = self.get_df().assign(**self._attrs)
+        # odf = self.get_df().assign(**self._attrs)
+        odf = self.get_df()
         return odf[[c for c in odf if not bad_keys or c not in bad_keys]]
 
     @cached_property
@@ -939,13 +975,17 @@ class ParseList(EntityList):
 
         plist = []
         mstrs = set()
-        for i, parse in enumerate(sorted(self.data)):
-            if parse.meter_str not in mstrs:
-                mstrs.add(parse.meter_str)
-                parse.parse_rank = i + 1
+        countd = Counter()
+        for parse in sorted(self.data):
+            lkey = (parse.stanza_num, parse.line_num)
+            key = (parse.stanza_num, parse.line_num, parse.meter_str)
+            if key not in mstrs:
+                mstrs.add(key)
+                countd[lkey] += 1
+                parse.parse_rank = countd[lkey]
                 plist.append(parse)
 
-        return ParseList(plist, is_scansions=True, show_bounded=True)
+        return ParseList(plist, is_scansions=True, show_bounded=True, type=self.type)
 
     @cached_property
     def num_lines(self):

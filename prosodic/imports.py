@@ -3,10 +3,11 @@ import os, sys
 sys.path.insert(0, "/Users/ryan/github/logmap")
 from logmap import logmap, logger
 
-logmap.quiet = False
+logmap.is_quiet = True
 
 from pprint import pprint, pformat
 import orjson
+import json
 from multiset import Multiset
 from tqdm import tqdm
 import logging
@@ -90,13 +91,14 @@ DF_INDEX = [
     "parse_stress_str",
     "sent_num",
     "sentpart_num",
+    "word_lang",
+    "wordtype_lang",
+    "wordtoken_num",
+    "wordtoken_txt",
+    "wordform_num",
     "meterpos_num",
     "meterpos_txt",
     "meterpos_val",
-    "wordtoken_num",
-    "wordtoken_txt",
-    "word_lang",
-    "wordform_num",
     "syll_num",
     "syll_txt",
     "syll_ipa",

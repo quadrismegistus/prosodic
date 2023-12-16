@@ -43,8 +43,20 @@ class Entity(UserList):
             self.txt, tuple(sorted(self._attrs.items())), self.__class__.__name__
         )
 
+    @cached_property
+    def key(self):
+        attrs = {
+            **{k: v for k, v in self.attrs.items() if v is not None},
+            "txt": self._txt,
+        }
+        return f"{self.__class__.__name__}({get_attr_str(attrs)})"
+
+    @cached_property
+    def hash(self):
+        return hashstr(self.key)
+
     def __hash__(self):
-        return hash(self.to_hash())
+        return hash(self.hash)
 
     def __eq__(self, other):
         return self is other
@@ -511,9 +523,11 @@ class Entity(UserList):
             val_obj = key_obj
         key = self.get_key(key_obj)
         if key and (force or not key in self.json_cache):
-            data = val_obj.to_json()
-            # print(f'caching {pprint(data)} to {key}')
-            self.json_cache[key] = data
+            with logmap(f'saving object to json cache under key "{key[:8]}"'):
+                with logmap("exporting to json"):
+                    data = val_obj.to_json()
+                with logmap("saving json to cache db"):
+                    self.json_cache[key] = data
 
 
 class EntityList(Entity):

@@ -110,17 +110,22 @@ class Meter(Entity):
         return parses
 
     def get_key(self, line):
-        return hashstr(self.to_hash(), line.to_hash())
+        return hashstr(self.key, line.key)
 
     def parses_from_json_cache(self, line, as_dict=False):
         from .parsing import ParseList
 
         key = self.get_key(line)
-        if key and self.use_cache and key in self.json_cache:
-            dat = self.json_cache[key]
-            if as_dict:
-                return dat
-            return ParseList.from_json(dat, line=line)
+        clsn = key.__class__.__name__.lower()
+        with logmap(
+            f'checking for cached {clsn} parses under key "{key[:8]}..."'
+        ) as lm:
+            if key and self.use_cache and key in self.json_cache:
+                dat = self.json_cache[key]
+                lm.log(f"found {len(dat.get("children",[])) if dat else 0:,} parses")
+                if as_dict:
+                    return dat
+                return ParseList.from_json(dat, line=line)
 
     def parse_line_fast(self, line, force=False):
         from .parsing import ParseList, Parse
@@ -203,19 +208,17 @@ class Meter(Entity):
 
         done = False
         if not force and self.use_cache:
-            with logmap(f"checking for cached parses under key {self.get_key(text)[:6]}...") as lm:
-                parses = self.parses_from_json_cache(text)
-                lm.log(f"found {len(parses) if parses else "no"} parses")
-                if parses:
-                    text._parses = parses
-                    for st in text:
-                        st._parses = ParseList(type="stanza")
-                    for parse in parses:
-                        if parse.stanza_num:
-                            stanza = text.get_stanza(parse.stanza_num)
-                            stanza._parses.append(parse)
-                    yield from text.parseable_units
-                    done = True
+            parses = self.parses_from_json_cache(text)
+            if parses:
+                text._parses = parses
+                for st in text:
+                    st._parses = ParseList(type="stanza")
+                for parse in parses:
+                    if parse.stanza_num:
+                        stanza = text.get_stanza(parse.stanza_num)
+                        stanza._parses.append(parse)
+                yield from text.parseable_units
+                done = True
 
         if not done:
             text._parses = ParseList(type="text")
@@ -231,7 +234,8 @@ class Meter(Entity):
                 num_proc = 1
             if num_proc is None:
                 num_proc = mp.cpu_count() - 2
-                if num_proc < 1: num_proc = 1
+                if num_proc < 1:
+                    num_proc = 1
             desc = f"parsing {numlines} {text.parse_unit_attr}"
             if num_proc > 1:
                 desc += f" [{num_proc}x]"
@@ -254,7 +258,7 @@ class Meter(Entity):
                         )
                     )
 
-                newstanzas=set()
+                newstanzas = set()
                 for i, parselist in enumerate(iterr):
                     line = text.parseable_units[i]
                     line._parses = parselist
@@ -270,7 +274,7 @@ class Meter(Entity):
                             )
 
             if self.use_cache:
-                self.to_json_cache(text, text._parses)
+                self.to_json_cache(text, text._parses, force=force)
 
     def _parse_text_iter_mp(
         self, text, force=False, progress=True, num_proc=1, lm=None, **progress_kwargs

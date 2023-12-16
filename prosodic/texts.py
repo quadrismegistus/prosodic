@@ -140,7 +140,8 @@ class Text(Entity):
         elif not meter_kwargs:
             logger.trace(f"no change in meter")
         else:
-            newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
+            # newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
+            newmeter = Meter(**meter_kwargs)
             if self._mtr.attrs != newmeter.attrs:
                 self._mtr = newmeter
                 logger.trace(f"resetting meter to: {self._mtr}")
@@ -224,23 +225,16 @@ class Text(Entity):
             with logmap("parsing text") as lm:
                 meter = self.get_meter(meter=meter, **meter_kwargs)
                 self.clear_cached_properties()
-
-                was_quiet = logmap.quiet
-                if was_quiet and (
-                    (len(self.parseable_units) >= 25) or meter.exhaustive
+                with logmap.verbosity(
+                    int((len(self.parseable_units) >= 25) or meter.exhaustive)
                 ):
-                    logmap.quiet = False
-
-                yield from meter.parse_iter(
-                    self,
-                    force=force,
-                    num_proc=num_proc,
-                    progress=progress,
-                    **meter_kwargs,
-                )
-
-                if was_quiet:
-                    logmap.quiet = True
+                    yield from meter.parse_iter(
+                        self,
+                        force=force,
+                        num_proc=num_proc,
+                        progress=progress,
+                        **meter_kwargs,
+                    )
         else:
             yield from self.parseable_units
 

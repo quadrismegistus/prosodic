@@ -52,4 +52,9 @@ venv/
 *.lprof
 .coverage*
 notebooks/dev
-docs
+docs/*
+!docs/*.ipynb
+!docs/*.qmd
+!docs/reference
+!docs/reference/*.qmd
+!docs/*.yml

@@ -1,0 +1,9 @@
+# Function reference {.doc .doc-index}
+
+## API Refernce
+
+| | |
+| --- | --- |
+| [texts.Text](texts.Text.qmd#prosodic.texts.Text) |  |
+| [texts.Text.__init__](texts.Text.__init__.qmd#prosodic.texts.Text.__init__) | Initializes an instance of the class. |
+| [lines.Line](lines.Line.qmd#prosodic.lines.Line) |  |

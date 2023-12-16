@@ -1,0 +1,30 @@
+# texts.Text.__init__ { #prosodic.texts.Text.__init__ }
+
+`texts.Text.__init__(txt='', filename='', lang=DEFAULT_LANG, parent=None, children=[], tokens_df=None, use_cache=USE_CACHE, **kwargs)`
+
+Initializes an instance of the class.
+
+## Parameters
+
+| Name        | Type                        | Description                                           | Default        |
+|-------------|-----------------------------|-------------------------------------------------------|----------------|
+| `txt`       | str                         | The text string. Default is an empty string.          | `''`           |
+| `filename`  | str                         | The name of the file. Default is an empty string.     | `''`           |
+| `lang`      | Optional\[str\]             | The language of the text. Default is DEFAULT_LANG.    | `DEFAULT_LANG` |
+| `parent`    | Optional\[Entity\]          | The parent entity. Default is None.                   | `None`         |
+| `children`  | Optional\[list\]            | The list of child entities. Default is an empty list. | `[]`           |
+| `tokens_df` | Optional\[pd.pd.DataFrame\] | The token dataframe. Default is None.                 | `None`         |
+| `use_cache` | bool                        | Whether to use cache. Default is USE_CACHE.           | `USE_CACHE`    |
+| `**kwargs`  |                             | Additional keyword arguments.                         | `{}`           |
+
+## Raises
+
+| Type      | Description                                                       |
+|-----------|-------------------------------------------------------------------|
+| Exception | If neither txt string, filename, nor token dataframe is provided. |
+
+## Returns
+
+| Type   | Description   |
+|--------|---------------|
+|        | None          |

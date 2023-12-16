@@ -1,0 +1,156 @@
+project:
+  type: website
+  output-dir: _build
+  resources:
+    - examples/single-page
+    - examples/pkgdown
+    - examples/auto-package
+
+metadata-files:
+  - reference/_sidebar.yml
+
+website:
+  title: "quartodoc"
+  page-navigation: true
+  navbar:
+    left:
+      - text: "About"
+        file: index.qmd
+      - text: "Getting started"
+        file: getting-started.qmd
+      - text: "Reference"
+        href: reference/
+
+    right:
+      - icon: github
+        href: https://github.com/machow/quartodoc/
+
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+
+
+quartodoc:
+  dir: reference
+  package: prosodic
+  parser: google
+  sidebar: "reference/_sidebar.yml"
+  sections:
+    - title: API Refernce
+      options:
+        dynamic: true
+      contents:
+        - name: texts.Text
+        - name: texts.Text.__init__
+        - name: lines.Line
+
+# project:
+#   title: "prosodic"
+
+# website:
+#   title: "pins for Python"
+#   description: "Pin, Discover, and Share Resources"
+#   page-navigation: true
+#   favicon: "favicon.ico"
+#   page-footer:
+#     center: |
+#       Proudly supported by
+#       [![](https://www.rstudio.com/assets/img/posit-logo-fullcolor-TM.svg){fig-alt="Posit PBC" width=65px}](https://posit.co/)
+#   navbar:
+#     background: light
+#     pinned: true
+#     logo: logo.png
+#     left:
+#       - text: "Get started"
+#         file: getting-started.qmd
+#       - text: "Reference"
+#         file: reference/index.qmd
+#       - text: Learn more
+#         menu:
+#           - text: "Create consistent metadata for pins"
+#             file: customize-pins-metadata.qmd
+#           - text: "pins for R"
+#             href: https://pins.rstudio.com
+#             target: _blank
+#     right:
+#       - icon: github
+#         href: https://github.com/rstudio/pins-python
+#         aria-label: Pins python GitHub
+#   sidebar:
+#     style: "floating"
+#     collapse-level: 1
+#     contents:
+#       - section: Boards
+#         contents:
+#           - text: "`board_folder`"
+#             href: reference/board_folder.qmd
+#           - text: "`board_local`"
+#             href: reference/board_local.qmd
+#           - text: "`board_temp`"
+#             href: reference/board_temp.qmd
+#           - text: "`board_s3`"
+#             href: reference/board_s3.qmd
+#           - text: "`board_gcs`"
+#             href: reference/board_gcs.qmd
+#           - text: "`board_azure`"
+#             href: reference/board_azure.qmd
+#           - text: "`board_connect`"
+#             href: reference/board_connect.qmd
+#           - text: "`board_url`"
+#             href: reference/board_url.qmd
+#           - text: "`board`"
+#             href: reference/board.qmd
+#       - section: Pins
+#         contents:
+#           - text: "`pin_read`"
+#             href: reference/pin_read.qmd
+#           - text: "`pin_write`"
+#             href: reference/pin_write.qmd
+#           - text: "`pin_meta`"
+#             href: reference/pin_meta.qmd
+#           - text: "`pin_download`"
+#             href: reference/pin_download.qmd
+#           - text: "`pin_upload`"
+#             href: reference/pin_upload.qmd
+#           - text: "`pin_versions`"
+#             href: reference/pin_versions.qmd
+#           - text: "`pin_list`"
+#             href: reference/pin_list.qmd
+#           - text: "`pin_exists`"
+#             href: reference/pin_exists.qmd
+#           - text: "`pin_version_delete`"
+#             href: reference/pin_version_delete.qmd
+#           - text: "`pin_versions_prune`"
+#             href: reference/pin_versions_prune.qmd
+#           - text: "`pin_delete`"
+#             href: reference/pin_delete.qmd
+#           - text: "`pin_search`"
+#             href: reference/pin_search.qmd
+
+# format:
+#   html:
+#     sidebar: true
+
+# quartodoc:
+#   title: Reference
+#   package: prosodic
+#   parser: google
+#   sections:
+#     - title: Board constructors
+#       desc: "Functions to create a board object"
+#       contents:
+#         - utils.from_json
+#     - title: Pin methods
+#       desc: "Methods to handle pins on your board"
+#       package: prosodic.texts.Text
+#       contents:
+#         - __init__
+#         - parse
+
+# # filters:
+# #   - interlinks
+
+# # interlinks:
+# #   sources: {}

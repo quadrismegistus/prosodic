@@ -1,0 +1,16 @@
+# lines.Line { #prosodic.lines.Line }
+
+`lines.Line(self, txt='', children=[], parent=None, tokens_df=None, lang=DEFAULT_LANG, **kwargs)`
+
+
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [child_type](#prosodic.lines.Line.child_type) | str(object='') -> str |
+| [is_parseable](#prosodic.lines.Line.is_parseable) | bool(x) -> bool |
+| [line_sep](#prosodic.lines.Line.line_sep) | str(object='') -> str |
+| [prefix](#prosodic.lines.Line.prefix) | str(object='') -> str |
+| [sep](#prosodic.lines.Line.sep) | str(object='') -> str |
+| [use_cache](#prosodic.lines.Line.use_cache) | bool(x) -> bool |

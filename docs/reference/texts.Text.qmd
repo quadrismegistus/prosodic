@@ -1,0 +1,16 @@
+# texts.Text { #prosodic.texts.Text }
+
+`texts.Text(self, txt='', filename='', lang=DEFAULT_LANG, parent=None, children=[], tokens_df=None, use_cache=USE_CACHE, **kwargs)`
+
+
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [cached_properties_to_clear](#prosodic.texts.Text.cached_properties_to_clear) | Built-in mutable sequence. |
+| [child_type](#prosodic.texts.Text.child_type) | str(object='') -> str |
+| [parse_unit_attr](#prosodic.texts.Text.parse_unit_attr) | str(object='') -> str |
+| [prefix](#prosodic.texts.Text.prefix) | str(object='') -> str |
+| [sep](#prosodic.texts.Text.sep) | str(object='') -> str |
+| [use_cache](#prosodic.texts.Text.use_cache) | bool(x) -> bool |

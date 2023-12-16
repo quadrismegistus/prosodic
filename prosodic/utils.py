@@ -237,3 +237,19 @@ def caching_is_enabled():
 def disable_caching():
     global USE_CACHE
     USE_CACHE = False
+
+
+def force_int(x, errors=0) -> int:
+    """Converts the input to an integer.
+
+    Args:
+        x: The input value to be converted to an integer.
+        errors: The value to be returned in case of an error. Defaults to 0.
+
+    Returns:
+        The input value converted to an integer if successful, otherwise the specified error value.
+    """
+    try:
+        return int(x)
+    except (ValueError, TypeError):
+        return errors

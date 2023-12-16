@@ -84,8 +84,12 @@ class Text(Entity):
         self._fn = filename
         self.lang = lang if lang else detect_lang(txt)
         self.use_cache = use_cache
+        was_quiet = logmap.quiet
         if not children:
-            with logmap(f"building text with {len(txt.split()):,} words") as lm:
+            numwords = len(txt.split())
+            if was_quiet and numwords > 1000:
+                logmap.quiet = False
+            with logmap(f"building text with {numwords:,} words") as lm:
                 if self.use_cache:
                     children = self.children_from_json_cache()
 
@@ -106,6 +110,8 @@ class Text(Entity):
         self._mtr = None
         if self.use_cache:
             self.to_json_cache()
+        if was_quiet:
+            logmap.quiet = True
 
     def to_hash(self):
         return hashstr(self._txt)
@@ -184,6 +190,17 @@ class Text(Entity):
         deque(self.parse_iter(**kwargs), maxlen=0)
         return self._parses
 
+    @cache
+    def get_line(self, stanza_num=1, line_num=1):
+        return self.get_stanza(stanza_num).get_line(line_num)
+
+    @cache
+    def get_stanza(self, stanza_num=1):
+        try:
+            return self.children[stanza_num - 1]
+        except IndexError:
+            return
+
     def reset_meter(self, **meter_kwargs):
         from .meter import DEFAULT_METER_KWARGS
 
@@ -204,13 +221,27 @@ class Text(Entity):
         if defaults:
             meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         if self.needs_parsing(force=force, meter=meter, **meter_kwargs):
-            meter = self.get_meter(meter=meter, **meter_kwargs)
-            self.clear_cached_properties()
-            yield from meter.parse_iter(
-                self, force=force, num_proc=num_proc, progress=progress, **meter_kwargs
-            )
+            with logmap("parsing text") as lm:
+                meter = self.get_meter(meter=meter, **meter_kwargs)
+                self.clear_cached_properties()
+
+                was_quiet = logmap.quiet
+                if was_quiet and (
+                    (len(self.parseable_units) >= 25) or meter.exhaustive
+                ):
+                    logmap.quiet = False
+
+                yield from meter.parse_iter(
+                    self,
+                    force=force,
+                    num_proc=num_proc,
+                    progress=progress,
+                    **meter_kwargs,
+                )
+
+                if was_quiet:
+                    logmap.quiet = True
         else:
-            print("not needed")
             yield from self.parseable_units
 
     @property
@@ -271,3 +302,9 @@ class Stanza(Text):
 
     def _repr_html_(self, as_df=False, df=None):
         return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)
+
+    def get_line(self, line_num=1):
+        try:
+            return self.children[line_num - 1]
+        except IndexError:
+            return

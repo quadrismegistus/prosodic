@@ -16,6 +16,9 @@ class Parse(Entity):
         is_bounded=False,
         bounded_by=None,
         rank=None,
+        line_num=None,
+        stanza_num=None,
+        line_txt="",
     ):
         from .meter import Meter
 
@@ -65,6 +68,9 @@ class Parse(Entity):
         self.parse_rank = rank
         # self.violset=Multiset()
         self.num_slots_positioned = 0
+        self._line_num = line_num
+        self._stanza_num = stanza_num
+        self._line_txt = line_txt
         if not positions:
             super().__init__(children=[], parent=parent)
             for mpos_str in self.positions_ls:
@@ -73,6 +79,14 @@ class Parse(Entity):
             super().__init__(children=positions, parent=parent)
         self.children = self.positions
         self.init()
+
+    @property
+    def line_num(self):
+        return self.line.num if self.line else self._line_num
+
+    @property
+    def stanza_num(self):
+        return self.stanza.num if self.line else self._stanza_num
 
     def init(self):
         for pos in self.positions:
@@ -83,14 +97,11 @@ class Parse(Entity):
         return to_json(
             {
                 "_class": self.__class__.__name__,
+                **self.attrs,
                 "children": [pos.to_json() for pos in self.positions],
-                "wordforms": self.wordforms.to_json(),
-                "meter": self.meter_obj.to_json(),
+                "_wordforms": self.wordforms.to_json(),
+                "_meter": self.meter_obj.to_json(),
                 "is_bounded": self.is_bounded,
-                "rank": self.parse_rank,
-                "meter_str": self.meter_str,
-                "stress_str": self.stress_str,
-                "score": self.score,
                 "bounded_by": list(self.bounded_by),
             },
             fn=fn,
@@ -98,10 +109,18 @@ class Parse(Entity):
 
     @staticmethod
     def from_json(json_d, line=None):
-        wordforms = from_json(json_d["wordforms"])
+        from .lines import Line
+
+        wordforms = from_json(json_d["_wordforms"])
         if line:
+            if type(line) == Text:
+                line = line.get_line(json_d["stanza_num"], json_d["line_num"])
+            elif type(line) == Stanza:
+                line = line.get_line(json_d["line_num"])
+            elif type(line) != Line:
+                raise Exception(f"what is {line}?")
             wordforms = line.match_wordforms(wordforms)
-        meter = from_json(json_d["meter"])
+        meter = from_json(json_d["_meter"])
         positions = [from_json(d) for d in json_d["children"]]
         slots = [slot for pos in positions for slot in pos.slots]
         sylls = [syll for word in wordforms for syll in word.children]
@@ -116,6 +135,8 @@ class Parse(Entity):
             is_bounded=json_d["is_bounded"],
             bounded_by=json_d["bounded_by"],
             rank=json_d["rank"],
+            line_num=json_d["line_num"],
+            stanza_num=json_d["stanza_num"],
         )
 
     @property
@@ -338,21 +359,28 @@ class Parse(Entity):
     # @profile
     def attrs(self):
         return {
-            **(self.line.prefix_attrs if self.line else {}),
+            "stanza_num": force_int(self.stanza_num),
+            "line_num": force_int(self.line_num),
+            "line_txt": self.line_txt,
             **self._attrs,
-            # 'stanza_num':self.line.parent.num if self.line and self.line.parent else None,
-            # 'line_num':self.line.num if self.line else None,
             "txt": self.txt,
             "rank": self.parse_rank,
             "meter": self.meter_str,
             "stress": self.stress_str,
             "score": self.score,
-            "ambig": self.line._parses.num_unbounded
-            if self.line and self.line._parses
-            else None,
+            "ambig": self.ambig,
             "is_bounded": int(bool(self.is_bounded)),
-            # **{c:v for c,v in self.constraint_scores.items() if v!=np.nan and v}
         }
+
+    @property
+    def line_txt(self):
+        return self.line.txt if self.line else self._line_txt
+
+    @property
+    def ambig(self):
+        return (
+            self.line._parses.num_unbounded if self.line and self.line._parses else None
+        )
 
     @property
     # @profile
@@ -698,7 +726,7 @@ class ParseList(EntityList):
     @staticmethod
     def from_json(json_d, line=None):
         parses = [Parse.from_json(d, line=line) for d in json_d["children"]]
-        return ParseList(parses, parent=line)
+        return ParseList(parses, parent=line, type=json_d.get("type"))
 
     @cached_property
     def num_parses(self):
@@ -713,6 +741,9 @@ class ParseList(EntityList):
             # 'parses_num': self.num_parses,
             # 'num_all_parses':self.num_all_parses
         }
+
+    def to_json(self, fn=None):
+        return Entity.to_json(self.scansions, fn=fn, type=self.type)
 
     @cached_property
     def all(self):
@@ -859,13 +890,18 @@ class ParseList(EntityList):
         if groupby:
             odf = odf.set_index(groupby)
             aggby = self._get_aggby(odf)
-            odf = odf.groupby(groupby).agg(aggby).drop("parse_rank", axis=1)
+            odf = odf.groupby(groupby).agg(aggby)
+            odf = odf.drop("parse_rank", axis=1)
             if not "line_num" in set(groupby):
                 odf = odf.drop("line_num", axis=1)
-            return odf
+            return odf.sort_index()
         else:
-            odf["parse_rank"] = odf.parse_rank.rank(method="first").apply(int)
-            return setindex(odf, DF_INDEX)
+            odf["parse_rank"] = (
+                odf.groupby(["stanza_num", "line_num"])
+                .parse_rank.rank(method="min")
+                .apply(force_int)
+            )
+            return setindex(odf, DF_INDEX).sort_index()
 
     def _repr_html_(self):
         df = (

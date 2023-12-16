@@ -121,18 +121,17 @@ parses2 = prosodic.load('my_parse_list.json')
 sonnets = prosodic.Text(filename='../corpora/corppoetry_en/en.shakespeare.txt')
 
 # parse beforehand if customizing
-# sonnets.parse(...opts...)
+parses = sonnets.parse()
 
-# look at parse dataframe
-df_by_parse = sonnets.parses.df
-df_by_parse
+# look at parse dataframe by line
+df_by_line = parses.stats()
 ```
 
 
 
 ```{python}
 # so we can groupby stanza and average
-df_by_stanza = df_by_parse.groupby('stanza_num').mean()
+df_by_stanza = parses.stats(by='stanza')
 
 # let's also sort by violation score
 df_by_stanza.sort_values('parse_score', inplace=True)

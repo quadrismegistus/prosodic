@@ -1,4 +1,10 @@
+import os, sys
+
+sys.path.insert(0, "/Users/ryan/github/logmap")
 from logmap import logmap, logger
+
+logmap.quiet = False
+
 from pprint import pprint, pformat
 import orjson
 from multiset import Multiset

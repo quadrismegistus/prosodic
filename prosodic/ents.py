@@ -39,7 +39,9 @@ class Entity(UserList):
         yield from self.children
 
     def to_hash(self):
-        return hashstr(self.txt, tuple(sorted(self._attrs.items())))
+        return hashstr(
+            self.txt, tuple(sorted(self._attrs.items())), self.__class__.__name__
+        )
 
     def __hash__(self):
         return hash(self.to_hash())

@@ -224,9 +224,13 @@ class WordForm(Entity):
     def num_stressed_sylls(self):
         return len([syll for syll in self.children if syll.is_stressed])
 
-    def to_hash(self):
+    @cached_property
+    def key(self):
         return hashstr(
             self._txt,
             self.sylls_ipa,
             self.sylls_text,
         )
+
+    def to_hash(self):
+        return hashstr(self.key)

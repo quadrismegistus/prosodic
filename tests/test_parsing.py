@@ -1,9 +1,9 @@
-from prosodic.constraints import *
-from pandas.testing import assert_frame_equal
-from prosodic.imports import *
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from prosodic.constraints import *
+from pandas.testing import assert_frame_equal
+from prosodic.imports import *
 disable_caching()
 
 

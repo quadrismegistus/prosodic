@@ -1,7 +1,7 @@
 import os,sys; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
 from pandas.testing import assert_frame_equal
-
+disable_caching()
 def test_WordFormList():
     # parsing not done yet so these are just testing the ordering of slot/word combos
 

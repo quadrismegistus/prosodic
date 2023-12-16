@@ -1,7 +1,8 @@
-from prosodic.imports import *
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from prosodic.imports import *
+disable_caching()
 
 
 def test_show():

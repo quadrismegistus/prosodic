@@ -1,6 +1,7 @@
 import os,sys; sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
 import tempfile
+disable_caching()
 
 def test_Text():
     x = 'Hello world!?!?!?!? !? ?!? –––_  -—- — “‘‘’ ewr ewr ’'

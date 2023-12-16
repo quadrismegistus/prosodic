@@ -21,13 +21,13 @@ def tokenize_sents_txt(txt, **y):
 def tokenize_words_txt(txt):
     l = tokenize_agnostic(txt)
     o = []
-    x0 = ''
+    x0 = ""
     for x in l:
         if not x.strip():
             x0 += x
         else:
             o += [x0 + x]
-            x0 = ''
+            x0 = ""
         # if o and not x.strip():# and not o[-1].strip():
         #     o[-1]+=x
         # else:
@@ -36,18 +36,19 @@ def tokenize_words_txt(txt):
 
 
 def tokenize_sentwords_df(txt):
-    with logmap('tokenizing'):
+    with logmap("tokenizing"):
         return pd.DataFrame(tokenize_sentwords_iter(txt))
 
 
 def tokenize_sentwords_iter(
-        txt,
-        sents=None,
-        sep_line=SEP_LINE,
-        sep_stanza=SEP_STANZA,
-        seps_phrase=SEPS_PHRASE,
-        para_i=None,
-        **kwargs):
+    txt,
+    sents=None,
+    sep_line=SEP_LINE,
+    sep_stanza=SEP_STANZA,
+    seps_phrase=SEPS_PHRASE,
+    para_i=None,
+    **kwargs
+):
     char_i = 0
     line_i = 1
     stanza_i = 1
@@ -69,11 +70,11 @@ def tokenize_sentwords_iter(
             is_punc = int(not any(x.isalpha() for x in word_str))
             odx_word = dict(
                 **(dict(para_i=para_i) if para_i is not None else {}),
-                sent_i=sent_i+1,
+                sent_i=sent_i + 1,
                 sentpart_i=linepart_i,
                 stanza_i=stanza_i,
                 line_i=line_i,
-                word_i=tok_i+1,
+                word_i=tok_i + 1,
                 word_str=word_str,
                 # word_tok=word_tok,
                 word_ispunc=is_punc

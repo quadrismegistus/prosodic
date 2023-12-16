@@ -47,9 +47,7 @@ class Line(Text):
                 for word_d in tokens_df.to_dict("records")
                 if "word_str" in word_d  # and 'word_ispunc'
             ]
-        Entity.__init__(
-            self, txt=txt, children=children, parent=parent, **kwargs
-        )
+        Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self.is_parseable = True
 
@@ -75,9 +73,7 @@ class Line(Text):
         def iterr():
             for correct_wf, target_wfl in zip(wordforms, wordforms_ll):
                 targets = [
-                    wf
-                    for wf in target_wfl
-                    if wf.to_hash() == correct_wf.to_hash()
+                    wf for wf in target_wfl if wf.to_hash() == correct_wf.to_hash()
                 ]
                 if len(targets) != 1:
                     pprint([correct_wf, target_wfl, targets])
@@ -132,5 +128,5 @@ class Line(Text):
         out = f'<style>{css}</style><div class="parse">{out}</div>'
         return to_html(out, as_str=as_str)
 
-    def stats(self, by='parse', **kwargs):
+    def stats(self, by="parse", **kwargs):
         return self.parses.stats(by=by, **kwargs)

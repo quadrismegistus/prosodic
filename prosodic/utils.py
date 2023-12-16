@@ -128,6 +128,7 @@ def get_initial_whitespace(xstr):
 
 def unique(l):
     from ordered_set import OrderedSet
+
     return list(OrderedSet(l))
 
 
@@ -148,6 +149,7 @@ def read_json(fn):
 
 def from_json(json_d, **kwargs):
     from .imports import GLOBALS
+
     if type(json_d) == str:
         json_d = read_json(json_d)
     if not "_class" in json_d:
@@ -163,7 +165,7 @@ def load(fn, **kwargs):
 
 
 def to_json(obj, fn=None):
-    if hasattr(obj, 'to_json'):
+    if hasattr(obj, "to_json"):
         data = obj.to_json()
     else:
         data = obj
@@ -177,8 +179,7 @@ def to_json(obj, fn=None):
         with open(fn, "wb") as of:
             of.write(
                 orjson.dumps(
-                    data,
-                    option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
+                    data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
                 )
             )
 

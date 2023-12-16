@@ -6,17 +6,18 @@ class PhonemeList(EntityList):
 
 
 class Syllable(Entity):
-    prefix = 'syll'
-    child_type = 'Phoneme'
+    prefix = "syll"
+    child_type = "Phoneme"
     list_type = PhonemeList
 
     @profile
     def __init__(self, txt: str, ipa=None, parent=None, children=[], **kwargs):
         from .phonemes import Phoneme
         from gruut_ipa import Pronunciation
+
         assert ipa or children
         if ipa and not children:
-            sipa = ''.join(x for x in ipa if x.isalpha())
+            sipa = "".join(x for x in ipa if x.isalpha())
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
             children = [Phoneme(phon) for phon in phones]
@@ -26,18 +27,19 @@ class Syllable(Entity):
         return super().to_json(ipa=self.ipa)
 
     @cached_property
-    def stress(self): return get_stress(self.ipa)
+    def stress(self):
+        return get_stress(self.ipa)
 
     @cached_property
     def attrs(self):
         return {
             **self._attrs,
-            'num': self.num,
-            'txt': self.txt,
-            'is_stressed': self.is_stressed,
-            'is_heavy': self.is_heavy,
-            'is_strong': self.is_strong,
-            'is_weak': self.is_weak,
+            "num": self.num,
+            "txt": self.txt,
+            "is_stressed": self.is_stressed,
+            "is_heavy": self.is_heavy,
+            "is_strong": self.is_strong,
+            "is_weak": self.is_weak,
         }
 
     @cached_property
@@ -54,7 +56,7 @@ class Syllable(Entity):
 
     @cached_property
     def is_stressed(self):
-        return self.stress in {'S', 'P'}
+        return self.stress in {"S", "P"}
 
     @cached_property
     def is_heavy(self):

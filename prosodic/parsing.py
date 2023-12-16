@@ -1,7 +1,6 @@
 from .imports import *
 from .constraints import *
 
-
 @total_ordering
 class Parse(Entity):
     prefix = 'parse'
@@ -449,8 +448,7 @@ class Parse(Entity):
                     stclass = 'stress_' + \
                         ('strong' if slot.unit.is_stressed else 'weak')
                     vclass = ' violation' if pos.violset else ''
-                    slotstr = f'<span class="{spclass} {
-                        stclass}{vclass}">{slot.unit.txt}</span>'
+                    slotstr = f'<span class="{spclass} {stclass}{vclass}">{slot.unit.txt}</span>'
                     output.append(slotstr)
                     # viol_str=' '.join(pos.violset)
                     # viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
@@ -798,7 +796,7 @@ class ParseList(EntityList):
     def stats_d(self, by=None, norm=None, incl_bounded=False, **kwargs):
         odf = self.stats(
             by=by,
-            norm=norm,
+            norm=norm, 
             incl_bounded=incl_bounded,
             **kwargs
         )

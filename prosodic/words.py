@@ -1,5 +1,6 @@
 from .imports import *
-SYLL_SEP = '.'
+
+SYLL_SEP = "."
 
 
 class SyllableList(EntityList):
@@ -13,15 +14,11 @@ class WordTypeList(EntityList):
 @total_ordering
 class WordFormList(EntityList):
     def __repr__(self):
-        return ' '.join(wf.token_stress for wf in self.data)
+        return " ".join(wf.token_stress for wf in self.data)
 
     @cached_property
     def slots(self):
-        return [
-            syll
-            for wordform in self.data
-            for syll in wordform.children
-        ]
+        return [syll for wordform in self.data for syll in wordform.children]
 
     # @cached_property
     # def df(self):
@@ -45,11 +42,7 @@ class WordFormList(EntityList):
 
     @cached_property
     def num_sylls(self):
-        return sum(
-            1
-            for wordform in self.data
-            for syll in wordform.children
-        )
+        return sum(1 for wordform in self.data for syll in wordform.children)
 
     @cached_property
     def first_syll(self):
@@ -60,11 +53,18 @@ class WordFormList(EntityList):
     @cached_property
     def sort_key(self):
         sylls_is_odd = int(bool(self.num_sylls % 2))
-        first_syll_stressed = 2 if self.first_syll is None else int(
-            self.first_syll.is_stressed)
-        return (sylls_is_odd, self.num_sylls, self.num_stressed_sylls, first_syll_stressed)
+        first_syll_stressed = (
+            2 if self.first_syll is None else int(self.first_syll.is_stressed)
+        )
+        return (
+            sylls_is_odd,
+            self.num_sylls,
+            self.num_stressed_sylls,
+            first_syll_stressed,
+        )
 
-    def __lt__(self, other): return self.sort_key < other.sort_key
+    def __lt__(self, other):
+        return self.sort_key < other.sort_key
 
     def __eq__(self, other):
         # return self.sort_key==other.sort_key
@@ -75,50 +75,40 @@ class WordFormList(EntityList):
 @profile
 def Word(token, lang=DEFAULT_LANG):
     if lang not in LANGS:
-        raise Exception(f'Language {lang} not recognized')
+        raise Exception(f"Language {lang} not recognized")
     lang_obj = LANGS[lang]()
     return lang_obj.get(token)
 
 
 class WordToken(Entity):
-    child_type = 'WordType'
+    child_type = "WordType"
     list_type = WordTypeList
 
-    prefix = 'wordtoken'
+    prefix = "wordtoken"
 
     @profile
     def __init__(self, txt, lang=DEFAULT_LANG, parent=None, children=[], **kwargs):
-        if txt.startswith('\n'):
+        if txt.startswith("\n"):
             txt = txt[1:]
         self.lang = lang
         if not children:
             children = WordTypeList([Word(txt, lang=lang)])
         self.word = children[0]
-        super().__init__(
-            children=children,
-            parent=parent,
-            txt=txt,
-            **kwargs
-        )
+        super().__init__(children=children, parent=parent, txt=txt, **kwargs)
 
     def to_json(self):
         return super().to_json(lang=self.lang)
 
 
 class WordType(Entity):
-    child_type: str = 'WordForm'
+    child_type: str = "WordForm"
     list_type = list
 
-    prefix = 'word'
+    prefix = "word"
 
     @profile
     def __init__(self, txt: str, children: list, parent=None, **kwargs):
-        super().__init__(
-            children=children,
-            parent=parent,
-            txt=txt,
-            **kwargs
-        )
+        super().__init__(children=children, parent=parent, txt=txt, **kwargs)
 
     def to_json(self):
         return super().to_json(lang=self.lang)
@@ -128,11 +118,16 @@ class WordType(Entity):
         return WordToken(self.txt, lang=self.lang, children=self.children)
 
     @property
-    def forms(self): return self.children
+    def forms(self):
+        return self.children
+
     @property
-    def form(self): return self.children[0] if self.children else None
+    def form(self):
+        return self.children[0] if self.children else None
+
     @property
-    def num_forms(self): return len(self.children)
+    def num_forms(self):
+        return len(self.children)
 
     @property
     def is_punc(self):
@@ -152,34 +147,29 @@ class WordType(Entity):
     def attrs(self):
         return {
             **super().attrs,
-            'num_forms': self.num_forms,
+            "num_forms": self.num_forms,
             # 'num_sylls':self.num_sylls,
             # 'num_stressed_sylls':self.num_stressed_sylls,
-            'is_punc': self.is_punc,
+            "is_punc": self.is_punc,
         }
 
 
 class WordForm(Entity):
-    prefix = 'wordform'
-    child_type: str = 'Syllable'
+    prefix = "wordform"
+    child_type: str = "Syllable"
     list_type = SyllableList
 
     @profile
-    def __init__(self, txt: str, sylls_ipa=[], sylls_text=[], children=[], syll_sep='.'):
+    def __init__(
+        self, txt: str, sylls_ipa=[], sylls_text=[], children=[], syll_sep="."
+    ):
         from .syllables import Syllable
-        sylls_ipa = (
-            sylls_ipa.split(syll_sep)
-            if type(sylls_ipa) == str
-            else sylls_ipa
-        )
+
+        sylls_ipa = sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
         sylls_text = (
             sylls_text.split(syll_sep)
             if type(sylls_text) == str
-            else (
-                sylls_text
-                if sylls_text
-                else sylls_ipa
-            )
+            else (sylls_text if sylls_text else sylls_ipa)
         )
         if not children:
             if sylls_text and sylls_ipa:
@@ -194,7 +184,7 @@ class WordForm(Entity):
             # sylls_ipa=sylls_ipa,
             # sylls_text=sylls_text,
             txt=txt,
-            children=children
+            children=children,
         )
         self.sylls_ipa = sylls_ipa
         self.sylls_text = sylls_text
@@ -212,7 +202,8 @@ class WordForm(Entity):
         return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
 
     @cached_property
-    def syllables(self): return self.children
+    def syllables(self):
+        return self.children
 
     @cached_property
     def token_stress(self):
@@ -226,11 +217,12 @@ class WordForm(Entity):
         return len(self.children) == 1 and not self.children[0].is_stressed
 
     @cached_property
-    def num_sylls(self): return len(self.children)
+    def num_sylls(self):
+        return len(self.children)
 
     @cached_property
-    def num_stressed_sylls(self): return len(
-        [syll for syll in self.children if syll.is_stressed])
+    def num_stressed_sylls(self):
+        return len([syll for syll in self.children if syll.is_stressed])
 
     def to_hash(self):
         return hashstr(

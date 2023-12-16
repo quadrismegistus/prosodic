@@ -65,7 +65,8 @@ def test_text_parsing():
     t.parse(num_proc=1)
     assert len(t.parses.unbounded) >= 14
     assert t.parses.num_lines == 14
-    assert len(t.parses.stats()) == 14
+    assert len(t.parses.stats(by="line")) == 14
+    assert len(t.parses.stats(by="syll")) > 14
 
 
 def test_exhaustive():

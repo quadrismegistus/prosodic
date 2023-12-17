@@ -2,6 +2,11 @@ name: "non-release testing"
 
 on:
     push:
+        branches:
+          - '**'
+          - '!master' 
+          - '!main' 
+          - '!develop' 
 
 jobs:
     tests:

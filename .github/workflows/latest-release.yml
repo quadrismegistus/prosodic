@@ -1,13 +1,36 @@
-# name: "latest-release"
+name: "latest-release"
 
-# on:
-#   push:
-#     branches:
-#         - "develop"
+on:
+  push:
+    branches:
+        - "develop"
 
-# jobs:
-#   tests:
-#     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+
+# you need these permissions to publish to GitHub pages
+permissions: 
+    contents: write
+    pages: write
+
+
+
+jobs:
+  tests:
+    uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Publish to GitHub Pages (and render) 
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # this secret is always available for github actions
+      
+
 
 #   pre-release:
 #     name: "Pre Release"

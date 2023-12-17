@@ -122,7 +122,8 @@ class Meter(Entity):
         ) as lm:
             if key and self.use_cache and key in self.json_cache:
                 dat = self.json_cache[key]
-                lm.log(f"found {len(dat.get("children",[])) if dat else 0:,} parses")
+                nchild = len(dat.get("children", [])) if dat else 0
+                lm.log(f"found {nchild:,} parses")
                 if as_dict:
                     return dat
                 return ParseList.from_json(dat, line=line)

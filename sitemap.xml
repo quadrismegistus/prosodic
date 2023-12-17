@@ -2,14 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://quadrismegistus.github.io/prosodic/reference/index.html</loc>
-    <lastmod>2023-12-16T17:25:42.128Z</lastmod>
+    <lastmod>2023-12-17T00:51:20.099Z</lastmod>
   </url>
   <url>
-    <loc>https://quadrismegistus.github.io/prosodic/tutorial.html</loc>
-    <lastmod>2023-12-16T17:25:17.970Z</lastmod>
+    <loc>https://quadrismegistus.github.io/prosodic/architecture.html</loc>
+    <lastmod>2023-12-17T00:51:18.502Z</lastmod>
+  </url>
+  <url>
+    <loc>https://quadrismegistus.github.io/prosodic/install.html</loc>
+    <lastmod>2023-12-17T00:51:16.738Z</lastmod>
+  </url>
+  <url>
+    <loc>https://quadrismegistus.github.io/prosodic/webapp.html</loc>
+    <lastmod>2023-12-17T00:51:15.728Z</lastmod>
+  </url>
+  <url>
+    <loc>https://quadrismegistus.github.io/prosodic/index.html</loc>
+    <lastmod>2023-12-17T00:51:16.032Z</lastmod>
+  </url>
+  <url>
+    <loc>https://quadrismegistus.github.io/prosodic/example.html</loc>
+    <lastmod>2023-12-17T00:51:17.416Z</lastmod>
   </url>
   <url>
     <loc>https://quadrismegistus.github.io/prosodic/quickstart.html</loc>
-    <lastmod>2023-12-16T17:25:41.847Z</lastmod>
+    <lastmod>2023-12-17T00:51:19.824Z</lastmod>
   </url>
 </urlset>

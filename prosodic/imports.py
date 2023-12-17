@@ -1,7 +1,7 @@
 import os, sys
 from logmap import logmap, logger
 
-logmap.disable()
+logmap.enable()
 from pprint import pprint, pformat
 import orjson
 import json

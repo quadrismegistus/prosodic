@@ -98,7 +98,7 @@ class Line(Text):
         **kwargs
     ):
         if parse is None:
-            parse = self.best_parse
+            parse = min(self._parses)
 
         output = []
 

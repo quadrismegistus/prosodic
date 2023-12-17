@@ -195,17 +195,6 @@ class Text(Entity):
         deque(self.parse_iter(**kwargs), maxlen=0)
         return self._parses
 
-    @cache
-    def get_line(self, stanza_num=1, line_num=1):
-        return self.get_stanza(stanza_num).get_line(line_num)
-
-    @cache
-    def get_stanza(self, stanza_num=1):
-        try:
-            return self.children[stanza_num - 1]
-        except IndexError:
-            return
-
     def render(self, as_str=False, blockquote=False, **meter_kwargs):
         return self.parse(**meter_kwargs).render(
             as_str=as_str,
@@ -232,7 +221,7 @@ class Text(Entity):
         if defaults:
             meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         if self.needs_parsing(force=force, meter=meter, **meter_kwargs):
-            with logmap("parsing text") as lm:
+            with logmap(f"parsing text {self}") as lm:
                 meter = self.get_meter(meter=meter, **meter_kwargs)
                 self.clear_cached_properties()
                 # with logmap.verbosity(
@@ -303,9 +292,3 @@ class Stanza(Text):
     def _repr_html_(self, as_df=False, df=None):
         return super()._repr_html_(df=df
                                    ) if as_df else self.to_html(as_str=True)
-
-    def get_line(self, line_num=1):
-        try:
-            return self.children[line_num - 1]
-        except IndexError:
-            return

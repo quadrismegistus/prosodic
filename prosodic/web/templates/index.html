@@ -25,9 +25,8 @@
           
         <div id="inputformdiv">
             <form onsubmit="return send(event)" id="inputform">
-                <button id="parsebtn" type="submit">Parse</button>
 
-                <h3>Parse text:</h3>
+                <!-- <h3>Parse text:</h3> -->
                 <textarea id="inputtext" name="text">From fairest creatures we desire increase,
 That thereby beauty's rose might never die,
 But as the riper should by time decease,
@@ -44,14 +43,52 @@ Pity the world, or else this glutton be,
 To eat the world's due, by the grave and thee.
 </textarea>
 
-            Constraints:<br/>
+<div id="parsebtndiv">
+    <button id="parsebtn" type="submit">Parse</button>
+</div>
+
+<hr/>
+
+            <div class="config-group">
+                <label class="title">Configure metrical constraints</label>
                 {% for cname in constraints %}
-                    <li>
-                        <input type="checkbox" id="{{cname}}" name="{{cname}}" value="1" {% if cname in active_constraints %}checked{%endif%}>
+                    <li class="flex-box">
                         <label for="{{cname}}">{{cname}}</label>
+                        <input type="checkbox" class="flex-box-2" id="{{cname}}" name="{{cname}}" value="1" {% if cname in active_constraints %}checked{%endif%}>
                     </li>
                 {% endfor %}
+            </div>
+
+            <div class="config-group">
+                <label for="max_w"  class="title">Adjust maximum # of syllables in a metrical position</label>
+
+                {% for maxx in ["max_w","max_s"] %}
+
+                    <li class = 'flex-box'>
+                        <label for="{{maxx}}">{{maxx}}</label>
+                        <select class="flex-box-2" name="{{maxx}}" id="{{maxx}}">
+                            {% for num in range(10) %}
+                                <option value={{num+1}}>{{num+1}}</option>
+                            {%endfor%}
+                        </select>
+                    </li>
+
+                {% endfor %}
+                
+            </div>
+
+            <div class="config-group">
+                <label class="title">Configure thoroughness of parser</label>
+                <li class="flex-box">
+                    <label for="resolve_optionality">{{cname}}</label>
+                    <input type="checkbox" class="flex-box-2" id="{{cname}}" name="{{cname}}" value="1" {% if cname in active_constraints %}checked{%endif%}>
+                </li>
+
+                
+            </div>
+
             
+
             
             </form>
         </div>
@@ -65,6 +102,7 @@ To eat the world's due, by the grave and thee.
                 <thead>
                     <th>Stanza</th>
                     <th>Line</th>
+                    <th>Rank</th>
                     <th>Parse</th>
                     <th>Ambiguity (#parses)<!--<small>(per 10 sylls)</small>--></th>
                     <th>Tension (#viols)<!--<small>(per 10 sylls)</small>--></th>
@@ -98,7 +136,7 @@ To eat the world's due, by the grave and thee.
         // data:[],
         // columns: ['#', 'Line'],
         pageLength: 50,
-        order: [[ 0, "asc" ], [ 1, "asc" ]],
+        order: [[ 0, "asc" ], [ 1, "asc" ], [ 2, "asc" ]],
         columnDefs: [
             { "width": "50px", "targets": 0 },
             { "width": "50px", "targets": 1 },

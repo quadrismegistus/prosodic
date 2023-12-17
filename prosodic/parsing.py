@@ -115,9 +115,10 @@ class Parse(Entity):
         wordforms = from_json(json_d["_wordforms"])
         if line:
             if type(line) == Text:
-                line = line.get_line(json_d["stanza_num"], json_d["line_num"])
+                line = line.stanzas[json_d["stanza_num"] -
+                                    1].lines[json_d["line_num"] - 1]
             elif type(line) == Stanza:
-                line = line.get_line(json_d["line_num"])
+                line = line.lines[json_d["line_num"] - 1]
             elif type(line) != Line:
                 raise Exception(f"what is {line}?")
             wordforms = line.match_wordforms(wordforms)
@@ -688,7 +689,7 @@ class ParseSlot(Entity):
 
     @cached_property
     def violset(self):
-        return {k for k, v in self.viold.items() if not v}
+        return {k for k, v in self.viold.items() if v}
 
     @cached_property
     def num_viols(self):

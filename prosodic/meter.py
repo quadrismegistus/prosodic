@@ -247,10 +247,15 @@ class Meter(Entity):
                 text._parses = parses
                 for st in text:
                     st._parses = ParseList(type="stanza")
+                    for l in st:
+                        l._parses = ParseList(type="list")
                 for parse in parses:
                     if parse.stanza_num:
-                        stanza = text.get_stanza(parse.stanza_num)
+                        stanza = text.stanzas[parse.stanza_num - 1]
                         stanza._parses.append(parse)
+                        line = stanza.lines[parse.line_num - 1]
+                        line._parses.append(parse)
+
                 yield from text.parseable_units
                 done = True
 

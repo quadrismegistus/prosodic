@@ -19,7 +19,8 @@ class Meter(Entity):
     def __init__(
         self,
         constraints=DEFAULT_METER_KWARGS["constraints"],
-        categorical_constraints=DEFAULT_METER_KWARGS["categorical_constraints"],
+        categorical_constraints=DEFAULT_METER_KWARGS["categorical_constraints"
+                                                     ],
         max_s=DEFAULT_METER_KWARGS["max_s"],
         max_w=DEFAULT_METER_KWARGS["max_w"],
         resolve_optionality=DEFAULT_METER_KWARGS["resolve_optionality"],
@@ -73,17 +74,24 @@ class Meter(Entity):
         return wtypes + stypes
 
     def get_wordform_matrix(self, line):
-        return line.get_wordform_matrix(resolve_optionality=self.resolve_optionality)
+        return line.get_wordform_matrix(
+            resolve_optionality=self.resolve_optionality
+        )
 
     def parse(self, text_or_line, **kwargs):
         return ParseList(
-            self.parse_iter(text_or_line, **kwargs),
+            self.parse_iter(text_or_line,
+                            **kwargs),
             type=self.__class__.__name__.lower(),
         )
 
     def parse_iter(self, text_or_line, force=False, **kwargs):
         if type(text_or_line) in {Text, Stanza}:
-            yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
+            yield from self.parse_text_iter(
+                text_or_line,
+                force=force,
+                **kwargs
+            )
         elif text_or_line.is_parseable:
             yield from self.parse_line(text_or_line, force=force, **kwargs)
         else:
@@ -118,7 +126,7 @@ class Meter(Entity):
         key = self.get_key(line)
         clsn = key.__class__.__name__.lower()
         with logmap(
-            f'checking for cached {clsn} parses under key "{key[:8]}..."'
+                f'checking for cached {clsn} parses under key "{key[:8]}..."'
         ) as lm:
             if key and self.use_cache and key in self.json_cache:
                 dat = self.json_cache[key]
@@ -134,7 +142,12 @@ class Meter(Entity):
         assert line.is_parseable
         parses = ParseList(
             [
-                Parse(wfl, pos, meter=self, parent=line)
+                Parse(
+                    wfl,
+                    pos,
+                    meter=self,
+                    parent=line,
+                )
                 for wfl in self.get_wordform_matrix(line)
                 for pos in self.get_pos_types(nsylls=wfl.num_sylls)
             ]
@@ -143,12 +156,9 @@ class Meter(Entity):
             # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
             parses = ParseList(
                 [
-                    newparse
-                    for parse in parses
-                    for newparse in parse.branch()
-                    if not parse.is_bounded
-                    and newparse is not None
-                    and parse is not None
+                    newparse for parse in parses
+                    for newparse in parse.branch() if not parse.is_bounded
+                    and newparse is not None and parse is not None
                 ],
                 type="line",
             )
@@ -173,10 +183,13 @@ class Meter(Entity):
             wfm = self.get_wordform_matrix(line)
             all_parses = []
             combos = [
-                (wfl, scansion)
+                (wfl,
+                 scansion)
                 for wfl in wfm
                 for scansion in get_possible_scansions(
-                    wfl.num_sylls, max_s=self.max_s, max_w=self.max_w
+                    wfl.num_sylls,
+                    max_s=self.max_s,
+                    max_w=self.max_w
                 )
             ]
             wfl = wfm[0]
@@ -197,11 +210,21 @@ class Meter(Entity):
         return line._parses
 
     def parse_text(self, text, num_proc=None, progress=True):
-        iterr = self.parse_text_iter(text, num_proc=num_proc, progress=progress)
+        iterr = self.parse_text_iter(
+            text,
+            num_proc=num_proc,
+            progress=progress
+        )
         deque(iterr, maxlen=0)
 
     def parse_text_iter(
-        self, text, progress=True, force=False, num_proc=None, use_mp=True, **kwargs
+        self,
+        text,
+        progress=True,
+        force=False,
+        num_proc=None,
+        use_mp=True,
+        **kwargs
     ):
         from .parsing import ParseList
 
@@ -252,8 +275,11 @@ class Meter(Entity):
                     )
                 else:
                     iterr = (
-                        self.parse_line(line, force=force, **kwargs)
-                        for line in lm.iter_progress(
+                        self.parse_line(
+                            line,
+                            force=force,
+                            **kwargs,
+                        ) for line in lm.iter_progress(
                             text.parseable_units,
                             desc="parsing",
                         )
@@ -278,17 +304,30 @@ class Meter(Entity):
                 self.to_json_cache(text, text._parses, force=force)
 
     def _parse_text_iter_mp(
-        self, text, force=False, progress=True, num_proc=1, lm=None, **progress_kwargs
+        self,
+        text,
+        force=False,
+        progress=True,
+        num_proc=1,
+        lm=None,
+        **progress_kwargs
     ):
         from .parsing import ParseList
 
         assert lm
         objs = [
-            (line.to_json(), self.to_json(), force or not self.use_cache_lines)
-            for line in text.parseable_units
+            (
+                line.to_json(),
+                self.to_json(),
+                force or not self.use_cache_lines
+            ) for line in text.parseable_units
         ]
         iterr = lm.imap(
-            _parse_iter, objs, progress=progress, num_proc=num_proc, **progress_kwargs
+            _parse_iter,
+            objs,
+            progress=progress,
+            num_proc=num_proc,
+            **progress_kwargs
         )
         for i, parselist_json in enumerate(iterr):
             line = text.parseable_units[i]

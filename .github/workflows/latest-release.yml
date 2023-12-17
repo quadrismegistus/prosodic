@@ -20,6 +20,37 @@ jobs:
   build-deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # NOTE: Python version to use is stored in the .python-version file, which is the
+      # convention for pyenv: https://github.com/pyenv/pyenv
+      - name: Get Python version
+        run: echo "PYTHON_VERSION=$(cat .python-version)" >> $GITHUB_ENV
+
+      # use python version for current build
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+            pip-${{ env.PYTHON_VERSION }}
+            pip-
+
+      - name: Install dependencies
+        run: |
+          sudo apt install espeak -y
+          pip install -U pip wheeel
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 

@@ -30,3 +30,6 @@ def test_cache_parses():
     with caching_disabled():
         t = Text(lstr)
         assert not t.parses_from_cache()
+
+
+# trying tests again

@@ -1,0 +1,87 @@
+---
+title: "Installing"
+format:
+  html:
+    code-fold: false
+jupyter: python3
+---
+
+
+Should work for any version of python following 3.8. 
+
+
+## 1. Install espeak
+
+Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) software, to ‘sound out’ unknown words.
+
+a. Mac
+    * First, install [homebrew](brew.sh) if not already installed.
+    
+    * ```sh
+    brew install espeak
+    ```
+
+a. Linux
+
+    * ```sh
+    apt-get install espeak
+    ```
+
+a. Windows
+
+    * Download and install from [sourceforge](http://espeak.sourceforge.net/download.html).
+
+
+
+
+## 2. Install python>=3.8
+
+You will need to install Python version 3.8 or newer. If you don't have one, you can:
+
+a. Use [pyenv](https://github.com/pyenv/pyenv) to manage and install python versions.
+
+    i. To install pyenv: 
+
+        ```sh
+        curl pyenv.run | bash
+        ```
+
+    i. To install and activate a version of python:
+
+        ```sh
+        pyenv install 3.12
+        pyenv shell 3.12
+        ```
+    
+    i. Then (if you want) create a local environment:
+
+        ```sh
+        python -m venv venv
+        . venv/bin/activate
+        ```
+
+a. Or use [conda](https://docs.conda.io/projects/miniconda/en/latest) to do the same.
+
+    i. To install, follow [these instructions](https://docs.conda.io/projects/miniconda/en/latest/#quick-command-line-install) for a command-line install or [these](https://docs.conda.io/projects/miniconda/en/latest/#latest-miniconda-installer-links) for a graphical install.
+
+    i. Then create an environment:
+      
+        ```sh
+        conda create -n "prosodic" python=3.12 -y
+        conda activate prosodic
+        ```
+
+
+## 3. Install prosodic
+
+Install via pip:
+
+```sh
+pip install git+https://github.com/quadrismegistus/prosodic@develop
+```
+
+Test to see if it works:
+
+```sh
+prosodic
+```

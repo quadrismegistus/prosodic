@@ -59,7 +59,7 @@ class Text(Entity):
 
         Args:
             txt (str): The text string. Default is an empty string.
-            filename (str): The name of the file. Default is an empty string.
+            fn (str): A path or URL to a text file to read
             lang (Optional[str]): The language of the text. Default is DEFAULT_LANG.
             parent (Optional[Entity]): The parent entity. Default is None.
             children (Optional[list]): The list of child entities. Default is an empty list.
@@ -202,6 +202,9 @@ class Text(Entity):
         except IndexError:
             return
 
+    def render(self, as_str=False, blockquote=False, **meter_kwargs):
+        return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
+
     def reset_meter(self, **meter_kwargs):
         from .meter import DEFAULT_METER_KWARGS
 
@@ -254,12 +257,7 @@ class Text(Entity):
             )
 
     def to_html(self, as_str=False, blockquote=False):
-        html_strs = (
-            line.to_html(blockquote=blockquote, as_str=True) for line in self.lines
-        )
-        html = "</li>\n<li>".join(html_strs)
-        html = f'<ol class="parselist"><li>{html}</li></ol>'
-        return to_html(html, as_str=as_str)
+        return self.parses.to_html(as_str=as_str, blockquote=blockquote)
 
 
 class Stanza(Text):

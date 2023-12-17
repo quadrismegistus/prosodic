@@ -6,24 +6,42 @@ format:
 jupyter: python3
 ---
 
-## Texts
+## Setup
 
-Contained in `prosodic.text`.
+See [installation instructions](install.html) here.
 
-### Reading texts
 
-#### Loading by string
+## Usage
 
-You can load any text with a string:
+To use as a web app, [see here](webapp.html). This document covers how to get started using Prosodic in python.
+
+To use within python, load jupyter or ipython:
+
+```sh
+ipython
+```
+
+Recommended practice is to import with fullname.
+
+```{python}
+import prosodic
+```
+
+
+### Loading texts
+
+You can load a text by a URL or a filename pointing to a text file:
 
 ```{python}
 #| label: reading-texts
+sonnets = prosodic.Text('https://raw.githubusercontent.com/quadrismegistus/prosodic/develop/corpora/corppoetry_en/en.shakespeare.txt')
+```
 
-# import
-import prosodic
+Or directly by a string:
 
-sonnetV = prosodic.Text(
-"""Those hours, that with gentle work did frame
+```{python}
+sonnet = prosodic.Text("""
+Those hours, that with gentle work did frame
 The lovely gaze where every eye doth dwell,
 Will play the tyrants to the very same
 And that unfair which fairly doth excel;
@@ -36,119 +54,48 @@ A liquid prisoner pent in walls of glass,
 Beauty’s effect with beauty were bereft,
 Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
-Leese but their show; their substance still lives sweet."""
-)
+Leese but their show; their substance still lives sweet.
+""")
 ```
 
 
-#### Loading texts by filename
+### Examining texts
 
-Can also read texts (especially larger ones) by filename:
+Any text when displayed will show the dataframe stored at its `.df` attribute:
 
 ```{python}
-#| label: reading-texts-filename
-sonnets = prosodic.Text(
-  filename='../corpora/corppoetry_en/en.shakespeare.txt'
-)
+# the sonnet object displays as `sonnet.df`
+sonnet
 ```
 
-### Displaying texts
-
-In a notebook environmnent, texts objects will display a by-syllable dataframe of the text structure it contains, stored at `text.df`
+Can also look at particular lines:
 
 ```{python}
-#| label: showing-texts
-
-# these will display the same, but former actually points to the dataframe
-sonnetV.df          
-sonnetV
+sonnet.line1
 ```
 
 
 
-## Parsing texts
+### Parsing texts
 
-### Displaying parsed texts
-
-In a notebook environmnent, the simplest way to view the parse is to to render it:
+Run the parsing command:
 
 ```{python}
-sonnetV.render()
+sonnet.parse()
 ```
 
-This is actually calling `.parse()` below and then returning each of its lines' `.best_parse`.
+The results, a special ParseList object, will be accessible at `sonnet.parses`. It displays as a dataframe accessible at `sonnet.parses.df`.
 
-### Displaying lists of parses
+#### Displaying parsed texts
+
+In a notebook environmnent, the simplest way to view the parse is to to render it.
 
 ```{python}
-# parse with default options by just reaching for best parse
-plausible_parses = sonnetV.parse()
-
-# this displays dataframe at plausible_parses.df
-plausible_parses
+sonnet.parses.render()
 ```
 
-### Customizing meter
+#### Saving parse output
 
 ```{python}
-# parse with different options
-sonnetV.parse(constraints=('w_peak','s_unstress'))
-sonnetV.render()
-```
-
-### Saving parse output
-
-```{python}
-# sonnet.parse(...opts...)    # if you want to customize meter
-
-# then get parselist object
-parses = sonnetV.parses
-
-# you can save pandas dataframe
-parses.df.to_csv('my_parse_output.csv')
-
-# or you can also save the object itself (as json)
-parses.save('my_parse_list.json')
-
-# and then re-load it later on:
-parses2 = prosodic.load('my_parse_list.json')
-```
-
-## Example: Comparing Shakespeare's sonnets
-
-```{python}
-# load sonnets
-sonnets = prosodic.Text(filename='../corpora/corppoetry_en/en.shakespeare.txt')
-
-# parse beforehand if customizing
-parses = sonnets.parse()
-
-# look at parse dataframe by line
-df_by_line = parses.stats()
-```
-
-
-
-```{python}
-# so we can groupby stanza and average
-df_by_stanza = parses.stats(by='stanza')
-
-# let's also sort by violation score
-df_by_stanza.sort_values('parse_score', inplace=True)
-
-# now take a look
-df_by_stanza
-```
-
-
-```{python}
-# now we can look at "best" sonnet
-sonnets.stanza84
-```
-
-
-
-```{python}
-# now we can look at "worst" sonnet
-sonnets.stanza51
+sonnet.parses.df.to_csv('my_parse_output.csv')
 ```

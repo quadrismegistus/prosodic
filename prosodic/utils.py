@@ -3,10 +3,20 @@ from .imports import *
 
 def get_txt(txt, fn):
     if txt:
+        if txt.startswith("http") or os.path.exists(fn):
+            return get_txt(None, txt)
+
         return txt
-    if fn and os.path.exists(fn):
-        with open(fn) as f:
-            return f.read()
+
+    if fn:
+        if fn.startswith("http"):
+            response = requests.get(fn)
+            return response.text.strip()
+
+        if os.path.exists(fn):
+            with open(fn) as f:
+                return f.read()
+
     return ""
 
 
@@ -46,6 +56,7 @@ def setindex(df, cols=[]):
 
 
 def split_scansion(wsws: str) -> list:
+    wsws = wsws.replace("-", "w").replace("+", "s")
     positions = []
     position = []
     last_x = None

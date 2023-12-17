@@ -44,6 +44,11 @@ class Entity(UserList):
         )
 
     @cached_property
+    def html(self):
+        if hasattr(self, "to_html"):
+            return self.to_html()
+
+    @cached_property
     def key(self):
         attrs = {
             **{k: v for k, v in self.attrs.items() if v is not None},

@@ -19,6 +19,7 @@ import ftfy
 import builtins
 import multiprocessing as mp
 from collections import deque
+import requests
 import textwrap
 import random
 import string

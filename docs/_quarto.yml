@@ -6,18 +6,27 @@ project:
     - examples/pkgdown
     - examples/auto-package
 
+execute:
+  freeze: auto  # re-render only when source changes
+
 metadata-files:
   - reference/_sidebar.yml
 
 website:
-  title: "quartodoc"
+  title: "prosodic"
   page-navigation: true
   navbar:
     left:
+      - text: "Install"
+        file: install.qmd
+      - text: "Web App"
+        file: webapp.qmd
       - text: "Quickstart"
         file: quickstart.qmd
-      - text: "Tutorial"
-        file: tutorial.qmd
+      - text: "Example"
+        file: example.qmd
+      - text: "Architecture"
+        file: architecture.qmd
       - text: "Reference"
         href: reference/
 
@@ -28,7 +37,9 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme: 
+      light: flatly
+      dark: darkly
     toc: true
 
 

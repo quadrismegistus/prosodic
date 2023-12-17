@@ -611,6 +611,10 @@ class ParsePosition(Entity):
         return self.viold
 
     @cached_property
+    def constraint_scores(self):
+        return {k: sum(v) for k, v in self.constraint_viols.items()}
+
+    @cached_property
     # @profile
     def constraint_set(self):
         return self.violset
@@ -660,6 +664,10 @@ class ParseSlot(Entity):
         d = super().to_json(unit=self.unit.to_hash(), viold=self.viold)
         d.pop("children")
         return d
+
+    @cached_property
+    def constraint_scores(self):
+        return self.viold
 
     @cached_property
     def meter_val(self):
@@ -990,6 +998,17 @@ class ParseList(EntityList):
     @cached_property
     def num_lines(self):
         return len(self.lines)
+
+    def render(self, as_str=False, blockquote=False):
+        return self.to_html(as_str=as_str, blockquote=blockquote)
+
+    def to_html(self, as_str=False, blockquote=False):
+        html_strs = (
+            line.to_html(blockquote=blockquote, as_str=True) for line in self.lines
+        )
+        html = "</li>\n<li>".join(html_strs)
+        html = f'<ol class="parselist"><li>{html}</li></ol>'
+        return to_html(html, as_str=as_str)
 
 
 # class representing the potential bounding relations between to parses

@@ -1,0 +1,48 @@
+---
+title: "Tutorial"
+format:
+  html:
+    code-fold: false
+jupyter: python3
+---
+
+## Example: Comparing Shakespeare's sonnets
+
+```{python}
+import prosodic
+
+# load sonnets
+sonnets = prosodic.Text(filename='../corpora/corppoetry_en/en.shakespeare.txt')
+
+# parse beforehand if customizing
+parses = sonnets.parse()
+
+# look at parse dataframe by line
+df_by_line = parses.stats()
+```
+
+
+
+```{python}
+# so we can groupby stanza and average
+df_by_stanza = parses.stats(by='stanza')
+
+# let's also sort by violation score
+df_by_stanza.sort_values('parse_score', inplace=True)
+
+# now take a look
+df_by_stanza
+```
+
+
+```{python}
+# now we can look at "best" sonnet
+sonnets.stanza84
+```
+
+
+
+```{python}
+# now we can look at "worst" sonnet
+sonnets.stanza51
+```

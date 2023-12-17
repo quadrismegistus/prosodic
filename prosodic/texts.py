@@ -52,6 +52,7 @@ class Text(Entity):
         children: Optional[list] = [],
         tokens_df: Optional[pd.DataFrame] = None,
         use_cache=USE_CACHE,
+        force=False,
         **kwargs,
     ):
         """
@@ -90,8 +91,8 @@ class Text(Entity):
             if was_quiet and numwords > 1000:
                 logmap.quiet = False
             with logmap(f"building text with {numwords:,} words") as lm:
-                if self.use_cache:
-                    children = self.children_from_json_cache()
+                if not force and self.use_cache:
+                    children = self.children_from_cache()
 
                 if children:
                     lm.log(f"found {len(children)} cached stanzas")
@@ -100,16 +101,18 @@ class Text(Entity):
                         tokens_df = tokenize_sentwords_df(txt)
                     with logmap("building stanzas") as lm2:
                         children = [
-                            Stanza(parent=self, tokens_df=stanza_df)
-                            for i, stanza_df in lm2.iter_progress(
-                                tokens_df.groupby("stanza_i"), desc="iterating stanzas"
+                            Stanza(parent=self,
+                                   tokens_df=stanza_df) for i,
+                            stanza_df in lm2.iter_progress(
+                                tokens_df.groupby("stanza_i"),
+                                desc="iterating stanzas"
                             )
                         ]
         super().__init__(txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self._mtr = None
         if self.use_cache:
-            self.to_json_cache()
+            self.cache()
         if was_quiet:
             logmap.quiet = True
 
@@ -175,14 +178,12 @@ class Text(Entity):
             return True
         if meter is not None and meter.attrs != self._mtr.attrs:
             return True
-        if (
-            meter_kwargs
-            and Meter(**{**self._mtr.attrs, **meter_kwargs}).attrs != self._mtr.attrs
-        ):
+        if (meter_kwargs
+                and Meter(**{**self._mtr.attrs,
+                             **meter_kwargs}).attrs != self._mtr.attrs):
             return True
         if not self.is_parseable and self._parses.num_lines != len(
-            self.parseable_units
-        ):
+                self.parseable_units):
             return True
         return False
 
@@ -203,7 +204,10 @@ class Text(Entity):
             return
 
     def render(self, as_str=False, blockquote=False, **meter_kwargs):
-        return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
+        return self.parse(**meter_kwargs).render(
+            as_str=as_str,
+            blockquote=blockquote
+        )
 
     def reset_meter(self, **meter_kwargs):
         from .meter import DEFAULT_METER_KWARGS
@@ -284,8 +288,9 @@ class Stanza(Text):
             if tokens_df is None:
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
-                Line(parent=self, tokens_df=line_df)
-                for line_i, line_df in tokens_df.groupby("line_i")
+                Line(parent=self,
+                     tokens_df=line_df) for line_i,
+                line_df in tokens_df.groupby("line_i")
             ]
         Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
 
@@ -293,7 +298,8 @@ class Stanza(Text):
         return Entity.to_json(self, no_txt=True)
 
     def _repr_html_(self, as_df=False, df=None):
-        return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)
+        return super()._repr_html_(df=df
+                                   ) if as_df else self.to_html(as_str=True)
 
     def get_line(self, line_num=1):
         try:

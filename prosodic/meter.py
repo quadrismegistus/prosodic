@@ -116,22 +116,22 @@ class Meter(Entity):
             parses = self.parse_line_fast(line)
 
         if self.use_cache_lines:
-            self.to_json_cache(line, parses)
+            self.cache(val_obj=parses, key=self.get_key(line))
         return parses
 
     def get_key(self, line):
         return hashstr(self.key, line.key)
 
-    def parses_from_json_cache(self, line, as_dict=False):
+    def parses_from_json_cache(self, line, as_dict=False, use_redis=True):
         from .parsing import ParseList
 
         key = self.get_key(line)
-        clsn = key.__class__.__name__.lower()
+        clsn = line.__class__.__name__.lower()
         with logmap(
                 f'checking for cached {clsn} parses under key "{key[:8]}..."'
         ) as lm:
-            if key and self.use_cache and key in self.json_cache:
-                dat = self.json_cache[key]
+            dat = self.from_cache(key=key, as_dict=True)
+            if dat:
                 nchild = len(dat.get("children", [])) if dat else 0
                 lm.log(f"found {nchild:,} parses")
                 if as_dict:
@@ -303,7 +303,7 @@ class Meter(Entity):
                             )
 
             if self.use_cache:
-                self.to_json_cache(text, text._parses, force=force)
+                self.cache(val_obj=text._parses, key=self.get_key(text))
 
     def _parse_text_iter_mp(
         self,

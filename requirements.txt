@@ -18,3 +18,4 @@ logmap @ git+https://github.com/quadrismegistus/logmap
 loguru
 orjson
 ipython
+redis-dict

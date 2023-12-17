@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>prosodic - Architecture</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">prosodic</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./install.html" rel="" target="">
+ <span class="menu-text">Install</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./webapp.html" rel="" target="">
+ <span class="menu-text">Web App</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./quickstart.html" rel="" target="">
+ <span class="menu-text">Quickstart</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./example.html" rel="" target="">
+ <span class="menu-text">Example</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./architecture.html" rel="" target="" aria-current="page">
+ <span class="menu-text">Architecture</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./reference/" rel="" target="">
+ <span class="menu-text">Reference</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/machow/quartodoc/" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#texts" id="toc-texts" class="nav-link active" data-scroll-target="#texts">Texts</a>
+  <ul class="collapse">
+  <li><a href="#reading-texts" id="toc-reading-texts" class="nav-link" data-scroll-target="#reading-texts">Reading texts</a></li>
+  <li><a href="#displaying-texts" id="toc-displaying-texts" class="nav-link" data-scroll-target="#displaying-texts">Displaying texts</a></li>
+  </ul></li>
+  <li><a href="#stanzas" id="toc-stanzas" class="nav-link" data-scroll-target="#stanzas">Stanzas</a>
+  <ul class="collapse">
+  <li><a href="#accessing-stanzas" id="toc-accessing-stanzas" class="nav-link" data-scroll-target="#accessing-stanzas">Accessing stanzas</a></li>
+  <li><a href="#displaying-stanzas" id="toc-displaying-stanzas" class="nav-link" data-scroll-target="#displaying-stanzas">Displaying stanzas</a></li>
+  </ul></li>
+  <li><a href="#lines" id="toc-lines" class="nav-link" data-scroll-target="#lines">Lines</a></li>
+  <li><a href="#words" id="toc-words" class="nav-link" data-scroll-target="#words">Words</a>
+  <ul class="collapse">
+  <li><a href="#tokens" id="toc-tokens" class="nav-link" data-scroll-target="#tokens">Tokens</a></li>
+  <li><a href="#types" id="toc-types" class="nav-link" data-scroll-target="#types">Types</a></li>
+  <li><a href="#forms" id="toc-forms" class="nav-link" data-scroll-target="#forms">Forms</a></li>
+  <li><a href="#syllables" id="toc-syllables" class="nav-link" data-scroll-target="#syllables">Syllables</a></li>
+  <li><a href="#phonemes" id="toc-phonemes" class="nav-link" data-scroll-target="#phonemes">Phonemes</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Architecture</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="texts" class="level2">
+<h2 class="anchored" data-anchor-id="texts">Texts</h2>
+<p>Contained in <code>prosodic.text</code>.</p>
+<section id="reading-texts" class="level3">
+<h3 class="anchored" data-anchor-id="reading-texts">Reading texts</h3>
+<section id="loading-by-string" class="level4">
+<h4 class="anchored" data-anchor-id="loading-by-string">Loading by string</h4>
+<p>You can load any text with a string:</p>
+<div id="reading-texts" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> prosodic</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sonnetV <span class="op">=</span> prosodic.Text(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">"""Those hours, that with gentle work did frame</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">The lovely gaze where every eye doth dwell,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">Will play the tyrants to the very same</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">And that unfair which fairly doth excel;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="st">For never-resting time leads summer on</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="st">To hideous winter, and confounds him there;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="st">Sap checked with frost, and lusty leaves quite gone,</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="st">Beauty o’er-snowed and bareness every where:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="st">Then were not summer’s distillation left,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="st">A liquid prisoner pent in walls of glass,</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="st">Beauty’s effect with beauty were bereft,</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="st">Nor it, nor no remembrance what it was:</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="st">But flowers distill’d, though they with winter meet,</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="st">Leese but their show; their substance still lives sweet."""</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="loading-texts-by-filename" class="level4">
+<h4 class="anchored" data-anchor-id="loading-texts-by-filename">Loading texts by filename</h4>
+<p>Can also read texts (especially larger ones) by filename:</p>
+<div id="reading-texts-filename" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>shakespeare_sonnets_filename <span class="op">=</span> os.path.join(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  prosodic.PATH_REPO, </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'corpora'</span>,<span class="st">'corppoetry_en'</span>,<span class="st">'en.shakespeare.txt'</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># read a text by string</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>sonnets <span class="op">=</span> prosodic.Text(filename<span class="op">=</span>shakespeare_sonnets_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="displaying-texts" class="level3">
+<h3 class="anchored" data-anchor-id="displaying-texts">Displaying texts</h3>
+<p>In a notebook environmnent, texts objects will display a by-syllable dataframe of the text structure it contains, stored at <code>text.df</code></p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># these will display the same, but former actually points to the dataframe</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sonnetV.df          </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>sonnetV</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="showing-texts" class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">word_num_forms</th>
+<th data-quarto-table-cell-role="th">syll_is_stressed</th>
+<th data-quarto-table-cell-role="th">syll_is_heavy</th>
+<th data-quarto-table-cell-role="th">syll_is_strong</th>
+<th data-quarto-table-cell-role="th">syll_is_weak</th>
+<th data-quarto-table-cell-role="th">word_is_punc</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">stanza_num</th>
+<th data-quarto-table-cell-role="th">line_num</th>
+<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">word_lang</th>
+<th data-quarto-table-cell-role="th">wordtoken_num</th>
+<th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">syll_num</th>
+<th data-quarto-table-cell-role="th">syll_txt</th>
+<th data-quarto-table-cell-role="th">syll_ipa</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Those hours, that with gentle work did frame</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">Those</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">Those</td>
+<td data-quarto-table-cell-role="th">ðoʊz</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">2</td>
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">hours</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">ho</td>
+<td data-quarto-table-cell-role="th">'aʊ</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">urs</td>
+<td data-quarto-table-cell-role="th">ɛːz</td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">hours</td>
+<td data-quarto-table-cell-role="th">'aʊrz</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">3</td>
+<td data-quarto-table-cell-role="th">,</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">14</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Leese but their show; their substance still lives sweet.</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">7</td>
+<td data-quarto-table-cell-role="th">substance</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">tance</td>
+<td data-quarto-table-cell-role="th">stəns</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">8</td>
+<td data-quarto-table-cell-role="th">still</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">still</td>
+<td data-quarto-table-cell-role="th">'stɪl</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">lives</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">lives</td>
+<td data-quarto-table-cell-role="th">'lɪvz</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">sweet</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">sweet</td>
+<td data-quarto-table-cell-role="th">'swiːt</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">11</td>
+<td data-quarto-table-cell-role="th">.</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+<p>195 rows × 6 columns</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="stanzas" class="level2">
+<h2 class="anchored" data-anchor-id="stanzas">Stanzas</h2>
+<section id="accessing-stanzas" class="level3">
+<h3 class="anchored" data-anchor-id="accessing-stanzas">Accessing stanzas</h3>
+<p>Stanza separations are detected by two line breaks in the input text. You can access stanza objects through a text object:</p>
+<div class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">len</span>(sonnets.stanzas) <span class="op">==</span> <span class="dv">154</span>    <span class="co"># number of shakespeare sonnets</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># can iterate over them simply by iterating over text object:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> stanza <span class="kw">in</span> sonnets:</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">pass</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach stanzas by .stanza###</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154.df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">word_num_forms</th>
+<th data-quarto-table-cell-role="th">syll_is_stressed</th>
+<th data-quarto-table-cell-role="th">syll_is_heavy</th>
+<th data-quarto-table-cell-role="th">syll_is_strong</th>
+<th data-quarto-table-cell-role="th">syll_is_weak</th>
+<th data-quarto-table-cell-role="th">word_is_punc</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">stanza_num</th>
+<th data-quarto-table-cell-role="th">line_num</th>
+<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">word_lang</th>
+<th data-quarto-table-cell-role="th">wordtoken_num</th>
+<th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">syll_num</th>
+<th data-quarto-table-cell-role="th">syll_txt</th>
+<th data-quarto-table-cell-role="th">syll_ipa</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">154</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">The little Love-god lying once asleep</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">The</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">The</td>
+<td data-quarto-table-cell-role="th">ðə</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">2</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">little</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">lit</td>
+<td data-quarto-table-cell-role="th">'lɪ</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">tle</td>
+<td data-quarto-table-cell-role="th">təl</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td data-quarto-table-cell-role="th">Love</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">Love</td>
+<td data-quarto-table-cell-role="th">'lʌv</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td data-quarto-table-cell-role="th">-</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">14</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Love's fire heats water, water cools not love.</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">7</td>
+<td data-quarto-table-cell-role="th">cools</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">cools</td>
+<td data-quarto-table-cell-role="th">'kuːlz</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">8</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">not</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">not</td>
+<td data-quarto-table-cell-role="th">nɑt</td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">not</td>
+<td data-quarto-table-cell-role="th">'nɑt</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">love</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">love</td>
+<td data-quarto-table-cell-role="th">'lʌv</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">.</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+<p>183 rows × 6 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="displaying-stanzas" class="level3">
+<h3 class="anchored" data-anchor-id="displaying-stanzas">Displaying stanzas</h3>
+<p>By default, sonnets will display parsed:</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<ol class="parselist"><li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">lit</span><span class="mtr_w str_w viol_n">tle</span> <span class="mtr_s str_s viol_n">Love</span>-<span class="mtr_w str_s viol_y">god</span> <span class="mtr_s str_s viol_n">ly</span><span class="mtr_w str_w viol_n">ing</span> <span class="mtr_s str_s viol_n">once</span> <span class="mtr_w str_w viol_n">a</span><span class="mtr_s str_s viol_n">sleep</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Laid</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">side</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">heart</span>-<span class="mtr_w str_w viol_n">in</span><span class="mtr_s str_s viol_n">fla</span><span class="mtr_w str_w viol_n">ming</span> <span class="mtr_s str_s viol_n">brand</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_s viol_y">Whilst</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">nymphs</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">vow'd</span> <span class="mtr_w str_s viol_y">chaste</span> <span class="mtr_s str_s viol_n">life</span> <span class="mtr_w str_w viol_n">to</span> <span class="mtr_s str_s viol_n">keep</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_s viol_y">Came</span> <span class="mtr_s str_s viol_n">trip</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_s str_s viol_n">in</span> <span class="mtr_w str_w viol_n">her</span> <span class="mtr_s str_s viol_n">mai</span><span class="mtr_w str_w viol_n">den</span> <span class="mtr_s str_s viol_n">hand</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">fai</span><span class="mtr_w str_w viol_n">rest</span> <span class="mtr_s str_s viol_n">vo</span><span class="mtr_w str_w viol_y">ta</span><span class="mtr_w str_w viol_y">ry</span> <span class="mtr_s str_s viol_n">took</span> <span class="mtr_w str_w viol_n">up</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Which</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">le</span><span class="mtr_w str_w viol_n">gions</span> <span class="mtr_s str_w viol_y">of</span> <span class="mtr_w str_s viol_y">true</span> <span class="mtr_s str_s viol_n">hearts</span> <span class="mtr_w str_w viol_n">had</span> <span class="mtr_s str_s viol_n">warm'd</span>;</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_w viol_y">so</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ge</span><span class="mtr_w str_w viol_n">ne</span><span class="mtr_s str_w viol_y">ral</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">hot</span> <span class="mtr_w str_w viol_n">de</span><span class="mtr_s str_s viol_n">sire</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Was</span> <span class="mtr_s str_s viol_n">slee</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span> <span class="mtr_w str_w viol_n">a</span> <span class="mtr_s str_s viol_n">vir</span><span class="mtr_w str_w viol_n">gin</span> <span class="mtr_s str_s viol_n">hand</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">sarm'd</span>.</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">This</span> <span class="mtr_s str_s viol_n">brand</span> <span class="mtr_w str_w viol_n">she</span> <span class="mtr_s str_s viol_n">quenched</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_s str_w viol_y">a</span> <span class="mtr_w str_s viol_y">cool</span> <span class="mtr_s str_s viol_n">well</span> <span class="mtr_w str_w viol_n">by</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Which</span> <span class="mtr_w str_w viol_n">from</span> <span class="mtr_s str_s viol_n">Love's</span> <span class="mtr_w str_s viol_y">fire</span> <span class="mtr_s str_s viol_n">took</span> <span class="mtr_w str_s viol_y">heat</span> <span class="mtr_s str_w viol_y">per</span><span class="mtr_s str_s viol_y">pe</span><span class="mtr_w str_w viol_n">tu</span><span class="mtr_s str_w viol_y">al</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Gro</span><span class="mtr_w str_w viol_y">wing</span> <span class="mtr_w str_w viol_y">a</span> <span class="mtr_s str_s viol_n">bath</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">healt</span><span class="mtr_w str_w viol_n">hful</span> <span class="mtr_s str_s viol_n">re</span><span class="mtr_w str_w viol_n">me</span><span class="mtr_s str_w viol_y">dy</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">men</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">seased</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_s str_s viol_n">I</span>, <span class="mtr_w str_w viol_n">my</span> <span class="mtr_s str_s viol_n">mis</span><span class="mtr_w str_w viol_n">tress'</span> <span class="mtr_s str_s viol_n">thrall</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Came</span> <span class="mtr_w str_w viol_n">there</span> <span class="mtr_w str_w viol_n">for</span> <span class="mtr_s str_s viol_n">cure</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_w viol_y">this</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">I</span> <span class="mtr_s str_s viol_n">prove</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_s viol_y">Love's</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span> <span class="mtr_s str_s viol_y">heats</span> <span class="mtr_s str_s viol_y">wa</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_s viol_n">wa</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">cools</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">love</span>.</div></li></ol>
+</div>
+</div>
+<p>The red indicates violations and allows for nice comparison with other poems and parses. You can display the same thing on a text with <code>text.render()</code></p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sonnetV.render()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<ol class="parselist"><li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Those</span> <span class="mtr_s str_s viol_n">ho</span><span class="mtr_w str_w viol_n">urs</span>, <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">gen</span><span class="mtr_w str_w viol_n">tle</span> <span class="mtr_s str_s viol_n">work</span> <span class="mtr_w str_w viol_n">did</span> <span class="mtr_s str_s viol_n">frame</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">lo</span><span class="mtr_w str_w viol_n">vely</span> <span class="mtr_s str_s viol_n">gaze</span> <span class="mtr_w str_w viol_n">where</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">eye</span> <span class="mtr_w str_w viol_n">doth</span> <span class="mtr_s str_s viol_n">dwell</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Will</span> <span class="mtr_s str_s viol_n">play</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ty</span><span class="mtr_w str_w viol_n">rants</span> <span class="mtr_s str_w viol_y">to</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ve</span><span class="mtr_w str_w viol_n">ry</span> <span class="mtr_s str_s viol_n">same</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">un</span><span class="mtr_s str_s viol_n">fair</span> <span class="mtr_w str_w viol_n">which</span> <span class="mtr_s str_s viol_n">fair</span><span class="mtr_w str_w viol_n">ly</span> <span class="mtr_s str_w viol_y">doth</span> <span class="mtr_w str_w viol_n">ex</span><span class="mtr_s str_s viol_n">cel</span>;</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">ne</span><span class="mtr_w str_w viol_n">ver</span>-<span class="mtr_s str_s viol_n">res</span><span class="mtr_w str_w viol_n">ting</span> <span class="mtr_s str_s viol_n">time</span> <span class="mtr_w str_s viol_y">leads</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer</span> <span class="mtr_s str_w viol_y">on</span></div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">To</span> <span class="mtr_s str_s viol_n">hi</span><span class="mtr_w str_w viol_y">deo</span><span class="mtr_w str_w viol_y">us</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_w viol_y">and</span> <span class="mtr_w str_w viol_n">con</span><span class="mtr_s str_s viol_n">founds</span> <span class="mtr_w str_w viol_n">him</span> <span class="mtr_w str_w viol_n">there</span>;</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_s viol_y">Sap</span> <span class="mtr_s str_s viol_n">checked</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">frost</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">lus</span><span class="mtr_w str_w viol_n">ty</span> <span class="mtr_s str_s viol_n">leaves</span> <span class="mtr_w str_s viol_y">quite</span> <span class="mtr_s str_s viol_n">gone</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_y">uty</span> <span class="mtr_w str_w viol_y">o'er</span>-<span class="mtr_s str_s viol_n">snowed</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">ba</span><span class="mtr_w str_w viol_n">reness</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">where</span>:</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Then</span> <span class="mtr_w str_w viol_n">were</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer's</span> <span class="mtr_s str_s viol_n">dis</span><span class="mtr_w str_w viol_n">til</span><span class="mtr_s str_s viol_n">la</span><span class="mtr_w str_w viol_n">tion</span> <span class="mtr_s str_s viol_n">left</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">A</span> <span class="mtr_s str_s viol_n">li</span><span class="mtr_w str_w viol_n">quid</span> <span class="mtr_s str_s viol_n">pri</span><span class="mtr_w str_w viol_n">soner</span> <span class="mtr_s str_s viol_n">pent</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_s str_s viol_n">walls</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">glass</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_n">uty's</span> <span class="mtr_s str_s viol_y">ef</span><span class="mtr_s str_w viol_y">fect</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">bea</span><span class="mtr_w str_w viol_n">uty</span> <span class="mtr_s str_w viol_y">were</span> <span class="mtr_w str_w viol_n">be</span><span class="mtr_s str_s viol_n">reft</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">Nor</span> <span class="mtr_s str_s viol_n">it</span>, <span class="mtr_w str_w viol_n">nor</span> <span class="mtr_s str_s viol_n">no</span> <span class="mtr_w str_w viol_n">re</span><span class="mtr_s str_s viol_n">mem</span><span class="mtr_w str_w viol_n">brance</span> <span class="mtr_s str_s viol_n">what</span> <span class="mtr_w str_w viol_n">it</span> <span class="mtr_w str_w viol_n">was</span>:</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_w str_w viol_n">But</span> <span class="mtr_s str_s viol_n">flo</span><span class="mtr_w str_w viol_n">wers</span> <span class="mtr_s str_w viol_y">dis</span><span class="mtr_s str_s viol_y">till'd</span>, <span class="mtr_w str_w viol_n">though</span> <span class="mtr_s str_s viol_n">they</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">meet</span>,</div></li>
+<li><style>
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+</style><div class="parse"><span class="mtr_s str_s viol_n">Leese</span> <span class="mtr_w str_w viol_n">but</span> <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">show</span>; <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">subs</span><span class="mtr_w str_w viol_n">tance</span> <span class="mtr_s str_s viol_n">still</span> <span class="mtr_w str_s viol_y">lives</span> <span class="mtr_s str_s viol_n">sweet</span>.</div></li></ol>
+</div>
+</div>
+</section>
+</section>
+<section id="lines" class="level2">
+<h2 class="anchored" data-anchor-id="lines">Lines</h2>
+<p>Lines are important objects because (at present) they are the only objects actually considered as the unit of metrical parsing to the parser.</p>
+<p>You can access them in a few ways:</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach them by line number</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>sonnetV.line14</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># which are relative to the stanza</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>sonnets.stanza5.line14</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">word_num_forms</th>
+<th data-quarto-table-cell-role="th">syll_is_stressed</th>
+<th data-quarto-table-cell-role="th">syll_is_heavy</th>
+<th data-quarto-table-cell-role="th">word_is_punc</th>
+<th data-quarto-table-cell-role="th">syll_is_strong</th>
+<th data-quarto-table-cell-role="th">syll_is_weak</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">stanza_num</th>
+<th data-quarto-table-cell-role="th">line_num</th>
+<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">word_lang</th>
+<th data-quarto-table-cell-role="th">wordtoken_num</th>
+<th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">syll_num</th>
+<th data-quarto-table-cell-role="th">syll_txt</th>
+<th data-quarto-table-cell-role="th">syll_ipa</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">5</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">14</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">Leese but their show; their substance still lives sweet.</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">Leese</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">Leese</td>
+<td data-quarto-table-cell-role="th">'liːs</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">but</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">but</td>
+<td data-quarto-table-cell-role="th">bət</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">3</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">their</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">their</td>
+<td data-quarto-table-cell-role="th">ðɛr</td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">their</td>
+<td data-quarto-table-cell-role="th">'ðɛr</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td data-quarto-table-cell-role="th">show</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">show</td>
+<td data-quarto-table-cell-role="th">'ʃoʊ</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7</td>
+<td data-quarto-table-cell-role="th">substance</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">tance</td>
+<td data-quarto-table-cell-role="th">stəns</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">8</td>
+<td data-quarto-table-cell-role="th">still</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">still</td>
+<td data-quarto-table-cell-role="th">'stɪl</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">lives</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">lives</td>
+<td data-quarto-table-cell-role="th">'lɪvz</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">sweet</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">sweet</td>
+<td data-quarto-table-cell-role="th">'swiːt</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">11</td>
+<td data-quarto-table-cell-role="th">.</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td>1</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>14 rows × 6 columns</p>
+</div>
+</div>
+</div>
+<p>You can also create them directly:</p>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>line <span class="op">=</span> prosodic.Line(<span class="st">"A horse, a horse, my kingdom for a horse!"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>line</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">word_num_forms</th>
+<th data-quarto-table-cell-role="th">syll_is_stressed</th>
+<th data-quarto-table-cell-role="th">syll_is_heavy</th>
+<th data-quarto-table-cell-role="th">word_is_punc</th>
+<th data-quarto-table-cell-role="th">syll_is_strong</th>
+<th data-quarto-table-cell-role="th">syll_is_weak</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">sent_num</th>
+<th data-quarto-table-cell-role="th">sentpart_num</th>
+<th data-quarto-table-cell-role="th">word_lang</th>
+<th data-quarto-table-cell-role="th">wordtoken_num</th>
+<th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">syll_num</th>
+<th data-quarto-table-cell-role="th">syll_txt</th>
+<th data-quarto-table-cell-role="th">syll_ipa</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">A horse, a horse, my kingdom for a horse!</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">en</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">A</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">A</td>
+<td data-quarto-table-cell-role="th">eɪ</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">'hɔːrs</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">3</td>
+<td data-quarto-table-cell-role="th">,</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td>1</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4</td>
+<td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">eɪ</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">'hɔːrs</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td data-quarto-table-cell-role="th">kingdom</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">dom</td>
+<td data-quarto-table-cell-role="th">dəm</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">for</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">for</td>
+<td data-quarto-table-cell-role="th">fɔːr</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">eɪ</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">11</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">'hɔːrs</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">12</td>
+<td data-quarto-table-cell-role="th">!</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
+<td>0</td>
+<td></td>
+<td></td>
+<td>1</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>13 rows × 6 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="words" class="level2">
+<h2 class="anchored" data-anchor-id="words">Words</h2>
+<section id="tokens" class="level3">
+<h3 class="anchored" data-anchor-id="tokens">Tokens</h3>
+</section>
+<section id="types" class="level3">
+<h3 class="anchored" data-anchor-id="types">Types</h3>
+</section>
+<section id="forms" class="level3">
+<h3 class="anchored" data-anchor-id="forms">Forms</h3>
+</section>
+<section id="syllables" class="level3">
+<h3 class="anchored" data-anchor-id="syllables">Syllables</h3>
+</section>
+<section id="phonemes" class="level3">
+<h3 class="anchored" data-anchor-id="phonemes">Phonemes</h3>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

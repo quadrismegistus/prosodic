@@ -58,3 +58,5 @@ docs/*
 !docs/reference
 !docs/reference/*.qmd
 !docs/*.yml
+!docs/_build
+!docs/_build/*

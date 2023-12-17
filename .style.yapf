@@ -1,0 +1,12 @@
+[style]
+based_on_style = pep8
+indent_width = 4
+split_before_logical_operator = true
+split_complex_comprehension = true
+dedent_closing_brackets = true
+split_before_named_assigns = true
+split_all_comma_separated_values = true
+split_arguments_when_comma_terminated = true
+split_before_first_argument = true
+continuation_indent_width = 4
+split_before_expression_after_opening_paren = true

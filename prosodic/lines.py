@@ -37,17 +37,23 @@ class Line(Text):
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
                 WordToken(
-                    txt=word_d.get("word_str", ""),
+                    txt=word_d.get("word_str",
+                                   ""),
                     lang=lang,
                     parent=self,
-                    # is_punc=word_d.get('word_ispunc'),
                     sent_num=word_d.get("sent_i"),
                     sentpart_num=word_d.get("sent_i"),
                 )
                 for word_d in tokens_df.to_dict("records")
                 if "word_str" in word_d  # and 'word_ispunc'
             ]
-        Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
+        Entity.__init__(
+            self,
+            txt=txt,
+            children=children,
+            parent=parent,
+            **kwargs
+        )
         self._parses = []
         self.is_parseable = True
 

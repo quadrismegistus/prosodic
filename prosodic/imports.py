@@ -92,9 +92,9 @@ DF_INDEX = [
     "parse_stress_str",
     "sent_num",
     "sentpart_num",
+    "wordtoken_num",
     "word_lang",
     "wordtype_lang",
-    "wordtoken_num",
     "wordtoken_txt",
     "wordform_num",
     "meterpos_num",
@@ -120,6 +120,7 @@ DF_COLS_RENAME = {
     "parse_stanza_num": "stanza_num",
     "parse_line_txt": "line_txt",
     "parselist_num_parses": "line_numparse",
+    "word_lang": "wordtoken_lang",
 }
 DF_BADCOLS = ["word_txt", "word_num", "wordform_txt"]
 LANGS = {}

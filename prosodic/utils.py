@@ -3,7 +3,7 @@ from .imports import *
 
 def get_txt(txt, fn):
     if txt:
-        if txt.startswith("http") or os.path.exists(fn):
+        if txt.startswith("http") or os.path.exists(txt):
             return get_txt(None, txt)
 
         return txt

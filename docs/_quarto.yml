@@ -38,7 +38,7 @@ website:
 format:
   html:
     theme: 
-      light: flatly
+      light: litera
       dark: darkly
     toc: true
 

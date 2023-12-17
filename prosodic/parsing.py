@@ -964,7 +964,7 @@ class ParseList(EntityList):
     def get_df(self, *x, **y):
         l = self.unbounded if not self.show_bounded else self.scansions
         l = [p.get_df() for p in l]
-        return pd.concat(l) if l else pd.DataFrame()
+        return pd.concat(l).sort_index() if l else pd.DataFrame()
 
     @cached_property
     def df_syll(self, bad_keys={"line_numparse"}):

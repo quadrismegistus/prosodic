@@ -46,7 +46,7 @@ class Text(Entity):
     def __init__(
         self,
         txt: str = "",
-        filename: str = "",
+        fn: str = "",
         lang: Optional[str] = DEFAULT_LANG,
         parent: Optional[Entity] = None,
         children: Optional[list] = [],
@@ -75,13 +75,13 @@ class Text(Entity):
         """
         from .lines import Stanza
 
-        if not txt and not filename and not children and tokens_df is None:
+        if not txt and not fn and not children and tokens_df is None:
             raise Exception(
                 "must provide either txt string or filename or token dataframe"
             )
-        txt = get_txt(txt, filename)
+        txt = get_txt(txt, fn)
         self._txt = txt
-        self._fn = filename
+        self._fn = fn
         self.lang = lang if lang else detect_lang(txt)
         self.use_cache = use_cache
         was_quiet = logmap.quiet
@@ -228,16 +228,16 @@ class Text(Entity):
             with logmap("parsing text") as lm:
                 meter = self.get_meter(meter=meter, **meter_kwargs)
                 self.clear_cached_properties()
-                with logmap.verbosity(
-                    int((len(self.parseable_units) >= 25) or meter.exhaustive)
-                ):
-                    yield from meter.parse_iter(
-                        self,
-                        force=force,
-                        num_proc=num_proc,
-                        progress=progress,
-                        **meter_kwargs,
-                    )
+                # with logmap.verbosity(
+                #     int((len(self.parseable_units) >= 25) or meter.exhaustive)
+                # ):
+                yield from meter.parse_iter(
+                    self,
+                    force=force,
+                    num_proc=num_proc,
+                    progress=progress,
+                    **meter_kwargs,
+                )
         else:
             yield from self.parseable_units
 

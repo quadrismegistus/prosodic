@@ -36,6 +36,7 @@ import os
 import sys
 from sqlitedict import SqliteDict
 from redis_dict import RedisDict
+from contextlib import contextmanager
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
@@ -168,7 +169,6 @@ except AttributeError:
     builtins.profile = profile
 
 # non-sys imports
-nltk.download("punkt", quiet=True)
 pd.options.display.width = 200
 pd.options.display.max_rows = 10
 logging.logger = logging.getLogger()

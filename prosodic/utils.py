@@ -273,6 +273,38 @@ def disable_caching():
     USE_CACHE = False
 
 
+@contextmanager
+def caching_enabled():
+    was_loud = caching_is_enabled()
+    enable_caching()
+    yield
+    if not was_loud: disable_caching()
+
+
+@contextmanager
+def caching_disabled():
+    was_loud = caching_is_enabled()
+    disable_caching()
+    yield
+    if was_loud: enable_caching()
+
+
+@contextmanager
+def logging_disabled():
+    was_quiet = logmap.is_quiet
+    logmap.is_quiet = True
+    yield
+    logmap.is_quiet = was_quiet
+
+
+@contextmanager
+def logging_enabled():
+    was_quiet = logmap.is_quiet
+    logmap.is_quiet = False
+    yield
+    logmap.is_quiet = was_quiet
+
+
 def force_int(x, errors=0) -> int:
     """Converts the input to an integer.
 

@@ -542,14 +542,23 @@ class Entity(UserList):
     @cached_property
     def redis_cache(self):
         from redis_dict import RedisDict
-        return RedisDict(
-            namespace=self.__class__.__name__,
-            host='134.209.216.92'
-        )
+        with logmap(announce=False) as lm:
+            cache = RedisDict(
+                namespace=self.__class__.__name__,
+                host='134.209.216.92'
+            )
+            try:
+                'x' in cache  # start
+                return cache
+            except Exception as e:
+                lm.warning(
+                    f'cannot connect to redis. defaulting to json cache'
+                )
 
     def children_from_cache(self):
-        res = self.from_cache()
-        return None if res is None else res.children
+        if caching_is_enabled():
+            res = self.from_cache()
+            return None if res is None else res.children
 
     def get_key(self, key):
         if hasattr(key, "to_hash"):
@@ -563,11 +572,20 @@ class Entity(UserList):
             obj = self
         key = self.get_key(obj) if not key else key
         if key and self.use_cache:
-            cache = self.redis_cache if use_redis else self.json_cache
+            cache = self.get_cache(use_redis=use_redis)
             if key in cache:
                 dat = decode_cache(cache[key])
                 if dat:
                     return from_json(dat) if not as_dict else dat
+
+    def get_cache(self, use_redis=True):
+        cache = None
+        with logmap(announce=False) as lm:
+            if use_redis:
+                cache = self.redis_cache
+            if not cache:
+                cache = self.json_cache
+            return cache
 
     def cache(
         self,
@@ -582,15 +600,14 @@ class Entity(UserList):
         if val_obj is None:
             val_obj = key_obj
         key = self.get_key(key_obj) if not key else key
-
-        cache = self.redis_cache if use_redis else self.json_cache
+        cache = self.get_cache(use_redis=use_redis)
         if key and (force or not key in cache):
             with logmap(
-                    f'saving object to {"json" if not use_redis else "redis"} cache under key "{key[:8]}"'
+                    f'saving object to {cache.__class__.__name__} under key "{key[:8]}..."'
             ):
                 with logmap("exporting to json"):
                     data = encode_cache(val_obj.to_json())
-                with logmap("saving json to cache db"):
+                with logmap("uploading json to cache"):
                     cache[key] = data
 
 

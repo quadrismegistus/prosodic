@@ -91,7 +91,7 @@ class Text(Entity):
             if was_quiet and numwords > 1000:
                 logmap.quiet = False
             with logmap(f"building text with {numwords:,} words") as lm:
-                if not force and self.use_cache:
+                if not force and self.use_cache and caching_is_enabled():
                     children = self.children_from_cache()
 
                 if children:
@@ -112,9 +112,12 @@ class Text(Entity):
         self._parses = []
         self._mtr = None
         if self.use_cache:
-            self.cache()
+            self.cache(force=force)
         if was_quiet:
             logmap.quiet = True
+
+    def parses_from_cache(self):
+        return self.meter.parses_from_cache(self)
 
     def to_hash(self):
         return hashstr(self._txt)

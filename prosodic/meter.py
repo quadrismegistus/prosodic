@@ -85,6 +85,7 @@ class Meter(Entity):
                 **kwargs,
             ),
             type=self.__class__.__name__.lower(),
+            line=text_or_line if text_or_line.is_parseable else None
         )
 
     def parse_iter(self, text_or_line, force=False, **kwargs):
@@ -157,7 +158,8 @@ class Meter(Entity):
                 )
                 for wfl in self.get_wordform_matrix(line)
                 for pos in self.get_pos_types(nsylls=wfl.num_sylls)
-            ]
+            ],
+            line=line
         )
         for n in range(1000):
             # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
@@ -168,6 +170,7 @@ class Meter(Entity):
                     and newparse is not None and parse is not None
                 ],
                 type="line",
+                line=line
             )
             parses.bound(progress=False)
             if all(p.is_complete for p in parses):
@@ -210,7 +213,7 @@ class Meter(Entity):
             logger.trace(f"Returning {len(all_parses)} parses")
             return all_parses
 
-        parses = ParseList(iter_parses(), type="line")
+        parses = ParseList(iter_parses(), type="line", line=line)
         parses.bound(progress=False)
         parses.rank()
         line._parses = parses

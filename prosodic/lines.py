@@ -89,7 +89,14 @@ class Line(Text):
     def to_json(self):
         return Entity.to_json(self, txt=self.txt)
 
-    def to_html(self, parse=None, as_str=False, css=HTML_CSS, **kwargs):
+    def to_html(
+        self,
+        parse=None,
+        as_str=False,
+        css=HTML_CSS,
+        tooltip=False,
+        **kwargs
+    ):
         if parse is None:
             parse = self.best_parse
 
@@ -113,6 +120,7 @@ class Line(Text):
                         "meter": spclass,
                         "stress": stclass,
                         "viol": vclass,
+                        "viols": list(slot.violset)
                     }
                     output.append(odx)
             else:
@@ -122,10 +130,22 @@ class Line(Text):
         odf = pd.DataFrame(output)
         odf = odf.fillna(method="ffill")
 
-        def htmlx(row):
+        def htmlx(row, tooltip=tooltip):
             if not row.txt.strip() or not row.txt[0].isalpha():
                 return row.txt
-            return f'<span class="{row.meter} {row.stress} {row.viol}">{row.txt}</span>'
+
+            if tooltip and row.viols:
+                # viol_str = ' '.join(sorted(row.viols))
+                viol_strs = [f'<li>{viol}</li>' for viol in sorted(row.viols)]
+                viol_str = f'<ol>{"".join(viol_strs)}</ol>'
+                viol_title = f'Violated {len(row.viols)} constraints: {viol_str}'
+                rowtxt = f'{row.txt}<span class="tooltip">{viol_title}</span>'
+                tooltip = ' tooltip'
+            else:
+                tooltip = ''
+                rowtxt = row.txt
+
+            return f'<span class="{row.meter} {row.stress} {row.viol}{tooltip}">{rowtxt}</span>'
 
         spans = odf.apply(htmlx, axis=1)
         out = "".join(spans)
@@ -134,3 +154,6 @@ class Line(Text):
 
     def stats(self, by="parse", **kwargs):
         return self.parses.stats(by=by, **kwargs)
+
+    def stats_d(self, by="parse", **kwargs):
+        return self.parses.stats_d(by=by, **kwargs)

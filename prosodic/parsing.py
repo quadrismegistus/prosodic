@@ -687,6 +687,14 @@ class ParseSlot(Entity):
         return d
 
     @cached_property
+    def violset(self):
+        return {k for k, v in self.viold.items() if not v}
+
+    @cached_property
+    def num_viols(self):
+        return len(self.violset)
+
+    @cached_property
     def constraint_scores(self):
         return self.viold
 
@@ -766,9 +774,10 @@ class ParseList(EntityList):
     show_bounded = False
     is_scansions = False
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.rank()
+    def __init__(self, *args, line=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.line = line
+        self.rank()
 
     @staticmethod
     def from_json(json_d, line=None, progress=False):
@@ -789,8 +798,8 @@ class ParseList(EntityList):
     @cached_property
     def attrs(self):
         return {
-            **self.line.stanza.prefix_attrs,
-            **self.line.prefix_attrs,
+            # **self.line.stanza.prefix_attrs,
+            # **(self.line.prefix_attrs if self.line else {}),
             **self._attrs,
             # 'parses_num': self.num_parses,
             # 'num_all_parses':self.num_all_parses
@@ -815,7 +824,7 @@ class ParseList(EntityList):
 
     @cached_property
     def best(self):
-        return self.data[0] if self.data else None
+        return min(self.data)
 
     @cached_property
     def unbounded(self):
@@ -909,7 +918,17 @@ class ParseList(EntityList):
 
     @cached_property
     def prefix_attrs(self):
-        return {k: v for k, v in self.attrs.items() if k != "type"}
+        return {
+            **({} if not self.line else self.line.prefix_attrs),
+            **super().prefix_attrs,
+            # **{
+            #     f'{self.prefix}_{k}': v
+            #     for (
+            #         k,
+            #         v,
+            #     ) in self.attrs.items()
+            # }
+        }
 
     @cache
     def stats_d(self, by=None, norm=None, incl_bounded=False, **kwargs):
@@ -941,10 +960,10 @@ class ParseList(EntityList):
 
         def getagg(col):
             if col.endswith("_norm"):
-                return np.mean
+                return 'mean'
             if self.type in {"text", "stanza"}:
-                return np.mean
-            return np.median
+                return 'median'
+            return 'median'
 
         aggby = {col: getagg(col) for col in df_q}
         return aggby

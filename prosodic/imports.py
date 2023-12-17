@@ -1,10 +1,7 @@
 import os, sys
-
-sys.path.insert(0, "/Users/ryan/github/logmap")
 from logmap import logmap, logger
 
-logmap.is_quiet = True
-
+logmap.disable()
 from pprint import pprint, pformat
 import orjson
 import json

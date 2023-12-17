@@ -14,7 +14,7 @@ ordered-set
 click
 Werkzeug==2.2.2
 editdistance @ git+https://github.com/roy-ht/editdistance
-logmap @ git+https://github.com/quadrismegistus/logmap
+logmap
 loguru
 orjson
 ipython

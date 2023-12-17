@@ -11,6 +11,7 @@ DEFAULT_METER_KWARGS = dict(
     resolve_optionality=METER_RESOLVE_OPTIONALITY,
     exhaustive=False,
 )
+MTRDEFAULT = DEFAULT_METER_KWARGS
 
 
 class Meter(Entity):
@@ -18,13 +19,12 @@ class Meter(Entity):
 
     def __init__(
         self,
-        constraints=DEFAULT_METER_KWARGS["constraints"],
-        categorical_constraints=DEFAULT_METER_KWARGS["categorical_constraints"
-                                                     ],
-        max_s=DEFAULT_METER_KWARGS["max_s"],
-        max_w=DEFAULT_METER_KWARGS["max_w"],
-        resolve_optionality=DEFAULT_METER_KWARGS["resolve_optionality"],
-        exhaustive=DEFAULT_METER_KWARGS["exhaustive"],
+        constraints=MTRDEFAULT["constraints"],
+        categorical_constraints=MTRDEFAULT["categorical_constraints"],
+        max_s=MTRDEFAULT["max_s"],
+        max_w=MTRDEFAULT["max_w"],
+        resolve_optionality=MTRDEFAULT["resolve_optionality"],
+        exhaustive=MTRDEFAULT["exhaustive"],
         **kwargs,
     ):
         self.constraints = get_constraints(constraints)
@@ -80,8 +80,10 @@ class Meter(Entity):
 
     def parse(self, text_or_line, **kwargs):
         return ParseList(
-            self.parse_iter(text_or_line,
-                            **kwargs),
+            self.parse_iter(
+                text_or_line,
+                **kwargs,
+            ),
             type=self.__class__.__name__.lower(),
         )
 

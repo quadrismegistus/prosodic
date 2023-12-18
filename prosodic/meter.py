@@ -219,7 +219,7 @@ class Meter(Entity):
         line._parses = parses
         return line._parses
 
-    def parse_text(self, text, num_proc=None, progress=True):
+    def parse_text(self, text, num_proc=DEFAULT_NUM_PROC, progress=True):
         iterr = self.parse_text_iter(
             text,
             num_proc=num_proc,
@@ -232,7 +232,7 @@ class Meter(Entity):
         text,
         progress=True,
         force=False,
-        num_proc=None,
+        num_proc=DEFAULT_NUM_PROC,
         use_mp=True,
         **kwargs
     ):
@@ -323,7 +323,7 @@ class Meter(Entity):
         text,
         force=False,
         progress=True,
-        num_proc=1,
+        num_proc=DEFAULT_NUM_PROC,
         lm=None,
         **progress_kwargs
     ):

@@ -209,7 +209,7 @@ class Text(Entity):
 
     def parse_iter(
         self,
-        num_proc=None,
+        num_proc=DEFAULT_NUM_PROC,
         progress=True,
         force=False,
         meter=None,

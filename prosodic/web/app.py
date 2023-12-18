@@ -29,16 +29,28 @@ async def ws():
     while True:
         data_s = await websocket.receive()
         data_l = unjsonify(data_s)
-        data = {d['name']: d['value'] for d in data_l}
+        data = {
+            d['name']: (
+                int(d['value']) 
+                if d['value'].isdigit() and d['name']!='text'
+                else d['value']
+            ) 
+            for d in data_l
+        }
         text = data.pop('text')
-        constraints = data.keys()
-
+        constraints = tuple(x[1:] for x in list(data.keys()) if x and x[0]=='*')
+        for c in constraints: data.pop('*'+c)
+        meter_kwargs = data
+        meter_kwargs['constraints'] = constraints
+        pprint(meter_kwargs)
         t = Text(text)
+        t.set_meter(**meter_kwargs)
         started = time.time()
         numtoiter = len(t.parseable_units)
         remainings = []
-        for i, parsed_line in enumerate(t.parse_iter(constraints=constraints)):
-            for i, parse in enumerate(parsed_line.parses.unbounded):
+        numrows=0
+        for i, parsed_line in enumerate(t.parse_iter()):
+            for pi, parse in enumerate(parsed_line.parses.unbounded):
                 html = parsed_line.to_html(
                     parse=parse,
                     blockquote=False,
@@ -77,7 +89,7 @@ async def ws():
                 ]
                 data['row'] = ['' if not x else x for x in data['row']]
                 data['row'] = [
-                    f'<span class="{'otherparse' if i else 'bestparse'}">{x}</span>'
+                    f'<span class="{'otherparse' if pi else 'bestparse'}">{x}</span>'
                     for x in data['row']
                 ]
                 data['progress'] = (i + 1) / len(t.parseable_units)
@@ -86,16 +98,19 @@ async def ws():
                 remaining = (numtoiter - i - 1) * rate
                 remainings.append(remaining)
                 data['remaining'] = float(np.median(remainings[-2:]))
-                await websocket.send(jsonify(data))
+                out = numrows, data
+                await websocket.send(jsonify(out))
+                numrows+=1
 
 
 @app.get("/")
 async def index():
     return await render_template(
         "index.html",
-        constraints=list(CONSTRAINTS.keys()),
-        active_constraints=DEFAULT_CONSTRAINTS_NAMES,
-        enumerate=enumerate
+        all_constraints=list(CONSTRAINTS.keys()),
+        enumerate=enumerate,
+        constraint_descs=CONSTRAINT_DESCS,
+        **Meter().attrs
     )
 
 

@@ -94,7 +94,9 @@ CONSTRAINTS = {
     "unres_within": unres_within,
     "foot_size": foot_size,
 }
-DEFAULT_CONSTRAINTS = [CONSTRAINTS[cname] for cname in DEFAULT_CONSTRAINTS_NAMES]
+DEFAULT_CONSTRAINTS = [
+    CONSTRAINTS[cname] for cname in DEFAULT_CONSTRAINTS_NAMES
+]
 
 
 def get_constraints(names_or_funcs):
@@ -105,3 +107,29 @@ def get_constraints(names_or_funcs):
         for cname in names_or_funcs
     ]
     return [x for x in l if x is not None]
+
+
+CONSTRAINT_DESCS = {
+    'w_peak':
+    'No polysyllabic stress on weak position',
+    's_trough':
+    'No polysyllabic unstress on strong position',
+    'w_stress':
+    'No stressed syllables on weak position',
+    's_unstress':
+    'No unstressed syllable on strong position',
+    'unres_across':
+    'Disyllabic positions crossing words can only contain function words',
+    'unres_within':
+    'Disyllabic positions within words must start with a light and stressed syllable',
+    'foot_size':
+    'Do not allow positions to exceed two syllables',
+    'max_s':
+    'Maximum number of syllables in strong position',
+    'max_w':
+    'Maximum number of syllables in weak position',
+    'resolve_optionality':
+    'Allow parser to choose best words\' stress patterns option',
+    'exhaustive':
+    'Compute even harmonically bounded parses (those worse in the same ways + another way compared to another parse)'
+}

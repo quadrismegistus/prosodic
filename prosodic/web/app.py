@@ -5,6 +5,7 @@ from prosodic.imports import *
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_socketio import send, emit
+from gevent import time as gtime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
@@ -95,6 +96,7 @@ def parse(data):
             data['rownum'] = numrows
             emit('parse_result', jsonify(data))
             numrows+=1
+            gtime.sleep(.01)
 
 
 @app.route("/")

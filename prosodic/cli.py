@@ -8,14 +8,18 @@ def cli(debug):
     click.echo('Debug mode is %s' % ('on' if debug else 'off'))
 
 
-@cli.command()  # @cli, not @click!
-def web():
-    click.echo('Starting prosodic as a webserver...')
+@cli.command()
+@click.option('--public', is_flag=True, help='enable remote connections')
+@click.option('--port', default=5111, help='set port (default: 5111)')
+def web(public=False, port=5111):
     from .web.app import main
-    main()
+    host = '0.0.0.0' if public else None
+    msg = f'Starting prosodic as a webserver at http://{host}:{port}...'
+    click.echo(msg)
+    main(host=host, port=port)
 
 
-@cli.command()  # @cli, not @click!
+@cli.command()
 def ipython():
     click.echo('Starting prosodic in ipython')
     imps = 'from prosodic import *\nimport prosodic'

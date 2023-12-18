@@ -114,9 +114,10 @@ async def index():
     )
 
 
-def main(port=5111, debug=True):
+def main(port=None, host=None, debug=True, **kwargs):
+    if port is None: port=5111
     if debug: logmap.enable()
-    app.run(port=port, debug=debug)
+    app.run(port=port, debug=debug, host=host, **kwargs)
 
 
 if __name__ == "__main__":

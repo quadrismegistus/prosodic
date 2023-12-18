@@ -87,11 +87,11 @@ DEFAULT_CONSTRAINTS_NAMES = [
 ]
 CONSTRAINTS = {
     "w_peak": w_peak,
-    "s_trough": s_trough,
     "w_stress": w_stress,
     "s_unstress": s_unstress,
     "unres_across": unres_across,
     "unres_within": unres_within,
+    "s_trough": s_trough,
     "foot_size": foot_size,
 }
 DEFAULT_CONSTRAINTS = [

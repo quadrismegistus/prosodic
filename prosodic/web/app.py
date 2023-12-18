@@ -62,8 +62,12 @@ async def ws():
                 data['row'] = [
                     parsed_line.stanza.num,
                     parsed_line.num,
+                    parsed_line.txt,
                     parse.parse_rank,
                     f'<div class="parsestr">{html}</div>',
+                    parse.txt,
+                    parse.meter_str,
+                    parse.stress_str,
                     parse.num_sylls,
                     round(
                         resd.get(
@@ -93,6 +97,7 @@ async def ws():
                     f'<span class="{'otherparse' if pi else 'bestparse'}">{x}</span>'
                     for x in data['row']
                 ]
+                print(len(data['row']))
                 data['progress'] = (i + 1) / len(t.parseable_units)
                 sofar = time.time() - started
                 rate = sofar / (i + 1)

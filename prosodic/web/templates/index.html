@@ -5,10 +5,12 @@
     <meta charset="utf-8" />
     <link rel="stylesheet" type="text/css" href="/static/jquery.dataTables.min.css" />
     <script type="text/javascript" src="/static/jquery-3.7.1.min.js"></script>
-    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <!-- <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script> -->
+    <link href="/static/DataTables/datatables.min.css" rel="stylesheet">
+    <script src="/static/DataTables/datatables.min.js"></script>
     <script type="text/javascript" src="/static/progressbar.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/style.css" />
-
+    
 
 
 </head>
@@ -114,14 +116,19 @@ To eat the world's due, by the grave and thee.
                     <thead>
                         <th>Stanza</th>
                         <th>Line</th>
-                        <th>Rank</th>
+                        <th>Line Text</th>
+                        <th>Parse Rank</th>
                         <th>Parse</th>
+                        <th>Parse Text</th>
+                        <th>Parse Meter</th>
+                        <th>Parse Stress</th>
                         <th>Length (#sylls)</th>
                         <th>Ambiguity (#parses)</th>
                         <th>Tension (#viols)</th>
-                        {% for cname in constraints %}
-                        <th>*{{cname.replace("_"," → ")}} </th>
+                        {% for cname in all_constraints %}
+                        <th>*{{cname.replace("_"," ")}} </th>
                         {%endfor%}
+                        
                     </thead>
                     <tbody>
                     </tbody>
@@ -138,12 +145,68 @@ To eat the world's due, by the grave and thee.
     <script type="text/javascript">
 
 
-        const ws = new WebSocket(`ws://${location.host}/ws`);
+function getCurrentDateTime() {
+    const now = new Date();
 
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // getMonth() returns 0-11
+    const day = String(now.getDate()).padStart(2, '0');
+
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}-${hour}${minute}`;
+}
+    nowstr = getCurrentDateTime();
+
+    var all_constraints = {{all_constraints|tojson}};
+
+
+
+        const ws = new WebSocket(`ws://${location.host}/ws`);
+        var export_opts = {
+            columns: [0,1,2,3,5,6,7,8,9,10{% for i,x in enumerate(all_constraints) %}, {{i+11}}{%endfor%}]
+        }
         var table = $('#table_lines').DataTable({
             dom: 'Bfrtip',
             buttons: [
-                'copy', 'excel', 'pdf'
+            'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            buttons: [
+                {
+                    header:true,
+                    extend: 'copy',
+                    footer: false,
+                    exportOptions: export_opts,
+                    title: 'prosodic_export_' + nowstr
+                },
+                {
+                    header:true,
+                    extend: 'csv',
+                    footer: false,
+                    exportOptions: export_opts,
+                    title: 'prosodic_export_' + nowstr
+                },{
+                    header:true,
+                    extend: 'excel',
+                    footer: false,
+                    exportOptions: export_opts,
+                    title: 'prosodic_export_' + nowstr
+                },         
+                {
+                    header:true,
+                    extend: 'pdf',
+                    footer: true,
+                    exportOptions: export_opts,
+                    title: 'prosodic_export_' + nowstr
+                },
+                {
+                    header:true,
+                    extend: 'print',
+                    footer: true,
+                    exportOptions: export_opts,
+                    title: 'prosodic_export_' + nowstr
+                },
             ],
             fixedHeader: true,
             scrollX: true,
@@ -154,17 +217,21 @@ To eat the world's due, by the grave and thee.
             // data:[],
             // columns: ['#', 'Line'],
             pageLength: 100,
-            order: [[0, "asc"], [1, "asc"], [2, "asc"]],
+            order: [[0, "asc"], [1, "asc"], [3, "asc"]],
             columnDefs: [
-                { "width": "50px", "targets": 0 },
-                { "width": "50px", "targets": 1 },
-                { "width": "50px", "targets": 2 },
-                { "width": "30em", "targets": 3 },
-                { "width": "50px", "targets": 4 },
-                { "width": "50px", "targets": 5 },
-                { "width": "50px", "targets": 6 },
-                {% for i,x in enumerate(constraints) %}
-                    { "width": "50px", "targets": {{i + 7}} },
+                { "width": "50px", "targets": 0 , "bVisible":true}, // stanza
+                { "width": "50px", "targets": 1 , "bVisible":true}, // line
+                { "width": "50px", "targets": 2, 'visible':false , "bVisible":true}, // line txt
+                { "width": "50px", "targets": 3 , "bVisible":true}, // parse rank
+                { "width": "30em", "targets": 4 , "bVisible":true}, // parse
+                { "width": "50px", "targets": 5, 'visible':false , "bVisible":true}, // parse txt
+                { "width": "50px", "targets": 6, 'visible':false , "bVisible":true}, // meter str
+                { "width": "50px", "targets": 7, 'visible':false , "bVisible":true}, // stress str
+                { "width": "50px", "targets": 8 , "bVisible":true}, // # sylls
+                { "width": "50px", "targets": 9 , "bVisible":true}, // ambig
+                { "width": "50px", "targets": 10 , "bVisible":true}, // total
+                {% for i,x in enumerate(all_constraints) %}
+                    { "width": "50px", "targets": {{i + 11}} , "bVisible":true},
                 {% endfor %}
         ]
     });
@@ -192,9 +259,23 @@ To eat the world's due, by the grave and thee.
         function submit() {
             data = $('#inputform').serializeArray();
             console.log(data);
-            // table.clear();
+            name2val = {};
+            for (d of data) { 
+                name2val[d['name']]=d['value']
+            }
+            
+            for (i in all_constraints) {
+                cname = all_constraints[i];
+                col = table.column(i+11);
+                active=('*'+cname) in name2val;
+                console.log(i,cname,col,active);
+                // if (col) {
+                //     col.visible(active);
+                // }
+            }
             bar.set(0.0);
-            // $('#progressbar').css('opacity',1);
+            bar.setText('parsing...');
+            $('#progressbar').fadeIn('fast');
             if (data) {
                 ojson = JSON.stringify(data);
                 ws.send(ojson);

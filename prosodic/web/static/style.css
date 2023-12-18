@@ -208,7 +208,8 @@ span.tooltip:hover span.tooltip {
   opacity:1;
 }
 
-.otherparse .tooltip { opacity: 1; }
+.otherparse span.tooltip {opacity:1;}
+
 
 
 
@@ -255,3 +256,7 @@ label .caption {
   font-size:.8em;
   opacity: .75;
 }
+
+
+
+.otherparse .tooltip { opacity: 1 !important; }

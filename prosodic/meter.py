@@ -272,7 +272,7 @@ class Meter(Entity):
             if not use_mp:
                 num_proc = 1
             if num_proc is None:
-                num_proc = mp.cpu_count() - 2
+                num_proc = mp.cpu_count() // 2
                 if num_proc < 1:
                     num_proc = 1
             desc = f"parsing {numlines} {text.parse_unit_attr}"

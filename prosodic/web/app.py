@@ -10,6 +10,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
 socketio = SocketIO(app)
 
+@cache(maxsize=10)
+def get_text(txt): return Text(txt)
 
 # @app.websocket("/ws")
 @socketio.on('parse')
@@ -23,14 +25,12 @@ def parse(data):
         )
         for d in data
     }
-    pprint(data)
     text = data.pop('text')
     constraints = tuple(x[1:] for x in list(data.keys()) if x and x[0]=='*')
     for c in constraints: data.pop('*'+c)
     meter_kwargs = data
     meter_kwargs['constraints'] = constraints
-    pprint(meter_kwargs)
-    t = Text(text)
+    t = get_text(text)
     t.set_meter(**meter_kwargs)
     started = time.time()
     numtoiter = len(t.parseable_units)

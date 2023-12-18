@@ -71,7 +71,7 @@ To eat the world's due, by the grave and thee.
                     </div>
 
                     <div class="config-group">
-                        <label for="max_w" class="title">Adjust maximum # of syllables in a metrical position</label>
+                        <label for="max_w" class="title">Adjust size of metrical positions</label>
                         <li class='flex-box'>
                             <label for="max_w">max_w<br /><span
                                     class='caption'>{{constraint_descs['max_w']}}</span></label>
@@ -102,14 +102,6 @@ To eat the world's due, by the grave and thee.
                             <input type="checkbox" class="flex-box-2" id="resolve_optionality"
                                 name="resolve_optionality" value="1" {%if resolve_optionality %}checked{%endif%}>
                         </li>
-
-                        <li class="flex-box">
-                            <label for="resolve_optionality">exhaustive<br /><span
-                                    class='caption'>{{constraint_descs['exhaustive']}}</span></label>
-                            <input type="checkbox" class="flex-box-2" id="exhaustive" name="exhaustive" value="1" {% if
-                                exhaustive %}checked{%endif%}>
-                        </li>
-
 
                     </div>
 

@@ -24,7 +24,7 @@ a. Mac
 a. Linux
 
     * ```sh
-    apt-get install espeak
+    apt-get install espeak libespeak-dev
     ```
 
 a. Windows

@@ -64,6 +64,7 @@ async def ws():
                     parsed_line.num,
                     parse.parse_rank,
                     f'<div class="parsestr">{html}</div>',
+                    parse.num_sylls,
                     round(
                         resd.get(
                             'ambig',

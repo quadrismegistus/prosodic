@@ -278,7 +278,7 @@ class Parse(Entity):
 
     @property
     def num_sylls(self):
-        return len([slot for mpos in self.positions for slot in mpos.slots])
+        return len(self.slots)
 
     @property
     def num_words(self):

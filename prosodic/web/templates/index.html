@@ -116,10 +116,11 @@ To eat the world's due, by the grave and thee.
                         <th>Line</th>
                         <th>Rank</th>
                         <th>Parse</th>
-                        <th>Ambiguity (#parses)<!--<small>(per 10 sylls)</small>--></th>
-                        <th>Tension (#viols)<!--<small>(per 10 sylls)</small>--></th>
+                        <th>Length (#sylls)</th>
+                        <th>Ambiguity (#parses)</th>
+                        <th>Tension (#viols)</th>
                         {% for cname in constraints %}
-                        <th>*{{cname.replace("_"," → ")}} <!--<small>(per 10 sylls)</small>--></th>
+                        <th>*{{cname.replace("_"," → ")}} </th>
                         {%endfor%}
                     </thead>
                     <tbody>
@@ -161,8 +162,9 @@ To eat the world's due, by the grave and thee.
                 { "width": "30em", "targets": 3 },
                 { "width": "50px", "targets": 4 },
                 { "width": "50px", "targets": 5 },
+                { "width": "50px", "targets": 6 },
                 {% for i,x in enumerate(constraints) %}
-                    { "width": "50px", "targets": {{i + 6}} },
+                    { "width": "50px", "targets": {{i + 7}} },
                 {% endfor %}
         ]
     });

@@ -13,7 +13,7 @@ def cli(debug):
 @click.option('--port', default=5111, help='set port (default: 5111)')
 def web(public=False, port=5111):
     from .web.app import main
-    host = '0.0.0.0' if public else None
+    host = '0.0.0.0' if public else '127.0.0.1'
     msg = f'Starting prosodic as a webserver at http://{host}:{port}...'
     click.echo(msg)
     main(host=host, port=port)

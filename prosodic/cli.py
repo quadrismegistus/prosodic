@@ -9,11 +9,10 @@ def cli(debug):
 
 
 @cli.command()
-@click.option('--public', is_flag=True, help='enable remote connections')
-@click.option('--port', default=5111, help='set port (default: 5111)')
-def web(public=False, port=5111):
+@click.option('--host', default='127.0.0.1', help='set host (127.0.0.1)')
+@click.option('--port', default=8080, help='set port (8080)')
+def web(host='127.0.0.1', port=8080):
     from .web.app import main
-    host = '0.0.0.0' if public else '127.0.0.1'
     msg = f'Starting prosodic as a webserver at http://{host}:{port}...'
     click.echo(msg)
     main(host=host, port=port)

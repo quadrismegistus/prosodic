@@ -37,6 +37,7 @@ from contextlib import contextmanager
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
+PATH_WEB = os.path.join(PATH_REPO,'prosodic','web')
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")

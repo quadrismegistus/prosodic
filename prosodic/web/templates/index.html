@@ -10,8 +10,13 @@
     <script src="/static/DataTables/datatables.min.js"></script>
     <script type="text/javascript" src="/static/progressbar.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/style.css" />
-    
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        var all_constraints = {{ all_constraints| tojson }};
+    </script>
 
 </head>
 
@@ -57,7 +62,8 @@ To eat the world's due, by the grave and thee.
                         <label class="title">Configure metrical constraints</label>
                         {% for cname in all_constraints %}
                         <li class="flex-box">
-                            <label for="{{cname}}">*{{cname}}<br/><span class='caption'>{{constraint_descs[cname]}}</span></label>
+                            <label for="{{cname}}">*{{cname}}<br /><span
+                                    class='caption'>{{constraint_descs[cname]}}</span></label>
                             <input type="checkbox" class="flex-box-2" id="{{cname}}" name="*{{cname}}" value="1" {% if
                                 cname in constraints %}checked{%endif%}>
                         </li>
@@ -67,7 +73,8 @@ To eat the world's due, by the grave and thee.
                     <div class="config-group">
                         <label for="max_w" class="title">Adjust maximum # of syllables in a metrical position</label>
                         <li class='flex-box'>
-                            <label for="max_w">max_w<br/><span class='caption'>{{constraint_descs['max_w']}}</span></label>
+                            <label for="max_w">max_w<br /><span
+                                    class='caption'>{{constraint_descs['max_w']}}</span></label>
                             <select class="flex-box-2" name="max_w" id="max_w">
                                 {% for num in range(10) %}
                                 <option value={{num+1}}{% if max_w==num+1 %} selected{%endif%}>{{num+1}}</option>
@@ -76,7 +83,8 @@ To eat the world's due, by the grave and thee.
                         </li>
 
                         <li class='flex-box'>
-                            <label for="max_s">max_s<br/><span class='caption'>{{constraint_descs['max_s']}}</span></label>
+                            <label for="max_s">max_s<br /><span
+                                    class='caption'>{{constraint_descs['max_s']}}</span></label>
                             <select class="flex-box-2" name="max_s" id="max_s">
                                 {% for num in range(10) %}
                                 <option value={{num+1}}{% if max_s==num+1 %} selected{%endif%}>{{num+1}}</option>
@@ -89,13 +97,17 @@ To eat the world's due, by the grave and thee.
                     <div class="config-group">
                         <label class="title">Configure thoroughness of parser</label>
                         <li class="flex-box">
-                            <label for="resolve_optionality">resolve_optionality<br/><span class='caption'>{{constraint_descs['resolve_optionality']}}</span></label>
-                            <input type="checkbox" class="flex-box-2" id="resolve_optionality" name="resolve_optionality" value="1" {%if resolve_optionality %}checked{%endif%}>
+                            <label for="resolve_optionality">resolve_optionality<br /><span
+                                    class='caption'>{{constraint_descs['resolve_optionality']}}</span></label>
+                            <input type="checkbox" class="flex-box-2" id="resolve_optionality"
+                                name="resolve_optionality" value="1" {%if resolve_optionality %}checked{%endif%}>
                         </li>
 
                         <li class="flex-box">
-                            <label for="resolve_optionality">exhaustive<br/><span class='caption'>{{constraint_descs['exhaustive']}}</span></label>
-                            <input type="checkbox" class="flex-box-2" id="exhaustive" name="exhaustive" value="1" {% if exhaustive %}checked{%endif%}>
+                            <label for="resolve_optionality">exhaustive<br /><span
+                                    class='caption'>{{constraint_descs['exhaustive']}}</span></label>
+                            <input type="checkbox" class="flex-box-2" id="exhaustive" name="exhaustive" value="1" {% if
+                                exhaustive %}checked{%endif%}>
                         </li>
 
 
@@ -128,7 +140,6 @@ To eat the world's due, by the grave and thee.
                         {% for cname in all_constraints %}
                         <th>*{{cname.replace("_"," ")}} </th>
                         {%endfor%}
-                        
                     </thead>
                     <tbody>
                     </tbody>
@@ -141,197 +152,8 @@ To eat the world's due, by the grave and thee.
 
 
     <!-- JAVASCRIPT -->
+    <script src="/static/script.js" type="text/javascript" charset="utf-8"></script>
 
-    <script type="text/javascript">
-
-
-function getCurrentDateTime() {
-    const now = new Date();
-
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // getMonth() returns 0-11
-    const day = String(now.getDate()).padStart(2, '0');
-
-    const hour = String(now.getHours()).padStart(2, '0');
-    const minute = String(now.getMinutes()).padStart(2, '0');
-
-    return `${year}-${month}-${day}-${hour}${minute}`;
-}
-    nowstr = getCurrentDateTime();
-
-    var all_constraints = {{all_constraints|tojson}};
-
-
-
-        const ws = new WebSocket(`ws://${location.host}/ws`);
-        var export_opts = {
-            columns: [0,1,2,3,5,6,7,8,9,10{% for i,x in enumerate(all_constraints) %}, {{i+11}}{%endfor%}]
-        }
-        var table = $('#table_lines').DataTable({
-            dom: 'Bfrtip',
-            buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print'
-            ],
-            buttons: [
-                {
-                    header:true,
-                    extend: 'copy',
-                    footer: false,
-                    exportOptions: export_opts,
-                    title: 'prosodic_export_' + nowstr
-                },
-                {
-                    header:true,
-                    extend: 'csv',
-                    footer: false,
-                    exportOptions: export_opts,
-                    title: 'prosodic_export_' + nowstr
-                },{
-                    header:true,
-                    extend: 'excel',
-                    footer: false,
-                    exportOptions: export_opts,
-                    title: 'prosodic_export_' + nowstr
-                },         
-                {
-                    header:true,
-                    extend: 'pdf',
-                    footer: true,
-                    exportOptions: export_opts,
-                    title: 'prosodic_export_' + nowstr
-                },
-                {
-                    header:true,
-                    extend: 'print',
-                    footer: true,
-                    exportOptions: export_opts,
-                    title: 'prosodic_export_' + nowstr
-                },
-            ],
-            fixedHeader: true,
-            scrollX: true,
-            // scrollY: true,
-            bScrollInfinite: true,
-            bScrollCollapse: true,
-            sScrollY: "82.5vh",
-            // data:[],
-            // columns: ['#', 'Line'],
-            pageLength: 100,
-            order: [[0, "asc"], [1, "asc"], [3, "asc"]],
-            columnDefs: [
-                { "width": "50px", "targets": 0 , "bVisible":true}, // stanza
-                { "width": "50px", "targets": 1 , "bVisible":true}, // line
-                { "width": "50px", "targets": 2, 'visible':false , "bVisible":true}, // line txt
-                { "width": "50px", "targets": 3 , "bVisible":true}, // parse rank
-                { "width": "30em", "targets": 4 , "bVisible":true}, // parse
-                { "width": "50px", "targets": 5, 'visible':false , "bVisible":true}, // parse txt
-                { "width": "50px", "targets": 6, 'visible':false , "bVisible":true}, // meter str
-                { "width": "50px", "targets": 7, 'visible':false , "bVisible":true}, // stress str
-                { "width": "50px", "targets": 8 , "bVisible":true}, // # sylls
-                { "width": "50px", "targets": 9 , "bVisible":true}, // ambig
-                { "width": "50px", "targets": 10 , "bVisible":true}, // total
-                {% for i,x in enumerate(all_constraints) %}
-                    { "width": "50px", "targets": {{i + 11}} , "bVisible":true},
-                {% endfor %}
-        ]
-    });
-
-        var bar = new ProgressBar.Line('#progressbar', {
-            color: 'rgba(202, 202, 202, .6)',
-            // This has to be the same size as the maximum width to
-            // prevent clipping
-            strokeWidth: 1,
-            // trailWidth: 1,
-            // easing: 'easeInOut',
-            duration: 0,
-            // text: {
-            // autoStyleContainer: false
-            // },
-            // from: { color: '#aaa', width: 1 },
-            // to: { color: '#333', width: 4 },
-        });
-        bar.setText('');
-        bar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
-        bar.text.style.fontSize = '.6rem';
-        bar.text.style.margin = '0 auto';
-        bar.text.style.color = 'rgba(0,0,0,0.5)';
-
-        function submit() {
-            data = $('#inputform').serializeArray();
-            console.log(data);
-            name2val = {};
-            for (d of data) { 
-                name2val[d['name']]=d['value']
-            }
-            
-            for (i in all_constraints) {
-                cname = all_constraints[i];
-                col = table.column(i+11);
-                active=('*'+cname) in name2val;
-                console.log(i,cname,col,active);
-                // if (col) {
-                //     col.visible(active);
-                // }
-            }
-            bar.set(0.0);
-            bar.setText('parsing...');
-            $('#progressbar').fadeIn('fast');
-            if (data) {
-                ojson = JSON.stringify(data);
-                ws.send(ojson);
-            }
-        }
-
-        ws.addEventListener('message', function (event) {
-            obj = JSON.parse(event.data);
-            rownum = obj[0]
-            data = obj[1];
-            console.log(data);
-            bar.animate(data.progress);
-            if (data.progress != 1) {
-                remaining = Math.round(data.remaining);
-                if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
-                progress = Math.round(data.progress * 100);
-                bar.setText(progress.toString() + '% complete, eta: ' + remaining + 's');
-            } else {
-                let pbtn = $('#parsebtn');
-                pbtn.html('Parse');
-                pbtn.prop("disabled", false);
-                let pbar = $('#progressbar');
-
-                setTimeout(function () {
-                    bar.setText('');
-                    pbar.fadeOut('slow');
-                    // $('#progressbar').css('opacity',0) 
-                }, 1000);
-            }
-
-            // table.row.add(data.row).draw();
-            row = table.row(rownum);
-            rowdat = row.data();
-            if (!rowdat) { 
-                table.row.add(data.row).draw();
-            } else {
-                row.data(data.row).draw();
-            }
-        });
-
-        $('#parsebtn').on('click', function () {
-            // $('#progressbar').show();
-            let pbtn = $('#parsebtn');
-            pbtn.html('Parsing...');
-            pbtn.prop("disabled", true);
-            submit();
-        });
-
-
-        // A $( document ).ready() block.
-        $(document).ready(function () {
-            setTimeout(function () { $('#parsebtn').click(); }, 500);
-        });
-
-
-    </script>
 </body>
 
 </html>

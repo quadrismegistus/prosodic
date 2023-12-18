@@ -1,0 +1,256 @@
+@import url('https://fonts.cdnfonts.com/css/frutiger');
+
+div {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: 16px;
+  /* width: 100vw; */
+  /* height: 100vh; */
+  padding: 0;
+  margin: 0;
+}
+
+h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: normal;
+}
+
+#title {
+  font-size: 2rem;
+  font-weight: normal;
+}
+
+#inputtext {
+  height: fit-content;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  border: none;
+  padding: .5rem;
+  font-size: 16px;
+  line-height: 1.5em;
+  margin-left: 1rem;
+  background-color: white;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  /* text-align: center; */
+  font-size: 17px;
+  width: 90%;
+  min-height: 400px;
+}
+
+#nav {
+  margin: 1rem 0;
+}
+
+#header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+#layout {
+  position:absolute;
+  top:0;
+  left:0;
+  min-height: 100vh;
+  width:100vw;
+  display:flex;
+}
+
+#sidecol {
+  flex-grow: 1;
+  width: 450px;
+  min-width: 450px;
+  padding: 5px;
+  border-right: 1px solid darkgray;
+  background-color: whitesmoke;
+  overflow-y: scroll;
+  height:100vh;
+}
+
+#maincol {
+  flex: 100%;
+  min-width: 400px;
+  padding: 5px;
+  margin-top:1rem;
+  /* position:absolute; */
+  /* top:0; */
+}
+
+.violation {
+  color: red;
+}
+
+.meter_strong {
+  text-decoration: overline;
+}
+
+.meter_weak {
+  font-weight: normal;
+}
+
+/* .stress_strong { text-decoration: underline; } */
+/* .stress_weak { text-decoration: none; } */
+#progressbar {
+  /* margin: 0px; */
+  /* width: 75px; */
+  /* height:75px; */
+  /* position: relative; */
+  /* display:none; */
+  position:absolute;
+  top:0;
+  z-index:1000;
+  left:0;
+  /* width:100%; */
+  height:1rem;
+  /* height:1rem; */
+  background-color: rgba(202, 202, 202, 0);
+  /* height:50px; */
+  color: rgba(0,0,0,1);
+}
+
+#parsebtn {
+  font-family: monospace;
+  font-size: 18px;
+  /* padding: 0.5rem 1rem; */
+  /* width: 100px; */
+  width:auto;
+  height:40px;
+  border:0;
+  border-radius:0;
+  margin:0 auto;
+  display:block;
+  /* -webkit-border-radius: 5px; */
+  /* -moz-border-radius: 5px; */
+  /* border-radius: 5px; */
+  /* border: 1px solid gray; */
+  background-color: rgba(202, 202, 202, .9);
+}
+
+#parsebtndiv {
+  text-align: center;
+  /* align-items: center; */
+  /* display:flex; */
+  width:100%;
+}
+
+table.dataTable thead th {
+  font-weight: normal;
+  font-size: 1rem;
+}
+
+table.dataTable tbody td {
+  font-weight: normal;
+  font-size: .9rem;
+}
+
+
+#parseresults {
+  width: 99%;
+  /* padding-right:2em; */
+}
+
+.parse {
+  /* font-size:16px;  */
+  min-width: 30em;
+}
+
+#table_lines {
+  width: 100%;
+}
+
+span.tooltip {
+  position: relative;
+}
+
+
+/* hide tooltip */
+
+span.tooltip span.tooltip {
+  display: none;
+}
+
+span.tooltip ol {
+  margin: 0;
+}
+
+
+/* show and style tooltip */
+
+span.tooltip:hover span.tooltip {
+  /* show tooltip */
+  display: block;
+  /* position relative to container div.tooltip */
+  position: absolute;
+  /* bottom: 1em; */
+  /* prettify */
+  font-size: 1rem;
+  line-height: normal;
+  font-weight: normal;
+  padding: 1em;
+  color: #000000;
+  background: #ffbbbb;
+  border: 1px solid #b7ddf2;
+  /* round the corners */
+  border-radius: 0.5em;
+  /* prevent too wide tooltip */
+  min-width: 200px;
+  max-width: 400px;
+  z-index: 500;
+  opacity:1;
+}
+
+.otherparse .tooltip { opacity: 1; }
+
+
+
+
+.flex-box {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid silver;
+  padding: 1em;
+}
+
+.flex-box-2 {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.config-group {
+  padding: .5em;
+}
+
+.config-group label.title {
+  /* text-decoration: underline dotted; */
+  display: block;
+  width: 90%;
+  margin: 0 auto;
+  text-align: center;
+  background-color: rgb(202, 202, 202, .3);
+  padding: .5em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.config-group .flex-box:last-child {
+  border-bottom: none;
+}
+
+.otherparse {
+  opacity: .4;
+}
+
+
+label .caption {
+  font-size:.8em;
+  opacity: .75;
+}

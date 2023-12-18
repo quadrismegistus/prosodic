@@ -5,8 +5,17 @@ def tokenize_agnostic(txt):
     return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
 
 
+@cache
+def get_sent_tokenizer():
+    try:
+        nltk.sent_tokenize('hello')
+    except Exception as e:
+        nltk.download("punkt", quiet=True)
+    return nltk.sent_tokenize
+
+
 def tokenize_sents_txt(txt, **y):
-    sents = nltk.sent_tokenize(txt)
+    sents = get_sent_tokenizer()(txt)
     lastoffset = 0
     osents = []
     for sent in sents:

@@ -1,115 +1,35 @@
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
+
 <head>
-<meta charset="utf-8" />
-<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
-<script src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="/static/progressbar.js"></script>
-<script src="https://unpkg.com/tippy.js@2.0.0-beta.2/dist/tippy.all.min.js"></script>
-<!-- <link href="https://fonts.cdnfonts.com/css/raleway-5" rel="stylesheet"> -->
-<!-- <link href="https://fonts.cdnfonts.com/css/baskerville" rel="stylesheet"> -->
-<!-- <link href="https://fonts.cdnfonts.com/css/nevermind-serif" rel="stylesheet"> -->
-<!-- <link href="https://fonts.cdnfonts.com/css/frutiger" rel="stylesheet"> -->
-
-
-
-
-
-
-
-<!-- CSS -->
-
-<style>
-/* @import url('https://fonts.cdnfonts.com/css/raleway-5'); */
-/* @import url('https://fonts.cdnfonts.com/css/baskerville'); */
-/* @import url('https://fonts.cdnfonts.com/css/nevermind-serif'); */
-@import url('https://fonts.cdnfonts.com/css/frutiger');
-div { margin:0; padding:0; }
-body { font-family:Georgia, 'Times New Roman', Times, serif; font-size:16px; }
-body { width:100vw; height:100vh; padding:0; margin:0; overflow-x: hidden;}
-h3 { font-size:1.2rem; margin-bottom:0}
-h1,h2,h3,h4,h5 { font-weight: normal;}
-#title {font-size:2rem; font-weight: normal;}
-#inputtext { 
-    height:fit-content;
-    font-family: Georgia, 'Times New Roman', Times, serif; 
-    border:none; 
-    padding:.5rem; 
-    font-size:16px; 
-    line-height: 1.5em; 
-    margin-left:1rem; 
-    background-color: white;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-    /* text-align: center; */
-    font-size: 17px;
-    width:90%;
-    min-height:400px;
-}
-#nav {margin: 1rem 0;}
-#header { margin-bottom:1rem; text-align: center;}
-#layout {display:flex; flex-direction: row; height:100%}
-#sidecol {flex-grow:1; width:450px; min-width:450px; padding: 5px; border-right:1px solid darkgray; background-color: whitesmoke;}
-#maincol {flex-grow:1; flex:100%; min-width:400px; padding:5px; }
-.violation { color:red; }
-.meter_strong { text-decoration: overline;}
-.meter_weak { font-weight: normal; }
-/* .stress_strong { text-decoration: underline; } */
-/* .stress_weak { text-decoration: none; } */
-#progressbar { margin: 0px; width: 75px; height: 75px; position:fixed; bottom:5px; right:5px; }
-#parsebtn { font-family: monospace; font-size:18px; padding:0.5rem 1rem; width:100%;}
-table.dataTable thead th { font-weight: normal; font-size:1rem;}
-table.dataTable tbody td { font-weight: normal; font-size:.9rem;}
-#maincol { 
-    width:100%;
-    overflow-x:auto
-}
-#parseresults {
-    width:1400px;
-}
-.parsestr { font-size:16px; }
-</style>
-
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="/static/jquery.dataTables.min.css" />
+    <script type="text/javascript" src="/static/jquery-3.7.1.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/progressbar.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/style.css" />
 
 
 
 </head>
+
 <body>
     <div id='progressbar'></div>
 
-  
-  <div id="layout">
+    <div id="layout">
 
-    <div id="sidecol">
-        <div id='header'>
-            <h1 id='title'>Prosodic [prə.'sɑ.dɪk]</h1>
-            <div id='subtitle'>A metrical parser, written in Python. For English and Finnish, with flexible language support.</div>      
-          </div>
-          
-        <div id="inputformdiv">
-            <form onsubmit="return send(event)" id="inputform">
-                <button id="parsebtn" type="submit">Parse</button>
+        <div id="sidecol">
+            <div id='header'>
+                <h1 id='title'>Prosodic [prə.'sɑ.dɪk]</h1>
+                <div id='subtitle'>A metrical parser, written in Python. For English and Finnish, with flexible language
+                    support.</div>
+            </div>
 
-                <h3>Parse text:</h3>
-                <!-- <ol id="inputtext" contenteditable>
-                    <li>When in the chronicle of wasted time
-                    <li>I see descriptions of the fairest wights,
-                    <li>And beauty making beautiful old rhyme,
-                    <li>In praise of ladies dead and lovely knights,
-                    <li>Then, in the blazon of sweet beauty’s best,
-                    <li>Of hand, of foot, of lip, of eye, of brow,
-                    <li>I see their antique pen would have express’d
-                    <li>Even such a beauty as you master now.
-                    <li>So all their praises are but prophecies
-                    <li>Of this our time, all you prefiguring;
-                    <li>And for they looked but with divining eyes,
-                    <li>They had not skill enough your worth to sing:
-                    <li>For we, which now behold these present days,
-                    <li>Have eyes to wonder, but lack tongues to praise.
-                </ol>  -->
-                <textarea id="inputtext" name="text">From fairest creatures we desire increase,
+            <div id="inputformdiv">
+                <form onsubmit="return send(event)" id="inputform">
+
+                    <!-- <h3>Parse text:</h3> -->
+                    <textarea id="inputtext" name="text">From fairest creatures we desire increase,
 That thereby beauty's rose might never die,
 But as the riper should by time decease,
 His tender heir might bear his memory:
@@ -125,159 +45,210 @@ Pity the world, or else this glutton be,
 To eat the world's due, by the grave and thee.
 </textarea>
 
-            Constraints:<br/>
-                {% for cname in constraints %}
-                    <li>
-                        <input type="checkbox" id="{{cname}}" name="{{cname}}" value="1" {% if cname in active_constraints %}checked{%endif%}>
-                        <label for="{{cname}}">{{cname}}</label>
-                    </li>
+                    <div id="parsebtndiv">
+                        <button id="parsebtn" type="submit">Parse</button>
+                    </div>
+
+                    <hr />
+
+                    <div class="config-group">
+                        <label class="title">Configure metrical constraints</label>
+                        {% for cname in all_constraints %}
+                        <li class="flex-box">
+                            <label for="{{cname}}">*{{cname}}<br/><span class='caption'>{{constraint_descs[cname]}}</span></label>
+                            <input type="checkbox" class="flex-box-2" id="{{cname}}" name="*{{cname}}" value="1" {% if
+                                cname in constraints %}checked{%endif%}>
+                        </li>
+                        {% endfor %}
+                    </div>
+
+                    <div class="config-group">
+                        <label for="max_w" class="title">Adjust maximum # of syllables in a metrical position</label>
+                        <li class='flex-box'>
+                            <label for="max_w">max_w<br/><span class='caption'>{{constraint_descs['max_w']}}</span></label>
+                            <select class="flex-box-2" name="max_w" id="max_w">
+                                {% for num in range(10) %}
+                                <option value={{num+1}}{% if max_w==num+1 %} selected{%endif%}>{{num+1}}</option>
+                                {%endfor%}
+                            </select>
+                        </li>
+
+                        <li class='flex-box'>
+                            <label for="max_s">max_s<br/><span class='caption'>{{constraint_descs['max_s']}}</span></label>
+                            <select class="flex-box-2" name="max_s" id="max_s">
+                                {% for num in range(10) %}
+                                <option value={{num+1}}{% if max_s==num+1 %} selected{%endif%}>{{num+1}}</option>
+                                {%endfor%}
+                            </select>
+                        </li>
+
+                    </div>
+
+                    <div class="config-group">
+                        <label class="title">Configure thoroughness of parser</label>
+                        <li class="flex-box">
+                            <label for="resolve_optionality">resolve_optionality<br/><span class='caption'>{{constraint_descs['resolve_optionality']}}</span></label>
+                            <input type="checkbox" class="flex-box-2" id="resolve_optionality" name="resolve_optionality" value="1" {%if resolve_optionality %}checked{%endif%}>
+                        </li>
+
+                        <li class="flex-box">
+                            <label for="resolve_optionality">exhaustive<br/><span class='caption'>{{constraint_descs['exhaustive']}}</span></label>
+                            <input type="checkbox" class="flex-box-2" id="exhaustive" name="exhaustive" value="1" {% if exhaustive %}checked{%endif%}>
+                        </li>
+
+
+                    </div>
+
+
+
+
+                </form>
+            </div>
+
+
+        </div>
+
+        <div id="maincol">
+            <div id="parseresults">
+                <table id="table_lines">
+                    <thead>
+                        <th>Stanza</th>
+                        <th>Line</th>
+                        <th>Rank</th>
+                        <th>Parse</th>
+                        <th>Ambiguity (#parses)<!--<small>(per 10 sylls)</small>--></th>
+                        <th>Tension (#viols)<!--<small>(per 10 sylls)</small>--></th>
+                        {% for cname in constraints %}
+                        <th>*{{cname.replace("_"," → ")}} <!--<small>(per 10 sylls)</small>--></th>
+                        {%endfor%}
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script type="text/javascript">
+
+
+        const ws = new WebSocket(`ws://${location.host}/ws`);
+
+        var table = $('#table_lines').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'excel', 'pdf'
+            ],
+            fixedHeader: true,
+            scrollX: true,
+            // scrollY: true,
+            bScrollInfinite: true,
+            bScrollCollapse: true,
+            sScrollY: "82.5vh",
+            // data:[],
+            // columns: ['#', 'Line'],
+            pageLength: 100,
+            order: [[0, "asc"], [1, "asc"], [2, "asc"]],
+            columnDefs: [
+                { "width": "50px", "targets": 0 },
+                { "width": "50px", "targets": 1 },
+                { "width": "50px", "targets": 2 },
+                { "width": "30em", "targets": 3 },
+                { "width": "50px", "targets": 4 },
+                { "width": "50px", "targets": 5 },
+                {% for i,x in enumerate(constraints) %}
+                    { "width": "50px", "targets": {{i + 6}} },
                 {% endfor %}
-            
-            
-            </form>
-        </div>
-
-        
-    </div>
-
-    <div id="maincol">
-        <div id="parseresults">
-            <table id="table_lines">
-                <thead>
-                    <th>Stanza</th>
-                    <th>Line</th>
-                    <th>Parse</th>
-                    <th>Ambiguity (#parses)<!--<small>(per 10 sylls)</small>--></th>
-                    <th>Tension (#viols)<!--<small>(per 10 sylls)</small>--></th>
-                    {% for cname in constraints %}
-                    <th>*{{cname.replace("_"," → ")}} <!--<small>(per 10 sylls)</small>--></th>
-                    {%endfor%}
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-
-  </div>
-
-
-<!-- JAVASCRIPT -->
-
-<script type="text/javascript">
-
-
-    const ws = new WebSocket(`ws://${location.host}/ws`);
-
-    var table = $('#table_lines').DataTable({
-        dom: 'Bfrtip',
-        buttons: [
-            'copy', 'excel', 'pdf'
-        ],
-        // data:[],
-        // columns: ['#', 'Line'],
-        pageLength: 50,
-        order: [[ 0, "asc" ], [ 1, "asc" ]],
-        columnDefs: [
-            { "width": "50px", "targets": 0 },
-            { "width": "50px", "targets": 1 },
-            { "width": "500px", "targets": 2 },
-            { "width": "50px", "targets": 3 },
-            { "width": "50px", "targets": 4 },
-            {% for i,x in enumerate(constraints) %}
-            { "width": "50px", "targets": {{i+5}} },
-            {%endfor%}
-        //   { "width": "300px", "targets": 2 },
-        //   { "width": "100px", "targets": 3 }
         ]
     });
 
-    var bar = new ProgressBar.Circle('#progressbar', {
-        color: '#aaa',
-        // This has to be the same size as the maximum width to
-        // prevent clipping
-        strokeWidth: 6,
-        trailWidth: 1,
-        // easing: 'easeInOut',
-        duration: 0,
-        text: {
-        autoStyleContainer: false
-        },
-        from: { color: '#aaa', width: 1 },
-        to: { color: '#333', width: 4 },
-        
-        // Set default step function for all animate calls
-        // step: function(state, circle) {
-        //     circle.path.setAttribute('stroke', state.color);
-        //     circle.path.setAttribute('stroke-width', state.width);
+        var bar = new ProgressBar.Line('#progressbar', {
+            color: 'rgba(202, 202, 202, .6)',
+            // This has to be the same size as the maximum width to
+            // prevent clipping
+            strokeWidth: 1,
+            // trailWidth: 1,
+            // easing: 'easeInOut',
+            duration: 0,
+            // text: {
+            // autoStyleContainer: false
+            // },
+            // from: { color: '#aaa', width: 1 },
+            // to: { color: '#333', width: 4 },
+        });
+        bar.setText('');
+        bar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+        bar.text.style.fontSize = '.6rem';
+        bar.text.style.margin = '0 auto';
+        bar.text.style.color = 'rgba(0,0,0,0.5)';
 
-        //     var value = Math.round(circle.value() * 100);
-        //     if (value === 0) {
-        //         circle.setText('');
-        //     } else {
-        //         circle.setText(value+'s');
-        //     }
-        // }
-    });
-    bar.setText('ready');
-    bar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
-    bar.text.style.fontSize = '.8rem';
-    bar.text.style.margin = '0 auto';
-
-    // var bar = new ProgressBar.Circle('#progressbar', {
-    //     color: '#FCB03C',
-    //     duration: 3000,
-    //     easing: 'easeInOut'
-    // });
-
-
-
-    function submit() {
-        data = $('#inputform').serializeArray();
-        console.log(data);
-        table.clear();
-        bar.set(0.0);
-        if (data) {
-            ojson = JSON.stringify(data);
-            ws.send(ojson); 
+        function submit() {
+            data = $('#inputform').serializeArray();
+            console.log(data);
+            // table.clear();
+            bar.set(0.0);
+            // $('#progressbar').css('opacity',1);
+            if (data) {
+                ojson = JSON.stringify(data);
+                ws.send(ojson);
+            }
         }
-    }
 
+        ws.addEventListener('message', function (event) {
+            obj = JSON.parse(event.data);
+            rownum = obj[0]
+            data = obj[1];
+            console.log(data);
+            bar.animate(data.progress);
+            if (data.progress != 1) {
+                remaining = Math.round(data.remaining);
+                if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
+                progress = Math.round(data.progress * 100);
+                bar.setText(progress.toString() + '% complete, eta: ' + remaining + 's');
+            } else {
+                let pbtn = $('#parsebtn');
+                pbtn.html('Parse');
+                pbtn.prop("disabled", false);
+                let pbar = $('#progressbar');
 
-    ws.addEventListener('message', function (event) {
-        data = JSON.parse(event.data);
-        console.log(data);
-        bar.animate(data.progress);
-        if (data.progress!=1) {
-            remaining = Math.round(data.remaining);
-            if (remaining==0) { remaining = '<1'} else { remaining = remaining.toString(); }
-            progress = Math.round(data.progress * 100);
-            bar.setText(progress.toString() + '%\n' + remaining+ 's');
-        } else {
+                setTimeout(function () {
+                    bar.setText('');
+                    pbar.fadeOut('slow');
+                    // $('#progressbar').css('opacity',0) 
+                }, 1000);
+            }
+
+            // table.row.add(data.row).draw();
+            row = table.row(rownum);
+            rowdat = row.data();
+            if (!rowdat) { 
+                table.row.add(data.row).draw();
+            } else {
+                row.data(data.row).draw();
+            }
+        });
+
+        $('#parsebtn').on('click', function () {
+            // $('#progressbar').show();
             let pbtn = $('#parsebtn');
-            pbtn.html('Parse');
-            pbtn.prop("disabled",false);
-            bar.setText('done');
-        }
-        
-        table.row.add(data.row).draw();
-    });
-
-    $('#parsebtn').on('click', function() { 
-        let pbtn=$('#parsebtn');
-        pbtn.html('Parsing...');
-        pbtn.prop("disabled",true);
-        submit();
-    });
+            pbtn.html('Parsing...');
+            pbtn.prop("disabled", true);
+            submit();
+        });
 
 
-    // A $( document ).ready() block.
-    $( document ).ready(function() {
-        setTimeout(function() { $('#parsebtn').click(); }, 500);
-    });
+        // A $( document ).ready() block.
+        $(document).ready(function () {
+            setTimeout(function () { $('#parsebtn').click(); }, 500);
+        });
 
 
-</script>
+    </script>
 </body>
+
 </html>

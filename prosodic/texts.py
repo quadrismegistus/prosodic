@@ -8,25 +8,27 @@ class StanzaList(EntityList):
 class LineList(EntityList):
     pass
 
-NUMBUILT=0
+
+NUMBUILT = 0
+
+
 class Text(Entity):
     """
-    Primarily the class one begins from, to create
-    a multi-line text in prosodic. You can.
+    A class that represents a text structure, usually comprised of stanzas.
 
-    Arguments:
-        Entity -- _description_
+    This class inherits from the Entity class and is responsible for parsing and managing
+    a body of text. It supports caching for efficient retrieval of parsed data and allows
+    for text analysis at various granularities.
 
-    Raises:
-        Exception: _description_
-
-    Returns:
-        _description_
-
-    Yields:
-        _description_
+    Attributes:
+        sep (str): Separator string used in text processing. Default is an empty string.
+        child_type (str): The type of child entity expected within the text. Default is "Stanza".
+        prefix (str): Prefix identifier for the text entity. Default is "text".
+        parse_unit_attr (str): Attribute name representing the unit to be parsed. Default is "lines".
+        list_type (StanzaList): The class type for containing child entities. Default is StanzaList.
+        use_cache (bool): Flag to determine if caching should be used. Default value is taken from USE_CACHE.
+        cached_properties_to_clear (list of str): List of property names whose cache should be cleared when appropriate.
     """
-
     sep: str = ""
     child_type: str = "Stanza"
     prefix = "text"
@@ -75,7 +77,7 @@ class Text(Entity):
             None
         """
         global NUMBUILT
-        NUMBUILT+=1
+        NUMBUILT += 1
         # print(NUMBUILT,len(txt),txt[:100])
         from .lines import Stanza
 

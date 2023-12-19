@@ -1,6 +1,7 @@
 from .imports import *
 from .constraints import *
 from .texts import Text
+
 NUM_GOING = 0
 # METER
 DEFAULT_METER_KWARGS = dict(
@@ -102,8 +103,8 @@ class Meter(Entity):
 
     def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
-        if line.num_sylls<2:
-            return ParseList(type='line',line=line)
+        if line.num_sylls < 2:
+            return ParseList(type='line', line=line)
         if self.exhaustive:
             parses = self.parse_line_exhaustive(line)
         else:
@@ -227,7 +228,7 @@ class Meter(Entity):
         **kwargs
     ):
         global NUM_GOING
-        NUM_GOING+=1
+        NUM_GOING += 1
         # print(NUM_GOING,type(type),text)
         from .parsing import ParseList
 
@@ -265,9 +266,7 @@ class Meter(Entity):
             if not use_mp:
                 num_proc = 1
             if num_proc is None:
-                num_proc = mp.cpu_count() // 2
-                if num_proc < 1:
-                    num_proc = 1
+                num_proc = mp.cpu_count() - 1 if num_proc > 1 else 1
             desc = f"parsing {numlines} {text.parse_unit_attr}"
 
             if num_proc > 1:
@@ -282,8 +281,7 @@ class Meter(Entity):
                         lm=lm,
                         desc="parsing",
                     )
-                
-                
+
                 # @TODO: not working?
                 else:
                     iterr = (
@@ -307,7 +305,7 @@ class Meter(Entity):
                     yield line
                     if line.num and line.stanza and line.stanza.num:
                         # if not line.stanza.num in newstanzas:
-                            # newstanzas.add(line.stanza.num)
+                        # newstanzas.add(line.stanza.num)
                         lm.log(
                             f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt if line.best_parse else line.txt}",
                             linelim=70,

@@ -273,7 +273,7 @@ class Meter(Entity):
             if num_proc > 1:
                 desc += f" [{num_proc}x]"
             with logmap(desc) as lm:
-                if num_proc > 0:
+                if num_proc > 1:
                     iterr = self._parse_text_iter_mp(
                         text,
                         progress=progress,
@@ -285,17 +285,17 @@ class Meter(Entity):
                 
                 
                 # @TODO: not working?
-                # else:
-                #     iterr = (
-                #         self.parse_line(
-                #             line,
-                #             force=force,
-                #             **kwargs,
-                #         ) for line in lm.iter_progress(
-                #             text.parseable_units,
-                #             desc="parsing",
-                #         )
-                #     )
+                else:
+                    iterr = (
+                        self.parse_line(
+                            line,
+                            force=force,
+                            **kwargs,
+                        ) for line in lm.iter_progress(
+                            text.parseable_units,
+                            desc="parsing",
+                        )
+                    )
 
                 # newstanzas = set()
                 for i, parselist in enumerate(iterr):

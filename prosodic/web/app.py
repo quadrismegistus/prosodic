@@ -49,10 +49,10 @@ def parse(data):
             data['row'] = [
                 parsed_line.stanza.num,
                 parsed_line.num,
-                parsed_line._txt,
+                parsed_line.txt,
                 parse.parse_rank,
                 f'<div class="parsestr">{html}</div>',
-                parse._txt,
+                parse.txt,
                 parse.meter_str,
                 parse.stress_str,
                 parse.num_sylls,

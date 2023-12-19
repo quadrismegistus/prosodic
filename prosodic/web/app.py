@@ -10,8 +10,12 @@ from gevent import time as gtime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
-socketio = SocketIO(app)
+socketio = SocketIO(app, ping_timeout=60 * 5, ping_interval=5)
 
+
+@cache(maxsize=10)
+def get_text(txt):
+    return Text(txt)
 
 # @app.websocket("/ws")
 @socketio.on('parse')
@@ -30,13 +34,14 @@ def parse(data):
     for c in constraints: data.pop('*'+c)
     meter_kwargs = data
     meter_kwargs['constraints'] = constraints
-    t = Text(text)
+    t = get_text(text)
     t.set_meter(**meter_kwargs)
     started = time.time()
     numtoiter = len(t.parseable_units)
     remainings = []
     numrows=0
     for i, parsed_line in enumerate(t.parse_iter()):
+        data_out_l=[]
         for pi, parse in enumerate(parsed_line.parses.unbounded):
             html = parsed_line.to_html(
                 parse=parse,
@@ -93,9 +98,16 @@ def parse(data):
             remainings.append(remaining)
             data['remaining'] = float(np.median(remainings[-2:]))
             data['rownum'] = numrows
-            emit('parse_result', jsonify(data))
+            data['numdone'] = numdone = i + 1
+            data['numtodo'] = numtoiter - numdone
+            data['numlines'] = numtoiter
+            data['duration'] = sofar
+            data_out_l.append(data)
             numrows+=1
-            gtime.sleep(.01)
+        gtime.sleep(.01)
+        # out = encode_cache(data_out_l)
+        out = jsonify(data_out_l)
+        emit('parse_result', out)
     gtime.sleep(.1)
     emit('parse_done', {'duration':time.time()-started, 'numrows':numrows})
 

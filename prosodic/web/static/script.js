@@ -110,6 +110,7 @@ $(document).ready(function () {
 
     function submit() {
         data = $('#inputform').serializeArray();
+        table.clear().draw();
         // bar.set(50);
         // bar.setText('parsing...');
         // $('#progressbar').fadeIn('fast');
@@ -121,25 +122,48 @@ $(document).ready(function () {
     }
 
     // socket.on('connect', function () {
-        socket.on('parse_result', function (event_data) {
-            data = JSON.parse(event_data);
-            rownum = data.rownum;
-            // bar.animate(data.progress);
-            // bar.set(data.progress * 100);
-            // table.row.add(data.row).draw();
-            row = table.row(rownum);
-            rowdat = row.data();
-            if (!rowdat) {
-                table.row.add(data.row).draw();
-            } else {
-                row.data(data.row).draw();
-            }
+        socket.on('parse_result', function (decompressedData) {
+            // let compressedData = Uint8Array.from(atob(json_gz), (c) => c.charCodeAt(0));
+            // let decompressedData = pako.inflate(compressedData, { to: "string" });
+            let data_l = JSON.parse(decompressedData);
+            console.log(data_l);
 
-            remaining = Math.round(data.remaining);
-            if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
-            progress = Math.round(data.progress * 100);
-            msg = progress.toString() + '% complete, eta: ' + remaining + 's';
-            $('#parsebtn').text(msg);
+            if (data_l.length) {
+                data = data_l[0];
+                numdone = data.numdone;
+                numtodo = data.numtodo;
+                numlines = data.numlines;
+                duration = data.duration;
+                rate = Math.round(numdone / duration * 10) / 10;
+                remaining = Math.round(numtodo / rate * 10) / 10;
+                if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
+                progress = Math.round(data.progress * 100);
+                msg = (
+                    'Parsed '+numdone.toString()+'/'+numlines.toString() +' lines '
+                    + '<br/><small> ('+progress.toString() + '%, '+rate.toString()+'it/s, eta: ' + remaining + 's)</small>'
+                )
+                $('#parsebtn').html(msg);
+
+                // rows=[];
+                // for (data of data_l) {
+                //     rows.push(data.row);
+                // }
+
+                // table.rows.add(rows).draw();
+                
+
+                for (data of data_l) {
+                    console.log(data);
+                    rownum = data.rownum;
+                    row = table.row(rownum);
+                    rowdat = row.data();
+                    if (!rowdat) {
+                        table.row.add(data.row).draw();
+                    } else {
+                        row.data(data.row).draw();
+                    }
+                }
+            }
         });
 
         socket.on('parse_done', function (event_data) {
@@ -148,7 +172,7 @@ $(document).ready(function () {
             pbtn.prop("disabled", false);
             // let pbar = $('#progressbar');
 
-            numdone = rownum+1;
+            numdone = event_data.numrows;
             numintbl = table.rows().count()+1;  
             if (numintbl - numdone > 0) {
                 todel=[];

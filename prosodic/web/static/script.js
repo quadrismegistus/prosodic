@@ -88,6 +88,11 @@ function get_progbar() {
     return bar;
 }
 
+function get_progbar2() {
+    pjs=progressJs('#progressbar')
+    pjs.start();
+    return pjs;
+}
 
 
 
@@ -99,15 +104,15 @@ function get_progbar() {
 $(document).ready(function () {
     // GLOBAL VARS
     var table = get_table();
-    var bar = get_progbar();
+    var bar = get_progbar2();
     var socket = io();
 
     socket.on('connect', function () {
         function submit() {
             data = $('#inputform').serializeArray();
             bar.set(0.0);
-            bar.setText('parsing...');
-            $('#progressbar').fadeIn('fast');
+            // bar.setText('parsing...');
+            // $('#progressbar').fadeIn('fast');
             if (data) {
                 ojson = JSON.stringify(data);
                 socket.emit('parse', ojson);
@@ -117,7 +122,8 @@ $(document).ready(function () {
         socket.on('parse_result', function (event_data) {
             data = JSON.parse(event_data);
             rownum = data.rownum;
-            bar.animate(data.progress);
+            // bar.animate(data.progress);
+            bar.set(data.progress * 100);
             // table.row.add(data.row).draw();
             row = table.row(rownum);
             rowdat = row.data();
@@ -131,12 +137,12 @@ $(document).ready(function () {
                 remaining = Math.round(data.remaining);
                 if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
                 progress = Math.round(data.progress * 100);
-                bar.setText(progress.toString() + '% complete, eta: ' + remaining + 's');
+                // bar.setText(progress.toString() + '% complete, eta: ' + remaining + 's');
             } else {
                 let pbtn = $('#parsebtn');
                 pbtn.html('Parse');
                 pbtn.prop("disabled", false);
-                let pbar = $('#progressbar');
+                // let pbar = $('#progressbar');
 
                 numdone = rownum+1;
                 numintbl = table.rows().count()+1;  
@@ -149,8 +155,8 @@ $(document).ready(function () {
                 }
 
                 // setTimeout(function () {
-                bar.setText('');
-                pbar.fadeOut('slow');
+                // bar.setText('');
+                // pbar.fadeOut('slow');
             }
 
 

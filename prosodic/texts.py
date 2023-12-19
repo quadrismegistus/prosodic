@@ -8,7 +8,7 @@ class StanzaList(EntityList):
 class LineList(EntityList):
     pass
 
-
+NUMBUILT=0
 class Text(Entity):
     """
     Primarily the class one begins from, to create
@@ -74,6 +74,9 @@ class Text(Entity):
         Returns:
             None
         """
+        global NUMBUILT
+        NUMBUILT+=1
+        # print(NUMBUILT,len(txt),txt[:100])
         from .lines import Stanza
 
         if not txt and not fn and not children and tokens_df is None:

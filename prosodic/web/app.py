@@ -6,13 +6,12 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_socketio import send, emit
 from gevent import time as gtime
+# disable_caching()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
 socketio = SocketIO(app)
 
-@cache(maxsize=10)
-def get_text(txt): return Text(txt)
 
 # @app.websocket("/ws")
 @socketio.on('parse')
@@ -31,7 +30,7 @@ def parse(data):
     for c in constraints: data.pop('*'+c)
     meter_kwargs = data
     meter_kwargs['constraints'] = constraints
-    t = get_text(text)
+    t = Text(text)
     t.set_meter(**meter_kwargs)
     started = time.time()
     numtoiter = len(t.parseable_units)
@@ -50,10 +49,10 @@ def parse(data):
             data['row'] = [
                 parsed_line.stanza.num,
                 parsed_line.num,
-                parsed_line.txt,
+                parsed_line._txt,
                 parse.parse_rank,
                 f'<div class="parsestr">{html}</div>',
-                parse.txt,
+                parse._txt,
                 parse.meter_str,
                 parse.stress_str,
                 parse.num_sylls,

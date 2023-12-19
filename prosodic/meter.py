@@ -1,7 +1,7 @@
 from .imports import *
 from .constraints import *
 from .texts import Text
-
+NUM_GOING = 0
 # METER
 DEFAULT_METER_KWARGS = dict(
     constraints=DEFAULT_CONSTRAINTS,
@@ -102,22 +102,10 @@ class Meter(Entity):
 
     def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
-        # if not line.needs_parsing(force=force,meter=self):
-        #     return line._parses
-
-        if not force and self.use_cache_lines and caching_enabled():
-            parses = self.parses_from_cache(line)
-            if parses:
-                line._parses = parses
-                return parses
-
         if self.exhaustive:
             parses = self.parse_line_exhaustive(line)
         else:
             parses = self.parse_line_fast(line)
-
-        if self.use_cache_lines and caching_enabled():
-            self.cache(val_obj=parses, key=self.get_key(line))
         return parses
 
     def get_key(self, line):
@@ -131,7 +119,7 @@ class Meter(Entity):
         with logmap(
                 f'checking for cached {clsn} parses under key "{key[:8]}..."'
         ) as lm:
-            dat = self.from_cache(key=key, as_dict=True)
+            dat = self.from_cache(key=key, as_dict=True, use_redis=use_redis)
             if dat:
                 nchild = len(dat.get("children", [])) if dat else 0
                 lm.log(f"found {nchild:,} parses")
@@ -236,6 +224,9 @@ class Meter(Entity):
         use_mp=True,
         **kwargs
     ):
+        global NUM_GOING
+        NUM_GOING+=1
+        # print(NUM_GOING,type(type),text)
         from .parsing import ParseList
 
         assert type(text) in {Text, Stanza}
@@ -276,10 +267,11 @@ class Meter(Entity):
                 if num_proc < 1:
                     num_proc = 1
             desc = f"parsing {numlines} {text.parse_unit_attr}"
+
             if num_proc > 1:
                 desc += f" [{num_proc}x]"
             with logmap(desc) as lm:
-                if num_proc > 1:
+                if num_proc > 0:
                     iterr = self._parse_text_iter_mp(
                         text,
                         progress=progress,
@@ -288,32 +280,36 @@ class Meter(Entity):
                         lm=lm,
                         desc="parsing",
                     )
-                else:
-                    iterr = (
-                        self.parse_line(
-                            line,
-                            force=force,
-                            **kwargs,
-                        ) for line in lm.iter_progress(
-                            text.parseable_units,
-                            desc="parsing",
-                        )
-                    )
+                
+                
+                # @TODO: not working?
+                # else:
+                #     iterr = (
+                #         self.parse_line(
+                #             line,
+                #             force=force,
+                #             **kwargs,
+                #         ) for line in lm.iter_progress(
+                #             text.parseable_units,
+                #             desc="parsing",
+                #         )
+                #     )
 
-                newstanzas = set()
+                # newstanzas = set()
                 for i, parselist in enumerate(iterr):
                     line = text.parseable_units[i]
+                    parselist.line = line
                     line._parses = parselist
                     text._parses.extend(parselist)
                     line.stanza._parses.extend(parselist)
                     yield line
                     if line.num and line.stanza and line.stanza.num:
-                        if not line.stanza.num in newstanzas:
-                            newstanzas.add(line.stanza.num)
-                            lm.log(
-                                f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt}",
-                                linelim=70,
-                            )
+                        # if not line.stanza.num in newstanzas:
+                            # newstanzas.add(line.stanza.num)
+                        lm.log(
+                            f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt}",
+                            linelim=70,
+                        )
 
             if self.use_cache and caching_is_enabled():
                 self.cache(val_obj=text._parses, key=self.get_key(text))

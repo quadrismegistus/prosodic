@@ -111,6 +111,8 @@ h1, h2, h3, h4, h5 {
   left:0;
   /* width:100%; */
   height:1rem;
+  min-height:1rem;
+  border: 1px solid blue;
   /* height:1rem; */
   background-color: rgba(202, 202, 202, 0);
   /* height:50px; */

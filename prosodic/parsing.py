@@ -778,7 +778,7 @@ class ParseList(EntityList):
     def __init__(self, *args, line=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.line = line
-        self.rank()
+        # self.rank()
 
     @staticmethod
     def from_json(json_d, line=None, progress=False):

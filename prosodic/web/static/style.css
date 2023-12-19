@@ -97,6 +97,8 @@ h1, h2, h3, h4, h5 {
   font-weight: normal;
 }
 
+
+
 /* .stress_strong { text-decoration: underline; } */
 /* .stress_weak { text-decoration: none; } */
 #progressbar {
@@ -111,10 +113,14 @@ h1, h2, h3, h4, h5 {
   left:0;
   /* width:100%; */
   height:1rem;
+  min-height:1rem;
+  /* border: 1px solid blue; */
+  width:100%;
+  text-align:center;
   /* height:1rem; */
-  background-color: rgba(202, 202, 202, 0);
+  /* background-color: rgba(202, 202, 202, 0); */
   /* height:50px; */
-  color: rgba(0,0,0,1);
+  /* color: rgba(0,0,0,1); */
 }
 
 #parsebtn {
@@ -122,17 +128,18 @@ h1, h2, h3, h4, h5 {
   font-size: 18px;
   /* padding: 0.5rem 1rem; */
   /* width: 100px; */
-  width:auto;
-  height:40px;
+  width:90%;
+  height:4rem;
   border:0;
   border-radius:0;
-  margin:0 auto;
+  margin:.5rem auto;
   display:block;
-  /* -webkit-border-radius: 5px; */
-  /* -moz-border-radius: 5px; */
-  /* border-radius: 5px; */
-  /* border: 1px solid gray; */
-  background-color: rgba(202, 202, 202, .9);
+  padding: .5em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  background-color: rgba(202, 202, 202, .8);
+
 }
 
 #parsebtndiv {
@@ -164,8 +171,13 @@ table.dataTable tbody td {
 }
 
 #table_lines {
-  width: 100%;
+  margin:1rem;
+  margin-right:auto;
 }
+
+/*
+#table_lines tbody { width:100%;}
+#table_lines thead { width:100%;} */
 
 span.tooltip {
   position: relative;

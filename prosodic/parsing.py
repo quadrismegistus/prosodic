@@ -219,7 +219,7 @@ class Parse(Entity):
         return (
             int(bool(self.is_bounded)),
             self.score,
-            self.positions[0].is_prom,
+            self.positions[0].is_prom if self.positions else 10,
             self.average_position_size,
             self.num_stressed_sylls,
         )
@@ -778,7 +778,7 @@ class ParseList(EntityList):
     def __init__(self, *args, line=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.line = line
-        self.rank()
+        # self.rank()
 
     @staticmethod
     def from_json(json_d, line=None, progress=False):
@@ -811,10 +811,11 @@ class ParseList(EntityList):
         for parse in self:
             if parse.meter:
                 return parse.meter
+        if self.line: return self.line.meter
 
     def to_json(self, fn=None):
         return Entity.to_json(
-            self.scansions if not self.meter.exhaustive else self,
+            self.scansions,# if not self.meter.exhaustive else self,
             fn=fn,
             type=self.type
         )
@@ -825,7 +826,7 @@ class ParseList(EntityList):
 
     @cached_property
     def best(self):
-        return min(self.data)
+        return min(self.data) if self.data else None
 
     @cached_property
     def unbounded(self):

@@ -524,7 +524,7 @@ class Entity(UserList):
     def is_phon(self):
         return self.__class__.__name__ == "PhonemeClass"
 
-    def get_json_cache(self, flag="c", autocommit=True):
+    def get_json_cache(self, flag="c", autocommit=False):
         # return CompressedSqliteDict(
         return SqliteDict(
             os.path.join(
@@ -574,6 +574,7 @@ class Entity(UserList):
         if key and self.use_cache:
             cache = self.get_cache(use_redis=use_redis)
             if key in cache:
+                with logmap(announce=False) as lm: lm.log(f'found {key[:8]} in {cache.__class__.__name__}')
                 dat = decode_cache(cache[key])
                 if dat:
                     return from_json(dat) if not as_dict else dat
@@ -583,7 +584,7 @@ class Entity(UserList):
         with logmap(announce=False) as lm:
             if use_redis:
                 cache = self.redis_cache
-            if not cache:
+            if cache is None:
                 cache = self.json_cache
             return cache
 
@@ -603,7 +604,7 @@ class Entity(UserList):
         cache = self.get_cache(use_redis=use_redis)
         if key and (force or not key in cache):
             with logmap(
-                    f'saving object to {cache.__class__.__name__} under key "{key[:8]}..."'
+                    f'saving object to {cache.__class__.__name__} under key {key[:8]}'
             ):
                 with logmap("exporting to json"):
                     data = encode_cache(val_obj.to_json())

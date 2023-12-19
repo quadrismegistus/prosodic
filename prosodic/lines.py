@@ -157,3 +157,7 @@ class Line(Text):
 
     def stats_d(self, by="parse", **kwargs):
         return self.parses.stats_d(by=by, **kwargs)
+
+    @cached_property
+    def num_sylls(self):
+        return len(self.syllables)

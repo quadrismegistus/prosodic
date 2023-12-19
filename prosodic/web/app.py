@@ -96,6 +96,8 @@ def parse(data):
             emit('parse_result', jsonify(data))
             numrows+=1
             gtime.sleep(.01)
+    gtime.sleep(.1)
+    emit('parse_done', {'duration':time.time()-started, 'numrows':numrows})
 
 
 @app.route("/")

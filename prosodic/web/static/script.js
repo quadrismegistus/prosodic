@@ -133,35 +133,28 @@ $(document).ready(function () {
                 row.data(data.row).draw();
             }
 
-            if (data.progress != 1) {
-                remaining = Math.round(data.remaining);
-                if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
-                progress = Math.round(data.progress * 100);
-                msg = progress.toString() + '% complete, eta: ' + remaining + 's';
-                // bar.setText(msg);
-                $('#parsebtn').text(msg);
-            } else {
-                let pbtn = $('#parsebtn');
-                pbtn.html('Parse');
-                pbtn.prop("disabled", false);
-                // let pbar = $('#progressbar');
+            remaining = Math.round(data.remaining);
+            if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
+            progress = Math.round(data.progress * 100);
+            msg = progress.toString() + '% complete, eta: ' + remaining + 's';
+            $('#parsebtn').text(msg);
+        });
 
-                numdone = rownum+1;
-                numintbl = table.rows().count()+1;  
-                if (numintbl - numdone > 0) {
-                    todel=[];
-                    for (xi = numdone; xi < numintbl; xi++) {
-                        todel.push(xi);
-                    }
-                    table.rows(todel).remove().draw()
+        socket.on('parse_done', function (event_data) {
+            let pbtn = $('#parsebtn');
+            pbtn.html('Parse');
+            pbtn.prop("disabled", false);
+            // let pbar = $('#progressbar');
+
+            numdone = rownum+1;
+            numintbl = table.rows().count()+1;  
+            if (numintbl - numdone > 0) {
+                todel=[];
+                for (xi = numdone; xi < numintbl; xi++) {
+                    todel.push(xi);
                 }
-
-                // setTimeout(function () {
-                // bar.setText('');
-                // pbar.fadeOut('slow');
+                table.rows(todel).remove().draw()
             }
-
-
         });
 
 

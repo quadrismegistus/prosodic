@@ -102,6 +102,8 @@ class Meter(Entity):
 
     def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
+        if line.num_sylls<2:
+            return ParseList(type='line',line=line)
         if self.exhaustive:
             parses = self.parse_line_exhaustive(line)
         else:
@@ -307,7 +309,7 @@ class Meter(Entity):
                         # if not line.stanza.num in newstanzas:
                             # newstanzas.add(line.stanza.num)
                         lm.log(
-                            f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt}",
+                            f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt if line.best_parse else line.txt}",
                             linelim=70,
                         )
 

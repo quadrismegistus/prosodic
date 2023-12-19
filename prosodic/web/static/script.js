@@ -106,19 +106,19 @@ $(document).ready(function () {
     // var bar = get_progbar();
     var socket = io();
 
-    socket.on('connect', function () {
-        function submit() {
-            data = $('#inputform').serializeArray();
-            // bar.set(50);
-            // bar.setText('parsing...');
-            // $('#progressbar').fadeIn('fast');
-            // $('#progressbar').text('');
-            if (data) {
-                ojson = JSON.stringify(data);
-                socket.emit('parse', ojson);
-            }
+    function submit() {
+        data = $('#inputform').serializeArray();
+        // bar.set(50);
+        // bar.setText('parsing...');
+        // $('#progressbar').fadeIn('fast');
+        // $('#progressbar').text('');
+        if (data) {
+            ojson = JSON.stringify(data);
+            socket.emit('parse', ojson);
         }
+    }
 
+    // socket.on('connect', function () {
         socket.on('parse_result', function (event_data) {
             data = JSON.parse(event_data);
             rownum = data.rownum;
@@ -164,14 +164,16 @@ $(document).ready(function () {
 
         });
 
-        $('#parsebtn').on('click', function () {
-            // $('#progressbar').show();
-            let pbtn = $('#parsebtn');
-            pbtn.html('Parsing...');
-            pbtn.prop("disabled", true);
-            submit();
-        });
-        
-        setTimeout(function () { $('#parsebtn').click(); }, 500);
+
+    // });
+
+    $('#parsebtn').on('click', function () {
+        // $('#progressbar').show();
+        let pbtn = $('#parsebtn');
+        pbtn.html('Parsing...');
+        pbtn.prop("disabled", true);
+        submit();
     });
+    
+    setTimeout(function () { $('#parsebtn').click(); }, 500);
 });

@@ -545,7 +545,7 @@ class Entity(UserList):
         with logmap(announce=False) as lm:
             cache = RedisDict(
                 namespace=self.__class__.__name__,
-                host='134.209.216.92'
+                host=REDIS_HOST
             )
             try:
                 'x' in cache  # start
@@ -574,7 +574,8 @@ class Entity(UserList):
         if key and self.use_cache:
             cache = self.get_cache(use_redis=use_redis)
             if key in cache:
-                with logmap(announce=False) as lm: lm.log(f'found {key[:8]} in {cache.__class__.__name__}')
+                with logmap(announce=False) as lm:
+                    lm.log(f'found {key[:8]} in {cache.__class__.__name__}')
                 dat = decode_cache(cache[key])
                 if dat:
                     return from_json(dat) if not as_dict else dat

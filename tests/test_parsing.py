@@ -96,7 +96,9 @@ def test_bounding():
 
 
 def test_html():
-    html = Text("disaster disaster disaster").line1.best_parse.to_html(as_str=True)
+    html = Text("disaster disaster disaster").line1.best_parse.to_html(
+        as_str=True
+    )
     assert "mtr_s" in html
     assert "viol_y" in html
 
@@ -125,19 +127,17 @@ def test_standalone_parsing():
     p4 = Parse(l)
     assert p3.score == p4.score
 
-    l = list(Text("the horse the horse the kingdom for a horse").wordforms.data)
+    l = list(
+        Text("the horse the horse the kingdom for a horse").wordforms.data
+    )
     p5 = Parse(l)
     assert p5.score == p4.score
     assert p5 != p4
     assert p5 is not p4
 
     assert (
-        len(p5.slots)
-        == len(p4.slots)
-        == len(p3.slots)
-        == len(p2.slots)
-        == len(p1.slots)
-        == 10
+        len(p5.slots) == len(p4.slots) == len(p3.slots) == len(p2.slots) ==
+        len(p1.slots) == 10
     )
 
     p6 = Parse("my horse my horse my kingdom for a horse", "sw" * 5)
@@ -192,5 +192,5 @@ def test_parse_iter():
 
 def test_scansion():
     t = Text("into " * 3)
-    t.parse(exhaustive=True)
+    t.parse(exhaustive=True, force=True)
     assert len(t.parses.data) > len(t.parses.scansions.data)

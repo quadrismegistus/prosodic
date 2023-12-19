@@ -214,14 +214,17 @@ class Parse(Entity):
         return self.num_slots_positioned == len(self.wordforms.slots)
 
     @property
-    # @profile
     def sort_key(self):
         return (
+            self.stanza_num,
+            self.line_num,
             int(bool(self.is_bounded)),
             self.score,
             self.positions[0].is_prom if self.positions else 10,
             self.average_position_size,
             self.num_stressed_sylls,
+            self.meter_ints,
+            self.stress_ints
         )
 
     @cached_property
@@ -438,6 +441,16 @@ class Parse(Entity):
             for mpos in self.positions
             for slot in mpos.slots
         )
+
+    @property
+    def meter_ints(self, word_sep=""):
+        return tuple(
+            int(mpos.is_prom) for mpos in self.positions for slot in mpos.slots
+        )
+
+    @property
+    def stress_ints(self, word_sep=""):
+        return tuple(int(slot.is_stressed) for slot in self.slots)
 
     @property
     # @profile
@@ -815,7 +828,10 @@ class ParseList(EntityList):
 
     def to_json(self, fn=None):
         return Entity.to_json(
-            self.scansions,# if not self.meter.exhaustive else self,
+            (
+                self.scansions
+                if self.meter and not self.meter.exhaustive else self
+            ),
             fn=fn,
             type=self.type
         )

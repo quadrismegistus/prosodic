@@ -47,6 +47,7 @@ os.makedirs(PATH_HOME_DATA, exist_ok=True)
 USE_CACHE = True
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
+REDIS_HOST = '212.227.240.128'
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)

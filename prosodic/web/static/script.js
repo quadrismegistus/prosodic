@@ -75,13 +75,13 @@ function get_table() {
 function get_progbar() {
     var bar = new ProgressBar.Line('#progressbar', {
         color: 'rgba(202, 202, 202, .6)',
-        strokeWidth: 1,
-        duration: 0,
+        // strokeWidth: 1,
+        // duration: 0,
     });
 
     bar.setText('');
     bar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
-    bar.text.style.fontSize = '.6rem';
+    bar.text.style.fontSize = '.9rem';
     bar.text.style.margin = '0 auto';
     bar.text.style.color = 'rgba(0,0,0,0.5)';
 
@@ -89,8 +89,7 @@ function get_progbar() {
 }
 
 function get_progbar2() {
-    pjs=progressJs('#progressbar')
-    pjs.start();
+    pjs=progressJs().setOptions({'theme': 'black', 'overlayMode': true }).start();
     return pjs;
 }
 
@@ -104,15 +103,16 @@ function get_progbar2() {
 $(document).ready(function () {
     // GLOBAL VARS
     var table = get_table();
-    var bar = get_progbar2();
+    // var bar = get_progbar();
     var socket = io();
 
     socket.on('connect', function () {
         function submit() {
             data = $('#inputform').serializeArray();
-            bar.set(0.0);
+            // bar.set(50);
             // bar.setText('parsing...');
             // $('#progressbar').fadeIn('fast');
+            // $('#progressbar').text('');
             if (data) {
                 ojson = JSON.stringify(data);
                 socket.emit('parse', ojson);
@@ -123,7 +123,7 @@ $(document).ready(function () {
             data = JSON.parse(event_data);
             rownum = data.rownum;
             // bar.animate(data.progress);
-            bar.set(data.progress * 100);
+            // bar.set(data.progress * 100);
             // table.row.add(data.row).draw();
             row = table.row(rownum);
             rowdat = row.data();
@@ -137,7 +137,9 @@ $(document).ready(function () {
                 remaining = Math.round(data.remaining);
                 if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
                 progress = Math.round(data.progress * 100);
-                // bar.setText(progress.toString() + '% complete, eta: ' + remaining + 's');
+                msg = progress.toString() + '% complete, eta: ' + remaining + 's';
+                // bar.setText(msg);
+                $('#parsebtn').text(msg);
             } else {
                 let pbtn = $('#parsebtn');
                 pbtn.html('Parse');
@@ -167,7 +169,7 @@ $(document).ready(function () {
             let pbtn = $('#parsebtn');
             pbtn.html('Parsing...');
             pbtn.prop("disabled", true);
-            submit(bar);
+            submit();
         });
         
         setTimeout(function () { $('#parsebtn').click(); }, 500);

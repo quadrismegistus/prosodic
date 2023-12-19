@@ -112,11 +112,13 @@ h1, h2, h3, h4, h5 {
   /* width:100%; */
   height:1rem;
   min-height:1rem;
-  border: 1px solid blue;
+  /* border: 1px solid blue; */
+  width:100%;
+  text-align:center;
   /* height:1rem; */
-  background-color: rgba(202, 202, 202, 0);
+  /* background-color: rgba(202, 202, 202, 0); */
   /* height:50px; */
-  color: rgba(0,0,0,1);
+  /* color: rgba(0,0,0,1); */
 }
 
 #parsebtn {

@@ -59,12 +59,14 @@ function get_table() {
     var table = $('#table_lines').DataTable({
         dom: 'Bfrtip',
         buttons:buttons,
-        fixedHeader: true,
+        autoWidth: true,
+        // fixedHeader: true,
         scrollX: true,
         bScrollInfinite: true,
         bScrollCollapse: true,
         sScrollY: "82.5vh",
-        pageLength: 100,
+        // pageLength: 100,
+        paging: false,
         order: [[0, "asc"], [1, "asc"], [3, "asc"]],
         columnDefs: columnDefs
     });

@@ -97,6 +97,8 @@ h1, h2, h3, h4, h5 {
   font-weight: normal;
 }
 
+
+
 /* .stress_strong { text-decoration: underline; } */
 /* .stress_weak { text-decoration: none; } */
 #progressbar {
@@ -168,8 +170,13 @@ table.dataTable tbody td {
 }
 
 #table_lines {
-  width: 100%;
+  margin:1rem;
+  margin-right:auto;
 }
+
+/*
+#table_lines tbody { width:100%;}
+#table_lines thead { width:100%;} */
 
 span.tooltip {
   position: relative;

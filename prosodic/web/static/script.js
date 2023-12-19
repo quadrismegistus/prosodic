@@ -34,7 +34,6 @@ function get_table() {
             'visible':!invis_cols.has(i)
         })
     }
-    console.log('columnDefs',columnDefs);
 
     var buttons = [];
     var ext2header = {
@@ -110,7 +109,7 @@ $(document).ready(function () {
 
     function submit() {
         data = $('#inputform').serializeArray();
-        table.clear().draw();
+        // table.clear().draw();
         // bar.set(50);
         // bar.setText('parsing...');
         // $('#progressbar').fadeIn('fast');
@@ -126,7 +125,6 @@ $(document).ready(function () {
             // let compressedData = Uint8Array.from(atob(json_gz), (c) => c.charCodeAt(0));
             // let decompressedData = pako.inflate(compressedData, { to: "string" });
             let data_l = JSON.parse(decompressedData);
-            console.log(data_l);
 
             if (data_l.length) {
                 data = data_l[0];
@@ -153,7 +151,6 @@ $(document).ready(function () {
                 
 
                 for (data of data_l) {
-                    console.log(data);
                     rownum = data.rownum;
                     row = table.row(rownum);
                     rowdat = row.data();
@@ -193,6 +190,16 @@ $(document).ready(function () {
         pbtn.prop("disabled", true);
         submit();
     });
+
+    $('#inputtext').on('keypress', function (event) {
+        var textarea = $(this),
+            numberOfLines = (textarea.val().match(/\n/g) || []).length + 1,
+            maxRows = parseInt(textarea.attr('rows'));
+        
+        if (event.which === 13 && numberOfLines >= maxRows ) {
+          return false;
+        }
+      });
     
     setTimeout(function () { $('#parsebtn').click(); }, 500);
 });

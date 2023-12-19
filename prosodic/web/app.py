@@ -12,10 +12,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
 socketio = SocketIO(app, ping_timeout=60 * 5, ping_interval=5)
 
+linelim = 500
+
 
 @cache(maxsize=10)
 def get_text(txt):
     return Text(txt)
+
 
 # @app.websocket("/ws")
 @socketio.on('parse')
@@ -24,14 +27,17 @@ def parse(data):
     data = {
         d['name']: (
             int(d['value'])
-            if d['value'].isdigit() and d['name']!='text'
-            else d['value']
+            if d['value'].isdigit() and d['name'] != 'text' else d['value']
         )
         for d in data
     }
     text = data.pop('text')
-    constraints = tuple(x[1:] for x in list(data.keys()) if x and x[0]=='*')
-    for c in constraints: data.pop('*'+c)
+    lines = text.split('\n')[:linelim]
+    text = '\n'.join(lines)
+
+    constraints = tuple(x[1:] for x in list(data.keys()) if x and x[0] == '*')
+    for c in constraints:
+        data.pop('*' + c)
     meter_kwargs = data
     meter_kwargs['constraints'] = constraints
     t = get_text(text)
@@ -39,9 +45,9 @@ def parse(data):
     started = time.time()
     numtoiter = len(t.parseable_units)
     remainings = []
-    numrows=0
+    numrows = 0
     for i, parsed_line in enumerate(t.parse_iter()):
-        data_out_l=[]
+        data_out_l = []
         for pi, parse in enumerate(parsed_line.parses.unbounded):
             html = parsed_line.to_html(
                 parse=parse,
@@ -85,11 +91,12 @@ def parse(data):
                 ) for cname in CONSTRAINTS
             ]
             data['row'] = ['' if not x else x for x in data['row']]
+
             def ctype(pi):
                 return 'otherparse' if pi else 'bestparse'
+
             data['row'] = [
-                f'<span class="{ctype(pi)}">{x}</span>'
-                for x in data['row']
+                f'<span class="{ctype(pi)}">{x}</span>' for x in data['row']
             ]
             data['progress'] = (i + 1) / len(t.parseable_units)
             sofar = time.time() - started
@@ -103,13 +110,13 @@ def parse(data):
             data['numlines'] = numtoiter
             data['duration'] = sofar
             data_out_l.append(data)
-            numrows+=1
+            numrows += 1
         gtime.sleep(.01)
         # out = encode_cache(data_out_l)
         out = jsonify(data_out_l)
         emit('parse_result', out)
     gtime.sleep(.1)
-    emit('parse_done', {'duration':time.time()-started, 'numrows':numrows})
+    emit('parse_done', {'duration': time.time() - started, 'numrows': numrows})
 
 
 @app.route("/")
@@ -127,13 +134,7 @@ def main(port=None, host=None, debug=True, **kwargs):
     if port is None: port = 5111
     if debug: logmap.enable()
     # app.run(port=port, debug=debug, host=host, **kwargs)
-    socketio.run(
-        app,
-        port=port, 
-        debug=debug, 
-        host=host, 
-        **kwargs
-    )
+    socketio.run(app, port=port, debug=debug, host=host, **kwargs)
 
 
 def jsonify(x):

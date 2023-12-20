@@ -145,8 +145,14 @@ h1, h2, h3, h4, h5 {
   background-color: rgba(202, 202, 202, .8);
 }
 
+#parsebtn:active { 
+  font-size:1.25em;
+  background-color: rgba(202, 202, 202, .9);
+  box-shadow: 3px 2px 22px 3px rgba(0, 0, 0, 0.24); 
+}
+
 #parsebtn:disabled { 
-  color:rgba(0,0,0,.9);
+  color:rgba(0,0,0,.8);
   /* box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.24);  */
   /* border:3px dotted gray; */
   background: repeating-linear-gradient(

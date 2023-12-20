@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
 socketio = SocketIO(app, ping_timeout=60 * 5, ping_interval=5)
 
-linelim = 100
+linelim = 1000
 
 
 @cache(maxsize=10)

@@ -45,6 +45,7 @@ def parse(data):
     started = time.time()
     numtoiter = len(t.parseable_units)
     remainings = []
+    rates = []
     numrows = 0
     for i, parsed_line in enumerate(t.parse_iter()):
         data_out_l = []
@@ -103,7 +104,9 @@ def parse(data):
             rate = sofar / (i + 1)
             remaining = (numtoiter - i - 1) * rate
             remainings.append(remaining)
-            data['remaining'] = float(np.median(remainings[-2:]))
+            rates.append(rate)
+            data['remaining'] = float(np.median(remainings[-10:]))
+            data['rate'] = float(np.median(rates[-10:]))
             data['rownum'] = numrows
             data['numdone'] = numdone = i + 1
             data['numtodo'] = numtoiter - numdone

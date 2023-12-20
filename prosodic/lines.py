@@ -81,8 +81,11 @@ class Line(Text):
                 targets = [wf for wf in target_wfl if wf.key == correct_wf.key]
                 if len(targets) != 1:
                     pprint([correct_wf, target_wfl, targets])
-                    raise Exception("too many candidates")
-                yield targets[0]
+                    with logmap(announce=False) as lm:
+                        lm.error("too many candidates")
+
+                if targets:
+                    yield targets[0]
 
         return WordFormList(iterr())
 

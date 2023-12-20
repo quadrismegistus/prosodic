@@ -87,7 +87,7 @@ class Line(Text):
                 if targets:
                     yield targets[0]
                 else:
-                    yield correct_wf
+                    yield target_wfl[0]
 
         return WordFormList(iterr())
 

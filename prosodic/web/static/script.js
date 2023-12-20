@@ -202,7 +202,7 @@ $(document).ready(function () {
     $('#inputtext').on('keypress', function (event) {
         var textarea = $(this),
             numberOfLines = (textarea.val().match(/\n/g) || []).length + 1,
-            maxRows = parseInt(textarea.attr('rows'));
+            maxRows = 1000;
         
         if (event.which === 13 && numberOfLines >= maxRows ) {
           return false;

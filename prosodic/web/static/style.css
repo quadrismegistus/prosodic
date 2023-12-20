@@ -54,9 +54,17 @@ h1, h2, h3, h4, h5 {
   margin: 1rem 0;
 }
 
-#header {
+#title {
   margin-bottom: 1rem;
   text-align: center;
+  margin:0;
+  padding:1rem;
+}
+#subtitle {
+  margin:0;
+  padding:1rem;
+  padding-top:0;
+  width:90%;
 }
 
 #layout {
@@ -297,3 +305,44 @@ label .caption {
 
 
 .otherparse .tooltip { opacity: 1 !important; }
+
+
+#header a, #header a:hover, #header a:visited, #header a:active { 
+  color:black;
+}
+
+h1 a { text-decoration: none; color:black;}
+
+
+
+
+
+.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
+.parse { line-height:2.5em; letter-spacing:.1em;}
+.parselist { list-style-type: none; }
+.parselist li { padding-left:2em;}
+.parselist li:nth-child(5n) { list-style-type: decimal; }
+.parse { text-decoration-offset:5px; }
+
+.viol_y { text-decoration-color:#f43838; color: #f43838; }
+.mtr_s { text-decoration: overline; }
+.str_s { font-weight:600; }
+.parselist > li:first-of-type { list-style-type: decimal; }
+.parselist > li:last-of-type { list-style-type: decimal; }
+
+
+.legend {
+  position:absolute;
+  bottom:0;
+  right:0;
+  display:flex;
+  z-index:100;
+  letter-spacing:.1em;
+  /* word-spacing: 30px; */
+  font-size:.9em;
+
+}
+
+.legend label {
+  font-style: italic;
+}

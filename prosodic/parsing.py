@@ -145,6 +145,10 @@ class Parse(Entity):
     def slots(self):
         return [slot for mpos in self.positions for slot in mpos.slots]
 
+    @property
+    def is_complete(self):
+        return len(self.slots) == len(self.syllables)
+
     def extend(self, mpos_str: str):  # ww for 2 slots, w for 1, etc
         slots = []
         mval = mpos_str[0]
@@ -254,10 +258,20 @@ class Parse(Entity):
         return self is other
 
     def can_compare(self, other, min_slots=4):
-        if self.num_slots_positioned != other.num_slots_positioned:
+        if ((self.stanza_num,
+             self.line_num) != (other.stanza_num,
+                                other.line_num)):
             return False
+
         if min_slots and self.num_slots_positioned < min_slots:
             return False
+
+        if self.is_complete and other.is_complete:
+            return True
+
+        if self.num_slots_positioned != other.num_slots_positioned:
+            return False
+
         return True
 
     @cached_property

@@ -127,7 +127,8 @@ h1, h2, h3, h4, h5 {
 }
 
 #parsebtn {
-  font-family: monospace;
+  /* font-family: monospace; */
+  font-family: Georgia, 'Times New Roman', Times, serif;
   font-size: 18px;
   /* padding: 0.5rem 1rem; */
   /* width: 100px; */
@@ -142,8 +143,23 @@ h1, h2, h3, h4, h5 {
   -moz-border-radius: 5px;
   border-radius: 5px;
   background-color: rgba(202, 202, 202, .8);
-
 }
+
+#parsebtn:disabled { 
+  color:rgba(0,0,0,.9);
+  /* box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.24);  */
+  /* border:3px dotted gray; */
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,0.05),
+    rgba(0,0,0,0.05) 10px,
+    rgba(0,0,0,0.15) 10px,
+    rgba(0,0,0,0.1) 20px
+  );
+  
+}
+
+#parsebtn small {font-size:.9em; letter-spacing:.05em;}
 
 #parsebtndiv {
   text-align: center;

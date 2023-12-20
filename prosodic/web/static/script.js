@@ -143,9 +143,10 @@ $(document).ready(function () {
                 if (remaining == 0) { remaining = '<1' } else { remaining = remaining.toString(); }
                 progress = Math.round(data.progress * 100);
                 rate = Math.round(1/rate*10)/10;
+                sofar = Math.round(duration);
                 msg = (
                     'Parsed '+numdone.toString()+'/'+numlines.toString() +' lines '
-                    + '<br/><small> ('+progress.toString() + '%, '+rate.toString()+'it/s, eta: ' + remaining + 's)</small>'
+                    + '<br/><small> ('+progress.toString() + '% in '+sofar.toString()+'s, '+rate.toString()+'it/s, eta: ' + remaining + 's)</small>'
                 )
                 $('#parsebtn').html(msg);
 

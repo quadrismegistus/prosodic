@@ -79,10 +79,10 @@ class Line(Text):
         def iterr():
             for correct_wf, target_wfl in zip(wordforms, wordforms_ll):
                 targets = [wf for wf in target_wfl if wf.key == correct_wf.key]
-                if len(targets) != 1:
-                    pprint([correct_wf, target_wfl, targets])
-                    with logmap(announce=False) as lm:
-                        lm.error("too many candidates")
+                # if len(targets) != 1:
+                # pprint([correct_wf, target_wfl, targets])
+                # with logmap(announce=False) as lm:
+                # lm.error("too many candidates")
 
                 if targets:
                     yield targets[0]

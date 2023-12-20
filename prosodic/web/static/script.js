@@ -17,7 +17,7 @@ function getCurrentDateTime() {
 function get_table() {
     var export_cols = [0, 1, 2, 3, 5, 6, 7, 8, 9, 10];
     for (i in all_constraints) {
-        export_cols.push(i+11);
+        export_cols.push(parseInt(i)+11);
     }
 
     var export_opts = {
@@ -54,6 +54,7 @@ function get_table() {
         }
         buttons.push(d);
     }
+    console.log('buttons',buttons);
 
     var table = $('#table_lines').DataTable({
         dom: 'Bfrtip',

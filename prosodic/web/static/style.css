@@ -333,8 +333,8 @@ h1 a { text-decoration: none; color:black;}
 
 .legend {
   position:absolute;
-  bottom:0;
-  right:0;
+  bottom:.5rem;
+  right:1rem;
   display:flex;
   z-index:100;
   letter-spacing:.1em;

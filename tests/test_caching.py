@@ -22,13 +22,16 @@ def test_cache_text():
 
 def test_cache_parses():
     with caching_enabled():
-        t = Text(lstr)
+        # t = Text(lstr)
+        t = Line(lstr)
         t.parse(force=True)
-        t2 = Text(lstr)
+        # t2 = Text(lstr)
+        t2 = Line(lstr)
         assert t2.parses_from_cache()
 
     with caching_disabled():
-        t = Text(lstr)
+        # t = Text(lstr)
+        t = Line(lstr)
         assert not t.parses_from_cache()
 
 

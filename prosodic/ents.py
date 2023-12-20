@@ -574,9 +574,13 @@ class Entity(UserList):
         if key and self.use_cache:
             cache = self.get_cache(use_redis=use_redis)
             if key in cache:
-                with logmap(announce=False) as lm:
-                    lm.log(f'found {key[:8]} in {cache.__class__.__name__}')
                 dat = decode_cache(cache[key])
+                # nchild = len(dat.get('children', []))
+                # with logmap(announce=False) as lm:
+                #     lm.log(
+                #         f'found {nchild} parses in {cache.__class__.__name__} under {key[:8]}',
+                #         level='trace'
+                #     )
                 if dat:
                     return from_json(dat) if not as_dict else dat
 
@@ -607,9 +611,9 @@ class Entity(UserList):
             with logmap(
                     f'saving object to {cache.__class__.__name__} under key {key[:8]}'
             ):
-                with logmap("exporting to json"):
+                with logmap("exporting to json", level='trace'):
                     data = encode_cache(val_obj.to_json())
-                with logmap("uploading json to cache"):
+                with logmap("uploading json to cache", level='trace'):
                     cache[key] = data
 
 

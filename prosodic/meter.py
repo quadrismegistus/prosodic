@@ -42,6 +42,10 @@ class Meter(Entity):
 
     @property
     def use_cache_lines(self):
+        return self.use_cache
+
+    @property
+    def use_cache_texts(self):
         return False
 
     def to_json(self):
@@ -105,10 +109,21 @@ class Meter(Entity):
         assert line.is_parseable
         if line.num_sylls < 2:
             return ParseList(type='line', line=line)
+
+        if not force and self.use_cache_lines and caching_is_enabled():
+            parses = self.parses_from_cache(line)
+            line._parses = parses
+            if parses:
+                return parses
+
         if self.exhaustive:
             parses = self.parse_line_exhaustive(line)
         else:
             parses = self.parse_line_fast(line)
+
+        if self.use_cache_lines and caching_is_enabled():
+            self.cache(val_obj=parses, key=self.get_key(line))
+
         return parses
 
     def get_key(self, line):
@@ -119,21 +134,21 @@ class Meter(Entity):
 
         key = self.get_key(line)
         clsn = line.__class__.__name__.lower()
-        with logmap(
-                f'checking for cached {clsn} parses under key "{key[:8]}..."'
-        ) as lm:
-            dat = self.from_cache(key=key, as_dict=True, use_redis=use_redis)
-            if dat:
-                nchild = len(dat.get("children", [])) if dat else 0
-                lm.log(f"found {nchild:,} parses")
-                if as_dict:
-                    return dat
-                with logmap('converting cache result to parses'):
-                    return ParseList.from_json(
-                        dat,
-                        line=line,
-                        progress=nchild >= 100,
-                    )
+        # with logmap(
+        #         f'checking for cached {clsn} parses under key "{key[:8]}..."'
+        # ) as lm:
+        dat = self.from_cache(key=key, as_dict=True, use_redis=use_redis)
+        if dat:
+            nchild = len(dat.get("children", [])) if dat else 0
+            # lm.log(f"found {nchild:,} parses")
+            if as_dict:
+                return dat
+            with logmap('converting cache result to parses'):
+                return ParseList.from_json(
+                    dat,
+                    line=line,
+                    progress=nchild >= 100,
+                )
 
     def parse_line_fast(self, line, force=False):
         from .parsing import ParseList, Parse
@@ -235,7 +250,7 @@ class Meter(Entity):
         assert type(text) in {Text, Stanza}
 
         done = False
-        if not force and self.use_cache and caching_is_enabled():
+        if not force and self.use_cache_texts and caching_is_enabled():
             parses = self.parses_from_cache(text)
             if parses:
                 text._parses = parses
@@ -311,7 +326,7 @@ class Meter(Entity):
                             linelim=70,
                         )
 
-            if self.use_cache and caching_is_enabled():
+            if self.use_cache_texts and caching_is_enabled():
                 self.cache(val_obj=text._parses, key=self.get_key(text))
 
     def _parse_text_iter_mp(
@@ -330,7 +345,7 @@ class Meter(Entity):
             (
                 line.to_json(),
                 self.to_json(),
-                force or not self.use_cache_lines or caching_is_disabled()
+                force or not self.use_cache_lines or not caching_is_enabled()
             ) for line in text.parseable_units
         ]
         iterr = lm.imap(

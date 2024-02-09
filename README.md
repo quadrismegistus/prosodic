@@ -921,13 +921,7 @@ line_from_richardIII.best_parse
 
 
 
-<style>.violation { color:#f43838; }
-.meter_strong { text-decoration: overline;}
-.miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
-.parse {font-family:monospace;}
-.stress_strong { text-decoration: underline; text-underline-offset: 3px; }
-.stress_strong.meter_strong { text-decoration: underline overline; text-underline-offset: 3px; }
-</style><div class="parse"><span class="meter_weak stress_weak">A</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">my</span> <span class="meter_strong stress_strong">king</span><span class="meter_weak stress_weak">dom</span> <span class="meter_strong stress_weak violation">for</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span></div><div class="miniquote">⎿ Parse(rank=1, meter='-+-+-+-+-+', stress='-+-+-+---+', score=1, is_bounded=0)</div>
+<div class="parse"><span class="meter_weak stress_weak">A</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">my</span> <span class="meter_strong stress_strong">king</span><span class="meter_weak stress_weak">dom</span> <span class="meter_strong stress_weak violation">for</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span></div><div class="miniquote">⎿ Parse(rank=1, meter='-+-+-+-+-+', stress='-+-+-+---+', score=1, is_bounded=0)</div>
 
 
 

@@ -70,7 +70,7 @@ Leese but their show; their substance still lives sweet.
 """)
 
 # can also load by filename
-shaksonnets = prosodic.Text(filename='corpora/corppoetry_en/en.shakespeare.txt')
+shaksonnets = prosodic.Text(fn='corpora/corppoetry_en/en.shakespeare.txt')
 ```
 
 #### Stanzas, lines, words, syllables, phonemes

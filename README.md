@@ -10,10 +10,10 @@ Supports Python>=3.8.
 
 ### 1. Install python package
 
-For now, pip-install directly from this develop branch:
+For now, pip-install directly from github:
 
 ```
-pip install git+https://github.com/quadrismegistus/prosodic@develop
+pip install git+https://github.com/quadrismegistus/prosodic
 ```
 
 ### 2. Install espeak

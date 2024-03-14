@@ -1,6 +1,32 @@
 from .imports import *
 
 
+def group_ents(l, feat):
+    val = None
+    ol = []
+    lx = []
+    for x in l:
+        valx = getattr(x, feat)
+        if valx is not val and lx:
+            ol.append(lx)
+            lx = []
+        lx.append(x)
+        val = valx
+    if lx:
+        ol.append(lx)
+    return ol
+
+
+def groupby(df: pd.DataFrame, groupby: list):
+    allcols = set(df.index.names) | {df.index.name} | set(df.columns)
+    if type(groupby) == str:
+        groupby = [groupby]
+    gby = [g for g in groupby if g in allcols]
+    if not gby:
+        raise Exception("No group after filter")
+    return df.groupby(gby)
+
+
 def get_txt(txt, fn):
     if txt:
         if txt.startswith("http") or os.path.exists(txt):
@@ -28,8 +54,8 @@ def clean_text(txt):
 
 def get_attr_str(attrs, sep=", ", bad_keys=None):
     strs = [
-        f"{k}={repr(v)}" for k,
-        v in attrs.items()
+        f"{k}={repr(v)}"
+        for k, v in attrs.items()
         if v is not None and (not bad_keys or not k in set(bad_keys))
     ]
     attrstr = sep.join(strs)
@@ -78,9 +104,7 @@ def get_possible_scansions(nsyll, max_s=METER_MAX_S, max_w=METER_MAX_W):
     if max_w is None:
         max_w = nsyll
     return [
-        l for l in iter_mpos(nsyll,
-                             max_s=max_s,
-                             max_w=max_w) if getlenparse(l) == nsyll
+        l for l in iter_mpos(nsyll, max_s=max_s, max_w=max_w) if getlenparse(l) == nsyll
     ]
 
 
@@ -88,13 +112,7 @@ def getlenparse(l):
     return sum(len(x) for x in l)
 
 
-def iter_mpos(
-    nsyll,
-    starter=[],
-    pos_types=None,
-    max_s=METER_MAX_S,
-    max_w=METER_MAX_W
-):
+def iter_mpos(nsyll, starter=[], pos_types=None, max_s=METER_MAX_S, max_w=METER_MAX_W):
     if pos_types is None:
         wtypes = ["w" * n for n in range(1, max_w + 1)]
         stypes = ["s" * n for n in range(1, max_s + 1)]
@@ -198,8 +216,7 @@ def to_json(obj, fn=None):
         with open(fn, "wb") as of:
             of.write(
                 orjson.dumps(
-                    data,
-                    option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
+                    data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
                 )
             )
 
@@ -215,10 +232,12 @@ from base64 import b64decode, b64encode
 
 def encode_cache(x):
     return b64encode(
-        zlib.compress(orjson.dumps(
-            x,
-            option=orjson.OPT_SERIALIZE_NUMPY,
-        ))
+        zlib.compress(
+            orjson.dumps(
+                x,
+                option=orjson.OPT_SERIALIZE_NUMPY,
+            )
+        )
     ).decode()
 
 
@@ -278,7 +297,8 @@ def caching_enabled():
     was_loud = caching_is_enabled()
     enable_caching()
     yield
-    if not was_loud: disable_caching()
+    if not was_loud:
+        disable_caching()
 
 
 @contextmanager
@@ -286,7 +306,8 @@ def caching_disabled():
     was_loud = caching_is_enabled()
     disable_caching()
     yield
-    if was_loud: enable_caching()
+    if was_loud:
+        enable_caching()
 
 
 @contextmanager

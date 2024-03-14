@@ -37,7 +37,7 @@ from contextlib import contextmanager
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
-PATH_WEB = os.path.join(PATH_REPO, 'prosodic', 'web')
+PATH_WEB = os.path.join(PATH_REPO, "prosodic", "web")
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")
@@ -47,7 +47,7 @@ os.makedirs(PATH_HOME_DATA, exist_ok=True)
 USE_CACHE = True
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
-REDIS_HOST = '212.227.240.128'
+REDIS_HOST = "212.227.240.128"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
@@ -108,6 +108,7 @@ DF_INDEX = [
     "syll_ipa",
     "meterslot_num",
     "meterslot_txt",
+    "phon_txt",
 ]
 DF_COLS_RENAME = {
     "wordtoken_sent_num": "sent_num",
@@ -193,6 +194,13 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+
+GROUPBY_STANZA = ["stanza_num"]
+GROUPBY_LINE = GROUPBY_STANZA + ["line_num", "sent_num", "sentpart_num"]
+GROUPBY_WORD = GROUPBY_LINE + ["wordtoken_num", "wordform_num"]
+GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
+
 
 from .utils import *
 from .tokenizers import *

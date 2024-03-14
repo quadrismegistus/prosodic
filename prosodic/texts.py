@@ -6,7 +6,15 @@ class StanzaList(EntityList):
 
 
 class LineList(EntityList):
-    pass
+    def get_rhyming_lines(self, max_dist=None):
+        o = []
+        for i1, line1 in enumerate(self.data):
+            for i2, line2 in enumerate(self.data):
+                if i1 < i2:
+                    dist = line1.rime_distance(line2)
+                    if max_dist is None or dist <= max_dist:
+                        o.append((dist, line1, line2))
+        return sorted(o, key=lambda x: x[0])
 
 
 NUMBUILT = 0
@@ -29,6 +37,7 @@ class Text(Entity):
         use_cache (bool): Flag to determine if caching should be used. Default value is taken from USE_CACHE.
         cached_properties_to_clear (list of str): List of property names whose cache should be cleared when appropriate.
     """
+
     sep: str = ""
     child_type: str = "Stanza"
     prefix = "text"
@@ -106,11 +115,9 @@ class Text(Entity):
                         tokens_df = tokenize_sentwords_df(txt)
                     with logmap("building stanzas") as lm2:
                         children = [
-                            Stanza(parent=self,
-                                   tokens_df=stanza_df) for i,
-                            stanza_df in lm2.iter_progress(
-                                tokens_df.groupby("stanza_i"),
-                                desc="iterating stanzas"
+                            Stanza(parent=self, tokens_df=stanza_df)
+                            for i, stanza_df in lm2.iter_progress(
+                                tokens_df.groupby("stanza_i"), desc="iterating stanzas"
                             )
                         ]
         super().__init__(txt, children=children, parent=parent, **kwargs)
@@ -186,12 +193,14 @@ class Text(Entity):
             return True
         if meter is not None and meter.attrs != self._mtr.attrs:
             return True
-        if (meter_kwargs
-                and Meter(**{**self._mtr.attrs,
-                             **meter_kwargs}).attrs != self._mtr.attrs):
+        if (
+            meter_kwargs
+            and Meter(**{**self._mtr.attrs, **meter_kwargs}).attrs != self._mtr.attrs
+        ):
             return True
         if not self.is_parseable and self._parses.num_lines != len(
-                self.parseable_units):
+            self.parseable_units
+        ):
             return True
         return False
 
@@ -201,10 +210,7 @@ class Text(Entity):
         return self._parses
 
     def render(self, as_str=False, blockquote=False, **meter_kwargs):
-        return self.parse(**meter_kwargs).render(
-            as_str=as_str,
-            blockquote=blockquote
-        )
+        return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
 
     def reset_meter(self, **meter_kwargs):
         from .meter import DEFAULT_METER_KWARGS
@@ -260,6 +266,10 @@ class Text(Entity):
     def to_html(self, as_str=False, blockquote=False):
         return self.parses.to_html(as_str=as_str, blockquote=blockquote)
 
+    @cached_property
+    def is_rhyming(self):
+        return any([st.is_rhyming for st in self.stanzas])
+
 
 class Stanza(Text):
     sep: str = ""
@@ -285,9 +295,8 @@ class Stanza(Text):
             if tokens_df is None:
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
-                Line(parent=self,
-                     tokens_df=line_df) for line_i,
-                line_df in tokens_df.groupby("line_i")
+                Line(parent=self, tokens_df=line_df)
+                for line_i, line_df in tokens_df.groupby("line_i")
             ]
         Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
 
@@ -295,5 +304,11 @@ class Stanza(Text):
         return Entity.to_json(self, no_txt=True)
 
     def _repr_html_(self, as_df=False, df=None):
-        return super()._repr_html_(df=df
-                                   ) if as_df else self.to_html(as_str=True)
+        return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)
+
+    def get_rhyming_lines(self, max_dist=None):
+        return self.children.get_rhyming_lines(max_dist=max_dist)
+
+    @cached_property
+    def is_rhyming(self):
+        return len(self.get_rhyming_lines(max_dist=0)) > 1

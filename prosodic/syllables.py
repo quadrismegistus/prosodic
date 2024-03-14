@@ -2,7 +2,35 @@ from .imports import *
 
 
 class PhonemeList(EntityList):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        def do_phons(phons):
+            vowel_yet = False
+            for phon in phons:
+                if not phon.is_vowel:
+                    if not vowel_yet:
+                        phon._attrs["is_onset"] = True
+                        phon._attrs["is_rime"] = False
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = False
+                    else:
+                        phon._attrs["is_onset"] = False
+                        phon._attrs["is_rime"] = True
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = True
+                else:
+                    vowel_yet = True
+                    phon._attrs["is_onset"] = False
+                    phon._attrs["is_rime"] = True
+                    phon._attrs["is_nucleus"] = True
+                    phon._attrs["is_coda"] = False
+
+        # get syll specific feats
+        phons_by_syll = group_ents(self.children, "syllable")
+
+        for phons in phons_by_syll:
+            do_phons(phons)
 
 
 class Syllable(Entity):
@@ -83,3 +111,43 @@ class Syllable(Entity):
             return True
         if self.next and self.next.is_stressed:
             return True
+
+    @cached_property
+    def onset(self):
+        return PhonemeList(p for p in self.children if p.is_onset)
+
+    @cached_property
+    def rime(self):
+        return PhonemeList(p for p in self.children if p.is_rime)
+
+    @cached_property
+    def nucleus(self):
+        return PhonemeList(p for p in self.children if p.is_nucleus)
+
+    @cached_property
+    def coda(self):
+        return PhonemeList(p for p in self.children if p.is_coda)
+
+    @cache
+    def rime_distance(self, syllable):
+        from scipy.spatial.distance import euclidean
+
+        df1 = self.rime.df
+        df2 = syllable.rime.df
+
+        if list(df1.reset_index().phon_txt) == list(df2.reset_index().phon_txt):
+            return 0
+
+        s1 = df1.mean(numeric_only=True)
+        s2 = df2.mean(numeric_only=True)
+        keys = [
+            k
+            for k in set(s1.index) & set(s2.index)
+            if k.startswith("phon_")
+            and not k.endswith("_num")
+            and not k.startswith("phon_is_")
+        ]
+        s1x = s1.loc[keys]
+        s2x = s2.loc[keys]
+        dist = euclidean(s1x, s2x)
+        return dist

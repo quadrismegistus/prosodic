@@ -234,3 +234,7 @@ class WordForm(Entity):
 
     def to_hash(self):
         return hashstr(self.key)
+
+    @cache
+    def rime_distance(self, wordform):
+        return self.syllables[-1].rime_distance(wordform.syllables[-1])

@@ -37,8 +37,7 @@ class Line(Text):
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
                 WordToken(
-                    txt=word_d.get("word_str",
-                                   ""),
+                    txt=word_d.get("word_str", ""),
                     lang=lang,
                     parent=self,
                     sent_num=word_d.get("sent_i"),
@@ -47,13 +46,7 @@ class Line(Text):
                 for word_d in tokens_df.to_dict("records")
                 if "word_str" in word_d  # and 'word_ispunc'
             ]
-        Entity.__init__(
-            self,
-            txt=txt,
-            children=children,
-            parent=parent,
-            **kwargs
-        )
+        Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self.is_parseable = True
 
@@ -94,14 +87,7 @@ class Line(Text):
     def to_json(self):
         return Entity.to_json(self, txt=self.txt)
 
-    def to_html(
-        self,
-        parse=None,
-        as_str=False,
-        css=HTML_CSS,
-        tooltip=False,
-        **kwargs
-    ):
+    def to_html(self, parse=None, as_str=False, css=HTML_CSS, tooltip=False, **kwargs):
         if parse is None:
             parse = min(self._parses)
 
@@ -125,7 +111,7 @@ class Line(Text):
                         "meter": spclass,
                         "stress": stclass,
                         "viol": vclass,
-                        "viols": list(slot.violset)
+                        "viols": list(slot.violset),
                     }
                     output.append(odx)
             else:
@@ -141,13 +127,13 @@ class Line(Text):
 
             if tooltip and row.viols:
                 # viol_str = ' '.join(sorted(row.viols))
-                viol_strs = [f'<li>{viol}</li>' for viol in sorted(row.viols)]
+                viol_strs = [f"<li>{viol}</li>" for viol in sorted(row.viols)]
                 viol_str = f'<ol>{"".join(viol_strs)}</ol>'
-                viol_title = f'Violated {len(row.viols)} constraints: {viol_str}'
+                viol_title = f"Violated {len(row.viols)} constraints: {viol_str}"
                 rowtxt = f'{row.txt}<span class="tooltip">{viol_title}</span>'
-                tooltip = ' tooltip'
+                tooltip = " tooltip"
             else:
-                tooltip = ''
+                tooltip = ""
                 rowtxt = row.txt
 
             return f'<span class="{row.meter} {row.stress} {row.viol}{tooltip}">{rowtxt}</span>'
@@ -166,3 +152,7 @@ class Line(Text):
     @cached_property
     def num_sylls(self):
         return len(self.syllables)
+
+    @cache
+    def rime_distance(self, line):
+        return self.wordforms[-1].rime_distance(line.wordforms[-1])

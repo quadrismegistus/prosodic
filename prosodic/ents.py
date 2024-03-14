@@ -40,9 +40,7 @@ class Entity(UserList):
 
     def to_hash(self):
         return hashstr(
-            self.txt,
-            tuple(sorted(self._attrs.items())),
-            self.__class__.__name__
+            self.txt, tuple(sorted(self._attrs.items())), self.__class__.__name__
         )
 
     @cached_property
@@ -53,11 +51,7 @@ class Entity(UserList):
     @cached_property
     def key(self):
         attrs = {
-            **{
-                k: v
-                for k,
-                v in self.attrs.items() if v is not None
-            },
+            **{k: v for k, v in self.attrs.items() if v is not None},
             "txt": self._txt,
         }
         return f"{self.__class__.__name__}({get_attr_str(attrs)})"
@@ -79,13 +73,8 @@ class Entity(UserList):
         txt = (self._txt if not yes_txt else self.txt) if not no_txt else None
         return to_json(
             {
-                "_class":
-                self.__class__.__name__,
-                **(
-                    {
-                        "txt": txt
-                    } if txt is not None and (yes_txt or txt) else {}
-                ),
+                "_class": self.__class__.__name__,
+                **({"txt": txt} if txt is not None and (yes_txt or txt) else {}),
                 "children": [kid.to_json() for kid in self.children],
                 **kwargs,
             },
@@ -106,25 +95,19 @@ class Entity(UserList):
         classx = GLOBALS[classname]
         childx = CHILDCLASSES.get(classname)
         children = json_d.get("children", [])
-        inpd = {
-            k: v
-            for k,
-            v in json_d.items()
-            if k not in {"children",
-                         "_class"}
-        }
+        inpd = {k: v for k, v in json_d.items() if k not in {"children", "_class"}}
         if children and childx:
             children = [childx.from_json(d) for d in json_d["children"]]
         return classx(children=tuple(children), **inpd)
 
-    @cached_property
+    @property
     def attrs(self):
         odx = {"num": self.num}
-        if (self.__class__.__name__ not in {"Text",
-                                            "Stanza",
-                                            "MeterLine",
-                                            "MeterText",
-                                            "Meter"} and self.txt):
+        if (
+            self.__class__.__name__
+            not in {"Text", "Stanza", "MeterLine", "MeterText", "Meter"}
+            and self.txt
+        ):
             odx["txt"] = self.txt
         return {**odx, **self._attrs}
 
@@ -146,9 +129,7 @@ class Entity(UserList):
         if self._txt:
             txt = self._txt
         elif self.children:
-            txt = self.child_class.sep.join(
-                child.txt for child in self.children
-            )
+            txt = self.child_class.sep.join(child.txt for child in self.children)
         else:
             txt = ""
         return clean_text(txt)
@@ -179,16 +160,13 @@ class Entity(UserList):
             myself = textwrap.indent(myself, "|" + (" " * (indent - 1)))
         lines = [myself]
         for child in self.children:
-            if isinstance(
-                    child,
-                    Entity) and (
-                        incl_phons
-                        or not child.__class__.__name__.startswith("Phoneme")):
+            if isinstance(child, Entity) and (
+                incl_phons or not child.__class__.__name__.startswith("Phoneme")
+            ):
                 lines.append(
-                    child.inspect(indent=indent + 4,
-                                  incl_phons=incl_phons
-                                  ).replace("PhonemeClass",
-                                            "Phoneme")
+                    child.inspect(indent=indent + 4, incl_phons=incl_phons).replace(
+                        "PhonemeClass", "Phoneme"
+                    )
                 )
         # self.__class__.__name__ in {'Text', 'Stanza', 'Line'}
         dblbreakfor = False
@@ -213,10 +191,10 @@ class Entity(UserList):
     def __repr__(self, attrs=None, bad_keys=None):
         d = {
             k: v
-            for k,
-            v in (
-                attrs if attrs is not None else
-                (self.attrs if self.attrs is not None else self._attrs)
+            for k, v in (
+                attrs
+                if attrs is not None
+                else (self.attrs if self.attrs is not None else self._attrs)
             ).items()
         }
         return f"{self.__class__.__name__}({get_attr_str(d, bad_keys=bad_keys)})"
@@ -231,12 +209,7 @@ class Entity(UserList):
 
         return GLOBALS.get(self.child_type)
 
-    def get_ld(
-        self,
-        incl_phons=False,
-        incl_sylls=True,
-        multiple_wordforms=True
-    ):
+    def get_ld(self, incl_phons=False, incl_sylls=True, multiple_wordforms=True):
         if not incl_sylls and self.child_type == "Syllable":
             return [{**self.prefix_attrs}]
         if not incl_phons and self.child_type == "Phoneme":
@@ -248,11 +221,9 @@ class Entity(UserList):
             # logger.debug(f'good children now {good_children}')
         if good_children:
             return [
-                {
-                    **self.prefix_attrs,
-                    **child.prefix_attrs,
-                    **grandchild_d
-                } for child in good_children for grandchild_d in child.get_ld(
+                {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}
+                for child in good_children
+                for grandchild_d in child.get_ld(
                     incl_phons=incl_phons,
                     incl_sylls=incl_sylls,
                     multiple_wordforms=multiple_wordforms,
@@ -302,8 +273,8 @@ class Entity(UserList):
         }
         if attr[-1].isdigit():
             for pref, lname in objs.items():
-                if attr.startswith(pref) and attr[len(pref):].isdigit():
-                    num = int(attr[len(pref):])
+                if attr.startswith(pref) and attr[len(pref) :].isdigit():
+                    num = int(attr[len(pref) :])
                     try:
                         return getattr(self, lname)[num - 1]
                     except IndexError:
@@ -375,9 +346,7 @@ class Entity(UserList):
         elif self.is_wordtype:
             o = [self]
         else:
-            o = [
-                wtype for token in self.wordtokens for wtype in token.children
-            ]
+            o = [wtype for token in self.wordtokens for wtype in token.children]
         return WordTypeList(o)
 
     @cached_property
@@ -389,9 +358,7 @@ class Entity(UserList):
         elif self.is_wordtype:
             o = [self]
         else:
-            o = [
-                wtype.children[0] for wtype in self.wordtypes if wtype.children
-            ]
+            o = [wtype.children[0] for wtype in self.wordtypes if wtype.children]
         return WordFormList(o)
 
     @cached_property
@@ -528,8 +495,7 @@ class Entity(UserList):
         # return CompressedSqliteDict(
         return SqliteDict(
             os.path.join(
-                PATH_HOME_DATA,
-                f"json_cache.{self.__class__.__name__}.sqlitedict"
+                PATH_HOME_DATA, f"json_cache.{self.__class__.__name__}.sqlitedict"
             ),
             flag=flag,
             autocommit=autocommit,
@@ -542,18 +508,14 @@ class Entity(UserList):
     @cached_property
     def redis_cache(self):
         from redis_dict import RedisDict
+
         with logmap(announce=False) as lm:
-            cache = RedisDict(
-                namespace=self.__class__.__name__,
-                host=REDIS_HOST
-            )
+            cache = RedisDict(namespace=self.__class__.__name__, host=REDIS_HOST)
             try:
-                'x' in cache  # start
+                "x" in cache  # start
                 return cache
             except Exception as e:
-                lm.warning(
-                    f'cannot connect to redis. defaulting to json cache'
-                )
+                lm.warning(f"cannot connect to redis. defaulting to json cache")
 
     def children_from_cache(self):
         if caching_is_enabled():
@@ -593,14 +555,7 @@ class Entity(UserList):
                 cache = self.json_cache
             return cache
 
-    def cache(
-        self,
-        key_obj=None,
-        val_obj=None,
-        key=None,
-        force=False,
-        use_redis=True
-    ):
+    def cache(self, key_obj=None, val_obj=None, key=None, force=False, use_redis=True):
         if key_obj is None:
             key_obj = self
         if val_obj is None:
@@ -609,11 +564,11 @@ class Entity(UserList):
         cache = self.get_cache(use_redis=use_redis)
         if key and (force or not key in cache):
             with logmap(
-                    f'saving object to {cache.__class__.__name__} under key {key[:8]}'
+                f"saving object to {cache.__class__.__name__} under key {key[:8]}"
             ):
-                with logmap("exporting to json", level='trace'):
+                with logmap("exporting to json", level="trace"):
                     data = encode_cache(val_obj.to_json())
-                with logmap("uploading json to cache", level='trace'):
+                with logmap("uploading json to cache", level="trace"):
                     cache[key] = data
 
 

@@ -362,6 +362,10 @@ class Entity(UserList):
         return WordFormList(o)
 
     @cached_property
+    def wordforms_nopunc(self):
+        return [wf for wf in self.wordforms if not wf.parent.is_punc]
+
+    @cached_property
     def wordforms_all(self):
         if self.is_wordtype:
             o = self.children
@@ -529,7 +533,7 @@ class Entity(UserList):
             key = hashstr(key)
         return key
 
-    def from_cache(self, obj=None, key=None, as_dict=False, use_redis=True):
+    def from_cache(self, obj=None, key=None, as_dict=False, use_redis=USE_REDIS):
         if obj is None:
             obj = self
         key = self.get_key(obj) if not key else key
@@ -546,7 +550,7 @@ class Entity(UserList):
                 if dat:
                     return from_json(dat) if not as_dict else dat
 
-    def get_cache(self, use_redis=True):
+    def get_cache(self, use_redis=USE_REDIS):
         cache = None
         with logmap(announce=False) as lm:
             if use_redis:
@@ -555,7 +559,9 @@ class Entity(UserList):
                 cache = self.json_cache
             return cache
 
-    def cache(self, key_obj=None, val_obj=None, key=None, force=False, use_redis=True):
+    def cache(
+        self, key_obj=None, val_obj=None, key=None, force=False, use_redis=USE_REDIS
+    ):
         if key_obj is None:
             key_obj = self
         if val_obj is None:

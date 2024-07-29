@@ -130,24 +130,4 @@ class Syllable(Entity):
 
     @cache
     def rime_distance(self, syllable):
-        from scipy.spatial.distance import euclidean
-
-        df1 = self.rime.df
-        df2 = syllable.rime.df
-
-        if list(df1.reset_index().phon_txt) == list(df2.reset_index().phon_txt):
-            return 0
-
-        s1 = df1.mean(numeric_only=True)
-        s2 = df2.mean(numeric_only=True)
-        keys = [
-            k
-            for k in set(s1.index) & set(s2.index)
-            if k.startswith("phon_")
-            and not k.endswith("_num")
-            and not k.startswith("phon_is_")
-        ]
-        s1x = s1.loc[keys]
-        s2x = s2.loc[keys]
-        dist = euclidean(s1x, s2x)
-        return dist
+        return self.wordform.rime_distance(syllable.wordform)

@@ -44,7 +44,8 @@ PATH_HOME = os.path.expanduser("~/prosodic_data")
 PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-USE_CACHE = True
+USE_CACHE = False
+USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 REDIS_HOST = "212.227.240.128"
@@ -68,7 +69,7 @@ MIN_WORDS_IN_PHRASE = 2
 MAX_WORDS_IN_PHRASE = 15
 DEFAULT_LANG = "en"
 LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>"
-LOG_LEVEL = 10
+LOG_LEVEL = 5
 DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2
@@ -143,6 +144,8 @@ HTML_CSS = """
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
 """
+RHYME_MAX_DIST = 1
+
 
 # .str_s { text-decoration: underline dotted; text-underline-offset: 3px; }
 # .str_s.mtr_s { text-decoration: overline; text-underline-offset: 3px; }

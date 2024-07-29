@@ -153,6 +153,9 @@ class WordType(Entity):
             "is_punc": self.is_punc,
         }
 
+    def rime_distance(self, word):
+        return self.children[0].rime_distance(word.children[0])
+
 
 class WordForm(Entity):
     prefix = "wordform"
@@ -235,6 +238,44 @@ class WordForm(Entity):
     def to_hash(self):
         return hashstr(self.key)
 
+    @cached_property
+    def rime(self):
+        from .syllables import PhonemeList
+
+        sylls = []
+        for syll in reversed(self.children):
+            sylls.insert(0, syll)
+            if syll.stress == "P":
+                break
+        if not sylls:
+            return
+        o = sylls[0].rime.data + [phon for syll in sylls[1:] for phon in syll.children]
+        return PhonemeList(o)
+
     @cache
     def rime_distance(self, wordform):
-        return self.syllables[-1].rime_distance(wordform.syllables[-1])
+        from scipy.spatial.distance import euclidean
+
+        if self.txt == wordform.txt:
+            return np.nan
+        # return self.syllables[-1].rime_distance(wordform.syllables[-1])
+
+        df1 = self.rime.df
+        df2 = wordform.rime.df
+
+        if list(df1.reset_index().phon_txt) == list(df2.reset_index().phon_txt):
+            return 0
+
+        s1 = df1.mean(numeric_only=True)
+        s2 = df2.mean(numeric_only=True)
+        keys = [
+            k
+            for k in set(s1.index) & set(s2.index)
+            if k.startswith("phon_")
+            and not k.endswith("_num")
+            and not k.startswith("phon_is_")
+        ]
+        s1x = s1.loc[keys]
+        s2x = s2.loc[keys]
+        dist = euclidean(s1x, s2x)
+        return dist

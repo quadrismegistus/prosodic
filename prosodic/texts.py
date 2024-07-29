@@ -6,15 +6,34 @@ class StanzaList(EntityList):
 
 
 class LineList(EntityList):
-    def get_rhyming_lines(self, max_dist=None):
-        o = []
-        for i1, line1 in enumerate(self.data):
-            for i2, line2 in enumerate(self.data):
-                if i1 < i2:
-                    dist = line1.rime_distance(line2)
-                    if max_dist is None or dist <= max_dist:
-                        o.append((dist, line1, line2))
-        return sorted(o, key=lambda x: x[0])
+    # def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
+    #     o = []
+    #     done = set()
+    #     for i1, line1 in enumerate(self.data):
+    #         for i2, line2 in enumerate(self.data):
+    #             if (
+    #                 i1 < i2
+    #                 and len(line1.wordforms)
+    #                 and len(line2.wordforms)
+    #                 and i1 not in done
+    #                 and i2 not in done
+    #             ):
+    #                 dist = line1.rime_distance(line2)
+    #                 if max_dist is None or dist <= max_dist:
+    #                     o.append((dist, line1, line2))
+    #                     done.update({i1, i2})
+    #     return sorted(o, key=lambda x: x[0])
+    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
+        line2rhyme = defaultdict(list)
+        for line in self.data:
+            prev_lines = self.data[: line.i]
+            if not prev_lines:
+                continue
+            for line2 in prev_lines:
+                dist = line.rime_distance(line2)
+                if max_dist is None or dist <= max_dist:
+                    line2rhyme[line].append((dist, line2))
+        return {i: min(v) for i, v in line2rhyme.items()}
 
 
 NUMBUILT = 0
@@ -266,6 +285,25 @@ class Text(Entity):
     def to_html(self, as_str=False, blockquote=False):
         return self.parses.to_html(as_str=as_str, blockquote=blockquote)
 
+    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
+        return dict(
+            x
+            for st in self.children
+            for x in st.get_rhyming_lines(max_dist=max_dist).items()
+        )
+
+    @cached_property
+    def rhyming_lines(self):
+        return self.get_rhyming_lines()
+
+    @cached_property
+    def num_lines(self):
+        return len(self.lines)
+
+    @cached_property
+    def num_rhyming_lines(self):
+        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
+
     @cached_property
     def is_rhyming(self):
         return any([st.is_rhyming for st in self.stanzas])
@@ -306,9 +344,13 @@ class Stanza(Text):
     def _repr_html_(self, as_df=False, df=None):
         return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)
 
-    def get_rhyming_lines(self, max_dist=None):
+    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
         return self.children.get_rhyming_lines(max_dist=max_dist)
 
     @cached_property
+    def num_rhyming_lines(self):
+        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
+
+    @cached_property
     def is_rhyming(self):
-        return len(self.get_rhyming_lines(max_dist=0)) > 1
+        return self.num_rhyming_lines > 0

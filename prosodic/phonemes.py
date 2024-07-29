@@ -10,9 +10,11 @@ class PhonemeClass(Entity):
 
     @cached_property
     def is_vowel(self):
-        if hasattr(self, "cons") and self.cons > 0:
+        if not hasattr(self, "cons") or self.cons is None:
+            return None
+        if self.cons > 0:
             return False
-        if hasattr(self, "cons") and self.cons < 1:
+        if self.cons < 1:
             return True
         return None
 
@@ -59,7 +61,7 @@ def Phoneme(txt, **kwargs):
         if phon in get_ipa_info():
             phond = get_ipa_info().get(phon, {})
         else:
-            logger.error(f"What is this phoneme? No features found for it: {phon}")
+            # logger.error(f"What is this phoneme? No features found for it: {phon}")
             phond = {}
     else:
         phond = phonl[0].data

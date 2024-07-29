@@ -155,4 +155,6 @@ class Line(Text):
 
     @cache
     def rime_distance(self, line):
-        return self.wordforms[-1].rime_distance(line.wordforms[-1])
+        if not self.wordforms_nopunc or not line.wordforms_nopunc:
+            return np.nan
+        return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1])

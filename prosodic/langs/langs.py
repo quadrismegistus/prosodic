@@ -35,14 +35,13 @@ class Language:
     @cached_property
     @profile
     def cached(self):
-        from sqlitedict import SqliteDict
-        import pickle
         return SqliteDict(
             os.path.join(PATH_HOME_DATA,
                          self.cache_fn),
             autocommit=True,
             encode=orjson.dumps,
-            decode=orjson.loads
+            decode=orjson.loads,
+            journal_mode='WAL'
             # encode=pickle.dumps,
             # decode=pickle.loads
         )

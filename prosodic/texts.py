@@ -62,7 +62,7 @@ class Text(Entity):
     prefix = "text"
     parse_unit_attr = "lines"
     list_type = StanzaList
-    use_cache = USE_CACHE
+    use_cache = None
 
     cached_properties_to_clear = [
         "best_parses",
@@ -81,7 +81,7 @@ class Text(Entity):
         parent: Optional[Entity] = None,
         children: Optional[list] = [],
         tokens_df: Optional[pd.DataFrame] = None,
-        use_cache=USE_CACHE,
+        use_cache=None,
         force=False,
         **kwargs,
     ):
@@ -124,7 +124,7 @@ class Text(Entity):
             if was_quiet and numwords > 1000:
                 logmap.quiet = False
             with logmap(f"building text with {numwords:,} words") as lm:
-                if not force and self.use_cache and caching_is_enabled():
+                if not force and self.use_cache!=False and caching_is_enabled():
                     children = self.children_from_cache()
 
                 if children:
@@ -142,7 +142,7 @@ class Text(Entity):
         super().__init__(txt, children=children, parent=parent, **kwargs)
         self._parses = []
         self._mtr = None
-        if self.use_cache:
+        if self.use_cache!=False:
             self.cache(force=force)
         if was_quiet:
             logmap.quiet = True

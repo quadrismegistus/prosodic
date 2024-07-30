@@ -495,35 +495,10 @@ class Entity(UserList):
     def is_phon(self):
         return self.__class__.__name__ == "PhonemeClass"
 
-    def get_json_cache(self, flag="c", autocommit=False):
-        # return CompressedSqliteDict(
-        return SqliteDict(
-            os.path.join(
-                PATH_HOME_DATA, f"json_cache.{self.__class__.__name__}.sqlitedict"
-            ),
-            flag=flag,
-            autocommit=autocommit,
-        )
-
-    @cached_property
-    def json_cache(self):
-        return self.get_json_cache()
-
-    @cached_property
-    def redis_cache(self):
-        from redis_dict import RedisDict
-
-        with logmap(announce=False) as lm:
-            cache = RedisDict(namespace=self.__class__.__name__, host=REDIS_HOST)
-            try:
-                "x" in cache  # start
-                return cache
-            except Exception as e:
-                lm.warning(f"cannot connect to redis. defaulting to json cache")
-
     def children_from_cache(self):
         if caching_is_enabled():
             res = self.from_cache()
+            print("FOUND", res)
             return None if res is None else res.children
 
     def get_key(self, key):
@@ -533,47 +508,35 @@ class Entity(UserList):
             key = hashstr(key)
         return key
 
-    def from_cache(self, obj=None, key=None, as_dict=False, use_redis=USE_REDIS):
+    def from_cache(self, obj=None, key=None, as_dict=False):
         if obj is None:
             obj = self
         key = self.get_key(obj) if not key else key
-        if key and self.use_cache:
-            cache = self.get_cache(use_redis=use_redis)
+        if key and self.use_cache != False:
+            cache = self.get_cache()
             if key in cache:
-                dat = decode_cache(cache[key])
-                # nchild = len(dat.get('children', []))
-                # with logmap(announce=False) as lm:
-                #     lm.log(
-                #         f'found {nchild} parses in {cache.__class__.__name__} under {key[:8]}',
-                #         level='trace'
-                #     )
+                dat = cache[key]
                 if dat:
                     return from_json(dat) if not as_dict else dat
 
-    def get_cache(self, use_redis=USE_REDIS):
-        cache = None
-        with logmap(announce=False) as lm:
-            if use_redis:
-                cache = self.redis_cache
-            if cache is None:
-                cache = self.json_cache
-            return cache
+    def get_cache(self):
+        return SimpleCache()
 
     def cache(
-        self, key_obj=None, val_obj=None, key=None, force=False, use_redis=USE_REDIS
+        self, key_obj=None, val_obj=None, key=None, force=False
     ):
         if key_obj is None:
             key_obj = self
         if val_obj is None:
             val_obj = key_obj
+        logger.warning(f"key_obj = {key_obj}")
+        logger.warning(f"val_obj = {val_obj}")
         key = self.get_key(key_obj) if not key else key
-        cache = self.get_cache(use_redis=use_redis)
+        cache = self.get_cache()
         if key and (force or not key in cache):
-            with logmap(
-                f"saving object to {cache.__class__.__name__} under key {key[:8]}"
-            ):
+            with logmap(f"saving object under key {key[:8]}"):
                 with logmap("exporting to json", level="trace"):
-                    data = encode_cache(val_obj.to_json())
+                    data = val_obj.to_json()
                 with logmap("uploading json to cache", level="trace"):
                     cache[key] = data
 

@@ -123,7 +123,7 @@ class Meter(Entity):
     def get_key(self, line):
         return hashstr(self.key, line.key)
 
-    def parses_from_cache(self, line, as_dict=False, use_redis=USE_REDIS):
+    def parses_from_cache(self, line, as_dict=False):
         from .parsing import ParseList
 
         key = self.get_key(line)
@@ -131,7 +131,7 @@ class Meter(Entity):
         # with logmap(
         #         f'checking for cached {clsn} parses under key "{key[:8]}..."'
         # ) as lm:
-        dat = self.from_cache(key=key, as_dict=True, use_redis=use_redis)
+        dat = self.from_cache(key=key, as_dict=True)
         if dat:
             nchild = len(dat.get("children", [])) if dat else 0
             # lm.log(f"found {nchild:,} parses")

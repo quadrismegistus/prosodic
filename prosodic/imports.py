@@ -2,6 +2,8 @@ import os, sys
 from logmap import logmap, logger
 
 logmap.enable()
+from base64 import b64decode, b64encode
+from functools import wraps
 from pprint import pprint, pformat
 import orjson
 import json
@@ -31,7 +33,7 @@ from typing import Optional
 import re
 import os
 import sys
-from sqlitedict import SqliteDict
+from sqlitedict import SqliteDict, SqliteMultithread
 from redis_dict import RedisDict
 from contextlib import contextmanager
 
@@ -42,6 +44,7 @@ PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")
 PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
+PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
 USE_CACHE = False

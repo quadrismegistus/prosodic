@@ -1,5 +1,58 @@
 from .imports import *
 
+class SimpleCache:
+    def __init__(self, root_dir = PATH_HOME_DATA_CACHE):
+        self.root_dir = root_dir
+        os.makedirs(root_dir, exist_ok=True)
+
+    def _get_file_path(self, key):
+        # Use the first 2 characters for the first level directory
+        # and the next 2 characters for the second level directory
+        dir1 = key[:2]
+        dir2 = key[2:4]
+        file_name = key[4:]
+        
+        dir_path = os.path.join(self.root_dir, dir1, dir2)
+        os.makedirs(dir_path, exist_ok=True)
+        
+        return os.path.join(dir_path, file_name)
+
+    def __setitem__(self, key, value):
+        file_path = self._get_file_path(key)
+        with open(file_path, 'wb') as f:
+            f.write(encode_cache(value))
+
+    def __getitem__(self, key):
+        file_path = self._get_file_path(key)
+        if not os.path.exists(file_path):
+            raise KeyError(key)
+        with open(file_path, 'rb') as f:
+            return decode_cache(f.read())
+
+    def __contains__(self, key):
+        return os.path.exists(self._get_file_path(key))
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+def retry_on_io_error(max_attempts=3, delay=0.1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except IOError as e:
+                    if attempt < max_attempts - 1:
+                        time.sleep(delay)
+                    else:
+                        raise
+        return wrapper
+    return decorator
+
 
 def group_ents(l, feat):
     val = None
@@ -227,8 +280,6 @@ def ensure_dir(fn):
         os.makedirs(dirname, exist_ok=True)
 
 
-from base64 import b64decode, b64encode
-
 
 def encode_cache(x):
     return b64encode(
@@ -238,14 +289,14 @@ def encode_cache(x):
                 option=orjson.OPT_SERIALIZE_NUMPY,
             )
         )
-    ).decode()
+    )
 
 
 def decode_cache(x):
     return orjson.loads(
         zlib.decompress(
             b64decode(
-                x.encode(),
+                x,
             ),
         ),
     )

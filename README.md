@@ -36,10 +36,10 @@ Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) softw
 Prosodic has a new GUI (graphical user interface) in a web app. After installing, run:
 
 ```
-prosodic
+prosodic web
 ```
 
-Then navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/). It should look like this:
+Then navigate to [http://127.0.0.1:8181/](http://127.0.0.1:8181/). It should look like this:
 
 <img width="800" alt="prosodic-gui2" src="https://github.com/quadrismegistus/prosodic/assets/733853/8acd4225-7425-43a9-8f68-aa5c1ff567f2">
 

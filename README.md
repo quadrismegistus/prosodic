@@ -41,7 +41,8 @@ prosodic web
 
 Then navigate to [http://127.0.0.1:8181/](http://127.0.0.1:8181/). It should look like this:
 
-<img width="800" alt="prosodic-gui2" src="https://github.com/quadrismegistus/prosodic/assets/733853/8acd4225-7425-43a9-8f68-aa5c1ff567f2">
+<img width="900" alt="prosodic-web-preview-3" src="https://github.com/user-attachments/assets/d34278fd-a28e-4337-9bcf-8c3c57992bc2">
+
 
 ### Python
 

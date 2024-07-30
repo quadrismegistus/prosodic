@@ -490,35 +490,35 @@ class Parse(Entity):
             out += f'<div class="miniquote">⎿ {reprstr}</div>'
         return to_html(out, as_str=as_str)
 
-    def to_html_no_line(self):
-        wordtokend = defaultdict(list)
-        for slot in self.slots:
-            wordtokend[slot.unit.wordtoken].append(slot)
-        output = []
-        for wordtoken in wordtokend:
-            prefstr = get_initial_whitespace(wordtoken.txt)
-            output.append(prefstr)
-            wordtoken_slots = wordtokend[wordtoken]
-            if wordtoken_slots:
-                for slot in wordtoken_slots:
-                    pos = slot.parent
-                    spclass = "meter_" + ("strong" if slot.is_prom else "weak")
-                    stclass = "stress_" + (
-                        "strong" if slot.unit.is_stressed else "weak"
-                    )
-                    vclass = " violation" if pos.violset else ""
-                    slotstr = f'<span class="{spclass} {stclass}{vclass}">{slot.unit.txt}</span>'
-                    output.append(slotstr)
-                    # viol_str=' '.join(pos.violset)
-                    # viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
-                    # slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.line.num}">{slotstr}</span>'
-            else:
-                output.append(wordtoken.txt)
-        out = "".join(output)
-        out = f'<style>{css}</style><div class="parse">{out}</div>'
-        if blockquote:
-            out += f'<div class="miniquote">⎿ {self.__repr__(bad_keys={"txt", "line_txt"})}</div>'
-        return to_html(out, as_str=as_str)
+    # def to_html_no_line(self):
+    #     wordtokend = defaultdict(list)
+    #     for slot in self.slots:
+    #         wordtokend[slot.unit.wordtoken].append(slot)
+    #     output = []
+    #     for wordtoken in wordtokend:
+    #         prefstr = get_initial_whitespace(wordtoken.txt)
+    #         output.append(prefstr)
+    #         wordtoken_slots = wordtokend[wordtoken]
+    #         if wordtoken_slots:
+    #             for slot in wordtoken_slots:
+    #                 pos = slot.parent
+    #                 spclass = "meter_" + ("strong" if slot.is_prom else "weak")
+    #                 stclass = "stress_" + (
+    #                     "strong" if slot.unit.is_stressed else "weak"
+    #                 )
+    #                 vclass = " violation" if pos.violset else ""
+    #                 slotstr = f'<span class="{spclass} {stclass}{vclass}">{slot.unit.txt}</span>'
+    #                 output.append(slotstr)
+    #                 # viol_str=' '.join(pos.violset)
+    #                 # viol_title = 'Violated %s constraints: %s' % (len(pos.violset), viol_str)
+    #                 # slotstr=f'<span class="violation" title="{viol_title}" id="viol__line_{self.line.num}">{slotstr}</span>'
+    #         else:
+    #             output.append(wordtoken.txt)
+    #     out = "".join(output)
+    #     out = f'<style>{css}</style><div class="parse">{out}</div>'
+    #     if blockquote:
+    #         out += f'<div class="miniquote">⎿ {self.__repr__(bad_keys={"txt", "line_txt"})}</div>'
+    #     return to_html(out, as_str=as_str)
 
     @cached_property
     def wordtoken2slots(self):

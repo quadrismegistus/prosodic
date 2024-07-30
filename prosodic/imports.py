@@ -2,6 +2,8 @@ import os, sys
 from logmap import logmap, logger
 
 logmap.enable()
+from base64 import b64decode, b64encode
+from functools import wraps
 from pprint import pprint, pformat
 import orjson
 import json
@@ -31,23 +33,25 @@ from typing import Optional
 import re
 import os
 import sys
-from sqlitedict import SqliteDict
+from sqlitedict import SqliteDict, SqliteMultithread
 from redis_dict import RedisDict
 from contextlib import contextmanager
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
-PATH_WEB = os.path.join(PATH_REPO, 'prosodic', 'web')
+PATH_WEB = os.path.join(PATH_REPO, "prosodic", "web")
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")
 PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
+PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-USE_CACHE = True
+USE_CACHE = False
+USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
-REDIS_HOST = '212.227.240.128'
+REDIS_HOST = "212.227.240.128"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
@@ -68,7 +72,7 @@ MIN_WORDS_IN_PHRASE = 2
 MAX_WORDS_IN_PHRASE = 15
 DEFAULT_LANG = "en"
 LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>"
-LOG_LEVEL = 10
+LOG_LEVEL = 5
 DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2
@@ -108,6 +112,7 @@ DF_INDEX = [
     "syll_ipa",
     "meterslot_num",
     "meterslot_txt",
+    "phon_txt",
 ]
 DF_COLS_RENAME = {
     "wordtoken_sent_num": "sent_num",
@@ -142,6 +147,8 @@ HTML_CSS = """
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
 """
+RHYME_MAX_DIST = 1
+
 
 # .str_s { text-decoration: underline dotted; text-underline-offset: 3px; }
 # .str_s.mtr_s { text-decoration: overline; text-underline-offset: 3px; }
@@ -193,6 +200,13 @@ Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
 Leese but their show; their substance still lives sweet.
 """
+
+
+GROUPBY_STANZA = ["stanza_num"]
+GROUPBY_LINE = GROUPBY_STANZA + ["line_num", "sent_num", "sentpart_num"]
+GROUPBY_WORD = GROUPBY_LINE + ["wordtoken_num", "wordform_num"]
+GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
+
 
 from .utils import *
 from .tokenizers import *

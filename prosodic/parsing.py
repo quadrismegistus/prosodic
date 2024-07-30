@@ -33,8 +33,7 @@ class Parse(Entity):
 
         # wordforms
         assert wordforms_or_str
-        if hasattr(wordforms_or_str,
-                   "is_parseable") and wordforms_or_str.is_parseable:
+        if hasattr(wordforms_or_str, "is_parseable") and wordforms_or_str.is_parseable:
             parent = wordforms_or_str
             self.wordforms = meter.get_wordform_matrix(parent)[0]
         elif type(wordforms_or_str) == str:
@@ -115,8 +114,9 @@ class Parse(Entity):
         wordforms = from_json(json_d["_wordforms"])
         if line:
             if type(line) == Text:
-                line = line.stanzas[json_d["stanza_num"] -
-                                    1].lines[json_d["line_num"] - 1]
+                line = line.stanzas[json_d["stanza_num"] - 1].lines[
+                    json_d["line_num"] - 1
+                ]
             elif type(line) == Stanza:
                 line = line.lines[json_d["line_num"] - 1]
             elif type(line) != Line:
@@ -168,10 +168,7 @@ class Parse(Entity):
             self.num_slots_positioned += 1
 
         mpos = ParsePosition(
-            meter_val=mval,
-            children=slots,
-            parent=self,
-            num=len(self.positions) + 1
+            meter_val=mval, children=slots, parent=self, num=len(self.positions) + 1
         )
         self.positions.append(mpos)
         self.constraint_viols  # init and bound
@@ -228,7 +225,7 @@ class Parse(Entity):
             self.average_position_size,
             self.num_stressed_sylls,
             self.meter_ints,
-            self.stress_ints
+            self.stress_ints,
         )
 
     @cached_property
@@ -241,10 +238,7 @@ class Parse(Entity):
 
     @cached_property
     def categorical_constraint_d(self):
-        return dict(
-            (c.__name__,
-             c) for c in self.meter.categorical_constraints
-        )
+        return dict((c.__name__, c) for c in self.meter.categorical_constraints)
 
     # @profile
 
@@ -258,9 +252,7 @@ class Parse(Entity):
         return self is other
 
     def can_compare(self, other, min_slots=4):
-        if ((self.stanza_num,
-             self.line_num) != (other.stanza_num,
-                                other.line_num)):
+        if (self.stanza_num, self.line_num) != (other.stanza_num, other.line_num):
             return False
 
         if min_slots and self.num_slots_positioned < min_slots:
@@ -287,10 +279,7 @@ class Parse(Entity):
     @property
     def num_stressed_sylls(self):
         return len(
-            [
-                slot for mpos in self.positions for slot in mpos.slots
-                if slot.is_stressed
-            ]
+            [slot for mpos in self.positions for slot in mpos.slots if slot.is_stressed]
         )
 
     @property
@@ -407,8 +396,7 @@ class Parse(Entity):
     @property
     def ambig(self):
         return (
-            self.line._parses.num_unbounded
-            if self.line and self.line._parses else None
+            self.line._parses.num_unbounded if self.line and self.line._parses else None
         )
 
     @property
@@ -421,8 +409,7 @@ class Parse(Entity):
         catcts = set(self.categorical_constraint_d.keys())
         for cname, constraint in self.constraint_d.items():
             d[cname] = cscores = [
-                x for score_d in scores for x in score_d.get(cname,
-                                                             nans)
+                x for score_d in scores for x in score_d.get(cname, nans)
             ]
             if cname in catcts and any(cscores):
                 logger.debug(
@@ -434,11 +421,7 @@ class Parse(Entity):
     @property
     # @profile
     def constraint_scores(self):
-        return {
-            cname: safesum(cvals)
-            for cname,
-            cvals in self.constraint_viols.items()
-        }
+        return {cname: safesum(cvals) for cname, cvals in self.constraint_viols.items()}
 
     @property
     # @profile
@@ -561,7 +544,8 @@ class Parse(Entity):
         for cname in cnames:
             odx[f"*{cname}"] = (
                 np.mean([slot.viold[cname] for slot in self.slots])
-                if norm else self.constraint_scores[cname]
+                if norm
+                else self.constraint_scores[cname]
             )
         viols = [int(slot.has_viol) for slot in self.slots]
         scores = [int(slot.score) for slot in self.slots]
@@ -572,9 +556,10 @@ class Parse(Entity):
     def get_df(self, *x, **y):
         df = super().get_df(*x, **y)
         df.columns = [
-            c.replace("meterslot_syll_",
-                      "syll_").replace("meterslot_wordtoken_",
-                                       "wordtoken_") for c in df
+            c.replace("meterslot_syll_", "syll_").replace(
+                "meterslot_wordtoken_", "wordtoken_"
+            )
+            for c in df
         ]
         return setindex(df.reset_index(), DF_INDEX).sort_index()
 
@@ -687,12 +672,7 @@ class ParseSlot(Entity):
     # @profile
 
     def __init__(
-        self,
-        unit: "Syllable" = None,
-        parent=None,
-        children=[],
-        viold={},
-        **kwargs
+        self, unit: "Syllable" = None, parent=None, children=[], viold={}, **kwargs
     ):
         # print(unit,parent,children,viold,kwargs)
         if unit is None and children:
@@ -780,11 +760,8 @@ class ParseSlot(Entity):
         return {
             **{
                 k: v
-                for k,
-                v in self.unit.prefix_attrs.items() if k.split("_")[0] in {
-                    "wordtoken",
-                    "syll"
-                }
+                for k, v in self.unit.prefix_attrs.items()
+                if k.split("_")[0] in {"wordtoken", "syll"}
             },
             **self._attrs,
             "num": self.num,
@@ -812,10 +789,10 @@ class ParseList(EntityList):
         with logmap(announce=progress) as lm:
             parses = lm.imap(
                 Parse.from_json,
-                json_d['children'],
+                json_d["children"],
                 kwargs=dict(line=line),
                 progress=progress,
-                num_proc=1
+                num_proc=1,
             )
         return ParseList(parses, parent=line, type=json_d.get("type"))
 
@@ -838,16 +815,14 @@ class ParseList(EntityList):
         for parse in self:
             if parse.meter:
                 return parse.meter
-        if self.line: return self.line.meter
+        if self.line:
+            return self.line.meter
 
     def to_json(self, fn=None):
         return Entity.to_json(
-            (
-                self.scansions
-                if self.meter and not self.meter.exhaustive else self
-            ),
+            (self.scansions if self.meter and not self.meter.exhaustive else self),
             fn=fn,
-            type=self.type
+            type=self.type,
         )
 
     @cached_property
@@ -862,8 +837,7 @@ class ParseList(EntityList):
     def unbounded(self):
         return ParseList(
             children=[
-                px for px in self.scansions
-                if px is not None and not px.is_bounded
+                px for px in self.scansions if px is not None and not px.is_bounded
             ],
             type=self.type,
         )
@@ -902,17 +876,12 @@ class ParseList(EntityList):
 
     def bound(self, progress=False):
         parses = [p for p in self.data if not p.is_bounded]
-        iterr = tqdm(
-            parses,
-            desc="Bounding parses",
-            disable=not progress,
-            position=0
-        )
+        iterr = tqdm(parses, desc="Bounding parses", disable=not progress, position=0)
         for parse_i, parse in enumerate(iterr):
             parse.constraint_viols  # init
             if parse.is_bounded:
                 continue
-            for comp_parse in parses[parse_i + 1:]:
+            for comp_parse in parses[parse_i + 1 :]:
                 if comp_parse.is_bounded:
                     continue
                 if not parse.can_compare(comp_parse):
@@ -921,15 +890,11 @@ class ParseList(EntityList):
                 if relation == Bounding.bounded:
                     parse.is_bounded = True
                     parse.bounded_by.append(
-                        (comp_parse.meter_str,
-                         comp_parse.stress_str)
+                        (comp_parse.meter_str, comp_parse.stress_str)
                     )
                 elif relation == Bounding.bounds:
                     comp_parse.is_bounded = True
-                    comp_parse.bounded_by.append(
-                        (parse.meter_str,
-                         parse.stress_str)
-                    )
+                    comp_parse.bounded_by.append((parse.meter_str, parse.stress_str))
         self._bound_init = True
         return self.unbounded
 
@@ -969,11 +934,7 @@ class ParseList(EntityList):
         resd = dict(odf.agg(aggby))
         return {
             **self.prefix_attrs,
-            **{
-                k: v
-                for k,
-                v in resd.items() if k not in self.prefix_attrs
-            },
+            **{k: v for k, v in resd.items() if k not in self.prefix_attrs},
         }
 
     def _get_groupby(self, by=None):
@@ -992,10 +953,10 @@ class ParseList(EntityList):
 
         def getagg(col):
             if col.endswith("_norm"):
-                return 'mean'
+                return "mean"
             if self.type in {"text", "stanza"}:
-                return 'median'
-            return 'median'
+                return "median"
+            return "median"
 
         aggby = {col: getagg(col) for col in df_q}
         return aggby
@@ -1017,9 +978,10 @@ class ParseList(EntityList):
         odf.columns = [
             (
                 f"parse_{c}"
-                if c[0] != "*" and c.split("_")[0] not in {"stanza",
-                                                           "line"} else c
-            ) for c in odf
+                if c[0] != "*" and c.split("_")[0] not in {"stanza", "line"}
+                else c
+            )
+            for c in odf
         ]
         groupby = self._get_groupby(by=by)
         if groupby:
@@ -1032,15 +994,16 @@ class ParseList(EntityList):
             return odf.sort_index()
         else:
             odf["parse_rank"] = (
-                odf.groupby(["stanza_num",
-                             "line_num"]).parse_rank.rank(method="min"
-                                                          ).apply(force_int)
+                odf.groupby(["stanza_num", "line_num"])
+                .parse_rank.rank(method="min")
+                .apply(force_int)
             )
             return setindex(odf, DF_INDEX).sort_index()
 
     def _repr_html_(self):
         df = (
-            self.unbounded.df if not self.show_bounded and self.num_unbounded
+            self.unbounded.df
+            if not self.show_bounded and self.num_unbounded
             else self.scansions.df
         )
         return super()._repr_html_(df=df)
@@ -1089,12 +1052,7 @@ class ParseList(EntityList):
                 parse.parse_rank = countd[lkey]
                 plist.append(parse)
 
-        return ParseList(
-            plist,
-            is_scansions=True,
-            show_bounded=True,
-            type=self.type
-        )
+        return ParseList(plist, is_scansions=True, show_bounded=True, type=self.type)
 
     @cached_property
     def num_lines(self):
@@ -1105,8 +1063,7 @@ class ParseList(EntityList):
 
     def to_html(self, as_str=False, blockquote=False):
         html_strs = (
-            line.to_html(blockquote=blockquote,
-                         as_str=True) for line in self.lines
+            line.to_html(blockquote=blockquote, as_str=True) for line in self.lines
         )
         html = "</li>\n<li>".join(html_strs)
         html = f'<ol class="parselist"><li>{html}</li></ol>'

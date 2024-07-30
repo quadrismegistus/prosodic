@@ -1,5 +1,84 @@
 from .imports import *
 
+class SimpleCache:
+    def __init__(self, root_dir = PATH_HOME_DATA_CACHE):
+        self.root_dir = root_dir
+        os.makedirs(root_dir, exist_ok=True)
+
+    def _get_file_path(self, key):
+        # Use the first 2 characters for the first level directory
+        # and the next 2 characters for the second level directory
+        dir1 = key[:2]
+        dir2 = key[2:4]
+        file_name = key[4:]
+        
+        dir_path = os.path.join(self.root_dir, dir1, dir2)
+        os.makedirs(dir_path, exist_ok=True)
+        
+        return os.path.join(dir_path, file_name)
+
+    def __setitem__(self, key, value):
+        file_path = self._get_file_path(key)
+        with open(file_path, 'wb') as f:
+            f.write(encode_cache(value))
+
+    def __getitem__(self, key):
+        file_path = self._get_file_path(key)
+        if not os.path.exists(file_path):
+            raise KeyError(key)
+        with open(file_path, 'rb') as f:
+            return decode_cache(f.read())
+
+    def __contains__(self, key):
+        return os.path.exists(self._get_file_path(key))
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+def retry_on_io_error(max_attempts=3, delay=0.1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except IOError as e:
+                    if attempt < max_attempts - 1:
+                        time.sleep(delay)
+                    else:
+                        raise
+        return wrapper
+    return decorator
+
+
+def group_ents(l, feat):
+    val = None
+    ol = []
+    lx = []
+    for x in l:
+        valx = getattr(x, feat)
+        if valx is not val and lx:
+            ol.append(lx)
+            lx = []
+        lx.append(x)
+        val = valx
+    if lx:
+        ol.append(lx)
+    return ol
+
+
+def groupby(df: pd.DataFrame, groupby: list):
+    allcols = set(df.index.names) | {df.index.name} | set(df.columns)
+    if type(groupby) == str:
+        groupby = [groupby]
+    gby = [g for g in groupby if g in allcols]
+    if not gby:
+        raise Exception("No group after filter")
+    return df.groupby(gby)
+
 
 def get_txt(txt, fn):
     if txt:
@@ -28,8 +107,8 @@ def clean_text(txt):
 
 def get_attr_str(attrs, sep=", ", bad_keys=None):
     strs = [
-        f"{k}={repr(v)}" for k,
-        v in attrs.items()
+        f"{k}={repr(v)}"
+        for k, v in attrs.items()
         if v is not None and (not bad_keys or not k in set(bad_keys))
     ]
     attrstr = sep.join(strs)
@@ -78,9 +157,7 @@ def get_possible_scansions(nsyll, max_s=METER_MAX_S, max_w=METER_MAX_W):
     if max_w is None:
         max_w = nsyll
     return [
-        l for l in iter_mpos(nsyll,
-                             max_s=max_s,
-                             max_w=max_w) if getlenparse(l) == nsyll
+        l for l in iter_mpos(nsyll, max_s=max_s, max_w=max_w) if getlenparse(l) == nsyll
     ]
 
 
@@ -88,13 +165,7 @@ def getlenparse(l):
     return sum(len(x) for x in l)
 
 
-def iter_mpos(
-    nsyll,
-    starter=[],
-    pos_types=None,
-    max_s=METER_MAX_S,
-    max_w=METER_MAX_W
-):
+def iter_mpos(nsyll, starter=[], pos_types=None, max_s=METER_MAX_S, max_w=METER_MAX_W):
     if pos_types is None:
         wtypes = ["w" * n for n in range(1, max_w + 1)]
         stypes = ["s" * n for n in range(1, max_s + 1)]
@@ -198,8 +269,7 @@ def to_json(obj, fn=None):
         with open(fn, "wb") as of:
             of.write(
                 orjson.dumps(
-                    data,
-                    option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
+                    data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
                 )
             )
 
@@ -210,23 +280,23 @@ def ensure_dir(fn):
         os.makedirs(dirname, exist_ok=True)
 
 
-from base64 import b64decode, b64encode
-
 
 def encode_cache(x):
     return b64encode(
-        zlib.compress(orjson.dumps(
-            x,
-            option=orjson.OPT_SERIALIZE_NUMPY,
-        ))
-    ).decode()
+        zlib.compress(
+            orjson.dumps(
+                x,
+                option=orjson.OPT_SERIALIZE_NUMPY,
+            )
+        )
+    )
 
 
 def decode_cache(x):
     return orjson.loads(
         zlib.decompress(
             b64decode(
-                x.encode(),
+                x,
             ),
         ),
     )
@@ -278,7 +348,8 @@ def caching_enabled():
     was_loud = caching_is_enabled()
     enable_caching()
     yield
-    if not was_loud: disable_caching()
+    if not was_loud:
+        disable_caching()
 
 
 @contextmanager
@@ -286,7 +357,8 @@ def caching_disabled():
     was_loud = caching_is_enabled()
     disable_caching()
     yield
-    if was_loud: enable_caching()
+    if was_loud:
+        enable_caching()
 
 
 @contextmanager

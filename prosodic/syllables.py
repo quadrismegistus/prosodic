@@ -2,7 +2,35 @@ from .imports import *
 
 
 class PhonemeList(EntityList):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        def do_phons(phons):
+            vowel_yet = False
+            for phon in phons:
+                if not phon.is_vowel:
+                    if not vowel_yet:
+                        phon._attrs["is_onset"] = True
+                        phon._attrs["is_rime"] = False
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = False
+                    else:
+                        phon._attrs["is_onset"] = False
+                        phon._attrs["is_rime"] = True
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = True
+                else:
+                    vowel_yet = True
+                    phon._attrs["is_onset"] = False
+                    phon._attrs["is_rime"] = True
+                    phon._attrs["is_nucleus"] = True
+                    phon._attrs["is_coda"] = False
+
+        # get syll specific feats
+        phons_by_syll = group_ents(self.children, "syllable")
+
+        for phons in phons_by_syll:
+            do_phons(phons)
 
 
 class Syllable(Entity):
@@ -83,3 +111,23 @@ class Syllable(Entity):
             return True
         if self.next and self.next.is_stressed:
             return True
+
+    @cached_property
+    def onset(self):
+        return PhonemeList(p for p in self.children if p.is_onset)
+
+    @cached_property
+    def rime(self):
+        return PhonemeList(p for p in self.children if p.is_rime)
+
+    @cached_property
+    def nucleus(self):
+        return PhonemeList(p for p in self.children if p.is_nucleus)
+
+    @cached_property
+    def coda(self):
+        return PhonemeList(p for p in self.children if p.is_coda)
+
+    @cache
+    def rime_distance(self, syllable):
+        return self.wordform.rime_distance(syllable.wordform)

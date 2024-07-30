@@ -79,9 +79,7 @@ class Meter(Entity):
         return wtypes + stypes
 
     def get_wordform_matrix(self, line):
-        return line.get_wordform_matrix(
-            resolve_optionality=self.resolve_optionality
-        )
+        return line.get_wordform_matrix(resolve_optionality=self.resolve_optionality)
 
     def parse(self, text_or_line, **kwargs):
         return ParseList(
@@ -90,16 +88,12 @@ class Meter(Entity):
                 **kwargs,
             ),
             type=self.__class__.__name__.lower(),
-            line=text_or_line if text_or_line.is_parseable else None
+            line=text_or_line if text_or_line.is_parseable else None,
         )
 
     def parse_iter(self, text_or_line, force=False, **kwargs):
         if type(text_or_line) in {Text, Stanza}:
-            yield from self.parse_text_iter(
-                text_or_line,
-                force=force,
-                **kwargs
-            )
+            yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
         elif text_or_line.is_parseable:
             yield from self.parse_line(text_or_line, force=force, **kwargs)
         else:
@@ -108,7 +102,7 @@ class Meter(Entity):
     def parse_line(self, line, force=False, **kwargs):
         assert line.is_parseable
         if line.num_sylls < 2:
-            return ParseList(type='line', line=line)
+            return ParseList(type="line", line=line)
 
         if not force and self.use_cache_lines and caching_is_enabled():
             parses = self.parses_from_cache(line)
@@ -129,7 +123,7 @@ class Meter(Entity):
     def get_key(self, line):
         return hashstr(self.key, line.key)
 
-    def parses_from_cache(self, line, as_dict=False, use_redis=True):
+    def parses_from_cache(self, line, as_dict=False):
         from .parsing import ParseList
 
         key = self.get_key(line)
@@ -137,13 +131,13 @@ class Meter(Entity):
         # with logmap(
         #         f'checking for cached {clsn} parses under key "{key[:8]}..."'
         # ) as lm:
-        dat = self.from_cache(key=key, as_dict=True, use_redis=use_redis)
+        dat = self.from_cache(key=key, as_dict=True)
         if dat:
             nchild = len(dat.get("children", [])) if dat else 0
             # lm.log(f"found {nchild:,} parses")
             if as_dict:
                 return dat
-            with logmap('converting cache result to parses'):
+            with logmap("converting cache result to parses"):
                 return ParseList.from_json(
                     dat,
                     line=line,
@@ -165,18 +159,21 @@ class Meter(Entity):
                 for wfl in self.get_wordform_matrix(line)
                 for pos in self.get_pos_types(nsylls=wfl.num_sylls)
             ],
-            line=line
+            line=line,
         )
         for n in range(1000):
             # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
             parses = ParseList(
                 [
-                    newparse for parse in parses
-                    for newparse in parse.branch() if not parse.is_bounded
-                    and newparse is not None and parse is not None
+                    newparse
+                    for parse in parses
+                    for newparse in parse.branch()
+                    if not parse.is_bounded
+                    and newparse is not None
+                    and parse is not None
                 ],
                 type="line",
-                line=line
+                line=line,
             )
             parses.bound(progress=False)
             if all(p.is_complete for p in parses):
@@ -199,13 +196,10 @@ class Meter(Entity):
             wfm = self.get_wordform_matrix(line)
             all_parses = []
             combos = [
-                (wfl,
-                 scansion)
+                (wfl, scansion)
                 for wfl in wfm
                 for scansion in get_possible_scansions(
-                    wfl.num_sylls,
-                    max_s=self.max_s,
-                    max_w=self.max_w
+                    wfl.num_sylls, max_s=self.max_s, max_w=self.max_w
                 )
             ]
             wfl = wfm[0]
@@ -226,11 +220,7 @@ class Meter(Entity):
         return line._parses
 
     def parse_text(self, text, num_proc=DEFAULT_NUM_PROC, progress=True):
-        iterr = self.parse_text_iter(
-            text,
-            num_proc=num_proc,
-            progress=progress
-        )
+        iterr = self.parse_text_iter(text, num_proc=num_proc, progress=progress)
         deque(iterr, maxlen=0)
 
     def parse_text_iter(
@@ -240,7 +230,7 @@ class Meter(Entity):
         force=False,
         num_proc=DEFAULT_NUM_PROC,
         use_mp=True,
-        **kwargs
+        **kwargs,
     ):
         global NUM_GOING
         NUM_GOING += 1
@@ -304,7 +294,8 @@ class Meter(Entity):
                             line,
                             force=force,
                             **kwargs,
-                        ) for line in lm.iter_progress(
+                        )
+                        for line in lm.iter_progress(
                             text.parseable_units,
                             desc="parsing",
                         )
@@ -336,7 +327,7 @@ class Meter(Entity):
         progress=True,
         num_proc=DEFAULT_NUM_PROC,
         lm=None,
-        **progress_kwargs
+        **progress_kwargs,
     ):
         from .parsing import ParseList
 
@@ -345,15 +336,12 @@ class Meter(Entity):
             (
                 line.to_json(),
                 self.to_json(),
-                force or not self.use_cache_lines or not caching_is_enabled()
-            ) for line in text.parseable_units
+                force or not self.use_cache_lines or not caching_is_enabled(),
+            )
+            for line in text.parseable_units
         ]
         iterr = lm.imap(
-            _parse_iter,
-            objs,
-            progress=progress,
-            num_proc=num_proc,
-            **progress_kwargs
+            _parse_iter, objs, progress=progress, num_proc=num_proc, **progress_kwargs
         )
         for i, parselist_json in enumerate(iterr):
             line = text.parseable_units[i]

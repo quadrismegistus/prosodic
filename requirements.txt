@@ -2,7 +2,6 @@ ftfy
 langdetect
 pandas
 syllabiphon @ git+https://github.com/dmort27/syllabiphon
-sqlitedict
 gruut-ipa
 numpy
 multiset
@@ -18,7 +17,6 @@ logmap
 loguru
 orjson
 ipython
-redis-dict
 flask
 flask-socketio
 gevent

@@ -4,7 +4,7 @@ from ..imports import *
 class Language:
     pronunciation_dictionary_filename = ''
     pronunciation_dictionary_filename_sep = '\t'
-    cache_fn = 'lang_wordtypes.sqlitedict'
+    cache_fn = 'lang_wordtypes'
     lang_espeak = None
     lang = None
     use_cache = False
@@ -35,16 +35,19 @@ class Language:
     @cached_property
     @profile
     def cached(self):
-        return SqliteDict(
-            os.path.join(PATH_HOME_DATA,
-                         self.cache_fn),
-            autocommit=True,
-            encode=orjson.dumps,
-            decode=orjson.loads,
-            journal_mode='WAL'
-            # encode=pickle.dumps,
-            # decode=pickle.loads
+        return SimpleCache(
+            root_dir=os.path.join(PATH_HOME_DATA_CACHE, self.cache_fn)
         )
+        # return SqliteDict(
+        #     os.path.join(PATH_HOME_DATA,
+        #                  self.cache_fn),
+        #     autocommit=True,
+        #     encode=orjson.dumps,
+        #     decode=orjson.loads,
+        #     journal_mode='WAL'
+        #     # encode=pickle.dumps,
+        #     # decode=pickle.loads
+        # )
 
     @cache
     @profile
@@ -153,10 +156,10 @@ class Language:
             )
             tokenx = ''.join(x if not x.isspace() else '-' for x in tokenx)
 
-        if self.use_cache and tokenx in self.cached:
-            logger.trace(f'found token {tokenx} in cache')
+        # if self.use_cache and tokenx in self.cached:
+            # logger.trace(f'found token {tokenx} in cache')
             # wordforms = self.cached.get(tokenx)
-            return WordType.from_json(self.cached[tokenx])
+            # return WordType.from_json(self.cached[tokenx])
 
         # else:
         wordforms = []
@@ -170,8 +173,8 @@ class Language:
             wordforms.sort(key=lambda w: w.num_stressed_sylls)
             # self.cached[tokenx] = wordforms
         wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
-        if self.use_cache:
-            self.cached[tokenx] = wordtype.to_json()
+        # if self.use_cache:
+            # self.cached[tokenx] = wordtype.to_json()
         return wordtype
 
 

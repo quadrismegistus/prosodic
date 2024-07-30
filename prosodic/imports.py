@@ -33,8 +33,6 @@ from typing import Optional
 import re
 import os
 import sys
-from sqlitedict import SqliteDict, SqliteMultithread
-from redis_dict import RedisDict
 from contextlib import contextmanager
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
@@ -77,7 +75,6 @@ DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = True
-PATH_PARSE_CACHE = os.path.join(PATH_HOME_DATA, "parse_cache.sqlitedict")
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
 ESPEAK_PATHS = [
     "/opt/homebrew/Cellar/espeak/",

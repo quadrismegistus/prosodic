@@ -529,8 +529,8 @@ class Entity(UserList):
             key_obj = self
         if val_obj is None:
             val_obj = key_obj
-        logger.warning(f"key_obj = {key_obj}")
-        logger.warning(f"val_obj = {val_obj}")
+        logger.trace(f"key_obj = {key_obj}")
+        logger.trace(f"val_obj = {val_obj}")
         key = self.get_key(key_obj) if not key else key
         cache = self.get_cache()
         if key and (force or not key in cache):

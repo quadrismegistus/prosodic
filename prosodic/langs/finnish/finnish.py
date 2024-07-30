@@ -80,7 +80,7 @@ ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.items()])
 class FinnishLanguage(Language):
     pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
     lang = 'fi'
-    cache_fn = 'english_wordtypes.sqlitedict'
+    cache_fn = 'finnish_wordtypes'
 
     @cache
     def get(self, token):

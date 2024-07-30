@@ -302,15 +302,6 @@ def decode_cache(x):
     )
 
 
-def CompressedSqliteDict(fn, *args, flag="c", **kwargs):
-    from sqlitedict import SqliteDict
-
-    ensure_dir(fn)
-    kwargs["encode"] = encode_cache
-    kwargs["decode"] = decode_cache
-    return SqliteDict(fn, *args, flag=flag, **kwargs)
-
-
 def to_html(html, as_str=False, **kwargs):
     if type(html) is not str:
         if hasattr(html, "to_html"):

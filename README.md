@@ -1,10 +1,13 @@
 # Prosodic
 
+[![codecov](https://codecov.io/github/quadrismegistus/prosodic/graph/badge.svg?token=t8VZMSMR4u)](https://codecov.io/github/quadrismegistus/prosodic)
+
 Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/). Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
 This version, "Prosodic 2", is a near-total rewrite of the original Prosodic.
 
 Supports Python>=3.8.
+
 
 ## Install
 
@@ -22,7 +25,7 @@ Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) softw
 
 * *Mac*: `brew install espeak`. (First install [homebrew](brew.sh) if not already installed.)
 
-* *Linux*: `apt-get install espeak`
+* *Linux*: `apt-get install espeak libespeak1 libespeak-dev`
 
 * *Windows*: Download and install from http://espeak.sourceforge.net/download.html.
 

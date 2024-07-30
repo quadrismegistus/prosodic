@@ -5,7 +5,7 @@ class EnglishLanguage(Language):
     pronunciation_dictionary_filename = os.path.join(os.path.dirname(__file__), 'english.tsv')
     lang_espeak = 'en-us'
     lang = 'en'
-    cache_fn = 'english_wordtypes.sqlitedict'
+    cache_fn = 'english_wordtypes'
     path_maybestressed = os.path.join(os.path.dirname(__file__), 'maybestressed.txt')
     path_unstressed = os.path.join(os.path.dirname(__file__), 'unstressed.txt')
 

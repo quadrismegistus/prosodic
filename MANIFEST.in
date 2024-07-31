@@ -2,9 +2,11 @@ include requirements.txt
 include README.md
 include LICENSE.md
 include *.txt
+include _version.py
 
 graft prosodic
 graft metricaltree
+graft syllabiphon
 graft tagged_samples
 
 graft corpora

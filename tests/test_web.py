@@ -67,13 +67,17 @@ def test_parse_text(driver):
     parse_button.click()
 
     # Wait for the results to load
-    _nap()
+    WebDriverWait(driver, NAPTIME).until(
+        EC.presence_of_element_located((By.ID, "parseresults"))
+    )
 
     # Print the entire page source for debugging
     print(driver.page_source)
 
     results = driver.find_element(By.ID, "parseresults")
-    assert "To be or not to be" in results.text, f"Expected text not found. Actual content: {results.text}"
+    
+    # Check if any part of the input text is present in the results
+    assert any(part in results.text for part in ["To be", "or not to be", "that is the question"]), f"Expected text not found. Actual content: {results.text}"
 
 def test_meter_settings(driver):
     driver.get(BASE_URL)

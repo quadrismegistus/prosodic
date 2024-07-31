@@ -13,11 +13,12 @@ Supports Python>=3.8.
 
 ### 1. Install python package
 
-For now, pip-install directly from github:
+Install from pypi:
 
 ```
-pip install git+https://github.com/quadrismegistus/prosodic
+pip install prosodic
 ```
+
 
 ### 2. Install espeak
 

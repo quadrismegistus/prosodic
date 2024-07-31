@@ -29,8 +29,8 @@ def sample_wordforms():
         # WordForm("cat", sylls_ipa=["kæt"], sylls_text=["cat"]),
         # WordForm("log", sylls_ipa=["lɔg"], sylls_text=["log"]),
         # WordForm("dog", sylls_ipa=["dɔg"], sylls_text=["dog"])
-        Word('mat').wordforms[0],
-        Word('cat').wordforms[0],
+        Word('silver').wordforms[0],
+        Word('blur').wordforms[0],
         Word('log').wordforms[0],
         Word('dog').wordforms[0],
     ]

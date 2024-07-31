@@ -45,7 +45,7 @@ jobs:
         uses: nanasess/setup-chromedriver@master
 
       - name: Run pytest
-        run: env NAPTIME=10 pytest --cov=prosodic --cov-report=xml
+        run: env NAPTIME=30 pytest --cov=prosodic --cov-report=xml
 
       - name: Upload test coverage to Codecov
         uses: codecov/codecov-action@v3

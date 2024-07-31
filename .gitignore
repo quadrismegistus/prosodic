@@ -60,3 +60,4 @@ docs/*
 !docs/*.yml
 !docs/_build
 !docs/_build/*
+.eggs

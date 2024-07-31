@@ -1,24 +1,46 @@
-# name: "stable-release"
+name: "stable-release"
 
 on:
   push:
     branches:
-        - "main"
-        - "master"
+      - "main"
+      - "master"
 
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
 
-#   pre-release:
-#     name: "Release"
-#     needs: [tests]
-#     runs-on: "ubuntu-latest"
-#     steps:
-#         - name: "Releasing"
-#           uses: "marvinpinto/action-automatic-releases@latest"
-#           with:
-#             repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#             automatic_release_tag: "stable"
-#             prerelease: false
-#             title: "Stable Build"
+  pre-release:
+    name: "GitHub Release"
+    needs: [tests]
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Releasing"
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "stable"
+          prerelease: false
+          title: "Stable Build"
+
+  pypi-release:
+    name: "PyPI Release"
+    needs: [tests, pre-release]
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*

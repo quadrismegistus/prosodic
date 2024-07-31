@@ -4,3 +4,4 @@ nbformat
 nbclient
 quarto
 quartodoc
+selenium

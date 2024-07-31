@@ -1,18 +1,15 @@
 ftfy
 langdetect
 pandas
-syllabiphon @ git+https://github.com/dmort27/syllabiphon
 gruut-ipa
 numpy
 multiset
 nltk
 phonemizer
-# quart
 orjson
 ordered-set
 click
-#Werkzeug==2.2.2
-editdistance @ git+https://github.com/roy-ht/editdistance
+editdistance
 logmap
 loguru
 orjson
@@ -22,3 +19,4 @@ flask-socketio
 gevent
 gevent-websocket
 scipy
+panphon

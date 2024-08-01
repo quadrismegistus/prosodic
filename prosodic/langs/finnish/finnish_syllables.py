@@ -32,7 +32,7 @@ def initialize_dict_from_file(dict, filename):
     
     try:
         
-        f = open(filename, 'r')
+        f = open(filename, 'r', encoding='utf-8')
         entries = f.readlines()
         f.close()
 

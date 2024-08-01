@@ -2337,16 +2337,16 @@ E.g.: python lexconvert.py --convert festival cepstral"""
    if toFormat=="espeak":
       assert fname=="en_extra", "If you changed eSpeak's lex_filename in the table you also need to change the code below"
       if os.system("mv en_extra en_extra~ && (grep \" // \" en_extra~ || true) > en_extra"): sys.stderr.write("Warning: en_extra not found, making a new one\n(espeak compile will probably fail in this directory)\n") # otherwise keep the commented entries, so can incrementally update the user lexicon only
-      outFile=open(fname,"a")
+      outFile=open(fname,"a", encoding='utf-8')
    else:
       l = 0
       try:
-         f = open(fname)
+         f = open(fname, encoding='utf-8')
          l = getBuf(f).read()
          del f
       except: pass
       assert not l, "File "+replHome(fname)+" already exists and is not empty; are you sure you want to overwrite it?  (Delete it first if so)" # (if you run with python -O then this is ignored, as are some other checks so be careful)
-      outFile=open(fname,"w")
+      outFile=open(fname,"w", encoding='utf-8')
    print ("Writing %s lexicon entries to %s file %s" % (fromFormat,toFormat,fname))
    try: convert_user_lexicon(fromFormat,toFormat,outFile)
    except Message:
@@ -2362,9 +2362,9 @@ or if you can't install the Debian package, try downloading http://ftp.debian.or
 In all cases you need to cd to the eSpeak source directory before running this.  en_extra will be overwritten.  Converter will also read your ~/.festivalrc if it exists.  (You can later incrementally update from ~/.festivalrc using the --convert option; the entries from the system dictionary will not be overwritten in this case.)  Specify --without-check to bypass checking the existing eSpeak pronunciation for OALD entries (much faster, but makes a larger file and in some cases compromises the pronunciation quality)."""
    try: festival_location=sys.argv[i+1]
    except IndexError: return "Error: --festival-dictionary-to-espeak must be followed by the location of the festival OALD file (see help text)"
-   try: open(festival_location)
+   try: open(festival_location, encoding='utf-8')
    except: return "Error: The specified OALD location '"+festival_location+"' could not be opened"
-   try: open("en_list")
+   try: open("en_list", encoding='utf-8')
    except: return "Error: en_list could not be opened (did you remember to cd to the eSpeak dictsource directory first?"
    convert_system_festival_dictionary_to_espeak(festival_location,not '--without-check' in sys.argv,not os.system("test -e ~/.festivalrc"))
 
@@ -2722,7 +2722,7 @@ def espeak_probably_right_already(existing_pronunc,new_pronunc):
 def parse_festival_dict(festival_location):
     "For OALD; yields word,part-of-speech,pronunciation"
     ret = []
-    for line in open(festival_location):
+    for line in open(festival_location, encoding='utf-8'):
         line=line.strip()
         if "((pos" in line: line=line[:line.index("((pos")]
         if line.startswith('( "'): line=line[3:]
@@ -2738,10 +2738,10 @@ def convert_system_festival_dictionary_to_espeak(festival_location,check_existin
     "See mainopt_festival_dictionary_to_espeak"
     os.system("mv en_extra en_extra~") # start with blank 'extra' dictionary
     if check_existing_pronunciation: os.system("espeak --compile=en") # so that the pronunciation we're checking against is not influenced by a previous version of en_extra
-    outFile=open("en_extra","w")
+    outFile=open("en_extra","w", encoding='utf-8')
     print ("Reading dictionary lists")
     wordDic = {} ; ambiguous = {}
-    el = open("en_list")
+    el = open("en_list", encoding='utf-8')
     for line in filter(lambda x:x.split() and not re.match(maybe_bytes(r'^[a-z]* *\$',x),x),getBuf(el).read().split(as_utf8('\n'))): ambiguous[line.split()[0]]=ambiguous[line.split()[0]+as_utf8('s')]=True # this stops the code below from overriding anything already in espeak's en_list.  If taking out then you need to think carefully about words like "a", "the" etc.
     for word,pos,pronunc in parse_festival_dict(festival_location):
         pronunc=pronunc.replace("i@ 0 @ 0","ii ou 2 ").replace("i@ 0 u 0","ii ou ") # (hack for OALD's "radio"/"video"/"stereo"/"embryo" etc)
@@ -2793,7 +2793,7 @@ def convert_system_festival_dictionary_to_espeak(festival_location,check_existin
     if check_existing_pronunciation:
         proc.close() ; print("")
         oldPronDic = {}
-        tp = open("/tmp/.pronunc")
+        tp = open("/tmp/.pronunc", encoding='utf-8')
         for k,v in zip(wList,getBuf(tp).read().split(as_utf8("\n"))): oldPronDic[k]=v.strip().replace(as_utf8(" "),as_utf8(""))
     for w in toDel: del wordDic[w]
     print ("Doing the conversion")
@@ -2833,8 +2833,8 @@ def convert_system_festival_dictionary_to_espeak(festival_location,check_existin
           oldPercent = percent
           progressCount += 1
       proc.close()
-      outFile=open("en_extra","a") # append to it
-      tp = open("/tmp/.pronunc")
+      outFile=open("en_extra","a", encoding='utf-8') # append to it
+      tp = open("/tmp/.pronunc", encoding='utf-8')
       for word,pronunc in zip(not_output_because_ok,getBuf(tp).read().split(as_utf8("\n"))):
         pronunc = pronunc.strip().replace(as_utf8(" "),as_utf8(""))
         if not pronunc==oldPronDic[word] and not espeak_probably_right_already(oldPronDic[word],pronunc):
@@ -2851,7 +2851,7 @@ def read_user_lexicon(fromFormat):
        lexFilename = getSetting(fromFormat,"lex_filename")
        if lexFilename==None: lexfile = None # e.g. the example lexicon
        else:
-          lexfile = open(lexFilename)
+          lexfile = open(lexFilename, encoding='utf-8')
           if not os.environ.get("LEXCONVERT_OMIT_READING_FROM",""): print ("Reading from "+lexFilename) # TODO: document LEXCONVERT_OMIT_READING_FROM (might be useful for the --mac-uk option)
     except KeyError: lexfile = None # lex_read_function without lex_filename is allowed, if the read function can take null param and fetch the lexicon itself
     except IOError: raise Message(fromFormat+"'s lexicon is expected to be in a file called "+replHome(lexFilename)+" which could not be read - please fix and try again")
@@ -3091,7 +3091,7 @@ def print_bbc_warnings(keyCount,lineCount):
 def bbc_prepDefaultLex(outFile):
   """Special-case function set as lex_header in bbcmicro format.  If SPEECH_DISK and MAKE_SPEECH_ROM is set, then read the ROM code from SPEECH_DISK and write to outFile (meant to go before the lexicon, to make a modified BBC Micro Speech ROM with custom lexicon)"""
   if not os.environ.get("MAKE_SPEECH_ROM",0): return
-  sd = open(os.environ['SPEECH_DISK'])
+  sd = open(os.environ['SPEECH_DISK'], encoding='utf-8')
   d=getBuf(sd).read() # if this fails, SPEECH_DISK was not set or was set incorrectly (it's required for MAKE_SPEECH_ROM)
   i=d.index(as_utf8('LO')+chr(0x80)+as_utf8('LP')+chr(0x80)+chr(0x82)+chr(0x11)) # start of SP8000 file (if this fails, it wasn't a Speech disk)
   j=d.index(as_utf8('>OUS_'),i) # start of lexicon (ditto)
@@ -3100,7 +3100,7 @@ def bbc_prepDefaultLex(outFile):
 def bbc_appendDefaultLex(outFile):
   """Special-case function set as lex_footer in bbcmicro format.  If SPEECH_DISK is set, read Speech's default lexicon from it and append this to outFile.  Otherwise just write a terminating >** to outFile.  In either case, check for exceeding 16k if we're MAKE_SPEECH_ROM, close the file and call print_bbclex_instructions."""
   if os.environ.get("SPEECH_DISK",""):
-     sd = open(os.environ['SPEECH_DISK'])
+     sd = open(os.environ['SPEECH_DISK'], encoding='utf-8')
      d=getBuf(sd).read()
      i=d.index(as_utf8('>OUS_')) # if this fails, it wasn't a Speech disk
      j=d.index(as_utf8(">**"),i)
@@ -3199,9 +3199,9 @@ def print_bbclex_instructions(fname,size):
     bbcStart = noSRAM_default_addr+noSRAM_lex_offset
     print ("You can load this lexicon by *LOAD %s %X or change the SPEECH file from offset &%X. Suggest you also set HIMEM=&%X for safety." % (fname,bbcStart,noSRAM_lex_offset,noSRAM_default_addr))
   if bbcStart: # we managed to fit it into main RAM
-     f = open(fname)
+     f = open(fname, encoding='utf-8')
      keys = bbcKeystrokes(getBuf(f).read(),bbcStart)
-     f = open(fname+".key","w")
+     f = open(fname+".key","w", encoding='utf-8')
      getBuf(f).write(keys)
      del f
      print ("For ease of transfer to emulators etc, a self-contained keystroke file for putting %s data at &%X has been written to %s.key" % (fname,bbcStart,fname))
@@ -3338,9 +3338,9 @@ class MacBritish_System_Lexicon(object):
             assert not err, "Error creating lexdir"
         compat_err = "\nThis probably means your Mac has a new version of the voice that is no longer compatible with this system-lexicon patch."
         import cPickle
-        if os.path.exists(lexFile) and os.stat(lexFile).st_size: self.wordIndexStart,self.wordIndexEnd,self.phIndexStart,self.phIndexEnd = cPickle.Unpickler(open(lexFile)).load()
+        if os.path.exists(lexFile) and os.stat(lexFile).st_size: self.wordIndexStart,self.wordIndexEnd,self.phIndexStart,self.phIndexEnd = cPickle.Unpickler(open(lexFile, encoding='utf-8')).load()
         else:
-            f = open(self.filename)
+            f = open(self.filename, encoding='utf-8')
             dat = getBuf(f).read()
             def findW(word,rtnPastEnd=0):
                 i = re.finditer(re.escape(word+chr(0)),dat)
@@ -3356,9 +3356,9 @@ class MacBritish_System_Lexicon(object):
             self.phIndexStart = findW("'e&It.o&U.e&Its")
             self.wordIndexEnd = findW("zombie",1)
             self.phIndexEnd = findW("'zA+m.bI",1)
-            if not text==False: cPickle.Pickler(open(lexFile,"w")).dump((self.wordIndexStart,self.wordIndexEnd,self.phIndexStart,self.phIndexEnd))
-        if text==False: self.dFile = open(self.filename)
-        else: self.dFile = open(self.filename,'r+')
+            if not text==False: cPickle.Pickler(open(lexFile,"w", encoding='utf-8')).dump((self.wordIndexStart,self.wordIndexEnd,self.phIndexStart,self.phIndexEnd))
+        if text==False: self.dFile = open(self.filename, encoding='utf-8')
+        else: self.dFile = open(self.filename,'r+', encoding='utf-8')
         assert len(self.allWords()) == len(self.allPh()), str(len(self.allWords()))+" words but "+str(len(self.allPh()))+" phonemes"+compat_err
         self.textToAvoid = u""
         if text==False: return

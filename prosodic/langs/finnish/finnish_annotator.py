@@ -34,7 +34,7 @@ def initialize_list(l, filename):
     
     try:
         
-        f = open(filename, 'r')
+        f = open(filename, 'r', encoding='utf-8')
         entries = f.readlines()
         f.close()
 
@@ -64,7 +64,7 @@ def initialize_dict_from_file(dict, filename):
     
     try:
         
-        f = open(filename, 'r')
+        f = open(filename, 'r', encoding='utf-8')
         entries = f.readlines()
         f.close()
 
@@ -84,7 +84,7 @@ def initialize_config():
 
     try:
 
-        f = open(config_file, 'r')
+        f = open(config_file, 'r', encoding='utf-8')
         entries = f.readlines()
         f.close()
 

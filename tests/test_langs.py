@@ -24,26 +24,26 @@ def test_espeak():
     os.environ['PATH_ESPEAK']=''
     with tempfile.TemporaryDirectory() as tdir:
         os.environ['PATH_ESPEAK']=''
-        with open(os.path.join(tdir,'espeak-ng'),'w') as of: of.write('')
+        with open(os.path.join(tdir,'espeak-ng'),'w', encoding='utf-8') as of: of.write('')
         assert get_espeak_env([tdir]) == tdir
     
     with tempfile.TemporaryDirectory() as tdir:
         os.environ['PATH_ESPEAK']=''
-        with open(os.path.join(tdir,'espeak-ng'),'w') as of: of.write('')
+        with open(os.path.join(tdir,'espeak-ng'),'w', encoding='utf-8') as of: of.write('')
         assert get_espeak_env([tdir]) == tdir
     
     with tempfile.TemporaryDirectory() as tdir:
         opath=os.path.join(tdir,'a','b','b')
         os.makedirs(opath,exist_ok=True)
         lib_fn='libespeak.dylib'
-        with open(os.path.join(opath,lib_fn),'w') as of: of.write('')
+        with open(os.path.join(opath,lib_fn),'w', encoding='utf-8') as of: of.write('')
         assert get_espeak_env([tdir]) == os.path.join(opath,lib_fn)
 
     with tempfile.TemporaryDirectory() as tdir:
         opath=os.path.join(tdir,'a','b','c')
         os.makedirs(opath,exist_ok=True)
         lib_fn='libespeak.so'
-        with open(os.path.join(opath,lib_fn),'w') as of: of.write('')
+        with open(os.path.join(opath,lib_fn),'w', encoding='utf-8') as of: of.write('')
         assert get_espeak_env([tdir]) == os.path.join(opath,lib_fn)
 
     os.environ['PATH_ESPEAK']= 'hello'

@@ -93,7 +93,7 @@ def get_txt(txt, fn):
             return response.text.strip()
 
         if os.path.exists(fn):
-            with open(fn) as f:
+            with open(fn, encoding='utf-8') as f:
                 return f.read()
 
     return ""
@@ -233,7 +233,7 @@ def hashstr(*inputs, length=HASHSTR_LEN):
 def read_json(fn):
     if not os.path.exists(fn):
         return {}
-    with open(fn) as f:
+    with open(fn, encoding='utf-8') as f:
         return orjson.loads(f.read())
 
 

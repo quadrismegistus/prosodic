@@ -52,7 +52,7 @@ class DataAggregator:
     def __extract_provided_data__(self, data_path, delimeter):
         data = {}
 
-        with open(data_path) as f:
+        with open(data_path, encoding='utf-8') as f:
             lastText = None
             hasReadFirstLine = False
             for line in f.readlines():

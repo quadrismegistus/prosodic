@@ -27,7 +27,7 @@ def test_Text():
     with tempfile.TemporaryDirectory() as tdir:
         oline = "A slumber did my spirit seal"
         fn = os.path.join(tdir, "test.txt")
-        with open(fn, "w") as of:
+        with open(fn, "w", encoding='utf-8') as of:
             of.write(oline)
         assert Text(fn=fn)._txt == oline
 

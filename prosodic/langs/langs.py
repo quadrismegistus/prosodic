@@ -20,7 +20,7 @@ class Language:
         d = {}
         fn = self.pronunciation_dictionary_filename
         if fn and os.path.exists(fn):
-            with open(fn) as f:
+            with open(fn, encoding='utf-8') as f:
                 for ln in f:
                     ln = ln.strip()
                     if ln and self.pronunciation_dictionary_filename_sep in ln:

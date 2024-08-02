@@ -6,7 +6,11 @@ Prosodic is a metrical-phonological parser written in Python. Currently, it can 
 
 This version, "Prosodic 2", is a near-total rewrite of the original Prosodic.
 
-Supports Python>=3.8.
+Supports Python>=3.9.
+
+## [Demo](https://prosodic.dev/)
+
+You can view and use a web app demo of the current Prosodic app at **[prosodic.dev](https://prosodic.dev/)**.
 
 
 ## Install

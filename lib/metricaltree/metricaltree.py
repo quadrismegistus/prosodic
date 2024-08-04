@@ -16,7 +16,7 @@ import nltk
 from nltk import compat
 from nltk.tree import Tree
 import nltk.data
-from deptree import DependencyTree, DependencyTreeParser
+from .deptree import DependencyTree, DependencyTreeParser
 import re,time
 
 DATE = '2015-04-20'

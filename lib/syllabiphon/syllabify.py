@@ -1,4 +1,5 @@
 import collections
+import panphon
 
 ENG_CONFL = {
     9: 9,

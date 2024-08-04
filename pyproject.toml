@@ -31,7 +31,7 @@ dependencies = {file = ["requirements.txt"]}
 version = {attr = "_version.__version__"}
 
 [tool.setuptools]
-packages = {find = {}}
+packages = {find = {where = [".", "lib"]}}
 include-package-data = true
 
 [project.optional-dependencies]

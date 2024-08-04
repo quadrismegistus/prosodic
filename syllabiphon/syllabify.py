@@ -1,5 +1,3 @@
-import panphon
-import panphon.sonority
 import collections
 
 ENG_CONFL = {

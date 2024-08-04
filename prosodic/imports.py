@@ -35,6 +35,31 @@ import os
 import sys
 from contextlib import contextmanager
 
+import panphon
+import panphon.sonority
+import csv
+
+
+def patched_read_bases(self, fn, weights):
+    segments = []
+    seg_dict = {}
+    with open(fn, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f, delimiter='\t')
+        header = next(reader)
+        names = header[1:]
+        for row in reader:
+            seg = row[0]
+            vals = list(map(int, row[1:]))
+            segs = panphon.featuretable.Segment(seg, names, vals, weights)
+            segments.append(segs)
+            seg_dict[seg] = segs
+    return segments, seg_dict, names
+
+# Monkey-patch the _read_bases method
+panphon.featuretable.FeatureTable._read_bases = patched_read_bases
+
+
+
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
 PATH_WEB = os.path.join(PATH_REPO, "prosodic", "web")

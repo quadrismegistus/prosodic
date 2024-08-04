@@ -44,8 +44,6 @@ class PhonemeClass(Entity):
 @cache
 @profile
 def get_phoneme_featuretable():
-    import panphon
-
     ft = panphon.FeatureTable()
     return ft
 

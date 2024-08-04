@@ -19,4 +19,4 @@ flask-socketio
 gevent
 gevent-websocket
 scipy
-panphon
+#panphon

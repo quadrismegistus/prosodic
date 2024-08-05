@@ -3,74 +3,6 @@ from .imports import *
 SYLL_SEP = "."
 
 
-class SyllableList(EntityList):
-    pass
-
-
-class WordTypeList(EntityList):
-    pass
-
-
-@total_ordering
-class WordFormList(EntityList):
-    def __repr__(self):
-        return " ".join(wf.token_stress for wf in self.data)
-
-    @cached_property
-    def slots(self):
-        return [syll for wordform in self.data for syll in wordform.children]
-
-    # @cached_property
-    # def df(self):
-    #     l=[
-    #         {
-    #             k:('.'.join(v) if type(v)==list else v)
-    #             for k,v in px.attrs.items()
-    #         }
-    #         for px in self.data
-    #         if px is not None
-    #     ]
-    #     return setindex(pd.DataFrame(l))
-
-    @cached_property
-    def num_stressed_sylls(self):
-        return sum(
-            int(syll.is_stressed)
-            for wordform in self.data
-            for syll in wordform.children
-        )
-
-    @cached_property
-    def num_sylls(self):
-        return sum(1 for wordform in self.data for syll in wordform.children)
-
-    @cached_property
-    def first_syll(self):
-        for wordform in self.data:
-            for syll in wordform.children:
-                return syll
-
-    @cached_property
-    def sort_key(self):
-        sylls_is_odd = int(bool(self.num_sylls % 2))
-        first_syll_stressed = (
-            2 if self.first_syll is None else int(self.first_syll.is_stressed)
-        )
-        return (
-            sylls_is_odd,
-            self.num_sylls,
-            self.num_stressed_sylls,
-            first_syll_stressed,
-        )
-
-    def __lt__(self, other):
-        return self.sort_key < other.sort_key
-
-    def __eq__(self, other):
-        # return self.sort_key==other.sort_key
-        return self is other
-
-
 # @cache
 @profile
 def Word(token, lang=DEFAULT_LANG):
@@ -82,7 +14,7 @@ def Word(token, lang=DEFAULT_LANG):
 
 class WordToken(Entity):
     child_type = "WordType"
-    list_type = WordTypeList
+    list_type = 'WordTypeList'
 
     prefix = "wordtoken"
 
@@ -92,6 +24,7 @@ class WordToken(Entity):
             txt = txt[1:]
         self.lang = lang
         if not children:
+            from .lists import WordTypeList
             children = WordTypeList([Word(txt, lang=lang)])
         self.word = children[0]
         super().__init__(children=children, parent=parent, txt=txt, **kwargs)
@@ -102,7 +35,7 @@ class WordToken(Entity):
 
 class WordType(Entity):
     child_type: str = "WordForm"
-    list_type = list
+    list_type = 'list'
 
     prefix = "word"
 
@@ -160,7 +93,7 @@ class WordType(Entity):
 class WordForm(Entity):
     prefix = "wordform"
     child_type: str = "Syllable"
-    list_type = SyllableList
+    list_type = 'SyllableList'
 
     @profile
     def __init__(
@@ -240,7 +173,7 @@ class WordForm(Entity):
 
     @cached_property
     def rime(self):
-        from .syllables import PhonemeList
+        from .lists import PhonemeList
 
         sylls = []
         for syll in reversed(self.children):

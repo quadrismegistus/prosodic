@@ -124,7 +124,7 @@ class Meter(Entity):
         return hashstr(self.key, line.key)
 
     def parses_from_cache(self, line, as_dict=False):
-        from .parsing import ParseList
+        from .lists import ParseList
 
         key = self.get_key(line)
         clsn = line.__class__.__name__.lower()
@@ -145,7 +145,8 @@ class Meter(Entity):
                 )
 
     def parse_line_fast(self, line, force=False):
-        from .parsing import ParseList, Parse
+        from .parsing import Parse
+        from .lists import ParseList
 
         assert line.is_parseable
         parses = ParseList(
@@ -188,7 +189,8 @@ class Meter(Entity):
     # slower, exhaustive parser
 
     def parse_line_exhaustive(self, line, progress=None):
-        from .parsing import ParseList, Parse
+        from .parsing import Parse
+        from .lists import ParseList
 
         assert line.is_parseable
 
@@ -235,7 +237,7 @@ class Meter(Entity):
         global NUM_GOING
         NUM_GOING += 1
         # print(NUM_GOING,type(type),text)
-        from .parsing import ParseList
+        from .lists import ParseList
 
         assert type(text) in {Text, Stanza}
 
@@ -329,7 +331,7 @@ class Meter(Entity):
         lm=None,
         **progress_kwargs,
     ):
-        from .parsing import ParseList
+        from .lists import ParseList
 
         assert lm
         objs = [

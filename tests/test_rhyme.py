@@ -1,9 +1,6 @@
 from pprint import pprint
 import pytest
-from prosodic.texts import Text, Stanza
-from prosodic.lines import Line
-from prosodic.words import WordForm, Word
-from prosodic.syllables import Syllable
+from prosodic.imports import *
 
 @pytest.fixture
 def sample_text():

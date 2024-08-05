@@ -2,9 +2,6 @@ from .imports import *
 from .texts import Text
 
 
-class WordTokenList(EntityList):
-    pass
-
 
 class Line(Text):
     line_sep = "\n"
@@ -12,7 +9,7 @@ class Line(Text):
     child_type: str = "WordToken"
     is_parseable = True
     prefix = "line"
-    list_type = WordTokenList
+    list_type = 'WordTokenList'
     is_parseable = False
     use_cache = False
 
@@ -55,7 +52,7 @@ class Line(Text):
         return self.get_wordform_matrix()
 
     def get_wordform_matrix(self, resolve_optionality=True):
-        from .words import WordFormList
+        from .lists import WordFormList
 
         lim = 1 if not resolve_optionality else None
         ll = [l for l in self.wordforms_all if l]
@@ -64,7 +61,7 @@ class Line(Text):
         return ll[:lim]
 
     def match_wordforms(self, wordforms):
-        from .words import WordFormList
+        from .lists import WordFormList
 
         wordforms_ll = [l for l in self.wordforms_all if l]
         assert len(wordforms) == len(wordforms_ll)

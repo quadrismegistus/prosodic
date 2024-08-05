@@ -1,41 +1,5 @@
 from .imports import *
 
-
-class StanzaList(EntityList):
-    pass
-
-
-class LineList(EntityList):
-    # def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
-    #     o = []
-    #     done = set()
-    #     for i1, line1 in enumerate(self.data):
-    #         for i2, line2 in enumerate(self.data):
-    #             if (
-    #                 i1 < i2
-    #                 and len(line1.wordforms)
-    #                 and len(line2.wordforms)
-    #                 and i1 not in done
-    #                 and i2 not in done
-    #             ):
-    #                 dist = line1.rime_distance(line2)
-    #                 if max_dist is None or dist <= max_dist:
-    #                     o.append((dist, line1, line2))
-    #                     done.update({i1, i2})
-    #     return sorted(o, key=lambda x: x[0])
-    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
-        line2rhyme = defaultdict(list)
-        for line in self.data:
-            prev_lines = self.data[: line.i]
-            if not prev_lines:
-                continue
-            for line2 in prev_lines:
-                dist = line.rime_distance(line2)
-                if max_dist is None or dist <= max_dist:
-                    line2rhyme[line].append((dist, line2))
-        return {i: min(v) for i, v in line2rhyme.items()}
-
-
 NUMBUILT = 0
 
 
@@ -61,7 +25,7 @@ class Text(Entity):
     child_type: str = "Stanza"
     prefix = "text"
     parse_unit_attr = "lines"
-    list_type = StanzaList
+    list_type = 'StanzaList'
     use_cache = None
 
     cached_properties_to_clear = [
@@ -308,49 +272,3 @@ class Text(Entity):
     def is_rhyming(self):
         return any([st.is_rhyming for st in self.stanzas])
 
-
-class Stanza(Text):
-    sep: str = ""
-    child_type: str = "Line"
-    prefix = "stanza"
-    list_type = LineList
-
-    @profile
-    def __init__(
-        self,
-        txt: str = "",
-        children=[],
-        parent=None,
-        tokens_df=None,
-        lang=DEFAULT_LANG,
-        **kwargs,
-    ):
-        from .lines import Line
-
-        if not txt and not children and tokens_df is None:
-            raise Exception("Must provide either txt, children, or tokens_df")
-        if not children:
-            if tokens_df is None:
-                tokens_df = tokenize_sentwords_df(txt)
-            children = [
-                Line(parent=self, tokens_df=line_df)
-                for line_i, line_df in tokens_df.groupby("line_i")
-            ]
-        Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
-
-    def to_json(self):
-        return Entity.to_json(self, no_txt=True)
-
-    def _repr_html_(self, as_df=False, df=None):
-        return super()._repr_html_(df=df) if as_df else self.to_html(as_str=True)
-
-    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
-        return self.children.get_rhyming_lines(max_dist=max_dist)
-
-    @cached_property
-    def num_rhyming_lines(self):
-        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
-
-    @cached_property
-    def is_rhyming(self):
-        return self.num_rhyming_lines > 0

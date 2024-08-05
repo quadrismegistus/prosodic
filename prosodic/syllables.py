@@ -1,42 +1,10 @@
 from .imports import *
-
-
-class PhonemeList(EntityList):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        def do_phons(phons):
-            vowel_yet = False
-            for phon in phons:
-                if not phon.is_vowel:
-                    if not vowel_yet:
-                        phon._attrs["is_onset"] = True
-                        phon._attrs["is_rime"] = False
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = False
-                    else:
-                        phon._attrs["is_onset"] = False
-                        phon._attrs["is_rime"] = True
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = True
-                else:
-                    vowel_yet = True
-                    phon._attrs["is_onset"] = False
-                    phon._attrs["is_rime"] = True
-                    phon._attrs["is_nucleus"] = True
-                    phon._attrs["is_coda"] = False
-
-        # get syll specific feats
-        phons_by_syll = group_ents(self.children, "syllable")
-
-        for phons in phons_by_syll:
-            do_phons(phons)
-
+from .lists import PhonemeList
 
 class Syllable(Entity):
     prefix = "syll"
     child_type = "Phoneme"
-    list_type = PhonemeList
+    list_type = 'PhonemeList'
 
     @profile
     def __init__(self, txt: str, ipa=None, parent=None, children=[], **kwargs):

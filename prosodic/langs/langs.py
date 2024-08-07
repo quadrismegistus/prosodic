@@ -133,7 +133,7 @@ class Language:
     @cached_property
     @profile
     def syllabiphon(self):
-        from syllabiphon.syllabify import Syllabify
+        from prosodic.lib.syllabiphon.syllabify import Syllabify
         return Syllabify()
 
     @cache

@@ -1,5 +1,6 @@
-import collections
 import panphon
+import panphon.sonority
+import collections
 
 ENG_CONFL = {
     9: 9,

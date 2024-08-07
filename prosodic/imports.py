@@ -29,7 +29,7 @@ import zlib
 import time
 import warnings
 from collections import UserList, Counter, defaultdict
-from typing import Optional
+from typing import *
 import re
 import os
 import sys
@@ -40,10 +40,13 @@ import panphon.sonority
 import csv
 
 
-
+from importlib import resources
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
-PATH_WEB = os.path.join(PATH_REPO, "prosodic", "web")
+PATH_PROSODIC = PATH_HERE
+PATH_LANGS = os.path.join(PATH_PROSODIC, 'langs')
+PATH_PHONS = os.path.join(PATH_LANGS,'phonemes.json')
+PATH_WEB = os.path.join(PATH_PROSODIC, "web")
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")
@@ -55,7 +58,6 @@ USE_CACHE = False
 USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
-REDIS_HOST = "212.227.240.128"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)

@@ -89,7 +89,7 @@ class Language:
     @cache
     @profile
     def syllabify_ipa(self, ipa_str_with_spaces_between_phonemes):
-        from ..phonemes import Phoneme
+        from ..words import Phoneme
         phn = ipa_str_with_spaces_between_phonemes
         phns = phn.split()
         sylls = []

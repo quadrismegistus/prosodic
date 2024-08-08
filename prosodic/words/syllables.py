@@ -1,5 +1,5 @@
-from .imports import *
-from .lists import PhonemeList
+from ..imports import *
+from .phonemes import PhonemeList
 
 class Syllable(Entity):
     prefix = "syll"
@@ -99,3 +99,8 @@ class Syllable(Entity):
     @cache
     def rime_distance(self, syllable):
         return self.wordform.rime_distance(syllable.wordform)
+
+
+class SyllableList(EntityList):
+    pass
+

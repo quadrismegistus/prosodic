@@ -1,59 +1,4 @@
-from .imports import *
-from .ents import Entity
-
-class EntityList(Entity):
-    """
-    A list of Entity objects.
-    """
-
-    def __init__(self, children=[], parent=None, **kwargs):
-        """
-        Initialize an EntityList object.
-
-        Args:
-            children (list): List of child entities.
-            parent (Entity): The parent entity.
-            **kwargs: Additional attributes to set on the entity.
-        """
-        self.parent = parent
-        self.children = [x for x in children]
-        self._attrs = kwargs
-        self._txt = None
-        for k, v in self._attrs.items():
-            setattr(self, k, v)
-
-    @cached_property
-    def txt(self):
-        """
-        Get the text content of the entity list.
-
-        Returns:
-            None: Always returns None for EntityList objects.
-        """
-        return None
-
-
-
-class StanzaList(EntityList):
-    pass
-
-
-class LineList(EntityList):
-    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
-        line2rhyme = defaultdict(list)
-        for line in self.data:
-            prev_lines = self.data[: line.i]
-            if not prev_lines:
-                continue
-            for line2 in prev_lines:
-                dist = line.rime_distance(line2)
-                if max_dist is None or dist <= max_dist:
-                    line2rhyme[line].append((dist, line2))
-        return {i: min(v) for i, v in line2rhyme.items()}
-
-
-class WordTokenList(EntityList):
-    pass
+from ..imports import *
 
 
 class ParseList(EntityList):
@@ -69,7 +14,7 @@ class ParseList(EntityList):
 
     @staticmethod
     def from_json(json_d, line=None, progress=False):
-        from .parsing import Parse
+        from .parses import Parse
         with logmap(announce=progress) as lm:
             parses = lm.imap(
                 Parse.from_json,
@@ -330,7 +275,9 @@ class ParseList(EntityList):
             lkey = (parse.stanza_num, parse.line_num)
             key = (parse.stanza_num, parse.line_num, parse.meter_str)
             if key not in mstrs:
-                mstrs.add(key)
+                mstrs.add(key) 
+
+                
                 countd[lkey] += 1
                 parse.parse_rank = countd[lkey]
                 plist.append(parse)
@@ -354,92 +301,3 @@ class ParseList(EntityList):
 
 
 
-class SyllableList(EntityList):
-    pass
-
-
-class WordTypeList(EntityList):
-    pass
-
-
-@total_ordering
-class WordFormList(EntityList):
-    def __repr__(self):
-        return " ".join(wf.token_stress for wf in self.data)
-
-    @cached_property
-    def slots(self):
-        return [syll for wordform in self.data for syll in wordform.children]
-
-    @cached_property
-    def num_stressed_sylls(self):
-        return sum(
-            int(syll.is_stressed)
-            for wordform in self.data
-            for syll in wordform.children
-        )
-
-    @cached_property
-    def num_sylls(self):
-        return sum(1 for wordform in self.data for syll in wordform.children)
-
-    @cached_property
-    def first_syll(self):
-        for wordform in self.data:
-            for syll in wordform.children:
-                return syll
-
-    @cached_property
-    def sort_key(self):
-        sylls_is_odd = int(bool(self.num_sylls % 2))
-        first_syll_stressed = (
-            2 if self.first_syll is None else int(self.first_syll.is_stressed)
-        )
-        return (
-            sylls_is_odd,
-            self.num_sylls,
-            self.num_stressed_sylls,
-            first_syll_stressed,
-        )
-
-    def __lt__(self, other):
-        return self.sort_key < other.sort_key
-
-    def __eq__(self, other):
-        # return self.sort_key==other.sort_key
-        return self is other
-
-
-
-
-
-class PhonemeList(EntityList):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        def do_phons(phons):
-            vowel_yet = False
-            for phon in phons:
-                if not phon.is_vowel:
-                    if not vowel_yet:
-                        phon._attrs["is_onset"] = True
-                        phon._attrs["is_rime"] = False
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = False
-                    else:
-                        phon._attrs["is_onset"] = False
-                        phon._attrs["is_rime"] = True
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = True
-                else:
-                    vowel_yet = True
-                    phon._attrs["is_onset"] = False
-                    phon._attrs["is_rime"] = True
-                    phon._attrs["is_nucleus"] = True
-                    phon._attrs["is_coda"] = False
-
-        # get syll specific feats
-        phons_by_syll = group_ents(self.children, "syllable")
-
-        for phons in phons_by_syll:
-            do_phons(phons)

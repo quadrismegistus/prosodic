@@ -1,4 +1,4 @@
-from .imports import *
+from ..imports import *
 from .texts import Text
 from typing import List, Optional, Any
 
@@ -51,7 +51,7 @@ class Line(Text):
         Raises:
             Exception: If neither txt, children, nor tokens_df is provided.
         """
-        from .words import WordToken
+        from ..words import WordToken
 
         if not txt and not children and tokens_df is None:
             raise Exception("Must provide either txt, children, or tokens_df")
@@ -95,7 +95,7 @@ class Line(Text):
         Returns:
             List[Any]: A matrix of word forms.
         """
-        from .lists import WordFormList
+        from ..words import WordFormList
 
         lim = 1 if not resolve_optionality else None
         ll = [l for l in self.wordforms_all if l]
@@ -113,7 +113,7 @@ class Line(Text):
         Returns:
             Any: A WordFormList of matched word forms.
         """
-        from .lists import WordFormList
+        from ..words import WordFormList
 
         wordforms_ll = [l for l in self.wordforms_all if l]
         assert len(wordforms) == len(wordforms_ll)
@@ -255,3 +255,21 @@ class Line(Text):
         if not self.wordforms_nopunc or not line.wordforms_nopunc:
             return np.nan
         return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1])
+    
+
+
+class LineList(EntityList):
+    def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
+        line2rhyme = defaultdict(list)
+        for line in self.data:
+            prev_lines = self.data[: line.i]
+            if not prev_lines:
+                continue
+            for line2 in prev_lines:
+                dist = line.rime_distance(line2)
+                if max_dist is None or dist <= max_dist:
+                    line2rhyme[line].append((dist, line2))
+        return {i: min(v) for i, v in line2rhyme.items()}
+
+
+

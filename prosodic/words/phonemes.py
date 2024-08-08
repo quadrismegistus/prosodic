@@ -1,4 +1,4 @@
-from .imports import *
+from ..imports import *
 
 
 class PhonemeClass(Entity):
@@ -101,3 +101,36 @@ FEATS_PANPHON = [
 def get_ipa_info():
     with open(PATH_PHONS) as f:
         return json.load(f)
+    
+
+
+class PhonemeList(EntityList):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        def do_phons(phons):
+            vowel_yet = False
+            for phon in phons:
+                if not phon.is_vowel:
+                    if not vowel_yet:
+                        phon._attrs["is_onset"] = True
+                        phon._attrs["is_rime"] = False
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = False
+                    else:
+                        phon._attrs["is_onset"] = False
+                        phon._attrs["is_rime"] = True
+                        phon._attrs["is_nucleus"] = False
+                        phon._attrs["is_coda"] = True
+                else:
+                    vowel_yet = True
+                    phon._attrs["is_onset"] = False
+                    phon._attrs["is_rime"] = True
+                    phon._attrs["is_nucleus"] = True
+                    phon._attrs["is_coda"] = False
+
+        # get syll specific feats
+        phons_by_syll = group_ents(self.children, "syllable")
+
+        for phons in phons_by_syll:
+            do_phons(phons)

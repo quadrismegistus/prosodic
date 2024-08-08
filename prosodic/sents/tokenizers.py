@@ -1,8 +1,4 @@
-from .imports import *
-
-
-def tokenize_agnostic(txt):
-    return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
+from ..imports import *
 
 
 @cache

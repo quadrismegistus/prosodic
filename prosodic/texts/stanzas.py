@@ -1,4 +1,4 @@
-from .imports import *
+from ..imports import *
 from .texts import Text
 from .lines import Line
 from typing import List, Optional, Any
@@ -112,3 +112,9 @@ class Stanza(Text):
             bool: True if the stanza contains rhyming lines, False otherwise.
         """
         return self.num_rhyming_lines > 0
+    
+
+
+class StanzaList(EntityList):
+    pass
+

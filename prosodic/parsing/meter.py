@@ -1,6 +1,6 @@
-from .imports import *
+from ..imports import *
 from .constraints import *
-from .texts import Text
+from ..texts import Text
 
 NUM_GOING = 0
 # METER
@@ -124,7 +124,7 @@ class Meter(Entity):
         return hashstr(self.key, line.key)
 
     def parses_from_cache(self, line, as_dict=False):
-        from .lists import ParseList
+        from .parselists import ParseList
 
         key = self.get_key(line)
         clsn = line.__class__.__name__.lower()
@@ -145,8 +145,8 @@ class Meter(Entity):
                 )
 
     def parse_line_fast(self, line, force=False):
-        from .parsing import Parse
-        from .lists import ParseList
+        from .parses import Parse
+        from .parselists import ParseList
 
         assert line.is_parseable
         parses = ParseList(
@@ -189,8 +189,8 @@ class Meter(Entity):
     # slower, exhaustive parser
 
     def parse_line_exhaustive(self, line, progress=None):
-        from .parsing import Parse
-        from .lists import ParseList
+        from .parses import Parse
+        from .parselists import ParseList
 
         assert line.is_parseable
 
@@ -237,7 +237,7 @@ class Meter(Entity):
         global NUM_GOING
         NUM_GOING += 1
         # print(NUM_GOING,type(type),text)
-        from .lists import ParseList
+        from .parselists import ParseList
 
         assert type(text) in {Text, Stanza}
 
@@ -331,7 +331,7 @@ class Meter(Entity):
         lm=None,
         **progress_kwargs,
     ):
-        from .lists import ParseList
+        from .parselists import ParseList
 
         assert lm
         objs = [

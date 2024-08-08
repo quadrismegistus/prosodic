@@ -1,4 +1,4 @@
-from .imports import *
+from ..imports import *
 
 NUMBUILT = 0
 
@@ -150,7 +150,7 @@ class Text(Entity):
         Returns:
             Any: The current meter object.
         """
-        from .meter import Meter
+        from ..parsing import Meter
 
         if meter is not None:
             self._mtr = meter
@@ -224,7 +224,7 @@ class Text(Entity):
         Returns:
             bool: True if parsing is needed, False otherwise.
         """
-        from .meter import Meter
+        from ..parsing import Meter
 
         if force:
             return True
@@ -279,7 +279,7 @@ class Text(Entity):
         Args:
             **meter_kwargs: Keyword arguments for meter configuration.
         """
-        from .meter import DEFAULT_METER_KWARGS
+        from ..parsing import DEFAULT_METER_KWARGS
 
         meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         self.set_meter(**meter_kwargs)
@@ -307,7 +307,7 @@ class Text(Entity):
         Returns:
             Any: The parsed result.
         """
-        from .meter import DEFAULT_METER_KWARGS
+        from ..parsing import DEFAULT_METER_KWARGS
 
         if defaults:
             meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}

@@ -214,18 +214,12 @@ GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
 
 
 from .utils import *
-from .tokenizers import *
+from .sents import *
 from .ents import *
 from .texts import *
-from .stanzas import *
-from .lines import *
 from .words import *
-from .syllables import *
-from .phonemes import *
 from .langs import *
 from .parsing import *
-from .meter import *
-from .lists import *
 
 GLOBALS = globals()
 GLOBALS['list']=list

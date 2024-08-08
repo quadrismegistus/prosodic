@@ -1,4 +1,4 @@
-from .imports import *
+from ..imports import *
 from .constraints import *
 
 
@@ -40,7 +40,7 @@ class Parse(Entity):
             parent = Line(wordforms_or_str)
             self.wordforms = meter.get_wordform_matrix(parent)[0]
         elif type(wordforms_or_str) == list:
-            from .lists import WordFormList
+            from ..words import WordFormList
             self.wordforms = WordFormList(wordforms_or_str)
         else:
             self.wordforms = wordforms_or_str
@@ -110,7 +110,7 @@ class Parse(Entity):
 
     @staticmethod
     def from_json(json_d, line=None):
-        from .lines import Line
+        from ..texts import Line
 
         wordforms = from_json(json_d["_wordforms"])
         if line:
@@ -746,3 +746,6 @@ def get_iambic_parse(nsyll):
         x = "w" if not o or o[-1] == "s" else "s"
         o.append(x)
     return o
+
+
+

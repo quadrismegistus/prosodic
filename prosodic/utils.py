@@ -382,3 +382,6 @@ def force_int(x, errors=0) -> int:
         return int(x)
     except (ValueError, TypeError):
         return errors
+
+def tokenize_agnostic(txt):
+    return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)

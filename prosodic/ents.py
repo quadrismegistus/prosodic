@@ -532,7 +532,7 @@ class Entity(UserList):
         Returns:
             StanzaList: A list of stanza entities.
         """
-        from .lists import StanzaList
+        from .texts import StanzaList
 
         if self.is_text:
             o = self.children
@@ -570,7 +570,7 @@ class Entity(UserList):
         Returns:
             LineList: A list of line entities.
         """
-        from .lists import LineList
+        from .texts import LineList
 
         if self.is_stanza:
             o = self.children
@@ -588,7 +588,7 @@ class Entity(UserList):
         Returns:
             WordTokenList: A list of word token entities.
         """
-        from .lists import WordTokenList
+        from .words import WordTokenList
 
         if self.is_line:
             o = self.children
@@ -616,7 +616,7 @@ class Entity(UserList):
         Returns:
             WordTypeList: A list of word type entities.
         """
-        from .lists import WordTypeList
+        from .words import WordTypeList
 
         if self.is_wordtoken:
             o = self.children
@@ -634,7 +634,7 @@ class Entity(UserList):
         Returns:
             WordFormList: A list of word form entities.
         """
-        from .lists import WordFormList
+        from .words import WordFormList
 
         if self.is_wordtype:
             o = self.children[:1]
@@ -678,7 +678,7 @@ class Entity(UserList):
         Returns:
             SyllableList: A list of syllable entities.
         """
-        from .lists import SyllableList
+        from .words import SyllableList
 
         if self.is_wordform:
             o = self.children
@@ -696,7 +696,7 @@ class Entity(UserList):
         Returns:
             PhonemeList: A list of phoneme entities.
         """
-        from .lists import PhonemeList
+        from .words import PhonemeList
 
         if self.is_syll:
             o = self.children
@@ -1001,4 +1001,37 @@ class Entity(UserList):
                     data = val_obj.to_json()
                 with logmap("uploading json to cache", level="trace"):
                     cache[key] = data
+
+
+class EntityList(Entity):
+    """
+    A list of Entity objects.
+    """
+
+    def __init__(self, children=[], parent=None, **kwargs):
+        """
+        Initialize an EntityList object.
+
+        Args:
+            children (list): List of child entities.
+            parent (Entity): The parent entity.
+            **kwargs: Additional attributes to set on the entity.
+        """
+        self.parent = parent
+        self.children = [x for x in children]
+        self._attrs = kwargs
+        self._txt = None
+        for k, v in self._attrs.items():
+            setattr(self, k, v)
+
+    @cached_property
+    def txt(self):
+        """
+        Get the text content of the entity list.
+
+        Returns:
+            None: Always returns None for EntityList objects.
+        """
+        return None
+
 

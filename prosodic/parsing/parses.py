@@ -1,25 +1,65 @@
 from ..imports import *
 from .constraints import *
-
+from .utils import *
+from .positions import *
+from .slots import *
 
 @total_ordering
 class Parse(Entity):
-    prefix = "parse"
+    """
+    Represents a metrical parse of a line of text.
+
+    Attributes:
+        prefix (str): The prefix used for naming this entity type.
+        positions (List[ParsePosition]): List of metrical positions in the parse.
+        meter_obj (Meter): The meter object associated with this parse.
+        meter (Meter): Alias for meter_obj.
+        wordforms (WordFormList): List of word forms in the parse.
+        line (Line): The line object this parse is associated with.
+        is_bounded (bool): Whether this parse is bounded.
+        bounded_by (List): List of constraints that bound this parse.
+        unmetrical (bool): Whether this parse is unmetrical.
+        comparison_nums (set): Set of comparison numbers.
+        comparison_parses (List[Parse]): List of comparison parses.
+        parse_num (int): The number of this parse.
+        total_score (Optional[float]): The total score of this parse.
+        pause_comparisons (bool): Whether to pause comparisons.
+        parse_rank (Optional[int]): The rank of this parse.
+        num_slots_positioned (int): Number of slots positioned in this parse.
+        _line_num (Optional[int]): The line number.
+        _stanza_num (Optional[int]): The stanza number.
+        _line_txt (str): The text of the line.
+
+    Args:
+        wordforms_or_str (Union[str, List, WordFormList]): The word forms or string to parse.
+        scansion (str): The scansion string.
+        meter (Optional[Meter]): The meter to use for parsing.
+        parent (Optional[Any]): The parent object of this parse.
+        positions (Optional[List[ParsePosition]]): List of parse positions.
+        is_bounded (bool): Whether this parse is bounded.
+        bounded_by (Optional[List]): List of constraints that bound this parse.
+        rank (Optional[int]): The rank of this parse.
+        line_num (Optional[int]): The line number.
+        stanza_num (Optional[int]): The stanza number.
+        line_txt (str): The text of the line.
+    """
+
+    prefix: str = "parse"
 
     def __init__(
         self,
-        wordforms_or_str,
+        wordforms_or_str: Union[str, List, "WordFormList"],
         scansion: str = "",
-        meter: "Meter" = None,
-        parent=None,
-        positions=None,
-        is_bounded=False,
-        bounded_by=None,
-        rank=None,
-        line_num=None,
-        stanza_num=None,
-        line_txt="",
-    ):
+        meter: Optional["Meter"] = None,
+        parent: Optional[Any] = None,
+        positions: Optional[List["ParsePosition"]] = None,
+        is_bounded: bool = False,
+        bounded_by: Optional[List] = None,
+        rank: Optional[int] = None,
+        line_num: Optional[int] = None,
+        stanza_num: Optional[int] = None,
+        line_txt: str = "",
+    ) -> None:
         from .meter import Meter
 
         if not positions:
@@ -82,19 +122,41 @@ class Parse(Entity):
         self.init()
 
     @property
-    def line_num(self):
+    def line_num(self) -> Optional[int]:
+        """
+        Get the line number.
+
+        Returns:
+            Optional[int]: The line number.
+        """
         return self.line.num if self.line else self._line_num
 
     @property
-    def stanza_num(self):
+    def stanza_num(self) -> Optional[int]:
+        """
+        Get the stanza number.
+
+        Returns:
+            Optional[int]: The stanza number.
+        """
         return self.stanza.num if self.line else self._stanza_num
 
-    def init(self):
+    def init(self) -> None:
+        """Initialize the parse positions."""
         for pos in self.positions:
             pos.parse = self
             pos.init()
 
-    def to_json(self, fn=None):
+    def to_json(self, fn: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Convert the parse to a JSON-serializable dictionary.
+
+        Args:
+            fn (Optional[str]): Filename to save the JSON to.
+
+        Returns:
+            Dict[str, Any]: JSON-serializable dictionary representation of the parse.
+        """
         return to_json(
             {
                 "_class": self.__class__.__name__,
@@ -109,7 +171,17 @@ class Parse(Entity):
         )
 
     @staticmethod
-    def from_json(json_d, line=None):
+    def from_json(json_d: Dict[str, Any], line: Optional[Union["Text", "Stanza", "Line"]] = None) -> "Parse":
+        """
+        Create a Parse object from a JSON dictionary.
+
+        Args:
+            json_d (Dict[str, Any]): JSON dictionary representation of the parse.
+            line (Optional[Union[Text, Stanza, Line]]): The line object to associate with the parse.
+
+        Returns:
+            Parse: A new Parse object created from the JSON data.
+        """
         from ..texts import Line
 
         wordforms = from_json(json_d["_wordforms"])
@@ -143,14 +215,35 @@ class Parse(Entity):
         )
 
     @property
-    def slots(self):
+    def slots(self) -> List["ParseSlot"]:
+        """
+        Get all slots in the parse.
+
+        Returns:
+            List[ParseSlot]: List of all slots in the parse.
+        """
         return [slot for mpos in self.positions for slot in mpos.slots]
 
     @property
-    def is_complete(self):
+    def is_complete(self) -> bool:
+        """
+        Check if the parse is complete.
+
+        Returns:
+            bool: True if the parse is complete, False otherwise.
+        """
         return len(self.slots) == len(self.syllables)
 
-    def extend(self, mpos_str: str):  # ww for 2 slots, w for 1, etc
+    def extend(self, mpos_str: str) -> Optional["Parse"]:
+        """
+        Extend the parse with a new metrical position.
+
+        Args:
+            mpos_str (str): String representation of the metrical position to add.
+
+        Returns:
+            Optional[Parse]: The extended parse, or None if extension is not possible.
+        """
         slots = []
         mval = mpos_str[0]
         if self.positions and self.positions[-1].meter_val == mval:
@@ -176,13 +269,25 @@ class Parse(Entity):
         return self
 
     @property
-    def violset(self):
+    def violset(self) -> Multiset:
+        """
+        Get the set of constraint violations for this parse.
+
+        Returns:
+            Multiset: A multiset of constraint violations.
+        """
         s = Multiset()
         for mpos in self.positions:
             s.update(mpos.violset)
         return s
 
-    def __copy__(self):
+    def __copy__(self) -> "Parse":
+        """
+        Create a shallow copy of the parse.
+
+        Returns:
+            Parse: A shallow copy of the parse.
+        """
         new = Parse(
             wordforms_or_str=self.wordforms,
             scansion=self.positions_ls,
@@ -196,7 +301,13 @@ class Parse(Entity):
         # new.violset = copy(self.violset)
         return new
 
-    def branch(self):
+    def branch(self) -> List["Parse"]:
+        """
+        Create branching parses from this parse.
+
+        Returns:
+            List[Parse]: List of branching parses.
+        """
         if self.is_bounded:
             return []
         if not self.positions:
@@ -212,11 +323,23 @@ class Parse(Entity):
         return o
 
     @property
-    def is_complete(self):
+    def is_complete(self) -> bool:
+        """
+        Check if the parse is complete.
+
+        Returns:
+            bool: True if the parse is complete, False otherwise.
+        """
         return self.num_slots_positioned == len(self.wordforms.slots)
 
     @property
-    def sort_key(self):
+    def sort_key(self) -> tuple:
+        """
+        Get the sort key for this parse.
+
+        Returns:
+            tuple: A tuple used for sorting parses.
+        """
         return (
             self.stanza_num,
             self.line_num,
@@ -230,29 +353,72 @@ class Parse(Entity):
         )
 
     @cached_property
-    def constraints(self):
+    def constraints(self) -> List[Callable]:
+        """
+        Get the list of constraints for this parse.
+
+        Returns:
+            List[Callable]: List of constraint functions.
+        """
         return self.meter.constraints + self.meter.categorical_constraints
 
     @cached_property
-    def constraint_d(self):
+    def constraint_d(self) -> Dict[str, Callable]:
+        """
+        Get a dictionary of constraints keyed by their names.
+
+        Returns:
+            Dict[str, Callable]: Dictionary of constraints.
+        """
         return dict((c.__name__, c) for c in self.constraints)
 
     @cached_property
-    def categorical_constraint_d(self):
+    def categorical_constraint_d(self) -> Dict[str, Callable]:
+        """
+        Get a dictionary of categorical constraints keyed by their names.
+
+        Returns:
+            Dict[str, Callable]: Dictionary of categorical constraints.
+        """
         return dict((c.__name__, c) for c in self.meter.categorical_constraints)
 
-    # @profile
+    def __lt__(self, other: "Parse") -> bool:
+        """
+        Compare this parse to another parse.
 
-    def __lt__(self, other):
+        Args:
+            other (Parse): The other parse to compare to.
+
+        Returns:
+            bool: True if this parse is less than the other parse, False otherwise.
+        """
         return self.sort_key < other.sort_key
 
-    # @profile
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        """
+        Check if this parse is equal to another parse.
+
+        Args:
+            other (object): The other object to compare to.
+
+        Returns:
+            bool: True if the parses are equal, False otherwise.
+        """
         # logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
         # return not (self<other) and not (other<self)
         return self is other
 
-    def can_compare(self, other, min_slots=4):
+    def can_compare(self, other: "Parse", min_slots: int = 4) -> bool:
+        """
+        Check if this parse can be compared to another parse.
+
+        Args:
+            other (Parse): The other parse to compare to.
+            min_slots (int): Minimum number of slots required for comparison.
+
+        Returns:
+            bool: True if the parses can be compared, False otherwise.
+        """
         if (self.stanza_num, self.line_num) != (other.stanza_num, other.line_num):
             return False
 
@@ -268,35 +434,65 @@ class Parse(Entity):
         return True
 
     @cached_property
-    def txt(self):
+    def txt(self) -> str:
+        """
+        Get the text representation of the parse.
+
+        Returns:
+            str: Text representation of the parse.
+        """
         return " ".join(m.txt for m in self.positions)
 
-    # def __repr__(self):
-    # attrstr=get_attr_str(self.attrs)
-    # parse=self.txt
-    # preattr=f'({self.__class__.__name__}: {parse})'
-    # return f'{preattr}{attrstr}'
-
     @property
-    def num_stressed_sylls(self):
+    def num_stressed_sylls(self) -> int:
+        """
+        Get the number of stressed syllables in the parse.
+
+        Returns:
+            int: Number of stressed syllables.
+        """
         return len(
             [slot for mpos in self.positions for slot in mpos.slots if slot.is_stressed]
         )
 
     @property
-    def num_sylls(self):
+    def num_sylls(self) -> int:
+        """
+        Get the total number of syllables in the parse.
+
+        Returns:
+            int: Total number of syllables.
+        """
         return len(self.slots)
 
     @property
-    def num_words(self):
+    def num_words(self) -> int:
+        """
+        Get the number of words in the parse.
+
+        Returns:
+            int: Number of words.
+        """
         return len(self.wordforms)
 
     @property
-    def num_peaks(self):
+    def num_peaks(self) -> int:
+        """
+        Get the number of metrical peaks in the parse.
+
+        Returns:
+            int: Number of metrical peaks.
+        """
         return len([mpos for mpos in self.positions if mpos.is_prom])
 
     @property
-    def is_rising(self):
+    def is_rising(self) -> Optional[bool]:
+        """
+        Check if the parse has a rising rhythm.
+
+        Returns:
+            Optional[bool]: True if rising, False if falling, None if undetermined.
+        """
         if not self.positions:
             return
         # return not self.positions[0].is_prom
@@ -316,11 +512,23 @@ class Parse(Entity):
         return not self.positions[0].is_prom
 
     @property
-    def nary_feet(self):
+    def nary_feet(self) -> int:
+        """
+        Get the n-ary foot type of the parse.
+
+        Returns:
+            int: The n-ary foot type (2 for binary, 3 for ternary, etc.).
+        """
         return int(np.median(self.foot_sizes))
 
     @property
-    def feet(self):
+    def feet(self) -> List[str]:
+        """
+        Get the list of feet in the parse.
+
+        Returns:
+            List[str]: List of feet as strings.
+        """
         if self.num_positions == 1:
             feet = [self.positions[0].meter_str]
         else:
@@ -331,19 +539,43 @@ class Parse(Entity):
         return feet
 
     @property
-    def foot_counts(self):
+    def foot_counts(self) -> Counter:
+        """
+        Get a counter of foot types in the parse.
+
+        Returns:
+            Counter: Counter of foot types.
+        """
         return Counter(self.feet)
 
     @property
-    def foot_sizes(self):
+    def foot_sizes(self) -> List[int]:
+        """
+        Get the sizes of feet in the parse.
+
+        Returns:
+            List[int]: List of foot sizes.
+        """
         return [len(ft) for ft in self.feet]
 
     @property
-    def num_positions(self):
+    def num_positions(self) -> int:
+        """
+        Get the number of metrical positions in the parse.
+
+        Returns:
+            int: Number of metrical positions.
+        """
         return len(self.positions)
 
     @property
-    def foot_type(self):
+    def foot_type(self) -> str:
+        """
+        Get the foot type of the parse.
+
+        Returns:
+            str: The foot type (e.g., "iambic", "trochaic", etc.).
+        """
         if self.nary_feet == 2:
             return "iambic" if self.is_rising else "trochaic"
         elif self.nary_feet == 3:
@@ -352,30 +584,64 @@ class Parse(Entity):
         return ""
 
     @property
-    def is_iambic(self):
+    def is_iambic(self) -> bool:
+        """
+        Check if the parse is iambic.
+
+        Returns:
+            bool: True if iambic, False otherwise.
+        """
         return self.foot_type == "iambic"
 
     @property
-    def is_trochaic(self):
+    def is_trochaic(self) -> bool:
+        """
+        Check if the parse is trochaic.
+
+        Returns:
+            bool: True if trochaic, False otherwise.
+        """
         return self.foot_type == "trochaic"
 
     @property
-    def is_anapestic(self):
+    def is_anapestic(self) -> bool:
+        """
+        Check if the parse is anapestic.
+
+        Returns:
+            bool: True if anapestic, False otherwise.
+        """
         return self.foot_type == "anapestic"
 
     @property
-    def is_dactylic(self):
+    def is_dactylic(self) -> bool:
+        """
+        Check if the parse is dactylic.
+
+        Returns:
+            bool: True if dactylic, False otherwise.
+        """
         return self.foot_type == "dactylic"
 
     @property
-    # @profile
-    def average_position_size(self):
+    def average_position_size(self) -> float:
+        """
+        Get the average size of metrical positions in the parse.
+
+        Returns:
+            float: Average position size.
+        """
         l = [len(mpos.children) for mpos in self.positions if mpos.children]
         return np.mean(l) if len(l) else np.nan
 
     @property
-    # @profile
-    def attrs(self):
+    def attrs(self) -> Dict[str, Any]:
+        """
+        Get a dictionary of attributes for the parse.
+
+        Returns:
+            Dict[str, Any]: Dictionary of parse attributes.
+        """
         return {
             "stanza_num": force_int(self.stanza_num),
             "line_num": force_int(self.line_num),
@@ -391,18 +657,35 @@ class Parse(Entity):
         }
 
     @property
-    def line_txt(self):
+    def line_txt(self) -> str:
+        """
+        Get the text of the line associated with this parse.
+
+        Returns:
+            str: The text of the line.
+        """
         return self.line.txt if self.line else self._line_txt
 
     @property
-    def ambig(self):
+    def ambig(self) -> Optional[int]:
+        """
+        Get the ambiguity score of the parse.
+
+        Returns:
+            Optional[int]: The ambiguity score, or None if not available.
+        """
         return (
             self.line._parses.num_unbounded if self.line and self.line._parses else None
         )
 
     @property
-    # @profile
-    def constraint_viols(self):
+    def constraint_viols(self) -> Dict[str, List[float]]:
+        """
+        Get the constraint violations for this parse.
+
+        Returns:
+            Dict[str, List[float]]: Dictionary of constraint violations.
+        """
         # logger.debug(self)
         scores = [mpos.constraint_viols for mpos in self.positions]
         d = {}
@@ -420,20 +703,36 @@ class Parse(Entity):
         return d
 
     @property
-    # @profile
-    def constraint_scores(self):
+    def constraint_scores(self) -> Dict[str, float]:
+        """
+        Get the constraint scores for this parse.
+
+        Returns:
+            Dict[str, float]: Dictionary of constraint scores.
+        """
         return {cname: safesum(cvals) for cname, cvals in self.constraint_viols.items()}
 
     @property
-    # @profile
-    def score(self):
+    def score(self) -> float:
+        """
+        Get the total score of the parse.
+
+        Returns:
+            float: The total score.
+        """
         return safesum(self.constraint_scores.values())
 
-    # return a list of all slots in the parse
-
     @property
-    # @profile
-    def meter_str(self, word_sep=""):
+    def meter_str(self, word_sep: str = "") -> str:
+        """
+        Get the meter string representation of the parse.
+
+        Args:
+            word_sep (str): Separator between words.
+
+        Returns:
+            str: Meter string representation.
+        """
         return "".join(
             "+" if mpos.is_prom else "-"
             for mpos in self.positions
@@ -441,27 +740,60 @@ class Parse(Entity):
         )
 
     @property
-    def meter_ints(self, word_sep=""):
+    def meter_ints(self, word_sep: str = "") -> tuple:
+        """
+        Get the meter as a tuple of integers.
+
+        Args:
+            word_sep (str): Separator between words.
+
+        Returns:
+            tuple: Tuple of integers representing the meter.
+        """
         return tuple(
             int(mpos.is_prom) for mpos in self.positions for slot in mpos.slots
         )
 
     @property
-    def stress_ints(self, word_sep=""):
+    def stress_ints(self, word_sep: str = "") -> tuple:
+        """
+        Get the stress pattern as a tuple of integers.
+
+        Args:
+            word_sep (str): Separator between words.
+
+        Returns:
+            tuple: Tuple of integers representing the stress pattern.
+        """
         return tuple(int(slot.is_stressed) for slot in self.slots)
 
     @property
-    # @profile
-    def stress_str(self, word_sep=""):
+    def stress_str(self, word_sep: str = "") -> str:
+        """
+        Get the stress string representation of the parse.
+
+        Args:
+            word_sep (str): Separator between words.
+
+        Returns:
+            str: Stress string representation.
+        """
         return "".join(
             "+" if slot.is_stressed else "-"
             for mpos in self.positions
             for slot in mpos.slots
         ).lower()
 
-    # return a representation of the bounding relation between self and parse
-    # @profile
-    def bounding_relation(self, parse):
+    def bounding_relation(self, parse: "Parse") -> Bounding:
+        """
+        Get the bounding relation between this parse and another parse.
+
+        Args:
+            parse (Parse): The other parse to compare to.
+
+        Returns:
+            Bounding: The bounding relation.
+        """
         selfviolset = self.violset
         parseviolset = parse.violset
         if selfviolset < parseviolset:
@@ -473,17 +805,50 @@ class Parse(Entity):
         else:
             return Bounding.unequal
 
-    def bounds(self, parse):
+    def bounds(self, parse: "Parse") -> bool:
+        """
+        Check if this parse bounds another parse.
+
+        Args:
+            parse (Parse): The other parse to compare to.
+
+        Returns:
+            bool: True if this parse bounds the other parse, False otherwise.
+        """
         return self.bounding_relation(parse) == Bounding.bounds
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
+        """
+        Get an HTML representation of the parse for Jupyter notebooks.
+
+        Returns:
+            str: HTML representation of the parse.
+        """
         return self.to_html(as_str=True, blockquote=True)
 
     @cached_property
-    def html(self):
+    def html(self) -> str:
+        """
+        Get an HTML representation of the parse.
+
+        Returns:
+            str: HTML representation of the parse.
+        """
         return self.to_html()
 
-    def to_html(self, as_str=False, css=HTML_CSS, blockquote=True):
+    def to_html(self, as_str: bool = False, css: str = HTML_CSS, blockquote: bool = True) -> Union[
+        str, 'HTML']:
+        """
+        Convert the parse to an HTML representation.
+
+        Args:
+            as_str (bool): Whether to return the HTML as a string.
+            css (str): CSS styles to apply to the HTML.
+            blockquote (bool): Whether to include a blockquote with parse attributes.
+
+        Returns:
+            Union[str, HTML]: HTML representation of the parse.
+        """
         assert self.line
         out = self.line.to_html(as_str=True, css=css)
         if blockquote:
@@ -492,13 +857,28 @@ class Parse(Entity):
         return to_html(out, as_str=as_str)
 
     @cached_property
-    def wordtoken2slots(self):
+    def wordtoken2slots(self) -> Dict[str, List["ParseSlot"]]:
+        """
+        Get a dictionary mapping word tokens to their corresponding parse slots.
+
+        Returns:
+            Dict[str, List[ParseSlot]]: Dictionary mapping word tokens to parse slots.
+        """
         wordtokend = defaultdict(list)
         for slot in self.slots:
             wordtokend[slot.unit.wordtoken].append(slot)
         return wordtokend
 
-    def stats_d(self, norm=None):
+    def stats_d(self, norm: Optional[bool] = None) -> Dict[str, Any]:
+        """
+        Get a dictionary of statistics for the parse.
+
+        Args:
+            norm (Optional[bool]): Whether to normalize the statistics.
+
+        Returns:
+            Dict[str, Any]: Dictionary of parse statistics.
+        """
         if norm is None:
             odx1 = self.stats_d(norm=False)
             odx2 = self.stats_d(norm=True)
@@ -524,7 +904,17 @@ class Parse(Entity):
         odx["*total"] = np.mean(scores) if norm else sum(scores)
         return odx
 
-    def get_df(self, *x, **y):
+    def get_df(self, *x, **y) -> pd.DataFrame:
+        """
+        Get a DataFrame representation of the parse.
+
+        Args:
+            *x: Additional positional arguments.
+            **y: Additional keyword arguments.
+
+        Returns:
+            pd.DataFrame: DataFrame representation of the parse.
+        """
         df = super().get_df(*x, **y)
         df.columns = [
             c.replace("meterslot_syll_", "syll_").replace(
@@ -533,219 +923,3 @@ class Parse(Entity):
             for c in df
         ]
         return setindex(df.reset_index(), DF_INDEX).sort_index()
-
-
-class ParsePosition(Entity):
-    prefix = "meterpos"
-
-    # @profile
-
-    # meter_val represents whether the position is 's' or 'w'
-    def __init__(self, meter_val: str, children=[], parent=None, **kwargs):
-        self.viold = (
-            {}
-        )  # dict of lists of viols; length of these lists == length of `slots`
-        self.violset = set()  # set of all viols on this position
-        self.slots = children
-        self.parse = parent
-        super().__init__(
-            meter_val=meter_val,
-            children=children,
-            parent=parent,
-            num_slots=len(self.slots),
-            **kwargs,
-        )
-        if self.parse:
-            self.init()
-
-    def init(self):
-        assert self.parse
-        if any(not slot.unit for slot in self.slots):
-            print(self.slots)
-            print([slot.__dict__ for slot in self.slots])
-            raise Exception
-        for cname, constraint in self.parse.constraint_d.items():
-            slot_viols = [int(bool(vx)) for vx in constraint(self)]
-            assert len(slot_viols) == len(self.slots)
-            self.viold[cname] = slot_viols
-            if any(slot_viols):
-                self.violset.add(cname)
-            for viol, slot in zip(slot_viols, self.slots):
-                slot.viold[cname] = viol
-
-    def __copy__(self):
-        new = ParsePosition(
-            self.meter_val,
-            children=[copy(slot) for slot in self.children],
-            parent=self.parent,
-        )
-        new.viold = copy(self.viold)
-        new.violset = copy(self.violset)
-        new._attrs = copy(self._attrs)
-        return new
-
-    def to_json(self):
-        return super().to_json(meter_val=self.meter_val)
-
-    @cached_property
-    def attrs(self):
-        return {
-            **self._attrs,
-            "num": self.num,
-            # **{k:sum(v) for k,v in self.viold.items()}
-        }
-
-    @cached_property
-    # @profile
-    def constraint_viols(self):
-        return self.viold
-
-    @cached_property
-    def constraint_scores(self):
-        return {k: sum(v) for k, v in self.constraint_viols.items()}
-
-    @cached_property
-    # @profile
-    def constraint_set(self):
-        return self.violset
-
-    @cached_property
-    def is_prom(self):
-        return self.meter_val == "s"
-
-    @cached_property
-    def txt(self):
-        token = ".".join([slot.txt for slot in self.slots])
-        token = token.upper() if self.is_prom else token.lower()
-        return token
-
-    @cached_property
-    def meter_str(self):
-        return self.meter_val * self.num_slots
-
-    @cached_property
-    def num_slots(self):
-        return len(self.slots)
-
-
-class ParseSlot(Entity):
-    prefix = "meterslot"
-
-    # @profile
-
-    def __init__(
-        self, unit: "Syllable" = None, parent=None, children=[], viold={}, **kwargs
-    ):
-        # print(unit,parent,children,viold,kwargs)
-        if unit is None and children:
-            assert len(children) == 1
-            unit = children[0]
-
-        self.unit = unit
-        self.viold = {**viold}
-        super().__init__(children=[], parent=parent, **kwargs)
-
-    def __copy__(self):
-        new = ParseSlot(unit=self.unit)
-        new.viold = copy(self.viold)
-        new._attrs = copy(self._attrs)
-        return new
-
-    def to_json(self):
-        d = super().to_json(unit=self.unit.to_hash(), viold=self.viold)
-        d.pop("children")
-        return d
-
-    @cached_property
-    def violset(self):
-        return {k for k, v in self.viold.items() if v}
-
-    @cached_property
-    def num_viols(self):
-        return len(self.violset)
-
-    @cached_property
-    def constraint_scores(self):
-        return self.viold
-
-    @cached_property
-    def meter_val(self):
-        return self.parent.meter_val
-
-    @cached_property
-    def is_prom(self):
-        return self.parent.is_prom
-
-    @cached_property
-    def wordform(self):
-        return self.unit.parent
-
-    @cached_property
-    def syll(self):
-        return self.unit
-
-    @cached_property
-    def is_stressed(self):
-        return self.unit.is_stressed
-
-    @cached_property
-    def is_heavy(self):
-        return self.unit.is_heavy
-
-    @cached_property
-    def is_strong(self):
-        return self.unit.is_strong
-
-    @cached_property
-    def is_weak(self):
-        return self.unit.is_weak
-
-    @cached_property
-    def score(self):
-        return sum(self.viold.values())
-
-    @cached_property
-    def has_viol(self):
-        return bool(self.score)
-
-    @cached_property
-    def txt(self):
-        o = self.unit.txt
-        return o.upper() if self.is_prom else o.lower()
-
-    @cached_property
-    def i(self):
-        return self.parent.parent.slots.index(self)
-
-    @cached_property
-    def attrs(self):
-        return {
-            **{
-                k: v
-                for k, v in self.unit.prefix_attrs.items()
-                if k.split("_")[0] in {"wordtoken", "syll"}
-            },
-            **self._attrs,
-            "num": self.num,
-            **self.viold,
-        }
-
-
-
-# class representing the potential bounding relations between to parses
-class Bounding:
-    bounds = 0  # first parse harmonically bounds the second
-    bounded = 1  # first parse is harmonically bounded by the second
-    equal = 2  # the same constraint violation scores
-    unequal = 3  # unequal scores; neither set of violations is a subset of the other
-
-
-def get_iambic_parse(nsyll):
-    o = []
-    while len(o) < nsyll:
-        x = "w" if not o or o[-1] == "s" else "s"
-        o.append(x)
-    return o
-
-
-

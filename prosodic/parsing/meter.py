@@ -1,6 +1,9 @@
+from typing import List, Tuple, Dict, Any, Iterator, Optional, Union
 from ..imports import *
 from .constraints import *
-from ..texts import Text
+from ..texts import Text, Line, Stanza
+from .parses import Parse
+from .parselists import ParseList
 
 NUM_GOING = 0
 # METER
@@ -16,18 +19,45 @@ MTRDEFAULT = DEFAULT_METER_KWARGS
 
 
 class Meter(Entity):
-    prefix = "meter"
+    """
+    A class representing a metrical parsing system.
+
+    This class implements methods for parsing lines and texts according to
+    specified metrical constraints.
+
+    Attributes:
+        constraints (list): List of constraint functions to apply.
+        categorical_constraints (list): List of categorical constraint functions.
+        max_s (int): Maximum number of consecutive strong positions.
+        max_w (int): Maximum number of consecutive weak positions.
+        resolve_optionality (bool): Whether to resolve optional syllables.
+        exhaustive (bool): Whether to perform exhaustive parsing.
+    """
+
+    prefix: str = "meter"
 
     def __init__(
         self,
-        constraints=MTRDEFAULT["constraints"],
-        categorical_constraints=MTRDEFAULT["categorical_constraints"],
-        max_s=MTRDEFAULT["max_s"],
-        max_w=MTRDEFAULT["max_w"],
-        resolve_optionality=MTRDEFAULT["resolve_optionality"],
-        exhaustive=MTRDEFAULT["exhaustive"],
-        **kwargs,
-    ):
+        constraints: List[Callable] = MTRDEFAULT["constraints"],
+        categorical_constraints: List[Callable] = MTRDEFAULT["categorical_constraints"],
+        max_s: int = MTRDEFAULT["max_s"],
+        max_w: int = MTRDEFAULT["max_w"],
+        resolve_optionality: bool = MTRDEFAULT["resolve_optionality"],
+        exhaustive: bool = MTRDEFAULT["exhaustive"],
+        **kwargs: Any
+    ) -> None:
+        """
+        Initialize a Meter object.
+
+        Args:
+            constraints (list): List of constraint functions to apply.
+            categorical_constraints (list): List of categorical constraint functions.
+            max_s (int): Maximum number of consecutive strong positions.
+            max_w (int): Maximum number of consecutive weak positions.
+            resolve_optionality (bool): Whether to resolve optional syllables.
+            exhaustive (bool): Whether to perform exhaustive parsing.
+            **kwargs: Additional keyword arguments.
+        """
         self.constraints = get_constraints(constraints)
         self.categorical_constraints = get_constraints(categorical_constraints)
         self.max_s = max_s
@@ -37,30 +67,72 @@ class Meter(Entity):
         super().__init__()
 
     @property
-    def use_cache(self):
+    def use_cache(self) -> bool:
+        """
+        Check if caching is enabled.
+
+        Returns:
+            bool: True if caching is enabled, False otherwise.
+        """
         return caching_is_enabled()
 
     @property
-    def use_cache_lines(self):
+    def use_cache_lines(self) -> bool:
+        """
+        Check if line caching is enabled.
+
+        Returns:
+            bool: True if line caching is enabled, False otherwise.
+        """
         return self.use_cache
 
     @property
-    def use_cache_texts(self):
+    def use_cache_texts(self) -> bool:
+        """
+        Check if text caching is enabled.
+
+        Returns:
+            bool: True if text caching is enabled, False otherwise.
+        """
         return False
 
-    def to_json(self):
+    def to_json(self) -> Dict[str, Any]:
+        """
+        Convert the Meter object to JSON format.
+
+        Returns:
+            dict: JSON representation of the Meter object.
+        """
         return super().to_json(**self.attrs)
 
     @cached_property
-    def constraint_names(self):
+    def constraint_names(self) -> Tuple[str, ...]:
+        """
+        Get the names of the constraint functions.
+
+        Returns:
+            tuple: Names of the constraint functions.
+        """
         return tuple(c.__name__ for c in self.constraints)
 
     @cached_property
-    def categorical_constraint_names(self):
+    def categorical_constraint_names(self) -> Tuple[str, ...]:
+        """
+        Get the names of the categorical constraint functions.
+
+        Returns:
+            tuple: Names of the categorical constraint functions.
+        """
         return tuple(c.__name__ for c in self.categorical_constraints)
 
     @cached_property
-    def attrs(self):
+    def attrs(self) -> Dict[str, Any]:
+        """
+        Get the attributes of the Meter object.
+
+        Returns:
+            dict: Attributes of the Meter object.
+        """
         return {
             "constraints": self.constraint_names,
             "categorical_constraints": self.categorical_constraint_names,
@@ -71,17 +143,45 @@ class Meter(Entity):
         }
 
     @cache
-    def get_pos_types(self, nsylls=None):
+    def get_pos_types(self, nsylls: Optional[int] = None) -> List[str]:
+        """
+        Get possible position types for a given number of syllables.
+
+        Args:
+            nsylls (int, optional): Number of syllables. Defaults to None.
+
+        Returns:
+            list: List of possible position types.
+        """
         max_w = nsylls if self.max_w is None else self.max_w
         max_s = nsylls if self.max_s is None else self.max_s
         wtypes = ["w" * n for n in range(1, max_w + 1)]
         stypes = ["s" * n for n in range(1, max_s + 1)]
         return wtypes + stypes
 
-    def get_wordform_matrix(self, line):
+    def get_wordform_matrix(self, line: Line) -> List[List['WordForm']]:
+        """
+        Get the wordform matrix for a given line.
+
+        Args:
+            line (Line): The line to process.
+
+        Returns:
+            List[List[WordForm]]: The wordform matrix for the line.
+        """
         return line.get_wordform_matrix(resolve_optionality=self.resolve_optionality)
 
-    def parse(self, text_or_line, **kwargs):
+    def parse(self, text_or_line: Union[Text, Line], **kwargs: Any) -> ParseList:
+        """
+        Parse a text or line.
+
+        Args:
+            text_or_line (Text or Line): The text or line to parse.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            ParseList: List of parses for the text or line.
+        """
         return ParseList(
             self.parse_iter(
                 text_or_line,
@@ -91,7 +191,21 @@ class Meter(Entity):
             line=text_or_line if text_or_line.is_parseable else None,
         )
 
-    def parse_iter(self, text_or_line, force=False, **kwargs):
+    def parse_iter(self, text_or_line: Union[Text, Line, Stanza], force: bool = False, **kwargs: Any) -> Iterator[Parse]:
+        """
+        Iterator for parsing a text or line.
+
+        Args:
+            text_or_line (Text or Line): The text or line to parse.
+            force (bool, optional): Force parsing even if cached. Defaults to False.
+            **kwargs: Additional keyword arguments.
+
+        Yields:
+            Parse: Individual parses for the text or line.
+
+        Raises:
+            Exception: If the object is not parseable.
+        """
         if type(text_or_line) in {Text, Stanza}:
             yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
         elif text_or_line.is_parseable:
@@ -99,7 +213,18 @@ class Meter(Entity):
         else:
             raise Exception(f"Object {text_or_line} not parseable")
 
-    def parse_line(self, line, force=False, **kwargs):
+    def parse_line(self, line: Line, force: bool = False, **kwargs: Any) -> ParseList:
+        """
+        Parse a line.
+
+        Args:
+            line (Line): The line to parse.
+            force (bool, optional): Force parsing even if cached. Defaults to False.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            ParseList: List of parses for the line.
+        """
         assert line.is_parseable
         if line.num_sylls < 2:
             return ParseList(type="line", line=line)
@@ -120,10 +245,29 @@ class Meter(Entity):
 
         return parses
 
-    def get_key(self, line):
+    def get_key(self, line: Line) -> str:
+        """
+        Get the cache key for a line.
+
+        Args:
+            line (Line): The line.
+
+        Returns:
+            str: The cache key.
+        """
         return hashstr(self.key, line.key)
 
-    def parses_from_cache(self, line, as_dict=False):
+    def parses_from_cache(self, line: Line, as_dict: bool = False) -> Union[ParseList, Dict[str, Any]]:
+        """
+        Get parses from cache for a line.
+
+        Args:
+            line (Line): The line.
+            as_dict (bool, optional): Whether to return as a dictionary. Defaults to False.
+
+        Returns:
+            ParseList or dict: The parses for the line, or a dictionary representation if as_dict is True.
+        """
         from .parselists import ParseList
 
         key = self.get_key(line)
@@ -144,7 +288,17 @@ class Meter(Entity):
                     progress=nchild >= 100,
                 )
 
-    def parse_line_fast(self, line, force=False):
+    def parse_line_fast(self, line: Line, force: bool = False) -> ParseList:
+        """
+        Parse a line using the fast parsing method.
+
+        Args:
+            line (Line): The line to parse.
+            force (bool, optional): Force parsing even if cached. Defaults to False.
+
+        Returns:
+            ParseList: List of parses for the line.
+        """
         from .parses import Parse
         from .parselists import ParseList
 
@@ -188,7 +342,17 @@ class Meter(Entity):
 
     # slower, exhaustive parser
 
-    def parse_line_exhaustive(self, line, progress=None):
+    def parse_line_exhaustive(self, line: Line, progress: Optional[bool] = None) -> ParseList:
+        """
+        Parse a line using the exhaustive parsing method.
+
+        Args:
+            line (Line): The line to parse.
+            progress (bool, optional): Whether to show progress. Defaults to None.
+
+        Returns:
+            ParseList: List of parses for the line.
+        """
         from .parses import Parse
         from .parselists import ParseList
 
@@ -221,19 +385,41 @@ class Meter(Entity):
         line._parses = parses
         return line._parses
 
-    def parse_text(self, text, num_proc=DEFAULT_NUM_PROC, progress=True):
+    def parse_text(self, text: Text, num_proc: int = DEFAULT_NUM_PROC, progress: bool = True) -> None:
+        """
+        Parse a text.
+
+        Args:
+            text (Text): The text to parse.
+            num_proc (int, optional): Number of processes to use. Defaults to DEFAULT_NUM_PROC.
+            progress (bool, optional): Whether to show progress. Defaults to True.
+        """
         iterr = self.parse_text_iter(text, num_proc=num_proc, progress=progress)
         deque(iterr, maxlen=0)
 
     def parse_text_iter(
         self,
-        text,
-        progress=True,
-        force=False,
-        num_proc=DEFAULT_NUM_PROC,
-        use_mp=True,
-        **kwargs,
-    ):
+        text: Union[Text, Stanza],
+        progress: bool = True,
+        force: bool = False,
+        num_proc: int = DEFAULT_NUM_PROC,
+        use_mp: bool = True,
+        **kwargs: Any
+    ) -> Iterator[Line]:
+        """
+        Iterator for parsing a text.
+
+        Args:
+            text (Text): The text to parse.
+            progress (bool, optional): Whether to show progress. Defaults to True.
+            force (bool, optional): Force parsing even if cached. Defaults to False.
+            num_proc (int, optional): Number of processes to use. Defaults to DEFAULT_NUM_PROC.
+            use_mp (bool, optional): Whether to use multiprocessing. Defaults to True.
+            **kwargs: Additional keyword arguments.
+
+        Yields:
+            Line: Individual lines of the text.
+        """
         global NUM_GOING
         NUM_GOING += 1
         # print(NUM_GOING,type(type),text)
@@ -324,13 +510,27 @@ class Meter(Entity):
 
     def _parse_text_iter_mp(
         self,
-        text,
-        force=False,
-        progress=True,
-        num_proc=DEFAULT_NUM_PROC,
-        lm=None,
-        **progress_kwargs,
-    ):
+        text: Text,
+        force: bool = False,
+        progress: bool = True,
+        num_proc: int = DEFAULT_NUM_PROC,
+        lm: Optional[Any] = None,
+        **progress_kwargs: Any
+    ) -> Iterator[ParseList]:
+        """
+        Helper function for parsing a text in parallel processing.
+
+        Args:
+            text (Text): The text to parse.
+            force (bool, optional): Force parsing even if cached. Defaults to False.
+            progress (bool, optional): Whether to show progress. Defaults to True.
+            num_proc (int, optional): Number of processes to use. Defaults to DEFAULT_NUM_PROC.
+            lm (logmap, optional): Logmap object. Defaults to None.
+            **progress_kwargs: Additional keyword arguments for progress logging.
+
+        Yields:
+            ParseList: List of parses for each line.
+        """
         from .parselists import ParseList
 
         assert lm
@@ -350,7 +550,7 @@ class Meter(Entity):
             yield ParseList.from_json(parselist_json, line=line)
 
 
-def _parse_iter(obj):
+def _parse_iter(obj: Tuple[Dict[str, Any], Dict[str, Any], bool]) -> Dict[str, Any]:
     line_json, meter_json, force = obj
     line, meter = from_json(line_json), from_json(meter_json)
     if not force:

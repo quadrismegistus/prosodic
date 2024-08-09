@@ -2,14 +2,34 @@ from ..imports import *
 
 
 class PhonemeClass(Entity):
-    prefix = "phon"
+    """
+    Represents a phoneme with various attributes.
+
+    Attributes:
+        prefix (str): The prefix for the phoneme class.
+    """
+
+    prefix: str = "phon"
 
     @profile
-    def __init__(self, txt, **kwargs):
+    def __init__(self, txt: str, **kwargs: Any) -> None:
+        """
+        Initialize a PhonemeClass instance.
+
+        Args:
+            txt (str): The text representation of the phoneme.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(txt, **kwargs)
 
     @cached_property
-    def is_vowel(self):
+    def is_vowel(self) -> Optional[bool]:
+        """
+        Determine if the phoneme is a vowel.
+
+        Returns:
+            Optional[bool]: True if vowel, False if consonant, None if undetermined.
+        """
         if not hasattr(self, "cons") or self.cons is None:
             return None
         if self.cons > 0:
@@ -18,39 +38,84 @@ class PhonemeClass(Entity):
             return True
         return None
 
-    def to_json(self):
+    def to_json(self) -> Dict[str, Any]:
+        """
+        Convert the phoneme to a JSON-serializable dictionary.
+
+        Returns:
+            Dict[str, Any]: A dictionary representation of the phoneme.
+        """
         resd = super().to_json()
         resd["_class"] = "Phoneme"
         resd.pop("children")
         return resd
 
     @property
-    def is_onset(self):
+    def is_onset(self) -> Optional[bool]:
+        """
+        Check if the phoneme is part of the syllable onset.
+
+        Returns:
+            Optional[bool]: True if onset, False otherwise, None if not set.
+        """
         return self._attrs.get("is_onset")
 
     @property
-    def is_rime(self):
+    def is_rime(self) -> Optional[bool]:
+        """
+        Check if the phoneme is part of the syllable rime.
+
+        Returns:
+            Optional[bool]: True if rime, False otherwise, None if not set.
+        """
         return self._attrs.get("is_rime")
 
     @property
-    def is_nucleus(self):
+    def is_nucleus(self) -> Optional[bool]:
+        """
+        Check if the phoneme is the syllable nucleus.
+
+        Returns:
+            Optional[bool]: True if nucleus, False otherwise, None if not set.
+        """
         return self._attrs.get("is_nucleus")
 
     @property
-    def is_coda(self):
+    def is_coda(self) -> Optional[bool]:
+        """
+        Check if the phoneme is part of the syllable coda.
+
+        Returns:
+            Optional[bool]: True if coda, False otherwise, None if not set.
+        """
         return self._attrs.get("is_coda")
 
 
 @cache
 @profile
-def get_phoneme_featuretable():
+def get_phoneme_featuretable() -> panphon.FeatureTable:
+    """
+    Get the phoneme feature table.
+
+    Returns:
+        panphon.FeatureTable: The feature table for phonemes.
+    """
     ft = panphon.FeatureTable()
     return ft
 
 
-# @cache
 @profile
-def Phoneme(txt, **kwargs):
+def Phoneme(txt: str, **kwargs: Any) -> PhonemeClass:
+    """
+    Create a Phoneme object from text.
+
+    Args:
+        txt (str): The text representation of the phoneme.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        PhonemeClass: A PhonemeClass instance representing the phoneme.
+    """
     phon = txt
     ft = get_phoneme_featuretable()
     phonl = ft.word_fts(phon)
@@ -67,7 +132,7 @@ def Phoneme(txt, **kwargs):
     return phonobj
 
 
-FEATS_PANPHON = [
+FEATS_PANPHON: List[str] = [
     "num",
     "txt",
     "syl",
@@ -98,17 +163,39 @@ FEATS_PANPHON = [
 
 
 @cache
-def get_ipa_info():
+def get_ipa_info() -> Dict[str, Any]:
+    """
+    Get IPA information from a JSON file.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing IPA information.
+    """
     with open(PATH_PHONS) as f:
         return json.load(f)
-    
 
 
 class PhonemeList(EntityList):
-    def __init__(self, *args, **kwargs):
+    """
+    A list of phonemes with additional functionality.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Initialize a PhonemeList instance.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
         super().__init__(*args, **kwargs)
 
-        def do_phons(phons):
+        def do_phons(phons: List[PhonemeClass]) -> None:
+            """
+            Process a list of phonemes to set syllable position attributes.
+
+            Args:
+                phons (List[PhonemeClass]): A list of phonemes to process.
+            """
             vowel_yet = False
             for phon in phons:
                 if not phon.is_vowel:

@@ -4,6 +4,7 @@ from .constraints import *
 from ..texts import Text, Line, Stanza
 from .parses import Parse
 from .parselists import ParseList
+from .utils import *
 
 NUM_GOING = 0
 # METER

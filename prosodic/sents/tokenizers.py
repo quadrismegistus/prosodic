@@ -1,8 +1,18 @@
+from typing import List, Dict, Any, Callable, Optional, Iterator
 from ..imports import *
 
 
 @cache
-def get_sent_tokenizer():
+def get_sent_tokenizer() -> Callable[[str], List[str]]:
+    """
+    Get a sentence tokenizer function.
+
+    Returns:
+        A function that tokenizes text into sentences.
+
+    Raises:
+        Exception: If NLTK punkt tokenizer fails to load.
+    """
     try:
         nltk.sent_tokenize('hello')
     except Exception as e:
@@ -10,7 +20,17 @@ def get_sent_tokenizer():
     return nltk.sent_tokenize
 
 
-def tokenize_sents_txt(txt, **y):
+def tokenize_sents_txt(txt: str, **y: Any) -> List[str]:
+    """
+    Tokenize text into sentences.
+
+    Args:
+        txt: The input text to tokenize.
+        **y: Additional keyword arguments.
+
+    Returns:
+        A list of sentences.
+    """
     sents = get_sent_tokenizer()(txt)
     lastoffset = 0
     osents = []
@@ -23,7 +43,16 @@ def tokenize_sents_txt(txt, **y):
     return osents
 
 
-def tokenize_words_txt(txt):
+def tokenize_words_txt(txt: str) -> List[str]:
+    """
+    Tokenize text into words.
+
+    Args:
+        txt: The input text to tokenize.
+
+    Returns:
+        A list of words.
+    """
     l = tokenize_agnostic(txt)
     o = []
     x0 = ""
@@ -40,20 +69,44 @@ def tokenize_words_txt(txt):
     return o
 
 
-def tokenize_sentwords_df(txt):
+def tokenize_sentwords_df(txt: str) -> pd.DataFrame:
+    """
+    Tokenize text into sentences and words, returning a DataFrame.
+
+    Args:
+        txt: The input text to tokenize.
+
+    Returns:
+        A DataFrame containing tokenized sentences and words.
+    """
     with logmap("tokenizing"):
         return pd.DataFrame(tokenize_sentwords_iter(txt))
 
 
 def tokenize_sentwords_iter(
-    txt,
-    sents=None,
-    sep_line=SEP_LINE,
-    sep_stanza=SEP_STANZA,
-    seps_phrase=SEPS_PHRASE,
-    para_i=None,
-    **kwargs
-):
+    txt: str,
+    sents: Optional[List[str]] = None,
+    sep_line: str = SEP_LINE,
+    sep_stanza: str = SEP_STANZA,
+    seps_phrase: List[str] = SEPS_PHRASE,
+    para_i: Optional[int] = None,
+    **kwargs: Any
+) -> Iterator[Dict[str, Any]]:
+    """
+    Tokenize text into sentences and words, yielding dictionaries.
+
+    Args:
+        txt: The input text to tokenize.
+        sents: Optional pre-tokenized sentences.
+        sep_line: Line separator.
+        sep_stanza: Stanza separator.
+        seps_phrase: Phrase separators.
+        para_i: Optional paragraph index.
+        **kwargs: Additional keyword arguments.
+
+    Yields:
+        Dictionaries containing tokenized word information.
+    """
     char_i = 0
     line_i = 1
     stanza_i = 1

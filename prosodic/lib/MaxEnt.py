@@ -1,4 +1,4 @@
-from Text import Text
+from ..texts import Text
 import numpy as np
 
 # class WeightingAnalysis ================
@@ -40,14 +40,28 @@ class DataAggregator:
         self.is_tab_formatted = is_tab_formatted
 
         self.constraints = None
+        self.lines = []
         self.data = self.__build_data_set__(data_path, delimeter)
 
+
     def __build_data_set__(self, data_path, delimeter):
-        data = self.__extract_provided_data__(data_path, delimeter)
+        if type(data_path) in {str,str}:
+            data = self.__extract_provided_data__(data_path, delimeter)
+        else: # The data is in the format: [(line [str], [scansion], [frequency]), (line [str], [scansion], [frequency]), ...]
+            data = self.__attach_provided_data__(data_path)
         full_parses = self.__get__parses__(data)
 
         return full_parses
 
+    def __attach_provided_data__(self,data_tuples):
+        data = {}
+        for line,scansion,frequency in data_tuples:
+            datum = DataPoint(line, scansion, None, frequency)
+            if line not in data:
+                data[line]=[]
+                self.lines+=[line]
+            data[line].append(datum)
+        return data
 
     def __extract_provided_data__(self, data_path, delimeter):
         data = {}
@@ -88,6 +102,7 @@ class DataAggregator:
 
                 if text not in data:
                     data[text] = []
+                    self.lines+=[text]
 
                 datum = DataPoint(text, scansion, None, frequency)
                 data[text].append(datum)
@@ -100,7 +115,7 @@ class DataAggregator:
             text = Text(line, lang=self.lang, meter=self.meter.id)
             text.parse()
 
-            print(line)
+            #print(line)
 
             parses = text.allParses(include_bounded=False)[0]
             parse_list = []
@@ -117,6 +132,7 @@ class DataAggregator:
                 if self.constraints is None:
                     self.constraints = []
                     for constraint in constraint_violations:
+                        if constraint.name in {'skip_initial_foot'}: continue
                         self.constraints.append(constraint)
 
                 constraint_viol_count = []
@@ -145,7 +161,12 @@ class DataAggregator:
         inputs_to_outputs = {}
         feature_count = None
 
-        for line in self.data:
+        #for line in self.data:
+        for line in self.lines:
+            if not line in self.data:
+                print('!?',line,'not in DataAggregator.data ?')
+                continue
+
             if line not in inputs_to_outputs:
                 inputs_to_outputs[line] = []
                 inputs_to_data[line] = ([], [])
@@ -163,7 +184,7 @@ class DataAggregator:
             violations, frequencies = inputs_to_data[key]
 
             violation_matrix = np.array(violations)
-            print("Frequencies:", frequencies)
+            #print "Frequencies:", frequencies
             frequency_vector = np.array(frequencies)
 
             # Normalize frequencies:
@@ -184,6 +205,7 @@ class MaxEntAnalyzer:
     def __init__(self, data_aggregator):
         self.data, self.outputs, self.feature_count = data_aggregator.convert_to_table()
         self.constraints = data_aggregator.constraints
+        self.lines = data_aggregator.lines
 
         muVec = []
         sigmaVec = []
@@ -198,7 +220,7 @@ class MaxEntAnalyzer:
         # initializes to all zeros..., maybe could randomize?
         self.weights = np.zeros([self.feature_count])
 
-    def train(self, step = 0.01, epochs = 1000000, tolerance=1e-4, only_positive_weights = True):
+    def train(self, step = 0.1, epochs = 10000, tolerance=1e-6, only_positive_weights = True):
         self.step = step
         self.tolerance = tolerance
         self.iterations = epochs
@@ -263,7 +285,7 @@ class MaxEntAnalyzer:
         print("-" * 80)
 
         # Then, print out probabilities for the inputs
-        for line in self.outputs:
+        for line in self.lines:
             print("Line: \"{}\"".format(line))
             print("")
             outs, freqs = self.data[line]

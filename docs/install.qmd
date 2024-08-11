@@ -7,7 +7,7 @@ jupyter: python3
 ---
 
 
-Should work for any version of python following 3.8. 
+Should work for any version of python following 3.9. 
 
 
 ## 1. Install espeak
@@ -34,9 +34,9 @@ a. Windows
 
 
 
-## 2. Install python>=3.8
+## 2. Install python>=3.9
 
-You will need to install Python version 3.8 or newer. If you don't have one, you can:
+You will need to install Python version 3.9 or newer. If you don't have one, you can:
 
 a. Use [pyenv](https://github.com/pyenv/pyenv) to manage and install python versions.
 

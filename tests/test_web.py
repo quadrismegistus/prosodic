@@ -12,7 +12,7 @@ from multiprocessing import Process, Queue
 import threading
 from selenium.webdriver.support.ui import Select
 
-NAPTIME = int(os.environ.get('NAPTIME', 10))
+NAPTIME = int(os.environ.get('NAPTIME', 5))
 BASE_URL = "http://localhost:5111"
 
 def _nap(naptime=NAPTIME):

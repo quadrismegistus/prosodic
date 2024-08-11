@@ -17,6 +17,7 @@ def get_sent_tokenizer() -> Callable[[str], List[str]]:
         nltk.sent_tokenize('hello')
     except Exception as e:
         nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
     return nltk.sent_tokenize
 
 

@@ -24,12 +24,12 @@ a. Mac
 a. Linux
 
     * ```sh
-    apt-get install espeak libespeak-dev
+    apt-get install espeak libespeak1 libespeak-dev
     ```
 
 a. Windows
 
-    * Download and install from [sourceforge](http://espeak.sourceforge.net/download.html).
+    * Download and install from [github](https://github.com/espeak-ng/espeak-ng/releases/latest)
 
 
 

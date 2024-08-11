@@ -55,7 +55,7 @@ shakespeare_sonnets_filename = os.path.join(
 )
 
 # read a text by string
-sonnets = prosodic.Text(filename=shakespeare_sonnets_filename)
+sonnets = prosodic.Text(fn=shakespeare_sonnets_filename)
 ```
 
 ### Displaying texts

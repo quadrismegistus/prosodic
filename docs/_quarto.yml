@@ -5,6 +5,8 @@ project:
     - examples/single-page
     - examples/pkgdown
     - examples/auto-package
+    - "*.html"
+    - "*.js"
 
 execute:
   freeze: auto  # re-render only when source changes
@@ -28,11 +30,13 @@ website:
       - text: "Architecture"
         file: architecture.qmd
       - text: "Reference"
-        href: reference/
+        href: reference/index.html
+        target: _blank
 
     right:
       - icon: github
-        href: https://github.com/machow/quartodoc/
+        href: https://github.com/quadrismegistus/prosodic
+        target: _blank
 
 
 format:
@@ -42,17 +46,3 @@ format:
       dark: darkly
     toc: true
 
-
-quartodoc:
-  dir: reference
-  package: prosodic
-  parser: google
-  sidebar: "reference/_sidebar.yml"
-  sections:
-    - title: API Refernce
-      options:
-        dynamic: true
-      contents:
-        - name: texts.Text
-        - name: texts.Text.__init__
-        - name: lines.Line

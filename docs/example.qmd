@@ -14,7 +14,7 @@ jupyter: python3
 import prosodic
 
 # load sonnets
-sonnets = prosodic.Text('https://raw.githubusercontent.com/quadrismegistus/prosodic/develop/corpora/corppoetry_en/en.shakespeare.txt')
+sonnets = prosodic.Text('https://raw.githubusercontent.com/quadrismegistus/prosodic/master/corpora/corppoetry_en/en.shakespeare.txt')
 ```
 
 ### Parsing text

@@ -7,6 +7,7 @@ from functools import wraps
 from pprint import pprint, pformat
 import orjson
 import json
+import io
 from multiset import Multiset
 from tqdm import tqdm
 import logging
@@ -29,15 +30,24 @@ import zlib
 import time
 import warnings
 from collections import UserList, Counter, defaultdict
-from typing import Optional
+from typing import *
 import re
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout, redirect_stderr
 
+import panphon
+import panphon.sonority
+import csv
+
+
+from importlib import resources
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
-PATH_WEB = os.path.join(PATH_REPO, "prosodic", "web")
+PATH_PROSODIC = PATH_HERE
+PATH_LANGS = os.path.join(PATH_PROSODIC, 'langs')
+PATH_PHONS = os.path.join(PATH_LANGS,'phonemes.json')
+PATH_WEB = os.path.join(PATH_PROSODIC, "web")
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
 PATH_HOME = os.path.expanduser("~/prosodic_data")
@@ -49,7 +59,6 @@ USE_CACHE = False
 USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
-REDIS_HOST = "212.227.240.128"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
@@ -82,6 +91,10 @@ ESPEAK_PATHS = [
     "/usr/lib/x86_64-linux-gnu/",
     "/usr/lib/",
     "/usr/local/lib/",
+    "C:\\Program Files\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (x86)\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (x64)\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (Arm)\\eSpeak NG\\libespeak-ng.dll",
 ]
 DF_INDEX = [
     "stanza_num",
@@ -206,18 +219,15 @@ GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
 
 
 from .utils import *
-from .tokenizers import *
+from .sents import *
 from .ents import *
 from .texts import *
-from .lines import *
 from .words import *
-from .syllables import *
-from .phonemes import *
 from .langs import *
 from .parsing import *
-from .meter import *
 
 GLOBALS = globals()
+GLOBALS['list']=list
 
 INITCLASSES = {
     "Text": Text,

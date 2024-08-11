@@ -19,4 +19,5 @@ flask-socketio
 gevent
 gevent-websocket
 scipy
-panphon
+#panphon
+panphon @ git+https://github.com/quadrismegistus/panphon

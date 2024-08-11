@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -109,7 +143,7 @@ ul.task-list li input[type="checkbox"] {
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
-    <a class="nav-link" href="https://github.com/machow/quartodoc/" rel="" target=""><i class="bi bi-github" role="img">
+    <a class="nav-link" href="https://github.com/quadrismegistus/prosodic" rel="" target="_blank"><i class="bi bi-github" role="img">
 </i> 
  <span class="menu-text"></span></a>
   </li>  
@@ -130,7 +164,20 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#prosodic" id="toc-prosodic" class="nav-link active" data-scroll-target="#prosodic">Prosodic</a></li>
+  <li><a href="#prosodic" id="toc-prosodic" class="nav-link active" data-scroll-target="#prosodic">Prosodic</a>
+  <ul class="collapse">
+  <li><a href="#demo" id="toc-demo" class="nav-link" data-scroll-target="#demo">Demo</a></li>
+  <li><a href="#install" id="toc-install" class="nav-link" data-scroll-target="#install">Install</a>
+  <ul class="collapse">
+  <li><a href="#install-python-package" id="toc-install-python-package" class="nav-link" data-scroll-target="#install-python-package">1. Install python package</a></li>
+  <li><a href="#install-espeak" id="toc-install-espeak" class="nav-link" data-scroll-target="#install-espeak">2. Install espeak</a></li>
+  </ul></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage">Usage</a>
+  <ul class="collapse">
+  <li><a href="#web-app" id="toc-web-app" class="nav-link" data-scroll-target="#web-app">Web app</a></li>
+  <li><a href="#python" id="toc-python" class="nav-link" data-scroll-target="#python">Python</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -141,14 +188,3212 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="prosodic" class="level1">
 <h1>Prosodic</h1>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="https://codecov.io/github/quadrismegistus/prosodic"><img src="https://codecov.io/github/quadrismegistus/prosodic/graph/badge.svg?token=t8VZMSMR4u" class="img-fluid figure-img"></a></p>
+<figcaption class="figure-caption">codecov</figcaption>
+</figure>
+</div>
 <p>Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by <a href="https://github.com/quadrismegistus">Ryan Heuser</a>, <a href="https://github.com/jsfalk">Josh Falk</a>, and <a href="http://web.stanford.edu/~anttila/">Arto Anttila</a>. Josh also maintains <a href="https://github.com/jsfalk/prosodic1b">another repository</a>, in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. <a href="https://github.com/sleepinyourhat">Sam Bowman</a> has contributed to the codebase as well, adding several new metrical constraints.</p>
-<p>“Prosodic 2”, in this <code>develop</code> branch, is a near-total rewrite of Prosodic.</p>
-<p>Supports Python&gt;=3.8.</p>
+<p>This version, Prosodic 2.x, is a near-total rewrite of the original Prosodic.</p>
+<p>Supports Python&gt;=3.9.</p>
+<section id="demo" class="level2">
+<h2 class="anchored" data-anchor-id="demo"><a href="https://prosodic.dev/">Demo</a></h2>
+<p>You can view and use a web app demo of the current Prosodic app at <strong><a href="https://prosodic.dev/">prosodic.dev</a></strong>.</p>
+</section>
+<section id="install" class="level2">
+<h2 class="anchored" data-anchor-id="install">Install</h2>
+<section id="install-python-package" class="level3">
+<h3 class="anchored" data-anchor-id="install-python-package">1. Install python package</h3>
+<p>Install from pypi:</p>
+<pre><code>pip install prosodic</code></pre>
+</section>
+<section id="install-espeak" class="level3">
+<h3 class="anchored" data-anchor-id="install-espeak">2. Install espeak</h3>
+<p>Install <a href="https://espeak.sourceforge.net">espeak</a>, free text-to-speak (TTS) software, to ‘sound out’ unknown words.</p>
+<ul>
+<li><p><em>Mac</em>: <code>brew install espeak</code>. (First install <a href="brew.sh">homebrew</a> if not already installed.)</p></li>
+<li><p><em>Linux</em>: <code>apt-get install espeak libespeak1 libespeak-dev</code></p></li>
+<li><p><em>Windows</em>: Download and install from https://github.com/espeak-ng/espeak-ng/releases/latest</p></li>
+</ul>
+</section>
+</section>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<section id="web-app" class="level3">
+<h3 class="anchored" data-anchor-id="web-app">Web app</h3>
+<p>Prosodic has a new GUI (graphical user interface) in a web app. After installing, run:</p>
+<pre><code>prosodic web</code></pre>
+<p>Then navigate to <a href="http://127.0.0.1:8181/">http://127.0.0.1:8181/</a>. It should look like this:</p>
+<p><img width="900" alt="prosodic-web-preview-3" src="https://github.com/user-attachments/assets/d34278fd-a28e-4337-9bcf-8c3c57992bc2"></p>
+</section>
+<section id="python" class="level3">
+<h3 class="anchored" data-anchor-id="python">Python</h3>
+<section id="read-texts" class="level4">
+<h4 class="anchored" data-anchor-id="read-texts">Read texts</h4>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import prosodic</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> prosodic</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># load a text</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>sonnet <span class="op">=</span> prosodic.Text(<span class="st">"""</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">Those hours, that with gentle work did frame</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">The lovely gaze where every eye doth dwell,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="st">Will play the tyrants to the very same</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="st">And that unfair which fairly doth excel;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="st">For never-resting time leads summer on</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="st">To hideous winter, and confounds him there;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="st">Sap checked with frost, and lusty leaves quite gone,</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="st">Beauty o’er-snowed and bareness every where:</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="st">Then were not summer’s distillation left,</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">A liquid prisoner pent in walls of glass,</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">Beauty’s effect with beauty were bereft,</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="st">Nor it, nor no remembrance what it was:</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="st">But flowers distill’d, though they with winter meet,</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="st">Leese but their show; their substance still lives sweet.</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># can also load by filename</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>shaksonnets <span class="op">=</span> prosodic.Text(fn<span class="op">=</span><span class="st">'corpora/corppoetry_en/en.shakespeare.txt'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="stanzas-lines-words-syllables-phonemes" class="level4">
+<h4 class="anchored" data-anchor-id="stanzas-lines-words-syllables-phonemes">Stanzas, lines, words, syllables, phonemes</h4>
+<p>Texts in prosodic are organized into a tree structure. The <code>.children</code> of a <code>Text</code> object is a list of <code>Stanza</code>’s, whose <code>.parent</code> objects point back to the <code>Text</code>. In turn, in each stanza’s <code>.children</code> is a list of <code>Line</code>’s, whose <code>.parent</code>’s point back to the stanza; so on down the tree.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Take a peek at this tree structure </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and the features particular entities have</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sonnet.show(maxlines<span class="op">=</span><span class="dv">30</span>, incl_phons<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>Text()
+|   Stanza(num=1)
+|       Line(num=1, txt='Those hours, that with gentle work did frame')
+|           WordToken(num=1, txt='Those', sent_num=1, sentpart_num=1)
+|               WordType(num=1, txt='Those', lang='en', num_forms=1)
+|                   WordForm(num=1, txt='Those')
+|                       Syllable(ipa='ðoʊz', num=1, txt='Those', is_stressed=False, is_heavy=True)
+|                           Phoneme(num=1, txt='ð', syl=-1, son=-1, cons=1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=1, cor=1, distr=1, lab=-1, hi=-1, lo=-1, back=-1, round=-1, velaric=-1, tense=0, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=3, txt='o', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=-1, lo=-1, back=1, round=1, velaric=-1, tense=1, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=3, txt='ʊ', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=1, lo=-1, back=1, round=1, velaric=-1, tense=-1, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=4, txt='z', syl=-1, son=-1, cons=1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=1, cor=1, distr=-1, lab=-1, hi=-1, lo=-1, back=-1, round=-1, velaric=-1, tense=0, long=-1, hitone=0, hireg=0)
+|           WordToken(num=2, txt=' hours', sent_num=1, sentpart_num=1)
+|               WordType(num=1, txt='hours', lang='en', num_forms=2)
+|                   WordForm(num=1, txt='hours')
+|                       Syllable(ipa="'aʊ", num=1, txt='ho', is_stressed=True, is_heavy=True, is_strong=True, is_weak=False)
+|                           Phoneme(num=2, txt='a', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=-1, lo=1, back=-1, round=-1, velaric=-1, tense=1, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=3, txt='ʊ', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=1, lo=-1, back=1, round=1, velaric=-1, tense=-1, long=-1, hitone=0, hireg=0)
+|                       Syllable(ipa='ɛːz', num=2, txt='urs', is_stressed=False, is_heavy=True, is_strong=False, is_weak=True)
+|                           Phoneme(num=2, txt='ɛː', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=-1, lo=-1, back=-1, round=-1, velaric=-1, tense=-1, long=1, hitone=0, hireg=0)
+|                           Phoneme(num=4, txt='z', syl=-1, son=-1, cons=1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=1, cor=1, distr=-1, lab=-1, hi=-1, lo=-1, back=-1, round=-1, velaric=-1, tense=0, long=-1, hitone=0, hireg=0)
+|                   WordForm(num=2, txt='hours')
+|                       Syllable(ipa="'aʊrz", num=1, txt='hours', is_stressed=True, is_heavy=True)
+|                           Phoneme(num=2, txt='a', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=-1, lo=1, back=-1, round=-1, velaric=-1, tense=1, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=3, txt='ʊ', syl=1, son=1, cons=-1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=0, cor=-1, distr=0, lab=-1, hi=1, lo=-1, back=1, round=1, velaric=-1, tense=-1, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=4, txt='r', syl=-1, son=1, cons=1, cont=1, delrel=0, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=1, cor=1, distr=-1, lab=-1, hi=0, lo=0, back=0, round=-1, velaric=-1, tense=0, long=-1, hitone=0, hireg=0)
+|                           Phoneme(num=4, txt='z', syl=-1, son=-1, cons=1, cont=1, delrel=-1, lat=-1, nas=-1, strid=0, voi=1, sg=-1, cg=-1, ant=1, cor=1, distr=-1, lab=-1, hi=-1, lo=-1, back=-1, round=-1, velaric=-1, tense=0, long=-1, hitone=0, hireg=0)
+|           WordToken(num=3, txt=',', sent_num=1, sentpart_num=1)
+|               WordType(num=1, txt=',', lang='en', num_forms=0, is_punc=True)
+|           WordToken(num=4, txt=' that', sent_num=1, sentpart_num=1)
+|               WordType(num=1, txt='that', lang='en', num_forms=3)</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># take a peek at it in dataframe form</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>sonnet.df   <span class="co"># by-syllable dataframe representation</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>sonnet      <span class="co"># ...which will also be shown when text object displayed (in a notebook)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+word_num_forms
+</th>
+<th>
+syll_is_stressed
+</th>
+<th>
+syll_is_heavy
+</th>
+<th>
+syll_is_strong
+</th>
+<th>
+syll_is_weak
+</th>
+<th>
+word_is_punc
+</th>
+</tr>
+<tr>
+<th>
+stanza_num
+</th>
+<th>
+line_num
+</th>
+<th>
+line_txt
+</th>
+<th>
+sent_num
+</th>
+<th>
+sentpart_num
+</th>
+<th>
+wordtoken_num
+</th>
+<th>
+wordtoken_txt
+</th>
+<th>
+word_lang
+</th>
+<th>
+wordform_num
+</th>
+<th>
+syll_num
+</th>
+<th>
+syll_txt
+</th>
+<th>
+syll_ipa
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="11" valign="top">
+1
+</th>
+<th rowspan="5" valign="top">
+1
+</th>
+<th rowspan="5" valign="top">
+Those hours, that with gentle work did frame
+</th>
+<th rowspan="5" valign="top">
+1
+</th>
+<th rowspan="5" valign="top">
+1
+</th>
+<th>
+1
+</th>
+<th>
+Those
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+Those
+</th>
+<th>
+ðoʊz
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th rowspan="3" valign="top">
+2
+</th>
+<th rowspan="3" valign="top">
+hours
+</th>
+<th rowspan="3" valign="top">
+en
+</th>
+<th rowspan="2" valign="top">
+1
+</th>
+<th>
+1
+</th>
+<th>
+ho
+</th>
+<th>
+’aʊ
+</th>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+urs
+</th>
+<th>
+ɛːz
+</th>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+1
+</th>
+<th>
+hours
+</th>
+<th>
+’aʊrz
+</th>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+,
+</th>
+<th>
+en
+</th>
+<th>
+0
+</th>
+<th>
+0
+</th>
+<th>
+</th>
+<th>
+</th>
+<td>
+0
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+</tr>
+<tr>
+<th rowspan="5" valign="top">
+14
+</th>
+<th rowspan="5" valign="top">
+Leese but their show; their substance still lives sweet.
+</th>
+<th rowspan="5" valign="top">
+1
+</th>
+<th rowspan="5" valign="top">
+1
+</th>
+<th>
+7
+</th>
+<th>
+substance
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+2
+</th>
+<th>
+tance
+</th>
+<th>
+stəns
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+8
+</th>
+<th>
+still
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+still
+</th>
+<th>
+’stɪl
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+9
+</th>
+<th>
+lives
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+lives
+</th>
+<th>
+’lɪvz
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+10
+</th>
+<th>
+sweet
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+sweet
+</th>
+<th>
+’swiːt
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+11
+</th>
+<th>
+.
+</th>
+<th>
+en
+</th>
+<th>
+0
+</th>
+<th>
+0
+</th>
+<th>
+</th>
+<th>
+</th>
+<td>
+0
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+1
+</td>
+</tr>
+</tbody>
+
+</table>
+<p>
+195 rows × 6 columns
+</p>
+</section></section></section></section></main></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># you can loop over this directly if you want</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> stanza <span class="kw">in</span> shaksonnets.stanzas:</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> line <span class="kw">in</span> sonnet:</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> wordtoken <span class="kw">in</span> line:</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> wordtype <span class="kw">in</span> wordtoken:</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> wordform <span class="kw">in</span> wordtype:</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> syllable <span class="kw">in</span> wordform:</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">for</span> phoneme <span class="kw">in</span> syllable:</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                            <span class="co"># ...</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                            <span class="cf">pass</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or directly access components</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'''</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ss">Shakespeare's sonnets have:</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.stanzas)<span class="sc">:,}</span><span class="ss"> "stanzas"        (in this text, each one a sonnet)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.lines)<span class="sc">:,}</span><span class="ss"> lines</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.wordtokens)<span class="sc">:,}</span><span class="ss"> wordtokens    (including punctuation)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.wordtypes)<span class="sc">:,}</span><span class="ss"> wordtypes     (each token has one wordtype object)</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.wordforms)<span class="sc">:,}</span><span class="ss"> wordforms     (a word + IPA pronunciation; no punctuation)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.syllables)<span class="sc">:,}</span><span class="ss"> syllables</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span><span class="sc">{</span><span class="bu">len</span>(shaksonnets.phonemes)<span class="sc">:,}</span><span class="ss"> phonemes</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="ss">'''</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>Shakespeare's sonnets have:
+  * 154 "stanzas"        (in this text, each one a sonnet)
+  * 2,155 lines
+  * 20,317 wordtokens    (including punctuation)
+  * 20,317 wordtypes     (each token has one wordtype object)
+  * 17,601 wordforms     (a word + IPA pronunciation; no punctuation)
+  * 21,915 syllables
+  * 63,614 phonemes</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># access lines</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># text.line{num} will return text.lines[num-1]</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> sonnet.line1 <span class="kw">is</span> sonnet.lines[<span class="dv">0</span>]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> sonnet.line10 <span class="kw">is</span> sonnet.lines[<span class="dv">9</span>]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># show the line</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>sonnet.line1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+word_num_forms
+</th>
+<th>
+syll_is_stressed
+</th>
+<th>
+syll_is_heavy
+</th>
+<th>
+syll_is_strong
+</th>
+<th>
+syll_is_weak
+</th>
+<th>
+word_is_punc
+</th>
+</tr>
+<tr>
+<th>
+line_num
+</th>
+<th>
+line_txt
+</th>
+<th>
+sent_num
+</th>
+<th>
+sentpart_num
+</th>
+<th>
+wordtoken_num
+</th>
+<th>
+wordtoken_txt
+</th>
+<th>
+word_lang
+</th>
+<th>
+wordform_num
+</th>
+<th>
+syll_num
+</th>
+<th>
+syll_txt
+</th>
+<th>
+syll_ipa
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="11" valign="top">
+1
+</th>
+<th rowspan="11" valign="top">
+Those hours, that with gentle work did frame
+</th>
+<th rowspan="11" valign="top">
+1
+</th>
+<th rowspan="11" valign="top">
+1
+</th>
+<th>
+1
+</th>
+<th>
+Those
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+Those
+</th>
+<th>
+ðoʊz
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th rowspan="3" valign="top">
+2
+</th>
+<th rowspan="3" valign="top">
+hours
+</th>
+<th rowspan="3" valign="top">
+en
+</th>
+<th rowspan="2" valign="top">
+1
+</th>
+<th>
+1
+</th>
+<th>
+ho
+</th>
+<th>
+’aʊ
+</th>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+urs
+</th>
+<th>
+ɛːz
+</th>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+1
+</th>
+<th>
+hours
+</th>
+<th>
+’aʊrz
+</th>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+,
+</th>
+<th>
+en
+</th>
+<th>
+0
+</th>
+<th>
+0
+</th>
+<th>
+</th>
+<th>
+</th>
+<td>
+0
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+</tr>
+<tr>
+<th>
+6
+</th>
+<th>
+gentle
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+2
+</th>
+<th>
+tle
+</th>
+<th>
+təl
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+7
+</th>
+<th>
+work
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+work
+</th>
+<th>
+’wɛːk
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">
+8
+</th>
+<th rowspan="2" valign="top">
+did
+</th>
+<th rowspan="2" valign="top">
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+did
+</th>
+<th>
+dɪd
+</th>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+1
+</th>
+<th>
+did
+</th>
+<th>
+’dɪd
+</th>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+9
+</th>
+<th>
+frame
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+frame
+</th>
+<th>
+’freɪm
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+
+</table>
+<p>
+15 rows × 6 columns
+</p>
+
+<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build lines directly</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>line_from_richardIII <span class="op">=</span> prosodic.Line(<span class="st">'A horse, a horse, my kingdom for a horse!'</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>line_from_richardIII</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>[34m[1mtokenizing[0m[36m @ 2023-12-15 14:14:17,991[0m
+[34m[1m⎿ 0 seconds[0m[36m @ 2023-12-15 14:14:17,992[0m</code></pre>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+word_num_forms
+</th>
+<th>
+syll_is_stressed
+</th>
+<th>
+syll_is_heavy
+</th>
+<th>
+word_is_punc
+</th>
+<th>
+syll_is_strong
+</th>
+<th>
+syll_is_weak
+</th>
+</tr>
+<tr>
+<th>
+line_txt
+</th>
+<th>
+sent_num
+</th>
+<th>
+sentpart_num
+</th>
+<th>
+wordtoken_num
+</th>
+<th>
+wordtoken_txt
+</th>
+<th>
+word_lang
+</th>
+<th>
+wordform_num
+</th>
+<th>
+syll_num
+</th>
+<th>
+syll_txt
+</th>
+<th>
+syll_ipa
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="11" valign="top">
+A horse, a horse, my kingdom for a horse!
+</th>
+<th rowspan="11" valign="top">
+1
+</th>
+<th rowspan="11" valign="top">
+1
+</th>
+<th>
+1
+</th>
+<th>
+A
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+A
+</th>
+<th>
+eɪ
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+horse
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+horse
+</th>
+<th>
+’hɔːrs
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+,
+</th>
+<th>
+en
+</th>
+<th>
+0
+</th>
+<th>
+0
+</th>
+<th>
+</th>
+<th>
+</th>
+<td>
+0
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+4
+</th>
+<th>
+a
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+a
+</th>
+<th>
+eɪ
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+5
+</th>
+<th>
+horse
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+horse
+</th>
+<th>
+’hɔːrs
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+</tr>
+<tr>
+<th>
+8
+</th>
+<th>
+kingdom
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+2
+</th>
+<th>
+dom
+</th>
+<th>
+dəm
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+9
+</th>
+<th>
+for
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+for
+</th>
+<th>
+fɔːr
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+10
+</th>
+<th>
+a
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+a
+</th>
+<th>
+eɪ
+</th>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+11
+</th>
+<th>
+horse
+</th>
+<th>
+en
+</th>
+<th>
+1
+</th>
+<th>
+1
+</th>
+<th>
+horse
+</th>
+<th>
+’hɔːrs
+</th>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<th>
+12
+</th>
+<th>
+!
+</th>
+<th>
+en
+</th>
+<th>
+0
+</th>
+<th>
+0
+</th>
+<th>
+</th>
+<th>
+</th>
+<td>
+0
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+1
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+
+</table>
+<p>
+13 rows × 6 columns
+</p>
+
+
+<section id="metrical-parsing" class="level4">
+<h4 data-anchor-id="metrical-parsing">Metrical parsing</h4>
+<section id="parsing-lines" class="level5">
+<h5 data-anchor-id="parsing-lines">Parsing lines</h5>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># parse with default options by just reaching for best parse</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>plausible_parses <span class="op">=</span> line_from_richardIII.parse()</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>plausible_parses</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+parse_score
+</th>
+<th>
+parse_is_bounded
+</th>
+<th>
+meterpos_num_slots
+</th>
+<th>
+*w_peak
+</th>
+<th>
+*w_stress
+</th>
+<th>
+*s_unstress
+</th>
+<th>
+*unres_across
+</th>
+<th>
+*unres_within
+</th>
+</tr>
+<tr>
+<th>
+line_txt
+</th>
+<th>
+parse_rank
+</th>
+<th>
+parse_txt
+</th>
+<th>
+parse_meter
+</th>
+<th>
+parse_stress
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>
+A horse, a horse, my kingdom for a horse!
+</th>
+<th>
+1
+</th>
+<th>
+a HORSE a HORSE my KING dom FOR a HORSE
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+</tbody>
+
+</table>
+
+<div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># see best parse</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>line_from_richardIII.best_parse</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="parse">
+<span class="meter_weak stress_weak">A</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span> <span class="meter_weak stress_weak">my</span> <span class="meter_strong stress_strong">king</span><span class="meter_weak stress_weak">dom</span> <span class="meter_strong stress_weak violation">for</span> <span class="meter_weak stress_weak">a</span> <span class="meter_strong stress_strong">horse</span>
+</div>
+<div class="miniquote">
+⎿ Parse(rank=1, meter=‘-+-+-+-+-+’, stress=‘-+-+-+—+’, score=1, is_bounded=0)
+</div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># parse with different options</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>diff_parses <span class="op">=</span> line_from_richardIII.parse(constraints<span class="op">=</span>(<span class="st">'w_peak'</span>,<span class="st">'s_unstress'</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>diff_parses</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+parse_score
+</th>
+<th>
+parse_is_bounded
+</th>
+<th>
+meterpos_num_slots
+</th>
+<th>
+*w_peak
+</th>
+<th>
+*s_unstress
+</th>
+</tr>
+<tr>
+<th>
+line_txt
+</th>
+<th>
+parse_rank
+</th>
+<th>
+parse_txt
+</th>
+<th>
+parse_meter
+</th>
+<th>
+parse_stress
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="6" valign="top">
+A horse, a horse, my kingdom for a horse!
+</th>
+<th>
+1
+</th>
+<th>
+a HORSE a HORSE my KING dom FOR a HORSE
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+a HORSE a HORSE my KING dom FOR a.horse
+</th>
+<th>
+-+-+-+-+–
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+12
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+a HORSE a HORSE my KING dom.for A horse
+</th>
+<th>
+-+-+-+–+-
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+12
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+4
+</th>
+<th>
+a HORSE a HORSE my KING dom.for A.HORSE
+</th>
+<th>
+-+-+-+–++
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+14
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+5
+</th>
+<th>
+a HORSE a HORSE my KING.DOM for.a HORSE
+</th>
+<th>
+-+-+-++–+
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+14
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+6
+</th>
+<th>
+a HORSE a HORSE my KING dom FOR.A horse
+</th>
+<th>
+-+-+-+-++-
+</th>
+<th>
+-+-+-+—+
+</th>
+<td>
+2.0
+</td>
+<td>
+0.0
+</td>
+<td>
+12
+</td>
+<td>
+0
+</td>
+<td>
+2
+</td>
+</tr>
+</tbody>
+
+</table>
+
+</section>
+<section id="parsing-texts" class="level5">
+<h5 data-anchor-id="parsing-texts">Parsing texts</h5>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># small texts</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>sonnet.parse()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>[34m[1mparsing 14 lines [5x][0m[36m @ 2023-12-15 14:17:43,563[0m
+[1;34m￨ stanza 01, line 14: LEESE but.their SHOW their SUBS tance STILL lives SWEET: 100%|[0;36m██████████[0;36m| 14/14 [00:00&lt;00:00, 45.78it/s]
+[34m[1m⎿ 0.3 seconds[0m[36m @ 2023-12-15 14:17:43,873[0m</code></pre>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+parse_score
+</th>
+<th>
+parse_is_bounded
+</th>
+<th>
+meterpos_num_slots
+</th>
+<th>
+*w_peak
+</th>
+<th>
+*w_stress
+</th>
+<th>
+*s_unstress
+</th>
+<th>
+*unres_across
+</th>
+<th>
+*unres_within
+</th>
+</tr>
+<tr>
+<th>
+stanza_num
+</th>
+<th>
+line_num
+</th>
+<th>
+line_txt
+</th>
+<th>
+parse_rank
+</th>
+<th>
+parse_txt
+</th>
+<th>
+parse_meter
+</th>
+<th>
+parse_stress
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="11" valign="top">
+1
+</th>
+<th rowspan="3" valign="top">
+1
+</th>
+<th rowspan="3" valign="top">
+Those hours, that with gentle work did frame
+</th>
+<th>
+1
+</th>
+<th>
+those HO urs THAT with GEN tle WORK did FRAME
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<td>
+0.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+those HOURS that.with GEN tle WORK did FRAME
+</th>
+<th>
+-+–+-+-+
+</th>
+<th>
+-+–+-+-+
+</th>
+<td>
+0.0
+</td>
+<td>
+0.0
+</td>
+<td>
+11
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+those HOURS that.with GEN tle WORK did FRAME
+</th>
+<th>
+-+–+-+-+
+</th>
+<th>
+-+–+-+-+
+</th>
+<td>
+0.0
+</td>
+<td>
+0.0
+</td>
+<td>
+11
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">
+2
+</th>
+<th rowspan="2" valign="top">
+The lovely gaze where every eye doth dwell,
+</th>
+<th>
+1
+</th>
+<th>
+the LO vely GAZE where E very EYE doth DWELL
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<td>
+0.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+the LO vely GAZE where E ve.ry EYE doth DWELL
+</th>
+<th>
+-+-+-+–+-+
+</th>
+<th>
+-+-+-+–+-+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+</tr>
+<tr>
+<th rowspan="4" valign="top">
+13
+</th>
+<th rowspan="4" valign="top">
+But flowers distill’d, though they with winter meet,
+</th>
+<th>
+1
+</th>
+<th>
+but FLO wers DIS.TILL’D though THEY with WIN ter MEET
+</th>
+<th>
+-+-++-+-+-+
+</th>
+<th>
+-+–+-+-+-+
+</th>
+<td>
+2.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+but FLO wers.dis TILL’D though THEY with WIN ter MEET
+</th>
+<th>
+-+–+-+-+-+
+</th>
+<th>
+-+–+-+-+-+
+</th>
+<td>
+2.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+but FLO.WERS dis TILL’D though THEY with WIN ter MEET
+</th>
+<th>
+-++-+-+-+-+
+</th>
+<th>
+-+–+-+-+-+
+</th>
+<td>
+2.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+4
+</th>
+<th>
+but FLO wers DIS till’d THOUGH they.with WIN ter MEET
+</th>
+<th>
+-+-+-+–+-+
+</th>
+<th>
+-+–+—+-+
+</th>
+<td>
+4.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+14
+</th>
+<th>
+Leese but their show; their substance still lives sweet.
+</th>
+<th>
+1
+</th>
+<th>
+LEESE but.their SHOW their SUBS tance STILL lives SWEET
+</th>
+<th>
++–+-+-+-+
+</th>
+<th>
++–+-+-+++
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+12
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+</tbody>
+
+</table>
+<p>
+37 rows × 8 columns
+</p>
+
+<div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># and big texts</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>shaksonnets.parse()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>[34m[1mparsing 2155 lines [5x][0m[36m @ 2023-12-15 14:17:52,124[0m
+[1;34m￨ stanza 154, line 14: love's FI re HEATS.WA ter WA ter COOLS not LOVE       : 100%|[0;36m██████████[0;36m| 2155/2155 [00:56&lt;00:00, 38.03it/s]
+[34m[1m⎿ 57.4 seconds[0m[36m @ 2023-12-15 14:18:49,496[0m</code></pre>
+
+<table class="dataframe table table-sm table-striped small">
+<thead>
+<tr>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+parse_score
+</th>
+<th>
+parse_is_bounded
+</th>
+<th>
+meterpos_num_slots
+</th>
+<th>
+*w_peak
+</th>
+<th>
+*w_stress
+</th>
+<th>
+*s_unstress
+</th>
+<th>
+*unres_across
+</th>
+<th>
+*unres_within
+</th>
+</tr>
+<tr>
+<th>
+stanza_num
+</th>
+<th>
+line_num
+</th>
+<th>
+line_txt
+</th>
+<th>
+parse_rank
+</th>
+<th>
+parse_txt
+</th>
+<th>
+parse_meter
+</th>
+<th>
+parse_stress
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="5" valign="top">
+1
+</th>
+<th rowspan="4" valign="top">
+1
+</th>
+<th rowspan="4" valign="top">
+FROM fairest creatures we desire increase,
+</th>
+<th>
+1
+</th>
+<th>
+from FAI rest CREA tures WE de SIRE in CREASE
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<td>
+0.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+from FAI rest CREA tures WE de SI re IN crease
+</th>
+<th>
+-+-+-+-+-+-
+</th>
+<th>
+-+-+-+-+-++
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+11
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+from FAI rest CREA tures WE de SI re IN.CREASE
+</th>
+<th>
+-+-+-+-+-++
+</th>
+<th>
+-+-+-+-+-++
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+4
+</th>
+<th>
+from FAI rest CREA tures WE de SI re.in CREASE
+</th>
+<th>
+-+-+-+-+–+
+</th>
+<th>
+-+-+-+-+–+
+</th>
+<td>
+2.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+2
+</th>
+<th>
+That thereby beauty’s rose might never die,
+</th>
+<th>
+1
+</th>
+<th>
+that THE reby BEA uty’s ROSE might NE ver DIE
+</th>
+<th>
+-+-+-+-+-+
+</th>
+<th>
+-+++-+-+-+
+</th>
+<td>
+1.0
+</td>
+<td>
+0.0
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<th>
+…
+</th>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+<td>
+…
+</td>
+</tr>
+<tr>
+<th rowspan="5" valign="top">
+154
+</th>
+<th rowspan="5" valign="top">
+14
+</th>
+<th rowspan="5" valign="top">
+Love’s fire heats water, water cools not love.
+</th>
+<th>
+2
+</th>
+<th>
+love’s FI re HEATS wa.ter WA ter COOLS not LOVE
+</th>
+<th>
+-+-+–+-+-+
+</th>
+<th>
+++-++-+-+-+
+</th>
+<td>
+4.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+1
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+3
+</th>
+<th>
+love’s FI.RE heats WA ter WA ter COOLS not LOVE
+</th>
+<th>
+-++-+-+-+-+
+</th>
+<th>
+++-++-+-+-+
+</th>
+<td>
+4.0
+</td>
+<td>
+0.0
+</td>
+<td>
+13
+</td>
+<td>
+0
+</td>
+<td>
+2
+</td>
+<td>
+1
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+4
+</th>
+<th>
+LOVE’S fire HEATS wa.ter WA ter COOLS not LOVE
+</th>
+<th>
++-+–+-+-+
+</th>
+<th>
+++++-+-+-+
+</th>
+<td>
+4.0
+</td>
+<td>
+0.0
+</td>
+<td>
+12
+</td>
+<td>
+1
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<th>
+5
+</th>
+<th>
+LOVE’S.FI re HEATS.WA ter WA ter COOLS not LOVE
+</th>
+<th>
+++-++-+-+-+
+</th>
+<th>
+++-++-+-+-+
+</th>
+<td>
+4.0
+</td>
+<td>
+0.0
+</td>
+<td>
+15
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+4
+</td>
+<td>
+0
+</td>
+</tr>
+<tr>
+<th>
+6
+</th>
+<th>
+love’s FI re HEATS wa TER wa TER cools NOT love
+</th>
+<th>
+-+-+-+-+-+-
+</th>
+<th>
+++-++-+-+++
+</th>
+<td>
+9.0
+</td>
+<td>
+0.0
+</td>
+<td>
+11
+</td>
+<td>
+2
+</td>
+<td>
+5
+</td>
+<td>
+2
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+</tbody>
+
+</table>
+<p>
+7277 rows × 8 columns
+</p>
+
 
 
 </section>
+</section>
 
-</main> <!-- /main -->
+
+
+
+ <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
@@ -497,7 +3742,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
 });
 </script>
-</div> <!-- /content -->
+ <!-- /content -->
 
 
 

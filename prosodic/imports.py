@@ -90,6 +90,7 @@ ESPEAK_PATHS = [
     "/usr/lib/x86_64-linux-gnu/",
     "/usr/lib/",
     "/usr/local/lib/",
+    "C:\Program Files\eSpeak NG\libespeak-ng.dll"
 ]
 DF_INDEX = [
     "stanza_num",

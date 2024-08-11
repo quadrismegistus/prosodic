@@ -68,8 +68,14 @@ class Language:
     @profile
     def phonemizer(self):
         from phonemizer.backend import EspeakBackend
-
-        return EspeakBackend(self.lang, preserve_punctuation=False, with_stress=True)
+        try:
+            return EspeakBackend(self.lang, preserve_punctuation=False, with_stress=True)
+        except Exception as e:
+            if self.lang == 'en':
+                lang = 'en-us'
+                return EspeakBackend(lang, preserve_punctuation=False, with_stress=True)
+            else:    
+                raise e
 
     @cache
     @profile

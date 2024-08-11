@@ -20,4 +20,4 @@ gevent
 gevent-websocket
 scipy
 #panphon
-panphon @ git+https://github.com/quadrismegistus/panphon
+# panphon @ git+https://github.com/quadrismegistus/panphon

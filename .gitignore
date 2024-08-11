@@ -55,7 +55,20 @@ notebooks/dev
 .eggs
 site
 /.quarto/
-qdocs
-docs
+# docs/*
+# docs/**
+
+# Ignore everything in qdocs
 docs/*
-docs/**
+
+# But allow these specific items
+!docs/*.qmd
+!docs/_quarto.yml
+!docs/reference/
+!docs/reference/**
+
+# Quarto output directory (if it's inside qdocs)
+docs/_build/
+
+# Quarto cache (if you're using caching and it's inside qdocs)
+docs/_cache/

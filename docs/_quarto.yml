@@ -1,0 +1,48 @@
+project:
+  type: website
+  output-dir: _build
+  resources:
+    - examples/single-page
+    - examples/pkgdown
+    - examples/auto-package
+    - "*.html"
+    - "*.js"
+
+execute:
+  freeze: auto  # re-render only when source changes
+
+metadata-files:
+  - reference/_sidebar.yml
+
+website:
+  title: "prosodic"
+  page-navigation: true
+  navbar:
+    left:
+      - text: "Install"
+        file: install.qmd
+      - text: "Web App"
+        file: webapp.qmd
+      - text: "Quickstart"
+        file: quickstart.qmd
+      - text: "Example"
+        file: example.qmd
+      - text: "Architecture"
+        file: architecture.qmd
+      - text: "Reference"
+        href: reference/index.html
+        target: _blank
+
+    right:
+      - icon: github
+        href: https://github.com/quadrismegistus/prosodic
+        target: _blank
+
+
+format:
+  html:
+    theme: 
+      light: litera
+      dark: darkly
+    toc: true
+

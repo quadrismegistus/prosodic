@@ -1,0 +1,101 @@
+---
+title: "Getting started"
+format:
+  html:
+    code-fold: false
+jupyter: python3
+---
+
+## Setup
+
+See [installation instructions](install.html) here.
+
+
+## Usage
+
+To use as a web app, [see here](webapp.html). This document covers how to get started using Prosodic in python.
+
+To use within python, load jupyter or ipython:
+
+```sh
+ipython
+```
+
+Recommended practice is to import with fullname.
+
+```{python}
+import prosodic
+```
+
+
+### Loading texts
+
+You can load a text by a URL or a filename pointing to a text file:
+
+```{python}
+#| label: reading-texts
+sonnets = prosodic.Text('https://raw.githubusercontent.com/quadrismegistus/prosodic/develop/corpora/corppoetry_en/en.shakespeare.txt')
+```
+
+Or directly by a string:
+
+```{python}
+sonnet = prosodic.Text("""
+Those hours, that with gentle work did frame
+The lovely gaze where every eye doth dwell,
+Will play the tyrants to the very same
+And that unfair which fairly doth excel;
+For never-resting time leads summer on
+To hideous winter, and confounds him there;
+Sap checked with frost, and lusty leaves quite gone,
+Beauty o’er-snowed and bareness every where:
+Then were not summer’s distillation left,
+A liquid prisoner pent in walls of glass,
+Beauty’s effect with beauty were bereft,
+Nor it, nor no remembrance what it was:
+But flowers distill’d, though they with winter meet,
+Leese but their show; their substance still lives sweet.
+""")
+```
+
+
+### Examining texts
+
+Any text when displayed will show the dataframe stored at its `.df` attribute:
+
+```{python}
+# the sonnet object displays as `sonnet.df`
+sonnet
+```
+
+Can also look at particular lines:
+
+```{python}
+sonnet.line1
+```
+
+
+
+### Parsing texts
+
+Run the parsing command:
+
+```{python}
+sonnet.parse()
+```
+
+The results, a special ParseList object, will be accessible at `sonnet.parses`. It displays as a dataframe accessible at `sonnet.parses.df`.
+
+#### Displaying parsed texts
+
+In a notebook environmnent, the simplest way to view the parse is to to render it.
+
+```{python}
+sonnet.parses.render()
+```
+
+#### Saving parse output
+
+```{python}
+sonnet.parses.df.to_csv('my_parse_output.csv')
+```

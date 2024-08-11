@@ -274,15 +274,17 @@ For more information on espeak: http://espeak.sourceforge.net
 
 
 def get_espeak_env(
-    path_or_paths=ESPEAK_PATHS, lib_fns={"libespeak.dylib", "libespeak.so"}
+    path_or_paths=ESPEAK_PATHS, lib_fns={"libespeak.dylib", "libespeak.so", "libespeak-ng.dll"}
 ):
-    stored = os.environ.get("PATH_ESPEAK")
+    stored = os.environ.get("PATH_ESPEAK") or os.environ.get('PHONEMIZER_ESPEAK_LIBRARY')
     if stored:
         return stored
     paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
     for path in paths:
         if not os.path.exists(path):
             continue
+        if os.path.isfile(path) and os.path.basename(path) in lib_fns:
+            return path
         if os.path.isdir(path) and "espeak-ng" in set(os.listdir(path)):
             return path
         for root, dirs, fns in os.walk(path):

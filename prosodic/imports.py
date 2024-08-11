@@ -7,6 +7,7 @@ from functools import wraps
 from pprint import pprint, pformat
 import orjson
 import json
+import io
 from multiset import Multiset
 from tqdm import tqdm
 import logging
@@ -33,7 +34,7 @@ from typing import *
 import re
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout, redirect_stderr
 
 import panphon
 import panphon.sonority
@@ -90,7 +91,10 @@ ESPEAK_PATHS = [
     "/usr/lib/x86_64-linux-gnu/",
     "/usr/lib/",
     "/usr/local/lib/",
-    "C:\Program Files\eSpeak NG\libespeak-ng.dll"
+    "C:\\Program Files\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (x86)\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (x64)\\eSpeak NG\\libespeak-ng.dll",
+    "C:\\Program Files (Arm)\\eSpeak NG\\libespeak-ng.dll",
 ]
 DF_INDEX = [
     "stanza_num",

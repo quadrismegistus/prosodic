@@ -58,7 +58,7 @@ import panphon
 import panphon.sonority
 
 
-USE_CACHE = False
+USE_CACHE = True
 USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None

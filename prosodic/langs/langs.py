@@ -7,7 +7,7 @@ class Language:
     cache_fn = "lang_wordtypes"
     lang_espeak = None
     lang = None
-    use_cache = False
+    use_cache = None
 
     def __getitem__(self, token):
         return self.get(token)
@@ -38,7 +38,7 @@ class Language:
     @cached_property
     @profile
     def cached(self):
-        return SimpleCache(root_dir=os.path.join(PATH_HOME_DATA_CACHE, self.cache_fn))
+        return SimpleCache()#root_dir=os.path.join(PATH_HOME_DATA_CACHE, self.cache_fn))
         # return SqliteDict(
         #     os.path.join(PATH_HOME_DATA,
         #                  self.cache_fn),
@@ -161,15 +161,15 @@ class Language:
 
         tokenx = token.strip()
         if any(x.isspace() for x in tokenx):
-            logger.error(
+            logger.warning(
                 f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
             )
             tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)
 
-        # if self.use_cache and tokenx in self.cached:
-        # logger.trace(f'found token {tokenx} in cache')
-        # wordforms = self.cached.get(tokenx)
-        # return WordType.from_json(self.cached[tokenx])
+        cache_key=hashstr(self.__class__.__name__, self.lang, tokenx)
+        if self.use_cache!=False and caching_is_enabled():
+            if cache_key in self.cached:
+                return WordType.from_json(self.cached[cache_key])
 
         # else:
         wordforms = []
@@ -183,8 +183,8 @@ class Language:
             wordforms.sort(key=lambda w: w.num_stressed_sylls)
             # self.cached[tokenx] = wordforms
         wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
-        # if self.use_cache:
-        # self.cached[tokenx] = wordtype.to_json()
+        if self.use_cache!=False and caching_is_enabled():
+            self.cached[cache_key] = wordtype.to_json()
         return wordtype
 
 

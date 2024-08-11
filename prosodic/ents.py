@@ -925,7 +925,6 @@ class Entity(UserList):
         """
         if caching_is_enabled():
             res = self.from_cache()
-            print("FOUND", res)
             return None if res is None else res.children
 
     def get_key(self, key):

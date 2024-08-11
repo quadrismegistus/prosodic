@@ -85,7 +85,7 @@ class Meter(Entity):
         Returns:
             bool: True if line caching is enabled, False otherwise.
         """
-        return self.use_cache
+        return False
 
     @property
     def use_cache_texts(self) -> bool:
@@ -95,7 +95,7 @@ class Meter(Entity):
         Returns:
             bool: True if text caching is enabled, False otherwise.
         """
-        return False
+        return caching_is_enabled()
 
     def to_json(self) -> Dict[str, Any]:
         """

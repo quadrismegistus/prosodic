@@ -319,7 +319,6 @@ def hashstr(*inputs: Any, length: int = HASHSTR_LEN) -> str:
         A hash string.
     """
     import hashlib
-
     input_string = str(inputs)
     sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
     return sha256_hash[:length]

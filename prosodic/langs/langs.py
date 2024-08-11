@@ -250,7 +250,7 @@ def ensure_unstressed(ipa_l):
 def get_espeak_error_msg(paths):
     pathstr = "\n    * ".join(paths)
     return f"""
-Cannot find espeak library ("libespeak.dylib" or "libespeak.so") at any of the following paths: 
+Cannot find espeak library ("libespeak.dylib" or "libespeak.so" or "libespeak-ng.dll") at any of the following paths: 
     * {pathstr}
 
 Please install espeak:
@@ -260,7 +260,7 @@ Please install espeak:
 
     * On Linux: apt-get install espeak libespeak1 libespeak-dev
 
-    * On Windows: download and install from http://espeak.sourceforge.net/download.html
+    * On Windows: download and install from https://github.com/espeak-ng/espeak-ng/releases/latest
 
 If you have placed espeak at another location than those listed above, 
 set the environment variable PATH_ESPEAK. From within python:

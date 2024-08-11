@@ -72,3 +72,5 @@ docs/_build/
 
 # Quarto cache (if you're using caching and it's inside qdocs)
 docs/_cache/
+
+prosodic/lib/panphon/doc

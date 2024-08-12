@@ -67,7 +67,7 @@
     "href": "webapp.html",
     "title": "Web app",
     "section": "",
-    "text": "To use as a web app, run in a terminal:\nprosodic"
+    "text": "To use as a web app, run in a terminal:\nprosodic web"
   },
   {
     "objectID": "install.html",

@@ -230,10 +230,17 @@ class Meter(Entity):
         if line.num_sylls < 2:
             return ParseList(type="line", line=line)
 
+        # if not force and self.use_cache_texts and caching_is_enabled() and line.text:
+            # line.text.parses_from_cache()
+
+        # if not force and line._parses:
+            # logger.debug('returning line parse from cache')
+            # return line._parses
+
         if not force and self.use_cache_lines and caching_is_enabled():
             parses = self.parses_from_cache(line)
-            line._parses = parses
             if parses:
+                line._parses = parses
                 return parses
 
         if self.exhaustive:
@@ -244,6 +251,7 @@ class Meter(Entity):
         if self.use_cache_lines and caching_is_enabled():
             self.cache(val_obj=parses, key=self.get_key(line))
 
+        line._parses = parses
         return parses
 
     def get_key(self, line: Line) -> str:
@@ -282,12 +290,13 @@ class Meter(Entity):
             # lm.log(f"found {nchild:,} parses")
             if as_dict:
                 return dat
-            with logmap("converting cache result to parses"):
-                return ParseList.from_json(
+            with logmap("converting cache result to parses") as lm:
+                line._parses = ParseList.from_json(
                     dat,
                     line=line,
                     progress=nchild >= 100,
                 )
+                return line._parses
 
     def parse_line_fast(self, line: Line, force: bool = False) -> ParseList:
         """

@@ -269,7 +269,7 @@ class Entity(UserList):
             txt = self.child_class.sep.join(child.txt for child in self.children)
         else:
             txt = ""
-        return clean_text(txt)
+        return txt
 
     @cached_property
     def data(self):
@@ -995,11 +995,12 @@ class Entity(UserList):
         key = self.get_key(key_obj) if not key else key
         cache = self.get_cache()
         if key and (force or not key in cache):
-            with logmap(f"saving object under key {key[:8]}"):
-                with logmap("exporting to json", level="trace"):
-                    data = val_obj.to_json()
-                with logmap("uploading json to cache", level="trace"):
-                    cache[key] = data
+            cache[key] = val_obj.to_json()
+            # with logmap(f"saving object under key {key[:8]}", level='trace'):
+                # with logmap("exporting to json", level="trace"):
+                    # data = val_obj.to_json()
+                # with logmap("uploading json to cache", level="trace"):
+                    # cache[key] = data
 
 
 class EntityList(Entity):

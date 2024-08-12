@@ -849,12 +849,14 @@ class Parse(Entity):
         Returns:
             Union[str, HTML]: HTML representation of the parse.
         """
-        assert self.line
-        out = self.line.to_html(as_str=True, css=css)
-        if blockquote:
-            reprstr = get_attr_str(self.attrs, bad_keys={"txt", "line_txt"})
-            out += f'<div class="miniquote">⎿ {reprstr}</div>'
-        return to_html(out, as_str=as_str)
+        if self.line:
+            out = self.line.to_html(as_str=True, css=css)
+            if blockquote:
+                reprstr = get_attr_str(self.attrs, bad_keys={"txt", "line_txt"})
+                out += f'<div class="miniquote">⎿ {reprstr}</div>'
+            return to_html(out, as_str=as_str)
+        else:
+            return str(self)
 
     @cached_property
     def wordtoken2slots(self) -> Dict[str, List["ParseSlot"]]:

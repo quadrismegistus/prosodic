@@ -39,6 +39,10 @@ class ParseSlot(Entity):
         self.viold = {**viold}
         super().__init__(children=[], parent=parent, **kwargs)
 
+    @cached_property
+    def position(self):
+        return self.parent
+
     def __copy__(self) -> "ParseSlot":
         """
         Create a shallow copy of the ParseSlot.
@@ -229,6 +233,7 @@ class ParseSlot(Entity):
             },
             **self._attrs,
             "num": self.num,
+            "is_prom": self.is_prom,
             **self.viold,
         }
     

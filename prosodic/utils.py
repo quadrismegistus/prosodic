@@ -195,18 +195,18 @@ def get_txt(txt: Optional[str], fn: Optional[str]) -> str:
     return ""
 
 
-def clean_text(txt: str) -> str:
-    """Clean and normalize text.
+# def clean_text(txt: str) -> str:
+#     """Clean and normalize text.
 
-    Args:
-        txt: The input text.
+#     Args:
+#         txt: The input text.
 
-    Returns:
-        Cleaned and normalized text.
-    """
-    txt = txt.replace("\r\n", "\n").replace("\r", "\n")
-    txt = ftfy.fix_text(txt)
-    return txt
+#     Returns:
+#         Cleaned and normalized text.
+#     """
+#     txt = txt.replace("\r\n", "\n").replace("\r", "\n")
+#     txt = ftfy.fix_text(txt)
+#     return txt
 
 
 def get_attr_str(attrs: Dict[str, Any], sep: str = ", ", bad_keys: Optional[List[str]] = None) -> str:
@@ -567,3 +567,36 @@ def tokenize_agnostic(txt: str) -> List[str]:
         A list of tokens.
     """
     return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
+
+
+
+def clean_text(txt):
+    txt=txt.replace('\r\n','\n').replace('\r','\n')
+    replacements={
+        '&eacute':'é',
+        '&hyphen;':'-',
+        '&sblank;':'--',
+        '&mdash;':' -- ',
+        '&ndash;':' - ',
+        '&longs;':'s',
+        '&wblank':' -- ',
+        '\u2223':'',
+        '\u2014':' -- ',
+        '&ldquo;':'“',
+        '&rdquo;':'”',
+        '&lsquo;':'‘’',
+        '&rsquo;':'’',
+        '&indent;':'     ',
+        '&amp;':'&',
+        '&euml;':'ë',
+        '&uuml;':'ü',
+        '&auml;':'ä',
+    }
+    for k,v in list(replacements.items()):
+        txt=txt.replace(k,v)
+        # elif k.startswith('&') and k.endswith(';') and k[:-1] in txt:
+            # txt=txt.replace(k[:-1],v)
+
+    import ftfy
+    txt=ftfy.fix_text(txt)
+    return txt

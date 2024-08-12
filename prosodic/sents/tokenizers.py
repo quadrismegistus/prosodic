@@ -80,7 +80,7 @@ def tokenize_sentwords_df(txt: str) -> pd.DataFrame:
     Returns:
         A DataFrame containing tokenized sentences and words.
     """
-    with logmap("tokenizing"):
+    with logmap("tokenizing", level='trace'):
         return pd.DataFrame(tokenize_sentwords_iter(txt))
 
 
@@ -114,7 +114,7 @@ def tokenize_sentwords_iter(
     linepart_i = 1
     linepart_ii = 0
     start_offset = 0
-    txt = clean_text(txt)
+    # txt = clean_text(txt)
     if sents is None:
         sents = tokenize_sents_txt(txt)
     for sent_i, sent in enumerate(sents):

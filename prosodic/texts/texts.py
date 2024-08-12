@@ -78,11 +78,12 @@ class Text(Entity):
             raise Exception(
                 "must provide either txt string or filename or token dataframe"
             )
-        txt = get_txt(txt, fn)
+        txt = clean_text(get_txt(txt, fn))
         self._txt = txt
         self._fn = fn
         self.lang = lang if lang else detect_lang(txt)
         self.use_cache = use_cache
+        self.tokens_df = None
         was_quiet = logmap.quiet
         if not children:
             numwords = len(txt.split())
@@ -97,6 +98,7 @@ class Text(Entity):
                 else:
                     if tokens_df is None:
                         tokens_df = tokenize_sentwords_df(txt)
+                    self.tokens_df = tokens_df
                     with logmap("building stanzas") as lm2:
                         children = [
                             Stanza(parent=self, tokens_df=stanza_df)
@@ -112,6 +114,15 @@ class Text(Entity):
         if was_quiet:
             logmap.quiet = True
 
+    def __repr__(self):
+        if self.is_text:
+            l1=self.line1
+            o = ' / '.join(x.txt.strip() for x in self.lines[:2])
+            o+=f'{" ... " if o else ""}[{self.num_lines} lines]'
+            return f'Text({o})'
+        else:
+            return super().__repr__()
+
     def parses_from_cache(self) -> List[Any]:
         """
         Retrieve parses from cache.
@@ -119,7 +130,9 @@ class Text(Entity):
         Returns:
             List[Any]: A list of cached parses.
         """
-        return self.meter.parses_from_cache(self)
+        if not len(self._parses):
+            self.meter.parses_from_cache(self)
+        return self._parses
 
     def to_hash(self) -> str:
         """
@@ -200,7 +213,17 @@ class Text(Entity):
         Returns:
             Any: The best parse object.
         """
-        return self.parses.best
+        return self.parses.best_parse
+    
+    @property
+    def best_parses(self) -> Any:
+        """
+        Get the best parse for the text.
+
+        Returns:
+            Any: The best parses.
+        """
+        return self.parses.best_parses
 
     @cached_property
     def parseable_units(self) -> Any:

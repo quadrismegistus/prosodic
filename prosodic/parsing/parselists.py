@@ -118,14 +118,14 @@ class ParseList(EntityList):
         return self.scansions
 
     @cached_property
-    def best(self) -> Optional['Parse']:
+    def best(self) -> 'ParseList':
         """
         Get the best parse.
 
         Returns:
             The best Parse object, or None if no parses are available.
         """
-        return min(self.data) if self.data else None
+        return self.best_parses
 
     @cached_property
     def unbounded(self) -> 'ParseList':
@@ -164,7 +164,22 @@ class ParseList(EntityList):
         Returns:
             The best Parse object, or None if no parses are available.
         """
-        return self.best
+        return min(self.data) if self.data else None
+    
+    @cached_property
+    def best_parses(self) -> 'ParseList':
+        """
+        Get bounded parses.
+
+        Returns:
+            A ParseList containing only bounded parses.
+        """
+        return ParseList(
+            [px for px in self.scansions if px is not None and px.parse_rank==1],
+            show_bounded=False,
+            type=self.type,
+        )
+
 
     @cached_property
     def num_unbounded(self) -> int:

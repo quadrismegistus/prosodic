@@ -6,7 +6,7 @@ from prosodic.imports import *
 
 disable_caching()
 
-lstr = 'I am monarch of all I survey'
+lstr = 'I am monarch of all I survey!!!'
 
 
 def test_cache_text():
@@ -23,15 +23,15 @@ def test_cache_text():
 def test_cache_parses():
     with caching_enabled():
         # t = Text(lstr)
-        t = Line(lstr)
+        t = Text(lstr)
         t.parse(force=True)
         # t2 = Text(lstr)
-        t2 = Line(lstr)
+        t2 = Text(lstr)
         assert t2.parses_from_cache()
 
     with caching_disabled():
         # t = Text(lstr)
-        t = Line(lstr)
+        t = Text(lstr)
         assert not t.parses_from_cache()
 
 

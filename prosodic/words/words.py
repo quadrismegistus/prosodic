@@ -45,13 +45,12 @@ class WordToken(Entity):
             children (List[WordType], optional): List of child WordType objects. Defaults to [].
             **kwargs: Additional keyword arguments.
         """
-        if txt.startswith("\n"):
-            txt = txt[1:]
-        self.lang = lang
+        # if txt.startswith("\n"):
+            # txt = txt[1:]
         if not children:
-            children = WordTypeList([Word(txt, lang=lang)])
+            children = WordTypeList([Word(txt.strip(), lang=lang)])
         self.word = children[0]
-        super().__init__(children=children, parent=parent, txt=txt, **kwargs)
+        super().__init__(children=children, parent=parent, txt=txt, lang=lang, **kwargs)
 
     def to_json(self) -> dict:
         """
@@ -60,7 +59,7 @@ class WordToken(Entity):
         Returns:
             dict: A dictionary representation of the WordToken.
         """
-        return super().to_json(lang=self.lang)
+        return super().to_json(**self.attrs)
 
 
 class WordType(Entity):

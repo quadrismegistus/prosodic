@@ -83,7 +83,6 @@ class Text(Entity):
         self._fn = fn
         self.lang = lang if lang else detect_lang(txt)
         self.use_cache = use_cache
-        self.tokens_df = None
         was_quiet = logmap.quiet
         if not children:
             numwords = len(txt.split())
@@ -98,7 +97,6 @@ class Text(Entity):
                 else:
                     if tokens_df is None:
                         tokens_df = tokenize_sentwords_df(txt)
-                    self.tokens_df = tokens_df
                     with logmap("building stanzas") as lm2:
                         children = [
                             Stanza(parent=self, tokens_df=stanza_df)
@@ -122,6 +120,12 @@ class Text(Entity):
             return f'Text({o})'
         else:
             return super().__repr__()
+        
+    @cached_property
+    def sentences(self):
+        from ..sents.sents import SentenceList
+        return SentenceList(self.wordtokens)
+        
 
     def parses_from_cache(self) -> List[Any]:
         """

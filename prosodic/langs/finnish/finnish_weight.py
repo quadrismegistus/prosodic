@@ -1,5 +1,5 @@
 # coding=utf-8
-from finnish_functions import *
+from .finnish_functions import *
 
 # return the syllable weight of a single syllable
 def syll_weight(syll_split):

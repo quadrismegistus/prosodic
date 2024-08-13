@@ -78,6 +78,7 @@ class Text(Entity):
             raise Exception(
                 "must provide either txt string or filename or token dataframe"
             )
+        
         txt = clean_text(get_txt(txt, fn))
         self._txt = txt
         self._fn = fn

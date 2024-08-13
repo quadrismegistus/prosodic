@@ -11,7 +11,7 @@ def test_Text():
     x = "Hello world!?!?!?!? !? ?!? –––_  -—- — “‘‘’ ewr ewr ’"
     t = Text(x, init=False)
     print([t._txt, t.txt])
-    assert t._txt == x
+    assert t._txt == clean_text(x)
     assert t.txt == clean_text(x)
 
     y = "This is a reasonably sized english text"

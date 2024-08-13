@@ -1,11 +1,6 @@
-from prosodic.imports import *
-from prosodic.langs.langs import Language
-from prosodic.words import WordForm, WordType
-dirself=os.path.dirname(__file__)
-sys.path.insert(0,dirself)
-from finnish_annotator import make_annotation
-#from tools import get_class
-
+from ...imports import *
+from ..langs import LanguageModel, get_sylls_ll
+from .finnish_annotator import make_annotation
 
 stress2stroke = {0:'',1:"'",2:"`"}
 
@@ -77,13 +72,13 @@ ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.items()])
 
 
 
-class FinnishLanguage(Language):
+class FinnishLanguage(LanguageModel):
     pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
     lang = 'fi'
     cache_fn = 'finnish_wordtypes'
 
     @cache
-    def get(self, token):
+    def get_sylls_ll_rule(self, token):
         token=token.strip()
         Annotation = make_annotation(token)
         syllables=[]
@@ -114,19 +109,17 @@ class FinnishLanguage(Language):
                     syllStr+="".join(orth2phon[x])
             syllables.append(syllStr)
 
-        wordforms=[]
         sylls_text=[syll for syll in Annotation.syllables]
+        sylls_ipa_ll = []
+        sylls_text_ll = []
         for stress in Annotation.stresses:
-            sylls_ipa = [stress2stroke[stress[i]]+syllables[i] for i in range(len(syllables))]
-            wf=WordForm(
-                token, 
-                sylls_ipa=sylls_ipa, 
-                sylls_text=sylls_text,
-            )
-            wordforms.append(wf)
-        wordtype = WordType(token, children=wordforms, lang=self.lang)
-        return wordtype
+            sylls_ipa = [
+                stress2stroke[stress[i]]+syllables[i] 
+                for i in range(len(syllables))
+            ]
+            sylls_text_ll.append(sylls_text)
+            sylls_ipa_ll.append(sylls_ipa)
+        return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), {'sylls_ipa_origin':'rule', 'sylls_text_origin':'rule'}
 
 @cache
 def Finnish(): return FinnishLanguage()
-LANGS['fi'] = Finnish

@@ -1,9 +1,9 @@
 # coding=utf-8
-from finnish_functions import *
-from finnish_syllables import initialize_presyllabified, make_syllables
-from finnish_weight import make_weights
-from finnish_sonority import make_sonorities
-from finnish_stress import make_stresses
+from .finnish_functions import *
+from .finnish_syllables import initialize_presyllabified, make_syllables
+from .finnish_weight import make_weights
+from .finnish_sonority import make_sonorities
+from .finnish_stress import make_stresses
 
 from copy import deepcopy
 

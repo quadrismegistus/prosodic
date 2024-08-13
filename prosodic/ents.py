@@ -295,15 +295,9 @@ class Entity(UserList):
         """
         Clear cached properties to free up memory.
         """
-        for prop in self.cached_properties_to_clear:
-            if prop in self.__dict__:
-                del self.__dict__[prop]
-            # elif hasattr(self,prop):
-            #     try:
-            #         func = getattr(self,prop)
-            #         func.clear_cache()
-            #     except AttributeError:
-            #         pass
+        for attr_name in list(self.__dict__.keys()):
+            if isinstance(getattr(type(self), attr_name, None), cached_property):
+                del self.__dict__[attr_name]
 
     def inspect(self, indent=0, maxlines=None, incl_phons=False):
         """
@@ -1035,3 +1029,6 @@ class EntityList(Entity):
         return None
 
 
+
+
+EntityCache = SimpleCache

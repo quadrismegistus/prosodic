@@ -20,6 +20,16 @@ class SimpleCache:
         self.root_dir = root_dir
         os.makedirs(root_dir, exist_ok=True)
 
+    def __enter__(self):
+        """Enter the runtime context for the cache."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context for the cache."""
+        # No specific cleanup needed, but could add it here if required
+        pass
+
+
     def _get_file_path(self, key: str) -> str:
         """Get the file path for a given key.
 
@@ -257,9 +267,16 @@ def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
     cols = [c for c in cols if c in set(df.columns)]
     return df.set_index(cols) if cols else df
 
+def format_syll_ipa_str(ipa: str) -> str:
+    if not ipa:
+        return ""
+    if "'" in ipa:
+        return "'" + ipa.replace("`","").replace("'","")
+    if "`" in ipa:
+        return "`" + ipa.replace("`","")
+    return ipa
 
-
-def get_stress(ipa: str) -> str:
+def get_syll_ipa_stress(ipa: str) -> str:
     """Get the stress level from an IPA string.
 
     Args:
@@ -270,9 +287,9 @@ def get_stress(ipa: str) -> str:
     """
     if not ipa:
         return ""
-    if ipa[0] == "`":
+    if "`" in ipa:
         return "S"
-    if ipa[0] == "'":
+    if "'" in ipa:
         return "P"
     return "U"
 
@@ -600,3 +617,6 @@ def clean_text(txt):
     import ftfy
     txt=ftfy.fix_text(txt)
     return txt
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, end='\n', **kwargs)

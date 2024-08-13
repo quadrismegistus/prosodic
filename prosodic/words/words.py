@@ -1,40 +1,26 @@
 from typing import List, Optional, Union
 from ..imports import *
+from ..langs import Language
 
 SYLL_SEP = "."
-
-
-# @cache
-@profile
-def Word(token: str, lang: str = DEFAULT_LANG) -> 'WordType':
-    """
-    Create a WordType object for the given token in the specified language.
-
-    Args:
-        token (str): The word token to create a WordType for.
-        lang (str, optional): The language code. Defaults to DEFAULT_LANG.
-
-    Returns:
-        WordType: A WordType object for the given token.
-
-    Raises:
-        Exception: If the specified language is not recognized.
-    """
-    if lang not in LANGS:
-        raise Exception(f"Language {lang} not recognized")
-    lang_obj = LANGS[lang]()
-    return lang_obj.get(token)
 
 
 class WordToken(Entity):
     """Represents a word token in text."""
 
     child_type = "WordType"
-    list_type = 'WordTypeList'
+    list_type = "WordTypeList"
     prefix = "wordtoken"
 
     @profile
-    def __init__(self, txt: str, lang: str = DEFAULT_LANG, parent: Optional['Entity'] = None, children: List['WordType'] = [], **kwargs):
+    def __init__(
+        self,
+        txt: str,
+        lang: str = DEFAULT_LANG,
+        parent: Optional["Entity"] = None,
+        children: List["WordType"] = [],
+        **kwargs,
+    ):
         """
         Initialize a WordToken object.
 
@@ -46,7 +32,7 @@ class WordToken(Entity):
             **kwargs: Additional keyword arguments.
         """
         # if txt.startswith("\n"):
-            # txt = txt[1:]
+        # txt = txt[1:]
         if not children:
             children = WordTypeList([Word(txt.strip(), lang=lang)])
         self.word = children[0]
@@ -61,16 +47,34 @@ class WordToken(Entity):
         """
         return super().to_json(**self.attrs)
 
+    @property
+    def wordtype(self):
+        return self.children[0] if self.children else None
+
+    @property
+    def is_punc(self):
+        return self.wordtype.is_punc
+
+    def unstress(self):
+        self.wordtype.unstress()
+        self.clear_cached_properties()
+
 
 class WordType(Entity):
     """Represents a word type (lexeme)."""
 
     child_type: str = "WordForm"
-    list_type = 'list'
+    list_type = "list"
     prefix = "word"
 
     @profile
-    def __init__(self, txt: str, children: List['WordForm'], parent: Optional['Entity'] = None, **kwargs):
+    def __init__(
+        self,
+        txt: str,
+        children: List["WordForm"],
+        parent: Optional["Entity"] = None,
+        **kwargs,
+    ):
         """
         Initialize a WordType object.
 
@@ -80,7 +84,7 @@ class WordType(Entity):
             parent (Entity, optional): The parent entity. Defaults to None.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(children=children, parent=parent, txt=txt, **kwargs)
+        super().__init__(txt=txt, children=children, parent=parent, **kwargs)
 
     def to_json(self) -> dict:
         """
@@ -91,16 +95,22 @@ class WordType(Entity):
         """
         return super().to_json(lang=self.lang)
 
+    def unstress(self) -> None:
+        if self.num_forms > 1:
+            wf = min(self.children, key=lambda wf: wf.num_stressed_sylls)
+            self.children = [wf]
+            self.clear_cached_properties()
+
     @property
-    def wtoken(self) -> 'WordToken':
+    def wtoken(self) -> "WordToken":
         return WordToken(self.txt, lang=self.lang, children=self.children)
 
     @property
-    def forms(self) -> List['WordForm']:
+    def forms(self) -> List["WordForm"]:
         return self.children
 
     @property
-    def form(self) -> Optional['WordForm']:
+    def form(self) -> Optional["WordForm"]:
         return self.children[0] if self.children else None
 
     @property
@@ -109,7 +119,7 @@ class WordType(Entity):
 
     @property
     def is_punc(self) -> Optional[bool]:
-        return True if not any([x.isalpha() for x in self.txt]) else None
+        return True if token_is_punc(self.txt) else None
 
     @cached_property
     def num_sylls(self) -> Optional[int]:
@@ -131,7 +141,7 @@ class WordType(Entity):
             "is_punc": self.is_punc,
         }
 
-    def rime_distance(self, word: 'WordType') -> float:
+    def rime_distance(self, word: "WordType") -> float:
         """
         Calculate the rime distance between this word and another.
 
@@ -149,12 +159,17 @@ class WordForm(Entity):
 
     prefix = "wordform"
     child_type: str = "Syllable"
-    list_type = 'SyllableList'
+    list_type = "SyllableList"
 
     @profile
     def __init__(
-        self, txt: str, sylls_ipa: Union[str, List[str]] = [], sylls_text: Union[str, List[str]] = [], 
-        children: List['Syllable'] = [], syll_sep: str = "."
+        self,
+        txt: str,
+        sylls_ipa: Union[str, List[str]] = [],
+        sylls_text: Union[str, List[str]] = [],
+        children: List["Syllable"] = [],
+        syll_sep: str = ".",
+        **kwargs
     ):
         """
         Initialize a WordForm object.
@@ -184,13 +199,18 @@ class WordForm(Entity):
                     for syll_str, syll_ipa in zip(sylls_text, sylls_ipa)
                 ]
         super().__init__(
-            # sylls_ipa=sylls_ipa,
-            # sylls_text=sylls_text,
+            sylls_ipa=sylls_ipa,
+            sylls_text=sylls_text,
             txt=txt,
             children=children,
+            **kwargs
         )
-        self.sylls_ipa = sylls_ipa
-        self.sylls_text = sylls_text
+        # self.sylls_ipa = sylls_ipa
+        # self.sylls_text = sylls_text
+
+    @property
+    def ipa(self):
+        return ".".join(self.sylls_ipa)
 
     def to_json(self) -> dict:
         """
@@ -203,15 +223,16 @@ class WordForm(Entity):
             sylls_ipa=self.sylls_ipa,
             sylls_text=self.sylls_text,
         )
+        
 
-    @property
-    def wtoken(self) -> 'WordToken':
-        if self.parent:
-            return self.parent.wtoken
-        return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
+    # @property
+    # def wtoken(self) -> 'WordToken':
+    #     if self.parent:
+    #         return self.parent.wtoken
+    #     return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
 
     @cached_property
-    def syllables(self) -> List['Syllable']:
+    def syllables(self) -> List["Syllable"]:
         return self.children
 
     @cached_property
@@ -245,7 +266,7 @@ class WordForm(Entity):
         return hashstr(self.key)
 
     @cached_property
-    def rime(self) -> Optional['PhonemeList']:
+    def rime(self) -> Optional["PhonemeList"]:
         """
         Get the rime of the word form.
 
@@ -265,7 +286,7 @@ class WordForm(Entity):
         return PhonemeList(o)
 
     @cache
-    def rime_distance(self, wordform: 'WordForm') -> float:
+    def rime_distance(self, wordform: "WordForm") -> float:
         """
         Calculate the rime distance between this word form and another.
 
@@ -302,9 +323,9 @@ class WordForm(Entity):
         return dist
 
 
-
 class WordTypeList(EntityList):
     """A list of WordType objects."""
+
     pass
 
 
@@ -322,7 +343,7 @@ class WordFormList(EntityList):
         return " ".join(wf.token_stress for wf in self.data)
 
     @cached_property
-    def slots(self) -> List['Syllable']:
+    def slots(self) -> List["Syllable"]:
         return [syll for wordform in self.data for syll in wordform.children]
 
     @cached_property
@@ -338,7 +359,7 @@ class WordFormList(EntityList):
         return sum(1 for wordform in self.data for syll in wordform.children)
 
     @cached_property
-    def first_syll(self) -> Optional['Syllable']:
+    def first_syll(self) -> Optional["Syllable"]:
         for wordform in self.data:
             for syll in wordform.children:
                 return syll
@@ -356,7 +377,7 @@ class WordFormList(EntityList):
             first_syll_stressed,
         )
 
-    def __lt__(self, other: 'WordFormList') -> bool:
+    def __lt__(self, other: "WordFormList") -> bool:
         """
         Compare this WordFormList with another for ordering.
 
@@ -382,8 +403,97 @@ class WordFormList(EntityList):
         return self is other
 
 
-
-
 class WordTokenList(EntityList):
     """A list of WordToken objects."""
+
     pass
+
+
+# @cache
+@profile
+def Word(
+    token: str,
+    lang: str = DEFAULT_LANG,
+    force_unstress: bool = None,
+    force_ambig_stress: bool = None,
+    use_cache: bool = False,
+) -> "WordType":
+    """
+    Create a WordType object for the given token in the specified language.
+
+    Args:
+        token (str): The word token to create a WordType for.
+        lang (str, optional): The language code. Defaults to DEFAULT_LANG.
+
+    Returns:
+        WordType: A WordType object for the given token.
+
+    Raises:
+        Exception: If the specified language is not recognized.
+    """
+    wordtype = None
+
+    ## try from cache?
+    if caching_is_enabled():
+        cache_key = hashstr("WordType3", lang, token, force_unstress, force_ambig_stress)
+    
+    if use_cache != False and caching_is_enabled():
+        with EntityCache() as cached:
+            data = cached.get(cache_key)
+            if data:
+                return WordType.from_json(data)
+
+    empty_wordtype = WordType(token, children=[], lang=lang)
+    wordtype = None
+    if token_is_punc(token):
+        wordtype = empty_wordtype
+
+    if not wordtype:
+        ## get from lang?
+        lang_obj = Language(lang)
+        tokenx = get_wordform_token(token)
+        sylls_ll, meta = lang_obj.get(
+            tokenx,
+            force_unstress=force_unstress,
+            force_ambig_stress=force_ambig_stress,
+        )
+
+        wordforms = []
+        for wordform_sylls in sylls_ll:
+            wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
+            wordform = WordForm(
+                tokenx,
+                sylls_ipa=tuple(wordform_sylls_ipa),
+                sylls_text=tuple(wordform_sylls_text),
+                **meta
+            )
+            wordforms.append(wordform)
+
+        ## make object
+        wordtype = WordType(
+            token,
+            children=wordforms,
+            lang=lang,
+        )
+
+    ## cache?
+    if caching_is_enabled():
+        with EntityCache() as cached:
+            cached[cache_key] = wordtype.to_json()
+
+    return wordtype
+
+
+def get_wordform_token(token):
+    tokenx = token.strip()
+    if any(x.isspace() for x in tokenx):
+        logger.warning(
+            f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
+        )
+        tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)
+    return tokenx
+
+
+def token_is_punc(token):
+    tokenx = get_wordform_token(token)
+    return not any(x.isalpha() for x in tokenx)

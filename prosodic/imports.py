@@ -117,6 +117,8 @@ DF_INDEX = [
     "wordtype_lang",
     "wordtoken_txt",
     "wordform_num",
+    "wordform_sylls_ipa",
+    "wordform_sylls_text",
     "meterpos_num",
     "meterpos_txt",
     "meterpos_val",

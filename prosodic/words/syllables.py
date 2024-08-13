@@ -56,7 +56,16 @@ class Syllable(Entity):
         Returns:
             The stress level as a string.
         """
-        return get_stress(self.ipa)
+        return get_syll_ipa_stress(self.ipa)
+    
+    @cached_property
+    def stress_num(self) -> float:
+        if self.stress == 'P':
+            return 1.0
+        elif self.stress == 'S':
+            return 0.5
+        else:
+            return 0.0
 
     @cached_property
     def attrs(self) -> dict:

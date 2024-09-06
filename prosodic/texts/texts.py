@@ -113,6 +113,9 @@ class Text(Entity):
         if was_quiet:
             logmap.quiet = True
 
+        # generate sentence objects
+        self.sents
+
     def __repr__(self):
         if self.is_text:
             l1=self.line1
@@ -123,9 +126,9 @@ class Text(Entity):
             return super().__repr__()
         
     @cached_property
-    def sentences(self):
-        from ..sents.sents import SentenceList
-        return SentenceList(self.wordtokens)
+    def sents(self):
+        from ..sents import SentenceList
+        return SentenceList.from_wordtokens(self.wordtokens)
         
 
     def parses_from_cache(self) -> List[Any]:

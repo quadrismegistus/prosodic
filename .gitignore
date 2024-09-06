@@ -74,3 +74,4 @@ docs/_build/
 docs/_cache/
 
 prosodic/lib/panphon/doc
+venv*

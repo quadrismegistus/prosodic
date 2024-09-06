@@ -59,6 +59,10 @@ class Syllable(Entity):
         return get_syll_ipa_stress(self.ipa)
     
     @cached_property
+    def weight(self):
+        return 'L' if not self.is_heavy else 'H'
+    
+    @cached_property
     def stress_num(self) -> float:
         if self.stress == 'P':
             return 1.0

@@ -31,6 +31,7 @@ import time
 import warnings
 from collections import UserList, Counter, defaultdict
 from typing import *
+from types import *
 import re
 import os
 import sys
@@ -39,13 +40,14 @@ import csv
 
 
 from importlib import resources
+
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_REPO = os.path.dirname(PATH_HERE)
 PATH_PROSODIC = PATH_HERE
-PATH_LANGS = os.path.join(PATH_PROSODIC, 'langs')
-PATH_LIB = os.path.join(PATH_PROSODIC, 'lib')
+PATH_LANGS = os.path.join(PATH_PROSODIC, "langs")
+PATH_LIB = os.path.join(PATH_PROSODIC, "lib")
 sys.path.append(PATH_LIB)
-PATH_PHONS = os.path.join(PATH_LANGS,'phonemes.json')
+PATH_PHONS = os.path.join(PATH_LANGS, "phonemes.json")
 PATH_WEB = os.path.join(PATH_PROSODIC, "web")
 PATH_REPO_DATA = os.path.join(PATH_REPO, "data")
 PATH_DICTS = os.path.join(PATH_REPO_DATA, "dicts")
@@ -112,13 +114,21 @@ DF_INDEX = [
     "parse_stress_str",
     "sent_num",
     "sentpart_num",
+    # "preterm_num",
+    # "preterm_str",
     "wordtoken_num",
-    "word_lang",
-    "wordtype_lang",
     "wordtoken_txt",
+    # "wordtoken_lang",
+    # "preterm_str",
+    "wordtype_txt",
+    "wordtype_lang",
+    # "wordtoken_txt",
     "wordform_num",
-    "wordform_sylls_ipa",
-    "wordform_sylls_text",
+    "wordform_txt",
+    "wordform_ipa",
+    "wordform_ipa_origin",
+    "wordform_stress",
+    "wordform_weight",
     "meterpos_num",
     "meterpos_txt",
     "meterpos_val",
@@ -128,6 +138,7 @@ DF_INDEX = [
     "meterslot_num",
     "meterslot_txt",
     "phon_txt",
+    "grid_i",
 ]
 DF_COLS_RENAME = {
     "wordtoken_sent_num": "sent_num",
@@ -145,7 +156,25 @@ DF_COLS_RENAME = {
     "parselist_num_parses": "line_numparse",
     "word_lang": "wordtoken_lang",
 }
-DF_BADCOLS = ["word_txt", "word_num", "wordform_txt"]
+DF_BADCOLS = {
+    "word_txt",
+    "word_num",
+    "wordform_txt",
+    "preterm_num",
+    "preterm_txt",
+    "preterm_str",
+    "wordtoken_lang",
+    "wordtype_num",
+    "wordtype_num_forms",
+    "wordtype_is_punc",
+    "wordtype_lang",
+    "wordform_force_unstress",
+    "wordform_force_ambig_stress",
+
+}
+
+DF_INDEX = [x for x in DF_INDEX if x not in DF_BADCOLS]
+
 LANGS = {}
 HTML_CSS = """
 
@@ -232,7 +261,7 @@ from .langs import *
 from .parsing import *
 
 GLOBALS = globals()
-GLOBALS['list']=list
+GLOBALS["list"] = list
 
 INITCLASSES = {
     "Text": Text,

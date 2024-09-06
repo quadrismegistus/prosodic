@@ -93,15 +93,15 @@ class LanguageModel:
         ## try dictionary
         sylls_ipa_ll = self.get_sylls_ipa_ll_dict(token)
         if sylls_ipa_ll:
-            meta['sylls_ipa_origin']='dict'        
+            meta['ipa_origin']='dict'        
         else:
             ## use tts
             sylls_ipa_ll = self.get_sylls_ipa_ll_tts(token)
             if sylls_ipa_ll:
-                meta["sylls_ipa_origin"] = "tts"
+                meta["ipa_origin"] = "tts"
             else:
                 logger.error(f'cannot parse syll IPAs in {token}')
-                meta['sylls_ipa_origin'] = 'error'
+                meta['ipa_origin'] = 'error'
         
         ## format
         sylls_ipa_ll = [
@@ -263,7 +263,7 @@ class LanguageModel:
             for sylls_ipa_l in sylls_ipa_ll
         ]
 
-        meta = {**meta_ipa, 'sylls_text_origin':'heuristic'}
+        meta = {**meta_ipa}#, 'sylls_text_origin':'heuristic'}
         return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), meta
     
     def get(self, *args, **kwargs):

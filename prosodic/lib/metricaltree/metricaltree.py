@@ -350,18 +350,22 @@ class MetricalTree(DependencyTree):
     # Set the total of the tree
     def set_stress(self, stress=0):
         """"""
+        vals = [self._lstress, self._pstress]
+        if not np.isnan(stress): vals.append(stress)
+        self._stress = sum(vals) if vals else np.nan
 
-        self._stress = self._lstress + self._pstress + stress
         if not self._preterm:
             for child in self:
                 child.set_stress(self._stress)
+        
         self.set_label()
 
     #=====================================================================
     # Reset the label of the node (cat < dep < lstress < pstress < stress
     def set_label(self):
-        """"""
-
+        """
+        Reset the label of the node (cat < dep < lstress < pstress < stress
+        """
         if self._stress is not np.nan:
             self._label = '%s/%s' % (self._cat, self._stress)
         elif self._pstress is not np.nan:

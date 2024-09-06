@@ -420,7 +420,7 @@ class ParseList(EntityList):
                 .parse_rank.rank(method="min")
                 .apply(force_int)
             )
-            return setindex(odf, DF_INDEX).sort_index()
+            return setindex(odf, DF_COLS).sort_index()
 
     def _repr_html_(self) -> str:
         """

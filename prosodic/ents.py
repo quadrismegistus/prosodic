@@ -145,7 +145,7 @@ class Entity(UserList):
         """
         return True
 
-    def to_json(self, fn=None, no_txt=False, yes_txt=False, **kwargs):
+    def to_json(self, fn=None, no_txt=False, yes_txt=False, no_children=None, **kwargs):
         """
         Convert the entity to a JSON representation.
 
@@ -163,11 +163,13 @@ class Entity(UserList):
             {
                 "_class": self.__class__.__name__,
                 **({"txt": txt} if txt is not None and (yes_txt or txt) else {}),
-                "children": [kid.to_json() for kid in self.children],
+                **({"children": [kid.to_json() for kid in self.children]} if not no_children else {}),
                 **kwargs,
             },
             fn=fn,
         )
+    
+    to_dict = to_json
 
     def save(self, fn, **kwargs):
         """
@@ -215,6 +217,14 @@ class Entity(UserList):
         if children and childx:
             children = [childx.from_json(d) for d in json_d["children"]]
         return classx(children=tuple(children), **inpd)
+    
+    from_dict = from_json
+
+
+    def __reduce__(self):
+        # Return a tuple of (callable, args) that allows recreation of this object
+        return (self.__class__.from_json, (self.to_json(),))
+    
 
     @property
     def attrs(self):
@@ -447,7 +457,7 @@ class Entity(UserList):
                 odf[c] = odf[c].fillna(0).apply(int)
             else:
                 odf[c] = odf[c].fillna("")
-        odf = setindex(odf, DF_INDEX)
+        odf = niceindex(odf)
 
         def unbool(x):
             if x is True:
@@ -1002,7 +1012,7 @@ class EntityList(Entity):
     A list of Entity objects.
     """
 
-    def __init__(self, children=[], parent=None, **kwargs):
+    def __init__(self, children=[], parent=None, txt=None, **kwargs):
         """
         Initialize an EntityList object.
 
@@ -1012,11 +1022,24 @@ class EntityList(Entity):
             **kwargs: Additional attributes to set on the entity.
         """
         self.parent = parent
-        self.children = [x for x in children]
+        self.children = children
         self._attrs = kwargs
-        self._txt = None
+        self._txt = txt
         for k, v in self._attrs.items():
             setattr(self, k, v)
+
+    def __repr__(self, indent=0):
+        class_name = self.__class__.__name__
+        items = []
+        for item in self.data:
+            if isinstance(item, EntityList):
+                item_repr = item.__repr__(indent + 4)
+            else:
+                item_repr = repr(item)
+            items.append(" " * (indent + 4) + item_repr)
+        
+        items_str = ",\n".join(items)
+        return f"{class_name}([\n{items_str}\n{' ' * indent}])"
 
     @cached_property
     def txt(self):

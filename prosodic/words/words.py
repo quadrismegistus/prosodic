@@ -1,7 +1,6 @@
 from typing import List, Optional, Union
 from ..imports import *
 from ..langs import Language
-
 SYLL_SEP = "."
 
 
@@ -35,8 +34,12 @@ class WordToken(Entity):
         # txt = txt[1:]
         if not children:
             children = WordTypeList([Word(txt.strip(), lang=lang)])
-        self.word = children[0]
+        self.word = children[0] if children else None
         super().__init__(children=children, parent=parent, txt=txt, lang=lang, **kwargs)
+        self._preterm = None
+
+    @property
+    def preterm(self): return self._preterm
 
     def to_json(self) -> dict:
         """
@@ -46,6 +49,10 @@ class WordToken(Entity):
             dict: A dictionary representation of the WordToken.
         """
         return super().to_json(**self.attrs)
+    
+    @property
+    def attrs(self):
+        return {**self._attrs, **({} if not self.preterm else self.preterm.attrs)}
 
     @property
     def wordtype(self):
@@ -55,9 +62,15 @@ class WordToken(Entity):
     def is_punc(self):
         return self.wordtype.is_punc
 
-    def unstress(self):
-        self.wordtype.unstress()
-        self.clear_cached_properties()
+    def force_unstress(self):
+        wordtype = Word(self._txt, lang=self.lang, force_unstress=True)
+        self.children=[wordtype]
+        wordtype.parent = self
+
+    def force_ambig_stress(self):
+        wordtype = Word(self._txt, lang=self.lang, force_ambig_stress=True)
+        self.children=[wordtype]
+        wordtype.parent = self
 
 
 class WordType(Entity):
@@ -65,7 +78,7 @@ class WordType(Entity):
 
     child_type: str = "WordForm"
     list_type = "list"
-    prefix = "word"
+    prefix = "wordtype"
 
     @profile
     def __init__(
@@ -182,6 +195,7 @@ class WordForm(Entity):
             syll_sep (str, optional): Syllable separator. Defaults to ".".
         """
         from .syllables import Syllable
+        from ..langs import syll_ipa_str_is_stressed
 
         sylls_ipa = sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
         sylls_text = (
@@ -189,6 +203,7 @@ class WordForm(Entity):
             if type(sylls_text) == str
             else (sylls_text if sylls_text else sylls_ipa)
         )
+        
         if not children:
             if sylls_text and sylls_ipa:
                 children = [
@@ -198,19 +213,27 @@ class WordForm(Entity):
                     )
                     for syll_str, syll_ipa in zip(sylls_text, sylls_ipa)
                 ]
+        
+        sylls_text_str = ".".join([
+            syll_text.upper() if syll_ipa_str_is_stressed(syll_ipa) else syll_text.lower()
+            for syll_text,syll_ipa in zip(sylls_text, sylls_ipa)
+        ])
+        sylls_ipa_str = ".".join(sylls_ipa)
+        stress_str = "".join(syll.stress for syll in children)
+        weight_str = "".join(syll.weight for syll in children)
         super().__init__(
-            sylls_ipa=sylls_ipa,
-            sylls_text=sylls_text,
-            txt=txt,
+            # sylls_ipa=sylls_ipa,
+            # sylls_text=sylls_text,
+            txt=sylls_text_str,
+            ipa=sylls_ipa_str,
+            stress=stress_str,
+            weight=weight_str,
             children=children,
             **kwargs
         )
-        # self.sylls_ipa = sylls_ipa
-        # self.sylls_text = sylls_text
+        self.sylls_ipa = sylls_ipa
+        self.sylls_text = sylls_text
 
-    @property
-    def ipa(self):
-        return ".".join(self.sylls_ipa)
 
     def to_json(self) -> dict:
         """
@@ -222,6 +245,7 @@ class WordForm(Entity):
         return super().to_json(
             sylls_ipa=self.sylls_ipa,
             sylls_text=self.sylls_text,
+            # no_children=True
         )
         
 
@@ -253,6 +277,10 @@ class WordForm(Entity):
     @cached_property
     def num_stressed_sylls(self) -> int:
         return len([syll for syll in self.children if syll.is_stressed])
+    
+    @cached_property
+    def is_stressed(self):
+        return self.num_stressed_sylls>0
 
     @cached_property
     def key(self) -> str:
@@ -341,6 +369,11 @@ class WordFormList(EntityList):
             str: A string representation of the WordFormList.
         """
         return " ".join(wf.token_stress for wf in self.data)
+    
+    @cached_property
+    def sents(self):
+        return unique_list(wtok.sent for wtok in self)
+
 
     @cached_property
     def slots(self) -> List["Syllable"]:
@@ -406,7 +439,35 @@ class WordFormList(EntityList):
 class WordTokenList(EntityList):
     """A list of WordToken objects."""
 
-    pass
+    @cached_property
+    def nums(self):
+        return [wtok.num for wtok in self]
+    
+    @cached_property
+    def numset(self):
+        return set(self.nums)
+
+    @cached_property
+    def sents(self):
+        from ..sents import SentenceList
+        return SentenceList(unique_list([wtok.sent for wtok in self if wtok.sent]))
+
+    @property
+    def is_sent_parsed(self):
+        l=self.children
+        if not l: return False
+        return all(wt.preterm for wt in l)
+    
+    @cached_property
+    def trees(self):
+        return self.sents.trees
+    
+    
+    @cached_property
+    def grid(self):
+        from ..sents.grids import SentenceGrid
+        return SentenceGrid.from_wordtokens(self)
+
 
 
 # @cache

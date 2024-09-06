@@ -251,6 +251,19 @@ def safesum(l: List[Union[int, float]]) -> Union[int, float]:
     l = [x for x in l if type(x) in {int, float, np.float64, np.float32}]
     return sum(l)
 
+def niceindex(df):
+    df = df[[c for c in df if c not in DF_BADCOLS]]
+    df = df.rename(columns=DF_COLS_RENAME)
+    df=setindex(df, DF_INDEX)
+    df=df.sort_index()
+    return df
+
+def nicedict(d):
+    d = {k:v for k,v in d.items() if k not in DF_BADCOLS}
+    ordered_keys = [key for key in DF_INDEX if key in d]
+    remaining_keys = [key for key in d if key not in set(DF_INDEX)]
+    keys = ordered_keys + remaining_keys
+    return {k:d[k] for k in keys}
 
 def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
     """Set the index of a DataFrame to specified columns.
@@ -264,8 +277,17 @@ def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
     """
     if not cols:
         return df
+    df = df.copy()
     cols = [c for c in cols if c in set(df.columns)]
-    return df.set_index(cols) if cols else df
+    if not cols:
+        return df
+    
+    for c in cols:
+        if c.endswith('_num'):
+            df[c] = df[c].fillna(0).apply(int)
+        else:
+            df[c] = df[c].fillna('')
+    return df.set_index(cols)
 
 def format_syll_ipa_str(ipa: str) -> str:
     if not ipa:
@@ -620,3 +642,23 @@ def clean_text(txt):
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, end='\n', **kwargs)
+
+def is_listlike(obj):
+    """
+    Check if an object is list-like (either a list, UserList, generator, or iterator).
+    
+    Args:
+        obj: The object to check.
+    
+    Returns:
+        bool: True if the object is list-like, False otherwise.
+    """
+    return isinstance(obj, (list, UserList, GeneratorType)) or hasattr(obj, '__iter__')
+
+
+def unique_list(obj):
+    if not is_listlike(obj):
+        logger.error(f'not list like: {obj}')
+        return []
+    seen = set()
+    return [x for x in obj if not (x in seen or seen.add(x))]

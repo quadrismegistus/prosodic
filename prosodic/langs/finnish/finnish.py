@@ -119,7 +119,7 @@ class FinnishLanguage(LanguageModel):
             ]
             sylls_text_ll.append(sylls_text)
             sylls_ipa_ll.append(sylls_ipa)
-        return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), {'sylls_ipa_origin':'rule', 'sylls_text_origin':'rule'}
+        return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), {'ipa_origin':'rule'}#, 'sylls_text_origin':'rule'}
 
 @cache
 def Finnish(): return FinnishLanguage()

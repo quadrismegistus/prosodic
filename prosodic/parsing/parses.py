@@ -924,4 +924,4 @@ class Parse(Entity):
             )
             for c in df
         ]
-        return setindex(df.reset_index(), DF_INDEX).sort_index()
+        return setindex(df.reset_index(), DF_COLS).sort_index()

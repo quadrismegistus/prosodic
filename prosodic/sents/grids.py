@@ -30,7 +30,7 @@ class SentenceGrid(EntityList):
         return niceindex(df.reset_index())
 
 
-    def plot(self, x='grid_i', y="syntactic_stress", label="wordtype_txt", **kwargs):
+    def plot(self, x='grid_i', y="syntax_stress", label="wordtype_txt", **kwargs):
         from plotnine import ggplot, aes, geom_col, geom_text, theme_void, options
         options.figure_size = (11, 5)
         figdf = self.df.reset_index()[[x, y, label]]
@@ -50,3 +50,6 @@ class SentenceGrid(EntityList):
             + geom_text(size=15)
             + theme_void()
         )
+    
+    def _repr_html_(self):
+        return self.plot()

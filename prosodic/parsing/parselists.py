@@ -19,20 +19,21 @@ class ParseList(EntityList):
     show_bounded: bool = False
     is_scansions: bool = False
 
-    def __init__(self, *args: Any, line: Optional['Line'] = None, **kwargs: Any) -> None:
-        """
-        Initialize a ParseList.
+    # def __init__(self, *args: Any, wordtokens: Optional['WordTokenList'] = None, **kwargs: Any) -> None:
+    #     """
+    #     Initialize a ParseList.
 
-        Args:
-            *args: Variable length argument list.
-            line: The Line object this ParseList is associated with.
-            **kwargs: Arbitrary keyword arguments.
-        """
-        super().__init__(*args, **kwargs)
-        self.line = line
+    #     Args:
+    #         *args: Variable length argument list.
+    #         line: The Line object this ParseList is associated with.
+    #         **kwargs: Arbitrary keyword arguments.
+    #     """
+    #     super().__init__(*args, **kwargs)
+    #     self.parent = self.wordtokens = wordtokens
+    #     self.data = list(self.data)
 
     @staticmethod
-    def from_json(json_d: Dict[str, Any], line: Optional['Line'] = None, progress: bool = False) -> 'ParseList':
+    def from_dict(json_d: Dict[str, Any], line: Optional['Line'] = None, progress: bool = False) -> 'ParseList':
         """
         Create a ParseList from a JSON dictionary.
 
@@ -47,7 +48,7 @@ class ParseList(EntityList):
         from .parses import Parse
         with logmap(announce=progress) as lm:
             parses = lm.imap(
-                Parse.from_json,
+                Parse.from_dict,
                 json_d["children"],
                 kwargs=dict(line=line),
                 progress=progress,
@@ -91,7 +92,7 @@ class ParseList(EntityList):
         if self.line:
             return self.line.meter
 
-    def to_json(self, fn: Optional[str] = None) -> Dict[str, Any]:
+    def to_dict(self, fn: Optional[str] = None) -> Dict[str, Any]:
         """
         Convert the ParseList to a JSON-serializable dictionary.
 
@@ -101,11 +102,12 @@ class ParseList(EntityList):
         Returns:
             A JSON-serializable dictionary representing the ParseList.
         """
-        return Entity.to_json(
-            (self.scansions if self.meter and not self.meter.exhaustive else self),
-            fn=fn,
-            type=self.type,
-        )
+        return super().to_dict(type=self.type)
+        # return Entity.to_dict(
+        #     (self.scansions if self.meter and not self.meter.exhaustive else self),
+        #     fn=fn,
+        #     type=self.type,
+        # )
 
     @cached_property
     def all(self) -> 'ParseList':
@@ -407,7 +409,9 @@ class ParseList(EntityList):
         ]
         groupby = self._get_groupby(by=by)
         if groupby:
-            odf = odf.set_index(groupby)
+            print(odf.columns)
+            print(odf)
+            odf = setindex(odf, groupby)
             aggby = self._get_aggby(odf)
             odf = odf.groupby(groupby).agg(aggby)
             odf = odf.drop("parse_rank", axis=1)
@@ -420,7 +424,7 @@ class ParseList(EntityList):
                 .parse_rank.rank(method="min")
                 .apply(force_int)
             )
-            return setindex(odf, DF_COLS).sort_index()
+            return setindex(odf, DF_INDEX).sort_index()
 
     def _repr_html_(self) -> str:
         """

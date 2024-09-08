@@ -235,4 +235,4 @@ def test_exceptions():
 
 def test_jsons():
     obj = Line('hello')
-    assert from_json(to_json(obj)).to_hash() == obj.to_hash()
+    assert from_dict(to_dict(obj)).to_hash() == obj.to_hash()

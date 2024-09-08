@@ -1,46 +1,21 @@
 from ..imports import *
+from ..words import WordTokenList, WordToken
 
 NUMBUILT = 0
 
 
-class Text(Entity):
+class TextModel(WordTokenList):
     """
-    A class that represents a text structure, usually comprised of stanzas.
-
-    This class inherits from the Entity class and is responsible for parsing and managing
-    a body of text. It supports caching for efficient retrieval of parsed data and allows
-    for text analysis at various granularities.
-
-    Attributes:
-        sep (str): Separator string used in text processing. Default is an empty string.
-        child_type (str): The type of child entity expected within the text. Default is "Stanza".
-        prefix (str): Prefix identifier for the text entity. Default is "text".
-        parse_unit_attr (str): Attribute name representing the unit to be parsed. Default is "lines".
-        list_type (StanzaList): The class type for containing child entities. Default is StanzaList.
-        use_cache (bool): Flag to determine if caching should be used. Default value is taken from USE_CACHE.
-        cached_properties_to_clear (list of str): List of property names whose cache should be cleared when appropriate.
+    A class that represents a text structure, comprised of WordTokens.
     """
-
-    sep: str = ""
-    child_type: str = "Stanza"
+    is_text = True
     prefix = "text"
-    parse_unit_attr = "lines"
-    list_type = 'StanzaList'
-    use_cache = None
 
-    cached_properties_to_clear = [
-        "best_parses",
-        "all_parses",
-        "unbounded_parses",
-        "parse_stats",
-        "meter",
-    ]
-
-    @profile
+    @log.debug
     def __init__(
         self,
-        txt: str = "",
-        fn: str = "",
+        txt: str = None,
+        fn: str = None,
         lang: Optional[str] = DEFAULT_LANG,
         parent: Optional[Entity] = None,
         children: Optional[list] = [],
@@ -69,78 +44,92 @@ class Text(Entity):
         Returns:
             None
         """
-        global NUMBUILT
-        NUMBUILT += 1
-        # print(NUMBUILT,len(txt),txt[:100])
-        from .stanzas import Stanza
-
         if not txt and not fn and not children and tokens_df is None:
-            raise Exception(
+            raise ValueError(
                 "must provide either txt string or filename or token dataframe"
             )
-        
+        self._text = None
+
+        log.debug("Cleaning and getting text")
         txt = clean_text(get_txt(txt, fn))
+
+        log.debug(f"Cleaned text: {txt[:100]}...")
+
         self._txt = txt
         self._fn = fn
+
+        log.debug(f"Setting language: {lang}")
+
         self.lang = lang if lang else detect_lang(txt)
+        log.debug(f"Language set to: {self.lang}")
+
         self.use_cache = use_cache
+        log.debug(f"Use cache set to: {self.use_cache}")
+
         was_quiet = logmap.quiet
+        log.debug(f"Was quiet: {was_quiet}")
+
         if not children:
+            log.debug("No children provided, processing text")
+
             numwords = len(txt.split())
+            log.debug(f"Number of words: {numwords}")
+
             if was_quiet and numwords > 1000:
+                log.debug("Setting logmap to not quiet due to large text")
                 logmap.quiet = False
-            with logmap(f"building text with {numwords:,} words") as lm:
-                if not force and self.use_cache!=False and caching_is_enabled():
-                    children = self.children_from_cache()
 
-                if children:
-                    lm.log(f"found {len(children)} cached stanzas")
-                else:
-                    if tokens_df is None:
-                        tokens_df = tokenize_sentwords_df(txt)
-                    with logmap("building stanzas") as lm2:
-                        children = [
-                            Stanza(parent=self, tokens_df=stanza_df)
-                            for i, stanza_df in lm2.iter_progress(
-                                tokens_df.groupby("stanza_i"), desc="iterating stanzas"
-                            )
-                        ]
-        super().__init__(txt, children=children, parent=parent, **kwargs)
-        self._parses = []
-        self._mtr = None
-        if self.use_cache!=False:
-            self.cache(force=force)
-        if was_quiet:
-            logmap.quiet = True
+            log.debug(f"building text with {numwords:,} words")
+            if tokens_df is None:
+                log.debug("Tokenizing text into DataFrame")
+                tokens_df = tokenize_sentwords_df(txt)
+            children = [
+                WordToken(lang=self.lang, parent=self, text=self, **row.to_dict())
+                for _, row in tokens_df.iterrows()
+            ]
+        log.debug("Initializing parent class")
+        super().__init__(children=children, parent=parent, text=self, **kwargs)
 
-        # generate sentence objects
-        self.sents
+    
 
-    def __repr__(self):
-        if self.is_text:
-            l1=self.line1
-            o = ' / '.join(x.txt.strip() for x in self.lines[:2])
-            o+=f'{" ... " if o else ""}[{self.num_lines} lines]'
-            return f'Text({o})'
-        else:
-            return super().__repr__()
-        
+    @cached_property
+    def stanzas(self):
+        from ..texts.stanzas import StanzaList
+        return StanzaList.from_wordtokens(self, text=self)
+    
+    @cached_property
+    def lines(self):
+        from ..texts.lines import LineList
+        return LineList.from_wordtokens(self, text=self)
+    
+    @cached_property
+    def lineparts(self):
+        from ..texts.lines import LinePartList
+        return LinePartList.from_wordtokens(self, text=self)
+    
     @cached_property
     def sents(self):
-        from ..sents import SentenceList
-        return SentenceList.from_wordtokens(self.wordtokens)
-        
+        from ..sents.sents import SentenceList
+        return SentenceList.from_wordtokens(self, text=self)
+    
+    @cached_property
+    def sentparts(self):
+        from ..sents.sents import SentPartList
+        return SentPartList.from_wordtokens(self, text=self)
 
-    def parses_from_cache(self) -> List[Any]:
-        """
-        Retrieve parses from cache.
 
-        Returns:
-            List[Any]: A list of cached parses.
-        """
-        if not len(self._parses):
-            self.meter.parses_from_cache(self)
-        return self._parses
+
+
+    # def __repr__(self):
+    #     o = " / ".join(x.txt.strip() for x in self.lines[:2])
+    #     o += f'{" ... " if o else ""}[{self.num_lines} lines]'
+    #     return f"Text({o})"
+
+    # @cached_property
+    # def sents(self):
+    #     from ..sents import SentenceList
+
+    #     return SentenceList.from_wordtokens(self.wordtokens)
 
     def to_hash(self) -> str:
         """
@@ -151,14 +140,14 @@ class Text(Entity):
         """
         return hashstr(self._txt)
 
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the text object to JSON format.
+    # def to_dict(self) -> Dict[str, Any]:
+    #     """
+    #     Convert the text object to JSON format.
 
-        Returns:
-            Dict[str, Any]: A JSON representation of the text object.
-        """
-        return super().to_json(no_txt=True)
+    #     Returns:
+    #         Dict[str, Any]: A JSON representation of the text object.
+    #     """
+    #     return super().to_dict(no_txt=True)
 
     def get_meter(self, meter: Optional[Any] = None, **meter_kwargs) -> Any:
         """
@@ -178,20 +167,20 @@ class Text(Entity):
         elif self._mtr is None:
             if self.text and self.text._mtr is not None:
                 self._mtr = self.text._mtr
-                logger.trace(f"meter inherited from text: {self._mtr}")
+                log.trace(f"meter inherited from text: {self._mtr}")
             else:
                 self._mtr = Meter(**meter_kwargs)
-                logger.trace(f"setting meter to: {self._mtr}")
+                log.trace(f"setting meter to: {self._mtr}")
         elif not meter_kwargs:
-            logger.trace(f"no change in meter")
+            log.trace(f"no change in meter")
         else:
             # newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
             newmeter = Meter(**meter_kwargs)
             if self._mtr.attrs != newmeter.attrs:
                 self._mtr = newmeter
-                logger.trace(f"resetting meter to: {self._mtr}")
+                log.trace(f"resetting meter to: {self._mtr}")
             else:
-                logger.trace(f"no change in meter")
+                log.trace(f"no change in meter")
         return self._mtr
 
     def set_meter(self, **meter_kwargs) -> None:
@@ -222,7 +211,7 @@ class Text(Entity):
             Any: The best parse object.
         """
         return self.parses.best_parse
-    
+
     @property
     def best_parses(self) -> Any:
         """
@@ -243,7 +232,9 @@ class Text(Entity):
         """
         return getattr(self, self.parse_unit_attr)
 
-    def needs_parsing(self, force: bool = False, meter: Optional[Any] = None, **meter_kwargs) -> bool:
+    def needs_parsing(
+        self, force: bool = False, meter: Optional[Any] = None, **meter_kwargs
+    ) -> bool:
         """
         Check if the text needs parsing.
 
@@ -276,6 +267,7 @@ class Text(Entity):
             return True
         return False
 
+    @stash.stashed_result
     def parse(self, **kwargs) -> Any:
         """
         Parse the text.
@@ -289,7 +281,9 @@ class Text(Entity):
         deque(self.parse_iter(**kwargs), maxlen=0)
         return self._parses
 
-    def render(self, as_str: bool = False, blockquote: bool = False, **meter_kwargs) -> Any:
+    def render(
+        self, as_str: bool = False, blockquote: bool = False, **meter_kwargs
+    ) -> Any:
         """
         Render the parsed text.
 
@@ -315,7 +309,7 @@ class Text(Entity):
         meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
         self.set_meter(**meter_kwargs)
 
-    def parse_iter(
+    def parse_iter_mtr(
         self,
         num_proc: int = DEFAULT_NUM_PROC,
         progress: bool = True,
@@ -457,3 +451,19 @@ class Text(Entity):
             bool: True if the text is rhyming, False otherwise.
         """
         return any([st.is_rhyming for st in self.stanzas])
+
+
+@stash.stashed_result
+def Text(
+    txt: str = "",
+    fn: str = "",
+    lang: Optional[str] = DEFAULT_LANG,
+    parent: Optional[Entity] = None,
+    children: Optional[list] = [],
+    tokens_df: Optional[pd.DataFrame] = None,
+):
+    return TextModel(txt, fn, lang, parent, children, tokens_df)
+
+
+class TextList(EntityList):
+    pass

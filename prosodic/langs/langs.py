@@ -100,7 +100,7 @@ class LanguageModel:
             if sylls_ipa_ll:
                 meta["ipa_origin"] = "tts"
             else:
-                logger.error(f'cannot parse syll IPAs in {token}')
+                log.error(f'cannot parse syll IPAs in {token}')
                 meta['ipa_origin'] = 'error'
         
         ## format
@@ -156,7 +156,7 @@ class LanguageModel:
             )
             obj = cache.get(cache_key)
             if force or not obj:
-                logger.trace("phonemizing")
+                log.trace("phonemizing")
                 sep = Separator(phone=" ", word="|", syllable=".")
                 res = self.phonemizer.phonemize(
                     [token],
@@ -470,7 +470,7 @@ def get_espeak_env(
             for lib_fn in lib_fns:
                 if lib_fn in fns:
                     return os.path.join(root, lib_fn)
-    logger.warning(get_espeak_error_msg(paths))
+    log.warning(get_espeak_error_msg(paths))
     return ""
 
 

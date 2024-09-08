@@ -48,7 +48,7 @@ class Parse(Entity):
 
     def __init__(
         self,
-        wordforms_or_str: Union[str, List, "WordFormList"],
+        wordforms: "WordFormList",
         scansion: str = "",
         meter: Optional["Meter"] = None,
         parent: Optional[Any] = None,
@@ -62,42 +62,28 @@ class Parse(Entity):
     ) -> None:
         from .meter import Meter
 
-        if not positions:
-            positions = []
-        self.positions = positions
-
         # meter
+        # if meter is None and parent:
+            # meter = parent.meter
         if meter is None:
             meter = Meter()
-        self.meter_obj = self.meter = meter
+        self.meter_obj = meter
 
         # wordforms
-        assert wordforms_or_str
-        if hasattr(wordforms_or_str, "is_parseable") and wordforms_or_str.is_parseable:
-            parent = wordforms_or_str
-            self.wordforms = meter.get_wordform_matrix(parent)[0]
-        elif type(wordforms_or_str) == str:
-            parent = Line(wordforms_or_str)
-            self.wordforms = meter.get_wordform_matrix(parent)[0]
-        elif type(wordforms_or_str) == list:
-            from ..words import WordFormList
-            self.wordforms = WordFormList(wordforms_or_str)
-        else:
-            self.wordforms = wordforms_or_str
+        self.wordforms = wordforms
+        self.parent = parent if parent is not None else wordforms
 
         # slots
-        # self.slots = [ParseSlot(slot) for slot in self.wordforms.slots]
-        # self.slots = self.wordforms.slots
+        self.slot_units = self.wordforms.sylls
 
         # scansion
         if not scansion:
-            scansion = get_iambic_parse(len(self.wordforms.slots))
+            scansion = get_iambic_parse(len(self.slots))
         if type(scansion) == str:
             scansion = split_scansion(scansion)
         self.positions_ls = copy(scansion)
 
         # divide positions
-        self.line = parent
         self.is_bounded = is_bounded
         self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
         self.unmetrical = False
@@ -112,13 +98,10 @@ class Parse(Entity):
         self._line_num = line_num
         self._stanza_num = stanza_num
         self._line_txt = line_txt
-        if not positions:
-            super().__init__(children=[], parent=parent)
+        self.positions = self.children = [] if not positions else positions
+        if not self.children:
             for mpos_str in self.positions_ls:
                 self.extend(mpos_str)
-        else:
-            super().__init__(children=positions, parent=parent)
-        self.children = self.positions
         self.init()
 
     @property
@@ -147,7 +130,7 @@ class Parse(Entity):
             pos.parse = self
             pos.init()
 
-    def to_json(self, fn: Optional[str] = None) -> Dict[str, Any]:
+    def to_dict(self, fn: Optional[str] = None) -> Dict[str, Any]:
         """
         Convert the parse to a JSON-serializable dictionary.
 
@@ -157,36 +140,42 @@ class Parse(Entity):
         Returns:
             Dict[str, Any]: JSON-serializable dictionary representation of the parse.
         """
-        return to_json(
-            {
-                "_class": self.__class__.__name__,
-                **self.attrs,
-                "children": [pos.to_json() for pos in self.positions],
-                "_wordforms": self.wordforms.to_json(),
-                "_meter": self.meter_obj.to_json(),
-                "is_bounded": self.is_bounded,
-                "bounded_by": list(self.bounded_by),
-            },
-            fn=fn,
+        return super().to_dict(
+            wordforms=self.wordforms.to_dict(),
+            meter=self.meter_obj.to_dict(),
+            is_bounded = self.is_bounded,
+            bounded_by = list(self.bounded_by)
         )
+        # return to_dict(
+        #     {
+        #         "_class": self.__class__.__name__,
+        #         **self.attrs,
+        #         "children": [pos.to_dict() for pos in self.positions],
+        #         "_wordforms": self.wordforms.to_dict(),
+        #         "_meter": self.meter_obj.to_dict(),
+        #         "is_bounded": self.is_bounded,
+        #         "bounded_by": list(self.bounded_by),
+        #     },
+        #     fn=fn,
+        # )
 
     @staticmethod
-    def from_json(json_d: Dict[str, Any], line: Optional[Union["Text", "Stanza", "Line"]] = None) -> "Parse":
+    def from_dict(json_d: Dict[str, Any], line: Optional[Union["TextModel", "Stanza", "Line"]] = None) -> "Parse":
         """
         Create a Parse object from a JSON dictionary.
 
         Args:
             json_d (Dict[str, Any]): JSON dictionary representation of the parse.
-            line (Optional[Union[Text, Stanza, Line]]): The line object to associate with the parse.
+            line (Optional[Union[TextModel, Stanza, Line]]): The line object to associate with the parse.
 
         Returns:
             Parse: A new Parse object created from the JSON data.
         """
         from ..texts import Line
 
-        wordforms = from_json(json_d["_wordforms"])
+        wordforms = from_dict(json_d["_wordforms"])
         if line:
-            if type(line) == Text:
+            if type(line) == TextModel:
                 line = line.stanzas[json_d["stanza_num"] - 1].lines[
                     json_d["line_num"] - 1
                 ]
@@ -195,8 +184,8 @@ class Parse(Entity):
             elif type(line) != Line:
                 raise Exception(f"what is {line}?")
             wordforms = line.match_wordforms(wordforms)
-        meter = from_json(json_d["_meter"])
-        positions = [from_json(d) for d in json_d["children"]]
+        meter = from_dict(json_d["_meter"])
+        positions = [from_dict(d) for d in json_d["children"]]
         slots = [slot for pos in positions for slot in pos.slots]
         sylls = [syll for word in wordforms for syll in word.children]
         assert len(slots) == len(sylls)
@@ -233,6 +222,7 @@ class Parse(Entity):
             bool: True if the parse is complete, False otherwise.
         """
         return len(self.slots) == len(self.syllables)
+    
 
     def extend(self, mpos_str: str) -> Optional["Parse"]:
         """
@@ -244,27 +234,28 @@ class Parse(Entity):
         Returns:
             Optional[Parse]: The extended parse, or None if extension is not possible.
         """
-        slots = []
         mval = mpos_str[0]
         if self.positions and self.positions[-1].meter_val == mval:
-            # logger.warning(f'cannnot extend because last position is also {mval}')
+            # log.warning(f'cannnot extend because last position is also {mval}')
             return None
-
+        
+        mpos = ParsePosition(meter_val=mval, children=[], parent=self)
+        mpos.children = mpos.slots = []
+        print(mpos, mpos.children, mpos.slots)
         for i, x in enumerate(mpos_str):
             slot_i = self.num_slots_positioned
             try:
-                slot = self.wordforms.slots[slot_i]
+                slot = ParseSlot(self.slot_units[slot_i], parent=mpos)
+                mpos.children.append(slot)
             except IndexError:
-                # logger.warning('cannot extend further, already taking up all syllable slots')
+                # log.warning('cannot extend further, already taking up all syllable slots')
                 return None
 
-            slots.append(ParseSlot(slot, num=slot_i + 1))
             self.num_slots_positioned += 1
 
-        mpos = ParsePosition(
-            meter_val=mval, children=slots, parent=self, num=len(self.positions) + 1
-        )
         self.positions.append(mpos)
+        # init
+        mpos.init()
         self.constraint_viols  # init and bound
         return self
 
@@ -289,10 +280,9 @@ class Parse(Entity):
             Parse: A shallow copy of the parse.
         """
         new = Parse(
-            wordforms_or_str=self.wordforms,
+            wordforms=self.wordforms,
             scansion=self.positions_ls,
-            meter=self.meter,
-            parent=self.parent,
+            meter=self.meter_obj,
             positions=[copy(mpos) for mpos in self.positions],
         )
         new._attrs = copy(self._attrs)
@@ -311,10 +301,10 @@ class Parse(Entity):
         if self.is_bounded:
             return []
         if not self.positions:
-            logger.error("needs to start with some positions")
+            log.error("needs to start with some positions")
             return
         mval = self.positions[-1].meter_val
-        otypes = self.meter.get_pos_types(self.wordforms.num_sylls)
+        otypes = self.meter_obj.get_pos_types(self.wordforms.num_sylls)
         otypes = [x for x in otypes if x[0] != mval]
         o = [copy(self).extend(posstr) for posstr in otypes]
         o = [x for x in o if x is not None]
@@ -360,7 +350,7 @@ class Parse(Entity):
         Returns:
             List[Callable]: List of constraint functions.
         """
-        return self.meter.constraints + self.meter.categorical_constraints
+        return self.meter_obj.constraints + self.meter_obj.categorical_constraints
 
     @cached_property
     def constraint_d(self) -> Dict[str, Callable]:
@@ -380,7 +370,7 @@ class Parse(Entity):
         Returns:
             Dict[str, Callable]: Dictionary of categorical constraints.
         """
-        return dict((c.__name__, c) for c in self.meter.categorical_constraints)
+        return dict((c.__name__, c) for c in self.meter_obj.categorical_constraints)
 
     def __lt__(self, other: "Parse") -> bool:
         """
@@ -404,7 +394,7 @@ class Parse(Entity):
         Returns:
             bool: True if the parses are equal, False otherwise.
         """
-        # logger.error(f'{self} and {other} could not be compared in sort, ended up equal')
+        # log.error(f'{self} and {other} could not be compared in sort, ended up equal')
         # return not (self<other) and not (other<self)
         return self is other
 
@@ -580,7 +570,7 @@ class Parse(Entity):
             return "iambic" if self.is_rising else "trochaic"
         elif self.nary_feet == 3:
             return "anapestic" if self.is_rising else "dactylic"
-        logger.error("foot type?")
+        log.error("foot type?")
         return ""
 
     @property
@@ -686,7 +676,7 @@ class Parse(Entity):
         Returns:
             Dict[str, List[float]]: Dictionary of constraint violations.
         """
-        # logger.debug(self)
+        # log.debug(self)
         scores = [mpos.constraint_viols for mpos in self.positions]
         d = {}
         nans = [np.nan for _ in range(len(self.slots))]
@@ -696,7 +686,7 @@ class Parse(Entity):
                 x for score_d in scores for x in score_d.get(cname, nans)
             ]
             if cname in catcts and any(cscores):
-                logger.debug(
+                log.debug(
                     f"Bounding {self.meter_str} because violates categorical constraint {cname}"
                 )
                 self.is_bounded = True
@@ -890,7 +880,7 @@ class Parse(Entity):
             return {**odx1, **odx2}
 
         odx = {**self.attrs}
-        cnames = [f.__name__ for f in self.meter.constraints]
+        cnames = [f.__name__ for f in self.meter_obj.constraints]
         odx["num_sylls"] = self.num_sylls
         odx["num_words"] = self.num_words
 

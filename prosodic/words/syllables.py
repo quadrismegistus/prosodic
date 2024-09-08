@@ -9,15 +9,13 @@ class Syllable(Entity):
     Attributes:
         prefix (str): Prefix for the syllable.
         child_type (str): Type of child entities (Phoneme).
-        list_type (str): Type of list for child entities (PhonemeList).
     """
 
     prefix: str = "syll"
     child_type: str = "Phoneme"
-    list_type: str = 'PhonemeList'
 
     @profile
-    def __init__(self, txt: str, ipa: Optional[str] = None, parent: Optional[Any] = None, children: List[Any] = [], **kwargs: Any) -> None:
+    def __init__(self, txt: str = None, ipa: Optional[str] = None, parent: Optional[Any] = None, children: List[Any] = [], **kwargs: Any) -> None:
         """
         Initialize a Syllable object.
 
@@ -37,16 +35,19 @@ class Syllable(Entity):
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
             children = [Phoneme(phon) for phon in phones]
-        super().__init__(txt=txt, ipa=ipa, children=children, parent=parent, **kwargs)
+        elif children and not ipa:
+            ipa = ''.join(phon.txt for phon in children)
+        self.ipa=ipa
+        super().__init__(txt=txt, children=children, parent=parent, **kwargs)
 
-    def to_json(self) -> dict:
-        """
-        Convert the syllable to a JSON-serializable dictionary.
+    # def to_dict(self) -> dict:
+    #     """
+    #     Convert the syllable to a JSON-serializable dictionary.
 
-        Returns:
-            A dictionary representation of the syllable.
-        """
-        return super().to_json(ipa=self.ipa)
+    #     Returns:
+    #         A dictionary representation of the syllable.
+    #     """
+    #     return super().to_dict(unit=self.id)
 
     @cached_property
     def stress(self) -> str:
@@ -71,23 +72,23 @@ class Syllable(Entity):
         else:
             return 0.0
 
-    @cached_property
-    def attrs(self) -> dict:
-        """
-        Get the attributes of the syllable.
+    # @cached_property
+    # def attrs(self) -> dict:
+    #     """
+    #     Get the attributes of the syllable.
 
-        Returns:
-            A dictionary of syllable attributes.
-        """
-        return {
-            **self._attrs,
-            "num": self.num,
-            "txt": self.txt,
-            "is_stressed": self.is_stressed,
-            "is_heavy": self.is_heavy,
-            "is_strong": self.is_strong,
-            "is_weak": self.is_weak,
-        }
+    #     Returns:
+    #         A dictionary of syllable attributes.
+    #     """
+    #     return {
+    #         **self._attrs,
+    #         # "num": self.num,
+    #         # "txt": self.txt,
+    #         "is_stressed": self.is_stressed,
+    #         "is_heavy": self.is_heavy,
+    #         "is_strong": self.is_strong,
+    #         "is_weak": self.is_weak,
+    #     }
 
     @cached_property
     def has_consonant_ending(self) -> bool:
@@ -97,7 +98,7 @@ class Syllable(Entity):
         Returns:
             True if the syllable ends with a consonant, False otherwise.
         """
-        return self.children[-1].cons > 0
+        return self.children[-1].is_cons
 
     @cached_property
     def num_vowels(self) -> int:
@@ -107,7 +108,7 @@ class Syllable(Entity):
         Returns:
             The number of vowels.
         """
-        return sum(1 for phon in self.children if phon.cons <= 0)
+        return sum(1 for phon in self.children if phon.is_vowel)
 
     @cached_property
     def has_dipthong(self) -> bool:

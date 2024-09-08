@@ -23,19 +23,23 @@ class ParsePosition(Entity):
             parent: Parent parse object.
             **kwargs: Additional keyword arguments.
         """
-        self.viold: Dict[str, List[int]] = {}
-        self.violset: Set[str] = set()
-        self.slots: List = children
-        self.parse: Optional['Parse'] = parent
         super().__init__(
             meter_val=meter_val,
             children=children,
             parent=parent,
-            num_slots=len(self.slots),
             **kwargs,
         )
-        if self.parse:
-            self.init()
+        self.viold: Dict[str, List[int]] = {}
+        self.violset: Set[str] = set()
+        self.slots = self.children
+        self.parse = self.parent
+        # self.parse: Optional['Parse'] = self.parent
+        # if self.parse:
+        #     self.init()
+
+    @property
+    def num_slots(self):
+        return len(self.children)
 
     def init(self) -> None:
         """Initialize violations for this position."""
@@ -61,8 +65,8 @@ class ParsePosition(Entity):
             A new ParsePosition object with copied attributes.
         """
         new = ParsePosition(
-            self.meter_val,
-            children=[copy(slot) for slot in self.children],
+            meter_val=self.meter_val,
+            children=[copy(slot) for slot in self.slots],
             parent=self.parent,
         )
         new.viold = copy(self.viold)
@@ -70,14 +74,14 @@ class ParsePosition(Entity):
         new._attrs = copy(self._attrs)
         return new
 
-    def to_json(self) -> Dict:
+    def to_dict(self) -> Dict:
         """
         Convert the ParsePosition to a JSON-serializable dictionary.
 
         Returns:
             A dictionary representation of the ParsePosition.
         """
-        return super().to_json(meter_val=self.meter_val)
+        return super().to_dict(meter_val=self.meter_val)
 
     @cached_property
     def attrs(self) -> Dict:
@@ -133,17 +137,17 @@ class ParsePosition(Entity):
         """
         return self.meter_val == "s"
 
-    @cached_property
-    def txt(self) -> str:
-        """
-        Get the text representation of this position.
+    # @cached_property
+    # def txt(self) -> str:
+    #     """
+    #     Get the text representation of this position.
 
-        Returns:
-            A string representation of the position.
-        """
-        token = ".".join([slot.txt for slot in self.slots])
-        token = token.upper() if self.is_prom else token.lower()
-        return token
+    #     Returns:
+    #         A string representation of the position.
+    #     """
+    #     token = ".".join([slot.txt for slot in self.children])
+    #     token = token.upper() if self.is_prom else token.lower()
+    #     return token
 
     @cached_property
     def meter_str(self) -> str:

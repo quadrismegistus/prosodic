@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Type
 from .imports import *
 
 
@@ -21,16 +21,100 @@ class Entity(UserList):
         sep (str): Separator used when joining child texts.
     """
 
-    child_type = "Text"
     is_parseable = False
     index_name = None
     prefix = "ent"
-    list_type = None
     cached_properties_to_clear = []
     use_cache = False
+    is_text = False
     sep = ""
 
-    def __init__(self, txt: str = "", children=[], parent=None, **kwargs):
+    # Define parent and child relationships
+    _parent_types = {
+        "text": "TextModel",
+        "stanza": "Stanza",
+        "line": "Line",
+        "wordtoken": "WordToken",
+        "wordtype": "WordType",
+        "wordform": "WordForm",
+        "syllable": "Syllable",
+    }
+
+    _child_types = {
+        "TextModel": ["stanzas", "Stanza", "StanzaList"],
+        "Stanza": ["lines", "Line", "LineList"],
+        "Line": ["wordtokens", "WordToken", "WordTokenList"],
+        "WordToken": ["wordtypes", "WordType", "WordTypeList"],
+        "WordType": ["wordforms", "WordForm", "WordFormList"],
+        "WordForm": ["syllables", "Syllable", "SyllableList"],
+        "Syllable": ["phonemes", "PhonemeClass", "PhonemeList"],
+    }
+
+    @property
+    @log.debug
+    def list_type(self):
+        from .imports import CHILDCLASSLISTS
+
+        return CHILDCLASSLISTS.get(self.type_name)
+
+    @property
+    def type_name(self):
+        name = type(self).__name__.lower()
+        return name if not name.endswith("list") else name[:-4] + "s"
+    
+    @property
+    def nice_type_name(self):
+        return self.__class__.__name__#.replace('Model','').replace('Class','')
+
+    @property
+    def children_type(self):
+        from .imports import CHILDCLASSES
+
+        return CHILDCLASSES.get(self.type_name)
+
+    @property
+    def type(self):
+        return type(self)
+
+    @classmethod
+    def _get_class(cls, name):
+        from .imports import SELFCLASSES
+
+        return SELFCLASSES.get(name.lower())
+
+    @property
+    def child_type(self):
+        """
+        Discover the child_type based on the class name.
+
+        Returns:
+            str: The child_type of the EntityList.
+        """
+        class_name = (
+            self.__class__.__name__
+            if type(self.__class__) is not type
+            else self.__name__
+        )
+        if class_name.endswith("List"):
+            return class_name[:-4]
+        return None
+
+    # def __init_subclass__(cls, **kwargs):
+    #     super().__init_subclass__(**kwargs)
+    #     cls._generate_parent_properties()
+    #     cls._generate_child_properties()
+
+    # @classmethod
+    # def _generate_parent_properties(cls):
+    #     for prop_name, parent_type in cls._parent_types.items():
+    #         setattr(cls, prop_name, property(lambda self, pt=parent_type: self.get_parent(pt)))
+
+    # @classmethod
+    # def _generate_child_properties(cls):
+    #     for child_prop, (list_name, child_type, list_type) in cls._child_types.items():
+    #         setattr(cls, list_name, property(lambda self, ct=child_type: self.get_children(ct)))
+
+    def __init__(self, txt: str = "", children=[], parent=None, num=None, text=None, **kwargs):
         """
         Initialize an Entity object.
 
@@ -40,25 +124,51 @@ class Entity(UserList):
             parent (Entity): The parent entity.
             **kwargs: Additional attributes to set on the entity.
         """
-        self.parent = parent
-        newchildren = []
-        for child in children:
-            if not isinstance(child, Entity):
-                logger.warning(f"{child} is not an Entity")
-                continue
-            newchildren.append(child)
-            # if not child.is_wordtype:   # don't do this for wordtypes since each wordtype is a single/shared python object
-            child.parent = self
-        children = newchildren
-        if self.list_type is None:
-            self.list_type = 'EntityList'
-        from .imports import GLOBALS
-        self.children = GLOBALS[self.list_type](children)
         self._attrs = kwargs
-        self._txt = txt
+        self._num = num
         self._mtr = None
+        self.parent = parent
+        self._text = text
         for k, v in self._attrs.items():
-            setattr(self, k, v)
+            try:
+                setattr(self, k, v)
+            except Exception as e:
+                log.debug(e)
+
+        if not isinstance(children, EntityList):
+            self.children = (
+                self.list_type(children, parent=self)
+                if self.list_type is not None
+                else None
+            )
+        else:
+            self.children = children
+
+        if self.children:
+            for child in self.children:
+                if child.parent is None:
+                    child.parent = self
+
+        self._txt = txt if txt else ""
+        # elif self.children:
+        #     self._txt = ''.join(child._txt for child in self.children)
+        # else:
+        #     self._txt = ''
+
+    @property
+    def is_wordtokenlist(self):
+        from .words.wordtokenlist import WordTokenList
+        return isinstance(self, WordTokenList)
+
+
+
+    @property
+    def text(self):
+        if self._text is not None: return self._text
+        if self.parent: return self.parent.text
+        if self.is_wordtokenlist: return self
+        
+        
 
     def __iter__(self):
         """
@@ -68,6 +178,403 @@ class Entity(UserList):
             Entity: The next child entity.
         """
         yield from self.children
+
+    @staticmethod
+    def _rename_attr(x):
+        d = {
+            "word": "wordtoken",
+            "words": "wordtokens",
+            "text": "textmodel",
+            "texts": "textmodels",
+            "syll": "syllable",
+            "sylls": "syllables",
+            "is_word": "is_wordtoken",
+            "is_words": "is_wordtokens",
+            "num_words": "num_wordtokens",
+            "is_text": "is_textmodel",
+            "is_texts": "is_textmodels",
+            "num_texts": "num_textmodels",
+            "is_syll": "is_syllable",
+            "is_sylls": "is_syllables",
+            "num_sylls": "num_syllables",
+            "is_phon": "is_phonemeclass",
+            "is_phons": "is_phonemes",
+            "num_phons": "num_phonemes",
+        }
+        x = x.lower().strip()
+        return d.get(x, x)
+    
+
+
+    # def __getattr__(self, attr):
+    #     """
+    #     Get an attribute of the entity by name.
+
+    #     Args:
+    #         attr (str): The name of the attribute.
+
+    #     Returns:
+    #         Any: The value of the attribute.
+    #     """
+    #     # attr = self._rename_attr(attr)
+
+    #     try:
+    #         # First, try to get the attribute normally
+    #         return self.__getattribute__(attr)
+    #     except AttributeError:
+    #         # If AttributeError is raised, implement the custom logic
+    #         from .imports import PLURAL_ATTRS, SINGULAR_ATTRS
+
+    #         res = None
+    #         attr = self._rename_attr(attr)
+    #         # if attr in PLURAL_ATTRS:
+    #             # log.debug(f"'{attr}' is in PLURAL_ATTRS, returning children")
+    #             # res = self.get_children(attr)
+    #         # if attr in SINGULAR_ATTRS:
+    #             # log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning one")
+    #             # res = self.get_one(attr)
+    #         if attr.endswith("_r") and attr[:-2] in SINGULAR_ATTRS:
+    #             log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning random")
+    #             res = self.get_random(attr[:-2])
+    #         elif attr.startswith("is_"):
+    #             cls_name = attr[3:]
+    #             res = (
+    #                 self.type_name == cls_name.lower()
+    #                 or type(self).__name__.lower() == cls_name.lower()
+    #             )
+    #         elif attr.startswith("num_"):
+    #             cls_name = attr[4:]
+    #             children = self.get_children(cls_name)
+    #             res = len(children) if children is not None else None
+    #         elif (
+    #             (digits := "".join(x for x in attr if x.isdigit()))
+    #             and (nondigits := "".join(x for x in attr if not x.isdigit()))
+    #             and nondigits in SINGULAR_ATTRS
+    #         ):
+    #             num = int(digits)
+    #             i = 0 if num == 0 else num - 1
+    #             try:
+    #                 log.debug(f"Attempting to return child at index {i}")
+    #                 res = self.get_children(nondigits)[i]
+    #             except IndexError:
+    #                 log.debug(f"Index {i} out of range, returning None")
+    #                 res = None
+
+    #         # If none of the custom logic applies, raise AttributeError
+    #         if res is not None:
+    #             setattr(self, attr, res)
+    #             return res
+    #         else:
+    #             raise AttributeError(
+    #                 f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+    #             )
+
+    def get_list(self, list_type: str):
+        """
+        Get a list of entities of the specified type, either from this entity's children
+        or by finding the intersecting list from the text.
+
+        Args:
+            list_type (str): The type of list to retrieve (e.g., 'lines', 'words', 'syllables').
+
+        Returns:
+            EntityList or None: The requested list of entities, or None if not found.
+        """
+        from .imports import get_class_depth, get_ent_class, get_list_class
+        cls_depth = get_class_depth(list_type)
+        ent_class = get_ent_class(list_type)
+        list_class = get_list_class(list_type)
+        log.info(f"Getting list of type: {list_type}")
+        log.info(f'My class: {self.__class__}')
+        log.info(f'My depth: {self.class_depth}')
+        log.info(f"Class depth: {cls_depth}")
+        log.info(f"Entity class: {ent_class}")
+        log.info(f"List class: {list_class}")
+        
+
+        if list_class is None:
+            return None
+
+        # If this entity is already the requested list type, return self
+        if isinstance(self, list_class):
+            return self
+
+        # Check if this entity contains the requested list type
+        if self.children and isinstance(self.children, list_class):
+            return self.children
+        
+        if cls_depth == 1: # on text level
+            log.info(f"Getting text list for type: {list_type}")
+            full_list = self.get_text_list(list_type)
+            if full_list is not None:
+                log.info(f"Found text list for type: {list_type}: {full_list}")
+                return self.get_overlapping_list(full_list)
+
+        # If the current entity is above the requested type
+        if self.class_depth < cls_depth:
+            log.info(f"Current class depth ({self.class_depth}) is less than requested class depth ({cls_depth})")
+            log.info(f"Getting descendants of type: {list_type}")
+            descendants = self._get_descendants(list_type)
+            log.info(f"Found {len(descendants)} descendants")
+            if descendants:
+                log.info("Creating new list with descendants")
+                return list_class(descendants, parent=self)
+            else:
+                log.info("No descendants found")
+        # If the current entity is below the requested type
+        elif self.class_depth > cls_depth:
+            log.info(f"Current class depth ({self.class_depth}) is greater than requested class depth ({cls_depth})")
+            log.info(f"Searching for ancestor of type: {list_type}")
+            ancestor = self._get_ancestor(list_type)
+            log.info(f"Found ancestor: {ancestor}")
+            return list_class([ancestor], parent=ancestor.parent) if ancestor else None
+
+        # If the depths are the same or we couldn't find an appropriate ancestor
+        log.error(f'Could not find list for type {list_type}')
+        return None
+
+
+    def get_overlapping_list(self, full_list: 'EntityList', entity:'Entity' = None):
+        list_class = type(full_list)
+        if entity is None: entity = self
+        filtered_list = [ent for ent in full_list if ent.contains(entity)]
+        return list_class(filtered_list,text=self.text)
+    
+    def get_text_list(self, list_type: str):
+        from .imports import get_list_class_name
+        list_type = get_list_class_name(list_type)
+        return getattr(self.text, list_type) if hasattr(self.text, list_type) else None
+
+    @classmethod
+    def _class_depth(cls):
+        from .imports import CLASS_DEPTHS
+        return CLASS_DEPTHS.get(cls)
+
+    @property
+    def class_depth(self):
+        return self._class_depth()
+
+
+    def _get_descendants(self, ent_type: str):
+        """
+        Recursively get all descendants of the specified type.
+
+        Args:
+            descendant_type (str): The type of descendants to retrieve.
+
+        Returns:
+            list: A list of descendant entities of the specified type.
+        """
+        from .imports import get_ent_class
+        descendant_cls = get_ent_class(ent_type)
+        descendants = []
+        if self.children:
+            for child in self.children:
+                if type(child) is descendant_cls:
+                    descendants.append(child)
+                descendants.extend(child._get_descendants(ent_type))
+        return descendants
+    
+    def _get_ancestor(self, ent_type: str):
+        from .imports import get_ent_class
+        ancestor_cls = get_ent_class(ent_type)
+        if self.parent:
+            if isinstance(self.parent, ancestor_cls):
+                return self.parent
+            else:
+                return self.parent._get_ancestor(ent_type)
+        return None
+
+    def contains(self, entity: 'Entity') -> bool:
+        """
+        Check if this entity contains the given entity.
+
+        Args:
+            entity (Entity): The entity to check for containment.
+
+        Returns:
+            bool: True if this entity contains the given entity, False otherwise.
+        """
+        if self is entity:
+            return True
+        if self.children:
+            if isinstance(entity, EntityList):
+                return bool(set(self.children) & set(entity.children))
+            for child in self.children:
+                if child is entity or child.contains(entity):
+                    return True
+        return False
+
+    @cached_property
+    def lines(self):
+        return self.get_list('lines')
+    
+    @cached_property
+    def stanzas(self):
+        return self.get_list('stanzas')
+    
+    @cached_property
+    def sents(self):
+        return self.get_list('sents')
+    
+    @cached_property
+    def sentparts(self):
+        return self.get_list('sentparts')
+    
+    @cached_property
+    def lineparts(self):
+        return self.get_list('lineparts')
+    
+    @property
+    def words(self):
+        return self.wordtokens
+    
+    @cached_property
+    def wordtokens(self):
+        return self.get_list('wordtokens')
+    
+    @cached_property
+    def phonemes(self):
+        return self.get_list('phonemes')
+    
+    @cached_property
+    def syllables(self):
+        return self.get_list('sylls')
+    @property
+    def sylls(self):
+        return self.syllables
+    
+    
+
+
+    def get_random(self, ent_type: str) -> "Entity":
+        ent_type = self._rename_attr(ent_type)
+        children = self.get_children(ent_type)
+        return (
+            random.choice(children) if children else None
+        )  # will return parent if available
+
+    def get_one(self, ent_type: str) -> "Entity":
+        ent_type = self._rename_attr(ent_type)
+        if self.type_name == ent_type:
+            return self
+        children = self.get_children(ent_type)
+        return children[0] if len(children) else None  # will return parent if available
+
+    def get_parent(self, parent_type: str) -> "Entity":
+        from .imports import SELFCLASSES, PLURAL_ATTRS
+
+        parent_type = self._rename_attr(parent_type)
+        if parent_type in PLURAL_ATTRS:
+            parent_type = parent_type[:-1]
+        parent_class = SELFCLASSES.get(parent_type)
+        if parent_class is None:
+            return
+
+        while self.parent and not isinstance(self.parent, parent_class):
+            self = self.parent
+
+        return self.parent
+
+    def get_children(self, child_type: str) -> List["Entity"]:
+        from .imports import LISTCLASSES
+
+        log.debug(f"Getting children of type: {child_type}")
+        child_type = self._rename_attr(child_type)
+        log.debug(f"Renamed child_type: {child_type}")
+        list_class = LISTCLASSES.get(child_type)
+        log.debug(f"List class for {child_type}: {list_class}")
+        if list_class is None:
+            log.debug("List class is None, returning None")
+            return None
+
+        # same?
+        if isinstance(self, list_class):
+            log.debug("Self is instance of list_class, returning self")
+            return self
+
+        # above?
+        parent = self.get_parent(child_type)
+        log.debug(f"Parent of type {child_type}: {parent}")
+        if parent is not None:
+            log.debug("Returning list with parent")
+            return list_class([parent], parent=parent.parent)
+
+        if self.children is None or list_class is None:
+            log.debug("Children or list_class is None, returning None")
+            return None
+
+        # below?
+        if self.children is not None and isinstance(self.children, list_class):
+            log.debug("Returning children as they are of the correct list_class")
+            return self.children
+
+        log.debug("Recursively getting grandchildren")
+        if self.children is not None:
+            grandchildren = []
+            for child in self.children:
+                child_children = child.get_children(child_type)
+                if child_children is not None:
+                    grandchildren.extend(list(child_children))
+
+            return list_class(grandchildren, parent=self)
+
+    # @cached_property
+    # def sents(self):
+    #     from .sents.sents import SentenceList
+
+    #     if self.is_text:
+    #         return SentenceList.from_wordtokens(self.wordtokens, parent=self)
+    #     else:
+    #         return SentenceList(
+    #             [
+    #                 sent
+    #                 for sent in self.text.sents
+    #                 if set(sent.wordtokens) & set(self.wordtokens)
+    #             ]
+    #         )
+
+    # @cached_property
+    # def sentparts(self):
+    #     from .sents.sents import SentPartList
+
+    #     return SentPartList(
+    #         [part for sent in self.sents for part in sent.parts], parent=self
+    #     )
+
+    # @cached_property
+    # def lineparts(self):
+    #     from .texts.lines import LinePartList
+
+    #     return LinePartList(
+    #         [part for line in self.lines for part in line.lineparts], parent=self
+    #     )
+
+    @property
+    def wordforms_first(self):
+        from .words.words import WordFormList
+
+        o = []
+        for wtok in self.get_children("wordtoken"):
+            wforms = wtok.get_children("wordform")
+            if wforms:
+                o.append(wforms[0])
+        return WordFormList(o, parent=self)
+
+    @property
+    def wordforms_all(self):
+        from .words.words import WordFormList
+
+        o = []
+        for wtok in self.get_children("wordtoken"):
+            wforms = wtok.get_children("wordform")
+            if wforms:
+                o.append(wforms)
+        return [WordFormList(ox, parent=self) for ox in o]
+
+    @property
+    def wordform_matrix(self):
+        return self.wordtokens.wordform_matrix
 
     def to_hash(self):
         """
@@ -80,7 +587,7 @@ class Entity(UserList):
             self.txt, tuple(sorted(self._attrs.items())), self.__class__.__name__
         )
 
-    @cached_property
+    @property
     def html(self):
         """
         Get the HTML representation of the entity.
@@ -91,21 +598,21 @@ class Entity(UserList):
         if hasattr(self, "to_html"):
             return self.to_html()
 
-    @cached_property
-    def key(self):
-        """
-        Generate a unique key for the entity.
+    # @property
+    # def key(self):
+    #     """
+    #     Generate a unique key for the entity.
 
-        Returns:
-            str: A string key representing the entity's class and attributes.
-        """
-        attrs = {
-            **{k: v for k, v in self.attrs.items() if v is not None},
-            "txt": self._txt,
-        }
-        return f"{self.__class__.__name__}({get_attr_str(attrs)})"
+    #     Returns:
+    #         str: A string key representing the entity's class and attributes.
+    #     """
+    #     attrs = {
+    #         **{k: v for k, v in self.attrs.items() if v is not None},
+    #         "txt": self._txt,
+    #     }
+    #     return f"{self.__class__.__name__}({get_attr_str(attrs)})"
 
-    @cached_property
+    @property
     def hash(self):
         """
         Get a hash value for the entity.
@@ -113,7 +620,27 @@ class Entity(UserList):
         Returns:
             str: A hash string for the entity.
         """
-        return hashstr(self.key)
+        return encode_hash(self.serialized)
+
+    @property
+    def stuffed(self):
+        return stuff(self)
+
+    @property
+    def unstuffed(self):
+        return unstuff(self.stuffed)
+
+    @property
+    def serialized(self):
+        return serialize(self)
+
+    @property
+    def deserialized(self):
+        return deserialize(self.serialized)
+
+    @classmethod
+    def deserialize(cls, obj):
+        return deserialize(obj)
 
     def __hash__(self):
         """
@@ -136,6 +663,13 @@ class Entity(UserList):
         """
         return self is other
 
+    def equals(self, other):
+        return self.serialized == other.serialized
+
+    @property
+    def meter(self):
+        return self.text.meter
+
     def __bool__(self):
         """
         Check if the entity is considered True in a boolean context.
@@ -145,7 +679,52 @@ class Entity(UserList):
         """
         return True
 
-    def to_json(self, fn=None, no_txt=False, yes_txt=False, no_children=None, **kwargs):
+    @property
+    def id(self):
+        return encode_hash(serialize(self.key))
+
+    @property
+    def ancestors(self):
+        l = []
+        obj = self
+        while obj.parent:
+            l.append(obj.parent)
+            obj = obj.parent
+        return l
+
+    @property
+    def root(self):
+        ancestors = self.ancestors
+        return ancestors[0] if ancestors else self
+
+    # def get_root_key(self):
+    #     return self.root.key
+
+    @property
+    def prefix_key(self):
+        from .imports import CLASSPREFIXES
+        return CLASSPREFIXES[self.__class__]
+    
+    @property
+    def key(self):
+        return (self.parent.key+"." if self.parent else "") + f"{self.prefix_key}{self.num if self.num else 0}"
+    # def key(self):
+    #     return {self.type_name:{
+    #         'num':self.num,
+    #         'parent':self.parent.key if self.parent else None,
+    #     }}
+
+    # @property
+    # def key(self):
+    # d = {}
+    # if self.parent:
+    #     d = self.parent.key
+    # num = self.num
+    # if num:
+    #     d[f'{self.type_name}_num'] = num
+    # return d
+
+    def to_dict(self, fn=None, no_txt=False, yes_txt=False, no_children=None, incl_key=False, **kwargs):
         """
         Convert the entity to a JSON representation.
 
@@ -158,18 +737,27 @@ class Entity(UserList):
         Returns:
             dict: A dictionary representation of the entity.
         """
-        txt = (self._txt if not yes_txt else self.txt) if not no_txt else None
-        return to_json(
-            {
-                "_class": self.__class__.__name__,
-                **({"txt": txt} if txt is not None and (yes_txt or txt) else {}),
-                **({"children": [kid.to_json() for kid in self.children]} if not no_children else {}),
-                **kwargs,
-            },
-            fn=fn,
-        )
-    
-    to_dict = to_json
+        pkgd = {}
+        # if incl_key:
+            # pkgd['key'] = self.key
+        if self.__class__.__name__ in {'PhonemeClass','Syllable'}:
+            pkgd["txt"] = self._txt
+
+        if not no_children and self.children:
+            pkgd["children"] = (
+                self.children.to_dict(incl_key=incl_key)
+                if isinstance(self.children, EntityList)
+                else [child.to_dict(incl_key=incl_key) for child in self.children]
+            )
+
+        if hasattr(self, "_attrs"):
+            for k, v in self._attrs.items():
+                pkgd[k] = v
+
+        for k, v in kwargs.items():
+            pkgd[k] = v
+
+        return {self.nice_type_name:pkgd}
 
     def save(self, fn, **kwargs):
         """
@@ -177,12 +765,12 @@ class Entity(UserList):
 
         Args:
             fn (str): The filename to save to.
-            **kwargs: Additional arguments to pass to to_json.
+            **kwargs: Additional arguments to pass to to_dict.
 
         Returns:
-            The result of to_json with the given filename.
+            The result of to_dict with the given filename.
         """
-        return self.to_json(fn=fn, **kwargs)
+        return self.to_dict(fn=fn, **kwargs)
 
     def render(self, as_str=False):
         """
@@ -196,35 +784,55 @@ class Entity(UserList):
         """
         return self.to_html(as_str=as_str)
 
-    @staticmethod
-    def from_json(json_d):
-        """
-        Create an Entity object from a JSON dictionary.
+    @classmethod
+    def from_dict(cls, data):
+        assert isinstance(data,dict)
+        from .imports import GLOBALS
+        if len(data)>1:
+            pprint(data)
+        assert len(data) == 1, "Should only be classname in key"
+        cls_name,cls_data = next(iter(data.items()))
+        cls = GLOBALS.get(cls_name)
+        assert cls is not None, "Class should exist"
+        children = cls_data.pop('children', None)
+        if children is not None:
+            if isinstance(children, dict):
+                children = Entity.from_dict(children)
+            elif isinstance(children,list):
+                children = [Entity.from_dict(child) for child in children]
+        return cls(children=children, **cls_data)
 
-        Args:
-            json_d (dict): A dictionary containing the entity data.
 
-        Returns:
-            Entity: An instance of the appropriate Entity subclass.
-        """
-        from .imports import GLOBALS, CHILDCLASSES
+    # @classmethod
+    # @log.debug
+    # def from_dict(cls, data):
+    #     """
+    #     Create an Entity object from a JSON dictionary.
 
-        classname = json_d["_class"]
-        classx = GLOBALS[classname]
-        childx = CHILDCLASSES.get(classname)
-        children = json_d.get("children", [])
-        inpd = {k: v for k, v in json_d.items() if k not in {"children", "_class"}}
-        if children and childx:
-            children = [childx.from_json(d) for d in json_d["children"]]
-        return classx(children=tuple(children), **inpd)
-    
-    from_dict = from_json
+    #     Args:
+    #         json_d (dict): A dictionary containing the entity data.
 
+    #     Returns:
+    #         Entity: An instance of the appropriate Entity subclass.
+    #     """
+    #     # log.info(f'stuffed: {data}')
+    #     data = unstuff(data) if isinstance(data, dict) else data
+    #     # log.info(f'unstuffed: {data}')
+
+    #     # New code to handle children properly
+    #     if isinstance(data, dict) and "children" in data:
+    #         if isinstance(data["children"], type):
+    #             # If children is a class, instantiate it
+    #             data["children"] = data["children"]()
+    #         elif isinstance(data["children"], list):
+    #             # If children is a list, recursively process each child
+    #             data["children"] = [cls.from_dict(child) for child in data["children"]]
+
+    #     return call_function_politely(cls, **data) if isinstance(data, dict) else data
 
     def __reduce__(self):
         # Return a tuple of (callable, args) that allows recreation of this object
-        return (self.__class__.from_json, (self.to_json(),))
-    
+        return (self.__class__.from_dict, (self.to_dict(),))
 
     @property
     def attrs(self):
@@ -234,16 +842,17 @@ class Entity(UserList):
         Returns:
             dict: A dictionary of the entity's attributes.
         """
-        odx = {"num": self.num}
-        if (
-            self.__class__.__name__
-            not in {"Text", "Stanza", "MeterLine", "MeterText", "Meter"}
-            and self.txt
-        ):
-            odx["txt"] = self.txt
-        return {**odx, **self._attrs}
+        return self._attrs
+        # odx = {}
+        # if (
+        #     self.__class__.__name__
+        #     not in {"TextModel", "Stanza", "MeterLine", "MeterText", "Meter"}
+        #     and self.txt
+        # ):
+        #     odx["txt"] = self.txt
+        # return {**odx, **self._attrs}
 
-    @cached_property
+    @property
     def prefix_attrs(self, with_parent=True):
         """
         Get the attributes of the entity with a prefix.
@@ -265,7 +874,7 @@ class Entity(UserList):
             return {**self.parent.prefix_attrs, **odx}
         return odx
 
-    @cached_property
+    @property
     def txt(self):
         """
         Get the text content of the entity.
@@ -273,15 +882,16 @@ class Entity(UserList):
         Returns:
             str: The text content of the entity.
         """
+        log.debug(type(self), self._txt)
         if self._txt:
             txt = self._txt
         elif self.children:
-            txt = self.child_class.sep.join(child.txt for child in self.children)
+            txt = "".join(child.txt for child in self.children)
         else:
             txt = ""
         return txt
 
-    @cached_property
+    @property
     def data(self):
         """
         Get the data associated with the entity.
@@ -291,7 +901,7 @@ class Entity(UserList):
         """
         return self.children
 
-    @cached_property
+    @property
     def l(self):
         """
         Get the list of child entities.
@@ -300,14 +910,6 @@ class Entity(UserList):
             list: The list of child entities.
         """
         return self.children
-
-    def clear_cached_properties(self):
-        """
-        Clear cached properties to free up memory.
-        """
-        for attr_name in list(self.__dict__.keys()):
-            if isinstance(getattr(type(self), attr_name, None), cached_property):
-                del self.__dict__[attr_name]
 
     def inspect(self, indent=0, maxlines=None, incl_phons=False):
         """
@@ -359,30 +961,19 @@ class Entity(UserList):
                 return ""
             return x
 
-        return (self.df if df is None else df).applymap(blank)._repr_html_()
+        return f"<b>{self.__class__.__name__}</b><br>{ (self.df if df is None else df).applymap(blank)._repr_html_() }"
 
-    def __repr__(self, attrs=None, bad_keys=None):
-        """
-        Get a string representation of the entity.
+    def __repr__(self):
+        kwargs = {}
+        attrs = self._attrs if hasattr(self, "_attrs") else {}
+        for attr in ["num", "txt"] + list(attrs.keys()):
+            attrval = getattr(self, attr, None) if not attr in attrs else attrs[attr]
+            if attrval:
+                kwargs[attr] = repr(attrval).strip()[:100]
+        params_str = f", ".join(f"{k}={v}" for k, v in kwargs.items())
+        return f"{self.nice_type_name}({params_str})"
 
-        Args:
-            attrs (dict): An optional dictionary of attributes to use.
-            bad_keys (list): An optional list of keys to exclude.
-
-        Returns:
-            str: A string representation of the entity.
-        """
-        d = {
-            k: v
-            for k, v in (
-                attrs
-                if attrs is not None
-                else (self.attrs if self.attrs is not None else self._attrs)
-            ).items()
-        }
-        return f"{self.__class__.__name__}({get_attr_str(d, bad_keys=bad_keys)})"
-
-    @cached_property
+    @property
     def ld(self):
         """
         Get a list of dictionaries representing the entity and its children.
@@ -392,7 +983,7 @@ class Entity(UserList):
         """
         return self.get_ld()
 
-    @cached_property
+    @property
     def child_class(self):
         """
         Get the class of the child entities.
@@ -421,10 +1012,10 @@ class Entity(UserList):
         if not incl_phons and self.child_type == "Phoneme":
             return [{**self.prefix_attrs}]
         good_children = [c for c in self.children if isinstance(c, Entity)]
-        # logger.debug(f'good children of {type(self)} -> {good_children}')
+        # log.debug(f'good children of {type(self)} -> {good_children}')
         if not multiple_wordforms and self.child_type == "WordForm" and good_children:
             good_children = good_children[:1]
-            # logger.debug(f'good children now {good_children}')
+            # log.debug(f'good children now {good_children}')
         if good_children:
             return [
                 {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}
@@ -471,7 +1062,7 @@ class Entity(UserList):
         odf = odf.applymap(unbool)
         return odf
 
-    @cached_property
+    @property
     def df(self):
         """
         Get a DataFrame representation of the entity and its children.
@@ -481,296 +1072,30 @@ class Entity(UserList):
         """
         return self.get_df()
 
-    def __getattr__(self, attr):
-        """
-        Get an attribute of the entity by name.
-
-        Args:
-            attr (str): The name of the attribute.
-
-        Returns:
-            Any: The value of the attribute.
-        """
-        objs = {
-            "stanza": "stanzas",
-            "line": "lines",
-            "word": "wordtokens",
-            "wordtoken": "wordtokens",
-            "wordtype": "wordtypes",
-            "wordform": "wordforms",
-            "syllable": "syllables",
-            "phoneme": "phonemes",
-        }
-        if attr[-1].isdigit():
-            for pref, lname in objs.items():
-                if attr.startswith(pref) and attr[len(pref) :].isdigit():
-                    num = int(attr[len(pref) :])
-                    try:
-                        return getattr(self, lname)[num - 1]
-                    except IndexError:
-                        logger.warning(f"no {pref} at that number")
-                        return
-
-    def get_parent(self, parent_type=None):
-        """
-        Get the parent entity of a specific type.
-
-        Args:
-            parent_type (str): The type of parent entity to find.
-
-        Returns:
-            Entity: The parent entity of the specified type, or None if not found.
-        """
-        logger.trace(self.__class__.__name__)
-        if not hasattr(self, "parent") or not self.parent:
-            return
-        if self.parent.__class__.__name__ == parent_type:
-            return self.parent
-        return self.parent.get_parent(parent_type)
-
-    @cached_property
-    def stanzas(self):
-        """
-        Get the list of stanza entities.
-
-        Returns:
-            StanzaList: A list of stanza entities.
-        """
-        from .texts import StanzaList
-
-        if self.is_text:
-            o = self.children
-        elif self.is_stanza:
-            o = [self]
-        else:
-            o = []
-        return StanzaList(o)
+    @property
+    def num_syllables(self):
+        return len(self.syllables)
 
     @property
-    def line_r(self):
-        """
-        Get a random line entity.
-
-        Returns:
-            Line: A random line entity, or None if no lines exist.
-        """
-        return random.choice(self.lines) if self.lines else None
+    def num_sylls(self):
+        return self.num_syllables
 
     @property
-    def word_r(self):
-        """
-        Get a random word entity.
-
-        Returns:
-            WordToken: A random word entity, or None if no words exist.
-        """
-        return random.choice(self.words) if self.words else None
-
-    @cached_property
-    def lines(self):
-        """
-        Get the list of line entities.
-
-        Returns:
-            LineList: A list of line entities.
-        """
-        from .texts import LineList
-
-        if self.is_stanza:
-            o = self.children
-        elif self.is_line:
-            o = [self]
-        else:
-            o = [line for stanza in self.stanzas for line in stanza.children]
-        return LineList(o)
-
-    @cached_property
-    def wordtokens(self):
-        """
-        Get the list of word token entities.
-
-        Returns:
-            WordTokenList: A list of word token entities.
-        """
-        from .words import WordTokenList
-
-        if self.is_line:
-            o = self.children
-        elif self.is_wordtoken:
-            o = [self]
-        else:
-            o = [wt for line in self.lines for wt in line.children]
-        return WordTokenList(o)
+    def num_wordforms(self):
+        return len(self.wordforms)
 
     @property
-    def words(self):
-        """
-        Get the list of word token entities.
+    def num_wordforms_nopunc(self):
+        return len([wf for wf in self.wordforms if not wf.parent.is_punc])
 
-        Returns:
-            WordTokenList: A list of word token entities.
-        """
-        return self.wordtokens
+    @property
+    def num_wordforms_all(self):
+        return sum(len(wt.children) for wt in self.wordtypes)
 
-    @cached_property
-    def wordtypes(self):
-        """
-        Get the list of word type entities.
+    @property
+    def num_phonemes(self):
+        return len(self.phonemes)
 
-        Returns:
-            WordTypeList: A list of word type entities.
-        """
-        from .words import WordTypeList
-
-        if self.is_wordtoken:
-            o = self.children
-        elif self.is_wordtype:
-            o = [self]
-        else:
-            o = [wtype for token in self.wordtokens for wtype in token.children]
-        return WordTypeList(o)
-
-    @cached_property
-    def wordforms(self):
-        """
-        Get the list of word form entities.
-
-        Returns:
-            WordFormList: A list of word form entities.
-        """
-        from .words import WordFormList
-
-        if self.is_wordtype:
-            o = self.children[:1]
-        elif self.is_wordtype:
-            o = [self]
-        else:
-            o = [wtype.children[0] for wtype in self.wordtypes if wtype.children]
-        return WordFormList(o)
-
-    @cached_property
-    def wordforms_nopunc(self):
-        """
-        Get the list of word form entities, excluding punctuation.
-
-        Returns:
-            list: A list of word form entities, excluding punctuation.
-        """
-        return [wf for wf in self.wordforms if not wf.parent.is_punc]
-
-    @cached_property
-    def wordforms_all(self):
-        """
-        Get the list of all word form entities.
-
-        Returns:
-            list: A list of all word form entities.
-        """
-        if self.is_wordtype:
-            o = self.children
-        if self.is_wordform:
-            o = [self]
-        else:
-            o = [wtype.children for wtype in self.wordtypes]
-        return o
-
-    @cached_property
-    def syllables(self):
-        """
-        Get the list of syllable entities.
-
-        Returns:
-            SyllableList: A list of syllable entities.
-        """
-        from .words import SyllableList
-
-        if self.is_wordform:
-            o = self.children
-        if self.is_syll:
-            o = [self]
-        else:
-            o = [syll for wf in self.wordforms for syll in wf.children]
-        return SyllableList(o)
-
-    @cached_property
-    def phonemes(self):
-        """
-        Get the list of phoneme entities.
-
-        Returns:
-            PhonemeList: A list of phoneme entities.
-        """
-        from .words import PhonemeList
-
-        if self.is_syll:
-            o = self.children
-        if self.is_phon:
-            o = [self]
-        else:
-            o = [phon for syll in self.syllables for phon in syll.children]
-        return PhonemeList(o)
-
-    @cached_property
-    def text(self):
-        """
-        Get the parent text entity.
-
-        Returns:
-            Text: The parent text entity, or None if not found.
-        """
-        return self.get_parent("Text")
-
-    @cached_property
-    def stanza(self):
-        """
-        Get the parent stanza entity.
-
-        Returns:
-            Stanza: The parent stanza entity, or None if not found.
-        """
-        return self.get_parent("Stanza")
-
-    @cached_property
-    def line(self):
-        """
-        Get the parent line entity.
-
-        Returns:
-            Line: The parent line entity, or None if not found.
-        """
-        return self.get_parent("Line")
-
-    @cached_property
-    def wordtoken(self):
-        """
-        Get the parent word token entity.
-
-        Returns:
-            WordToken: The parent word token entity, or None if not found.
-        """
-        return self.get_parent("WordToken")
-
-    @cached_property
-    def wordtype(self):
-        """
-        Get the parent word type entity.
-
-        Returns:
-            WordType: The parent word type entity, or None if not found.
-        """
-        return self.get_parent("WordType")
-
-    @cached_property
-    def wordform(self):
-        """
-        Get the parent word form entity.
-
-        Returns:
-            WordForm: The parent word form entity, or None if not found.
-        """
-        return self.get_parent("WordForm")
-
-    @cached_property
     def syllable(self):
         """
         Get the parent syllable entity.
@@ -780,7 +1105,7 @@ class Entity(UserList):
         """
         return self.get_parent("Syllable")
 
-    @cached_property
+    @property
     def i(self):
         """
         Get the index of the entity in its parent's children list.
@@ -794,10 +1119,10 @@ class Entity(UserList):
             return None
         try:
             return self.parent.children.index(self)
-        except IndexError:
+        except (IndexError, ValueError):
             return None
 
-    @cached_property
+    @property
     def num(self):
         """
         Get the 1-based index of the entity in its parent's children list.
@@ -805,9 +1130,10 @@ class Entity(UserList):
         Returns:
             int: The 1-based index of the entity, or None if not found.
         """
+        if self._num is not None: return self._num
         return self.i + 1 if self.i is not None else None
 
-    @cached_property
+    @property
     def next(self):
         """
         Get the next sibling entity.
@@ -822,7 +1148,7 @@ class Entity(UserList):
         except IndexError:
             return None
 
-    @cached_property
+    @property
     def prev(self):
         """
         Get the previous sibling entity.
@@ -840,179 +1166,25 @@ class Entity(UserList):
         except IndexError:
             return None
 
-    @cached_property
-    def is_text(self):
-        """
-        Check if the entity is a text entity.
-
-        Returns:
-            bool: True if the entity is a text entity, False otherwise.
-        """
-        return self.__class__.__name__ == "Text"
-
-    @cached_property
-    def is_stanza(self):
-        """
-        Check if the entity is a stanza entity.
-
-        Returns:
-            bool: True if the entity is a stanza entity, False otherwise.
-        """
-        return self.__class__.__name__ == "Stanza"
-
-    @cached_property
-    def is_line(self):
-        """
-        Check if the entity is a line entity.
-
-        Returns:
-            bool: True if the entity is a line entity, False otherwise.
-        """
-        return self.__class__.__name__ == "Line"
-
-    @cached_property
-    def is_wordtoken(self):
-        """
-        Check if the entity is a word token entity.
-
-        Returns:
-            bool: True if the entity is a word token entity, False otherwise.
-        """
-        return self.__class__.__name__ == "WordToken"
-
-    @cached_property
-    def is_wordtype(self):
-        """
-        Check if the entity is a word type entity.
-
-        Returns:
-            bool: True if the entity is a word type entity, False otherwise.
-        """
-        return self.__class__.__name__ == "WordType"
-
-    @cached_property
-    def is_wordform(self):
-        """
-        Check if the entity is a word form entity.
-
-        Returns:
-            bool: True if the entity is a word form entity, False otherwise.
-        """
-        return self.__class__.__name__ == "WordForm"
-
-    @cached_property
-    def is_syll(self):
-        """
-        Check if the entity is a syllable entity.
-
-        Returns:
-            bool: True if the entity is a syllable entity, False otherwise.
-        """
-        return self.__class__.__name__ == "Syllable"
-
-    @cached_property
-    def is_phon(self):
-        """
-        Check if the entity is a phoneme entity.
-
-        Returns:
-            bool: True if the entity is a phoneme entity, False otherwise.
-        """
-        return self.__class__.__name__ == "PhonemeClass"
-
-    def children_from_cache(self):
-        """
-        Get the children of the entity from the cache.
-
-        Returns:
-            list: The list of child entities, or None if not found in the cache.
-        """
-        if caching_is_enabled():
-            res = self.from_cache()
-            return None if res is None else res.children
-
-    def get_key(self, key):
-        """
-        Get a key for caching purposes.
-
-        Args:
-            key: The key object.
-
-        Returns:
-            str: The hashed key.
-        """
-        if hasattr(key, "to_hash"):
-            key = key.to_hash()
-        elif key:
-            key = hashstr(key)
-        return key
-
-    def from_cache(self, obj=None, key=None, as_dict=False):
-        """
-        Get an object from the cache.
-
-        Args:
-            obj: The object to cache.
-            key: The key for the cache.
-            as_dict (bool): If True, return the cached data as a dictionary.
-
-        Returns:
-            Any: The cached object, or None if not found.
-        """
-        if obj is None:
-            obj = self
-        key = self.get_key(obj) if not key else key
-        if key and self.use_cache != False:
-            cache = self.get_cache()
-            if key in cache:
-                dat = cache[key]
-                if dat:
-                    return from_json(dat) if not as_dict else dat
-
-    def get_cache(self):
-        """
-        Get the cache object.
-
-        Returns:
-            SimpleCache: The cache object.
-        """
-        return SimpleCache()
-
-    def cache(
-        self, key_obj=None, val_obj=None, key=None, force=False
-    ):
-        """
-        Cache an object.
-
-        Args:
-            key_obj: The object to use as the cache key.
-            val_obj: The object to cache.
-            key: An optional key for the cache.
-            force (bool): If True, force the cache to be updated.
-        """
-        if key_obj is None:
-            key_obj = self
-        if val_obj is None:
-            val_obj = key_obj
-        logger.trace(f"key_obj = {key_obj}")
-        logger.trace(f"val_obj = {val_obj}")
-        key = self.get_key(key_obj) if not key else key
-        cache = self.get_cache()
-        if key and (force or not key in cache):
-            cache[key] = val_obj.to_json()
-            # with logmap(f"saving object under key {key[:8]}", level='trace'):
-                # with logmap("exporting to json", level="trace"):
-                    # data = val_obj.to_json()
-                # with logmap("uploading json to cache", level="trace"):
-                    # cache[key] = data
-
 
 class EntityList(Entity):
     """
     A list of Entity objects.
     """
 
-    def __init__(self, children=[], parent=None, txt=None, **kwargs):
+    # @property
+    # def key(self):
+    #     return {self.type_name: [ent.key for ent in self]}
+    @property
+    def key(self):
+        return (self.parent.key+"." if self.parent else "") + f"{self.prefix_key}[{', '.join(child.key for child in self.children)}]"
+
+
+    @property
+    def list_type(self):
+        return type(self)
+
+    def __init__(self, children=[], parent=None, txt=None, text=None, num=None, **kwargs):
         """
         Initialize an EntityList object.
 
@@ -1021,27 +1193,37 @@ class EntityList(Entity):
             parent (Entity): The parent entity.
             **kwargs: Additional attributes to set on the entity.
         """
+        self._num=num
+        self._text = text
         self.parent = parent
-        self.children = children
+        self.children = list(children)
+        for child in self.children:
+            if child.parent is None:
+                child.parent = self
+
         self._attrs = kwargs
         self._txt = txt
         for k, v in self._attrs.items():
-            setattr(self, k, v)
+            try:
+                setattr(self, k, v)
+            except AttributeError:
+                pass
 
-    def __repr__(self, indent=0):
+    def __repr__(self, indent=1, indenter="    "):
         class_name = self.__class__.__name__
         items = []
-        for item in self.data:
-            if isinstance(item, EntityList):
-                item_repr = item.__repr__(indent + 4)
-            else:
-                item_repr = repr(item)
-            items.append(" " * (indent + 4) + item_repr)
-        
-        items_str = ",\n".join(items)
-        return f"{class_name}([\n{items_str}\n{' ' * indent}])"
+        if self.data is not None:
+            for item in self.data:
+                if isinstance(item, EntityList):
+                    item_repr = item.__repr__(indent=indent+1)
+                else:
+                    item_repr = repr(item).strip()
+                items.append((indenter * indent) + item_repr)
 
-    @cached_property
+        items_str = ",\n".join(items)
+        return f"{self.nice_type_name}([\n{items_str}\n{' ' * indent}])"
+
+    @property
     def txt(self):
         """
         Get the text content of the entity list.
@@ -1052,6 +1234,8 @@ class EntityList(Entity):
         return None
 
 
-
-
 EntityCache = SimpleCache
+
+def get_class(class_name):
+    from .imports import get_class
+    return get_class(class_name)

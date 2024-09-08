@@ -1,23 +1,23 @@
 from typing import List, Optional, Union
 from ..imports import *
 from ..langs import Language
+from ..ents import Entity
 SYLL_SEP = "."
 
 
 class WordToken(Entity):
     """Represents a word token in text."""
 
-    child_type = "WordType"
-    list_type = "WordTypeList"
     prefix = "wordtoken"
 
-    @profile
+    @log.debug
     def __init__(
         self,
-        txt: str,
+        txt: str = None,
         lang: str = DEFAULT_LANG,
         parent: Optional["Entity"] = None,
         children: List["WordType"] = [],
+        text = None,
         **kwargs,
     ):
         """
@@ -33,26 +33,32 @@ class WordToken(Entity):
         # if txt.startswith("\n"):
         # txt = txt[1:]
         if not children:
-            children = WordTypeList([Word(txt.strip(), lang=lang)])
+            children = WordTypeList([Word(txt.strip(), lang=lang)], parent=self, text=text)
         self.word = children[0] if children else None
-        super().__init__(children=children, parent=parent, txt=txt, lang=lang, **kwargs)
+        # self.sent_num = kwargs.pop('sent_num',None)
+        # self.sentpart_num = kwargs.pop('sentpart_num',None)
+        super().__init__(children=children, parent=parent, txt=txt, lang=lang, text=text, **kwargs)
         self._preterm = None
+        log.debug(f'Initialized word with txt {[self.txt]}')
 
     @property
     def preterm(self): return self._preterm
 
-    def to_json(self) -> dict:
-        """
-        Convert the WordToken to a JSON-serializable dictionary.
+    # def to_dict(self) -> dict:
+    #     """
+    #     Convert the WordToken to a JSON-serializable dictionary.
 
-        Returns:
-            dict: A dictionary representation of the WordToken.
-        """
-        return super().to_json(**self.attrs)
+    #     Returns:
+    #         dict: A dictionary representation of the WordToken.
+    #     """
+    #     return super().to_dict(**self.attrs)
     
     @property
     def attrs(self):
-        return {**self._attrs, **({} if not self.preterm else self.preterm.attrs)}
+        return {
+            **super().attrs, 
+            **({} if not self.preterm else self.preterm.attrs)
+        }
 
     @property
     def wordtype(self):
@@ -77,15 +83,15 @@ class WordType(Entity):
     """Represents a word type (lexeme)."""
 
     child_type: str = "WordForm"
-    list_type = "list"
     prefix = "wordtype"
 
     @profile
     def __init__(
         self,
-        txt: str,
-        children: List["WordForm"],
+        txt: str = None,
+        children: List["WordForm"] = None,
         parent: Optional["Entity"] = None,
+        lang: str = DEFAULT_LANG,
         **kwargs,
     ):
         """
@@ -97,16 +103,17 @@ class WordType(Entity):
             parent (Entity, optional): The parent entity. Defaults to None.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(txt=txt, children=children, parent=parent, **kwargs)
+        log.debug([txt, children, parent, lang])
+        super().__init__(txt=txt, lang=lang, children=children, parent=parent, **kwargs)
 
-    def to_json(self) -> dict:
-        """
-        Convert the WordType to a JSON-serializable dictionary.
+    # def to_dict(self) -> dict:
+    #     """
+    #     Convert the WordType to a JSON-serializable dictionary.
 
-        Returns:
-            dict: A dictionary representation of the WordType.
-        """
-        return super().to_json(lang=self.lang)
+    #     Returns:
+    #         dict: A dictionary representation of the WordType.
+    #     """
+    #     return super().to_dict(lang=self.lang)
 
     def unstress(self) -> None:
         if self.num_forms > 1:
@@ -134,17 +141,17 @@ class WordType(Entity):
     def is_punc(self) -> Optional[bool]:
         return True if token_is_punc(self.txt) else None
 
-    @cached_property
+    @property
     def num_sylls(self) -> Optional[int]:
         x = np.median([form.num_sylls for form in self.forms])
         return None if np.isnan(x) else int(round(x))
 
-    @cached_property
+    @property
     def num_stressed_sylls(self) -> Optional[int]:
         x = np.median([form.num_stressed_sylls for form in self.forms])
         return None if np.isnan(x) else int(round(x))
 
-    @cached_property
+    @property
     def attrs(self) -> dict:
         return {
             **super().attrs,
@@ -172,12 +179,11 @@ class WordForm(Entity):
 
     prefix = "wordform"
     child_type: str = "Syllable"
-    list_type = "SyllableList"
 
     @profile
     def __init__(
         self,
-        txt: str,
+        txt: str = None,
         sylls_ipa: Union[str, List[str]] = [],
         sylls_text: Union[str, List[str]] = [],
         children: List["Syllable"] = [],
@@ -194,18 +200,18 @@ class WordForm(Entity):
             children (List[Syllable], optional): List of child Syllable objects. Defaults to [].
             syll_sep (str, optional): Syllable separator. Defaults to ".".
         """
-        from .syllables import Syllable
+        from .syllables import Syllable, SyllableList
         from ..langs import syll_ipa_str_is_stressed
 
-        sylls_ipa = sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
-        sylls_text = (
-            sylls_text.split(syll_sep)
-            if type(sylls_text) == str
-            else (sylls_text if sylls_text else sylls_ipa)
-        )
-        
+
         if not children:
             if sylls_text and sylls_ipa:
+                sylls_ipa = sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
+                sylls_text = (
+                    sylls_text.split(syll_sep)
+                    if type(sylls_text) == str
+                    else (sylls_text if sylls_text else sylls_ipa)
+                )
                 children = [
                     Syllable(
                         syll_str,
@@ -213,40 +219,43 @@ class WordForm(Entity):
                     )
                     for syll_str, syll_ipa in zip(sylls_text, sylls_ipa)
                 ]
+        else:
+            sylls_ipa = [syll.ipa for syll in children]
+            sylls_text = [syll.txt for syll in children]
         
-        sylls_text_str = ".".join([
+
+        
+
+        super().__init__(
+            txt=txt,
+            # txt_stress=sylls_text_str,
+            # ipa=sylls_ipa_str,
+            # stress=stress_str,
+            # weight=weight_str,
+            children=children,
+            ipa = ".".join(sylls_ipa),
+            stress = "".join(syll.stress for syll in children),
+            weight = "".join(syll.weight for syll in children),
+            sylls_ipa = [syll.ipa for syll in children],
+            sylls_text = [syll.txt for syll in children],
+            stress_text = ".".join([
             syll_text.upper() if syll_ipa_str_is_stressed(syll_ipa) else syll_text.lower()
             for syll_text,syll_ipa in zip(sylls_text, sylls_ipa)
-        ])
-        sylls_ipa_str = ".".join(sylls_ipa)
-        stress_str = "".join(syll.stress for syll in children)
-        weight_str = "".join(syll.weight for syll in children)
-        super().__init__(
-            # sylls_ipa=sylls_ipa,
-            # sylls_text=sylls_text,
-            txt=sylls_text_str,
-            ipa=sylls_ipa_str,
-            stress=stress_str,
-            weight=weight_str,
-            children=children,
-            **kwargs
+            ])
         )
-        self.sylls_ipa = sylls_ipa
-        self.sylls_text = sylls_text
 
+    # def to_dict(self) -> dict:
+    #     """
+    #     Convert the WordForm to a JSON-serializable dictionary.
 
-    def to_json(self) -> dict:
-        """
-        Convert the WordForm to a JSON-serializable dictionary.
-
-        Returns:
-            dict: A dictionary representation of the WordForm.
-        """
-        return super().to_json(
-            sylls_ipa=self.sylls_ipa,
-            sylls_text=self.sylls_text,
-            # no_children=True
-        )
+    #     Returns:
+    #         dict: A dictionary representation of the WordForm.
+    #     """
+    #     return super().to_dict(
+    #         # sylls_ipa=self.sylls_ipa,
+    #         # sylls_text=self.sylls_text,
+    #         # no_children=True
+    #     )
         
 
     # @property
@@ -255,45 +264,45 @@ class WordForm(Entity):
     #         return self.parent.wtoken
     #     return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
 
-    @cached_property
+    @property
     def syllables(self) -> List["Syllable"]:
         return self.children
 
-    @cached_property
+    @property
     def token_stress(self) -> str:
         return SYLL_SEP.join(
             syll.txt.upper() if syll.is_stressed else syll.txt.lower()
             for syll in self.children
         )
 
-    @cached_property
+    @property
     def is_functionword(self) -> bool:
         return len(self.children) == 1 and not self.children[0].is_stressed
 
-    @cached_property
+    @property
     def num_sylls(self) -> int:
         return len(self.children)
 
-    @cached_property
+    @property
     def num_stressed_sylls(self) -> int:
         return len([syll for syll in self.children if syll.is_stressed])
     
-    @cached_property
+    @property
     def is_stressed(self):
         return self.num_stressed_sylls>0
 
-    @cached_property
-    def key(self) -> str:
-        return hashstr(
-            self._txt,
-            self.sylls_ipa,
-            self.sylls_text,
-        )
+    # @property
+    # def key(self) -> str:
+    #     return hashstr(
+    #         self._txt,
+    #         self.sylls_ipa,
+    #         self.sylls_text,
+    #     )
 
     def to_hash(self) -> str:
         return hashstr(self.key)
 
-    @cached_property
+    @property
     def rime(self) -> Optional["PhonemeList"]:
         """
         Get the rime of the word form.
@@ -361,25 +370,25 @@ class WordTypeList(EntityList):
 class WordFormList(EntityList):
     """A list of WordForm objects with additional properties and comparison methods."""
 
-    def __repr__(self) -> str:
-        """
-        Get a string representation of the WordFormList.
+    # def __repr__(self) -> str:
+    #     """
+    #     Get a string representation of the WordFormList.
 
-        Returns:
-            str: A string representation of the WordFormList.
-        """
-        return " ".join(wf.token_stress for wf in self.data)
+    #     Returns:
+    #         str: A string representation of the WordFormList.
+    #     """
+    #     return " ".join(wf.token_stress for wf in self.data)
     
-    @cached_property
+    @property
     def sents(self):
         return unique_list(wtok.sent for wtok in self)
 
 
-    @cached_property
+    @property
     def slots(self) -> List["Syllable"]:
-        return [syll for wordform in self.data for syll in wordform.children]
+        return self.wordforms.sylls.data
 
-    @cached_property
+    @property
     def num_stressed_sylls(self) -> int:
         return sum(
             int(syll.is_stressed)
@@ -387,17 +396,17 @@ class WordFormList(EntityList):
             for syll in wordform.children
         )
 
-    @cached_property
+    @property
     def num_sylls(self) -> int:
         return sum(1 for wordform in self.data for syll in wordform.children)
 
-    @cached_property
+    @property
     def first_syll(self) -> Optional["Syllable"]:
         for wordform in self.data:
             for syll in wordform.children:
                 return syll
 
-    @cached_property
+    @property
     def sort_key(self) -> tuple:
         sylls_is_odd = int(bool(self.num_sylls % 2))
         first_syll_stressed = (
@@ -436,42 +445,10 @@ class WordFormList(EntityList):
         return self is other
 
 
-class WordTokenList(EntityList):
-    """A list of WordToken objects."""
-
-    @cached_property
-    def nums(self):
-        return [wtok.num for wtok in self]
-    
-    @cached_property
-    def numset(self):
-        return set(self.nums)
-
-    @cached_property
-    def sents(self):
-        from ..sents import SentenceList
-        return SentenceList(unique_list([wtok.sent for wtok in self if wtok.sent]))
-
-    @property
-    def is_sent_parsed(self):
-        l=self.children
-        if not l: return False
-        return all(wt.preterm for wt in l)
-    
-    @cached_property
-    def trees(self):
-        return self.sents.trees
-    
-    
-    @cached_property
-    def grid(self):
-        from ..sents.grids import SentenceGrid
-        return SentenceGrid.from_wordtokens(self)
-
-
 
 # @cache
-@profile
+# @profile
+# @stash.stashed_result
 def Word(
     token: str,
     lang: str = DEFAULT_LANG,
@@ -492,17 +469,8 @@ def Word(
     Raises:
         Exception: If the specified language is not recognized.
     """
+    log.info('making wordtype')
     wordtype = None
-
-    ## try from cache?
-    if caching_is_enabled():
-        cache_key = hashstr("WordType3", lang, token, force_unstress, force_ambig_stress)
-    
-    if use_cache != False and caching_is_enabled():
-        with EntityCache() as cached:
-            data = cached.get(cache_key)
-            if data:
-                return WordType.from_json(data)
 
     empty_wordtype = WordType(token, children=[], lang=lang)
     wordtype = None
@@ -537,18 +505,13 @@ def Word(
             lang=lang,
         )
 
-    ## cache?
-    if caching_is_enabled():
-        with EntityCache() as cached:
-            cached[cache_key] = wordtype.to_json()
-
     return wordtype
 
 
 def get_wordform_token(token):
     tokenx = token.strip()
     if any(x.isspace() for x in tokenx):
-        logger.warning(
+        log.warning(
             f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
         )
         tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)

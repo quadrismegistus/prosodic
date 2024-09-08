@@ -34,10 +34,8 @@ class ParseSlot(Entity):
         if unit is None and children:
             assert len(children) == 1
             unit = children[0]
-
         self.unit = unit
-        self.viold = {**viold}
-        super().__init__(children=[], parent=parent, **kwargs)
+        super().__init__(parent=parent, viold={**viold}, **kwargs)
 
     @cached_property
     def position(self):
@@ -50,21 +48,13 @@ class ParseSlot(Entity):
         Returns:
             A new ParseSlot instance with copied attributes.
         """
-        new = ParseSlot(unit=self.unit)
-        new.viold = copy(self.viold)
-        new._attrs = copy(self._attrs)
+        new = ParseSlot(unit=self.unit, viold=self.viold)
         return new
+    
+    def to_dict(self,**kwargs):
+        return super().to_dict(viold=self.viold, incl_key=True, **kwargs)
 
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the ParseSlot to a JSON-serializable dictionary.
-
-        Returns:
-            A dictionary representation of the ParseSlot.
-        """
-        d = super().to_json(unit=self.unit.to_hash(), viold=self.viold)
-        d.pop("children")
-        return d
+    
 
     @cached_property
     def violset(self) -> Set[str]:
@@ -217,23 +207,25 @@ class ParseSlot(Entity):
         """
         return self.parent.parent.slots.index(self)
 
-    @cached_property
-    def attrs(self) -> Dict[str, Any]:
-        """
-        Dictionary of attributes for the slot.
 
-        Returns:
-            A dictionary of attributes for the slot.
-        """
-        return {
-            **{
-                k: v
-                for k, v in self.unit.prefix_attrs.items()
-                if k.split("_")[0] in {"wordtoken", "syll"}
-            },
-            **self._attrs,
-            "num": self.num,
-            "is_prom": self.is_prom,
-            **self.viold,
-        }
+
+    # @property
+    # def attrs(self) -> Dict[str, Any]:
+    #     """
+    #     Dictionary of attributes for the slot.
+
+    #     Returns:
+    #         A dictionary of attributes for the slot.
+    #     """
+    #     return {
+    #         **{
+    #             k: v
+    #             for k, v in self.unit.prefix_attrs.items()
+    #             if k.split("_")[0] in {"wordtoken", "syll"}
+    #         },
+    #         **self._attrs,
+    #         "num": self.num,
+    #         "is_prom": self.is_prom,
+    #         **self.viold,
+    #     }
     

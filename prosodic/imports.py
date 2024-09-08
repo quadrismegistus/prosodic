@@ -1,7 +1,8 @@
 import os, sys
-from logmap import logmap, logger
-
+sys.path.insert(0,'/Users/ryan/github/hashstash')
+from logmap import logmap
 logmap.enable()
+import itertools
 from base64 import b64decode, b64encode
 from functools import wraps
 from pprint import pprint, pformat
@@ -30,13 +31,14 @@ import zlib
 import time
 import warnings
 from collections import UserList, Counter, defaultdict
-from typing import *
-from types import *
+from typing import Iterator, Set, Dict, List, Literal, Union, Optional
+from types import GeneratorType
 import re
 import os
 import sys
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 import csv
+from hashstash import HashStash, log, logger, get_obj_addr, progress_bar, stuff, serialize, unstuff, deserialize, encode_hash, call_function_politely
 
 
 from importlib import resources
@@ -55,6 +57,8 @@ PATH_HOME = os.path.expanduser("~/prosodic_data")
 PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
+
+stash = HashStash(PATH_HOME_DATA_CACHE, engine='memory')
 
 import panphon
 import panphon.sonority
@@ -222,9 +226,9 @@ except AttributeError:
 # non-sys imports
 pd.options.display.width = 200
 pd.options.display.max_rows = 10
-logging.logger = logging.getLogger()
-while logging.logger.hasHandlers():
-    logging.logger.removeHandler(logging.logger.handlers[0])
+# logging.logger = logging.getLogger()
+# while logging.log.hasHandlers():
+#     logging.log.removeHandler(logging.log.handlers[0])
 
 # local imports
 
@@ -253,54 +257,274 @@ GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
 
 
 from .utils import *
-from .sents import *
 from .ents import *
-from .texts import *
 from .words import *
+from .texts import *
+from .sents import *
 from .langs import *
 from .parsing import *
 
 GLOBALS = globals()
 GLOBALS["list"] = list
 
-INITCLASSES = {
-    "Text": Text,
-    "Stanza": Stanza,
-    "Line": Line,
-    "WordToken": WordToken,
-    "WordType": WordType,
-    "WordForm": WordForm,
-    "Syllable": Syllable,
-    "Phoneme": Phoneme,
-    "WordFormList": WordFormList,
-    "Parse": Parse,
-    "ParsePosition": ParsePosition,
-    "ParseSlot": ParseSlot,
-    "ParseList": ParseList,
+CLASSNAMES = {
+    TextModel: "text",
+    Stanza: "stanza",
+    Line: "line",
+    WordToken: "wordtoken",
+    WordType: "wordtype",
+    WordForm: "wordform",
+    Syllable: "syllable",
+    PhonemeClass: "phoneme",
 }
 
 CHILDCLASSES = {
-    "Text": Stanza,
-    "Stanza": Line,
-    "Line": WordToken,
-    "WordToken": WordType,
-    "WordType": WordForm,
-    "WordForm": Syllable,
-    "Syllable": PhonemeClass,
-    "Phoneme": None,
-    "WordFormList": WordForm,
-    "ParseList": Parse,
-    "Parse": ParsePosition,
-    "ParsePosition": ParseSlot,
+    "textmodel": Stanza,
+    "text": Stanza,
+    "stanza": Line,
+    "line": WordToken,
+    "wordtoken": WordType,
+    "word": WordType,
+    "wordtype": WordForm,
+    "wordform": Syllable,
+    "syllable": PhonemeClass,
+    "syll": PhonemeClass,
+    "phoneme": None,
+    "wordformlist": WordForm,
+    "parselist": Parse,
+    "parse": ParsePosition,
+    "parseposition": ParseSlot,
 }
 
 CHILDCLASSLISTS = {
-    "Text": StanzaList,
-    "Stanza": LineList,
-    "Line": WordTokenList,
-    "WordToken": WordTypeList,
-    "WordType": WordFormList,
-    "WordForm": SyllableList,
-    "Syllable": PhonemeList,
-    "Phoneme": None,
+    "textmodel": StanzaList,
+    "text": StanzaList,
+    "stanza": LineList,
+    "line": WordTokenList,
+    "wordtoken": WordTypeList,
+    "word": WordTypeList,
+    "wordtype": WordFormList,
+    "wordform": SyllableList,
+    "syllable": PhonemeList,
+    "syll": PhonemeList,
+    "phoneme": None,
 }
+
+SELFCLASSES = {
+    "textmodel": TextModel,
+    "text": TextModel,
+    "stanza": Stanza,
+    "line": Line,
+    "wordtoken": WordToken,
+    "word": WordToken,
+    "wordtype": WordType,
+    "wordform": WordForm,
+    "syllable": Syllable,
+    "syll": Syllable,
+    "phoneme": PhonemeClass,
+    "phonemeclass": PhonemeClass,
+}
+
+PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words"}
+SINGULAR_ATTRS = {"text", "textmodel", "stanza", "line", "wordtoken", "word", "wordtype", "wordform", "syllable", "phoneme", "parse", "syll"}
+
+
+LISTCLASSES = {
+    "stanza": StanzaList,
+    "line": LineList,
+    "text": TextList,
+    "textmodel": TextList,
+    "texts": TextList,
+    "textmodels":TextList,
+    "wordtoken": WordTokenList,
+    "wordtype": WordTypeList,
+    "wordform": WordFormList,
+    "syllable": SyllableList,
+    "syll": SyllableList,
+    "phoneme": PhonemeList,
+    "parse": ParseList,
+    "stanzalist": StanzaList,
+    "linelist": LineList,
+    "wordtokenlist": WordTokenList,
+    "wordtypelist": WordTypeList,
+    "wordformlist": WordFormList,
+    "syllablelist": SyllableList,
+    "phonemelist": PhonemeList,
+    "parselist": ParseList,
+    "stanzas": StanzaList,
+    "lines": LineList,
+    "words": WordTokenList,
+    "wordtokens": WordTokenList,
+    "wordtypes": WordTypeList,
+    "wordforms": WordFormList,
+    "syllables": SyllableList,
+    "sylls": SyllableList,
+    "phonemes": PhonemeList,
+    "parses": ParseList,
+}
+
+CLASSPREFIXES = {
+    TextModel: "Text",
+    Stanza: "Stanza",
+    Line: "Line",
+    WordToken:"Token",
+    WordType: "Type",
+    WordForm: "Form",
+    Syllable: "Syll",
+    PhonemeClass: "Phon",
+    Parse: "Parse",
+    ParsePosition: "MPos",
+    ParseSlot: "MSlot",
+
+    TextList: "Texts",
+    StanzaList: "Stanzas",
+    LineList: "Lines",
+    WordTokenList: "Tokens",
+    WordTypeList: "Types",
+    WordFormList: "Forms",
+    SyllableList: "Sylls",
+    PhonemeList: "Phonemes",
+    ParseList: "Parses",
+}
+
+# Add this new dictionary after the existing class mappings
+CLASS_DEPTHS = {
+    TextList: 0,
+    
+    WordTokenList: 1,
+    TextModel: 1,
+    Stanza: 1,
+    Line: 1,
+    LinePart: 1,
+    SentPart: 1,
+    Sentence: 1,
+
+    StanzaList: 1,
+    LineList: 1,
+    SentPartList: 1,
+    SentenceList: 1,
+    LinePartList: 1,
+
+    WordToken: 2,
+
+    WordTypeList: 3,
+    WordType: 4,
+    WordFormList: 5,
+    WordForm: 6,
+    SyllableList: 7,
+    Syllable: 8,
+    PhonemeList: 9,
+    PhonemeClass: 10,
+    
+    ParseList: 1,
+    Parse: 1,
+    ParsePosition: 2,
+    ParseSlot: 3,
+}
+
+def pluralize_class_name(class_name):
+    return class_name+'s' if not class_name.endswith('s') else class_name
+
+def singularize_class_name(class_name):
+    return class_name[:-1] if class_name.endswith('s') else class_name
+
+
+def get_list_class(class_name):
+    return get_class(pluralize_class_name(class_name.lower()))
+
+def get_ent_class(class_name):
+    return get_class(singularize_class_name(class_name.lower()))
+
+def get_class_depth(class_name):
+    return CLASS_DEPTHS.get(get_class(class_name),-1)
+
+def get_class(class_name):
+    """
+    Get the class object based on a variety of possible nicknames.
+    
+    Args:
+        class_name (str): A string representing the class name or nickname.
+        
+    Returns:
+        type: The corresponding class object, or None if not found.
+    """
+    class_name = str(class_name).lower().replace('_', '').replace(' ', '')
+    
+    # Define nickname mappings
+    nickname_map = {
+        'text': TextModel,
+        'textmodel': TextModel,
+        'stanza': Stanza,
+        'line': Line,
+        'word': WordToken,
+        'wordtoken': WordToken,
+        'token': WordToken,
+        'wordtype': WordType,
+        'type': WordType,
+        'wordform': WordForm,
+        'form': WordForm,
+        'syllable': Syllable,
+        'syll': Syllable,
+        'phoneme': PhonemeClass,
+        'phon': PhonemeClass,
+        'parse': Parse,
+        'parseposition': ParsePosition,
+        'position': ParsePosition,
+        'parseslot': ParseSlot,
+        'slot': ParseSlot,
+        "linepart": LinePart,
+        "sentpart": SentPart,
+        "sent": Sentence,
+        "sentence": Sentence,
+        
+        # List classes
+        'textlist': TextList,
+        'texts': TextList,
+        'stanzalist': StanzaList,
+        'stanzas': StanzaList,
+        'linelist': LineList,
+        'lines': LineList,
+        'linepartlist': LinePartList,
+        'lineparts': LinePartList,
+        "sents":SentenceList,
+        "sentences":SentenceList,
+        "sentparts":SentPartList,
+        "sentenceparts": SentPartList,
+        'wordtokenlist': WordTokenList,
+        'wordlist': WordTokenList,
+        'words': WordTokenList,
+        'tokens': WordTokenList,
+        'wordtypelist': WordTypeList,
+        'types': WordTypeList,
+        'wordformlist': WordFormList,
+        'forms': WordFormList,
+        'syllablelist': SyllableList,
+        'sylls': SyllableList,
+        'syllables': SyllableList,
+        'phonemelist': PhonemeList,
+        'phonemes': PhonemeList,
+        'phons': PhonemeList,
+        'parselist': ParseList,
+        'parses': ParseList,
+    }
+    
+    # Check for exact match in nickname_map
+    if class_name in nickname_map:
+        return nickname_map[class_name]
+    
+    # Check for plural forms not explicitly listed
+    if class_name.endswith('s') and class_name[:-1] in nickname_map:
+        singular = nickname_map[class_name[:-1]]
+        return LISTCLASSES.get(singular.__name__.lower(), singular)
+    
+    # Check for 'list' suffix
+    if class_name.endswith('list'):
+        base_name = class_name[:-4]
+        if base_name in nickname_map:
+            return LISTCLASSES.get(nickname_map[base_name].__name__.lower(), nickname_map[base_name])
+    
+    # If no match found, return None
+    return None
+
+def get_list_class_name(list_class):
+    return pluralize_class_name(list_class.lower())

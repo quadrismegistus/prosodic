@@ -378,7 +378,7 @@ def read_json(fn: str) -> Dict[str, Any]:
         return orjson.loads(f.read())
 
 
-def from_json(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
+def from_dict(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
     """Create an object from JSON data.
 
     Args:
@@ -400,7 +400,7 @@ def from_json(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
         raise Exception
     classname = json_d["_class"]
     classx = GLOBALS[classname]
-    return classx.from_json(json_d, **kwargs)
+    return classx.from_dict(json_d, **kwargs)
 
 
 def load(fn: str, **kwargs: Any) -> Any:
@@ -413,10 +413,10 @@ def load(fn: str, **kwargs: Any) -> Any:
     Returns:
         The loaded object.
     """
-    return from_json(fn, **kwargs)
+    return from_dict(fn, **kwargs)
 
 
-def to_json(obj: Any, fn: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def to_dict(obj: Any, fn: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Convert an object to JSON and optionally save to a file.
 
     Args:
@@ -426,8 +426,8 @@ def to_json(obj: Any, fn: Optional[str] = None) -> Optional[Dict[str, Any]]:
     Returns:
         The JSON data if fn is None, otherwise None.
     """
-    if hasattr(obj, "to_json"):
-        data = obj.to_json()
+    if hasattr(obj, "to_dict"):
+        data = obj.to_dict()
     else:
         data = obj
 
@@ -508,7 +508,7 @@ def to_html(html: Union[str, Any], as_str: bool = False, **kwargs: Any) -> Union
     if type(html) is not str:
         if hasattr(html, "to_html"):
             return html.to_html(as_str=as_str, **kwargs)
-        logger.error(f"what type of data is this? {html}")
+        log.error(f"what type of data is this? {html}")
         return
 
     if as_str:
@@ -658,7 +658,7 @@ def is_listlike(obj):
 
 def unique_list(obj):
     if not is_listlike(obj):
-        logger.error(f'not list like: {obj}')
+        log.error(f'not list like: {obj}')
         return []
     seen = set()
     return [x for x in obj if not (x in seen or seen.add(x))]

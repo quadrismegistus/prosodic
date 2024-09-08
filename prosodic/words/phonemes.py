@@ -20,7 +20,14 @@ class PhonemeClass(Entity):
             txt (str): The text representation of the phoneme.
             **kwargs: Additional keyword arguments.
         """
-        super().__init__(txt, **kwargs)
+        self._feats = {}
+        super().__init__(txt=txt)
+        for k,v in kwargs.items():
+            try:
+                setattr(self,k,v)
+            except Exception:
+                pass
+        
 
     @cached_property
     def is_vowel(self) -> Optional[bool]:
@@ -37,18 +44,22 @@ class PhonemeClass(Entity):
         if self.cons < 1:
             return True
         return None
+    
+    @property
+    def is_cons(self):
+        return not self.is_vowel
 
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the phoneme to a JSON-serializable dictionary.
+    # def to_dict(self) -> Dict[str, Any]:
+    #     """
+    #     Convert the phoneme to a JSON-serializable dictionary.
 
-        Returns:
-            Dict[str, Any]: A dictionary representation of the phoneme.
-        """
-        resd = super().to_json()
-        resd["_class"] = "Phoneme"
-        resd.pop("children")
-        return resd
+    #     Returns:
+    #         Dict[str, Any]: A dictionary representation of the phoneme.
+    #     """
+    #     resd = super().to_dict()
+    #     resd["_class"] = "Phoneme"
+    #     resd.pop("children",None)
+    #     return resd
 
     @property
     def is_onset(self) -> Optional[bool]:
@@ -58,7 +69,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if onset, False otherwise, None if not set.
         """
-        return self._attrs.get("is_onset")
+        return self._feats.get("is_onset")
 
     @property
     def is_rime(self) -> Optional[bool]:
@@ -68,7 +79,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if rime, False otherwise, None if not set.
         """
-        return self._attrs.get("is_rime")
+        return self._feats.get("is_rime")
 
     @property
     def is_nucleus(self) -> Optional[bool]:
@@ -78,7 +89,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if nucleus, False otherwise, None if not set.
         """
-        return self._attrs.get("is_nucleus")
+        return self._feats.get("is_nucleus")
 
     @property
     def is_coda(self) -> Optional[bool]:
@@ -88,7 +99,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if coda, False otherwise, None if not set.
         """
-        return self._attrs.get("is_coda")
+        return self._feats.get("is_coda")
 
 
 @cache
@@ -120,11 +131,11 @@ def Phoneme(txt: str, **kwargs: Any) -> PhonemeClass:
     ft = get_phoneme_featuretable()
     phonl = ft.word_fts(phon)
     if not phonl:
-        # logger.error(f'What is this phoneme? {phon}')
+        # log.error(f'What is this phoneme? {phon}')
         if phon in get_ipa_info():
             phond = get_ipa_info().get(phon, {})
         else:
-            # logger.error(f"What is this phoneme? No features found for it: {phon}")
+            # log.error(f"What is this phoneme? No features found for it: {phon}")
             phond = {}
     else:
         phond = phonl[0].data
@@ -200,21 +211,21 @@ class PhonemeList(EntityList):
             for phon in phons:
                 if not phon.is_vowel:
                     if not vowel_yet:
-                        phon._attrs["is_onset"] = True
-                        phon._attrs["is_rime"] = False
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = False
+                        phon._feats["is_onset"] = True
+                        phon._feats["is_rime"] = False
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = False
                     else:
-                        phon._attrs["is_onset"] = False
-                        phon._attrs["is_rime"] = True
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = True
+                        phon._feats["is_onset"] = False
+                        phon._feats["is_rime"] = True
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = True
                 else:
                     vowel_yet = True
-                    phon._attrs["is_onset"] = False
-                    phon._attrs["is_rime"] = True
-                    phon._attrs["is_nucleus"] = True
-                    phon._attrs["is_coda"] = False
+                    phon._feats["is_onset"] = False
+                    phon._feats["is_rime"] = True
+                    phon._feats["is_nucleus"] = True
+                    phon._feats["is_coda"] = False
 
         # get syll specific feats
         phons_by_syll = group_ents(self.children, "syllable")

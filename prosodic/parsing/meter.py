@@ -1,7 +1,7 @@
 from typing import List, Tuple, Dict, Any, Iterator, Optional, Union
 from ..imports import *
 from .constraints import *
-from ..texts import Text, Line, Stanza
+from ..texts import TextModel, Line, Stanza
 from .parses import Parse
 from .parselists import ParseList
 from .utils import *
@@ -15,6 +15,7 @@ DEFAULT_METER_KWARGS = dict(
     max_w=METER_MAX_W,
     resolve_optionality=METER_RESOLVE_OPTIONALITY,
     exhaustive=False,
+    parse_unit='lineparts'
 )
 MTRDEFAULT = DEFAULT_METER_KWARGS
 
@@ -45,6 +46,7 @@ class Meter(Entity):
         max_w: int = MTRDEFAULT["max_w"],
         resolve_optionality: bool = MTRDEFAULT["resolve_optionality"],
         exhaustive: bool = MTRDEFAULT["exhaustive"],
+        parse_unit: Literal['lines', 'sentparts', 'lineparts']=MTRDEFAULT['parse_unit'],
         **kwargs: Any
     ) -> None:
         """
@@ -65,6 +67,7 @@ class Meter(Entity):
         self.max_w = max_w
         self.resolve_optionality = resolve_optionality
         self.exhaustive = exhaustive
+        self.parse_unit = parse_unit
         super().__init__()
 
     @property
@@ -97,14 +100,14 @@ class Meter(Entity):
         """
         return caching_is_enabled()
 
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the Meter object to JSON format.
+    # def to_dict(self) -> Dict[str, Any]:
+    #     """
+    #     Convert the Meter object to JSON format.
 
-        Returns:
-            dict: JSON representation of the Meter object.
-        """
-        return super().to_json(**self.attrs)
+    #     Returns:
+    #         dict: JSON representation of the Meter object.
+    #     """
+    #     return super().to_dict(**self.attrs)
 
     @cached_property
     def constraint_names(self) -> Tuple[str, ...]:
@@ -141,6 +144,7 @@ class Meter(Entity):
             "max_w": self.max_w,
             "resolve_optionality": self.resolve_optionality,
             "exhaustive": self.exhaustive,
+            "parse_unit": self.parse_unit,
         }
 
     @cache
@@ -160,7 +164,7 @@ class Meter(Entity):
         stypes = ["s" * n for n in range(1, max_s + 1)]
         return wtypes + stypes
 
-    def get_wordform_matrix(self, line: Line) -> List[List['WordForm']]:
+    def get_wordform_matrix(self, wordtokens: WordTokenList) -> List[List['WordForm']]:
         """
         Get the wordform matrix for a given line.
 
@@ -170,135 +174,58 @@ class Meter(Entity):
         Returns:
             List[List[WordForm]]: The wordform matrix for the line.
         """
-        return line.get_wordform_matrix(resolve_optionality=self.resolve_optionality)
-
-    def parse(self, text_or_line: Union[Text, Line], **kwargs: Any) -> ParseList:
-        """
-        Parse a text or line.
-
-        Args:
-            text_or_line (Text or Line): The text or line to parse.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ParseList: List of parses for the text or line.
-        """
-        return ParseList(
-            self.parse_iter(
-                text_or_line,
-                **kwargs,
-            ),
-            type=self.__class__.__name__.lower(),
-            line=text_or_line if text_or_line.is_parseable else None,
+        return wordtokens.get_wordform_matrix(
+            resolve_optionality=self.resolve_optionality
         )
 
-    def parse_iter(self, text_or_line: Union[Text, Line, Stanza], force: bool = False, **kwargs: Any) -> Iterator[Parse]:
+    def get_parse_units(self, entity: "Entity"):
+        try:
+            return getattr(entity, self.parse_unit)
+        except AttributeError:
+            return None
+
+
+    def parse(self, entity: "Entity", force:bool = False, **kwargs: Any) -> 'ParseList':
+        parse_units = self.get_parse_units(entity)
+        if parse_units is None:
+            log.warning(f'cannot parse {entity}')
+            return
+        
+        return stash.map(
+            self.parse_wordtokens,
+            parse_units,
+            num_proc=1
+        )
+        
+
+
+    # @stash.stashed_result
+    def parse_wordtokens(self, wordtokens: 'WordTokenList', force: bool = False, **kwargs: Any) -> 'ParseList':
         """
-        Iterator for parsing a text or line.
+        Parse a wordtoken list.
 
         Args:
-            text_or_line (Text or Line): The text or line to parse.
-            force (bool, optional): Force parsing even if cached. Defaults to False.
-            **kwargs: Additional keyword arguments.
-
-        Yields:
-            Parse: Individual parses for the text or line.
-
-        Raises:
-            Exception: If the object is not parseable.
-        """
-        if type(text_or_line) in {Text, Stanza}:
-            yield from self.parse_text_iter(text_or_line, force=force, **kwargs)
-        elif text_or_line.is_parseable:
-            yield from self.parse_line(text_or_line, force=force, **kwargs)
-        else:
-            raise Exception(f"Object {text_or_line} not parseable")
-
-    def parse_line(self, line: Line, force: bool = False, **kwargs: Any) -> ParseList:
-        """
-        Parse a line.
-
-        Args:
-            line (Line): The line to parse.
+            wordtokens (WordTokenList): The words to parse.
             force (bool, optional): Force parsing even if cached. Defaults to False.
             **kwargs: Additional keyword arguments.
 
         Returns:
             ParseList: List of parses for the line.
         """
-        assert line.is_parseable
-        if line.num_sylls < 2:
-            return ParseList(type="line", line=line)
-
-        # if not force and self.use_cache_texts and caching_is_enabled() and line.text:
-            # line.text.parses_from_cache()
-
-        # if not force and line._parses:
-            # logger.debug('returning line parse from cache')
-            # return line._parses
-
-        if not force and self.use_cache_lines and caching_is_enabled():
-            parses = self.parses_from_cache(line)
-            if parses:
-                line._parses = parses
-                return parses
+        print('Parsing',wordtokens)
+        if wordtokens.num_sylls < 2:
+            return ParseList(type="wordtokens", wordtokens=wordtokens)
 
         if self.exhaustive:
-            parses = self.parse_line_exhaustive(line)
+            parses = self.parse_exhaustive(wordtokens)
         else:
-            parses = self.parse_line_fast(line)
+            parses = self.parse_fast(wordtokens)
 
-        if self.use_cache_lines and caching_is_enabled():
-            self.cache(val_obj=parses, key=self.get_key(line))
-
-        line._parses = parses
+        wordtokens._parses = parses
         return parses
 
-    def get_key(self, line: Line) -> str:
-        """
-        Get the cache key for a line.
 
-        Args:
-            line (Line): The line.
-
-        Returns:
-            str: The cache key.
-        """
-        return hashstr(self.key, line.key)
-
-    def parses_from_cache(self, line: Line, as_dict: bool = False) -> Union[ParseList, Dict[str, Any]]:
-        """
-        Get parses from cache for a line.
-
-        Args:
-            line (Line): The line.
-            as_dict (bool, optional): Whether to return as a dictionary. Defaults to False.
-
-        Returns:
-            ParseList or dict: The parses for the line, or a dictionary representation if as_dict is True.
-        """
-        from .parselists import ParseList
-
-        key = self.get_key(line)
-        clsn = line.__class__.__name__.lower()
-        # with logmap(
-        #         f'checking for cached {clsn} parses under key "{key[:8]}..."'
-        # ) as lm:
-        dat = self.from_cache(key=key, as_dict=True)
-        if dat:
-            nchild = len(dat.get("children", [])) if dat else 0
-            # lm.log(f"found {nchild:,} parses")
-            if as_dict:
-                return dat
-            with logmap("converting cache result to parses") as lm:
-                line._parses = ParseList.from_json(
-                    dat,
-                    line=line,
-                    progress=nchild >= 100,
-                )
-                return line._parses
-
-    def parse_line_fast(self, line: Line, force: bool = False) -> ParseList:
+    def parse_fast(self, wordtokens: 'WordTokenList', force: bool = False) -> ParseList:
         """
         Parse a line using the fast parsing method.
 
@@ -312,22 +239,21 @@ class Meter(Entity):
         from .parses import Parse
         from .parselists import ParseList
 
-        assert line.is_parseable
         parses = ParseList(
             [
                 Parse(
                     wfl,
                     pos,
                     meter=self,
-                    parent=line,
+                    parent=wordtokens,
                 )
-                for wfl in self.get_wordform_matrix(line)
+                for wfl in self.get_wordform_matrix(wordtokens)
                 for pos in self.get_pos_types(nsylls=wfl.num_sylls)
             ],
-            line=line,
+            line=wordtokens,
         )
         for n in range(1000):
-            # logger.debug(f'Now at {i}A, there are {len(parses)} parses')
+            # log.debug(f'Now at {i}A, there are {len(parses)} parses')
             parses = ParseList(
                 [
                     newparse
@@ -337,22 +263,22 @@ class Meter(Entity):
                     and newparse is not None
                     and parse is not None
                 ],
-                type="line",
-                line=line,
+                type="wordtokens",
+                line=wordtokens,
             )
             parses.bound(progress=False)
             if all(p.is_complete for p in parses):
                 break
         else:
-            logger.error(f"did not complete parsing: {line}")
+            log.error(f"did not complete parsing: {wordtokens}")
         parses.bound(progress=False)
         parses.rank()
-        line._parses = parses
-        return line._parses
+        wordtokens._parses = parses
+        return wordtokens._parses
 
     # slower, exhaustive parser
 
-    def parse_line_exhaustive(self, line: Line, progress: Optional[bool] = None) -> ParseList:
+    def parse_exhaustive(self, line: Line, progress: Optional[bool] = None) -> ParseList:
         """
         Parse a line using the exhaustive parsing method.
 
@@ -379,14 +305,14 @@ class Meter(Entity):
                 )
             ]
             wfl = wfm[0]
-            logger.trace(
+            log.trace(
                 f"Generated {len(combos)} from a wordfrom matrix of size {len(wfm), wfl, wfl.num_sylls, self.max_s, self.max_s, len(get_possible_scansions(wfl.num_sylls))}"
             )
             iterr = tqdm(combos, disable=not progress, position=0)
             for wfl, scansion in iterr:
                 parse = Parse(wfl, scansion, meter=self, parent=line)
                 all_parses.append(parse)
-            logger.trace(f"Returning {len(all_parses)} parses")
+            log.trace(f"Returning {len(all_parses)} parses")
             return all_parses
 
         parses = ParseList(iter_parses(), type="line", line=line)
@@ -395,7 +321,7 @@ class Meter(Entity):
         line._parses = parses
         return line._parses
 
-    def parse_text(self, text: Text, num_proc: int = DEFAULT_NUM_PROC, progress: bool = True) -> None:
+    def parse_text(self, text: TextModel, num_proc: int = DEFAULT_NUM_PROC, progress: bool = True) -> None:
         """
         Parse a text.
 
@@ -409,7 +335,7 @@ class Meter(Entity):
 
     def parse_text_iter(
         self,
-        text: Union[Text, Stanza],
+        text: Union[TextModel, Stanza],
         progress: bool = True,
         force: bool = False,
         num_proc: int = DEFAULT_NUM_PROC,
@@ -435,7 +361,7 @@ class Meter(Entity):
         # print(NUM_GOING,type(type),text)
         from .parselists import ParseList
 
-        assert type(text) in {Text, Stanza}
+        assert type(text) in {TextModel, Stanza}
 
         done = False
         if not force and self.use_cache_texts and caching_is_enabled():
@@ -510,7 +436,7 @@ class Meter(Entity):
                     if line.num and line.stanza and line.stanza.num:
                         # if not line.stanza.num in newstanzas:
                         # newstanzas.add(line.stanza.num)
-                        lm.log(
+                        log.debug(
                             f"stanza {line.stanza.num:02}, line {line.num:02}: {line.best_parse.txt if line.best_parse else line.txt}",
                             linelim=70,
                         )
@@ -520,7 +446,7 @@ class Meter(Entity):
 
     def _parse_text_iter_mp(
         self,
-        text: Text,
+        text: TextModel,
         force: bool = False,
         progress: bool = True,
         num_proc: int = DEFAULT_NUM_PROC,
@@ -546,8 +472,8 @@ class Meter(Entity):
         assert lm
         objs = [
             (
-                line.to_json(),
-                self.to_json(),
+                line.to_dict(),
+                self.to_dict(),
                 force or not self.use_cache_lines or not caching_is_enabled(),
             )
             for line in text.parseable_units
@@ -557,16 +483,16 @@ class Meter(Entity):
         )
         for i, parselist_json in enumerate(iterr):
             line = text.parseable_units[i]
-            yield ParseList.from_json(parselist_json, line=line)
+            yield ParseList.from_dict(parselist_json, line=line)
 
 
 def _parse_iter(obj: Tuple[Dict[str, Any], Dict[str, Any], bool]) -> Dict[str, Any]:
     line_json, meter_json, force = obj
-    line, meter = from_json(line_json), from_json(meter_json)
+    line, meter = from_dict(line_json), from_dict(meter_json)
     if not force:
         parse_data = meter.parses_from_cache(line, as_dict=True)
         if parse_data:
             return parse_data
 
     parses = meter.parse_line(line, force=True)
-    return parses.to_json()
+    return parses.to_dict()

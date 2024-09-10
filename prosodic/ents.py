@@ -314,7 +314,7 @@ class Entity(UserList):
         Returns:
             EntityList or None: The requested list of entities, or None if not found.
         """
-        log.warning(f'Getting list of type: {list_type}')
+        # if list_type in {'wordform','wordforms','syll','sylls'}: stopx
         from .imports import get_class_depth, get_ent_class, get_list_class
         list_type = self._rename_attr(list_type)
         cls_depth = get_class_depth(list_type)
@@ -345,14 +345,14 @@ class Entity(UserList):
             if self.is_text:
                 return full_list
             if full_list is not None:
-                # log.info(f"Found text list for type: {list_type}: {full_list}")
+                # log.info(f"Found text list for type: {list_type}: {full_list[:1]}")
                 return self.get_overlapping_list(full_list)
 
         # If the current entity is above the requested type
         if self.class_depth < cls_depth:
             # log.info(f"Current class depth ({self.class_depth}) is less than requested class depth ({cls_depth})")
             # log.info(f"Getting descendants of type: {list_type}")
-            descendants = self._get_descendants(list_type)
+            descendants = self.get_descendants(list_type)
             # log.info(f"Found {len(descendants)} descendants")
             if descendants:
                 # log.info("Creating new list with descendants")
@@ -368,7 +368,7 @@ class Entity(UserList):
             return list_class([ancestor], parent=ancestor.parent, text=self.text) if ancestor else None
 
         # If the depths are the same or we couldn't find an appropriate ancestor
-        #log.debug(f'Could not find list for type {list_type}')
+        # log.warning(f'Could not find list for type {list_type}')
         return None
 
     @cached_property
@@ -413,7 +413,9 @@ class Entity(UserList):
             for child in self.children:
                 d.update(child.descendants)
         return d
-                
+
+    def get_descendants(self, ent_type: str):
+        return list(self._get_descendants(ent_type))
 
     def _get_descendants(self, ent_type: str):
         """
@@ -427,7 +429,15 @@ class Entity(UserList):
         """
         from .imports import get_ent_class
         descendant_cls = get_ent_class(ent_type)
-        return [v for k,v in self.descendants.items() if isinstance(v, descendant_cls)]
+        # return [v for k,v in self.descendants.items() if isinstance(v, descendant_cls)]
+        if isinstance(self.children, descendant_cls):
+            yield self.children
+        elif self.children and len(self.children):
+            for child in self.children:
+                if isinstance(child, descendant_cls):
+                    yield child
+                else:
+                    yield from child._get_descendants(ent_type)
     
     def _get_ancestor(self, ent_type: str):
         from .imports import get_ent_class

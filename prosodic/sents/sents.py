@@ -30,17 +30,17 @@ class SentenceList(EntityList):
     #     sl.wordtokens = wordtokens
     #     return sl
     
-    @cached_property
+    @property
     def parts(self):
         return SentPartList([part for sent in self for part in sent.parts], parent=self)
     
 
-    @cached_property
+    @property
     def trees(self):
         with logmap('parsing syntax in sentences') as lm:
             return [sent.tree for sent in lm.iter_progress(self.children)]
 
-    @cached_property
+    @property
     def trees_df(self):
         l=[tree.df for tree in self.trees]
         return pd.concat(l) if l else pd.DataFrame()
@@ -82,12 +82,12 @@ class Sentence(WordTokenList):
     #         **kwargs
     #     )
 
-    # @cached_property
+    # @property
     # def parts(self):
     #     return SentPartList.from_wordtokens(self.wordtokens, parent=self)
         
         
-    @cached_property
+    @property
     def nlp(self):
         from .syntax import get_nlp_doc
 
@@ -97,12 +97,12 @@ class Sentence(WordTokenList):
         assert len(sents) == 1, 'Should be 1 sentence only'
         return sents[0]
 
-    @cached_property
+    @property
     def tree(self):
         from .trees import SentenceTree
         return SentenceTree.from_sent(self)
 
-    @cached_property
+    @property
     def grid(self):
         from .grids import SentenceGrid
         return SentenceGrid.from_wordtokens(self.wordtokens)

@@ -37,26 +37,27 @@ class ParseSlot(Entity):
         self.unit = unit
         super().__init__(parent=parent, viold={**viold}, **kwargs)
 
-    @cached_property
+    @property
     def position(self):
         return self.parent
 
-    def __copy__(self) -> "ParseSlot":
+    # @log.info
+    def copy(self):
         """
-        Create a shallow copy of the ParseSlot.
+        Create a shallow copy of the parse slot.
 
         Returns:
-            A new ParseSlot instance with copied attributes.
+            ParseSlot: A shallow copy of the parse slot.
         """
-        new = ParseSlot(unit=self.unit, viold=self.viold)
+        new = ParseSlot.__new__(ParseSlot)
+        new.__dict__.update(self.__dict__)
+        new.viold = self.viold.copy()
         return new
     
     def to_dict(self,**kwargs):
         return super().to_dict(viold=self.viold, incl_key=True, **kwargs)
 
-    
-
-    @cached_property
+    @property
     def violset(self) -> Set[str]:
         """
         Set of constraint violations.
@@ -66,7 +67,7 @@ class ParseSlot(Entity):
         """
         return {k for k, v in self.viold.items() if v}
 
-    @cached_property
+    @property
     def num_viols(self) -> int:
         """
         Number of constraint violations.
@@ -75,18 +76,12 @@ class ParseSlot(Entity):
             The number of constraint violations.
         """
         return len(self.violset)
+    
+    @property
+    def scores(self):
+        return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
 
-    @cached_property
-    def constraint_scores(self) -> Dict[str, Any]:
-        """
-        Dictionary of constraint scores.
-
-        Returns:
-            A dictionary of constraint scores.
-        """
-        return self.viold
-
-    @cached_property
+    @property
     def meter_val(self) -> Any:
         """
         Meter value of the parent.
@@ -96,7 +91,7 @@ class ParseSlot(Entity):
         """
         return self.parent.meter_val
 
-    @cached_property
+    @property
     def is_prom(self) -> bool:
         """
         Whether the slot is prominent.
@@ -106,7 +101,7 @@ class ParseSlot(Entity):
         """
         return self.parent.is_prom
 
-    @cached_property
+    @property
     def wordform(self) -> Any:
         """
         The wordform associated with this slot.
@@ -116,7 +111,7 @@ class ParseSlot(Entity):
         """
         return self.unit.parent
 
-    @cached_property
+    @property
     def syll(self) -> "Syllable":
         """
         The syllable associated with this slot.
@@ -126,7 +121,7 @@ class ParseSlot(Entity):
         """
         return self.unit
 
-    @cached_property
+    @property
     def is_stressed(self) -> bool:
         """
         Whether the syllable is stressed.
@@ -136,7 +131,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_stressed
 
-    @cached_property
+    @property
     def is_heavy(self) -> bool:
         """
         Whether the syllable is heavy.
@@ -146,7 +141,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_heavy
 
-    @cached_property
+    @property
     def is_strong(self) -> bool:
         """
         Whether the syllable is strong.
@@ -156,7 +151,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_strong
 
-    @cached_property
+    @property
     def is_weak(self) -> bool:
         """
         Whether the syllable is weak.
@@ -166,7 +161,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_weak
 
-    @cached_property
+    @property
     def score(self) -> float:
         """
         Total violation score.
@@ -176,7 +171,7 @@ class ParseSlot(Entity):
         """
         return sum(self.viold.values())
 
-    @cached_property
+    @property
     def has_viol(self) -> bool:
         """
         Whether the slot has any violations.
@@ -186,7 +181,7 @@ class ParseSlot(Entity):
         """
         return bool(self.score)
 
-    @cached_property
+    @property
     def txt(self) -> str:
         """
         Text representation of the slot.
@@ -197,7 +192,7 @@ class ParseSlot(Entity):
         o = self.unit.txt
         return o.upper() if self.is_prom else o.lower()
 
-    @cached_property
+    @property
     def i(self) -> int:
         """
         Index of the slot in the parent's slots list.
@@ -208,24 +203,5 @@ class ParseSlot(Entity):
         return self.parent.parent.slots.index(self)
 
 
-
-    # @property
-    # def attrs(self) -> Dict[str, Any]:
-    #     """
-    #     Dictionary of attributes for the slot.
-
-    #     Returns:
-    #         A dictionary of attributes for the slot.
-    #     """
-    #     return {
-    #         **{
-    #             k: v
-    #             for k, v in self.unit.prefix_attrs.items()
-    #             if k.split("_")[0] in {"wordtoken", "syll"}
-    #         },
-    #         **self._attrs,
-    #         "num": self.num,
-    #         "is_prom": self.is_prom,
-    #         **self.viold,
-    #     }
-    
+class ParseSlotList(EntityList):
+    pass

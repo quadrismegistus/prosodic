@@ -29,7 +29,7 @@ class PhonemeClass(Entity):
                 pass
         
 
-    @cached_property
+    @property
     def is_vowel(self) -> Optional[bool]:
         """
         Determine if the phoneme is a vowel.
@@ -49,17 +49,8 @@ class PhonemeClass(Entity):
     def is_cons(self):
         return not self.is_vowel
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Convert the phoneme to a JSON-serializable dictionary.
-
-    #     Returns:
-    #         Dict[str, Any]: A dictionary representation of the phoneme.
-    #     """
-    #     resd = super().to_dict()
-    #     resd["_class"] = "Phoneme"
-    #     resd.pop("children",None)
-    #     return resd
+    def to_dict(self) -> dict:
+        return super().to_dict(incl_txt=True)
 
     @property
     def is_onset(self) -> Optional[bool]:

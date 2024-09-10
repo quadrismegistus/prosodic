@@ -133,39 +133,39 @@ class SentenceTree(MetricalTree):
     #     for child in self:
     #         child.set_labels()
 
-    @cached_property
+    @property
     def lstress(self):
         return self._lstress
 
-    @cached_property
+    @property
     def pstress(self):
         return self._pstress
 
-    @cached_property
+    @property
     def pstress_pos(self):
         return -(self._pstress - 1)
 
-    @cached_property
+    @property
     def stress(self):
         return self._stress
 
-    @cached_property
+    @property
     def stress_pos(self):
         return -(self._stress - 1)
 
-    @cached_property
+    @property
     def seg(self):
         return self._seg if self._seg is not None else []
 
-    @cached_property
+    @property
     def nseg(self):
         return len(self._seg) if self._seg is not None else np.nan
 
-    @cached_property
+    @property
     def nsyll(self):
         return self._nsyll
 
-    @cached_property
+    @property
     def nstress(self):
         return self._nstress
 
@@ -224,16 +224,16 @@ class SentenceTree(MetricalTree):
                 w2._phrasal_stress_valley = 0
                 w2._pstrength = 1.0
 
-    @cached_property
+    @property
     def prom_lstress(self):
         # return self.lstress + 1 if not np.isnan(self.lstress) else np.nan
         return self.lstress
 
-    @cached_property
+    @property
     def preterms(self):
         return list(self.preterminals())
 
-    @cached_property
+    @property
     def prom_pstress(self):
         return self.pstress
         # preterms = list(self.preterminals())
@@ -244,7 +244,7 @@ class SentenceTree(MetricalTree):
         # max_pstress = max(pstress_values) - min_pstress
         # return (self.pstress - min_pstress) / max_pstress if max_pstress else np.nan
 
-    @cached_property
+    @property
     def prom_tstress(self):
         return self.stress
         # preterms = list(self.preterminals())
@@ -255,23 +255,23 @@ class SentenceTree(MetricalTree):
         # max_stress = max(stress_values) - min_stress
         # return (self.stress - min_stress) / max_stress if max_stress else np.nan
 
-    @cached_property
+    @property
     def prom_pstrength(self):
         return self._pstrength
 
-    @cached_property
+    @property
     def mtree_ishead(self):
         return self._phrasal_head
 
-    @cached_property
+    @property
     def preterm_index(self):
         return self._preterm_index
 
-    @cached_property
+    @property
     def is_preterm(self):
         return bool(self._preterm)
 
-    @cached_property
+    @property
     def preterm_str(self):
         return self[0] if self.is_preterm else ""
 
@@ -287,7 +287,7 @@ class SentenceTree(MetricalTree):
     def wordform(self):
         return self.wordtype.children[0] if self.wordtype and self.wordtype.children else None
 
-    @cached_property
+    @property
     def prefix_attrs(self):
         return nicedict({
             **self.attrs,
@@ -296,7 +296,7 @@ class SentenceTree(MetricalTree):
             **({} if not self.wordform else self.wordform.prefix_attrs),
         })
     
-    @cached_property
+    @property
     def attrs(self):
         return {
             "syntax_cat": self._cat,
@@ -308,7 +308,7 @@ class SentenceTree(MetricalTree):
             # "syntax_phead": self.mtree_ishead,
         }
 
-    @cached_property
+    @property
     def df(self):
         odf = pd.DataFrame(
             preterm.prefix_attrs 

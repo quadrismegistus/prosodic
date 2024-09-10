@@ -48,17 +48,18 @@ class Parse(Entity):
 
     def __init__(
         self,
-        wordforms: "WordFormList",
+        wordtokens: "WordTokenList",
         scansion: str = "",
         meter: Optional["Meter"] = None,
         parent: Optional[Any] = None,
-        positions: Optional[List["ParsePosition"]] = None,
+        children: Optional[List["ParsePositionList"]] = None,
         is_bounded: bool = False,
         bounded_by: Optional[List] = None,
         rank: Optional[int] = None,
-        line_num: Optional[int] = None,
-        stanza_num: Optional[int] = None,
-        line_txt: str = "",
+        parse_viold={},
+        # line_num: Optional[int] = None,
+        # stanza_num: Optional[int] = None,
+        # line_txt: str = "",
     ) -> None:
         from .meter import Meter
 
@@ -68,20 +69,29 @@ class Parse(Entity):
         if meter is None:
             meter = Meter()
         self.meter_obj = meter
+        
+        self.constraint_names = list(meter.constraints.keys())
+        self.parse_constraints = meter.parse_constraint_funcs
+        self.position_constraints = meter.position_constraint_funcs
+        self.constraint_weights = meter.constraints
 
         # wordforms
-        self.wordforms = wordforms
-        self.parent = parent if parent is not None else wordforms
+        assert wordtokens.num_with_forms == wordtokens.num_wordforms
+        self.wordtokens = wordtokens
+        self.wordforms = wordtokens.wordforms
+        self.slot_units = self.wordforms.sylls
+        
+        self.parent = parent if parent is not None else wordtokens
 
         # slots
-        self.slot_units = self.wordforms.sylls
+        # self.slots = [ParseSlot(syll, parent=self) for syll in self.slot_units]
 
         # scansion
         if not scansion:
-            scansion = get_iambic_parse(len(self.slots))
+            scansion = get_iambic_parse(len(self.slot_units))
         if type(scansion) == str:
             scansion = split_scansion(scansion)
-        self.positions_ls = copy(scansion)
+        self.scansion = copy(scansion)
 
         # divide positions
         self.is_bounded = is_bounded
@@ -95,42 +105,42 @@ class Parse(Entity):
         self.parse_rank = rank
         # self.violset=Multiset()
         self.num_slots_positioned = 0
-        self._line_num = line_num
-        self._stanza_num = stanza_num
-        self._line_txt = line_txt
-        self.positions = self.children = [] if not positions else positions
+        self.parse_viold = Counter(parse_viold)
+        # self._line_num = line_num
+        # self._stanza_num = stanza_num
+        # self._line_txt = line_txt
+        # super().__init__(children=[] if not positions else positions, parent=parent)
+        # self.children = ParsePositionList([] if not positions else positions)
+        # self.positions = self.children
+        self.children = [] if not children else children
         if not self.children:
-            for mpos_str in self.positions_ls:
+            for mpos_str in self.scansion:
                 self.extend(mpos_str)
         self.init()
+        if isinstance(self.children, list):
+            self.children = ParsePositionList(self.children, parent=self)
 
     @property
-    def line_num(self) -> Optional[int]:
-        """
-        Get the line number.
+    def positions(self):
+        return self.children
 
-        Returns:
-            Optional[int]: The line number.
-        """
-        return self.line.num if self.line else self._line_num
-
-    @property
-    def stanza_num(self) -> Optional[int]:
-        """
-        Get the stanza number.
-
-        Returns:
-            Optional[int]: The stanza number.
-        """
-        return self.stanza.num if self.line else self._stanza_num
-
-    def init(self) -> None:
+    def init(self, force=False) -> None:
         """Initialize the parse positions."""
         for pos in self.positions:
             pos.parse = self
             pos.init()
+        self.apply_parse_constraints(force=force)
 
-    def to_dict(self, fn: Optional[str] = None) -> Dict[str, Any]:
+    def apply_parse_constraints(self, force=False):
+        # parse constraints
+        for cname, cfunc in self.parse_constraints.items():
+            if (force or cname not in self.parse_viold) and cfunc.scope == self.scope:
+                res = cfunc(self)
+                log.debug(f'applying {cname}, got {res}')
+                assert isinstance(res,bool), "Parse constraints must return True/False"
+                self.parse_viold[cname]=int(res)
+
+    def to_dict(self) -> Dict[str, Any]:
         """
         Convert the parse to a JSON-serializable dictionary.
 
@@ -141,10 +151,12 @@ class Parse(Entity):
             Dict[str, Any]: JSON-serializable dictionary representation of the parse.
         """
         return super().to_dict(
-            wordforms=self.wordforms.to_dict(),
+            wordtokens=self.wordtokens.to_dict(incl_children=True),
             meter=self.meter_obj.to_dict(),
             is_bounded = self.is_bounded,
-            bounded_by = list(self.bounded_by)
+            bounded_by = list(self.bounded_by),
+            rank = self.parse_rank,
+            parse_viold=dict(self.parse_viold),
         )
         # return to_dict(
         #     {
@@ -159,8 +171,8 @@ class Parse(Entity):
         #     fn=fn,
         # )
 
-    @staticmethod
-    def from_dict(json_d: Dict[str, Any], line: Optional[Union["TextModel", "Stanza", "Line"]] = None) -> "Parse":
+    @classmethod
+    def from_dict(cls, json_d: Dict[str, Any], line: Optional[Union["TextModel", "Stanza", "Line"]] = None) -> "Parse":
         """
         Create a Parse object from a JSON dictionary.
 
@@ -172,35 +184,22 @@ class Parse(Entity):
             Parse: A new Parse object created from the JSON data.
         """
         from ..texts import Line
+        cls_name, data = next(iter(json_d.items()))
+        assert cls_name == cls.__name__
 
-        wordforms = from_dict(json_d["_wordforms"])
-        if line:
-            if type(line) == TextModel:
-                line = line.stanzas[json_d["stanza_num"] - 1].lines[
-                    json_d["line_num"] - 1
-                ]
-            elif type(line) == Stanza:
-                line = line.lines[json_d["line_num"] - 1]
-            elif type(line) != Line:
-                raise Exception(f"what is {line}?")
-            wordforms = line.match_wordforms(wordforms)
-        meter = from_dict(json_d["_meter"])
-        positions = [from_dict(d) for d in json_d["children"]]
-        slots = [slot for pos in positions for slot in pos.slots]
-        sylls = [syll for word in wordforms for syll in word.children]
+        wordtokens = Entity.from_dict(data.pop('wordtokens'))
+        meter = Entity.from_dict(data.pop('meter'))
+        children = Entity.from_dict(data.pop("children"))
+        slots = [slot for pos in children for slot in pos.slots]
+        sylls = wordtokens.sylls
         assert len(slots) == len(sylls)
         for syll, slot in zip(sylls, slots):
             slot.unit = syll
         return Parse(
-            wordforms,
-            positions=positions,
-            parent=line,
+            wordtokens,
+            children=children,
             meter=meter,
-            is_bounded=json_d["is_bounded"],
-            bounded_by=json_d["bounded_by"],
-            rank=json_d["rank"],
-            line_num=json_d["line_num"],
-            stanza_num=json_d["stanza_num"],
+            **data
         )
 
     @property
@@ -211,7 +210,7 @@ class Parse(Entity):
         Returns:
             List[ParseSlot]: List of all slots in the parse.
         """
-        return [slot for mpos in self.positions for slot in mpos.slots]
+        return ParseSlotList([slot for mpos in self.positions for slot in mpos.slots], parent=self)
 
     @property
     def is_complete(self) -> bool:
@@ -223,6 +222,35 @@ class Parse(Entity):
         """
         return len(self.slots) == len(self.syllables)
     
+    @property
+    def parse_unit(self):
+        return self.meter_obj.parse_unit
+
+    @property
+    def scope(self):
+        return self.parent.__class__.__name__.lower() if self.parent else None
+
+
+    @classmethod
+    def concat(cls, *parses:'Parse', wordtokens_cls=None) -> 'Parse':
+        from .positions import ParsePositionList
+        from ..words.wordtokenlist import WordTokenList
+        assert len(parses)>0
+        if len(parses)==1: return parses[0]
+        assert all(parses[0].meter_obj.equals(parse.meter_obj) for parse in parses[1:])
+        # parses = [parse.copy() for parse in parses]
+        positions = ParsePositionList([mpos for parse in parses for mpos in parse.positions])
+        if wordtokens_cls is None:
+            wordtokens_cls = WordTokenList
+        wordtokens = wordtokens_cls(children=[wt for parse in parses for wt in parse.wordtokens])
+        scansion = [x for parse in parses for x in parse.scansion]
+
+        return Parse(
+            wordtokens=wordtokens,
+            scansion=scansion,
+            meter=parses[0].meter_obj,
+            children=positions,
+        )
 
     def extend(self, mpos_str: str) -> Optional["Parse"]:
         """
@@ -240,13 +268,10 @@ class Parse(Entity):
             return None
         
         mpos = ParsePosition(meter_val=mval, children=[], parent=self)
-        mpos.children = mpos.slots = []
-        print(mpos, mpos.children, mpos.slots)
         for i, x in enumerate(mpos_str):
             slot_i = self.num_slots_positioned
             try:
-                slot = ParseSlot(self.slot_units[slot_i], parent=mpos)
-                mpos.children.append(slot)
+                mpos.add_slot(self.slot_units[slot_i])
             except IndexError:
                 # log.warning('cannot extend further, already taking up all syllable slots')
                 return None
@@ -260,6 +285,27 @@ class Parse(Entity):
         return self
 
     @property
+    def positions_viold(self):
+        viold = Counter()
+        for position in self.positions:
+            for cname,cviol in position.viold.items():
+                viold[cname]+=cviol
+        return viold
+    
+    @property
+    def viold(self):
+        return self.positions_viold + self.parse_viold
+    
+    @property
+    def scores(self):
+        return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
+
+    @property
+    def parse_violset(self):
+        return {cname for cname,cval in self.parse_viold.items() if cval>0}
+
+
+    @property
     def violset(self) -> Multiset:
         """
         Get the set of constraint violations for this parse.
@@ -270,25 +316,21 @@ class Parse(Entity):
         s = Multiset()
         for mpos in self.positions:
             s.update(mpos.violset)
+        s.update(self.parse_violset)
         return s
 
-    def __copy__(self) -> "Parse":
+    # @log.info
+    def copy(self):
         """
         Create a shallow copy of the parse.
 
         Returns:
             Parse: A shallow copy of the parse.
         """
-        new = Parse(
-            wordforms=self.wordforms,
-            scansion=self.positions_ls,
-            meter=self.meter_obj,
-            positions=[copy(mpos) for mpos in self.positions],
-        )
-        new._attrs = copy(self._attrs)
-        new.is_bounded = self.is_bounded
-        new.num_slots_positioned = self.num_slots_positioned
-        # new.violset = copy(self.violset)
+        from .positions import ParsePositionList
+        new = Parse.__new__(Parse)
+        new.__dict__.update(self.__dict__)
+        new.children = ParsePositionList([pos.copy() for pos in self.children])
         return new
 
     def branch(self) -> List["Parse"]:
@@ -300,13 +342,13 @@ class Parse(Entity):
         """
         if self.is_bounded:
             return []
-        if not self.positions:
+        if not self.positions or not len(self.positions):
             log.error("needs to start with some positions")
-            return
+            return []
         mval = self.positions[-1].meter_val
         otypes = self.meter_obj.get_pos_types(self.wordforms.num_sylls)
         otypes = [x for x in otypes if x[0] != mval]
-        o = [copy(self).extend(posstr) for posstr in otypes]
+        o = [self.copy().extend(posstr) for posstr in otypes]
         o = [x for x in o if x is not None]
         o = o if o else [self]
         o = [p for p in o if not p.is_bounded]
@@ -320,7 +362,7 @@ class Parse(Entity):
         Returns:
             bool: True if the parse is complete, False otherwise.
         """
-        return self.num_slots_positioned == len(self.wordforms.slots)
+        return self.num_slots_positioned == len(self.slot_units)
 
     @property
     def sort_key(self) -> tuple:
@@ -331,8 +373,7 @@ class Parse(Entity):
             tuple: A tuple used for sorting parses.
         """
         return (
-            self.stanza_num,
-            self.line_num,
+            self.wordtokens.word_span,
             int(bool(self.is_bounded)),
             self.score,
             self.positions[0].is_prom if self.positions else 10,
@@ -342,35 +383,6 @@ class Parse(Entity):
             self.stress_ints,
         )
 
-    @cached_property
-    def constraints(self) -> List[Callable]:
-        """
-        Get the list of constraints for this parse.
-
-        Returns:
-            List[Callable]: List of constraint functions.
-        """
-        return self.meter_obj.constraints + self.meter_obj.categorical_constraints
-
-    @cached_property
-    def constraint_d(self) -> Dict[str, Callable]:
-        """
-        Get a dictionary of constraints keyed by their names.
-
-        Returns:
-            Dict[str, Callable]: Dictionary of constraints.
-        """
-        return dict((c.__name__, c) for c in self.constraints)
-
-    @cached_property
-    def categorical_constraint_d(self) -> Dict[str, Callable]:
-        """
-        Get a dictionary of categorical constraints keyed by their names.
-
-        Returns:
-            Dict[str, Callable]: Dictionary of categorical constraints.
-        """
-        return dict((c.__name__, c) for c in self.meter_obj.categorical_constraints)
 
     def __lt__(self, other: "Parse") -> bool:
         """
@@ -397,6 +409,10 @@ class Parse(Entity):
         # log.error(f'{self} and {other} could not be compared in sort, ended up equal')
         # return not (self<other) and not (other<self)
         return self is other
+    
+    @cached_property
+    def wordtokens_key(self):
+        return self.wordtokens.key
 
     def can_compare(self, other: "Parse", min_slots: int = 4) -> bool:
         """
@@ -409,7 +425,7 @@ class Parse(Entity):
         Returns:
             bool: True if the parses can be compared, False otherwise.
         """
-        if (self.stanza_num, self.line_num) != (other.stanza_num, other.line_num):
+        if self.wordtokens_key != other.wordtokens_key:
             return False
 
         if min_slots and self.num_slots_positioned < min_slots:
@@ -423,7 +439,7 @@ class Parse(Entity):
 
         return True
 
-    @cached_property
+    @property
     def txt(self) -> str:
         """
         Get the text representation of the parse.
@@ -633,9 +649,10 @@ class Parse(Entity):
             Dict[str, Any]: Dictionary of parse attributes.
         """
         return {
-            "stanza_num": force_int(self.stanza_num),
-            "line_num": force_int(self.line_num),
-            "line_txt": self.line_txt,
+            "word_span": self.wordtokens.word_span,
+            # "stanza_num": force_int(self.stanza_num),
+            # "line_num": force_int(self.line_num),
+            # "line_txt": self.line_txt,
             **self._attrs,
             "txt": self.txt,
             "rank": self.parse_rank,
@@ -668,49 +685,49 @@ class Parse(Entity):
             self.line._parses.num_unbounded if self.line and self.line._parses else None
         )
 
-    @property
-    def constraint_viols(self) -> Dict[str, List[float]]:
-        """
-        Get the constraint violations for this parse.
+    # @property
+    # def constraint_viols(self) -> Dict[str, List[float]]:
+    #     """
+    #     Get the constraint violations for this parse.
 
-        Returns:
-            Dict[str, List[float]]: Dictionary of constraint violations.
-        """
-        # log.debug(self)
-        scores = [mpos.constraint_viols for mpos in self.positions]
-        d = {}
-        nans = [np.nan for _ in range(len(self.slots))]
-        catcts = set(self.categorical_constraint_d.keys())
-        for cname, constraint in self.constraint_d.items():
-            d[cname] = cscores = [
-                x for score_d in scores for x in score_d.get(cname, nans)
-            ]
-            if cname in catcts and any(cscores):
-                log.debug(
-                    f"Bounding {self.meter_str} because violates categorical constraint {cname}"
-                )
-                self.is_bounded = True
-        return d
+    #     Returns:
+    #         Dict[str, List[float]]: Dictionary of constraint violations.
+    #     """
+    #     # log.debug(self)
+    #     scores = [mpos.constraint_viols for mpos in self.positions]
+    #     d = {}
+    #     nans = [np.nan for _ in range(len(self.slots))]
+    #     catcts = set(self.categorical_constraint_d.keys())
+    #     for cname, constraint in self.constraint_d.items():
+    #         d[cname] = cscores = [
+    #             x for score_d in scores for x in score_d.get(cname, nans)
+    #         ]
+    #         if cname in catcts and any(cscores):
+    #             log.debug(
+    #                 f"Bounding {self.meter_str} because violates categorical constraint {cname}"
+    #             )
+    #             self.is_bounded = True
+    #     return d
 
-    @property
-    def constraint_scores(self) -> Dict[str, float]:
-        """
-        Get the constraint scores for this parse.
+    # @property
+    # def constraint_scores(self) -> Dict[str, float]:
+    #     """
+    #     Get the constraint scores for this parse.
 
-        Returns:
-            Dict[str, float]: Dictionary of constraint scores.
-        """
-        return {cname: safesum(cvals) for cname, cvals in self.constraint_viols.items()}
+    #     Returns:
+    #         Dict[str, float]: Dictionary of constraint scores.
+    #     """
+    #     return {cname: safesum(cvals) for cname, cvals in self.constraint_viols.items()}
 
-    @property
-    def score(self) -> float:
-        """
-        Get the total score of the parse.
+    # @property
+    # def score(self) -> float:
+    #     """
+    #     Get the total score of the parse.
 
-        Returns:
-            float: The total score.
-        """
-        return safesum(self.constraint_scores.values())
+    #     Returns:
+    #         float: The total score.
+    #     """
+    #     return safesum(self.constraint_scores.values())
 
     @property
     def meter_str(self, word_sep: str = "") -> str:
@@ -816,7 +833,7 @@ class Parse(Entity):
         """
         return self.to_html(as_str=True, blockquote=True)
 
-    @cached_property
+    @property
     def html(self) -> str:
         """
         Get an HTML representation of the parse.
@@ -848,7 +865,7 @@ class Parse(Entity):
         else:
             return str(self)
 
-    @cached_property
+    @property
     def wordtoken2slots(self) -> Dict[str, List["ParseSlot"]]:
         """
         Get a dictionary mapping word tokens to their corresponding parse slots.

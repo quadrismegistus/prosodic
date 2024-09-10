@@ -13,7 +13,7 @@ class ParsePosition(Entity):
 
     prefix: str = "meterpos"
 
-    def __init__(self, meter_val: str, children: List = [], parent: Optional['Parse'] = None, **kwargs):
+    def __init__(self, meter_val: str, children: List = [], parent: Optional['Parse'] = None, _init=False, **kwargs):
         """
         Initialize a ParsePosition.
 
@@ -29,49 +29,67 @@ class ParsePosition(Entity):
             parent=parent,
             **kwargs,
         )
-        self.viold: Dict[str, List[int]] = {}
-        self.violset: Set[str] = set()
-        self.slots = self.children
         self.parse = self.parent
         # self.parse: Optional['Parse'] = self.parent
         # if self.parse:
         #     self.init()
 
+    def add_slot(self, unit):
+        from .slots import ParseSlot
+        slot = ParseSlot(unit, parent=self, num=len(self.children)+1)
+        self.children.append(slot)
+    
+    @property
+    def slots(self):
+        return self.children
+
     @property
     def num_slots(self):
         return len(self.children)
 
-    def init(self) -> None:
+    def init(self, force=False) -> None:
         """Initialize violations for this position."""
         assert self.parse
         if any(not slot.unit for slot in self.slots):
             print(self.slots)
             print([slot.__dict__ for slot in self.slots])
             raise Exception
-        for cname, constraint in self.parse.constraint_d.items():
-            slot_viols = [int(bool(vx)) for vx in constraint(self)]
-            assert len(slot_viols) == len(self.slots)
-            self.viold[cname] = slot_viols
-            if any(slot_viols):
-                self.violset.add(cname)
-            for viol, slot in zip(slot_viols, self.slots):
-                slot.viold[cname] = viol
+        for cname, constraint in self.parse.position_constraints.items():
+            if force or any(cname not in slot.viold for slot in self.slots):
+                slot_viols = [int(bool(vx)) for vx in constraint(self)]
+                log.debug(f'applying position constriant {cname}, got {slot_viols}')
+                assert len(slot_viols) == len(self.slots)
+                for viol, slot in zip(slot_viols, self.slots):
+                    slot.viold[cname] = viol
+        self._init = True
 
-    def __copy__(self) -> 'ParsePosition':
+    @property
+    def viold(self):
+        viold = Counter()
+        for slot in self.slots:
+            for cname,cviol in slot.viold.items():
+                viold[cname]+=cviol
+        return viold
+    
+    @property
+    def scores(self):
+        return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
+
+    @property
+    def violset(self):
+        return {cname for cname,cval in self.viold.items() if cval>0}
+
+    def copy(self):
         """
-        Create a copy of this ParsePosition.
+        Create a shallow copy of the parse position.
 
         Returns:
-            A new ParsePosition object with copied attributes.
+            ParsePosition: A shallow copy of the parse position.
         """
-        new = ParsePosition(
-            meter_val=self.meter_val,
-            children=[copy(slot) for slot in self.slots],
-            parent=self.parent,
-        )
-        new.viold = copy(self.viold)
-        new.violset = copy(self.violset)
-        new._attrs = copy(self._attrs)
+        from .slots import ParseSlotList
+        new = ParsePosition.__new__(ParsePosition)
+        new.__dict__.update(self.__dict__)
+        new.children = ParseSlotList([slot.copy() for slot in self.children])
         return new
 
     def to_dict(self) -> Dict:
@@ -83,51 +101,7 @@ class ParsePosition(Entity):
         """
         return super().to_dict(meter_val=self.meter_val)
 
-    @cached_property
-    def attrs(self) -> Dict:
-        """
-        Get the attributes of this ParsePosition.
-
-        Returns:
-            A dictionary of attributes.
-        """
-        return {
-            **self._attrs,
-            "num": self.num,
-            # **{k:sum(v) for k,v in self.viold.items()}
-        }
-
-    @cached_property
-    def constraint_viols(self) -> Dict[str, List[int]]:
-        """
-        Get the constraint violations for this position.
-
-        Returns:
-            A dictionary of constraint violations.
-        """
-        return self.viold
-
-    @cached_property
-    def constraint_scores(self) -> Dict[str, int]:
-        """
-        Get the constraint scores for this position.
-
-        Returns:
-            A dictionary of constraint scores.
-        """
-        return {k: sum(v) for k, v in self.constraint_viols.items()}
-
-    @cached_property
-    def constraint_set(self) -> Set[str]:
-        """
-        Get the set of constraints violated by this position.
-
-        Returns:
-            A set of constraint names.
-        """
-        return self.violset
-
-    @cached_property
+    @property
     def is_prom(self) -> bool:
         """
         Check if this position is prominent.
@@ -137,19 +111,19 @@ class ParsePosition(Entity):
         """
         return self.meter_val == "s"
 
-    # @cached_property
-    # def txt(self) -> str:
-    #     """
-    #     Get the text representation of this position.
+    @property
+    def txt(self) -> str:
+        """
+        Get the text representation of this position.
 
-    #     Returns:
-    #         A string representation of the position.
-    #     """
-    #     token = ".".join([slot.txt for slot in self.children])
-    #     token = token.upper() if self.is_prom else token.lower()
-    #     return token
+        Returns:
+            A string representation of the position.
+        """
+        token = ".".join([slot.txt for slot in self.children])
+        token = token.upper() if self.is_prom else token.lower()
+        return token
 
-    @cached_property
+    @property
     def meter_str(self) -> str:
         """
         Get the meter string for this position.
@@ -159,7 +133,7 @@ class ParsePosition(Entity):
         """
         return self.meter_val * self.num_slots
 
-    @cached_property
+    @property
     def num_slots(self) -> int:
         """
         Get the number of slots in this position.
@@ -168,3 +142,6 @@ class ParsePosition(Entity):
             The number of slots.
         """
         return len(self.slots)
+    
+class ParsePositionList(EntityList):
+    pass

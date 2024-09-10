@@ -201,7 +201,7 @@ class Line(WordTokenList):
         """
         return self.parses.stats_d(by=by, **kwargs)
 
-    @cached_property
+    @property
     def num_sylls(self) -> int:
         """
         Get the number of syllables in the line.
@@ -226,7 +226,7 @@ class Line(WordTokenList):
             return np.nan
         return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1])
     
-    @cached_property
+    @property
     def parts(self):
         return LinePartList.from_wordtokens(self.wordtokens, parent=self)
     

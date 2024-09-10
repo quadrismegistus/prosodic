@@ -256,6 +256,19 @@ GROUPBY_WORD = GROUPBY_LINE + ["wordtoken_num", "wordform_num"]
 GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
 
 
+
+DEFAULT_CONSTRAINTS = [
+    "w_peak",
+    "w_stress",
+    "s_unstress",
+    "unres_across",
+    "unres_within",
+    "pentameter"
+]
+
+
+
+
 from .utils import *
 from .ents import *
 from .words import *
@@ -297,17 +310,18 @@ CHILDCLASSES = {
 }
 
 CHILDCLASSLISTS = {
-    "textmodel": StanzaList,
-    "text": StanzaList,
-    "stanza": LineList,
-    "line": WordTokenList,
-    "wordtoken": WordTypeList,
-    "word": WordTypeList,
-    "wordtype": WordFormList,
-    "wordform": SyllableList,
-    "syllable": PhonemeList,
-    "syll": PhonemeList,
-    "phoneme": None,
+    TextModel: StanzaList,
+    Stanza: LineList,
+    Line: WordTokenList,
+    WordToken: WordTypeList,
+    WordType: WordFormList,
+    WordForm: SyllableList,
+    Syllable: PhonemeList,
+    PhonemeClass: None,
+
+    Parse: ParsePositionList,
+    ParsePosition: ParseSlotList
+
 }
 
 SELFCLASSES = {
@@ -325,8 +339,8 @@ SELFCLASSES = {
     "phonemeclass": PhonemeClass,
 }
 
-PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words"}
-SINGULAR_ATTRS = {"text", "textmodel", "stanza", "line", "wordtoken", "word", "wordtype", "wordform", "syllable", "phoneme", "parse", "syll"}
+PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words", "lineparts", "sentparts", "sentences", "sentences"}
+SINGULAR_ATTRS = {"text", "textmodel", "stanza", "line", "wordtoken", "word", "wordtype", "wordform", "syllable", "phoneme", "parse", "syll", "linepart", "sentpart", "sentence", "sent"}
 
 
 LISTCLASSES = {
@@ -389,10 +403,10 @@ CLASSPREFIXES = {
 
 # Add this new dictionary after the existing class mappings
 CLASS_DEPTHS = {
-    TextList: 0,
+    TextList: -1,
+    TextModel: 0,
     
     WordTokenList: 1,
-    TextModel: 1,
     Stanza: 1,
     Line: 1,
     LinePart: 1,
@@ -423,6 +437,7 @@ CLASS_DEPTHS = {
 }
 
 def pluralize_class_name(class_name):
+    class_name = class_name.replace('list','')
     return class_name+'s' if not class_name.endswith('s') else class_name
 
 def singularize_class_name(class_name):
@@ -430,7 +445,7 @@ def singularize_class_name(class_name):
 
 
 def get_list_class(class_name):
-    return get_class(pluralize_class_name(class_name.lower()))
+    return get_class(get_list_class_name(class_name))
 
 def get_ent_class(class_name):
     return get_class(singularize_class_name(class_name.lower()))
@@ -506,6 +521,20 @@ def get_class(class_name):
         'phons': PhonemeList,
         'parselist': ParseList,
         'parses': ParseList,
+        
+        'parsepositionlist': ParsePositionList,
+        'positions': ParsePositionList,
+        'parsepositions': ParsePositionList,
+
+        'parseposition': ParsePosition,
+        'position': ParsePosition,
+        
+        'parseslotlist': ParseSlotList,
+        'parseslots': ParseSlotList,
+        'slots': ParseSlotList,
+
+        'parseslot': ParseSlot,
+        'slot': ParseSlot,
     }
     
     # Check for exact match in nickname_map

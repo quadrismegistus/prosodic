@@ -17,12 +17,12 @@ class LanguageModel:
     def __getitem__(self, token):
         return self.get(token)
 
-    @cached_property
+    @property
     def path(self):
         path_langs = os.path.dirname(__file__)
         return path_langs if not self.name else os.path.join(path_langs, self.name)
 
-    @cached_property
+    @property
     def path_token2ipa(self):
         if not self.filename_token2ipa and self.name:
             self.filename_token2ipa = self.name + ".tsv"
@@ -33,12 +33,12 @@ class LanguageModel:
                 return path
         return None
 
-    @cached_property
+    @property
     def path_unstressed(self):
         path = os.path.join(self.path, self.filename_unstressed)
         return path if os.path.exists(path) else None
 
-    @cached_property
+    @property
     def path_ambig_stress(self):
         path = os.path.join(self.path, self.filename_ambig_stress)
         return path if os.path.exists(path) else None
@@ -80,7 +80,6 @@ class LanguageModel:
         return [], {}
 
     @cache
-    @profile
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
 
         meta = {}
@@ -210,14 +209,12 @@ class LanguageModel:
         return osylls
 
     @cached_property
-    @profile
     def syllabifier(self):
         from nltk.tokenize import SyllableTokenizer
 
         return SyllableTokenizer()
 
     @cached_property
-    @profile
     def syllabiphon(self):
         from prosodic.lib.syllabiphon.syllabify import Syllabify
 

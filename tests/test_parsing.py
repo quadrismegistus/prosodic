@@ -102,13 +102,6 @@ def test_html():
     assert "viol_y" in html
 
 
-def test_categorical_constraints():
-    line = Line("dangerous " * 3)
-    line.parse(categorical_constraints="foot_size", max_s=None, max_w=None)
-
-    assert not any([px.meter_str.count("---") for px in line.parses.unbounded])
-    assert not any([px.meter_str.count("+++") for px in line.parses.unbounded])
-
 
 def test_standalone_parsing():
     p1 = Parse("my horse my horse my kingdom for a horse")

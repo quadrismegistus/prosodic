@@ -101,7 +101,7 @@ class Stanza(WordTokenList):
         """
         return self.children.get_rhyming_lines(max_dist=max_dist)
 
-    @cached_property
+    @property
     def num_rhyming_lines(self) -> int:
         """
         Get the number of rhyming lines in the stanza.
@@ -111,7 +111,7 @@ class Stanza(WordTokenList):
         """
         return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
 
-    @cached_property
+    @property
     def is_rhyming(self) -> bool:
         """
         Check if the stanza contains rhyming lines.

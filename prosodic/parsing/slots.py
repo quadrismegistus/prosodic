@@ -50,14 +50,14 @@ class ParseSlot(Entity):
             ParseSlot: A shallow copy of the parse slot.
         """
         new = ParseSlot.__new__(ParseSlot)
-        new.__dict__.update(self.__dict__)
+        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
         new.viold = self.viold.copy()
         return new
     
     def to_dict(self,**kwargs):
         return super().to_dict(viold=self.viold, incl_key=True, **kwargs)
 
-    @property
+    @cached_property
     def violset(self) -> Set[str]:
         """
         Set of constraint violations.
@@ -77,7 +77,7 @@ class ParseSlot(Entity):
         """
         return len(self.violset)
     
-    @property
+    @cached_property
     def scores(self):
         return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
 
@@ -161,7 +161,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_weak
 
-    @property
+    @cached_property
     def score(self) -> float:
         """
         Total violation score.
@@ -181,7 +181,7 @@ class ParseSlot(Entity):
         """
         return bool(self.score)
 
-    @property
+    @cached_property
     def txt(self) -> str:
         """
         Text representation of the slot.
@@ -192,7 +192,7 @@ class ParseSlot(Entity):
         o = self.unit.txt
         return o.upper() if self.is_prom else o.lower()
 
-    @property
+    @cached_property
     def i(self) -> int:
         """
         Index of the slot in the parent's slots list.

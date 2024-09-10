@@ -57,13 +57,13 @@ class ParsePosition(Entity):
         for cname, constraint in self.parse.position_constraints.items():
             if force or any(cname not in slot.viold for slot in self.slots):
                 slot_viols = [int(bool(vx)) for vx in constraint(self)]
-                log.debug(f'applying position constriant {cname}, got {slot_viols}')
+                #log.debug(f'applying position constriant {cname}, got {slot_viols}')
                 assert len(slot_viols) == len(self.slots)
                 for viol, slot in zip(slot_viols, self.slots):
                     slot.viold[cname] = viol
         self._init = True
 
-    @property
+    @cached_property
     def viold(self):
         viold = Counter()
         for slot in self.slots:
@@ -71,11 +71,11 @@ class ParsePosition(Entity):
                 viold[cname]+=cviol
         return viold
     
-    @property
+    @cached_property
     def scores(self):
         return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
 
-    @property
+    @cached_property
     def violset(self):
         return {cname for cname,cval in self.viold.items() if cval>0}
 
@@ -88,7 +88,7 @@ class ParsePosition(Entity):
         """
         from .slots import ParseSlotList
         new = ParsePosition.__new__(ParsePosition)
-        new.__dict__.update(self.__dict__)
+        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
         new.children = ParseSlotList([slot.copy() for slot in self.children])
         return new
 
@@ -111,7 +111,7 @@ class ParsePosition(Entity):
         """
         return self.meter_val == "s"
 
-    @property
+    @cached_property
     def txt(self) -> str:
         """
         Get the text representation of this position.
@@ -123,7 +123,7 @@ class ParsePosition(Entity):
         token = token.upper() if self.is_prom else token.lower()
         return token
 
-    @property
+    @cached_property
     def meter_str(self) -> str:
         """
         Get the meter string for this position.

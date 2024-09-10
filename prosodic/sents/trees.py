@@ -175,7 +175,7 @@ class SentenceTree(MetricalTree):
         # self.gen_word_info()
 
         if self._preterm:
-            log.debug(f"setting lstress for {self._wordtoken}")
+            #log.debug(f"setting lstress for {self._wordtoken}")
             if self[0].lower() in super(MetricalTree, self)._contractables:
                 self._lstress = np.nan
             elif self._cat in super(MetricalTree, self)._punctTags:

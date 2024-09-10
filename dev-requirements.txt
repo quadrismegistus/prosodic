@@ -5,3 +5,4 @@ nbclient
 quarto
 quartodoc
 selenium
+snakeviz

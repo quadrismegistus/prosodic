@@ -11,7 +11,7 @@ class WordToken(Entity):
 
     prefix = "wordtoken"
 
-    @log.debug
+    # @#log.debug
     def __init__(
         self,
         txt: str = None,
@@ -52,20 +52,20 @@ class WordToken(Entity):
             **kwargs,
         )
         self._preterm = None
-        log.debug(f"Initialized word with txt {[self.txt]}")
+        #log.debug(f"Initialized word with txt {[self.txt]}")
 
     @property
     def preterm(self):
         return self._preterm
     
-    @property
+    @cached_property
     def key(self):
         return f'{self.text.key+"." if self.text else ""}{self.nice_type_name}{self.num}'
 
     def to_dict(
         self,
         incl_num=True,
-        incl_children=False,
+        incl_children=True,
         incl_txt=True,
         incl_attrs=True,
         **kwargs,
@@ -136,7 +136,7 @@ class WordType(Entity):
             parent (Entity, optional): The parent entity. Defaults to None.
             **kwargs: Additional keyword arguments.
         """
-        log.debug([txt, children, parent, lang])
+        #log.debug([txt, children, parent, lang])
         super().__init__(txt=txt, lang=lang, children=children, parent=parent, **kwargs)
 
     def to_dict(self) -> dict:
@@ -498,7 +498,7 @@ def Word(
     Raises:
         Exception: If the specified language is not recognized.
     """
-    log.debug("making wordtype")
+    #log.debug("making wordtype")
     wordtype = None
 
     empty_wordtype = WordType(token, children=[], lang=lang)

@@ -19,7 +19,7 @@ class Stanza(WordTokenList):
     """
 
 
-    # @log.debug
+    # @#log.debug
     # def __init__(
     #     self,
     #     txt: str = "",
@@ -47,25 +47,25 @@ class Stanza(WordTokenList):
 
     #     if not txt and not children and tokens_df is None:
     #         raise ValueError("Must provide either txt, children, or tokens_df")
-    #     log.debug(f"Checking input: txt={bool(txt)}, children={bool(children)}, tokens_df={tokens_df is not None}")
+    #     #log.debug(f"Checking input: txt={bool(txt)}, children={bool(children)}, tokens_df={tokens_df is not None}")
 
     #     if not children:
-    #         log.debug("No children provided, creating from tokens_df or txt")
+    #         #log.debug("No children provided, creating from tokens_df or txt")
             
     #         if tokens_df is None:
     #             tokens_df = tokenize_sentwords_df(txt)
-    #             log.debug(f"Tokenized text into DataFrame with shape {tokens_df.shape}")
+    #             #log.debug(f"Tokenized text into DataFrame with shape {tokens_df.shape}")
             
     #         children = [
     #             Line(parent=self, tokens_df=line_df)
     #             for line_i, line_df in tokens_df.groupby("line_i")
     #         ]
-    #         log.debug(f"Created {len(children)} Line objects from tokens_df")
+    #         #log.debug(f"Created {len(children)} Line objects from tokens_df")
 
     #     if not txt:
     #         txt=''.join(x._txt for x in children)
     #     super().__init__(txt=txt, children=children, parent=parent, **kwargs)
-    #     log.debug(f"Initialized Stanza object with text: {txt}")
+    #     #log.debug(f"Initialized Stanza object with text: {txt}")
 
     # def to_dict(self) -> Dict[str, Any]:
     #     """

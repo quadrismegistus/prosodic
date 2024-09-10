@@ -48,7 +48,7 @@ class ParseList(EntityList):
         return new_parses
 
     def to_dict(self, **kwargs):
-        return super().to_dict(parent=self.parent.to_dict(incl_children=False), **kwargs)
+        return super().to_dict(parent=self.parent.to_dict(incl_children=True), **kwargs)
     
     @classmethod
     def from_dict(cls, data):
@@ -114,7 +114,7 @@ class ParseList(EntityList):
         """
         return self.best_parses
 
-    @property
+    @cached_property
     def unbounded(self) -> 'ParseList':
         """
         Get unbounded parses.
@@ -129,7 +129,7 @@ class ParseList(EntityList):
             type=self.type,
         )
 
-    @property
+    @cached_property
     def bounded(self) -> 'ParseList':
         """
         Get bounded parses.
@@ -482,7 +482,7 @@ class ParseList(EntityList):
         odf = self.get_df()
         return odf[[c for c in odf if not bad_keys or c not in bad_keys]]
 
-    @property
+    @cached_property
     def scansions(self) -> 'ParseList':
         """
         Get unique scansions for this ParseList.

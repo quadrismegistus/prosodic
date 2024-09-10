@@ -79,7 +79,7 @@ class Parse(Entity):
         assert wordtokens.num_with_forms == wordtokens.num_wordforms
         self.wordtokens = wordtokens
         self.wordforms = wordtokens.wordforms
-        self.slot_units = self.wordforms.sylls
+        self.slot_units = [syll for wf in self.wordforms for syll in wf]
         
         self.parent = parent if parent is not None else wordtokens
 
@@ -136,7 +136,7 @@ class Parse(Entity):
         for cname, cfunc in self.parse_constraints.items():
             if (force or cname not in self.parse_viold) and cfunc.scope == self.scope:
                 res = cfunc(self)
-                log.debug(f'applying {cname}, got {res}')
+                #log.debug(f'applying {cname}, got {res}')
                 assert isinstance(res,bool), "Parse constraints must return True/False"
                 self.parse_viold[cname]=int(res)
 
@@ -191,7 +191,7 @@ class Parse(Entity):
         meter = Entity.from_dict(data.pop('meter'))
         children = Entity.from_dict(data.pop("children"))
         slots = [slot for pos in children for slot in pos.slots]
-        sylls = wordtokens.sylls
+        sylls = [syll for wtok in wordtokens for wtyp in wtok for wf in wtyp for syll in wf]
         assert len(slots) == len(sylls)
         for syll, slot in zip(sylls, slots):
             slot.unit = syll
@@ -284,7 +284,7 @@ class Parse(Entity):
         self.constraint_viols  # init and bound
         return self
 
-    @property
+    @cached_property
     def positions_viold(self):
         viold = Counter()
         for position in self.positions:
@@ -292,20 +292,20 @@ class Parse(Entity):
                 viold[cname]+=cviol
         return viold
     
-    @property
+    @cached_property
     def viold(self):
         return self.positions_viold + self.parse_viold
     
-    @property
+    @cached_property
     def scores(self):
         return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
 
-    @property
+    @cached_property
     def parse_violset(self):
         return {cname for cname,cval in self.parse_viold.items() if cval>0}
 
 
-    @property
+    @cached_property
     def violset(self) -> Multiset:
         """
         Get the set of constraint violations for this parse.
@@ -329,7 +329,7 @@ class Parse(Entity):
         """
         from .positions import ParsePositionList
         new = Parse.__new__(Parse)
-        new.__dict__.update(self.__dict__)
+        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
         new.children = ParsePositionList([pos.copy() for pos in self.children])
         return new
 
@@ -343,7 +343,7 @@ class Parse(Entity):
         if self.is_bounded:
             return []
         if not self.positions or not len(self.positions):
-            log.error("needs to start with some positions")
+            #log.debug("needs to start with some positions")
             return []
         mval = self.positions[-1].meter_val
         otypes = self.meter_obj.get_pos_types(self.wordforms.num_sylls)
@@ -364,7 +364,7 @@ class Parse(Entity):
         """
         return self.num_slots_positioned == len(self.slot_units)
 
-    @property
+    @cached_property
     def sort_key(self) -> tuple:
         """
         Get the sort key for this parse.
@@ -373,7 +373,6 @@ class Parse(Entity):
             tuple: A tuple used for sorting parses.
         """
         return (
-            self.wordtokens.word_span,
             int(bool(self.is_bounded)),
             self.score,
             self.positions[0].is_prom if self.positions else 10,
@@ -649,10 +648,6 @@ class Parse(Entity):
             Dict[str, Any]: Dictionary of parse attributes.
         """
         return {
-            "word_span": self.wordtokens.word_span,
-            # "stanza_num": force_int(self.stanza_num),
-            # "line_num": force_int(self.line_num),
-            # "line_txt": self.line_txt,
             **self._attrs,
             "txt": self.txt,
             "rank": self.parse_rank,
@@ -685,49 +680,15 @@ class Parse(Entity):
             self.line._parses.num_unbounded if self.line and self.line._parses else None
         )
 
-    # @property
-    # def constraint_viols(self) -> Dict[str, List[float]]:
-    #     """
-    #     Get the constraint violations for this parse.
+    @cached_property
+    def score(self) -> float:
+        """
+        Get the total score of the parse.
 
-    #     Returns:
-    #         Dict[str, List[float]]: Dictionary of constraint violations.
-    #     """
-    #     # log.debug(self)
-    #     scores = [mpos.constraint_viols for mpos in self.positions]
-    #     d = {}
-    #     nans = [np.nan for _ in range(len(self.slots))]
-    #     catcts = set(self.categorical_constraint_d.keys())
-    #     for cname, constraint in self.constraint_d.items():
-    #         d[cname] = cscores = [
-    #             x for score_d in scores for x in score_d.get(cname, nans)
-    #         ]
-    #         if cname in catcts and any(cscores):
-    #             log.debug(
-    #                 f"Bounding {self.meter_str} because violates categorical constraint {cname}"
-    #             )
-    #             self.is_bounded = True
-    #     return d
-
-    # @property
-    # def constraint_scores(self) -> Dict[str, float]:
-    #     """
-    #     Get the constraint scores for this parse.
-
-    #     Returns:
-    #         Dict[str, float]: Dictionary of constraint scores.
-    #     """
-    #     return {cname: safesum(cvals) for cname, cvals in self.constraint_viols.items()}
-
-    # @property
-    # def score(self) -> float:
-    #     """
-    #     Get the total score of the parse.
-
-    #     Returns:
-    #         float: The total score.
-    #     """
-    #     return safesum(self.constraint_scores.values())
+        Returns:
+            float: The total score.
+        """
+        return sum(self.scores.values())
 
     @property
     def meter_str(self, word_sep: str = "") -> str:
@@ -865,7 +826,7 @@ class Parse(Entity):
         else:
             return str(self)
 
-    @property
+    @cached_property
     def wordtoken2slots(self) -> Dict[str, List["ParseSlot"]]:
         """
         Get a dictionary mapping word tokens to their corresponding parse slots.

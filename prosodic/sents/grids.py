@@ -8,16 +8,16 @@ class SentenceGrid(EntityList):
         grid.sents = wordtokens.sents
         return grid    
         
-    @property
+    @cached_property
     def trees(self):
         return self.sents.trees
 
-    @property
+    @cached_property
     def trees_df(self):
         tdf = self.sents.trees_df.reset_index()
         return niceindex(tdf[tdf.wordtoken_num.isin(self.wordtokens.numset)])
     
-    @property
+    @cached_property
     def df(self):
         df = self.trees_df.copy()
         for y in df:

@@ -24,7 +24,7 @@ class Line(WordTokenList):
     # prefix: str = "line"
     # use_cache: bool = False
 
-    # @log.debug
+    # @#log.debug
     # def __init__(
     #     self,
     #     txt: str = "",
@@ -49,22 +49,22 @@ class Line(WordTokenList):
     #         Exception: If neither txt, children, nor tokens_df is provided.
     #     """
     #     from ..words import WordToken
-    #     log.debug("Importing WordToken")
+    #     #log.debug("Importing WordToken")
 
     #     if not txt and not children and tokens_df is None:
-    #         log.debug("No input provided")
+    #         #log.debug("No input provided")
     #         raise Exception("Must provide either txt, children, or tokens_df")
 
     #     txt = txt.strip()
-    #     log.debug(f"Stripped text: {txt}")
+    #     #log.debug(f"Stripped text: {txt}")
 
     #     if not children:
-    #         log.debug("No children provided")
+    #         #log.debug("No children provided")
     #         if tokens_df is None:
-    #             log.debug("No tokens_df provided, tokenizing text")
+    #             #log.debug("No tokens_df provided, tokenizing text")
     #             tokens_df = tokenize_sentwords_df(txt)
             
-    #         log.debug("Creating children from tokens_df")
+    #         #log.debug("Creating children from tokens_df")
     #         children = [
     #             WordToken(
     #                 txt=word_d.get("word_str", ""),
@@ -76,18 +76,18 @@ class Line(WordTokenList):
     #             for word_d in tokens_df.to_dict("records")
     #             if "word_str" in word_d
     #         ]
-    #         log.debug(f"Created {len(children)} children")
+    #         #log.debug(f"Created {len(children)} children")
 
-    #     log.debug("Initializing Entity")
+    #     #log.debug("Initializing Entity")
     #     if not txt:
     #         txt=''.join(x._txt for x in children)
     #     super().__init__(txt=txt, children=children, parent=parent, **kwargs)
 
-    #     log.debug("Setting up parses and parseable flag")
+    #     #log.debug("Setting up parses and parseable flag")
     #     self._parses = []
     #     self.is_parseable = True
-    #     log.debug("Line initialization complete")
-    #     log.debug(f"Line text: {self._txt}")
+    #     #log.debug("Line initialization complete")
+    #     #log.debug(f"Line text: {self._txt}")
 
     # @stash.stashed_result
     # def parse(self, meter=None, defaults=False, **meter_kwargs):

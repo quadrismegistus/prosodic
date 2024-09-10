@@ -52,9 +52,10 @@ class Entity(UserList):
 
     # @log.info
     def copy(self):
-        new = Entity.from_dict(self.to_dict())
-        new.parent = self.parent
-        new._text = self._text
+        new = self.__class__.__new__(self.__class__)
+        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
+        if self.children is not None:
+            new.children = self.children.copy() if isinstance(self.children, EntityList) else [ent.copy() for ent in self.children]
         return new
         # return unstuff(stuff(self))
         # data = self.to_dict()
@@ -162,7 +163,8 @@ class Entity(UserList):
             try:
                 setattr(self, k, v)
             except Exception as e:
-                log.debug(e)
+                #log.debug(e)
+                pass
 
         if not isinstance(children, EntityList):
             self.children = (
@@ -261,13 +263,13 @@ class Entity(UserList):
 
             res = None
             if attr in PLURAL_ATTRS:
-                log.debug(f"'{attr}' is in PLURAL_ATTRS, returning list")
+                #log.debug(f"'{attr}' is in PLURAL_ATTRS, returning list")
                 res = self.get_list(attr)
             if attr in SINGULAR_ATTRS:
-                log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning one")
+                #log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning one")
                 res = self.get_one(attr)
             if attr.endswith("_r") and attr[:-2] in SINGULAR_ATTRS:
-                log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning random")
+                #log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning random")
                 res = self.get_random(attr[:-2])
                 return res # don't cache
 
@@ -283,10 +285,10 @@ class Entity(UserList):
                 num = int(digits)
                 i = 0 if num == 0 else num - 1
                 try:
-                    log.debug(f"Attempting to return child at index {i}")
+                    #log.debug(f"Attempting to return child at index {i}")
                     res = self.get_list(nondigits)[i]
                 except IndexError:
-                    log.debug(f"Index {i} out of range, returning None")
+                    #log.debug(f"Index {i} out of range, returning None")
                     res = None
 
 
@@ -312,6 +314,7 @@ class Entity(UserList):
         Returns:
             EntityList or None: The requested list of entities, or None if not found.
         """
+        log.warning(f'Getting list of type: {list_type}')
         from .imports import get_class_depth, get_ent_class, get_list_class
         list_type = self._rename_attr(list_type)
         cls_depth = get_class_depth(list_type)
@@ -365,10 +368,10 @@ class Entity(UserList):
             return list_class([ancestor], parent=ancestor.parent, text=self.text) if ancestor else None
 
         # If the depths are the same or we couldn't find an appropriate ancestor
-        log.debug(f'Could not find list for type {list_type}')
+        #log.debug(f'Could not find list for type {list_type}')
         return None
 
-    @property
+    @cached_property
     def children_keys(self):
         return {child.key for child in self.children} if self.children and len(self.children) else set()
 
@@ -399,12 +402,7 @@ class Entity(UserList):
     def class_depth(self):
         return self._class_depth()
 
-    @property
-    def descendant_keys(self):
-        raise Exception('descendant_keys is deprecated')
-        return set(self.descendants.keys())
-    
-    @property
+    @cached_property
     def descendants(self):
         d={
             self.key: self
@@ -441,7 +439,7 @@ class Entity(UserList):
                 return self.parent._get_ancestor(ent_type)
         return None
     
-    @property
+    @cached_property
     def children_set(self):
         return set(self.children) if self.children is not None else set()
 
@@ -501,37 +499,37 @@ class Entity(UserList):
     def get_children(self, child_type: str) -> List["Entity"]:
         from .imports import LISTCLASSES
 
-        log.debug(f"Getting children of type: {child_type}")
+        #log.debug(f"Getting children of type: {child_type}")
         child_type = self._rename_attr(child_type)
-        log.debug(f"Renamed child_type: {child_type}")
+        #log.debug(f"Renamed child_type: {child_type}")
         list_class = LISTCLASSES.get(child_type)
-        log.debug(f"List class for {child_type}: {list_class}")
+        #log.debug(f"List class for {child_type}: {list_class}")
         if list_class is None:
-            log.debug("List class is None, returning None")
+            #log.debug("List class is None, returning None")
             return None
 
         # same?
         if isinstance(self, list_class):
-            log.debug("Self is instance of list_class, returning self")
+            #log.debug("Self is instance of list_class, returning self")
             return self
 
         # above?
         parent = self.get_parent(child_type)
-        log.debug(f"Parent of type {child_type}: {parent}")
+        #log.debug(f"Parent of type {child_type}: {parent}")
         if parent is not None:
-            log.debug("Returning list with parent")
+            #log.debug("Returning list with parent")
             return list_class([parent], parent=parent.parent, text=self.text)
 
         if self.children is None or list_class is None:
-            log.debug("Children or list_class is None, returning None")
+            #log.debug("Children or list_class is None, returning None")
             return None
 
         # below?
         if self.children is not None and isinstance(self.children, list_class):
-            log.debug("Returning children as they are of the correct list_class")
+            #log.debug("Returning children as they are of the correct list_class")
             return self.children
 
-        log.debug("Recursively getting grandchildren")
+        #log.debug("Recursively getting grandchildren")
         if self.children is not None:
             grandchildren = []
             for child in self.children:
@@ -572,7 +570,7 @@ class Entity(UserList):
     #         [part for line in self.lines for part in line.lineparts], parent=self
     #     )
 
-    @property
+    @cached_property
     def wordforms_first(self):
         from .words.words import WordFormList
 
@@ -583,7 +581,7 @@ class Entity(UserList):
                 o.append(wforms[0])
         return WordFormList(o, parent=self)
 
-    @property
+    @cached_property
     def wordforms_all(self):
         from .words.words import WordFormList
 
@@ -594,7 +592,7 @@ class Entity(UserList):
                 o.append(wforms)
         return [WordFormList(ox, parent=self) for ox in o]
 
-    @property
+    @cached_property
     def wordform_matrix(self):
         return self.wordtokens.wordform_matrix
 
@@ -621,7 +619,7 @@ class Entity(UserList):
             return self.to_html()
 
 
-    @property
+    @cached_property
     def hash(self):
         """
         Get a hash value for the entity.
@@ -631,7 +629,7 @@ class Entity(UserList):
         """
         return encode_hash(self.key)
 
-    @property
+    @cached_property
     def stuffed(self):
         return stuff(self)
 
@@ -639,7 +637,7 @@ class Entity(UserList):
     def unstuffed(self):
         return unstuff(self.stuffed)
 
-    @property
+    @cached_property
     def serialized(self):
         return serialize(self)
 
@@ -693,11 +691,11 @@ class Entity(UserList):
         """
         return True
 
-    @property
+    @cached_property
     def id(self):
         return encode_hash(serialize(self.key))
 
-    @property
+    @cached_property
     def ancestors(self):
         l = []
         obj = self
@@ -706,7 +704,7 @@ class Entity(UserList):
             obj = obj.parent
         return l
 
-    @property
+    @cached_property
     def root(self):
         ancestors = self.ancestors
         return ancestors[0] if ancestors else self
@@ -734,7 +732,7 @@ class Entity(UserList):
         return key
 
 
-    @property
+    @cached_property
     def wordspan(self):
         try:
             return (self.wordtokens[0].num, self.wordtokens[-1].num)
@@ -824,7 +822,7 @@ class Entity(UserList):
 
 
     # @classmethod
-    # @log.debug
+    # @#log.debug
     # def from_dict(cls, data):
     #     """
     #     Create an Entity object from a JSON dictionary.
@@ -894,7 +892,7 @@ class Entity(UserList):
             return {**self.parent.prefix_attrs, **odx}
         return odx
 
-    @property
+    @cached_property
     def txt(self):
         """
         Get the text content of the entity.
@@ -902,7 +900,7 @@ class Entity(UserList):
         Returns:
             str: The text content of the entity.
         """
-        log.debug(type(self), self._txt)
+        #log.debug(type(self), self._txt)
         if self._txt:
             txt = self._txt
         elif self.children:
@@ -1032,10 +1030,10 @@ class Entity(UserList):
         if not incl_phons and self.child_type == "Phoneme":
             return [{**self.prefix_attrs}]
         good_children = [c for c in self.children if isinstance(c, Entity)]
-        # log.debug(f'good children of {type(self)} -> {good_children}')
+        # #log.debug(f'good children of {type(self)} -> {good_children}')
         if not multiple_wordforms and self.child_type == "WordForm" and good_children:
             good_children = good_children[:1]
-            # log.debug(f'good children now {good_children}')
+            # #log.debug(f'good children now {good_children}')
         if good_children:
             return [
                 {**self.prefix_attrs, **child.prefix_attrs, **grandchild_d}
@@ -1110,7 +1108,7 @@ class Entity(UserList):
         """
         return self.get_parent("Syllable")
 
-    @property
+    @cached_property
     def i(self):
         """
         Get the index of the entity in its parent's children list.
@@ -1127,7 +1125,7 @@ class Entity(UserList):
         except (IndexError, ValueError):
             return None
 
-    @property
+    @cached_property
     def num(self):
         """
         Get the 1-based index of the entity in its parent's children list.
@@ -1136,7 +1134,7 @@ class Entity(UserList):
             int: The 1-based index of the entity, or None if not found.
         """
         if self._num is not None: return self._num
-        # return
+        return
         return self.i + 1 if self.i is not None else None
 
     @property
@@ -1254,8 +1252,6 @@ class EntityList(Entity):
         """
         return None
 
-
-EntityCache = SimpleCache
 
 def get_class(class_name):
     from .imports import get_class

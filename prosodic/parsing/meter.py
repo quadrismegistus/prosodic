@@ -67,7 +67,7 @@ class Meter(Entity):
             parse_unit = parse_unit,
         )
 
-    @property
+    @cached_property
     def key(self):
         return serialize(self)
 
@@ -80,15 +80,15 @@ class Meter(Entity):
         """
         return super().to_dict(incl_attrs=True)
     
-    @property
+    @cached_property
     def constraint_funcs(self):
         return get_constraints(self.constraints)
 
-    @property
+    @cached_property
     def parse_constraint_funcs(self):
         return {cname:cfunc for cname,cfunc in self.constraint_funcs.items() if cfunc.scope!='position'}
     
-    @property
+    @cached_property
     def position_constraint_funcs(self):
         return {cname:cfunc for cname,cfunc in self.constraint_funcs.items() if cfunc.scope=='position'}
 
@@ -137,15 +137,12 @@ class Meter(Entity):
         #     self.parse_wordspan,
         #     parse_units.data,
         #     num_proc=num_proc,
+        #     total=lim,
         #     _force=force,
         #     desc=f'Parsing {self.parse_unit}s'
         # ).results_iter()
-        done=0
-        for wordtokens in progress_bar(parse_units, desc=f'Parsing {self.parse_unit}s'):
+        for wordtokens in progress_bar(parse_units[:lim], desc=f'Parsing {self.parse_unit}s'):
             yield self.parse_wordspan(wordtokens)
-            done+=1
-            if lim and done>=lim:
-                break
 
     # @stash.stashed_result
     def parse_wordspan(self, wordtokens: 'WordTokenList', **kwargs: Any) -> 'ParseList':
@@ -175,9 +172,9 @@ class Meter(Entity):
 
     def get_one_parse(self, wordtokens: 'WordTokenList'):
         for wtl in wordtokens.iter_wordtoken_matrix():
-            log.debug(f"Processing wordtoken list: {wtl}")
+            #log.debug(f"Processing wordtoken list: {wtl}")
             for scansion in self.get_pos_types(nsylls=wtl[0].num_sylls):
-                log.debug(f"Creating parse with scansion: {scansion}")
+                #log.debug(f"Creating parse with scansion: {scansion}")
                 parse = Parse(
                     wordtokens=wtl,
                     scansion=scansion,
@@ -199,12 +196,12 @@ class Meter(Entity):
         from .parses import Parse
         from .parselists import ParseList
 
-        log.debug(f"Starting parse_fast for wordtokens: {wordtokens}")
+        #log.debug(f"Starting parse_fast for wordtokens: {wordtokens}")
         parses = []
         for wtl in wordtokens.iter_wordtoken_matrix():
-            log.debug(f"Processing wordtoken list: {wtl}")
+            #log.debug(f"Processing wordtoken list: {wtl}")
             for scansion in self.get_pos_types(nsylls=wtl[0].num_sylls):
-                log.debug(f"Creating parse with scansion: {scansion}")
+                #log.debug(f"Creating parse with scansion: {scansion}")
                 parse = Parse(
                     wordtokens=wtl,
                     scansion=scansion,
@@ -212,13 +209,13 @@ class Meter(Entity):
                 )
                 parses.append(parse)
             if not self.resolve_optionality:
-                log.debug("Breaking loop as resolve_optionality is False")
+                #log.debug("Breaking loop as resolve_optionality is False")
                 break
 
-        log.debug(f"Created initial ParseList with {len(parses)} parses")
+        #log.debug(f"Created initial ParseList with {len(parses)} parses")
         parses = ParseList(parses, parse_unit=self.parse_unit, parent=wordtokens)
         for n in range(1000):
-            log.debug(f"Starting iteration {n} of parse branching")
+            #log.debug(f"Starting iteration {n} of parse branching")
             parses = ParseList(
                 [
                     newparse
@@ -231,19 +228,19 @@ class Meter(Entity):
                 parse_unit=self.parse_unit,
                 parent=wordtokens,
             )
-            log.debug(f"After branching, ParseList has {len(parses)} parses")
+            #log.debug(f"After branching, ParseList has {len(parses)} parses")
             parses.bound(progress=False)
             if all(p.is_complete for p in parses):
-                log.debug("All parses are complete, breaking loop")
+                #log.debug("All parses are complete, breaking loop")
                 break
         else:
             log.error(f"did not complete parsing: {wordtokens}")
         
-        log.debug("Performing final bound and rank operations")
+        #log.debug("Performing final bound and rank operations")
         parses.bound(progress=False)
         parses.rank()
         wordtokens._parses = parses
-        log.debug(f"Returning ParseList with {len(parses)} parses")
+        #log.debug(f"Returning ParseList with {len(parses)} parses")
         return wordtokens._parses
 
     # slower, exhaustive parser

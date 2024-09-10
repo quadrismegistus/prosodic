@@ -148,22 +148,14 @@ class LanguageModel:
 
     def get_sylls_ipa_str_tts(self, token, force=False):
         from phonemizer.separator import Separator
-
-        with EntityCache() as cache:
-            cache_key = hashstr(
-                "TTS", self.lang_espeak if self.lang_espeak else self.lang, token
-            )
-            obj = cache.get(cache_key)
-            if force or not obj:
-                log.trace("phonemizing")
-                sep = Separator(phone=" ", word="|", syllable=".")
-                res = self.phonemizer.phonemize(
-                    [token],
-                    separator=sep,
-                    strip=True,
-                )
-                obj = res[0]
-                cache[cache_key] = obj
+        log.trace("phonemizing")
+        sep = Separator(phone=" ", word="|", syllable=".")
+        res = self.phonemizer.phonemize(
+            [token],
+            separator=sep,
+            strip=True,
+        )
+        obj = res[0]
         return obj
 
     @cache

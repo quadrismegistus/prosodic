@@ -11,7 +11,7 @@ class TextModel(WordTokenList):
     is_text = True
     prefix = "text"
 
-    @log.debug
+    # @#log.debug
     def __init__(
         self,
         children: Optional[list] = [],
@@ -52,35 +52,35 @@ class TextModel(WordTokenList):
             )
         self._text = None
 
-        log.debug("Cleaning and getting text")
+        #log.debug("Cleaning and getting text")
         txt = clean_text(get_txt(txt, fn)).strip()
 
-        log.debug(f"Cleaned text: {txt[:100]}...")
+        #log.debug(f"Cleaned text: {txt[:100]}...")
 
         self._txt = txt
         self._fn = fn
 
-        log.debug(f"Setting language: {lang}")
+        #log.debug(f"Setting language: {lang}")
 
         self.lang = lang if lang else detect_lang(txt)
-        log.debug(f"Language set to: {self.lang}")
+        #log.debug(f"Language set to: {self.lang}")
 
         was_quiet = logmap.quiet
-        log.debug(f"Was quiet: {was_quiet}")
+        #log.debug(f"Was quiet: {was_quiet}")
 
         if not children:
-            log.debug("No children provided, processing text")
+            #log.debug("No children provided, processing text")
 
             numwords = len(txt.split())
-            log.debug(f"Number of words: {numwords}")
+            #log.debug(f"Number of words: {numwords}")
 
             if was_quiet and numwords > 1000:
-                log.debug("Setting logmap to not quiet due to large text")
+                #log.debug("Setting logmap to not quiet due to large text")
                 logmap.quiet = False
 
-            log.debug(f"building text with {numwords:,} words")
+            #log.debug(f"building text with {numwords:,} words")
             if tokens_df is None:
-                log.debug("Tokenizing text into DataFrame")
+                #log.debug("Tokenizing text into DataFrame")
                 tokens_df = tokenize_sentwords_df(txt)
             children = [
                 WordToken(lang=self.lang, parent=self, text=self, **row.to_dict())
@@ -90,7 +90,7 @@ class TextModel(WordTokenList):
                     desc='Building long text'
                 )
             ]
-        log.debug("Initializing parent class")
+        #log.debug("Initializing parent class")
         super().__init__(children=children, parent=parent, **kwargs)
 
     
@@ -137,7 +137,7 @@ class TextModel(WordTokenList):
     def key(self):
         return f'{self.nice_type_name}({self.hash})'
 
-    
+    # @stash.stashed_result
     def parse(self, combine_by: Literal['line','sent'] = DEFAULT_COMBINE_BY, num_proc=None, lim=None, force=False, meter=None, **meter_kwargs):
         """
         Parse the text.
@@ -194,7 +194,7 @@ class TextModel(WordTokenList):
 
         
 
-@stash.stashed_result
+# @stash.stashed_result
 def Text(
     txt: str = "",
     fn: str = "",

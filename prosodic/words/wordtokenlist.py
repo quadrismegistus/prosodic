@@ -41,7 +41,7 @@ class WordTokenList(EntityList):
     def words(self):
         return self
 
-    def to_dict(self, incl_children=False, **kwargs):
+    def to_dict(self, incl_children=True, **kwargs):
         return {
             self.__class__.__name__: {
                 "children": [wtok.to_dict(incl_children=incl_children) for wtok in self]
@@ -67,13 +67,13 @@ class WordTokenList(EntityList):
     def trees(self):
         return self.sents.trees
 
-    @property
+    @cached_property
     def grid(self):
         from ..sents.grids import SentenceGrid
 
         return SentenceGrid.from_wordtokens(self, text=self.text)
 
-    @property
+    @cached_property
     def num_with_forms(self):
         return len([tok for tok in self if tok.has_wordform])
 
@@ -134,7 +134,7 @@ class WordTokenList(EntityList):
         """
         self.get_meter(**meter_kwargs)
 
-    @property
+    @cached_property
     def key(self):
         return f'{self.text.key+"." if self.text and self.text is not self else ""}{self.nice_type_name}{self.num}'
         

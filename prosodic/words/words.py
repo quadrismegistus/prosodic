@@ -65,7 +65,7 @@ class WordToken(Entity):
     def to_dict(
         self,
         incl_num=True,
-        incl_children=True,
+        incl_children=False,
         incl_txt=True,
         incl_attrs=True,
         **kwargs,

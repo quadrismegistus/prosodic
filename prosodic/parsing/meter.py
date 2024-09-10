@@ -133,16 +133,17 @@ class Meter(Entity):
             log.warning(f'cannot parse {text}')
             return
 
-        # yield from stash.map(
-        #     self.parse_wordspan,
-        #     parse_units.data,
-        #     num_proc=num_proc,
-        #     total=lim,
-        #     _force=force,
-        #     desc=f'Parsing {self.parse_unit}s'
-        # ).results_iter()
-        for wordtokens in progress_bar(parse_units[:lim], desc=f'Parsing {self.parse_unit}s'):
-            yield self.parse_wordspan(wordtokens)
+        yield from stash.map(
+            self.parse_wordspan,
+            parse_units.data,
+            num_proc=num_proc,
+            total=lim,
+            _force=force,
+            desc=f'Parsing {self.parse_unit}s'
+        ).results_iter()
+        
+        # for wordtokens in progress_bar(parse_units[:lim], desc=f'Parsing {self.parse_unit}s'):
+        #     yield self.parse_wordspan(wordtokens)
 
     # @stash.stashed_result
     def parse_wordspan(self, wordtokens: 'WordTokenList', **kwargs: Any) -> 'ParseList':

@@ -137,7 +137,6 @@ class TextModel(WordTokenList):
     def key(self):
         return f'{self.nice_type_name}({self.hash})'
 
-    # @stash.stashed_result
     def parse(self, combine_by: Literal['line','sent'] = DEFAULT_COMBINE_BY, num_proc=None, lim=None, force=False, meter=None, **meter_kwargs):
         """
         Parse the text.

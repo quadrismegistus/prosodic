@@ -477,7 +477,7 @@ class WordFormList(EntityList):
 
 # @cache
 # @profile
-# @stash.stashed_result
+@stash.stashed_result
 def Word(
     token: str,
     lang: str = DEFAULT_LANG,

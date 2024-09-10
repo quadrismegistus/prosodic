@@ -67,9 +67,11 @@ class Meter(Entity):
             parse_unit = parse_unit,
         )
 
-    @cached_property
+    @property
     def key(self):
-        return serialize(self)
+        if self._key is None:
+            self._key = f'{self.prefix}({self.hash})'
+        return self._key
 
     def to_dict(self) -> Dict[str, Any]:
         """

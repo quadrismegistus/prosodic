@@ -1,6 +1,5 @@
-from typing import List, Optional, Any
-from ..imports import *
-from .phonemes import PhonemeList
+from . import *
+
 
 class Syllable(Entity):
     """
@@ -14,8 +13,16 @@ class Syllable(Entity):
     prefix: str = "syll"
     child_type: str = "Phoneme"
 
-    @profile
-    def __init__(self, txt: str = None, ipa: Optional[str] = None, parent: Optional[Any] = None, children: List[Any] = [], **kwargs: Any) -> None:
+    def __init__(
+        self,
+        children: List[Entity] = [],
+        txt: str = None,
+        ipa: Optional[str] = None,
+        parent: Optional[Any] = None,
+        text=None,
+        key=None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize a Syllable object.
 
@@ -29,20 +36,39 @@ class Syllable(Entity):
         from .phonemes import Phoneme
         from gruut_ipa import Pronunciation
 
+        log.info(
+            f"I am {self.__class__.__name__} with parent {parent.__class__.__name__}"
+        )
+
         assert ipa or children
-        if ipa and not children:
+        
+        super().__init__(
+            txt=txt,
+            children=children,
+            parent=parent,
+            text=text,
+            key=key,
+            ipa=ipa,
+            **kwargs,
+        )
+        
+        if ipa and not self.children:
             sipa = "".join(x for x in ipa if x.isalpha())
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
-            children = [Phoneme(phon) for phon in phones]
+            children = PhonemeList(parent=self)
+            for phon in phones:
+                children.append(
+                    Phoneme(phon, text=text, num=len(children) + 1, parent=children)
+                )
         elif children and not ipa:
-            ipa = ''.join(phon.txt for phon in children)
-        self.ipa=ipa
-        super().__init__(txt=txt, children=children, parent=parent, **kwargs)
+            ipa = "".join(phon.txt for phon in children)
+        
+        log.info(f'I am {self.__class__.__name__} with parent {self.parent.__class__.__name__} and children {self.children.__class__.__name__}')
 
     def to_dict(self) -> dict:
         return super().to_dict(incl_txt=True)
-    
+
     @property
     def stress(self) -> str:
         """
@@ -52,16 +78,16 @@ class Syllable(Entity):
             The stress level as a string.
         """
         return get_syll_ipa_stress(self.ipa)
-    
+
     @property
     def weight(self):
-        return 'L' if not self.is_heavy else 'H'
-    
+        return "L" if not self.is_heavy else "H"
+
     @property
     def stress_num(self) -> float:
-        if self.stress == 'P':
+        if self.stress == "P":
             return 1.0
-        elif self.stress == 'S':
+        elif self.stress == "S":
             return 0.5
         else:
             return 0.0
@@ -209,7 +235,7 @@ class Syllable(Entity):
         return PhonemeList(p for p in self.children if p.is_coda)
 
     @cache
-    def rime_distance(self, syllable: 'Syllable') -> float:
+    def rime_distance(self, syllable: "Syllable") -> float:
         """
         Calculate the rime distance between this syllable and another.
 
@@ -224,4 +250,5 @@ class Syllable(Entity):
 
 class SyllableList(EntityList):
     """A list of Syllable objects."""
+
     pass

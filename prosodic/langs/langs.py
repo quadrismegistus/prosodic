@@ -255,7 +255,7 @@ class LanguageModel:
         meta = {**meta_ipa}#, 'sylls_text_origin':'heuristic'}
         return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), meta
     
-    def get(self, *args, **kwargs):
+    def get(self, *args, _force=False, **kwargs):
       return self.get_sylls_ll(*args, **kwargs)
 
 

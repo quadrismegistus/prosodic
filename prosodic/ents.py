@@ -1,6 +1,8 @@
 from typing import Any, List, Type
 from .imports import *
 
+from UltraDict import UltraDict
+OBJECTS = UltraDict()
 
 class Entity(UserList):
     """
@@ -29,42 +31,59 @@ class Entity(UserList):
     is_text = False
     sep = ""
 
-    # Define parent and child relationships
-    _parent_types = {
-        "text": "TextModel",
-        "stanza": "Stanza",
-        "line": "Line",
-        "wordtoken": "WordToken",
-        "wordtype": "WordType",
-        "wordform": "WordForm",
-        "syllable": "Syllable",
-    }
 
-    _child_types = {
-        "TextModel": ["stanzas", "Stanza", "StanzaList"],
-        "Stanza": ["lines", "Line", "LineList"],
-        "Line": ["wordtokens", "WordToken", "WordTokenList"],
-        "WordToken": ["wordtypes", "WordType", "WordTypeList"],
-        "WordType": ["wordforms", "WordForm", "WordFormList"],
-        "WordForm": ["syllables", "Syllable", "SyllableList"],
-        "Syllable": ["phonemes", "PhonemeClass", "PhonemeList"],
-    }
+    def __init__(self, children=[], txt = "", parent=None, num=None, text=None, key=None, **kwargs):
+        """
+        Initialize an Entity object.
 
-    # @log.info
+        Args:
+            txt (str): The text content of the entity.
+            children (list): List of child entities.
+            parent (Entity): The parent entity.
+            **kwargs: Additional attributes to set on the entity.
+        """
+        global OBJECTS
+        self._attrs = kwargs
+        self._num = num
+        print(num,'???')
+        if num is None: stopx
+        self._mtr = None
+        self.parent = parent
+        self._text = text
+        self._key = key
+        self._txt = txt if txt else ""
+        for k, v in self._attrs.items():
+            try:
+                setattr(self, k, v)
+            except Exception as e:
+                #log.debug(e)
+                pass
+
+        if not children:
+            self.children = self.children_type(parent=self)
+        elif not isinstance(children, EntityList):
+            self.children = (
+                self.children_type(children, parent=self)
+                if self.children_type is not None
+                else None
+            )
+        else:
+            self.children = children
+            self.children.parent = self
+        
+        if self.parent is not None:
+            OBJECTS[self.key] = self
+
+
+
+
     def copy(self):
         new = self.__class__.__new__(self.__class__)
         new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
         if self.children is not None:
             new.children = self.children.copy() if isinstance(self.children, EntityList) else [ent.copy() for ent in self.children]
         return new
-        # return unstuff(stuff(self))
-        # data = self.to_dict()
-        # if 'children' in data:
-        #     if isinstance(data['children'],list):
-        #         data['children'] = [x.copy() for x in data['children']]
-        #     elif isinstance(data['children'],EntityList):
-        #         data['children'] = data['children'].copy()
-        # return self.__class__(**data)
+
     
     def find(self, ent):
         if ent.class_depth < 2:
@@ -143,40 +162,6 @@ class Entity(UserList):
     #     for child_prop, (list_name, child_type, list_type) in cls._child_types.items():
     #         setattr(cls, list_name, property(lambda self, ct=child_type: self.get_children(ct)))
 
-    def __init__(self, txt: str = "", children=[], parent=None, num=None, text=None, **kwargs):
-        """
-        Initialize an Entity object.
-
-        Args:
-            txt (str): The text content of the entity.
-            children (list): List of child entities.
-            parent (Entity): The parent entity.
-            **kwargs: Additional attributes to set on the entity.
-        """
-        self._attrs = kwargs
-        self._num = num
-        self._mtr = None
-        self.parent = parent
-        self._text = text
-        self._txt = txt if txt else ""
-        for k, v in self._attrs.items():
-            try:
-                setattr(self, k, v)
-            except Exception as e:
-                #log.debug(e)
-                pass
-
-        if not isinstance(children, EntityList):
-            self.children = (
-                self.children_type(children, parent=self)
-                if self.children_type is not None
-                else None
-            )
-        else:
-            self.children = children
-            self.children.parent = self
-        
-        
 
     @property
     def is_wordtokenlist(self):
@@ -220,7 +205,7 @@ class Entity(UserList):
             # "is_syll": "is_syllable",
             # "is_sylls": "is_syllables",
             # "num_sylls": "num_syllables",
-            # "is_phon": "is_phonemeclass",
+            # "is_phon": "is_phoneme",
             # "is_phons": "is_phonemes",
             # "num_phons": "num_phonemes",
             "sentence":"sent",
@@ -734,12 +719,16 @@ class Entity(UserList):
         except AttributeError:
             return None
 
-    @cached_property
+    @property
     def key(self):
-        key=f"{self.parent.key}.{self.nice_type_name}"
-        if self.num is not None:
-            key+=f'{self.num}'
-        return key
+        if self._key is None:
+            log.info(f'I am {self.__class__.__name__} with parent {self.parent.__class__.__name__}')
+            key=f"{self.parent.key}.{self.nice_type_name}"
+            if self.num is not None:
+                key+=f'{self.num}'
+            self._key = key
+            log.info(f'I am {self.__class__.__name__} with key {self._key}\n')
+        return self._key
 
 
     @cached_property
@@ -762,7 +751,7 @@ class Entity(UserList):
         Returns:
             dict: A dictionary representation of the entity.
         """
-        pkgd = {}
+        pkgd = {'key':self.key}
         if incl_num and self._num:
             pkgd['num'] = self._num
         if incl_txt:
@@ -817,6 +806,13 @@ class Entity(UserList):
             pprint(data)
         assert len(data) == 1, "Should only be classname in key"
         cls_name,cls_data = next(iter(data.items()))
+
+        key = cls_data.get('key')
+        print(f'class: {cls_name}, key: {key}')
+        if key is not None and key in OBJECTS:
+            print(f'returning OBJECTS[{key}]')
+            return OBJECTS[key]
+        
         cls2 = GLOBALS.get(cls_name)
         if cls is not cls2:
             return cls2.from_dict(data)
@@ -860,7 +856,7 @@ class Entity(UserList):
 
     def __reduce__(self):
         # Return a tuple of (callable, args) that allows recreation of this object
-        return (self.__class__.from_dict, (self.to_dict(),))
+        return (Entity.from_dict, (self.to_dict(),))
 
     @property
     def attrs(self):
@@ -959,7 +955,7 @@ class Entity(UserList):
             ):
                 lines.append(
                     child.inspect(indent=indent + 4, incl_phons=incl_phons).replace(
-                        "PhonemeClass", "Phoneme"
+                        "Phoneme", "Phoneme"
                     )
                 )
         # self.__class__.__name__ in {'Text', 'Stanza', 'Line'}
@@ -1135,7 +1131,7 @@ class Entity(UserList):
         except (IndexError, ValueError):
             return None
 
-    @cached_property
+    @property
     def num(self):
         """
         Get the 1-based index of the entity in its parent's children list.
@@ -1188,18 +1184,20 @@ class EntityList(Entity):
 
     @property
     def is_text_list(self):
-        return self.parent and self.parent.class_depth < 2
+        return self.parent and self.parent.is_text
 
-    @cached_property
+    @property
     def key(self):
-        if self.is_text_list and self.children and len(self.children):
-            w1,w2=self.children[0].key, self.children[-1].key
-            w1='.'.join(w1.split('.')[1:])
-            w2='.'.join(w2.split('.')[1:])
-            textkey=self.text.key+'.' if self.text is not self else ''
-            return f'{textkey}{self.nice_type_name}({w1}, {w2})'
-        else:
-            return f'{self.parent.key}.{self.nice_type_name}'
+        if self._key is None:
+            if self.is_text_list and self.children and len(self.children):
+                w1,w2=self.children[0].key, self.children[-1].key
+                w1='.'.join(w1.split('.')[1:])
+                w2='.'.join(w2.split('.')[1:])
+                textkey=self.text.key+'.' if self.text is not self else ''
+                self._key = f'{textkey}{self.nice_type_name}({w1}, {w2})'
+            else:
+                self._key = f'{self.parent.key}.{self.nice_type_name}'
+        return self._key
 
     
 
@@ -1221,6 +1219,7 @@ class EntityList(Entity):
             parent (Entity): The parent entity.
             **kwargs: Additional attributes to set on the entity.
         """
+        global OBJECTS
         self._num=num
         self._text = text
         self.parent = parent
@@ -1229,6 +1228,7 @@ class EntityList(Entity):
         for child in self.children:
             if child.parent is None:
                 child.parent = self
+                OBJECTS[child.key] = child
 
         self._attrs = kwargs
         self._txt = txt

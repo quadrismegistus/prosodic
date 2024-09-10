@@ -1,7 +1,7 @@
 from ..imports import *
 
 
-class PhonemeClass(Entity):
+class Phoneme(Entity):
     """
     Represents a phoneme with various attributes.
 
@@ -11,27 +11,9 @@ class PhonemeClass(Entity):
 
     prefix: str = "phon"
 
-    # @profile
-    # def __init__(self, txt: str, **kwargs: Any) -> None:
-    #     """
-    #     Initialize a PhonemeClass instance.
-
-    #     Args:
-    #         txt (str): The text representation of the phoneme.
-    #         **kwargs: Additional keyword arguments.
-    #     """
-    #     self._feats = {}
-    #     super().__init__(txt=txt)
-    #     for k,v in kwargs.items():
-    #         try:
-    #             setattr(self,k,v)
-    #         except Exception:
-    #             pass
-
     @cached_property
     def feats(self):
         return get_phoneme_feats(self.txt)
-        
 
     @cached_property
     def is_vowel(self) -> Optional[bool]:
@@ -135,33 +117,6 @@ def get_phoneme_feats(phon: str) -> Dict[str, Any]:
     return phond
 
 
-def Phoneme(txt: str, **kwargs: Any) -> PhonemeClass:
-    """
-    Create a Phoneme object from text.
-
-    Args:
-        txt (str): The text representation of the phoneme.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        PhonemeClass: A PhonemeClass instance representing the phoneme.
-    """
-    phon = txt
-    ft = get_phoneme_featuretable()
-    phonl = ft.word_fts(phon)
-    if not phonl:
-        # log.error(f'What is this phoneme? {phon}')
-        if phon in get_ipa_info():
-            phond = get_ipa_info().get(phon, {})
-        else:
-            # log.error(f"What is this phoneme? No features found for it: {phon}")
-            phond = {}
-    else:
-        phond = phonl[0].data
-    phonobj = PhonemeClass(phon, **phond)
-    return phonobj
-
-
 FEATS_PANPHON: List[str] = [
     "num",
     "txt",
@@ -219,12 +174,12 @@ class PhonemeList(EntityList):
     #     """
     #     super().__init__(*args, **kwargs)
 
-    #     def do_phons(phons: List[PhonemeClass]) -> None:
+    #     def do_phons(phons: List[Phoneme]) -> None:
     #         """
     #         Process a list of phonemes to set syllable position attributes.
 
     #         Args:
-    #             phons (List[PhonemeClass]): A list of phonemes to process.
+    #             phons (List[Phoneme]): A list of phonemes to process.
     #         """
     #         vowel_yet = False
     #         for phon in phons:

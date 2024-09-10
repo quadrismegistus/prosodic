@@ -6,4 +6,4 @@ class EnglishLanguage(LanguageModel):
     lang_espeak = 'en-us'
 
 @cache
-def English(): return FinnishLanguage()
+def English(): return EnglishLanguage()

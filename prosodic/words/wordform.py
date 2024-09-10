@@ -1,0 +1,273 @@
+from . import *
+
+
+class WordForm(Entity):
+    """Represents a specific form of a word."""
+
+    prefix = "wordform"
+    child_type: str = "Syllable"
+
+    @profile
+    def __init__(
+        self,
+        children: List["Syllable"] = [],
+        txt: str = None,
+        sylls_ipa: Union[str, List[str]] = [],
+        sylls_text: Union[str, List[str]] = [],
+        syll_sep: str = ".",
+        num=None,
+        text=None,
+        key=None,
+        parent=None,
+        **kwargs,
+    ):
+        """
+        Initialize a WordForm object.
+
+        Args:
+            txt (str): The text of the word form.
+            sylls_ipa (Union[str, List[str]], optional): IPA representation of syllables. Defaults to [].
+            sylls_text (Union[str, List[str]], optional): Text representation of syllables. Defaults to [].
+            children (List[Syllable], optional): List of child Syllable objects. Defaults to [].
+            syll_sep (str, optional): Syllable separator. Defaults to ".".
+        """
+        from .syllables import Syllable
+        from ..langs import syll_ipa_str_is_stressed
+
+        if not children:
+            if sylls_text and sylls_ipa:
+                sylls_ipa = (
+                    sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
+                )
+                sylls_text = (
+                    sylls_text.split(syll_sep)
+                    if type(sylls_text) == str
+                    else (sylls_text if sylls_text else sylls_ipa)
+                )
+                children = SyllableList(parent=self)
+                log.info(f'I am {self.__class__.__name__} with parent {parent.__class__.__name__} and children {children.__class__.__name__}')
+                for syll_str, syll_ipa in zip(sylls_text, sylls_ipa):
+                    children.append(
+                        Syllable(
+                            txt=syll_str,
+                            ipa=syll_ipa,
+                            text=text,
+                            num=len(children)+1,
+                            parent=children,
+                        )
+                    )
+        else:
+            sylls_ipa = [syll.ipa for syll in children]
+            sylls_text = [syll.txt for syll in children]
+
+        super().__init__(
+            txt=txt,
+            num=num,
+            children=children,
+            ipa=".".join(sylls_ipa),
+            stress="".join(syll.stress for syll in children),
+            weight="".join(syll.weight for syll in children),
+            sylls_ipa=[syll.ipa for syll in children],
+            sylls_text=[syll.txt for syll in children],
+            stress_text=".".join(
+                [
+                    (
+                        syll_text.upper()
+                        if syll_ipa_str_is_stressed(syll_ipa)
+                        else syll_text.lower()
+                    )
+                    for syll_text, syll_ipa in zip(sylls_text, sylls_ipa)
+                ]
+            ),
+            text=text,
+            key=key,
+            parent=parent,
+            **kwargs,
+        )
+
+    # def to_dict(self) -> dict:
+    #     """
+    #     Convert the WordForm to a JSON-serializable dictionary.
+
+    #     Returns:
+    #         dict: A dictionary representation of the WordForm.
+    #     """
+    #     return super().to_dict(
+    #         # sylls_ipa=self.sylls_ipa,
+    #         # sylls_text=self.sylls_text,
+    #         # no_children=True
+    #     )
+
+    # @property
+    # def wtoken(self) -> 'WordToken':
+    #     if self.parent:
+    #         return self.parent.wtoken
+    #     return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
+
+    @property
+    def syllables(self) -> List["Syllable"]:
+        return self.children
+
+    @property
+    def token_stress(self) -> str:
+        return SYLL_SEP.join(
+            syll.txt.upper() if syll.is_stressed else syll.txt.lower()
+            for syll in self.children
+        )
+
+    @property
+    def is_functionword(self) -> bool:
+        return len(self.children) == 1 and not self.children[0].is_stressed
+
+    @property
+    def num_sylls(self) -> int:
+        return len(self.children)
+
+    @property
+    def num_stressed_sylls(self) -> int:
+        return len([syll for syll in self.children if syll.is_stressed])
+
+    @property
+    def is_stressed(self):
+        return self.num_stressed_sylls > 0
+
+
+    def to_hash(self) -> str:
+        return hashstr(self.key)
+
+    @property
+    def rime(self) -> Optional["PhonemeList"]:
+        """
+        Get the rime of the word form.
+
+        Returns:
+            PhonemeList: The rime of the word form, or None if no rime can be determined.
+        """
+        from .phonemes import PhonemeList
+
+        sylls = []
+        for syll in reversed(self.children):
+            sylls.insert(0, syll)
+            if syll.stress == "P":
+                break
+        if not sylls:
+            return
+        o = sylls[0].rime.data + [phon for syll in sylls[1:] for phon in syll.children]
+        return PhonemeList(o)
+
+    @cache
+    def rime_distance(self, wordform: "WordForm") -> float:
+        """
+        Calculate the rime distance between this word form and another.
+
+        Args:
+            wordform (WordForm): The word form to compare with.
+
+        Returns:
+            float: The rime distance between the two word forms.
+        """
+        from scipy.spatial.distance import euclidean
+
+        if self.txt == wordform.txt:
+            return np.nan
+        # return self.syllables[-1].rime_distance(wordform.syllables[-1])
+
+        df1 = self.rime.df
+        df2 = wordform.rime.df
+
+        if list(df1.reset_index().phon_txt) == list(df2.reset_index().phon_txt):
+            return 0
+
+        s1 = df1.mean(numeric_only=True)
+        s2 = df2.mean(numeric_only=True)
+        keys = [
+            k
+            for k in set(s1.index) & set(s2.index)
+            if k.startswith("phon_")
+            and not k.endswith("_num")
+            and not k.startswith("phon_is_")
+        ]
+        s1x = s1.loc[keys]
+        s2x = s2.loc[keys]
+        dist = euclidean(s1x, s2x)
+        return dist
+
+
+
+
+@total_ordering
+class WordFormList(EntityList):
+    """A list of WordForm objects with additional properties and comparison methods."""
+
+    # def __repr__(self) -> str:
+    #     """
+    #     Get a string representation of the WordFormList.
+
+    #     Returns:
+    #         str: A string representation of the WordFormList.
+    #     """
+    #     return " ".join(wf.token_stress for wf in self.data)
+
+    @property
+    def sents(self):
+        return unique_list(wtok.sent for wtok in self)
+
+    @property
+    def slots(self) -> List["Syllable"]:
+        return self.wordforms.sylls.data
+
+    @property
+    def num_stressed_sylls(self) -> int:
+        return sum(
+            int(syll.is_stressed)
+            for wordform in self.data
+            for syll in wordform.children
+        )
+
+    @property
+    def num_sylls(self) -> int:
+        return sum(1 for wordform in self.data for syll in wordform.children)
+
+    @property
+    def first_syll(self) -> Optional["Syllable"]:
+        for wordform in self.data:
+            for syll in wordform.children:
+                return syll
+
+    @property
+    def sort_key(self) -> tuple:
+        sylls_is_odd = int(bool(self.num_sylls % 2))
+        first_syll_stressed = (
+            2 if self.first_syll is None else int(self.first_syll.is_stressed)
+        )
+        return (
+            sylls_is_odd,
+            self.num_sylls,
+            self.num_stressed_sylls,
+            first_syll_stressed,
+        )
+
+    def __lt__(self, other: "WordFormList") -> bool:
+        """
+        Compare this WordFormList with another for ordering.
+
+        Args:
+            other (WordFormList): The WordFormList to compare with.
+
+        Returns:
+            bool: True if this WordFormList is less than the other, False otherwise.
+        """
+        return self.sort_key < other.sort_key
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Check if this WordFormList is equal to another object.
+
+        Args:
+            other (object): The object to compare with.
+
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+        """
+        # return self.sort_key==other.sort_key
+        return self is other

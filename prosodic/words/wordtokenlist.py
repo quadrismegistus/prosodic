@@ -6,7 +6,7 @@ class WordTokenList(EntityList):
 
     def __init__(
         self,
-        children: List["WordToken"],
+        children: List["WordToken"] = [],
         parent=None,
         text=None,
         num=None,
@@ -44,6 +44,7 @@ class WordTokenList(EntityList):
     def to_dict(self, incl_children=False, **kwargs):
         return {
             self.__class__.__name__: {
+                "key": self.key,
                 "children": [wtok.to_dict(incl_children=incl_children) for wtok in self]
             }
         }
@@ -134,9 +135,11 @@ class WordTokenList(EntityList):
         """
         self.get_meter(**meter_kwargs)
 
-    @property
-    def key(self):
-        return f'{self.text.key+"." if self.text and self.text is not self else ""}{self.nice_type_name}{self.num}'
+    # @property
+    # def key(self):
+    #     if self._key is None:
+    #         self._key = f'{self.text.key+"." if self.text and self.text is not self else ""}{self.nice_type_name}{self.num}'
+    #     return self._key
         
 
     @property

@@ -39,8 +39,6 @@ import sys
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 import csv
 from hashstash import HashStash, log, logger, get_obj_addr, progress_bar, stuff, serialize, unstuff, deserialize, encode_hash, call_function_politely
-
-
 from importlib import resources
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
@@ -58,7 +56,7 @@ PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-stash = HashStash(PATH_HOME_DATA_CACHE, engine='pairtree', serializer='pickle', compress='lz4', b64=True)
+stash = HashStash(PATH_HOME_DATA_CACHE, engine='memory', serializer='pickle', compress='lz4', b64=True)
 
 import panphon
 import panphon.sonority
@@ -68,6 +66,7 @@ USE_CACHE = True
 USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
+SYLL_SEP = "."
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
@@ -288,7 +287,7 @@ CLASSNAMES = {
     WordType: "wordtype",
     WordForm: "wordform",
     Syllable: "syllable",
-    PhonemeClass: "phoneme",
+    Phoneme: "phoneme",
 }
 
 CHILDCLASSES = {
@@ -300,8 +299,8 @@ CHILDCLASSES = {
     "word": WordType,
     "wordtype": WordForm,
     "wordform": Syllable,
-    "syllable": PhonemeClass,
-    "syll": PhonemeClass,
+    "syllable": Phoneme,
+    "syll": Phoneme,
     "phoneme": None,
     "wordformlist": WordForm,
     "parselist": Parse,
@@ -317,7 +316,7 @@ CHILDCLASSLISTS = {
     WordType: WordFormList,
     WordForm: SyllableList,
     Syllable: PhonemeList,
-    PhonemeClass: None,
+    Phoneme: None,
 
     Parse: ParsePositionList,
     ParsePosition: ParseSlotList
@@ -335,8 +334,8 @@ SELFCLASSES = {
     "wordform": WordForm,
     "syllable": Syllable,
     "syll": Syllable,
-    "phoneme": PhonemeClass,
-    "phonemeclass": PhonemeClass,
+    "phoneme": Phoneme,
+    "phoneme": Phoneme,
 }
 
 PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words", "lineparts", "sentparts", "sentences", "sentences"}
@@ -385,7 +384,7 @@ CLASSPREFIXES = {
     WordType: "Type",
     WordForm: "Form",
     Syllable: "Syll",
-    PhonemeClass: "Phon",
+    Phoneme: "Phon",
     Parse: "Parse",
     ParsePosition: "MPos",
     ParseSlot: "MSlot",
@@ -428,7 +427,7 @@ CLASS_DEPTHS = {
     SyllableList: 7,
     Syllable: 8,
     PhonemeList: 9,
-    PhonemeClass: 10,
+    Phoneme: 10,
     
     ParseList: 1,
     Parse: 1,
@@ -480,8 +479,8 @@ def get_class(class_name):
         'form': WordForm,
         'syllable': Syllable,
         'syll': Syllable,
-        'phoneme': PhonemeClass,
-        'phon': PhonemeClass,
+        'phoneme': Phoneme,
+        'phon': Phoneme,
         'parse': Parse,
         'parseposition': ParsePosition,
         'position': ParsePosition,

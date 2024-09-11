@@ -70,18 +70,17 @@ class Meter(Entity):
     @property
     def key(self):
         if self._key is None:
-            params_str = f", ".join(f"{k}={repr(v)}" for k, v in self._attrs.items())
-            self._key = f'{self.nice_type_name}({params_str})'
+            self._key = f'{self.nice_type_name}({encode_hash(serialize(self._attrs))})'
         return self._key
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, **kwargs) -> Dict[str, Any]:
         """
         Convert the Meter object to JSON format.
 
         Returns:
             dict: JSON representation of the Meter object.
         """
-        return super().to_dict(incl_attrs=True)
+        return super().to_dict(incl_attrs=True, **kwargs)
     
     @cached_property
     def constraint_funcs(self):
@@ -128,25 +127,32 @@ class Meter(Entity):
 
     def parse_text(self, text: 'WordTokenList', num_proc=1, force:bool=False, lim=None):
         from .parselists import ParseListList
-        return ParseListList(self.parse_text_iter(text, lim=lim), parent=text)
+        pll = ParseListList(parent=text)
+        for i,pl in enumerate(self.parse_text_iter(text, num_proc=num_proc, force=force, lim=lim)):
+            pl._num = i+1
+            pll.append(pl)
+        pll.register_objects()
+        return pll
         
     def parse_text_iter(self, text: 'WordTokenList', num_proc=1, force:bool = False, lim=None):
         parse_units = self.get_parse_units(text)
         if parse_units is None:
             log.warning(f'cannot parse {text}')
             return
-
-        yield from stash.map(
-            self.parse_wordspan,
-            parse_units.data,
-            num_proc=num_proc,
-            total=lim,
-            _force=force,
-            desc=f'Parsing {self.parse_unit}s'
-        ).results_iter()
         
-        # for wordtokens in progress_bar(parse_units[:lim], desc=f'Parsing {self.parse_unit}s'):
-        #     yield self.parse_wordspan(wordtokens)
+        if num_proc!=0:
+            yield from stash.map(
+                self.parse_wordspan,
+                parse_units.data,
+                num_proc=num_proc,
+                total=lim,
+                _force=force,
+                desc=f'Parsing {self.parse_unit}s',
+                stash_map=False,
+            ).results_iter()
+        else:
+            for wordtokens in progress_bar(parse_units[:lim], desc=f'Parsing {self.parse_unit}s'):
+                yield self.parse_wordspan(wordtokens)
 
     # @stash.stashed_result
     def parse_wordspan(self, wordtokens: 'WordTokenList', **kwargs: Any) -> 'ParseList':
@@ -171,6 +177,7 @@ class Meter(Entity):
             parses = self.parse_fast(wordtokens)
 
         wordtokens._parses = parses
+        parses.register_objects()
         return parses
 
 
@@ -286,7 +293,7 @@ class Meter(Entity):
             log.trace(f"Returning {len(all_parses)} parses")
             return all_parses
 
-        parses = ParseList(iter_parses(), type="line", line=line)
+        parses = ParseList(iter_parses(), type="line", parent=line)
         parses.bound(progress=False)
         parses.rank()
         line._parses = parses

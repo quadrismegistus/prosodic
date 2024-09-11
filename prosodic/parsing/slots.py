@@ -41,18 +41,18 @@ class ParseSlot(Entity):
     def position(self):
         return self.parent
 
-    # @log.info
-    def copy(self):
-        """
-        Create a shallow copy of the parse slot.
+    # # @log.info
+    # def copy(self):
+    #     """
+    #     Create a shallow copy of the parse slot.
 
-        Returns:
-            ParseSlot: A shallow copy of the parse slot.
-        """
-        new = ParseSlot.__new__(ParseSlot)
-        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-        new.viold = self.viold.copy()
-        return new
+    #     Returns:
+    #         ParseSlot: A shallow copy of the parse slot.
+    #     """
+    #     new = ParseSlot.__new__(ParseSlot)
+    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
+    #     new.viold = self.viold.copy()
+    #     return new
     
     def to_dict(self,**kwargs):
         return super().to_dict(viold=self.viold, incl_key=True, **kwargs)
@@ -191,16 +191,21 @@ class ParseSlot(Entity):
         """
         o = self.unit.txt
         return o.upper() if self.is_prom else o.lower()
+    
+    # @property
+    # def num(self):
+    #     if len(self.parent.children)==1 and self._num == 2: raise Exception
+    #     return self._num
 
-    @cached_property
-    def i(self) -> int:
-        """
-        Index of the slot in the parent's slots list.
+    # @cached_property
+    # def i(self) -> int:
+    #     """
+    #     Index of the slot in the parent's slots list.
 
-        Returns:
-            The index of the slot in the parent's slots list.
-        """
-        return self.parent.parent.slots.index(self)
+    #     Returns:
+    #         The index of the slot in the parent's slots list.
+    #     """
+    #     return self.parent.parent.slots.index(self)
 
 
 class ParseSlotList(EntityList):

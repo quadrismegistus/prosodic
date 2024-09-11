@@ -15,7 +15,7 @@ timenow=time.time()
 pr.enable()
 
 
-pll = t.parse(num_proc=None, lim=None, parse_unit='line')
+pll = t.parse(num_proc=5, lim=None, parse_unit='line')
 print(f"Time taken to parse: {time.time()-timenow:.2f}s")
 
 

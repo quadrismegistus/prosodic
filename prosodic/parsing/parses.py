@@ -4,6 +4,7 @@ from .utils import *
 from .positions import *
 from .slots import *
 
+
 @total_ordering
 class Parse(Entity):
     """
@@ -57,19 +58,23 @@ class Parse(Entity):
         bounded_by: Optional[List] = None,
         rank: Optional[int] = None,
         parse_viold={},
+        key=None,
+        num=None,
         # line_num: Optional[int] = None,
         # stanza_num: Optional[int] = None,
         # line_txt: str = "",
     ) -> None:
         from .meter import Meter
+
         global OBJECTS
         # meter
         # if meter is None and parent:
-            # meter = parent.meter
+        # meter = parent.meter
         if meter is None:
             meter = Meter()
         self.meter_obj = meter
-        
+        self._key = key
+        self._num = num
         self.constraint_names = list(meter.constraints.keys())
         self.parse_constraints = meter.parse_constraint_funcs
         self.position_constraints = meter.position_constraint_funcs
@@ -80,7 +85,7 @@ class Parse(Entity):
         self.wordtokens = wordtokens
         self.wordforms = wordtokens.wordforms
         self.slot_units = [syll for wf in self.wordforms for syll in wf]
-        
+
         self.parent = parent if parent is not None else wordtokens
 
         # slots
@@ -104,14 +109,12 @@ class Parse(Entity):
         self.parse_rank = rank
         self.num_slots_positioned = 0
         self.parse_viold = Counter(parse_viold)
-        self.children = ParsePositionList(parent=self) if not children else children
+        self.children = ParsePositionList() if not children else children
+        self.children.parent = self
         if not self.children:
             for mpos_str in self.scansion:
                 self.extend(mpos_str)
         self.init()
-        if self.is_complete:
-            for obj in self.iter_all():
-                OBJECTS[obj.key] = obj
 
     @property
     def positions(self):
@@ -128,11 +131,11 @@ class Parse(Entity):
         for cname, cfunc in self.parse_constraints.items():
             if (force or cname not in self.parse_viold) and cfunc.scope == self.scope:
                 res = cfunc(self)
-                #log.debug(f'applying {cname}, got {res}')
-                assert isinstance(res,bool), "Parse constraints must return True/False"
-                self.parse_viold[cname]=int(res)
+                # log.debug(f'applying {cname}, got {res}')
+                assert isinstance(res, bool), "Parse constraints must return True/False"
+                self.parse_viold[cname] = int(res)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, **kwargs) -> Dict[str, Any]:
         """
         Convert the parse to a JSON-serializable dictionary.
 
@@ -143,12 +146,14 @@ class Parse(Entity):
             Dict[str, Any]: JSON-serializable dictionary representation of the parse.
         """
         return super().to_dict(
-            wordtokens=self.wordtokens.to_dict(incl_children=True),
+            wordtokens=self.wordtokens.to_dict(incl_children=True, _use_registry=False),   # different from registered wordtokens
             meter=self.meter_obj.to_dict(),
-            is_bounded = self.is_bounded,
-            bounded_by = list(self.bounded_by),
-            rank = self.parse_rank,
+            is_bounded=self.is_bounded,
+            bounded_by=list(self.bounded_by),
+            rank=self.parse_rank,
             parse_viold=dict(self.parse_viold),
+            # _use_registry=False,
+            **kwargs,
         )
         # return to_dict(
         #     {
@@ -164,7 +169,11 @@ class Parse(Entity):
         # )
 
     @classmethod
-    def from_dict(cls, json_d: Dict[str, Any], line: Optional[Union["TextModel", "Stanza", "Line"]] = None) -> "Parse":
+    def from_dict(
+        cls,
+        json_d: Dict[str, Any],
+        use_registry=True,
+    ) -> "Parse":
         """
         Create a Parse object from a JSON dictionary.
 
@@ -176,29 +185,26 @@ class Parse(Entity):
             Parse: A new Parse object created from the JSON data.
         """
         from ..texts import Line
+
         cls_name, data = next(iter(json_d.items()))
         assert cls_name == cls.__name__
-
-        wordtokens = Entity.from_dict(data.pop('wordtokens'))
-        meter = Entity.from_dict(data.pop('meter'))
-        children = Entity.from_dict(data.pop("children"))
+        wordtokens = Entity.from_dict(data.pop("wordtokens"), use_registry=use_registry)
+        meter = Entity.from_dict(data.pop("meter"), use_registry=use_registry)
+        children = Entity.from_dict(data.pop("children"), use_registry=use_registry)
         slots = [slot for pos in children for slot in pos.slots]
         sylls = [syll for wtok in wordtokens for wtyp in wtok for wf in wtyp for syll in wf]
         assert len(slots) == len(sylls)
         for syll, slot in zip(sylls, slots):
             slot.unit = syll
-        return Parse(
-            wordtokens,
-            children=children,
-            meter=meter,
-            **data
-        )
-    
+        return Parse(wordtokens, children=children, meter=meter, **data)
+
     @property
     def key(self):
-        if self._key is None:
-            self._key = f"""{self.parent.key}.{self.nice_type_name}(scansion="{self.meter_str}",stress="{self.stress_str}")"""
-        return self._key
+        if self._key is not None:
+            return self._key
+        key = f"""{self.parent.key}.{self.nice_type_name}(scansion="{self.meter_str}",stress="{self.stress_str}").{self.meter_obj.key}"""
+        self._key = key
+        return key
 
     @property
     def slots(self) -> List["ParseSlot"]:
@@ -208,18 +214,10 @@ class Parse(Entity):
         Returns:
             List[ParseSlot]: List of all slots in the parse.
         """
-        return ParseSlotList([slot for mpos in self.positions for slot in mpos.slots], parent=self)
+        return ParseSlotList(
+            [slot for mpos in self.positions for slot in mpos.slots], parent=self
+        )
 
-    @property
-    def is_complete(self) -> bool:
-        """
-        Check if the parse is complete.
-
-        Returns:
-            bool: True if the parse is complete, False otherwise.
-        """
-        return len(self.slots) == len(self.syllables)
-    
     @property
     def parse_unit(self):
         return self.meter_obj.parse_unit
@@ -228,19 +226,25 @@ class Parse(Entity):
     def scope(self):
         return self.parent.__class__.__name__.lower() if self.parent else None
 
-
     @classmethod
-    def concat(cls, *parses:'Parse', wordtokens_cls=None) -> 'Parse':
+    def concat(cls, *parses: "Parse", wordtokens=None) -> "Parse":
         from .positions import ParsePositionList
         from ..words.wordtokenlist import WordTokenList
-        assert len(parses)>0
-        if len(parses)==1: return parses[0]
+
+        assert len(parses) > 0
+        if len(parses) == 1:
+            return parses[0]
         assert all(parses[0].meter_obj.equals(parse.meter_obj) for parse in parses[1:])
         # parses = [parse.copy() for parse in parses]
-        positions = ParsePositionList([mpos for parse in parses for mpos in parse.positions])
-        if wordtokens_cls is None:
-            wordtokens_cls = WordTokenList
-        wordtokens = wordtokens_cls(children=[wt for parse in parses for wt in parse.wordtokens])
+        positions = ParsePositionList(
+            [mpos for parse in parses for mpos in parse.positions],
+            parent=parses[0].parent,
+        )
+        wordtokens_cls = type(wordtokens) if wordtokens is not None else WordTokenList
+        wordtokens = wordtokens_cls(
+            children=[wt for parse in parses for wt in parse.wordtokens],
+            parent=wordtokens.parent if wordtokens is not None else parses[0].wordtokens.parent,
+        )
         scansion = [x for parse in parses for x in parse.scansion]
 
         return Parse(
@@ -264,8 +268,8 @@ class Parse(Entity):
         if self.positions and self.positions[-1].meter_val == mval:
             # log.warning(f'cannnot extend because last position is also {mval}')
             return None
-        
-        mpos = ParsePosition(meter_val=mval, children=[])
+
+        mpos = ParsePosition(meter_val=mval)
         for i, x in enumerate(mpos_str):
             slot_i = self.num_slots_positioned
             try:
@@ -275,33 +279,33 @@ class Parse(Entity):
                 return None
 
             self.num_slots_positioned += 1
-
         self.positions.append(mpos)
         # init
         mpos.init()
-        self.constraint_viols  # init and bound
         return self
 
     @cached_property
     def positions_viold(self):
         viold = Counter()
         for position in self.positions:
-            for cname,cviol in position.viold.items():
-                viold[cname]+=cviol
+            for cname, cviol in position.viold.items():
+                viold[cname] += cviol
         return viold
-    
+
     @cached_property
     def viold(self):
         return self.positions_viold + self.parse_viold
-    
+
     @cached_property
     def scores(self):
-        return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
+        return {
+            cname: cnum * self.constraint_weights.get(cname)
+            for cname, cnum in self.viold.items()
+        }
 
     @cached_property
     def parse_violset(self):
-        return {cname for cname,cval in self.parse_viold.items() if cval>0}
-
+        return {cname for cname, cval in self.parse_viold.items() if cval > 0}
 
     @cached_property
     def violset(self) -> Multiset:
@@ -317,21 +321,21 @@ class Parse(Entity):
         s.update(self.parse_violset)
         return s
 
-    # @log.info
-    def copy(self):
-        """
-        Create a shallow copy of the parse.
+    # # @log.info
+    # def copy(self):
+    #     """
+    #     Create a shallow copy of the parse.
 
-        Returns:
-            Parse: A shallow copy of the parse.
-        """
-        from .positions import ParsePositionList
-        new = Parse.__new__(Parse)
-        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-        new.children = ParsePositionList(parent=self.parent)
-        for pos in self.children:
-            new.children.append(pos.copy())
-        return new
+    #     Returns:
+    #         Parse: A shallow copy of the parse.
+    #     """
+    #     from .positions import ParsePositionList
+    #     new = Parse.__new__(Parse)
+    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
+    #     new.children = ParsePositionList(parent=new)
+    #     for pos in self.children:
+    #         new.children.append(pos.copy())
+    #     return new
 
     def branch(self) -> List["Parse"]:
         """
@@ -343,7 +347,7 @@ class Parse(Entity):
         if self.is_bounded:
             return []
         if not self.positions or not len(self.positions):
-            #log.debug("needs to start with some positions")
+            # log.debug("needs to start with some positions")
             return []
         mval = self.positions[-1].meter_val
         otypes = self.meter_obj.get_pos_types(self.wordforms.num_sylls)
@@ -382,7 +386,6 @@ class Parse(Entity):
             self.stress_ints,
         )
 
-
     def __lt__(self, other: "Parse") -> bool:
         """
         Compare this parse to another parse.
@@ -408,7 +411,7 @@ class Parse(Entity):
         # log.error(f'{self} and {other} could not be compared in sort, ended up equal')
         # return not (self<other) and not (other<self)
         return self is other
-    
+
     @cached_property
     def wordtokens_key(self):
         return self.wordtokens.key
@@ -804,8 +807,9 @@ class Parse(Entity):
         """
         return self.to_html()
 
-    def to_html(self, as_str: bool = False, css: str = HTML_CSS, blockquote: bool = True) -> Union[
-        str, 'HTML']:
+    def to_html(
+        self, as_str: bool = False, css: str = HTML_CSS, blockquote: bool = True
+    ) -> Union[str, "HTML"]:
         """
         Convert the parse to an HTML representation.
 

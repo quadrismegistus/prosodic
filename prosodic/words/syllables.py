@@ -57,8 +57,8 @@ class Syllable(Entity):
             self.ipa = "".join(phon.txt for phon in self.children)
         
 
-    def to_dict(self) -> dict:
-        return super().to_dict(incl_txt=True)
+    def to_dict(self, **kwargs) -> dict:
+        return super().to_dict(incl_txt=True, **kwargs)
 
     @property
     def stress(self) -> str:

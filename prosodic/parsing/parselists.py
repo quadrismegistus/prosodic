@@ -38,25 +38,36 @@ class ParseList(EntityList):
         pll = [list(parselist) for parselist in parselistlist if parselist and len(parselist)]
         new_parses = cls(
             [
-                Parse.concat(*parse_combo, wordtokens_cls=type(parent) if parent is not None else None)
+                Parse.concat(*parse_combo, wordtokens=parent)
                 for parse_combo in itertools.product(*pll)
             ],
             parent=parent,
         )
         new_parses.bound(progress=False)
         new_parses.rank()
+        new_parses.register_objects()
         return new_parses
 
     def to_dict(self, **kwargs):
         return super().to_dict(parent=self.parent.to_dict(incl_children=True), **kwargs)
     
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, use_registry=True):
         cls_name, cls_data = next(iter(data.items()))
         assert cls.__name__ == cls_name
-        children = [Entity.from_dict(xdata) for xdata in cls_data.pop('children',[])]
-        parent = Entity.from_dict(cls_data.pop('parent')) if 'parent' in cls_data else None
-        return cls(children=children, parent=parent)
+        children = [Entity.from_dict(xdata, use_registry=use_registry) for xdata in cls_data.pop('children',[])]
+        parent = Entity.from_dict(cls_data.pop('parent'), use_registry=use_registry) if 'parent' in cls_data else None
+        return cls(children=children, parent=parent, **cls_data)
+
+    @property
+    def key(self):
+        if self._key is not None:
+            return self._key
+        key = f"""{self.parent.key}.{self.nice_type_name}"""
+        if self.children:
+            key+=f'.{self.children[0].meter_obj.key}'
+        self._key = key
+        return key
 
     @property
     def num_parses(self) -> int:
@@ -127,6 +138,7 @@ class ParseList(EntityList):
                 px for px in self.scansions if px is not None and not px.is_bounded
             ],
             type=self.type,
+            parent=self.parent,
         )
 
     @cached_property
@@ -141,6 +153,7 @@ class ParseList(EntityList):
             [px for px in self.scansions if px is not None and px.is_bounded],
             show_bounded=True,
             type=self.type,
+            parent=self.parent,
         )
 
     @property
@@ -165,6 +178,7 @@ class ParseList(EntityList):
             [px for px in self.scansions if px is not None and px.parse_rank==1],
             show_bounded=False,
             type=self.type,
+            parent=self.parent,
         )
 
 
@@ -501,13 +515,11 @@ class ParseList(EntityList):
             key = (parse.stanza_num, parse.line_num, parse.meter_str)
             if key not in mstrs:
                 mstrs.add(key) 
-
-                
                 countd[lkey] += 1
                 parse.parse_rank = countd[lkey]
                 plist.append(parse)
 
-        return ParseList(plist, is_scansions=True, show_bounded=True, type=self.type)
+        return ParseList(plist, is_scansions=True, show_bounded=True, parent=self.parent, type=self.type)
 
     @property
     def num_lines(self) -> int:
@@ -554,4 +566,12 @@ class ParseList(EntityList):
 
 
 class ParseListList(ParseList):
-    pass
+    @property
+    def key(self):
+        if self._key is not None:
+            return self._key
+        key = f"""{self.parent.key}.{self.nice_type_name}"""
+        if self.children and self.children[0]:
+            key+=f'.{self.children[0][0].meter_obj.key}'
+        self._key = key
+        return key

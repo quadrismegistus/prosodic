@@ -13,7 +13,7 @@ class ParsePosition(Entity):
 
     prefix: str = "meterpos"
 
-    def __init__(self, meter_val: str, children: List = [], parent: Optional['Parse'] = None, _init=False, **kwargs):
+    def __init__(self, meter_val: str, children: List = [], parent: Optional['Parse'] = None, **kwargs):
         """
         Initialize a ParsePosition.
 
@@ -37,7 +37,9 @@ class ParsePosition(Entity):
             return self.parent
         elif self.parent and isinstance(self.parent.parent, Parse):
             return self.parent.parent
-
+        print([self, self.parent, self.parent.parent])
+        raise Exception
+    
     def add_slot(self, unit):
         from .slots import ParseSlot
         slot = ParseSlot(unit=unit)
@@ -83,27 +85,37 @@ class ParsePosition(Entity):
     def violset(self):
         return {cname for cname,cval in self.viold.items() if cval>0}
 
-    def copy(self):
-        """
-        Create a shallow copy of the parse position.
+    # def copy(self):
+    #     """
+    #     Create a shallow copy of the parse position.
 
-        Returns:
-            ParsePosition: A shallow copy of the parse position.
-        """
-        from .slots import ParseSlotList
-        new = ParsePosition.__new__(ParsePosition)
-        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-        new.children = ParseSlotList([slot.copy() for slot in self.children])
-        return new
+    #     Returns:
+    #         ParsePosition: A shallow copy of the parse position.
+    #     """
+    #     from .slots import ParseSlotList
+    #     new = ParsePosition.__new__(ParsePosition)
+    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
+    #     # new.children = ParseSlotList(parent=new)
+    #     # for slot in self.slots:
+    #     #     new.add_slot(slot.unit)
+    #     new.children = self.children.copy()
+    #     return new
 
-    def to_dict(self) -> Dict:
+    # def copy(self):
+    #     new = super().copy()
+    #     if len(self.slots)==1:
+    #         print(self.slots)
+    #         print(new.slots)
+    #     return new
+
+    def to_dict(self, **kwargs) -> Dict:
         """
         Convert the ParsePosition to a JSON-serializable dictionary.
 
         Returns:
             A dictionary representation of the ParsePosition.
         """
-        return super().to_dict(meter_val=self.meter_val)
+        return super().to_dict(meter_val=self.meter_val, **kwargs)
 
     @property
     def is_prom(self) -> bool:
@@ -115,7 +127,7 @@ class ParsePosition(Entity):
         """
         return self.meter_val == "s"
 
-    @cached_property
+    @property
     def txt(self) -> str:
         """
         Get the text representation of this position.

@@ -3,6 +3,7 @@ from .imports import *
 
 OBJECTS = {}
 
+
 class Entity(UserList):
     """
     Root Entity class representing a hierarchical structure in prosodic analysis.
@@ -30,8 +31,10 @@ class Entity(UserList):
     is_text = False
     sep = ""
 
-
-    def __init__(self, children=[], txt = "", parent=None, num=None, text=None, key=None, **kwargs):
+    # @log.info
+    def __init__(
+        self, children=[], txt="", parent=None, num=None, text=None, key=None, **kwargs
+    ):
         """
         Initialize an Entity object.
 
@@ -53,10 +56,14 @@ class Entity(UserList):
             try:
                 setattr(self, k, v)
             except Exception as e:
-                #log.debug(e)
+                # log.debug(e)
                 pass
 
-        if self.children_type is not None:
+        if isinstance(self, EntityList):
+            self.children = []
+            for child in children:
+                self.append(child)
+        elif self.children_type is not None:
             if not children:
                 self.children = self.children_type(parent=self)
             elif not isinstance(children, EntityList):
@@ -68,33 +75,60 @@ class Entity(UserList):
             else:
                 self.children = children
                 self.children.parent = self
-        
+
         # if self.parent is not None:
         #     OBJECTS[self.key] = self
-        
 
-
-
+    def index(self, entity):
+        for i, ent in enumerate(self):
+            if ent is entity:
+                return i
+        return None
 
     def copy(self):
         new = self.__class__.__new__(self.__class__)
-        new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
+        new.__dict__.update(
+            {
+                k: v
+                for k, v in self.__dict__.items()
+                if not isinstance(getattr(self.__class__, k, None), cached_property)
+            }
+        )
         if self.children is not None:
-            new.children = self.children.copy() if isinstance(self.children, EntityList) else [ent.copy() for ent in self.children]
+            if isinstance(self.children, EntityList):
+                new.children = self.children.copy()
+                new.children.parent = new
+            else:
+                assert isinstance(self, EntityList)
+                new.children = []
+                for ent in self.children:
+                    new_ent = ent.copy()
+                    new_ent.parent = None
+                    new.append(new_ent)
         return new
 
-    
+    def register_objects(self):
+        global OBJECTS
+        for obj in self.iter_all():
+            OBJECTS[obj.key] = obj
+
     def find(self, ent):
+        if ent.key in OBJECTS:
+            return OBJECTS[ent.key]
         if ent.class_depth < 2:
-            attr_name = ent.key.split('.')[-1].lower()
-            return getattr(self.text,attr_name)
-        else:
-            return self.text.descendants.get(ent.key)
+            attr_name = ent.key.split(".")[-1].lower()
+            attr_name = ''.join(x for x in attr_name if x.isalnum())
+            return getattr(self.text, attr_name)
+        
+        log.error(f'Could not find {ent.key}')
+        return None
 
     def match(self, ent, ent_type=None):
         res = self.find(ent)
-        if res is not None: return res
-        if ent_type is None: ent_type = type(ent).__name__.lower()
+        if res is not None:
+            return res
+        if ent_type is None:
+            ent_type = type(ent).__name__.lower()
         ent_list = self.get_list(ent_type)
         for ent2 in ent_list:
             if ent2.equals(ent):
@@ -103,20 +137,22 @@ class Entity(UserList):
     @property
     def list_type(self):
         from .imports import get_list_class
+
         return get_list_class(self.__class__.__name__.lower())
 
     @property
     def type_name(self):
         name = type(self).__name__.lower()
         return name if not name.endswith("list") else name[:-4] + "s"
-    
+
     @property
     def nice_type_name(self):
-        return self.__class__.__name__.replace('Model','').replace('Class','')
+        return self.__class__.__name__.replace("Model", "").replace("Class", "")
 
     @property
     def children_type(self):
         from .imports import CHILDCLASSLISTS
+
         return CHILDCLASSLISTS.get(type(self))
 
     @property
@@ -146,28 +182,11 @@ class Entity(UserList):
             return class_name[:-4]
         return None
 
-    # def __init_subclass__(cls, **kwargs):
-    #     super().__init_subclass__(**kwargs)
-    #     cls._generate_parent_properties()
-    #     cls._generate_child_properties()
-
-    # @classmethod
-    # def _generate_parent_properties(cls):
-    #     for prop_name, parent_type in cls._parent_types.items():
-    #         setattr(cls, prop_name, property(lambda self, pt=parent_type: self.get_parent(pt)))
-
-    # @classmethod
-    # def _generate_child_properties(cls):
-    #     for child_prop, (list_name, child_type, list_type) in cls._child_types.items():
-    #         setattr(cls, list_name, property(lambda self, ct=child_type: self.get_children(ct)))
-
-
     @property
     def is_wordtokenlist(self):
         from .words.wordtokenlist import WordTokenList
+
         return isinstance(self, WordTokenList)
-
-
 
     @property
     def text(self):
@@ -185,42 +204,22 @@ class Entity(UserList):
     @staticmethod
     def _rename_attr(x):
         d = {
-            # "word": "wordtoken",
-            # "words": "wordtokens",
-            # "text": "textmodel",
-            # "texts": "textmodels",
-            # "syll": "syllable",
-            # "sylls": "syllables",
-            # "is_word": "is_wordtoken",
-            # "is_words": "is_wordtokens",
-            # "num_words": "num_wordtokens",
-            # "is_text": "is_textmodel",
-            # "is_texts": "is_textmodels",
-            # "num_texts": "num_textmodels",
-            # "is_syll": "is_syllable",
-            # "is_sylls": "is_syllables",
-            # "num_sylls": "num_syllables",
-            # "is_phon": "is_phoneme",
-            # "is_phons": "is_phonemes",
-            # "num_phons": "num_phonemes",
-            "sentence":"sent",
-            "sentences":"sents",
-            "phon":"phoneme",
-            "phons":"phonemes",
-            "syllable":"syll",
-            "syllables":"sylls",
-
+            "sentence": "sent",
+            "sentences": "sents",
+            "phon": "phoneme",
+            "phons": "phonemes",
+            "syllable": "syll",
+            "syllables": "sylls",
         }
         x = x.lower().strip()
         return d.get(x, x)
-    
+
     def __getitem__(self, key):
         res = super().__getitem__(key)
-        if isinstance(res,type(self)) and res is not self:
+        if isinstance(res, type(self)) and res is not self:
             res._text = self.text
             res.parent = self.parent
         return res
-
 
     def __getattr__(self, attr):
         """
@@ -243,15 +242,15 @@ class Entity(UserList):
 
             res = None
             if attr in PLURAL_ATTRS:
-                #log.debug(f"'{attr}' is in PLURAL_ATTRS, returning list")
+                # log.debug(f"'{attr}' is in PLURAL_ATTRS, returning list")
                 res = self.get_list(attr)
             if attr in SINGULAR_ATTRS:
-                #log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning one")
+                # log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning one")
                 res = self.get_one(attr)
             if attr.endswith("_r") and attr[:-2] in SINGULAR_ATTRS:
-                #log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning random")
+                # log.debug(f"'{attr}' is in SINGULAR_ATTRS, returning random")
                 res = self.get_random(attr[:-2])
-                return res # don't cache
+                return res  # don't cache
 
             elif attr.startswith("num_"):
                 cls_name = attr[4:]
@@ -265,18 +264,18 @@ class Entity(UserList):
                 num = int(digits)
                 i = 0 if num == 0 else num - 1
                 try:
-                    #log.debug(f"Attempting to return child at index {i}")
+                    # log.debug(f"Attempting to return child at index {i}")
                     res = self.get_list(nondigits)[i]
+                    if res is not None:
+                        assert res.num == num
                 except IndexError:
-                    #log.debug(f"Index {i} out of range, returning None")
+                    # log.debug(f"Index {i} out of range, returning None")
                     res = None
 
-
-            elif attr.endswith('_span'):
+            elif attr.endswith("_span"):
                 lname = attr[:-5]
                 l = self.get_list(lname)
                 return (l[0].num, l[-1].num) if l else None
-
 
             if res is not None:
                 self.__dict__[attr] = res
@@ -296,6 +295,7 @@ class Entity(UserList):
         """
         # if list_type in {'wordform','wordforms','syll','sylls'}: stopx
         from .imports import get_class_depth, get_ent_class, get_list_class
+
         list_type = self._rename_attr(list_type)
         cls_depth = get_class_depth(list_type)
         ent_class = get_ent_class(list_type)
@@ -306,7 +306,6 @@ class Entity(UserList):
         # log.info(f"Class depth: {cls_depth}")
         # log.info(f"Entity class: {ent_class}")
         # log.info(f"List class: {list_class}")
-        
 
         if list_class is None:
             return None
@@ -318,8 +317,8 @@ class Entity(UserList):
         # Check if this entity contains the requested list type
         if self.children and isinstance(self.children, list_class):
             return self.children
-        
-        if cls_depth == 1: # on text level
+
+        if cls_depth == 1:  # on text level
             # log.info(f"Getting text list for type: {list_type}")
             full_list = self.get_text_list(list_type)
             if self.is_text:
@@ -338,14 +337,18 @@ class Entity(UserList):
                 # log.info("Creating new list with descendants")
                 return list_class(descendants, parent=self, text=self.text)
             # else:
-                # log.info("No descendants found")
+            # log.info("No descendants found")
         # If the current entity is below the requested type
         elif self.class_depth > cls_depth:
             # log.info(f"Current class depth ({self.class_depth}) is greater than requested class depth ({cls_depth})")
             # log.info(f"Searching for ancestor of type: {list_type}")
             ancestor = self._get_ancestor(list_type)
             # log.info(f"Found ancestor: {ancestor}")
-            return list_class([ancestor], parent=ancestor.parent, text=self.text) if ancestor else None
+            return (
+                list_class([ancestor], parent=ancestor.parent, text=self.text)
+                if ancestor
+                else None
+            )
 
         # If the depths are the same or we couldn't find an appropriate ancestor
         # log.warning(f'Could not find list for type {list_type}')
@@ -353,49 +356,60 @@ class Entity(UserList):
 
     @cached_property
     def children_keys(self):
-        return {child.key for child in self.children} if self.children and len(self.children) else set()
+        return (
+            {child.key for child in self.children}
+            if self.children and len(self.children)
+            else set()
+        )
 
-    def get_overlapping_list(self, full_list: 'EntityList', entity:'Entity' = None):
+    def get_overlapping_list(self, full_list: "EntityList", entity: "Entity" = None):
         list_class = type(full_list)
         list_class_depth = full_list.class_depth
-        if entity is None: entity = self
+        if entity is None:
+            entity = self
         entity_depth = entity.class_depth
 
         assert list_class_depth < 2
         assert entity_depth < 2
 
         # filtered_list = [ent for ent in full_list if ent.contains(entity)]
-        filtered_list = [ent for ent in full_list if ent.children_keys & entity.children_keys]
-        return list_class(children=filtered_list,text=self.text, parent=self)
-    
+        filtered_list = [
+            ent for ent in full_list if ent.children_keys & entity.children_keys
+        ]
+        return list_class(children=filtered_list, text=self.text, parent=self)
+
     def get_text_list(self, list_type: str):
         from .imports import get_list_class_name
+
         list_type = get_list_class_name(list_type)
         return getattr(self.text, list_type) if hasattr(self.text, list_type) else None
 
     @classmethod
     def _class_depth(cls):
         from .imports import CLASS_DEPTHS
+
         return CLASS_DEPTHS.get(cls)
 
     @property
     def class_depth(self):
         return self._class_depth()
 
-    def iter_all(self):
+    def _iter_all(self):
         yield self
         if self.children is not None:
             yield self.children
             for child in self.children:
-                yield from child.iter_all()
+                yield from child._iter_all()
+    
+    def iter_all(self):
+        yield from (obj for obj in self._iter_all() if isinstance(obj,Entity))
+
 
     @cached_property
     def descendants(self):
-        d={
-            self.key: self
-        }
+        d = {self.key: self}
         if self.children is not None:
-            if isinstance(self.children,Entity):
+            if isinstance(self.children, Entity):
                 d[self.children.key] = self.children
             for child in self.children:
                 d.update(child.descendants)
@@ -415,6 +429,7 @@ class Entity(UserList):
             list: A list of descendant entities of the specified type.
         """
         from .imports import get_ent_class
+
         descendant_cls = get_ent_class(ent_type)
         # return [v for k,v in self.descendants.items() if isinstance(v, descendant_cls)]
         if isinstance(self.children, descendant_cls):
@@ -425,9 +440,10 @@ class Entity(UserList):
                     yield child
                 else:
                     yield from child._get_descendants(ent_type)
-    
+
     def _get_ancestor(self, ent_type: str):
         from .imports import get_ent_class
+
         ancestor_cls = get_ent_class(ent_type)
         if self.parent:
             if isinstance(self.parent, ancestor_cls):
@@ -435,12 +451,12 @@ class Entity(UserList):
             else:
                 return self.parent._get_ancestor(ent_type)
         return None
-    
+
     @cached_property
     def children_set(self):
         return set(self.children) if self.children is not None else set()
 
-    def contains(self, entity: 'Entity') -> bool:
+    def contains(self, entity: "Entity") -> bool:
         """
         Check if this entity contains the given entity.
 
@@ -452,18 +468,17 @@ class Entity(UserList):
         """
         if self is entity:
             return True
-        
-        if self.class_depth>1 and self.class_depth >= entity.class_depth: 
+
+        if self.class_depth > 1 and self.class_depth >= entity.class_depth:
             return False
-        
+
         if entity.key.startswith(self.key):
             return True
-        
+
         if self.children:
             if isinstance(entity, EntityList):
                 return bool(self.descendant_keys & entity.descendant_keys)
             else:
-                print([self.key, entity.key])
                 return entity.key in self.descendant_keys
         return False
 
@@ -476,7 +491,9 @@ class Entity(UserList):
 
     def get_one(self, ent_type: str) -> "Entity":
         children = self.get_list(ent_type)
-        return children[0] if children and len(children) else None  # will return parent if available
+        return (
+            children[0] if children and len(children) else None
+        )  # will return parent if available
 
     def get_parent(self, parent_type: str) -> "Entity":
         from .imports import SELFCLASSES, PLURAL_ATTRS
@@ -496,37 +513,37 @@ class Entity(UserList):
     def get_children(self, child_type: str) -> List["Entity"]:
         from .imports import LISTCLASSES
 
-        #log.debug(f"Getting children of type: {child_type}")
+        # log.debug(f"Getting children of type: {child_type}")
         child_type = self._rename_attr(child_type)
-        #log.debug(f"Renamed child_type: {child_type}")
+        # log.debug(f"Renamed child_type: {child_type}")
         list_class = LISTCLASSES.get(child_type)
-        #log.debug(f"List class for {child_type}: {list_class}")
+        # log.debug(f"List class for {child_type}: {list_class}")
         if list_class is None:
-            #log.debug("List class is None, returning None")
+            # log.debug("List class is None, returning None")
             return None
 
         # same?
         if isinstance(self, list_class):
-            #log.debug("Self is instance of list_class, returning self")
+            # log.debug("Self is instance of list_class, returning self")
             return self
 
         # above?
         parent = self.get_parent(child_type)
-        #log.debug(f"Parent of type {child_type}: {parent}")
+        # log.debug(f"Parent of type {child_type}: {parent}")
         if parent is not None:
-            #log.debug("Returning list with parent")
+            # log.debug("Returning list with parent")
             return list_class([parent], parent=parent.parent, text=self.text)
 
         if self.children is None or list_class is None:
-            #log.debug("Children or list_class is None, returning None")
+            # log.debug("Children or list_class is None, returning None")
             return None
 
         # below?
         if self.children is not None and isinstance(self.children, list_class):
-            #log.debug("Returning children as they are of the correct list_class")
+            # log.debug("Returning children as they are of the correct list_class")
             return self.children
 
-        #log.debug("Recursively getting grandchildren")
+        # log.debug("Recursively getting grandchildren")
         if self.children is not None:
             grandchildren = []
             for child in self.children:
@@ -615,7 +632,6 @@ class Entity(UserList):
         if hasattr(self, "to_html"):
             return self.to_html()
 
-
     @cached_property
     def hash(self):
         """
@@ -656,7 +672,7 @@ class Entity(UserList):
         try:
             return hash(self.hash)
         except TypeError:
-            log.error(f'hash of {self.key} failed')
+            log.error(f"hash of {self.key} failed")
             log.error(self)
             return hash(self.key)
 
@@ -673,13 +689,18 @@ class Entity(UserList):
         return self is other
 
     def equals(self, other):
-        return self is other or self.key == other.key or self.serialized == other.serialized
+        return (
+            self is other
+            or self.key == other.key
+            or self.serialized == other.serialized
+        )
 
     @property
     def meter(self):
         text = self.text
         if text._mtr is None:
             from .parsing.meter import Meter
+
             text._mtr = Meter()
         return text._mtr
 
@@ -718,8 +739,9 @@ class Entity(UserList):
     @property
     def prefix_key(self):
         from .imports import CLASSPREFIXES
+
         return CLASSPREFIXES[self.__class__]
-    
+
     @property
     def grandparent(self):
         try:
@@ -729,26 +751,35 @@ class Entity(UserList):
 
     @property
     def key(self):
-        if self._key is None:
-            if self.parent is None:
-                raise Exception
-            key=f"{self.parent.key}.{self.nice_type_name}"
-            if self.num is not None:
-                key+=f'({self.num})'
-            elif isinstance(self,EntityList) and self.parent.is_text and self.children:
-                key+=f'({self.children[0].num},{self.children[-1].num})'
-            self._key = key
-        return self._key
-
+        if self._key is not None:
+            return self._key
+        if self.parent is None:
+            raise Exception
+        key = f"{self.parent.key}.{self.nice_type_name}"
+        if self.num is not None:
+            key += f"({self.num})"
+        elif isinstance(self, EntityList) and self.parent.is_text and self.children:
+            key += f"({self.children[0].num},{self.children[-1].num})"
+        self._key = key
+        return key
 
     @cached_property
     def wordspan(self):
         try:
             return (self.wordtokens[0].num, self.wordtokens[-1].num)
-        except (IndexError,AttributeError):
+        except (IndexError, AttributeError):
             return None
 
-    def to_dict(self, incl_num=True, incl_attrs=False, incl_txt=None, incl_children=True, **kwargs):
+    # @log.info
+    def to_dict(
+        self,
+        incl_num=True,
+        incl_attrs=False,
+        incl_txt=None,
+        incl_children=True,
+        incl_key=True,
+        **kwargs,
+    ):
         """
         Convert the entity to a JSON representation.
 
@@ -761,17 +792,20 @@ class Entity(UserList):
         Returns:
             dict: A dictionary representation of the entity.
         """
-        pkgd = {'key':self.key}
+        # print(f'Serializing {type(self)}, with parent {type(self.parent)} and _key {self._key}')
+        pkgd = {}
+        if incl_key:
+            pkgd["key"] = self.key
         if incl_num and self._num:
-            pkgd['num'] = self._num
+            pkgd["num"] = self._num
         if incl_txt:
             pkgd["txt"] = self._txt
 
         if incl_children and self.children:
             pkgd["children"] = (
-                self.children.to_dict()
+                self.children.to_dict(incl_children=incl_children)
                 if isinstance(self.children, EntityList)
-                else [child.to_dict() for child in self.children]
+                else [child.to_dict(incl_children=incl_children) for child in self.children]
             )
 
         if incl_attrs and hasattr(self, "_attrs"):
@@ -781,7 +815,7 @@ class Entity(UserList):
         for k, v in kwargs.items():
             pkgd[k] = v
 
-        return {self.__class__.__name__:pkgd}
+        return {self.__class__.__name__: pkgd}
 
     def save(self, fn, **kwargs):
         """
@@ -809,33 +843,35 @@ class Entity(UserList):
         return self.to_html(as_str=as_str)
 
     @classmethod
-    def from_dict(cls, data):
-        assert isinstance(data,dict)
+    # @log.info
+    def from_dict(cls, data, use_registry=True):
+        assert isinstance(data, dict)
         from .imports import GLOBALS
-        if len(data)>1:
+
+        if len(data) > 1:
             pprint(data)
         assert len(data) == 1, "Should only be classname in key"
-        cls_name,cls_data = next(iter(data.items()))
+        cls_name, cls_data = next(iter(data.items()))
+        # print(f'Deserializing {cls_name} with {len(cls_data)} items and {cls_data.keys()} keys')
 
-        key = cls_data.get('key')
-        print(f'class: {cls_name}, key: {key}')
-        if key is not None and key in OBJECTS:
-            print(f'returning OBJECTS[{key}]')
+        key = cls_data.get("key")
+        use_registry = cls_data.pop("_use_registry", use_registry)
+        if use_registry and key is not None and key in OBJECTS:
+            # log.warning(f'returning OBJECTS[{key}]')
             return OBJECTS[key]
-        
+
         cls2 = GLOBALS.get(cls_name)
         if cls is not cls2:
-            return cls2.from_dict(data)
-        
+            return cls2.from_dict(data, use_registry=use_registry)
+
         assert cls is not None, "Class should exist"
-        children = cls_data.pop('children', None)
+        children = cls_data.pop("children", None)
         if children is not None:
             if isinstance(children, dict):
-                children = Entity.from_dict(children)
-            elif isinstance(children,list):
-                children = [Entity.from_dict(child) for child in children]
+                children = Entity.from_dict(children, use_registry=use_registry)
+            elif isinstance(children, list):
+                children = [Entity.from_dict(child, use_registry=use_registry) for child in children]
         return cls(children=children, **cls_data)
-
 
     # @classmethod
     # @#log.debug
@@ -916,7 +952,7 @@ class Entity(UserList):
         Returns:
             str: The text content of the entity.
         """
-        #log.debug(type(self), self._txt)
+        # log.debug(type(self), self._txt)
         if self._txt:
             txt = self._txt
         elif self.children:
@@ -997,13 +1033,13 @@ class Entity(UserList):
 
         return f"<b>{self.__class__.__name__}</b><br>{ (self.df if df is None else df).applymap(blank)._repr_html_() }"
 
-    def __repr__(self):
+    def __repr__(self, kwarg_str_lim=100):
         kwargs = {}
-        attrs = self._attrs if hasattr(self, "_attrs") and self._attrs else {}
+        attrs = self._attrs if self._attrs is not None else {}
         for attr in ["num", "txt"] + list(attrs.keys()):
             attrval = getattr(self, attr, None) if not attr in attrs else attrs[attr]
             if attrval:
-                kwargs[attr] = repr(attrval).strip()[:100]
+                kwargs[attr] = repr(attrval[:kwarg_str_lim] if isinstance(attrval,str) else attrval)[:kwarg_str_lim].strip()
         params_str = f", ".join(f"{k}={v}" for k, v in kwargs.items())
         return f"{self.nice_type_name}({params_str})"
 
@@ -1106,7 +1142,6 @@ class Entity(UserList):
         """
         return self.get_df()
 
-    
     @property
     def num_wordforms_nopunc(self):
         return len([wf for wf in self.wordforms if not wf.parent.is_punc])
@@ -1124,7 +1159,7 @@ class Entity(UserList):
         """
         return self.get_parent("Syllable")
 
-    @cached_property
+    @property
     def i(self):
         """
         Get the index of the entity in its parent's children list.
@@ -1137,7 +1172,7 @@ class Entity(UserList):
         if not self.parent.children:
             return None
         try:
-            return self.parent.children.index(self)
+            return self.parent.index(self)
         except (IndexError, ValueError):
             return None
 
@@ -1149,9 +1184,10 @@ class Entity(UserList):
         Returns:
             int: The 1-based index of the entity, or None if not found.
         """
-        if self._num is not None: return self._num
-        return
-        return self.i + 1 if self.i is not None else None
+        if self._num is not None:
+            return self._num
+        i = self.i
+        return None if i is None else i + 1
 
     @property
     def next(self):
@@ -1186,6 +1222,60 @@ class Entity(UserList):
         except IndexError:
             return None
 
+    # @log.info
+    def get_meter(self, meter: Optional[Any] = None, **meter_kwargs) -> Any:
+        """
+        Get or set the meter for the text.
+
+        Args:
+            meter (Optional[Any]): A meter object to set. Default is None.
+            **meter_kwargs: Additional keyword arguments for meter configuration.
+
+        Returns:
+            Any: The current meter object.
+        """
+        from .parsing import Meter
+
+        if meter is not None:
+            self._mtr = meter
+        elif self._mtr is None:
+            if self.text and self.text._mtr is not None:
+                self._mtr = self.text._mtr
+                log.trace(f"meter inherited from text: {self._mtr}")
+            else:
+                self.text._mtr = self._mtr = Meter(**meter_kwargs)
+                log.trace(f"setting meter to: {self._mtr}")
+        elif not meter_kwargs:
+            log.trace(f"no change in meter")
+        else:
+            # newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
+            newmeter = Meter(**meter_kwargs)
+            if self._mtr.attrs != newmeter.attrs:
+                self._mtr = newmeter
+                log.trace(f"resetting meter to: {self._mtr}")
+            else:
+                log.trace(f"no change in meter")
+        return self._mtr
+
+    def set_meter(self, **meter_kwargs) -> None:
+        """
+        Set the meter for the text.
+
+        Args:
+            **meter_kwargs: Keyword arguments for meter configuration.
+        """
+        self.get_meter(**meter_kwargs)
+
+    @property
+    def meter(self) -> Any:
+        """
+        Get the meter for the text.
+
+        Returns:
+            Any: The current meter object.
+        """
+        return self.get_meter()
+
 
 class EntityList(Entity):
     """
@@ -1194,56 +1284,27 @@ class EntityList(Entity):
 
     def __bool__(self):
         return self.children is not None and self.children != []
-    
+
     def append(self, entity):
-        global OBJECTS
-        entity._num = len(self.children)+1
+        # entity._key = None
+        # entity._num = len(self.children)+1
         if entity.parent is None:
             entity.parent = self
-            # OBJECTS[entity.key] = entity
         self.children.append(entity)
 
     @property
     def is_text_list(self):
         return self.parent and self.parent.is_text
 
-
     @property
     def list_type(self):
         return type(self)
-    
+
     @property
     def children_type(self):
         from .imports import CHILDCLASSLISTS
+
         return CHILDCLASSLISTS.get(type(self))
-
-    def __init__(self, children=[], parent=None, txt=None, text=None, num=None, **kwargs):
-        """
-        Initialize an EntityList object.
-
-        Args:
-            children (list): List of child entities.
-            parent (Entity): The parent entity.
-            **kwargs: Additional attributes to set on the entity.
-        """
-        global OBJECTS
-        self._num=num
-        self._text = text
-        self.parent = parent
-        if children is None: children=[]
-        self.children = list(children)
-        for child in self.children:
-            if child.parent is None:
-                child.parent = self
-                OBJECTS[child.key] = child
-
-        self._attrs = kwargs
-        self._txt = txt
-        for k, v in self._attrs.items():
-            try:
-                setattr(self, k, v)
-            except AttributeError:
-                pass
 
     def __repr__(self, indent=1, indenter="    "):
         class_name = self.__class__.__name__
@@ -1251,7 +1312,7 @@ class EntityList(Entity):
         if self.data is not None:
             for item in self.data:
                 if isinstance(item, EntityList):
-                    item_repr = item.__repr__(indent=indent+1)
+                    item_repr = item.__repr__(indent=indent + 1)
                 else:
                     item_repr = repr(item).strip()
                 items.append((indenter * indent) + item_repr)
@@ -1272,4 +1333,5 @@ class EntityList(Entity):
 
 def get_class(class_name):
     from .imports import get_class
+
     return get_class(class_name)

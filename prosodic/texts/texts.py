@@ -45,7 +45,6 @@ class TextModel(Entity):
         Returns:
             None
         """
-        global OBJECTS
 
         if isinstance(children, str):
             txt = children
@@ -80,8 +79,7 @@ class TextModel(Entity):
                 self.children.append(WordToken(lang=self.lang, **row.to_dict()))
         
         # assign objects to global OBJECTS dict
-        for obj in self.iter_all():
-            OBJECTS[obj.key] = obj
+        self.register_objects()
         
 
     @cached_property
@@ -160,17 +158,18 @@ class TextModel(Entity):
         """
         from ..parsing.parselists import ParseListList
 
-        self._parses = ParseListList(
-            self.parse_iter(
-                combine_by=combine_by,
-                num_proc=num_proc,
-                force=force,
-                meter=meter,
-                lim=lim,
-                **meter_kwargs,
-            ),
-            parent=self,
-        )
+        self._parses = ParseListList(parent=self)
+        for i,pl in enumerate(self.parse_iter(
+            combine_by=combine_by,
+            num_proc=num_proc,
+            force=force,
+            meter=meter,
+            lim=lim,
+            **meter_kwargs,
+        )):
+            pl._num = i+1
+            self._parses.append(pl)
+        self._parses.register_objects()
         return self._parses
 
     def parse_iter(

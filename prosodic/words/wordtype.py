@@ -66,14 +66,14 @@ class WordType(Entity):
 
         
 
-    def to_dict(self) -> dict:
+    def to_dict(self, **kwargs) -> dict:
         """
         Convert the WordType to a JSON-serializable dictionary.
 
         Returns:
             dict: A dictionary representation of the WordType.
         """
-        return super().to_dict(incl_attrs=True, incl_txt=True)
+        return super().to_dict(incl_attrs=True, incl_txt=True, **kwargs)
 
     def unstress(self) -> None:
         if self.num_forms > 1:

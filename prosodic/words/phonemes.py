@@ -36,8 +36,8 @@ class Phoneme(Entity):
     def is_cons(self):
         return not self.is_vowel
 
-    def to_dict(self) -> dict:
-        return super().to_dict(incl_txt=True)
+    def to_dict(self, **kwargs) -> dict:
+        return super().to_dict(incl_txt=True, **kwargs)
 
     @property
     def is_onset(self) -> Optional[bool]:

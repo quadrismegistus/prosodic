@@ -38,13 +38,23 @@ class WordTokenList(EntityList):
     def words(self):
         return self
 
-    def to_dict(self, incl_children=False, **kwargs):
-        return {
-            self.__class__.__name__: {
-                "key": self.key,
-                "children": [wtok.to_dict(incl_children=incl_children) for wtok in self]
-            }
-        }
+    # def to_dict(self, incl_children=False, **kwargs):
+    #     print([type(self), self._key, self.parent])
+    #     return {
+    #         self.__class__.__name__: {
+    #             "key": self.key,
+    #             "children": [wtok.to_dict(incl_children=incl_children) for wtok in self]
+    #         }
+    #     }
+
+    def __getstate__(self):
+        print(f"Pickling WordTokenList: _key = {getattr(self, '_key', 'Not set')}")
+        state = self.__dict__.copy()
+        return state
+
+    def __setstate__(self, state):
+        print(f"Unpickling WordTokenList: _key in state = {state.get('_key', 'Not set')}")
+        self.__dict__.update(state)
 
     @property
     def nums(self):
@@ -87,60 +97,6 @@ class WordTokenList(EntityList):
                     [wf], parent=wtok_match.wordtype
                 )
             yield wtl
-
-    # @log.info
-    def get_meter(self, meter: Optional[Any] = None, **meter_kwargs) -> Any:
-        """
-        Get or set the meter for the text.
-
-        Args:
-            meter (Optional[Any]): A meter object to set. Default is None.
-            **meter_kwargs: Additional keyword arguments for meter configuration.
-
-        Returns:
-            Any: The current meter object.
-        """
-        from ..parsing import Meter
-
-        if meter is not None:
-            self._mtr = meter
-        elif self._mtr is None:
-            if self.text and self.text._mtr is not None:
-                self._mtr = self.text._mtr
-                log.trace(f"meter inherited from text: {self._mtr}")
-            else:
-                self.text._mtr = self._mtr = Meter(**meter_kwargs)
-                log.trace(f"setting meter to: {self._mtr}")
-        elif not meter_kwargs:
-            log.trace(f"no change in meter")
-        else:
-            # newmeter = Meter(**{**self._mtr.attrs, **meter_kwargs})
-            newmeter = Meter(**meter_kwargs)
-            if self._mtr.attrs != newmeter.attrs:
-                self._mtr = newmeter
-                log.trace(f"resetting meter to: {self._mtr}")
-            else:
-                log.trace(f"no change in meter")
-        return self._mtr
-
-    def set_meter(self, **meter_kwargs) -> None:
-        """
-        Set the meter for the text.
-
-        Args:
-            **meter_kwargs: Keyword arguments for meter configuration.
-        """
-        self.get_meter(**meter_kwargs)
-
-    @property
-    def meter(self) -> Any:
-        """
-        Get the meter for the text.
-
-        Returns:
-            Any: The current meter object.
-        """
-        return self.get_meter()
 
     @property
     def best_parse(self) -> Any:

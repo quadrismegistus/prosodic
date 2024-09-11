@@ -26,16 +26,13 @@ class WordTokenList(EntityList):
 
         list_class = get_list_class(list_type)
         ent_class = get_ent_class(list_type)
-        return list_class(
-            [
-                ent_class(children=list(group), text=text, num=i + 1)
-                for i, (_, group) in enumerate(
-                    itertools.groupby(wordtokens, key=lambda x: getattr(x, list_num))
-                )
-            ],
-            parent=wordtokens,
-            text=text,
-        )
+        new_list = list_class(parent=text)
+        for _, group in itertools.groupby(wordtokens, key=lambda x: getattr(x, list_num)):
+            ent_list = ent_class(parent=new_list)
+            for ent in group:
+                ent_list.append(ent)
+            new_list.append(ent_list)
+        return new_list
 
     @property
     def words(self):
@@ -134,13 +131,6 @@ class WordTokenList(EntityList):
             **meter_kwargs: Keyword arguments for meter configuration.
         """
         self.get_meter(**meter_kwargs)
-
-    # @property
-    # def key(self):
-    #     if self._key is None:
-    #         self._key = f'{self.text.key+"." if self.text and self.text is not self else ""}{self.nice_type_name}{self.num}'
-    #     return self._key
-        
 
     @property
     def meter(self) -> Any:

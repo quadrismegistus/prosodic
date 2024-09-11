@@ -1,8 +1,7 @@
 from typing import Any, List, Type
 from .imports import *
 
-from UltraDict import UltraDict
-OBJECTS = UltraDict()
+OBJECTS = {}
 
 class Entity(UserList):
     """
@@ -45,8 +44,6 @@ class Entity(UserList):
         global OBJECTS
         self._attrs = kwargs
         self._num = num
-        print(num,'???')
-        if num is None: stopx
         self._mtr = None
         self.parent = parent
         self._text = text
@@ -59,20 +56,22 @@ class Entity(UserList):
                 #log.debug(e)
                 pass
 
-        if not children:
-            self.children = self.children_type(parent=self)
-        elif not isinstance(children, EntityList):
-            self.children = (
-                self.children_type(children, parent=self)
-                if self.children_type is not None
-                else None
-            )
-        else:
-            self.children = children
-            self.children.parent = self
+        if self.children_type is not None:
+            if not children:
+                self.children = self.children_type(parent=self)
+            elif not isinstance(children, EntityList):
+                self.children = (
+                    self.children_type(children, parent=self)
+                    if self.children_type is not None
+                    else None
+                )
+            else:
+                self.children = children
+                self.children.parent = self
         
-        if self.parent is not None:
-            OBJECTS[self.key] = self
+        # if self.parent is not None:
+        #     OBJECTS[self.key] = self
+        
 
 
 
@@ -172,11 +171,7 @@ class Entity(UserList):
 
     @property
     def text(self):
-        if self._text is not None: return self._text
-        if self.parent: return self.parent.text
-        if self.is_wordtokenlist: return self
-        
-        
+        return self.root
 
     def __iter__(self):
         """
@@ -386,6 +381,13 @@ class Entity(UserList):
     @property
     def class_depth(self):
         return self._class_depth()
+
+    def iter_all(self):
+        yield self
+        if self.children is not None:
+            yield self.children
+            for child in self.children:
+                yield from child.iter_all()
 
     @cached_property
     def descendants(self):
@@ -675,7 +677,11 @@ class Entity(UserList):
 
     @property
     def meter(self):
-        return self.text.meter
+        text = self.text
+        if text._mtr is None:
+            from .parsing.meter import Meter
+            text._mtr = Meter()
+        return text._mtr
 
     def __bool__(self):
         """
@@ -701,8 +707,10 @@ class Entity(UserList):
 
     @cached_property
     def root(self):
-        ancestors = self.ancestors
-        return ancestors[0] if ancestors else self
+        obj = self
+        while obj.parent:
+            obj = obj.parent
+        return obj
 
     # def get_root_key(self):
     #     return self.root.key
@@ -722,12 +730,14 @@ class Entity(UserList):
     @property
     def key(self):
         if self._key is None:
-            log.info(f'I am {self.__class__.__name__} with parent {self.parent.__class__.__name__}')
+            if self.parent is None:
+                raise Exception
             key=f"{self.parent.key}.{self.nice_type_name}"
             if self.num is not None:
-                key+=f'{self.num}'
+                key+=f'({self.num})'
+            elif isinstance(self,EntityList) and self.parent.is_text and self.children:
+                key+=f'({self.children[0].num},{self.children[-1].num})'
             self._key = key
-            log.info(f'I am {self.__class__.__name__} with key {self._key}\n')
         return self._key
 
 
@@ -1182,24 +1192,21 @@ class EntityList(Entity):
     A list of Entity objects.
     """
 
+    def __bool__(self):
+        return self.children is not None and self.children != []
+    
+    def append(self, entity):
+        global OBJECTS
+        entity._num = len(self.children)+1
+        if entity.parent is None:
+            entity.parent = self
+            # OBJECTS[entity.key] = entity
+        self.children.append(entity)
+
     @property
     def is_text_list(self):
         return self.parent and self.parent.is_text
 
-    @property
-    def key(self):
-        if self._key is None:
-            if self.is_text_list and self.children and len(self.children):
-                w1,w2=self.children[0].key, self.children[-1].key
-                w1='.'.join(w1.split('.')[1:])
-                w2='.'.join(w2.split('.')[1:])
-                textkey=self.text.key+'.' if self.text is not self else ''
-                self._key = f'{textkey}{self.nice_type_name}({w1}, {w2})'
-            else:
-                self._key = f'{self.parent.key}.{self.nice_type_name}'
-        return self._key
-
-    
 
     @property
     def list_type(self):

@@ -70,7 +70,8 @@ class Meter(Entity):
     @property
     def key(self):
         if self._key is None:
-            self._key = f'{self.prefix}({self.hash})'
+            params_str = f", ".join(f"{k}={repr(v)}" for k, v in self._attrs.items())
+            self._key = f'{self.nice_type_name}({params_str})'
         return self._key
 
     def to_dict(self) -> Dict[str, Any]:

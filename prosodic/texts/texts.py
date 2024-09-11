@@ -22,6 +22,7 @@ class TextModel(Entity):
         lang: Optional[str] = DEFAULT_LANG,
         parent: Optional[Entity] = None,
         tokens_df: Optional[pd.DataFrame] = None,
+        key=None,
         **kwargs,
     ):
         """
@@ -54,59 +55,64 @@ class TextModel(Entity):
             raise ValueError(
                 "must provide either txt string or filename or token dataframe"
             )
-        self._txt = clean_text(get_txt(txt, fn)).strip()
-        self.lang = lang if lang else detect_lang(self._txt)
-        self._key = f"{self.nice_type_name}({self.hash})"
-        if not children:
+        txt = clean_text(get_txt(txt, fn)).strip()
+        lang = lang if lang else detect_lang(self._txt)
+        key = f"{self.nice_type_name}({self.hash})" if key is None else key
+
+        # init entity
+        super().__init__(
+            children=children,
+            txt=txt,
+            key=key,
+            lang=lang,
+            **kwargs,
+        )
+
+        if not self.children:
             if tokens_df is None:
                 tokens_df = tokenize_sentwords_df(txt)
 
-            children = WordTokenList(parent=self)
             for _, row in progress_bar(
                 list(tokens_df.iterrows()),
                 progress=len(tokens_df) >= 1000,
                 desc="Building long text",
             ):
-                children.append(
-                    WordToken(
-                        lang=self.lang,
-                        parent=children,
-                        text=self,
-                        **row.to_dict(),
-                    )
-                )
-        super().__init__(children=children, txt=txt, key=self._key, parent=parent, text=self, num=0, **kwargs)
-        # OBJECTS[self.key] = self
+                self.children.append(WordToken(lang=self.lang, **row.to_dict()))
+        
+        # assign objects to global OBJECTS dict
+        for obj in self.iter_all():
+            OBJECTS[obj.key] = obj
+        
 
     @cached_property
     def stanzas(self):
         from ..texts.stanzas import StanzaList
 
-        return StanzaList.from_wordtokens(self, text=self)
+        return StanzaList.from_wordtokens(self.children, text=self)
 
     @cached_property
     def lines(self):
         from ..texts.lines import LineList
 
-        return LineList.from_wordtokens(self, text=self)
+        return LineList.from_wordtokens(self.children, text=self)
 
     @cached_property
     def lineparts(self):
         from ..texts.lines import LinePartList
 
-        return LinePartList.from_wordtokens(self, text=self)
+        return LinePartList.from_wordtokens(self.children, text=self)
 
     @cached_property
     def sents(self):
         from ..sents.sents import SentenceList
 
-        return SentenceList.from_wordtokens(self, text=self)
+        return SentenceList.from_wordtokens(self.children, text=self)
 
     @cached_property
     def sentparts(self):
         from ..sents.sents import SentPartList
 
-        return SentPartList.from_wordtokens(self, text=self)
+        return SentPartList.from_wordtokens(self.children, text=self)
 
     def to_hash(self) -> str:
         """
@@ -126,6 +132,12 @@ class TextModel(Entity):
         if self._key is None:
             self._key = f"{self.nice_type_name}({self.hash})"
         return self._key
+    
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return self.children[item]
+        return super().__getitem__(item)
+        
 
     # @stash.stashed_result
     def parse(

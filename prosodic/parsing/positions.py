@@ -29,14 +29,18 @@ class ParsePosition(Entity):
             parent=parent,
             **kwargs,
         )
-        self.parse = self.parent
-        # self.parse: Optional['Parse'] = self.parent
-        # if self.parse:
-        #     self.init()
+    
+    @property
+    def parse(self):
+        from .parses import Parse
+        if isinstance(self.parent, Parse):
+            return self.parent
+        elif self.parent and isinstance(self.parent.parent, Parse):
+            return self.parent.parent
 
     def add_slot(self, unit):
         from .slots import ParseSlot
-        slot = ParseSlot(unit, parent=self, num=len(self.children)+1)
+        slot = ParseSlot(unit=unit)
         self.children.append(slot)
     
     @property

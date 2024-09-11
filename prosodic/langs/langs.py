@@ -190,11 +190,11 @@ class LanguageModel:
         osyll = []
         for syll in sylls:
             osyll.extend([sx for sx in syll])
-            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
                 osylls.append("".join(osyll))
                 osyll = []
         if osyll:
-            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
                 osylls.append("".join(osyll))
             elif osylls:
                 osylls[-1] += "".join(osyll)
@@ -226,12 +226,12 @@ class LanguageModel:
         return [], {}
 
     # @cache
-    @profile
     def get_sylls_ll(
         self,
         tokenx,
         force_unstress=None,
         force_ambig_stress=None,
+        **kwargs
     ) -> Tuple[List[Tuple[Tuple[str, str]]], Dict]:
         
         sylls_ll, meta = self.get_sylls_ll_rule(tokenx)
@@ -255,8 +255,8 @@ class LanguageModel:
         meta = {**meta_ipa}#, 'sylls_text_origin':'heuristic'}
         return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), meta
     
-    def get(self, *args, _force=False, **kwargs):
-      return self.get_sylls_ll(*args, **kwargs)
+    def get(self, *args, **kwargs):
+        return self.get_sylls_ll(*args, **kwargs)
 
 
 def fix_recasing(l, token):
@@ -488,3 +488,8 @@ def Language(lang: str = DEFAULT_LANG):
     lang_obj = LanguageModel()
     lang_obj.lang = lang
     return lang_obj
+
+
+@cache
+def get_word(tokenx, lang=DEFAULT_LANG, force_unstress=None, force_ambig_stress=None):
+    return Language(lang).get(tokenx, force_unstress=force_unstress, force_ambig_stress=force_ambig_stress)

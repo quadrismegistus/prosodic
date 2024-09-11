@@ -34,56 +34,52 @@ class WordForm(Entity):
         from .syllables import Syllable
         from ..langs import syll_ipa_str_is_stressed
 
-        if not children:
-            if sylls_text and sylls_ipa:
-                sylls_ipa = (
-                    sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
-                )
-                sylls_text = (
-                    sylls_text.split(syll_sep)
-                    if type(sylls_text) == str
-                    else (sylls_text if sylls_text else sylls_ipa)
-                )
-                children = SyllableList(parent=self)
-                log.info(f'I am {self.__class__.__name__} with parent {parent.__class__.__name__} and children {children.__class__.__name__}')
-                for syll_str, syll_ipa in zip(sylls_text, sylls_ipa):
-                    children.append(
-                        Syllable(
-                            txt=syll_str,
-                            ipa=syll_ipa,
-                            text=text,
-                            num=len(children)+1,
-                            parent=children,
-                        )
-                    )
-        else:
-            sylls_ipa = [syll.ipa for syll in children]
-            sylls_text = [syll.txt for syll in children]
-
         super().__init__(
             txt=txt,
             num=num,
             children=children,
-            ipa=".".join(sylls_ipa),
-            stress="".join(syll.stress for syll in children),
-            weight="".join(syll.weight for syll in children),
-            sylls_ipa=[syll.ipa for syll in children],
-            sylls_text=[syll.txt for syll in children],
-            stress_text=".".join(
-                [
-                    (
-                        syll_text.upper()
-                        if syll_ipa_str_is_stressed(syll_ipa)
-                        else syll_text.lower()
-                    )
-                    for syll_text, syll_ipa in zip(sylls_text, sylls_ipa)
-                ]
-            ),
             text=text,
             key=key,
             parent=parent,
             **kwargs,
         )
+
+        if not self.children:
+            assert sylls_text and sylls_ipa, "must provide sylls_text and sylls_ipa"
+            sylls_ipa = (
+                sylls_ipa.split(syll_sep) if type(sylls_ipa) == str else sylls_ipa
+            )
+            sylls_text = (
+                sylls_text.split(syll_sep)
+                if type(sylls_text) == str
+                else (sylls_text if sylls_text else sylls_ipa)
+            )
+            for syll_str, syll_ipa in zip(sylls_text, sylls_ipa):
+                self.children.append(
+                    Syllable(
+                        txt=syll_str,
+                        ipa=syll_ipa,
+                        text=text,
+                    )
+                )
+        
+        self.sylls_ipa = [syll.ipa for syll in self.children]
+        self.sylls_text = [syll.txt for syll in self.children]
+        self.ipa=".".join(self.sylls_ipa)
+        self.stress="".join(syll.stress for syll in self.children)
+        self.weight="".join(syll.weight for syll in self.children)
+        self.stress_text=".".join(
+            [
+                (
+                    syll_text.upper()
+                    if syll_ipa_str_is_stressed(syll_ipa)
+                    else syll_text.lower()
+                )
+                for syll_text, syll_ipa in zip(self.sylls_text, self.sylls_ipa)
+            ]
+        )
+
+
 
     # def to_dict(self) -> dict:
     #     """

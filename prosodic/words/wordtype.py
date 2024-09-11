@@ -33,31 +33,6 @@ class WordType(Entity):
 
         ## get from lang?
         tokenx = get_wordform_token(txt)
-
-        if not children:
-            from ..langs import Language
-            lang_obj = Language(lang)
-            sylls_ll, meta = lang_obj.get(
-                tokenx,
-                force_unstress=force_unstress,
-                force_ambig_stress=force_ambig_stress,
-            )
-
-            children = WordFormList(parent=self)
-            for wordform_sylls in sylls_ll:
-                wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
-                wordform = WordForm(
-                    txt=tokenx,
-                    sylls_ipa=tuple(wordform_sylls_ipa),
-                    sylls_text=tuple(wordform_sylls_text),
-                    num=len(children)+1,
-                    text=text,
-                    parent=children,
-                    **meta,
-                )
-                children.append(wordform)
-
-        ## make object
         super().__init__(
             txt = tokenx,
             children=children,
@@ -68,6 +43,27 @@ class WordType(Entity):
             num = num,
             **kwargs,
         )
+
+        if not self.children and not token_is_punc(tokenx):
+            from ..langs import get_word
+            sylls_ll, meta = get_word(
+                tokenx,
+                lang=lang,
+                force_unstress=force_unstress,
+                force_ambig_stress=force_ambig_stress,
+            )
+            # print([tokenx, sylls_ll, meta])
+            for wordform_sylls in sylls_ll:
+                wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
+                wordform = WordForm(
+                    txt=tokenx,
+                    sylls_ipa=tuple(wordform_sylls_ipa),
+                    sylls_text=tuple(wordform_sylls_text),
+                    **meta,
+                )
+                self.children.append(wordform)
+
+
         
 
     def to_dict(self) -> dict:
@@ -157,7 +153,7 @@ def get_wordform_token(token):
             f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
         )
         tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)
-    return tokenx
+    return tokenx.lower()
 
 
 def token_is_punc(token):
@@ -167,68 +163,68 @@ def token_is_punc(token):
 
 
 
-# @cache
-# @profile
-# @stash.stashed_result
-def Word(
-    token: str,
-    lang: str = DEFAULT_LANG,
-    force_unstress: bool = None,
-    force_ambig_stress: bool = None,
-    parent=None,
-    text=None,
-) -> "WordType":
-    """
-    Create a WordType object for the given token in the specified language.
+# # @cache
+# # @profile
+# # @stash.stashed_result
+# def Word(
+#     token: str,
+#     lang: str = DEFAULT_LANG,
+#     force_unstress: bool = None,
+#     force_ambig_stress: bool = None,
+#     parent=None,
+#     text=None,
+# ) -> "WordType":
+#     """
+#     Create a WordType object for the given token in the specified language.
 
-    Args:
-        token (str): The word token to create a WordType for.
-        lang (str, optional): The language code. Defaults to DEFAULT_LANG.
+#     Args:
+#         token (str): The word token to create a WordType for.
+#         lang (str, optional): The language code. Defaults to DEFAULT_LANG.
 
-    Returns:
-        WordType: A WordType object for the given token.
+#     Returns:
+#         WordType: A WordType object for the given token.
 
-    Raises:
-        Exception: If the specified language is not recognized.
-    """
-    #log.debug("making wordtype")
-    wordtype = None
+#     Raises:
+#         Exception: If the specified language is not recognized.
+#     """
+#     #log.debug("making wordtype")
+#     wordtype = None
 
-    empty_wordtype = WordType(token, children=[], lang=lang, parent=parent, text=text)
-    wordtype = None
-    if token_is_punc(token):
-        wordtype = empty_wordtype
+#     empty_wordtype = WordType(token, children=[], lang=lang, parent=parent, text=text)
+#     wordtype = None
+#     if token_is_punc(token):
+#         wordtype = empty_wordtype
 
-    if not wordtype:
-        ## get from lang?
-        lang_obj = Language(lang)
-        tokenx = get_wordform_token(token)
-        sylls_ll, meta = lang_obj.get(
-            tokenx,
-            force_unstress=force_unstress,
-            force_ambig_stress=force_ambig_stress,
-        )
+#     if not wordtype:
+#         ## get from lang?
+#         lang_obj = Language(lang)
+#         tokenx = get_wordform_token(token)
+#         sylls_ll, meta = lang_obj.get(
+#             tokenx,
+#             force_unstress=force_unstress,
+#             force_ambig_stress=force_ambig_stress,
+#         )
 
-        wordforms = []
-        for wordform_sylls in sylls_ll:
-            wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
-            wordform = WordForm(
-                tokenx,
-                sylls_ipa=tuple(wordform_sylls_ipa),
-                sylls_text=tuple(wordform_sylls_text),
-                num=len(wordforms)+1,
-                text=text,
-                **meta,
-            )
-            wordforms.append(wordform)
+#         wordforms = []
+#         for wordform_sylls in sylls_ll:
+#             wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
+#             wordform = WordForm(
+#                 tokenx,
+#                 sylls_ipa=tuple(wordform_sylls_ipa),
+#                 sylls_text=tuple(wordform_sylls_text),
+#                 num=len(wordforms)+1,
+#                 text=text,
+#                 **meta,
+#             )
+#             wordforms.append(wordform)
 
-        ## make object
-        wordtype = WordType(
-            token,
-            children=wordforms,
-            lang=lang,
-            parent=parent,
-            text=text,
-        )
+#         ## make object
+#         wordtype = WordType(
+#             token,
+#             children=wordforms,
+#             lang=lang,
+#             parent=parent,
+#             text=text,
+#         )
 
-    return wordtype
+#     return wordtype

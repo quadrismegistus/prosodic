@@ -28,11 +28,6 @@ class WordToken(Entity):
             children (List[WordType], optional): List of child WordType objects. Defaults to [].
             **kwargs: Additional keyword arguments.
         """
-        if not children:
-            children = WordTypeList(parent=self)
-            wordtype = WordType(txt=txt, lang=lang, text=text, parent=children, num=1)
-            children.append(wordtype)
-
         super().__init__(
             children=children,
             parent=parent,
@@ -45,15 +40,13 @@ class WordToken(Entity):
         )
         self._preterm = None
 
+        if not self.children:
+            self.children.append(WordType(txt=txt,lang=lang))
+
+
     @property
     def preterm(self):
         return self._preterm
-    
-    @property
-    def key(self):
-        if self._key is None:
-            self._key = f'{self.text.key+"." if self.text else ""}{self.nice_type_name}{self.num}'
-        return self._key
 
     def to_dict(
         self,
@@ -76,11 +69,12 @@ class WordToken(Entity):
             incl_attrs=incl_attrs,
             **kwargs,
         )
-    
+
     @property
     def has_wordform(self):
-        return bool(self.wordtype and self.wordtype.children and len(self.wordtype.children))
-
+        return bool(
+            self.wordtype and self.wordtype.children and len(self.wordtype.children)
+        )
 
     @property
     def attrs(self):
@@ -96,12 +90,18 @@ class WordToken(Entity):
 
     def force_unstress(self):
         from .wordtype import WordType, WordTypeList
-        wordtype = WordType(self._txt, lang=self.lang, force_unstress=True, text=self.text)
+
+        wordtype = WordType(
+            self._txt, lang=self.lang, force_unstress=True, text=self.text
+        )
         self.children = WordTypeList([wordtype], parent=self, text=self.text)
         wordtype.parent = self
 
     def force_ambig_stress(self):
         from .wordtype import WordType, WordTypeList
-        wordtype = WordType(self._txt, lang=self.lang, force_ambig_stress=True, text=self.text)
+
+        wordtype = WordType(
+            self._txt, lang=self.lang, force_ambig_stress=True, text=self.text
+        )
         self.children = WordTypeList([wordtype], parent=self, text=self.text)
         wordtype.parent = self

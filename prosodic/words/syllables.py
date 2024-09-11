@@ -33,13 +33,6 @@ class Syllable(Entity):
             children: List of child entities (Phonemes).
             **kwargs: Additional keyword arguments.
         """
-        from .phonemes import Phoneme
-        from gruut_ipa import Pronunciation
-
-        log.info(
-            f"I am {self.__class__.__name__} with parent {parent.__class__.__name__}"
-        )
-
         assert ipa or children
         
         super().__init__(
@@ -52,19 +45,17 @@ class Syllable(Entity):
             **kwargs,
         )
         
-        if ipa and not self.children:
+        if self.ipa and not self.children:
+            from gruut_ipa import Pronunciation
+
             sipa = "".join(x for x in ipa if x.isalpha())
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
-            children = PhonemeList(parent=self)
             for phon in phones:
-                children.append(
-                    Phoneme(phon, text=text, num=len(children) + 1, parent=children)
-                )
-        elif children and not ipa:
-            ipa = "".join(phon.txt for phon in children)
+                self.children.append(Phoneme(txt=phon))
+        elif self.children and not self.ipa:
+            self.ipa = "".join(phon.txt for phon in self.children)
         
-        log.info(f'I am {self.__class__.__name__} with parent {self.parent.__class__.__name__} and children {self.children.__class__.__name__}')
 
     def to_dict(self) -> dict:
         return super().to_dict(incl_txt=True)

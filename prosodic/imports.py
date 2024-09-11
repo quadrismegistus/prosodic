@@ -38,7 +38,7 @@ import os
 import sys
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 import csv
-from hashstash import HashStash, log, logger, get_obj_addr, progress_bar, stuff, serialize, unstuff, deserialize, encode_hash, call_function_politely
+from hashstash import HashStash, log, logger, get_obj_addr, progress_bar, stuff, serialize, unstuff, deserialize, encode_hash, call_function_politely, stashed_result
 from importlib import resources
 
 PATH_HERE = os.path.abspath(os.path.dirname(__file__))
@@ -309,7 +309,7 @@ CHILDCLASSES = {
 }
 
 CHILDCLASSLISTS = {
-    TextModel: StanzaList,
+    TextModel: WordTokenList,
     Stanza: LineList,
     Line: WordTokenList,
     WordToken: WordTypeList,

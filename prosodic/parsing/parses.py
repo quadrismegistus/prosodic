@@ -62,7 +62,7 @@ class Parse(Entity):
         # line_txt: str = "",
     ) -> None:
         from .meter import Meter
-
+        global OBJECTS
         # meter
         # if meter is None and parent:
             # meter = parent.meter
@@ -93,7 +93,6 @@ class Parse(Entity):
             scansion = split_scansion(scansion)
         self.scansion = copy(scansion)
 
-        # divide positions
         self.is_bounded = is_bounded
         self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
         self.unmetrical = False
@@ -103,22 +102,16 @@ class Parse(Entity):
         self.total_score = None
         self.pause_comparisons = False
         self.parse_rank = rank
-        # self.violset=Multiset()
         self.num_slots_positioned = 0
         self.parse_viold = Counter(parse_viold)
-        # self._line_num = line_num
-        # self._stanza_num = stanza_num
-        # self._line_txt = line_txt
-        # super().__init__(children=[] if not positions else positions, parent=parent)
-        # self.children = ParsePositionList([] if not positions else positions)
-        # self.positions = self.children
-        self.children = [] if not children else children
+        self.children = ParsePositionList(parent=self) if not children else children
         if not self.children:
             for mpos_str in self.scansion:
                 self.extend(mpos_str)
         self.init()
-        if isinstance(self.children, list):
-            self.children = ParsePositionList(self.children, parent=self)
+        if self.is_complete:
+            for obj in self.iter_all():
+                OBJECTS[obj.key] = obj
 
     @property
     def positions(self):
@@ -127,7 +120,6 @@ class Parse(Entity):
     def init(self, force=False) -> None:
         """Initialize the parse positions."""
         for pos in self.positions:
-            pos.parse = self
             pos.init()
         self.apply_parse_constraints(force=force)
 
@@ -201,6 +193,12 @@ class Parse(Entity):
             meter=meter,
             **data
         )
+    
+    @property
+    def key(self):
+        if self._key is None:
+            self._key = f"""{self.parent.key}.{self.nice_type_name}(scansion="{self.meter_str}",stress="{self.stress_str}")"""
+        return self._key
 
     @property
     def slots(self) -> List["ParseSlot"]:
@@ -267,7 +265,7 @@ class Parse(Entity):
             # log.warning(f'cannnot extend because last position is also {mval}')
             return None
         
-        mpos = ParsePosition(meter_val=mval, children=[], parent=self)
+        mpos = ParsePosition(meter_val=mval, children=[])
         for i, x in enumerate(mpos_str):
             slot_i = self.num_slots_positioned
             try:
@@ -330,7 +328,9 @@ class Parse(Entity):
         from .positions import ParsePositionList
         new = Parse.__new__(Parse)
         new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-        new.children = ParsePositionList([pos.copy() for pos in self.children])
+        new.children = ParsePositionList(parent=self.parent)
+        for pos in self.children:
+            new.children.append(pos.copy())
         return new
 
     def branch(self) -> List["Parse"]:

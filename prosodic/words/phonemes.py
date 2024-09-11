@@ -15,7 +15,7 @@ class Phoneme(Entity):
     def feats(self):
         return get_phoneme_feats(self.txt)
 
-    @cached_property
+    @property
     def is_vowel(self) -> Optional[bool]:
         """
         Determine if the phoneme is a vowel.

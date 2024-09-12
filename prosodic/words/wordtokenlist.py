@@ -37,6 +37,7 @@ class WordTokenList(EntityList):
     @property
     def words(self):
         return self
+        
 
     # def to_dict(self, incl_children=False, **kwargs):
     #     print([type(self), self._key, self.parent])

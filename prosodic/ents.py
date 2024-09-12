@@ -944,7 +944,7 @@ class Entity(UserList):
             return {**self.parent.prefix_attrs, **odx}
         return odx
 
-    @cached_property
+    @property
     def txt(self):
         """
         Get the text content of the entity.
@@ -953,13 +953,10 @@ class Entity(UserList):
             str: The text content of the entity.
         """
         # log.debug(type(self), self._txt)
-        if self._txt:
-            txt = self._txt
-        elif self.children:
-            txt = "".join(child.txt for child in self.children)
-        else:
-            txt = ""
-        return txt
+        if self._txt is None and self.children:
+            self._txt = "".join(child.txt for child in self.children)
+        
+        return self._txt
 
     @property
     def data(self):

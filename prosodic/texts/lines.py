@@ -17,6 +17,9 @@ class Line(WordTokenList):
         use_cache (bool): Whether to use caching. Default is False.
     """
 
+    def __repr__(self, **kwargs):
+        return f"Line(num={self.num}, txt={repr(self.txt)})"
+
     # line_sep: str = "\n"
     # sep: str = "\n"
     # child_type: str = "WordToken"

@@ -18,6 +18,9 @@ class Stanza(WordTokenList):
         prefix (str): Prefix used for identification. Default is "stanza".
     """
 
+    def __repr__(self, **kwargs):
+        return f"Stanza(num={self.num}, txt={repr(self.txt)})"
+
 
     # @#log.debug
     # def __init__(

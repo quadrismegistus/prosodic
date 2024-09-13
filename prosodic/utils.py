@@ -188,10 +188,9 @@ def get_txt(txt: Optional[str], fn: Optional[str]) -> str:
         The text content.
     """
     if txt:
-        if txt.startswith("http") or os.path.exists(txt):
+        if txt.startswith("http"):
             return get_txt(None, txt)
-
-        return txt
+        return txt.strip()
 
     if fn:
         if fn.startswith("http"):
@@ -200,7 +199,7 @@ def get_txt(txt: Optional[str], fn: Optional[str]) -> str:
 
         if os.path.exists(fn):
             with open(fn, encoding='utf-8') as f:
-                return f.read()
+                return f.read().strip()
 
     return ""
 
@@ -265,7 +264,7 @@ def nicedict(d):
     keys = ordered_keys + remaining_keys
     return {k:d[k] for k in keys}
 
-def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
+def setindex(df: pd.DataFrame, cols: List[str] = DF_INDEX, sort=False) -> pd.DataFrame:
     """Set the index of a DataFrame to specified columns.
 
     Args:
@@ -287,7 +286,8 @@ def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
             df[c] = df[c].fillna(0).apply(int)
         else:
             df[c] = df[c].fillna('')
-    return df.set_index(cols)
+    odf = df.set_index(cols)
+    return odf if not sort else odf.sort_index()
 
 def format_syll_ipa_str(ipa: str) -> str:
     if not ipa:
@@ -416,35 +416,6 @@ def load(fn: str, **kwargs: Any) -> Any:
     return from_dict(fn, **kwargs)
 
 
-def to_dict(obj: Any, fn: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Convert an object to JSON and optionally save to a file.
-
-    Args:
-        obj: The object to convert.
-        fn: The filename to save to (optional).
-
-    Returns:
-        The JSON data if fn is None, otherwise None.
-    """
-    if hasattr(obj, "to_dict"):
-        data = obj.to_dict()
-    else:
-        data = obj
-
-    if not fn:
-        return data
-    else:
-        fdir = os.path.dirname(fn)
-        if fdir:
-            os.makedirs(fdir, exist_ok=True)
-        with open(fn, "wb") as of:
-            of.write(
-                orjson.dumps(
-                    data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
-                )
-            )
-
-
 def ensure_dir(fn: str) -> None:
     """Ensure that the directory for a file exists.
 
@@ -455,43 +426,6 @@ def ensure_dir(fn: str) -> None:
     if dirname:
         os.makedirs(dirname, exist_ok=True)
 
-
-
-def encode_cache(x: Any) -> bytes:
-    """Encode an object for caching.
-
-    Args:
-        x: The object to encode.
-
-    Returns:
-        The encoded object as bytes.
-    """
-    return b64encode(
-        zlib.compress(
-            orjson.dumps(
-                x,
-                option=orjson.OPT_SERIALIZE_NUMPY,
-            )
-        )
-    )
-
-
-def decode_cache(x: bytes) -> Any:
-    """Decode a cached object.
-
-    Args:
-        x: The encoded object.
-
-    Returns:
-        The decoded object.
-    """
-    return orjson.loads(
-        zlib.decompress(
-            b64decode(
-                x,
-            ),
-        ),
-    )
 
 
 def to_html(html: Union[str, Any], as_str: bool = False, **kwargs: Any) -> Union[str, Any]:

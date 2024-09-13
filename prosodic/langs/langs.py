@@ -122,7 +122,7 @@ class LanguageModel:
         ##
         sylls_ipa_lt = [tuple(x) for x in sylls_ipa_ll]
         sylls_ipa_ll = [list(x) for x in set(sylls_ipa_lt)]
-        sylls_ipa_ll.sort(key=lambda x: count_stresses_in_sylls_ipa_l(x))
+        sylls_ipa_ll.sort(key=lambda x: (count_stresses_in_sylls_ipa_l(x), len(x)))
         meta = {
             "force_unstress": force_unstress,
             "force_ambig_stress": force_ambig_stress,

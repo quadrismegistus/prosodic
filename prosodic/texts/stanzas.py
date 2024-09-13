@@ -17,67 +17,11 @@ class Stanza(WordTokenList):
         child_type (str): The type of child entities. Default is "Line".
         prefix (str): Prefix used for identification. Default is "stanza".
     """
+    prefix = 'stanza'
 
     def __repr__(self, **kwargs):
         return f"Stanza(num={self.num}, txt={repr(self.txt)})"
 
-
-    # @#log.debug
-    # def __init__(
-    #     self,
-    #     txt: str = "",
-    #     children: List[Any] = [],
-    #     parent: Optional[Any] = None,
-    #     tokens_df: Optional[pd.DataFrame] = None,
-    #     lang: str = DEFAULT_LANG,
-    #     **kwargs
-    # ) -> None:
-    #     """
-    #     Initialize a Stanza object.
-
-    #     Args:
-    #         txt (str): The text content of the stanza.
-    #         children (List[Any]): List of child entities (usually Lines).
-    #         parent (Optional[Any]): The parent entity of this stanza.
-    #         tokens_df (Optional[pd.DataFrame]): DataFrame containing tokenized data.
-    #         lang (str): The language of the stanza. Defaults to DEFAULT_LANG.
-    #         **kwargs: Additional keyword arguments.
-
-    #     Raises:
-    #         Exception: If neither txt, children, nor tokens_df is provided.
-    #     """
-    #     from .lines import Line
-
-    #     if not txt and not children and tokens_df is None:
-    #         raise ValueError("Must provide either txt, children, or tokens_df")
-    #     #log.debug(f"Checking input: txt={bool(txt)}, children={bool(children)}, tokens_df={tokens_df is not None}")
-
-    #     if not children:
-    #         #log.debug("No children provided, creating from tokens_df or txt")
-            
-    #         if tokens_df is None:
-    #             tokens_df = tokenize_sentwords_df(txt)
-    #             #log.debug(f"Tokenized text into DataFrame with shape {tokens_df.shape}")
-            
-    #         children = [
-    #             Line(parent=self, tokens_df=line_df)
-    #             for line_i, line_df in tokens_df.groupby("line_i")
-    #         ]
-    #         #log.debug(f"Created {len(children)} Line objects from tokens_df")
-
-    #     if not txt:
-    #         txt=''.join(x._txt for x in children)
-    #     super().__init__(txt=txt, children=children, parent=parent, **kwargs)
-    #     #log.debug(f"Initialized Stanza object with text: {txt}")
-
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Convert the Stanza object to a JSON-serializable dictionary.
-
-    #     Returns:
-    #         Dict[str, Any]: A dictionary representation of the Stanza object.
-    #     """
-    #     return Entity.to_dict(self, no_txt=True)
 
     def _repr_html_(self, as_df: bool = False, df: Optional[pd.DataFrame] = None) -> str:
         """

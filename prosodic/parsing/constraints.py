@@ -103,7 +103,7 @@ def unres_across(mpos):
     slots = mpos.slots
     if len(slots) < 2:
         return [None] * len(mpos.slots)
-    ol = [None]
+    ol = [None] # only raise viol on second (or more) position
     for si in range(1, len(slots)):
         slot1, slot2 = slots[si - 1], slots[si]
         unit1, unit2 = slot1.unit, slot2.unit
@@ -113,7 +113,6 @@ def unres_across(mpos):
         else:
             # disyllabic strong position immediately violates
             if mpos.is_prom or not wf1.is_functionword or not wf2.is_functionword:
-                ol[si - 1] = True
                 ol.append(True)
             else:
                 ol.append(False)

@@ -60,6 +60,8 @@ class Parse(Entity):
         parse_viold={},
         key=None,
         num=None,
+        scope=None,
+        **meter_kwargs,
         # line_num: Optional[int] = None,
         # stanza_num: Optional[int] = None,
         # line_txt: str = "",
@@ -71,22 +73,27 @@ class Parse(Entity):
         # if meter is None and parent:
         # meter = parent.meter
         if meter is None:
-            meter = Meter()
+            meter = Meter(**meter_kwargs)
+        # self._attrs = {}
         self.meter_obj = meter
         self._key = key
         self._num = num
+        self._scope = scope
         self.constraint_names = list(meter.constraints.keys())
         self.parse_constraints = meter.parse_constraint_funcs
         self.position_constraints = meter.position_constraint_funcs
         self.constraint_weights = meter.constraints
 
         # wordforms
+        if isinstance(wordtokens, str):
+            wordtokens = next(TextModel(wordtokens).wordtokens.iter_wordtoken_matrix())
         assert wordtokens.num_with_forms == wordtokens.num_wordforms
         self.wordtokens = wordtokens
         self.wordforms = wordtokens.wordforms
         self.slot_units = [syll for wf in self.wordforms for syll in wf]
 
-        self.parent = parent if parent is not None else wordtokens
+        # self.parent = parent if parent is not None else wordtokens
+        self.parent = None # wait for parselist
 
         # slots
         # self.slots = [ParseSlot(syll, parent=self) for syll in self.slot_units]
@@ -172,7 +179,7 @@ class Parse(Entity):
     def from_dict(
         cls,
         json_d: Dict[str, Any],
-        use_registry=True,
+        use_registry=DEFAULT_USE_REGISTRY,
     ) -> "Parse":
         """
         Create a Parse object from a JSON dictionary.
@@ -224,7 +231,8 @@ class Parse(Entity):
 
     @property
     def scope(self):
-        return self.parent.__class__.__name__.lower() if self.parent else None
+        if self._scope: return self._scope
+        return self.parent.parent.prefix if self.parent and self.parent.parent else None
 
     @classmethod
     def concat(cls, *parses: "Parse", wordtokens=None) -> "Parse":
@@ -650,17 +658,26 @@ class Parse(Entity):
         Returns:
             Dict[str, Any]: Dictionary of parse attributes.
         """
+        d={**(self._attrs or {})}
+        for unit_type in ['stanza', 'line', 'linepart', 'sentpart', 'sent']:
+            unit = self.get_unit(unit_type)
+            if unit is not None:
+                d[f"{unit_type}_num"] = unit.num
+                if unit_type == self.scope:
+                    d[f'{unit_type}_txt'] = unit.txt
         return {
-            **self._attrs,
-            "txt": self.txt,
+            **d,
             "rank": self.parse_rank,
+            "txt": self.txt,
             "meter": self.meter_str,
             "stress": self.stress_str,
             "score": self.score,
+            "num_viols": self.num_viols,
             "ambig": self.ambig,
             "is_bounded": int(bool(self.is_bounded)),
+            **{f'*{c}':self.parse_viold.get(c,0) for c in self.parse_constraints},
         }
-
+    
     @property
     def line_txt(self) -> str:
         """
@@ -669,7 +686,7 @@ class Parse(Entity):
         Returns:
             str: The text of the line.
         """
-        return self.line.txt if self.line else self._line_txt
+        return self.parent.txt if self.parent else self._line_txt
 
     @property
     def ambig(self) -> Optional[int]:
@@ -680,7 +697,7 @@ class Parse(Entity):
             Optional[int]: The ambiguity score, or None if not available.
         """
         return (
-            self.line._parses.num_unbounded if self.line and self.line._parses else None
+            self.parent.num_unbounded if self.parent else None
         )
 
     @cached_property
@@ -692,6 +709,10 @@ class Parse(Entity):
             float: The total score.
         """
         return sum(self.scores.values())
+    
+    @cached_property
+    def num_viols(self):
+        return len(self.violset)
 
     @property
     def meter_str(self, word_sep: str = "") -> str:
@@ -821,8 +842,8 @@ class Parse(Entity):
         Returns:
             Union[str, HTML]: HTML representation of the parse.
         """
-        if self.line:
-            out = self.line.to_html(as_str=True, css=css)
+        if self.parent:
+            out = self.parent.to_html(as_str=True, css=css)
             if blockquote:
                 reprstr = get_attr_str(self.attrs, bad_keys={"txt", "line_txt"})
                 out += f'<div class="miniquote">⎿ {reprstr}</div>'
@@ -862,15 +883,15 @@ class Parse(Entity):
             return {**odx1, **odx2}
 
         odx = {**self.attrs}
-        cnames = [f.__name__ for f in self.meter_obj.constraints]
+        cnames = [f for f in self.meter_obj.constraints]
         odx["num_sylls"] = self.num_sylls
         odx["num_words"] = self.num_words
 
         for cname in cnames:
             odx[f"*{cname}"] = (
-                np.mean([slot.viold[cname] for slot in self.slots])
+                np.mean([slot.viold.get(cname,0) for slot in self.slots])
                 if norm
-                else self.constraint_scores[cname]
+                else self.scores.get(cname,0)
             )
         viols = [int(slot.has_viol) for slot in self.slots]
         scores = [int(slot.score) for slot in self.slots]
@@ -878,22 +899,64 @@ class Parse(Entity):
         odx["*total"] = np.mean(scores) if norm else sum(scores)
         return odx
 
-    def get_df(self, *x, **y) -> pd.DataFrame:
+    def get_unit(self, unit_type:str=None):
+        if unit_type is None: unit_type = self.scope
+        unit = self.parent.parent if self.parent and self.parent.parent else None
+        if unit is None: return None
+        return getattr(unit, unit_type)
+    
+    def get_unit_num(self, unit_type:str=None):
+        unit = self.get_unit(unit_type)
+        if unit is None: return None
+        return getattr(unit, 'num')
+
+    @property
+    def line(self):
+        return self.get_unit('line')
+
+    @property
+    def linepart(self):
+        return self.get_unit('linepart')
+    
+    @property
+    def stanza(self):
+        return self.get_unit('stanza')
+    
+    @property
+    def sentpart(self):
+        return self.get_unit('sentpart')
+    
+    @property
+    def sent(self):
+        return self.get_unit('sent')
+
+    def get_ld(self, *args, **kwargs):
+        l=[]
+        attrs = {f'parse_{k}' if not k.endswith('_num') and not k.endswith('_txt') and k[0]!='*' else k:v for k,v in self.attrs.items()}
+        for pos in self.positions:
+            pos_attrs = {f'meterpos_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in pos.attrs.items()}
+            for slot in pos.slots:
+                slot_attrs = {
+                    'wordtoken_num':slot.unit.wordtoken.num,
+                    'wordtoken_txt':slot.unit.wordtoken.txt,
+                    **{f'meterslot_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in slot.attrs.items()}
+                }
+                all_attrs = {**attrs, **pos_attrs, **slot_attrs}
+                viol_attrs = {k:v for k,v in all_attrs.items() if k and k[0] == '*'}
+                non_viol_attrs = {k:v for k,v in all_attrs.items() if k and k[0] != '*'}
+                l.append({**non_viol_attrs, **viol_attrs})
+        return l
+
+
+    def get_df(self, *args, **kwargs) -> pd.DataFrame:
         """
         Get a DataFrame representation of the parse.
 
         Args:
-            *x: Additional positional arguments.
-            **y: Additional keyword arguments.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             pd.DataFrame: DataFrame representation of the parse.
         """
-        df = super().get_df(*x, **y)
-        df.columns = [
-            c.replace("meterslot_syll_", "syll_").replace(
-                "meterslot_wordtoken_", "wordtoken_"
-            )
-            for c in df
-        ]
-        return setindex(df.reset_index(), DF_COLS).sort_index()
+        return setindex(pd.DataFrame(self.get_ld(*args, **kwargs)), sort=True)

@@ -66,14 +66,14 @@ class WordType(Entity):
 
         
 
-    def to_dict(self, **kwargs) -> dict:
+    def to_dict(self, incl_attrs=True, incl_txt=True, **kwargs) -> dict:
         """
         Convert the WordType to a JSON-serializable dictionary.
 
         Returns:
             dict: A dictionary representation of the WordType.
         """
-        return super().to_dict(incl_attrs=True, incl_txt=True, **kwargs)
+        return super().to_dict(incl_attrs=incl_attrs, incl_txt=incl_txt, **kwargs)
 
     def unstress(self) -> None:
         if self.num_forms > 1:
@@ -161,70 +161,6 @@ def token_is_punc(token):
     return not any(x.isalpha() for x in tokenx)
 
 
-
-
-# # @cache
-# # @profile
-# # @stash.stashed_result
-# def Word(
-#     token: str,
-#     lang: str = DEFAULT_LANG,
-#     force_unstress: bool = None,
-#     force_ambig_stress: bool = None,
-#     parent=None,
-#     text=None,
-# ) -> "WordType":
-#     """
-#     Create a WordType object for the given token in the specified language.
-
-#     Args:
-#         token (str): The word token to create a WordType for.
-#         lang (str, optional): The language code. Defaults to DEFAULT_LANG.
-
-#     Returns:
-#         WordType: A WordType object for the given token.
-
-#     Raises:
-#         Exception: If the specified language is not recognized.
-#     """
-#     #log.debug("making wordtype")
-#     wordtype = None
-
-#     empty_wordtype = WordType(token, children=[], lang=lang, parent=parent, text=text)
-#     wordtype = None
-#     if token_is_punc(token):
-#         wordtype = empty_wordtype
-
-#     if not wordtype:
-#         ## get from lang?
-#         lang_obj = Language(lang)
-#         tokenx = get_wordform_token(token)
-#         sylls_ll, meta = lang_obj.get(
-#             tokenx,
-#             force_unstress=force_unstress,
-#             force_ambig_stress=force_ambig_stress,
-#         )
-
-#         wordforms = []
-#         for wordform_sylls in sylls_ll:
-#             wordform_sylls_ipa, wordform_sylls_text = zip(*wordform_sylls)
-#             wordform = WordForm(
-#                 tokenx,
-#                 sylls_ipa=tuple(wordform_sylls_ipa),
-#                 sylls_text=tuple(wordform_sylls_text),
-#                 num=len(wordforms)+1,
-#                 text=text,
-#                 **meta,
-#             )
-#             wordforms.append(wordform)
-
-#         ## make object
-#         wordtype = WordType(
-#             token,
-#             children=wordforms,
-#             lang=lang,
-#             parent=parent,
-#             text=text,
-#         )
-
-#     return wordtype
+def Word(token, lang=DEFAULT_LANG, **kwargs):
+    from ..texts import TextModel
+    return TextModel(txt=token, lang=lang, **kwargs).wordtype

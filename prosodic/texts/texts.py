@@ -2,7 +2,6 @@ from ..imports import *
 from ..words import WordTokenList, WordToken
 
 NUMBUILT = 0
-DEFAULT_COMBINE_BY = "line"
 
 
 class TextModel(Entity):
@@ -22,7 +21,6 @@ class TextModel(Entity):
         lang: Optional[str] = DEFAULT_LANG,
         parent: Optional[Entity] = None,
         tokens_df: Optional[pd.DataFrame] = None,
-        key=None,
         **kwargs,
     ):
         """
@@ -56,16 +54,15 @@ class TextModel(Entity):
             )
         txt = clean_text(get_txt(txt, fn)).strip()
         lang = lang if lang else detect_lang(self._txt)
-        key = f"{self.nice_type_name}({self.hash})" if key is None else key
 
         # init entity
         super().__init__(
             children=children,
             txt=txt,
-            key=key,
             lang=lang,
             **kwargs,
         )
+        self._parse_results = {}
 
         if not self.children:
             if tokens_df is None:
@@ -123,7 +120,8 @@ class TextModel(Entity):
 
     @property
     def hash(self):
-        return encode_hash(serialize({"txt": self._txt, "lang": self.lang}))
+        pkg={"txt": self._txt, "lang": self.lang}
+        return encode_hash(serialize(pkg))
 
     @property
     def key(self):
@@ -137,7 +135,7 @@ class TextModel(Entity):
         return super().__getitem__(item)
         
 
-    # @stash.stashed_result
+    @cache
     def parse(
         self,
         combine_by: Literal["line", "sent"] = DEFAULT_COMBINE_BY,
@@ -158,7 +156,8 @@ class TextModel(Entity):
         """
         from ..parsing.parselists import ParseListList
 
-        self._parses = ParseListList(parent=self)
+        if combine_by != self.prefix:
+            self._parses = ParseListList(parent=self)
         for i,pl in enumerate(self.parse_iter(
             combine_by=combine_by,
             num_proc=num_proc,
@@ -167,9 +166,12 @@ class TextModel(Entity):
             lim=lim,
             **meter_kwargs,
         )):
-            pl._num = i+1
-            self._parses.append(pl)
-        self._parses.register_objects()
+            if combine_by == self.prefix:
+                return pl
+            else:
+                pl._num = i+1
+                self._parses.append(pl)
+        # self._parses.register_objects()
         return self._parses
 
     def parse_iter(
@@ -187,30 +189,57 @@ class TextModel(Entity):
         if combine_by and meter.parse_unit == combine_by:
             combine_by = None
 
-        last_unit = None
-        units = []
-        for parse_list in meter.parse_text_iter(
-            self, num_proc=num_proc, force=force, lim=lim
-        ):
-            parsed_ent = self.match(parse_list.parent)
-            parse_list.parent = parsed_ent
-            parsed_ent._parses = parse_list
-            if not combine_by:
-                yield parse_list
-            else:
-                this_unit = getattr(parsed_ent, combine_by)
-                if units and not last_unit.equals(this_unit):
-                    new_parselist = ParseList.from_combinations(units, parent=this_unit)
-                    this_unit._parses = new_parselist
-                    yield new_parselist
-                    units = []
-                units.append(parse_list)
-                last_unit = this_unit
+        parse_key = (meter.key, combine_by)
+        if parse_key in self._parse_results:
+            yield from self._parse_results[parse_key]
+        else:
+            self._parse_results[parse_key] = []
+            last_unit = None
+            units = []
+            for parse_list in meter.parse_text_iter(
+                self, num_proc=num_proc, force=force, lim=lim
+            ):
+                log.info(f'parsed_ent v1: {parse_list.parent}')
+                parsed_ent = self.match(parse_list.parent)
+                parse_list.parent = parsed_ent
+                parsed_ent._parses = parse_list
+                if not combine_by:
+                    self._parse_results[parse_key].append(parse_list)
+                    yield parse_list
+                else:
+                    this_unit = getattr(parsed_ent, combine_by)
+                    log.info(f'parsed_ent: {parsed_ent}')
+                    log.info(f'this_unit: {this_unit}')
+                    print()
+                    if units and not last_unit.equals(this_unit):
+                        new_parselist = ParseList.from_combinations(units, parent=last_unit)
+                        this_unit._parses = new_parselist
+                        self._parse_results[parse_key].append(new_parselist)
+                        yield new_parselist
+                        units = []
+                    units.append(parse_list)
+                    last_unit = this_unit
 
-        if units:
-            new_parselist = ParseList.from_combinations(units, parent=this_unit)
-            this_unit._parses = new_parselist
-            yield new_parselist
+            if units:
+                new_parselist = ParseList.from_combinations(units, parent=this_unit)
+                this_unit._parses = new_parselist
+                self._parse_results[parse_key].append(new_parselist)
+                yield new_parselist
+
+    @property
+    def parses(self) -> Any:
+        """
+        Get the parses for the text.
+
+        Returns:
+            Any: The parses object.
+        """
+        if not self._parses:
+            self.parse()
+        return self._parses
+
+    def iter_wordtoken_matrix(self):
+        yield from self.wordtokens.iter_wordtoken_matrix()
 
 
 @stash.stashed_result

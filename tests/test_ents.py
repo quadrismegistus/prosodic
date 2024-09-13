@@ -3,22 +3,22 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prosodic.imports import *
 disable_caching()
-
+import pytest
 
 def test_show():
-    t = Text('in hello world')
+    t = TextModel('in hello world')
     x = t.inspect()
     assert x is None
     x = t.inspect(indent=1)
     assert x is not None
-    assert 'Text(' in x
+    assert 'TextModel(' in x
 
     html = t._repr_html_()
     assert '<table' in html
 
 
 def test_get_ld():
-    t = Text('in hello world')
+    t = TextModel('in hello world')
 
     ld1 = t.get_ld(incl_phons=False, incl_sylls=False,
                    multiple_wordforms=False)
@@ -30,7 +30,7 @@ def test_get_ld():
 
 
 def test_get_df():
-    t = Text('in hello world')
+    t = TextModel('in hello world')
 
     df1 = t.get_df(incl_phons=False, incl_sylls=False,
                    multiple_wordforms=False)
@@ -42,7 +42,7 @@ def test_get_df():
 
 
 def test_get_children():
-    t = Text(sonnet + '\n\n' + sonnet)
+    t = TextModel(sonnet + '\n\n' + sonnet)
     assert len(t.stanzas) == 2
     assert len(t.lines) == (14*2)
     assert len(t.syllables) >= (14*2*10)
@@ -57,36 +57,34 @@ def test_get_children():
     assert type(t.syllables) == SyllableList
     assert type(t.phonemes) == PhonemeList
 
-    w = Word('hello')
+    w = TextModel('hello').wordtypes[0]
     syll = w.syllables[0]
     assert syll.wordtype is w
     assert len(w.syllables) == 2
     assert len(w.phonemes) == 5
 
-    w = Word('hello')
+    w = TextModel('hello').wordtypes[0]
     assert len(w.syllables) == 2
     assert len(w.phonemes) == 5
 
-    t = Text('hello')
+    t = TextModel('hello')
     stanza = t.stanzas[0]
-    assert stanza.parent is t
+    assert stanza.parent.nice_type_name == 'StanzaList'
     assert stanza.text is t
     assert stanza.stanzas.data == [stanza]
 
     line = t.lines[0]
-    assert line.parent is stanza
+    assert line.parent.nice_type_name == 'LineList'
     assert line.stanza is stanza
     assert line.text is t
-    assert line.stanzas.data == []
 
     wordtoken = t.wordtokens[0]
-    assert wordtoken.parent is line
+    assert wordtoken.parent.nice_type_name == 'WordTokenList'
     assert wordtoken.line is line
     assert wordtoken.stanza is stanza
     assert wordtoken.text is t
 
     wordtype = t.wordtypes[0]
-    assert wordtype.parent is wordtoken
     assert wordtype.wordtoken is wordtoken
     assert wordtype.line is line
     assert wordtype.stanza is stanza
@@ -94,23 +92,21 @@ def test_get_children():
     assert wordtype.children
 
     wordform = t.wordforms[0]
-    assert wordform.parent is wordtype
     assert wordform.wordtype is wordtype
 
     syll = t.syllables[0]
-    assert syll.parent is wordform
     assert syll.wordform is wordform
     assert syll.wordtype is wordtype
 
     phon = t.phonemes[0]
-    assert phon.parent is syll
+    assert phon.syll is syll
     assert phon.syllable is syll
     assert phon.wordform is wordform
     assert phon.wordtype is wordtype
 
 
 def test_i():
-    t = Text('hello')
+    t = TextModel('hello')
     wf = t.wordforms[0]
     syll = wf.children[0]
     assert syll.i is not None
@@ -121,31 +117,13 @@ def test_i():
     assert syll.next is None
     assert syll.prev is not None
 
-    t = Stanza('hello\nworld')
-    l1, l2 = t.children
-    t.children = []
-    assert l1.i is None
-    assert l1.num is None
-    assert l1.next is None
-    assert l1.prev is None
-    assert l2.i is None
-    assert l2.num is None
-    assert l2.next is None
-    assert l2.prev is None
-
-    t = Stanza('hello\nworld')
-    l1, l2 = t.children
-    l1.i, l2.i  # instantiate
-    t.children = []
-    assert l1.next is None
-    assert l2.prev is None
 
 
 def test_types():
-    text = Text('ok')
-    stanza = text.children[0]
-    line = stanza.children[0]
-    wtoken = line.children[0]
+    text = TextModel('ok')
+    stanza = text.stanza1
+    line = text.line1
+    wtoken = text.children[0]
     wtype = wtoken.children[0]
     wform = wtype.children[0]
     syll = wform.children[0]
@@ -225,14 +203,40 @@ def test_types():
 
 
 def test_exceptions():
-    t = Text(children=[1, 2])
-    assert t.children.data == []
+    with pytest.raises(ValueError):
+        WordTokenList(children=[1, 2])
 
-    t = Text('', children=[Entity()])
-    assert not t._txt
-    assert not t.txt
+    with pytest.raises(ValueError):
+        TextModel(children=[Entity()])
 
 
-def test_jsons():
-    obj = Line('hello')
-    assert from_dict(to_dict(obj)).to_hash() == obj.to_hash()
+def test_new_parent_system():
+    t = TextModel('hello')
+    assert t.parent is None
+    obj = t
+    while obj.children:
+        assert obj.children.parent is obj
+        assert obj.children[0].parent is obj.children
+        obj = obj.children[0]
+    
+    obj = Parse(t.linepart1)
+    assert obj.parent is None   # wait for parselist
+    while obj.children:
+        assert obj.children.parent is obj
+        assert obj.children[0].parent is obj.children
+        obj = obj.children[0]
+
+
+def test_serialize():
+    t = TextModel('hello world')
+
+    def do(x):
+        for obj in x.iter_all():
+            obj2 = Entity.from_dict(obj.to_dict(), use_registry=False)
+            assert obj.key == obj2.key
+            attrd1 = {k:v for k,v in obj.attrs.items() if k not in {'num', 'txt'}}
+            attrd2 = {k:v for k,v in obj2.attrs.items() if k not in {'num', 'txt'}}
+            assert attrd1 == attrd2
+
+    do(t)
+    do(Parse(t.linepart1))

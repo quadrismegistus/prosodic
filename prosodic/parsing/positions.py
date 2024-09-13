@@ -69,7 +69,7 @@ class ParsePosition(Entity):
                     slot.viold[cname] = viol
         self._init = True
 
-    @cached_property
+    @property
     def viold(self):
         viold = Counter()
         for slot in self.slots:
@@ -77,36 +77,13 @@ class ParsePosition(Entity):
                 viold[cname]+=cviol
         return viold
     
-    @cached_property
+    @property
     def scores(self):
         return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
 
-    @cached_property
+    @property
     def violset(self):
         return {cname for cname,cval in self.viold.items() if cval>0}
-
-    # def copy(self):
-    #     """
-    #     Create a shallow copy of the parse position.
-
-    #     Returns:
-    #         ParsePosition: A shallow copy of the parse position.
-    #     """
-    #     from .slots import ParseSlotList
-    #     new = ParsePosition.__new__(ParsePosition)
-    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-    #     # new.children = ParseSlotList(parent=new)
-    #     # for slot in self.slots:
-    #     #     new.add_slot(slot.unit)
-    #     new.children = self.children.copy()
-    #     return new
-
-    # def copy(self):
-    #     new = super().copy()
-    #     if len(self.slots)==1:
-    #         print(self.slots)
-    #         print(new.slots)
-    #     return new
 
     def to_dict(self, **kwargs) -> Dict:
         """
@@ -139,7 +116,7 @@ class ParsePosition(Entity):
         token = token.upper() if self.is_prom else token.lower()
         return token
 
-    @cached_property
+    @property
     def meter_str(self) -> str:
         """
         Get the meter string for this position.

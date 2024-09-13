@@ -132,8 +132,8 @@ def tokenize_sentwords_iter(
             odx_word = dict(
                 txt=word_str,
                 num=tok_i,
-                line_num=line_i,
                 para_num=para_i,
+                line_num=line_i,
                 sent_num=sent_i + 1,
                 sentpart_num=sentpart_i,
                 linepart_num=linepart_i,

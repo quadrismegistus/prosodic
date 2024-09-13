@@ -1,5 +1,6 @@
 from ..imports import *
 
+
 class ParseSlot(Entity):
     """
     Represents a slot in a metrical parse.
@@ -18,7 +19,7 @@ class ParseSlot(Entity):
         parent: Optional[Any] = None,
         children: List[Any] = [],
         viold: Dict[str, Any] = {},
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Initialize a ParseSlot.
@@ -30,7 +31,6 @@ class ParseSlot(Entity):
             viold: Dictionary of violation data.
             **kwargs: Additional keyword arguments.
         """
-        # print(unit,parent,children,viold,kwargs)
         if unit is None and children:
             assert len(children) == 1
             unit = children[0]
@@ -41,23 +41,29 @@ class ParseSlot(Entity):
     def position(self):
         return self.parent
 
-    # # @log.info
-    # def copy(self):
-    #     """
-    #     Create a shallow copy of the parse slot.
+    # @log.info
+    def copy(self):
+        """
+        Create a shallow copy of the parse slot.
 
-    #     Returns:
-    #         ParseSlot: A shallow copy of the parse slot.
-    #     """
-    #     new = ParseSlot.__new__(ParseSlot)
-    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-    #     new.viold = self.viold.copy()
-    #     return new
-    
-    def to_dict(self,**kwargs):
-        return super().to_dict(viold=self.viold, incl_key=True, **kwargs)
+        Returns:
+            ParseSlot: A shallow copy of the parse slot.
+        """
+        new = ParseSlot.__new__(ParseSlot)
+        new.__dict__.update(
+            {
+                k: v
+                for k, v in self.__dict__.items()
+                if not isinstance(getattr(self.__class__, k, None), cached_property)
+            }
+        )
+        new.viold = self.viold.copy()
+        return new
 
-    @cached_property
+    def to_dict(self, incl_key=True, **kwargs):
+        return super().to_dict(viold=self.viold, incl_key=incl_key, **kwargs)
+
+    @property
     def violset(self) -> Set[str]:
         """
         Set of constraint violations.
@@ -76,10 +82,13 @@ class ParseSlot(Entity):
             The number of constraint violations.
         """
         return len(self.violset)
-    
-    @cached_property
+
+    @property
     def scores(self):
-        return {cname:cnum*self.constraint_weights.get(cname) for cname,cnum in self.viold.items()}
+        return {
+            cname: cnum * self.constraint_weights.get(cname)
+            for cname, cnum in self.viold.items()
+        }
 
     @property
     def meter_val(self) -> Any:
@@ -92,6 +101,10 @@ class ParseSlot(Entity):
         return self.parent.meter_val
 
     @property
+    def position(self):
+        return self.parent.parent
+
+    @property
     def is_prom(self) -> bool:
         """
         Whether the slot is prominent.
@@ -99,7 +112,7 @@ class ParseSlot(Entity):
         Returns:
             True if the slot is prominent, False otherwise.
         """
-        return self.parent.is_prom
+        return self.position.is_prom
 
     @property
     def wordform(self) -> Any:
@@ -109,7 +122,7 @@ class ParseSlot(Entity):
         Returns:
             The wordform associated with this slot.
         """
-        return self.unit.parent
+        return self.unit.parent.parent
 
     @property
     def syll(self) -> "Syllable":
@@ -161,7 +174,7 @@ class ParseSlot(Entity):
         """
         return self.unit.is_weak
 
-    @cached_property
+    @property
     def score(self) -> float:
         """
         Total violation score.
@@ -181,7 +194,15 @@ class ParseSlot(Entity):
         """
         return bool(self.score)
 
-    @cached_property
+    @property
+    def attrs(self):
+        return {
+            "num": self.num,
+            "txt": self.txt,
+            **{f"*{c}": self.viold.get(c, 0) for c in self.viold},
+        }
+
+    @property
     def txt(self) -> str:
         """
         Text representation of the slot.
@@ -189,23 +210,10 @@ class ParseSlot(Entity):
         Returns:
             The text representation of the slot.
         """
+        assert isinstance(self.unit, Syllable)
         o = self.unit.txt
-        return o.upper() if self.is_prom else o.lower()
-    
-    # @property
-    # def num(self):
-    #     if len(self.parent.children)==1 and self._num == 2: raise Exception
-    #     return self._num
-
-    # @cached_property
-    # def i(self) -> int:
-    #     """
-    #     Index of the slot in the parent's slots list.
-
-    #     Returns:
-    #         The index of the slot in the parent's slots list.
-    #     """
-    #     return self.parent.parent.slots.index(self)
+        result = o.upper() if self.is_prom else o.lower()
+        return result
 
 
 class ParseSlotList(EntityList):

@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional, Union
 from ..imports import *
 from .utils import *
 
+
 class ParseList(EntityList):
     """
     A list of Parse objects representing possible metrical parses for a line of poetry.
@@ -35,7 +36,12 @@ class ParseList(EntityList):
     @classmethod
     def from_combinations(cls, parselistlist, parent=None):
         from .parses import Parse
-        pll = [list(parselist) for parselist in parselistlist if parselist and len(parselist)]
+
+        pll = [
+            list(parselist)
+            for parselist in parselistlist
+            if parselist and len(parselist)
+        ]
         new_parses = cls(
             [
                 Parse.concat(*parse_combo, wordtokens=parent)
@@ -48,15 +54,24 @@ class ParseList(EntityList):
         new_parses.register_objects()
         return new_parses
 
-    def to_dict(self, **kwargs):
-        return super().to_dict(parent=self.parent.to_dict(incl_children=True), **kwargs)
-    
+    def to_dict(self, incl_children=True, **kwargs):
+        return super().to_dict(
+            parent=self.parent.to_dict(incl_children=incl_children), **kwargs
+        )
+
     @classmethod
-    def from_dict(cls, data, use_registry=True):
+    def from_dict(cls, data, use_registry=DEFAULT_USE_REGISTRY):
         cls_name, cls_data = next(iter(data.items()))
         assert cls.__name__ == cls_name
-        children = [Entity.from_dict(xdata, use_registry=use_registry) for xdata in cls_data.pop('children',[])]
-        parent = Entity.from_dict(cls_data.pop('parent'), use_registry=use_registry) if 'parent' in cls_data else None
+        children = [
+            Entity.from_dict(xdata, use_registry=use_registry)
+            for xdata in cls_data.pop("children", [])
+        ]
+        parent = (
+            Entity.from_dict(cls_data.pop("parent"), use_registry=use_registry)
+            if "parent" in cls_data
+            else None
+        )
         return cls(children=children, parent=parent, **cls_data)
 
     @property
@@ -65,7 +80,7 @@ class ParseList(EntityList):
             return self._key
         key = f"""{self.parent.key}.{self.nice_type_name}"""
         if self.children:
-            key+=f'.{self.children[0].meter_obj.key}'
+            key += f".{self.children[0].meter_obj.key}"
         self._key = key
         return key
 
@@ -92,7 +107,7 @@ class ParseList(EntityList):
         }
 
     @property
-    def meter(self) -> Optional['Meter']:
+    def meter(self) -> Optional["Meter"]:
         """
         Get the meter associated with this ParseList.
 
@@ -106,7 +121,7 @@ class ParseList(EntityList):
             return self.line.meter
 
     @property
-    def all(self) -> 'ParseList':
+    def all(self) -> "ParseList":
         """
         Get all parses, including scansions.
 
@@ -116,7 +131,7 @@ class ParseList(EntityList):
         return self.scansions
 
     @property
-    def best(self) -> 'ParseList':
+    def best(self) -> "ParseList":
         """
         Get the best parse.
 
@@ -126,7 +141,7 @@ class ParseList(EntityList):
         return self.best_parses
 
     @cached_property
-    def unbounded(self) -> 'ParseList':
+    def unbounded(self) -> "ParseList":
         """
         Get unbounded parses.
 
@@ -137,12 +152,11 @@ class ParseList(EntityList):
             children=[
                 px for px in self.scansions if px is not None and not px.is_bounded
             ],
-            type=self.type,
             parent=self.parent,
         )
 
     @cached_property
-    def bounded(self) -> 'ParseList':
+    def bounded(self) -> "ParseList":
         """
         Get bounded parses.
 
@@ -152,12 +166,11 @@ class ParseList(EntityList):
         return ParseList(
             [px for px in self.scansions if px is not None and px.is_bounded],
             show_bounded=True,
-            type=self.type,
             parent=self.parent,
         )
 
     @property
-    def best_parse(self) -> Optional['Parse']:
+    def best_parse(self) -> Optional["Parse"]:
         """
         Get the best parse.
 
@@ -165,9 +178,9 @@ class ParseList(EntityList):
             The best Parse object, or None if no parses are available.
         """
         return min(self.data) if self.data else None
-    
+
     @property
-    def best_parses(self) -> 'ParseList':
+    def best_parses(self) -> "ParseList":
         """
         Get bounded parses.
 
@@ -175,12 +188,10 @@ class ParseList(EntityList):
             A ParseList containing only bounded parses.
         """
         return ParseList(
-            [px for px in self.scansions if px is not None and px.parse_rank==1],
+            [px for px in self.scansions if px is not None and px.parse_rank == 1],
             show_bounded=False,
-            type=self.type,
             parent=self.parent,
         )
-
 
     @property
     def num_unbounded(self) -> int:
@@ -223,7 +234,7 @@ class ParseList(EntityList):
         return len(self.data)
 
     @property
-    def parses(self) -> 'ParseList':
+    def parses(self) -> "ParseList":
         """
         Get all parses.
 
@@ -232,7 +243,7 @@ class ParseList(EntityList):
         """
         return self
 
-    def bound(self, progress: bool = False) -> 'ParseList':
+    def bound(self, progress: bool = False) -> "ParseList":
         """
         Bound the parses in this ParseList.
 
@@ -274,7 +285,7 @@ class ParseList(EntityList):
             parse.parse_rank = i + 1
 
     @property
-    def line(self) -> Optional['Line']:
+    def line(self) -> Optional["Line"]:
         """
         Get the Line object associated with this ParseList.
 
@@ -286,30 +297,36 @@ class ParseList(EntityList):
                 return parse.line
 
     @property
-    def lines(self) -> 'LineList':
+    def lines(self) -> "LineList":
         """
         Get a list of unique Line objects associated with this ParseList.
 
         Returns:
             A LineList containing unique Line objects.
         """
-        return LineList(unique(parse.line for parse in self.data))
+        return LineList(unique(parse.line for parse in self.data), parent=self.text)
 
-    @property
-    def prefix_attrs(self) -> Dict[str, Any]:
-        """
-        Get prefix attributes for this ParseList.
+    # @property
+    # def prefix_attrs(self) -> Dict[str, Any]:
+    #     """
+    #     Get prefix attributes for this ParseList.
 
-        Returns:
-            A dictionary of prefix attributes.
-        """
-        return {
-            **({} if not self.line else self.line.prefix_attrs),
-            **super().prefix_attrs,
-        }
+    #     Returns:
+    #         A dictionary of prefix attributes.
+    #     """
+    #     return {
+    #         **({} if not self.parent or not hasattr(self.parent, 'prefix_attrs') else self.parent.prefix_attrs),
+    #         **super().prefix_attrs,
+    #     }
 
     @cache
-    def stats_d(self, by: Optional[str] = None, norm: Optional[bool] = None, incl_bounded: bool = False, **kwargs: Any) -> Dict[str, Any]:
+    def stats_d(
+        self,
+        by: Optional[str] = None,
+        norm: Optional[bool] = None,
+        incl_bounded: bool = False,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """
         Get statistics for this ParseList.
 
@@ -365,7 +382,7 @@ class ParseList(EntityList):
         def getagg(col):
             if col.endswith("_norm"):
                 return "mean"
-            if self.type in {"text", "stanza"}:
+            if self.scope in {"text", "stanza"}:
                 return "median"
             return "median"
 
@@ -373,7 +390,13 @@ class ParseList(EntityList):
         return aggby
 
     @cache
-    def stats(self, norm: Optional[bool] = None, incl_bounded: Optional[bool] = None, by: Optional[str] = None, **kwargs: Any) -> pd.DataFrame:
+    def stats(
+        self,
+        norm: Optional[bool] = None,
+        incl_bounded: Optional[bool] = None,
+        by: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
         """
         Get statistics for this ParseList as a DataFrame.
 
@@ -401,29 +424,40 @@ class ParseList(EntityList):
         odf.columns = [
             (
                 f"parse_{c}"
-                if c[0] != "*" and c.split("_")[0] not in {"stanza", "line"}
+                if c[0] != "*" and not c.endswith("_num") and not c.endswith("_txt")
                 else c
             )
             for c in odf
         ]
-        groupby = self._get_groupby(by=by)
-        if groupby:
-            print(odf.columns)
-            print(odf)
-            odf = setindex(odf, groupby)
-            aggby = self._get_aggby(odf)
-            odf = odf.groupby(groupby).agg(aggby)
-            odf = odf.drop("parse_rank", axis=1)
-            if not "line_num" in set(groupby):
-                odf = odf.drop("line_num", axis=1)
-            return odf.sort_index()
+        by_num = by+'_num'
+        if by_num in odf.columns:
+            odf = odf.drop_duplicates(subset=[by_num], keep='first')
         else:
-            odf["parse_rank"] = (
-                odf.groupby(["stanza_num", "line_num"])
-                .parse_rank.rank(method="min")
-                .apply(force_int)
-            )
-            return setindex(odf, DF_INDEX).sort_index()
+            log.error(f'{by_num} not in {odf.columns}')
+        odf = setindex(odf, sort=True)
+        return odf
+        # groupby = self._get_groupby(by=by)
+        # if groupby:
+        #     print(odf.columns)
+        #     print(odf)
+        #     odf = setindex(odf, groupby)
+        #     aggby = self._get_aggby(odf)
+        #     odf = odf.groupby(groupby).agg(aggby)
+        #     odf = odf.drop("parse_rank", axis=1)
+        #     if not "line_num" in set(groupby):
+        #         odf = odf.drop("line_num", axis=1)
+        #     return odf.sort_index()
+        # else:
+        #     odf["parse_rank"] = (
+        #         odf.groupby(["stanza_num", "line_num"])
+        #         .parse_rank.rank(method="min")
+        #         .apply(force_int)
+        #     )
+        #     return setindex(odf, DF_INDEX).sort_index()
+
+    @property
+    def scope(self):
+        return self.parent.prefix if self.parent else None
 
     def _repr_html_(self) -> str:
         """
@@ -469,20 +503,20 @@ class ParseList(EntityList):
         """
         return self.stats(norm=False)
 
-    def get_df(self, *x: Any, **y: Any) -> pd.DataFrame:
+    def get_df(self, *args, **kwargs) -> pd.DataFrame:
         """
         Get a DataFrame representation of this ParseList.
 
         Args:
-            *x: Positional arguments.
-            **y: Keyword arguments.
+            *args: Positional arguments.
+            **kwargs: Keyword arguments.
 
         Returns:
             A DataFrame representing this ParseList.
         """
         l = self.unbounded if not self.show_bounded else self.scansions
-        l = [p.get_df() for p in l]
-        return pd.concat(l).sort_index() if l else pd.DataFrame()
+        l = [p.get_df(*args, **kwargs).reset_index() for p in l]
+        return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()
 
     @property
     def df_syll(self) -> pd.DataFrame:
@@ -497,7 +531,7 @@ class ParseList(EntityList):
         return odf[[c for c in odf if not bad_keys or c not in bad_keys]]
 
     @cached_property
-    def scansions(self) -> 'ParseList':
+    def scansions(self) -> "ParseList":
         """
         Get unique scansions for this ParseList.
 
@@ -514,12 +548,14 @@ class ParseList(EntityList):
             lkey = (parse.stanza_num, parse.line_num)
             key = (parse.stanza_num, parse.line_num, parse.meter_str)
             if key not in mstrs:
-                mstrs.add(key) 
+                mstrs.add(key)
                 countd[lkey] += 1
                 parse.parse_rank = countd[lkey]
                 plist.append(parse)
 
-        return ParseList(plist, is_scansions=True, show_bounded=True, parent=self.parent, type=self.type)
+        return ParseList(
+            plist, is_scansions=True, show_bounded=True, parent=self.parent
+        )
 
     @property
     def num_lines(self) -> int:
@@ -531,7 +567,9 @@ class ParseList(EntityList):
         """
         return len(self.lines)
 
-    def render(self, as_str: bool = False, blockquote: bool = False) -> Union[str, 'HTML']:
+    def render(
+        self, as_str: bool = False, blockquote: bool = False
+    ) -> Union[str, "HTML"]:
         """
         Render the ParseList as HTML.
 
@@ -544,7 +582,9 @@ class ParseList(EntityList):
         """
         return self.to_html(as_str=as_str, blockquote=blockquote)
 
-    def to_html(self, as_str: bool = False, blockquote: bool = False) -> Union[str, 'HTML']:
+    def to_html(
+        self, as_str: bool = False, blockquote: bool = False
+    ) -> Union[str, "HTML"]:
         """
         Convert the ParseList to HTML.
 
@@ -563,8 +603,6 @@ class ParseList(EntityList):
         return to_html(html, as_str=as_str)
 
 
-
-
 class ParseListList(ParseList):
     @property
     def key(self):
@@ -572,6 +610,25 @@ class ParseListList(ParseList):
             return self._key
         key = f"""{self.parent.key}.{self.nice_type_name}"""
         if self.children and self.children[0]:
-            key+=f'.{self.children[0][0].meter_obj.key}'
+            key += f".{self.children[0][0].meter_obj.key}"
         self._key = key
         return key
+
+    @property
+    def scansions(self):
+        plist = [p for pl in self for p in pl.scansions]
+        return ParseList(
+            plist, is_scansions=True, show_bounded=True, parent=self.parent
+        )
+
+    @property
+    def lines(self):
+        return LineList(unique(p.line for pl in self for p in pl), parent=self.text)
+
+    def get_df(self, *args, **kwargs):
+        l = [p.get_df(*args, **kwargs).reset_index() for p in self]
+        return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()
+
+    def stats(self, *args, **kwargs):
+        l = [pl.stats(*args, **kwargs).reset_index() for pl in self]
+        return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()

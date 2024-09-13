@@ -14,9 +14,10 @@ class WordTokenList(EntityList):
         **kwargs,
     ):
         # print([type(self), type(children), parent, kwargs,'!!!'])
-        assert all([isinstance(wt, WordToken) for wt in children])
+        if not all([isinstance(wt, WordToken) for wt in children]):
+            raise ValueError("All children must be WordToken objects")
         self._parses = None
-        self._parsed = {}
+        self._parse_results = {}
         self._mtr = None
         super().__init__(children=children, text=text, parent=parent, num=num, **kwargs)
 
@@ -37,16 +38,10 @@ class WordTokenList(EntityList):
     @property
     def words(self):
         return self
-        
 
-    # def to_dict(self, incl_children=False, **kwargs):
-    #     print([type(self), self._key, self.parent])
-    #     return {
-    #         self.__class__.__name__: {
-    #             "key": self.key,
-    #             "children": [wtok.to_dict(incl_children=incl_children) for wtok in self]
-    #         }
-    #     }
+    @property
+    def txt(self):
+        return "".join(wt.txt for wt in self)
 
     def __getstate__(self):
         print(f"Pickling WordTokenList: _key = {getattr(self, '_key', 'Not set')}")
@@ -89,14 +84,19 @@ class WordTokenList(EntityList):
     def iter_wordtoken_matrix(self):
         tokens_with_wf = [tok for tok in self if tok.has_wordform]
         tokens_with_wfl = [tok.wordforms for tok in tokens_with_wf]
-        for wfl in itertools.product(*tokens_with_wfl):
+        # for every combination of wordforms...
+        for _i,wfl in enumerate(itertools.product(*tokens_with_wfl)):
+            # copy the wordtokenlist
             wtl = self.copy()
+            # for each wordform in the combination, assign it to the corresponding wordtoken
             for i, wf in enumerate(wfl):
+                # get the wordtoken that corresponds to the wordform
                 wtok = tokens_with_wf[i]
+                # get the wordtoken in the copy of the wordtokenlist that corresponds to the wordform
                 wtok_match = next(w for w in wtl if w.num == wtok.num)
-                wtok_match.wordtype.children = WordFormList(
-                    [wf], parent=wtok_match.wordtype
-                )
+                # assign the wordform to the wordtoken
+                wtype = wtok_match.wordtype
+                wtype.children = WordFormList([wf], parent=wtype)
             yield wtl
 
     @property
@@ -129,7 +129,7 @@ class WordTokenList(EntityList):
         """
         return getattr(self, self.parse_unit_attr)
 
-    def parse(self, num_proc=None, force=False, meter=None, **meter_kwargs):
+    def parse(self, *args, **kwargs):
         """
         Parse the text.
 
@@ -139,25 +139,29 @@ class WordTokenList(EntityList):
         Returns:
             Any: The parsed result.
         """
-        from ..parsing.parselists import ParseList
-        self._parses = ParseList.from_combinations(
-            self.parse_iter(
-                num_proc=num_proc,
-                force=force,
-                meter=meter,
-                **meter_kwargs,
-            ),
-            parent=self
-        )
-        return self._parses
+        from ..texts import TextModel
+        return TextModel.parse(self, *args, **kwargs)
+        # from ..parsing.parselists import ParseList
+        # self._parses = ParseList.from_combinations(
+        #     self.parse_iter(
+        #         num_proc=num_proc,
+        #         force=force,
+        #         meter=meter,
+        #         **meter_kwargs,
+        #     ),
+        #     parent=self
+        # )
+        # return self._parses
 
-    def parse_iter(self, num_proc=None, force=False, meter=None, **meter_kwargs):
-        meter = self.get_meter(meter=meter, **meter_kwargs)
-        for parse_list in meter.parse_text_iter(self, num_proc=num_proc, force=force):
-            parsed_ent = self.match(parse_list.parent, parse_list.parse_unit)
-            parse_list.parent = parsed_ent
-            parsed_ent._parses = parse_list
-            yield parse_list
+    def parse_iter(self, *args, **kwargs):
+        from ..texts import TextModel
+        yield from TextModel.parse_iter(self, *args, **kwargs)
+        # meter = self.get_meter(meter=meter, **meter_kwargs)
+        # for parse_list in meter.parse_text_iter(self, num_proc=num_proc, force=force):
+        #     parsed_ent = self.match(parse_list.parent, parse_list.parse_unit)
+        #     parse_list.parent = parsed_ent
+        #     parsed_ent._parses = parse_list
+        #     yield parse_list
 
     def render(
         self, as_str: bool = False, blockquote: bool = False, **meter_kwargs

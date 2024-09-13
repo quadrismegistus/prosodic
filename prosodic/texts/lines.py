@@ -16,99 +16,10 @@ class Line(WordTokenList):
         prefix (str): Prefix used for identification. Default is "line".
         use_cache (bool): Whether to use caching. Default is False.
     """
+    prefix = 'line'
 
     def __repr__(self, **kwargs):
         return f"Line(num={self.num}, txt={repr(self.txt)})"
-
-    # line_sep: str = "\n"
-    # sep: str = "\n"
-    # child_type: str = "WordToken"
-    # is_parseable: bool = True
-    # prefix: str = "line"
-    # use_cache: bool = False
-
-    # @#log.debug
-    # def __init__(
-    #     self,
-    #     txt: str = "",
-    #     children: List[Any] = [],
-    #     parent: Optional[Any] = None,
-    #     tokens_df: Optional[pd.DataFrame] = None,
-    #     lang: str = DEFAULT_LANG,
-    #     **kwargs
-    # ) -> None:
-    #     """
-    #     Initialize a Line object.
-
-    #     Args:
-    #         txt (str): The text content of the line.
-    #         children (List[Any]): List of child entities (usually WordTokens).
-    #         parent (Optional[Any]): The parent entity of this line.
-    #         tokens_df (Optional[pd.DataFrame]): DataFrame containing tokenized data.
-    #         lang (str): The language of the line. Defaults to DEFAULT_LANG.
-    #         **kwargs: Additional keyword arguments.
-
-    #     Raises:
-    #         Exception: If neither txt, children, nor tokens_df is provided.
-    #     """
-    #     from ..words import WordToken
-    #     #log.debug("Importing WordToken")
-
-    #     if not txt and not children and tokens_df is None:
-    #         #log.debug("No input provided")
-    #         raise Exception("Must provide either txt, children, or tokens_df")
-
-    #     txt = txt.strip()
-    #     #log.debug(f"Stripped text: {txt}")
-
-    #     if not children:
-    #         #log.debug("No children provided")
-    #         if tokens_df is None:
-    #             #log.debug("No tokens_df provided, tokenizing text")
-    #             tokens_df = tokenize_sentwords_df(txt)
-            
-    #         #log.debug("Creating children from tokens_df")
-    #         children = [
-    #             WordToken(
-    #                 txt=word_d.get("word_str", ""),
-    #                 lang=lang,
-    #                 parent=self,
-    #                 sent_num=word_d.get("sent_i"),
-    #                 sentpart_num=word_d.get("sentpart_i"),
-    #             )
-    #             for word_d in tokens_df.to_dict("records")
-    #             if "word_str" in word_d
-    #         ]
-    #         #log.debug(f"Created {len(children)} children")
-
-    #     #log.debug("Initializing Entity")
-    #     if not txt:
-    #         txt=''.join(x._txt for x in children)
-    #     super().__init__(txt=txt, children=children, parent=parent, **kwargs)
-
-    #     #log.debug("Setting up parses and parseable flag")
-    #     self._parses = []
-    #     self.is_parseable = True
-    #     #log.debug("Line initialization complete")
-    #     #log.debug(f"Line text: {self._txt}")
-
-    # @stash.stashed_result
-    # def parse(self, meter=None, defaults=False, **meter_kwargs):
-    #     if meter is None:
-    #         if defaults:
-    #             meter_kwargs = {**DEFAULT_METER_KWARGS, **meter_kwargs}
-    #         meter = self.get_meter(meter=meter, **meter_kwargs)
-        
-    #     return meter.parse_line(self, **meter_kwargs)
-
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Convert the Line object to a JSON-serializable dictionary.
-
-    #     Returns:
-    #         Dict[str, Any]: A dictionary representation of the Line object.
-    #     """
-    #     return super().to_dict(self, txt=self.txt)
 
     def to_html(self, parse: Optional[Any] = None, as_str: bool = False, css: str = HTML_CSS, tooltip: bool = False, **kwargs) -> Any:
         """

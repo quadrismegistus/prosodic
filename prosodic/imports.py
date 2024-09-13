@@ -57,7 +57,8 @@ PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-stash = HashStash(PATH_HOME_DATA_CACHE, engine='pairtree', serializer='pickle', compress='lz4', b64=True)
+stash = HashStash(PATH_HOME_DATA_CACHE, engine='memory', serializer='hashstash', compress='lz4', b64=True)
+stash_was = None
 
 import panphon
 import panphon.sonority
@@ -68,6 +69,9 @@ USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."
+
+DEFAULT_USE_REGISTRY = True
+DEFAULT_COMBINE_BY = "line"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
 sys.path.append(PATH_MTREE)
@@ -109,6 +113,8 @@ DF_INDEX = [
     "stanza_num",
     "line_num",
     "line_txt",
+    "linepart_num",
+    "linepart_txt",
     "parse_rank",
     "parse_txt",
     "bestparse_txt",
@@ -147,6 +153,9 @@ DF_INDEX = [
 DF_COLS_RENAME = {
     "wordtoken_sent_num": "sent_num",
     "wordtoken_sentpart_num": "sentpart_num",
+    "wordtoken_line_num": "line_num",
+    "wordtoken_linepart_num": "linepart_num",
+    "wordtoken_para_num": "stanza_num",
     "meterpos_meter_val": "meterpos_val",
     "meterslot_w_peak": "*w_peak",
     "meterslot_w_stress": "*w_stress",
@@ -159,6 +168,7 @@ DF_COLS_RENAME = {
     "parse_line_txt": "line_txt",
     "parselist_num_parses": "line_numparse",
     "word_lang": "wordtoken_lang",
+    # "wordtype_num_forms": "num_wordforms",
 }
 DF_BADCOLS = {
     "word_txt",
@@ -174,7 +184,8 @@ DF_BADCOLS = {
     "wordtype_lang",
     "wordform_force_unstress",
     "wordform_force_ambig_stress",
-
+    "text_lang",
+    "wordtoken_lang",
 }
 
 DF_INDEX = [x for x in DF_INDEX if x not in DF_BADCOLS]
@@ -232,8 +243,7 @@ pd.options.display.max_rows = 10
 
 # local imports
 
-sonnet = """
-Those hours, that with gentle work did frame
+sonnet = """Those hours, that with gentle work did frame
 The lovely gaze where every eye doth dwell,
 Will play the tyrants to the very same
 And that unfair which fairly doth excel;
@@ -246,8 +256,10 @@ A liquid prisoner pent in walls of glass,
 Beauty’s effect with beauty were bereft,
 Nor it, nor no remembrance what it was:
 But flowers distill’d, though they with winter meet,
-Leese but their show; their substance still lives sweet.
-"""
+Leese but their show; their substance still lives sweet."""
+
+sonnet2 = """Those hours, that with gentle work did frame
+The lovely gaze where every eye doth dwell,"""
 
 
 GROUPBY_STANZA = ["stanza_num"]
@@ -263,6 +275,7 @@ DEFAULT_CONSTRAINTS = [
     "s_unstress",
     "unres_across",
     "unres_within",
+    "foot_size",
     "pentameter"
 ]
 

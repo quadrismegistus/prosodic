@@ -79,27 +79,6 @@ class WordForm(Entity):
             ]
         )
 
-
-
-    # def to_dict(self) -> dict:
-    #     """
-    #     Convert the WordForm to a JSON-serializable dictionary.
-
-    #     Returns:
-    #         dict: A dictionary representation of the WordForm.
-    #     """
-    #     return super().to_dict(
-    #         # sylls_ipa=self.sylls_ipa,
-    #         # sylls_text=self.sylls_text,
-    #         # no_children=True
-    #     )
-
-    # @property
-    # def wtoken(self) -> 'WordToken':
-    #     if self.parent:
-    #         return self.parent.wtoken
-    #     return WordToken(self.txt, lang=self.parent.lang, children=self.parent.children)
-
     @property
     def syllables(self) -> List["Syllable"]:
         return self.children
@@ -127,6 +106,8 @@ class WordForm(Entity):
     def is_stressed(self):
         return self.num_stressed_sylls > 0
 
+    def to_dict(self, incl_attrs=True, **kwargs) -> dict:
+        return super().to_dict(incl_attrs=incl_attrs, **kwargs)
 
     def to_hash(self) -> str:
         return hashstr(self.key)

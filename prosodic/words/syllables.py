@@ -53,12 +53,10 @@ class Syllable(Entity):
             phones = [p.text for p in pron if p.text]
             for phon in phones:
                 self.children.append(Phoneme(txt=phon))
-        elif self.children and not self.ipa:
-            self.ipa = "".join(phon.txt for phon in self.children)
         
 
-    def to_dict(self, **kwargs) -> dict:
-        return super().to_dict(incl_txt=True, **kwargs)
+    def to_dict(self, incl_txt=True, incl_attrs=True, **kwargs) -> dict:
+        return super().to_dict(incl_txt=incl_txt, incl_attrs=incl_attrs, **kwargs)
 
     @property
     def stress(self) -> str:

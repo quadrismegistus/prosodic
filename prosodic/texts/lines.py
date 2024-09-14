@@ -163,7 +163,9 @@ class LineList(EntityList):
                     line2rhyme[line].append((dist, line2))
         return {i: min(v) for i, v in line2rhyme.items()}
 
-class LinePart(WordTokenList): pass
+class LinePart(WordTokenList): 
+    prefix = 'linepart'
+    pass
 
 class LinePartList(EntityList):
     @classmethod

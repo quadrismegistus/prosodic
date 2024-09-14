@@ -48,6 +48,7 @@ class SentenceList(EntityList):
 
 
 class SentPart(WordTokenList):
+    prefix = 'sentpart'
     pass
 
 class SentPartList(EntityList):
@@ -64,29 +65,8 @@ class SentPartList(EntityList):
 
 
 class Sentence(WordTokenList):
-    # def __init__(self, wordtokens, **kwargs):
-    #     from ..words import WordTokenList
-    #     if not isinstance(wordtokens, WordTokenList):
-    #         wordtokens = WordTokenList(wordtokens, parent=self)
-        
-    #     txt=''.join(wtok._txt for wtok in wordtokens)
-        
-    #     self.wordtokens = wordtokens
-        
-    #     for wtok in self.wordtokens:
-    #         wtok.sent = self
-        
-    #     super().__init__(
-    #         children=wordtokens.data,
-    #         txt = txt,
-    #         **kwargs
-    #     )
+    prefix = 'sent'
 
-    # @property
-    # def parts(self):
-    #     return SentPartList.from_wordtokens(self.wordtokens, parent=self)
-        
-        
     @property
     def nlp(self):
         from .syntax import get_nlp_doc

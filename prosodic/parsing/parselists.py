@@ -409,6 +409,8 @@ class ParseList(EntityList):
         Returns:
             A DataFrame containing statistics.
         """
+        if not by:
+            by = self.scope
         if incl_bounded is None:
             incl_bounded = self.show_bounded
         if by == "syll":
@@ -429,11 +431,6 @@ class ParseList(EntityList):
             )
             for c in odf
         ]
-        by_num = by+'_num'
-        if by_num in odf.columns:
-            odf = odf.drop_duplicates(subset=[by_num], keep='first')
-        else:
-            log.error(f'{by_num} not in {odf.columns}')
         odf = setindex(odf, sort=True)
         return odf
         # groupby = self._get_groupby(by=by)
@@ -629,6 +626,31 @@ class ParseListList(ParseList):
         l = [p.get_df(*args, **kwargs).reset_index() for p in self]
         return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()
 
-    def stats(self, *args, **kwargs):
-        l = [pl.stats(*args, **kwargs).reset_index() for pl in self]
+    @property
+    def scope(self):
+        for pl in self:
+            if pl.scope:
+                return pl.scope
+
+    def stats(
+        self,
+        by: Optional[str] = None,
+        norm: Optional[bool] = None,
+        incl_bounded: Optional[bool] = None,
+        **kwargs: Any,
+    ):
+        if not by:
+            by = self.scope
+        l = [pl.stats(norm=norm, incl_bounded=incl_bounded, by=by, **kwargs).reset_index() for pl in self]
+        if not l:
+            return pd.DataFrame()
+
+        if by:
+            by_num = by + "_num"
+            if by_num in odf.columns:
+                subset = [by_num, self.scope + "_num"] if self.scope != by else [by_num]
+                odf = odf.drop_duplicates(subset=subset, keep="first")
+            else:
+                log.error(f"{by_num} not in {odf.columns}")
+
         return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()

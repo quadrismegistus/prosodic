@@ -116,9 +116,12 @@ class Entity(UserList):
             OBJECTS[key] = obj
 
     def find(self, ent):
+        # log.info(f'Finding {ent.key}')
         if ent.key in OBJECTS:
+            # log.info(f'Found {ent.key} in OBJECTS')
             return OBJECTS[ent.key]
         if ent.class_depth < 2:
+            # log.info(f'Finding {ent.key} in text by attr')
             attr_name = ent.key.split(".")[-1].lower()
             attr_name = ''.join(x for x in attr_name if x.isalnum())
             return getattr(self.text, attr_name)
@@ -240,6 +243,8 @@ class Entity(UserList):
             # First, try to get the attribute normally
             return self.__dict__.get(attr, self.__getattribute__(attr))
         except AttributeError:
+            if attr == 'lines':
+                raise
             # If AttributeError is raised, implement the custom logic
             from .imports import PLURAL_ATTRS, SINGULAR_ATTRS, get_class
 

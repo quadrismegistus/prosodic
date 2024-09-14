@@ -33,6 +33,13 @@ class ParseList(EntityList):
     #     self.parent = self.wordtokens = wordtokens
     #     self.data = list(self.data)
 
+
+    # def append(self, parse):
+    #     # entity._key = None
+    #     # entity._num = len(self.children)+1
+    #     parse.parent = self
+    #     self.children.append(parse)
+
     @classmethod
     def from_combinations(cls, parselistlist, parent=None):
         from .parses import Parse
@@ -621,6 +628,42 @@ class ParseListList(ParseList):
     @property
     def lines(self):
         return LineList(unique(p.line for pl in self for p in pl), parent=self.text)
+    
+    @property
+    def num_lines(self):
+        return len(self.lines)
+
+    @property
+    def sents(self):
+        return SentenceList(unique(p.sent for pl in self for p in pl), parent=self.text)
+    
+    @property
+    def num_sents(self):
+        return len(self.sents)
+
+    @property
+    def lineparts(self):
+        return LinePartList(unique(p.linepart for pl in self for p in pl), parent=self.text)
+    
+    @property
+    def num_lineparts(self):
+        return len(self.lineparts)
+
+    @property
+    def sentparts(self):
+        return SentPartList(unique(p.sentpart for pl in self for p in pl), parent=self.text)
+    
+    @property
+    def num_sentparts(self):
+        return len(self.sentparts)
+
+    @property
+    def stanzas(self):
+        return StanzaList(unique(p.stanza for pl in self for p in pl), parent=self.text)
+    
+    @property
+    def num_stanzas(self):
+        return len(self.stanzas)
 
     def get_df(self, *args, **kwargs):
         l = [p.get_df(*args, **kwargs).reset_index() for p in self]
@@ -644,6 +687,7 @@ class ParseListList(ParseList):
         l = [pl.stats(norm=norm, incl_bounded=incl_bounded, by=by, **kwargs).reset_index() for pl in self]
         if not l:
             return pd.DataFrame()
+        odf = pd.concat(l)
 
         if by:
             by_num = by + "_num"
@@ -653,4 +697,4 @@ class ParseListList(ParseList):
             else:
                 log.error(f"{by_num} not in {odf.columns}")
 
-        return setindex(pd.concat(l), sort=True) if l else pd.DataFrame()
+        return setindex(odf, sort=True)

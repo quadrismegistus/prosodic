@@ -36,6 +36,7 @@ class Meter(Entity):
     """
 
     prefix: str = "meter"
+    children = None
 
     def __init__(
         self,

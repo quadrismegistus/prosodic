@@ -231,8 +231,10 @@ class Parse(Entity):
 
     @property
     def scope(self):
-        if self._scope: return self._scope
-        return self.parent.parent.prefix if self.parent and self.parent.parent else None
+        if self._scope: 
+            log.info(f'parse _scope: {self._scope}')
+            return self._scope
+        return self.wordtokens.prefix# if self.parent and self.parent.parent else None
 
     @classmethod
     def concat(cls, *parses: "Parse", wordtokens=None) -> "Parse":
@@ -241,7 +243,10 @@ class Parse(Entity):
 
         assert len(parses) > 0
         if len(parses) == 1:
-            return parses[0]
+            parse = parses[0].copy()
+            if wordtokens is not None:
+                parse.wordtokens = wordtokens
+            return parse
         assert all(parses[0].meter_obj.equals(parse.meter_obj) for parse in parses[1:])
         # parses = [parse.copy() for parse in parses]
         positions = ParsePositionList(
@@ -664,7 +669,7 @@ class Parse(Entity):
             if unit is not None:
                 d[f"{unit_type}_num"] = unit.num
                 if unit_type == self.scope:
-                    d[f'{unit_type}_txt'] = unit.txt
+                    d[f'{unit_type}_txt'] = unit.txt.strip()
         return {
             **d,
             "rank": self.parse_rank,

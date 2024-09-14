@@ -171,7 +171,7 @@ class TextModel(Entity):
             else:
                 pl._num = i+1
                 self._parses.append(pl)
-        # self._parses.register_objects()
+        self._parses.register_objects()
         return self._parses
 
     def parse_iter(
@@ -199,7 +199,7 @@ class TextModel(Entity):
             for parse_list in meter.parse_text_iter(
                 self, num_proc=num_proc, force=force, lim=lim
             ):
-                log.info(f'parsed_ent v1: {parse_list.parent}')
+                # log.info(f'parsed_ent v1: {parse_list.parent}')
                 parsed_ent = self.match(parse_list.parent)
                 parse_list.parent = parsed_ent
                 parsed_ent._parses = parse_list
@@ -208,9 +208,9 @@ class TextModel(Entity):
                     yield parse_list
                 else:
                     this_unit = getattr(parsed_ent, combine_by)
-                    log.info(f'parsed_ent: {parsed_ent}')
-                    log.info(f'this_unit: {this_unit}')
-                    print()
+                    # log.info(f'parsed_ent: {parsed_ent}')
+                    # log.info(f'this_unit: {this_unit}')
+                    # print()
                     if units and not last_unit.equals(this_unit):
                         new_parselist = ParseList.from_combinations(units, parent=last_unit)
                         this_unit._parses = new_parselist
@@ -221,7 +221,7 @@ class TextModel(Entity):
                     last_unit = this_unit
 
             if units:
-                new_parselist = ParseList.from_combinations(units, parent=this_unit)
+                new_parselist = ParseList.from_combinations(units, parent=last_unit)
                 this_unit._parses = new_parselist
                 self._parse_results[parse_key].append(new_parselist)
                 yield new_parselist

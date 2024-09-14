@@ -10,6 +10,7 @@ class Phoneme(Entity):
     """
 
     prefix: str = "phon"
+    children = None
 
     @cached_property
     def feats(self):

@@ -208,12 +208,13 @@ class TextModel(Entity):
                     yield parse_list
                 else:
                     this_unit = getattr(parsed_ent, combine_by)
-                    # log.info(f'parsed_ent: {parsed_ent}')
-                    # log.info(f'this_unit: {this_unit}')
+                    this_unit._secret = 'this_unit'
+                    log.info(f'parsed_ent: {parsed_ent.key}')
+                    log.info(f'this_unit: {this_unit.key}')
                     # print()
                     if units and not last_unit.equals(this_unit):
                         new_parselist = ParseList.from_combinations(units, parent=last_unit)
-                        this_unit._parses = new_parselist
+                        last_unit._parses = new_parselist
                         self._parse_results[parse_key].append(new_parselist)
                         yield new_parselist
                         units = []
@@ -222,7 +223,7 @@ class TextModel(Entity):
 
             if units:
                 new_parselist = ParseList.from_combinations(units, parent=last_unit)
-                this_unit._parses = new_parselist
+                last_unit._parses = new_parselist
                 self._parse_results[parse_key].append(new_parselist)
                 yield new_parselist
 

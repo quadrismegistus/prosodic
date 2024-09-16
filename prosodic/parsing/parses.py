@@ -242,22 +242,27 @@ class Parse(Entity):
         from ..words.wordtokenlist import WordTokenList
 
         assert len(parses) > 0
-        if len(parses) == 1:
-            parse = parses[0].copy()
-            if wordtokens is not None:
-                parse.wordtokens = wordtokens
-            return parse
+        # if len(parses) == 1:
+        #     parse = parses[0].copy()
+        #     if wordtokens is not None:
+        #         parse.wordtokens = wordtokens
+        #     return parse
         assert all(parses[0].meter_obj.equals(parse.meter_obj) for parse in parses[1:])
         # parses = [parse.copy() for parse in parses]
         positions = ParsePositionList(
             [mpos for parse in parses for mpos in parse.positions],
             parent=parses[0].parent,
         )
-        wordtokens_cls = type(wordtokens) if wordtokens is not None else WordTokenList
-        wordtokens = wordtokens_cls(
-            children=[wt for parse in parses for wt in parse.wordtokens],
-            parent=wordtokens.parent if wordtokens is not None else parses[0].wordtokens.parent,
-        )
+        wordtokens_limited = [wt for parse in parses for wt in parse.wordtokens]
+        if wordtokens is not None:
+            wordtokens = wordtokens.copy()
+            wordtokens.children = wordtokens_limited
+        else:
+            wordtokens_cls = type(wordtokens) if wordtokens is not None else WordTokenList
+            wordtokens = wordtokens_cls(
+                children=wordtokens_limited,
+                parent=parses[0].wordtokens.parent,
+            )
         scansion = [x for parse in parses for x in parse.scansion]
 
         return Parse(

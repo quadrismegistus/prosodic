@@ -34,21 +34,26 @@ class ParseList(EntityList):
     #     self.data = list(self.data)
 
 
-    # def append(self, parse):
-    #     # entity._key = None
-    #     # entity._num = len(self.children)+1
-    #     parse.parent = self
-    #     self.children.append(parse)
+    def append(self, parse):
+        from .parses import Parse
+        if not isinstance(parse, Parse):
+            raise ValueError('parse must be a Parse object')
+        super().append(parse)
 
     @classmethod
     def from_combinations(cls, parselistlist, parent=None):
         from .parses import Parse
+        # if len(parselistlist) == 1:
+        #     new_parses = cls(parselistlist[0], parent=parent)
+        #     return new_parses
+
 
         pll = [
             list(parselist)
             for parselist in parselistlist
             if parselist and len(parselist)
         ]
+        print(pll)
         new_parses = cls(
             [
                 Parse.concat(*parse_combo, wordtokens=parent)
@@ -56,6 +61,7 @@ class ParseList(EntityList):
             ],
             parent=parent,
         )
+        assert new_parses.parent is parent
         new_parses.bound(progress=False)
         new_parses.rank()
         new_parses.register_objects()
@@ -607,7 +613,12 @@ class ParseList(EntityList):
         return to_html(html, as_str=as_str)
 
 
-class ParseListList(ParseList):
+class ParseListList(EntityList):
+    def append(self, parse_list):
+        if not isinstance(parse_list, ParseList):
+            raise ValueError('parse_list must be a ParseList object')
+        super().append(parse_list)
+    
     @property
     def key(self):
         if self._key is not None:

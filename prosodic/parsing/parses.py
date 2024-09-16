@@ -949,6 +949,7 @@ class Parse(Entity):
                 slot_attrs = {
                     'wordtoken_num':slot.unit.wordtoken.num,
                     'wordtoken_txt':slot.unit.wordtoken.txt,
+                    # 'syll_num':slot.unit.num,
                     **{f'meterslot_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in slot.attrs.items()}
                 }
                 all_attrs = {**attrs, **pos_attrs, **slot_attrs}

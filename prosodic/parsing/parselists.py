@@ -53,7 +53,6 @@ class ParseList(EntityList):
             for parselist in parselistlist
             if parselist and len(parselist)
         ]
-        print(pll)
         new_parses = cls(
             [
                 Parse.concat(*parse_combo, wordtokens=parent)
@@ -700,7 +699,7 @@ class ParseListList(EntityList):
             return pd.DataFrame()
         odf = pd.concat(l)
 
-        if by:
+        if by and by != "syll":
             by_num = by + "_num"
             if by_num in odf.columns:
                 subset = [by_num, self.scope + "_num"] if self.scope != by else [by_num]
@@ -709,3 +708,19 @@ class ParseListList(EntityList):
                 log.error(f"{by_num} not in {odf.columns}")
 
         return setindex(odf, sort=True)
+
+    @cached_property
+    def unbounded(self):
+        return ParseListList([pl.unbounded for pl in self], parent=self.parent)
+    
+    @cached_property
+    def bounded(self):
+        return ParseListList([pl.bounded for pl in self], parent=self.parent)
+    
+    @cached_property
+    def best_parses(self):
+        return ParseList([pl.best_parse for pl in self], parent=self.parent)
+    
+    @property
+    def best(self):
+        return self.best_parses

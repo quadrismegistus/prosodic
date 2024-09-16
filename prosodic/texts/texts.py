@@ -53,7 +53,7 @@ class TextModel(Entity):
                 "must provide either txt string or filename or token dataframe"
             )
         txt = clean_text(get_txt(txt, fn)).strip()
-        lang = lang if lang else detect_lang(self._txt)
+        lang = lang if lang else detect_lang(txt)
 
         # init entity
         super().__init__(
@@ -199,6 +199,7 @@ class TextModel(Entity):
             for parse_list in meter.parse_text_iter(
                 self, num_proc=num_proc, force=force, lim=lim
             ):
+                log.info(f'parse_list: {parse_list}')
                 # log.info(f'parsed_ent v1: {parse_list.parent}')
                 parsed_ent = self.match(parse_list.parent)
                 parse_list.parent = parsed_ent
@@ -208,10 +209,6 @@ class TextModel(Entity):
                     yield parse_list
                 else:
                     this_unit = getattr(parsed_ent, combine_by)
-                    this_unit._secret = 'this_unit'
-                    log.info(f'parsed_ent: {parsed_ent.key}')
-                    log.info(f'this_unit: {this_unit.key}')
-                    # print()
                     if units and not last_unit.equals(this_unit):
                         new_parselist = ParseList.from_combinations(units, parent=last_unit)
                         last_unit._parses = new_parselist

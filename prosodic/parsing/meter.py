@@ -161,7 +161,7 @@ class Meter(Entity):
         if parse_units is None:
             log.warning(f"cannot parse {text}")
             return
-
+        if self.exhaustive: num_proc = 1 # @todo fix this
         if num_proc != 0:
             yield from stash.map(
                 self.parse_wordspan,

@@ -61,6 +61,7 @@ class Parse(Entity):
         key=None,
         num=None,
         scope=None,
+        num_slots_positioned=0,
         **meter_kwargs,
         # line_num: Optional[int] = None,
         # stanza_num: Optional[int] = None,
@@ -114,7 +115,7 @@ class Parse(Entity):
         self.total_score = None
         self.pause_comparisons = False
         self.parse_rank = rank
-        self.num_slots_positioned = 0
+        self.num_slots_positioned = num_slots_positioned
         self.parse_viold = Counter(parse_viold)
         self.children = ParsePositionList() if not children else children
         self.children.parent = self
@@ -159,6 +160,7 @@ class Parse(Entity):
             bounded_by=list(self.bounded_by),
             rank=self.parse_rank,
             parse_viold=dict(self.parse_viold),
+            num_slots_positioned=self.num_slots_positioned,
             # _use_registry=False,
             **kwargs,
         )
@@ -265,12 +267,14 @@ class Parse(Entity):
             )
         scansion = [x for parse in parses for x in parse.scansion]
 
-        return Parse(
+        parse = Parse(
             wordtokens=wordtokens,
             scansion=scansion,
             meter=parses[0].meter_obj,
             children=positions,
         )
+        parse.num_slots_positioned = sum(px.num_slots_positioned for px in parses)
+        return parse
 
     def extend(self, mpos_str: str) -> Optional["Parse"]:
         """

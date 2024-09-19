@@ -276,7 +276,7 @@ DEFAULT_CONSTRAINTS = [
     "unres_across",
     "unres_within",
     "foot_size",
-    "pentameter"
+    # "pentameter"
 ]
 
 

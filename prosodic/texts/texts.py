@@ -199,7 +199,7 @@ class TextModel(Entity):
             for parse_list in meter.parse_text_iter(
                 self, num_proc=num_proc, force=force, lim=lim
             ):
-                log.info(f'parse_list: {parse_list}')
+                # log.info(f'parse_list: {parse_list}')
                 # log.info(f'parsed_ent v1: {parse_list.parent}')
                 parsed_ent = self.match(parse_list.parent)
                 parse_list.parent = parsed_ent

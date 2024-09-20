@@ -130,7 +130,8 @@ class WordForm(Entity):
         if not sylls:
             return
         o = sylls[0].rime.data + [phon for syll in sylls[1:] for phon in syll.children]
-        return PhonemeList(o)
+        return PhonemeList(o, parent=self)
+
 
     @cache
     def rime_distance(self, wordform: "WordForm") -> float:
@@ -143,31 +144,12 @@ class WordForm(Entity):
         Returns:
             float: The rime distance between the two word forms.
         """
-        from scipy.spatial.distance import euclidean
-
         if self.txt == wordform.txt:
             return np.nan
-        # return self.syllables[-1].rime_distance(wordform.syllables[-1])
 
-        df1 = self.rime.df
-        df2 = wordform.rime.df
-
-        if list(df1.reset_index().phon_txt) == list(df2.reset_index().phon_txt):
-            return 0
-
-        s1 = df1.mean(numeric_only=True)
-        s2 = df2.mean(numeric_only=True)
-        keys = [
-            k
-            for k in set(s1.index) & set(s2.index)
-            if k.startswith("phon_")
-            and not k.endswith("_num")
-            and not k.startswith("phon_is_")
-        ]
-        s1x = s1.loc[keys]
-        s2x = s2.loc[keys]
-        dist = euclidean(s1x, s2x)
-        return dist
+        phons1 = self.rime
+        phons2 = wordform.rime
+        return phons1.feature_distance(phons2)
 
 
 

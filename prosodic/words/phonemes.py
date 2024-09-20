@@ -90,6 +90,11 @@ class Phoneme(Entity):
             Optional[bool]: True if coda, False otherwise, None if not set.
         """
         return self._feats.get("is_coda")
+    
+    @property
+    def feature_profile(self):
+        return {k: v for k, v in self.feats.items() if type(v) in {int, float}}
+    
 
 
 @cache
@@ -186,6 +191,8 @@ class PhonemeList(EntityList):
         """
         super().__init__(*args, **kwargs)
 
+    
+    def _annotate_phons(self) -> None:
         def do_phons(phons: List[Phoneme]) -> None:
             """
             Process a list of phonemes to set syllable position attributes.
@@ -218,3 +225,26 @@ class PhonemeList(EntityList):
 
         for phons in phons_by_syll:
             do_phons(phons)
+    
+    
+    @property
+    def feature_profile(self):
+        import pandas as pd
+        self._annotate_phons()
+        df = pd.DataFrame([p.feature_profile for p in self.children])
+        return dict(df.mean())
+    
+    def feature_distance(self, other: "PhonemeList"):
+        from scipy.spatial.distance import euclidean
+
+        phons1_txt = ''.join(phon.txt for phon in self)
+        phons2_txt = ''.join(phon.txt for phon in other)
+        if phons1_txt == phons2_txt:
+            return 0
+
+        d1 = self.feature_profile
+        d2 = other.feature_profile
+        keys = set(d1.keys()) & set(d2.keys())
+        v1 = [d1[k] for k in keys]
+        v2 = [d2[k] for k in keys]
+        return float(euclidean(v1, v2))

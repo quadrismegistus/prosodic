@@ -239,6 +239,48 @@ class TextModel(Entity):
     def iter_wordtoken_matrix(self):
         yield from self.wordtokens.iter_wordtoken_matrix()
 
+    @cached_property
+    def wordtoken_matrix(self):
+        return list(self.iter_wordtoken_matrix())
+
+    def get_parseable_units(self, combine_by: Optional[Literal["line", "sent"]] = DEFAULT_COMBINE_BY):
+        return self.get_list(combine_by) if combine_by is not None else self.meter.get_parse_units()
+
+    def get_rhyming_lines(self, max_dist: int = RHYME_MAX_DIST) -> Dict[Any, Any]:
+        """
+        Get the rhyming lines within the stanza.
+
+        Args:
+            max_dist (int): Maximum distance between rhyming lines. Default is RHYME_MAX_DIST.
+
+        Returns:
+            Dict[Any, Any]: A dictionary of rhyming lines.
+        """
+        d={}
+        for stanza in self.stanzas:
+            d.update(stanza.get_rhyming_lines(max_dist=max_dist))
+        return d
+    
+    @property
+    def num_rhyming_lines(self) -> int:
+        """
+        Get the number of rhyming lines in the text.
+
+        Returns:
+            int: The number of rhyming lines.
+        """
+        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
+    
+    @property
+    def is_rhyming(self) -> bool:
+        """
+        Check if the text is rhyming.
+
+        Returns:
+            bool: True if the text is rhyming, False otherwise.
+        """
+        return self.num_rhyming_lines > 0
+
 
 @stash.stashed_result
 def Text(

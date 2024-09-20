@@ -17,7 +17,7 @@ linelim = 1000
 
 @cache(maxsize=10)
 def get_text(txt):
-    return Text(txt)
+    return TextModel(txt)
 
 
 # @app.websocket("/ws")
@@ -43,11 +43,12 @@ def parse(data):
     t = get_text(text)
     t.set_meter(**meter_kwargs)
     started = time.time()
-    numtoiter = len(t.parseable_units)
+    numtoiter = len(t.get_parseable_units())
     remainings = []
     rates = []
     numrows = 0
-    for i, parsed_line in enumerate(t.parse_iter()):
+    for i, line_parses in enumerate(t.parse_iter()):
+        parsed_line = line_parses.line
         data_out_l = []
         for pi, parse in enumerate(parsed_line.parses.unbounded):
             html = parsed_line.to_html(
@@ -89,7 +90,7 @@ def parse(data):
                         0,
                     ),
                     1,
-                ) for cname in CONSTRAINTS
+                ) for cname in get_all_constraints()
             ]
             data['row'] = ['' if not x else x for x in data['row']]
 
@@ -99,7 +100,7 @@ def parse(data):
             data['row'] = [
                 f'<span class="{ctype(pi)}">{x}</span>' for x in data['row']
             ]
-            data['progress'] = (i + 1) / len(t.parseable_units)
+            data['progress'] = (i + 1) / numtoiter
             sofar = time.time() - started
             rate = sofar / (i + 1)
             remaining = (numtoiter - i - 1) * rate
@@ -126,9 +127,9 @@ def parse(data):
 def index():
     return render_template(
         "index.html",
-        all_constraints=list(CONSTRAINTS.keys()),
+        all_constraints=list(get_all_constraints().keys()),
         enumerate=enumerate,
-        constraint_descs=CONSTRAINT_DESCS,
+        constraint_descs=get_constraint_descriptions(),
         **Meter().attrs
     )
 

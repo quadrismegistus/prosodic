@@ -243,8 +243,6 @@ class Entity(UserList):
             # First, try to get the attribute normally
             return self.__dict__.get(attr, self.__getattribute__(attr))
         except AttributeError:
-            if attr == 'lines':
-                raise
             # If AttributeError is raised, implement the custom logic
             from .imports import PLURAL_ATTRS, SINGULAR_ATTRS, get_class
 
@@ -511,7 +509,7 @@ class Entity(UserList):
 
     @cached_property
     def wordforms_first(self):
-        from .words.words import WordFormList
+        from .words import WordFormList
 
         o = []
         for wtyp in self.wordtypes:
@@ -519,6 +517,11 @@ class Entity(UserList):
             if wforms and len(wforms):
                 o.append(wforms[0])
         return WordFormList(o, parent=self)
+    
+    @cached_property
+    def wordforms_nopunc(self):
+        from .words import WordFormList
+        return WordFormList([wf for wf in self.wordforms_first if not wf.is_punc], parent=self)
 
     @cached_property
     def wordforms_all(self):

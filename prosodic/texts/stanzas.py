@@ -46,7 +46,11 @@ class Stanza(WordTokenList):
         Returns:
             Dict[Any, Any]: A dictionary of rhyming lines.
         """
-        return self.children.get_rhyming_lines(max_dist=max_dist)
+        return self.lines.get_rhyming_lines(max_dist=max_dist)
+    
+    @property
+    def rhyming_lines(self):
+        return self.get_rhyming_lines(max_dist=RHYME_MAX_DIST)
 
     @property
     def num_rhyming_lines(self) -> int:
@@ -56,7 +60,7 @@ class Stanza(WordTokenList):
         Returns:
             int: The number of rhyming lines.
         """
-        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
+        return len(self.rhyming_lines)
 
     @property
     def is_rhyming(self) -> bool:

@@ -99,6 +99,10 @@ class WordTokenList(EntityList):
                 wtype.children = WordFormList([wf], parent=wtype)
             yield wtl
 
+    @cached_property
+    def wordtoken_matrix(self):
+        return list(self.iter_wordtoken_matrix())
+
     @property
     def best_parse(self) -> Any:
         """
@@ -234,21 +238,21 @@ class WordTokenList(EntityList):
         """
         return self.parses.to_html(as_str=as_str, blockquote=blockquote)
 
-    def get_rhyming_lines(self, max_dist: int = RHYME_MAX_DIST) -> Dict[Any, Any]:
-        """
-        Get rhyming lines from the text.
+    # def get_rhyming_lines(self, max_dist: int = RHYME_MAX_DIST) -> Dict[Any, Any]:
+    #     """
+    #     Get rhyming lines from the text.
 
-        Args:
-            max_dist (int): Maximum distance for rhyme detection. Default is RHYME_MAX_DIST.
+    #     Args:
+    #         max_dist (int): Maximum distance for rhyme detection. Default is RHYME_MAX_DIST.
 
-        Returns:
-            Dict[Any, Any]: A dictionary of rhyming lines.
-        """
-        return dict(
-            x
-            for st in self.children
-            for x in st.get_rhyming_lines(max_dist=max_dist).items()
-        )
+    #     Returns:
+    #         Dict[Any, Any]: A dictionary of rhyming lines.
+    #     """
+    #     return dict(
+    #         x
+    #         for st in self.children
+    #         for x in st.get_rhyming_lines(max_dist=max_dist).items()
+    #     )
 
     @property
     def rhyming_lines(self) -> Dict[Any, Any]:
@@ -280,12 +284,3 @@ class WordTokenList(EntityList):
         """
         return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
 
-    @property
-    def is_rhyming(self) -> bool:
-        """
-        Check if the text is rhyming.
-
-        Returns:
-            bool: True if the text is rhyming, False otherwise.
-        """
-        return any([st.is_rhyming for st in self.stanzas])

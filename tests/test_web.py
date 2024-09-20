@@ -69,6 +69,7 @@ def test_parse_text(driver):
     # Wait for the results to load with a longer timeout
     max_wait_time = 60  # Increase this if needed
     start_time = time.time()
+    results = None
     while time.time() - start_time < max_wait_time:
         try:
             results = driver.find_element(By.ID, "parseresults")
@@ -79,12 +80,18 @@ def test_parse_text(driver):
         time.sleep(1)
         print(f"Waiting for results... Elapsed time: {time.time() - start_time:.2f} seconds")
 
+    # Re-locate the parse button before checking its state
+    parse_button = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "parsebtn"))
+    )
+
     # Print debugging information
     print("Parse button state:", parse_button.is_enabled())
     print("Parse button text:", parse_button.text)
-    print("Results content:", results.text)
+    print("Results content:", results.text if results else "No results found")
 
     # Check if any part of the input text is present in the results
+    assert results is not None, "Results element not found"
     assert any(part in results.text for part in ["To be", "or not to be", "that is the question"]), f"Expected text not found. Actual content: {results.text}"
 
 def test_meter_settings(driver):

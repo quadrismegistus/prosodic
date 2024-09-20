@@ -153,7 +153,7 @@ def get_wordform_token(token):
             f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
         )
         tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)
-    return tokenx.lower()
+    return tokenx
 
 
 def token_is_punc(token):

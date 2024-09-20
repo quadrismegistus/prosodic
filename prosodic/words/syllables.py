@@ -201,7 +201,8 @@ class Syllable(Entity):
         Returns:
             A PhonemeList containing the rime phonemes.
         """
-        return PhonemeList(p for p in self.children if p.is_rime)
+        self.children._annotate_phons()
+        return PhonemeList([p for p in self.children if p.is_rime], parent=self)
 
     @property
     def nucleus(self) -> PhonemeList:

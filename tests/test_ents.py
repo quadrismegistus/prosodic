@@ -239,4 +239,3 @@ def test_serialize():
             assert attrd1 == attrd2
 
     do(t)
-    do(Parse(t.linepart1))

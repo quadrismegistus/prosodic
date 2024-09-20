@@ -22,14 +22,10 @@ def sample_lines():
 @pytest.fixture
 def sample_wordforms():
     return [
-        # WordForm("mat", sylls_ipa=["mæt"], sylls_text=["mat"]),
-        # WordForm("cat", sylls_ipa=["kæt"], sylls_text=["cat"]),
-        # WordForm("log", sylls_ipa=["lɔg"], sylls_text=["log"]),
-        # WordForm("dog", sylls_ipa=["dɔg"], sylls_text=["dog"])
-        Word('silver').wordforms[0],
-        Word('blur').wordforms[0],
-        Word('log').wordforms[0],
-        Word('dog').wordforms[0],
+        TextModel('silver').wordform1,
+        TextModel('blur').wordform1,
+        TextModel('log').wordform1,
+        TextModel('dog').wordform1,
     ]
 
 def test_text_get_rhyming_lines(sample_text):

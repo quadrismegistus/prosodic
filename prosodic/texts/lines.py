@@ -67,7 +67,6 @@ class Line(WordTokenList):
 
         odf = pd.DataFrame(output)
         odf = odf.fillna(method="ffill")
-        print(odf)
 
         def htmlx(row, tooltip=tooltip):
             if not row.txt.strip() or not row.txt[0].isalpha():
@@ -163,6 +162,30 @@ class LineList(EntityList):
                 if max_dist is None or dist <= max_dist:
                     line2rhyme[line].append((dist, line2))
         return {i: min(v) for i, v in line2rhyme.items()}
+    
+    @property
+    def rhyming(self):
+        return self.get_rhyming_lines()
+    
+    @property
+    def num_rhyming(self) -> int:
+        """
+        Get the number of rhyming lines in the stanza.
+
+        Returns:
+            int: The number of rhyming lines.
+        """
+        return len(self.rhyming)
+
+    @property
+    def is_rhyming(self) -> bool:
+        """
+        Check if the stanza contains rhyming lines.
+
+        Returns:
+            bool: True if the stanza contains rhyming lines, False otherwise.
+        """
+        return self.num_rhyming > 0
 
 class LinePart(WordTokenList): 
     prefix = 'linepart'

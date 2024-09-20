@@ -4,19 +4,19 @@ from prosodic.imports import *
 
 @pytest.fixture
 def sample_text():
-    return Text("The cat\nsat on the mat.\nThe dog\nlay on the log.")
+    return TextModel("The cat\nsat on the mat.\nThe dog\nlay on the log.")
 
 @pytest.fixture
 def sample_stanza():
-    return Stanza("The cat\nsat on the mat.\nThe dog\nlay on the log.")
+    return TextModel("The cat\nsat on the mat.\nThe dog\nlay on the log.").stanza1
 
 @pytest.fixture
 def sample_lines():
     return [
-        Line("The cat"),
-        Line("sat on the mat"),
-        Line("The dog"),
-        Line("lay on the log.")
+        TextModel("The cat").line1,
+        TextModel("sat on the mat").line1,
+        TextModel("The dog").line1,
+        TextModel("lay on the log.").line1,
     ]
 
 @pytest.fixture

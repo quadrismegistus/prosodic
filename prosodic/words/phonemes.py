@@ -12,9 +12,20 @@ class Phoneme(Entity):
     prefix: str = "phon"
     children = None
 
-    @cached_property
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Initialize a Phoneme instance.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
+        self._feats = get_phoneme_feats(self.txt)
+
+    @property
     def feats(self):
-        return get_phoneme_feats(self.txt)
+        return self._feats
 
     @property
     def is_vowel(self) -> Optional[bool]:
@@ -165,45 +176,45 @@ class PhonemeList(EntityList):
     A list of phonemes with additional functionality.
     """
 
-    # def __init__(self, *args: Any, **kwargs: Any) -> None:
-    #     """
-    #     Initialize a PhonemeList instance.
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Initialize a PhonemeList instance.
 
-    #     Args:
-    #         *args: Variable length argument list.
-    #         **kwargs: Arbitrary keyword arguments.
-    #     """
-    #     super().__init__(*args, **kwargs)
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
 
-    #     def do_phons(phons: List[Phoneme]) -> None:
-    #         """
-    #         Process a list of phonemes to set syllable position attributes.
+        def do_phons(phons: List[Phoneme]) -> None:
+            """
+            Process a list of phonemes to set syllable position attributes.
 
-    #         Args:
-    #             phons (List[Phoneme]): A list of phonemes to process.
-    #         """
-    #         vowel_yet = False
-    #         for phon in phons:
-    #             if not phon.is_vowel:
-    #                 if not vowel_yet:
-    #                     phon._feats["is_onset"] = True
-    #                     phon._feats["is_rime"] = False
-    #                     phon._feats["is_nucleus"] = False
-    #                     phon._feats["is_coda"] = False
-    #                 else:
-    #                     phon._feats["is_onset"] = False
-    #                     phon._feats["is_rime"] = True
-    #                     phon._feats["is_nucleus"] = False
-    #                     phon._feats["is_coda"] = True
-    #             else:
-    #                 vowel_yet = True
-    #                 phon._feats["is_onset"] = False
-    #                 phon._feats["is_rime"] = True
-    #                 phon._feats["is_nucleus"] = True
-    #                 phon._feats["is_coda"] = False
+            Args:
+                phons (List[Phoneme]): A list of phonemes to process.
+            """
+            vowel_yet = False
+            for phon in phons:
+                if not phon.is_vowel:
+                    if not vowel_yet:
+                        phon._feats["is_onset"] = True
+                        phon._feats["is_rime"] = False
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = False
+                    else:
+                        phon._feats["is_onset"] = False
+                        phon._feats["is_rime"] = True
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = True
+                else:
+                    vowel_yet = True
+                    phon._feats["is_onset"] = False
+                    phon._feats["is_rime"] = True
+                    phon._feats["is_nucleus"] = True
+                    phon._feats["is_coda"] = False
 
-    #     # get syll specific feats
-    #     phons_by_syll = group_ents(self.children, "syllable")
+        # get syll specific feats
+        phons_by_syll = group_ents(self.children, "syllable")
 
-    #     for phons in phons_by_syll:
-    #         do_phons(phons)
+        for phons in phons_by_syll:
+            do_phons(phons)

@@ -46,10 +46,10 @@ class Line(WordTokenList):
                 odx = {"txt": prefstr}
                 output.append(odx)
 
-            wordtoken_slots = parse.wordtoken2slots[wordtoken]
+            wordtoken_slots = parse.wordtoken2slots[wordtoken.key]
             if wordtoken_slots:
                 for slot in wordtoken_slots:
-                    pos = slot.parent
+                    pos = slot.position
                     spclass = f"mtr_{'s' if slot.is_prom else 'w'}"
                     stclass = f"str_{'s' if slot.unit.is_stressed else 'w'}"
                     vclass = f"viol_{'y' if pos.violset else 'n'}"
@@ -67,6 +67,7 @@ class Line(WordTokenList):
 
         odf = pd.DataFrame(output)
         odf = odf.fillna(method="ffill")
+        print(odf)
 
         def htmlx(row, tooltip=tooltip):
             if not row.txt.strip() or not row.txt[0].isalpha():

@@ -353,7 +353,8 @@ class ParseList(EntityList):
         """
         odf = self.stats(by=by, norm=norm, incl_bounded=incl_bounded, **kwargs)
         aggby = self._get_aggby(odf)
-        resd = dict(odf.agg(aggby))
+        print(aggby)
+        resd = {k: float(v) for k, v in dict(odf.agg(aggby)).items()}
         return {
             **self.prefix_attrs,
             **{k: v for k, v in resd.items() if k not in self.prefix_attrs},
@@ -392,11 +393,12 @@ class ParseList(EntityList):
         df_q = df.select_dtypes("number")
 
         def getagg(col):
-            if col.endswith("_norm"):
-                return "mean"
-            if self.scope in {"text", "stanza"}:
-                return "median"
-            return "median"
+            return "mean"
+            # if col.endswith("_norm"):
+                # return "mean"
+            # if self.scope in {"text", "stanza"}:
+                # return "median"
+            # return "median"
 
         aggby = {col: getagg(col) for col in df_q}
         return aggby
@@ -592,7 +594,7 @@ class ParseList(EntityList):
         return self.to_html(as_str=as_str, blockquote=blockquote)
 
     def to_html(
-        self, as_str: bool = False, blockquote: bool = False
+        self, as_str: bool = False, blockquote: bool = False, css=None
     ) -> Union[str, "HTML"]:
         """
         Convert the ParseList to HTML.

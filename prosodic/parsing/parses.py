@@ -875,7 +875,7 @@ class Parse(Entity):
         """
         wordtokend = defaultdict(list)
         for slot in self.slots:
-            wordtokend[slot.unit.wordtoken].append(slot)
+            wordtokend[slot.unit.wordtoken.key].append(slot)
         return wordtokend
 
     def stats_d(self, norm: Optional[bool] = None) -> Dict[str, Any]:
@@ -902,15 +902,15 @@ class Parse(Entity):
         odx["num_words"] = self.num_words
 
         for cname in cnames:
-            odx[f"*{cname}"] = (
+            odx[f"*{cname}"] = float(
                 np.mean([slot.viold.get(cname,0) for slot in self.slots])
                 if norm
                 else self.scores.get(cname,0)
             )
         viols = [int(slot.has_viol) for slot in self.slots]
         scores = [int(slot.score) for slot in self.slots]
-        odx["*total_sylls"] = np.mean(viols) if norm else sum(viols)
-        odx["*total"] = np.mean(scores) if norm else sum(scores)
+        odx["*total_sylls"] = float(np.mean(viols)) if norm else sum(viols)
+        odx["*total"] = float(np.mean(scores)) if norm else sum(scores)
         return odx
 
     def get_unit(self, unit_type:str=None):

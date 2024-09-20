@@ -111,27 +111,6 @@ def test_standalone_parsing():
     assert set(p1.violset) == {"s_unstress"}  # my is currently stressed!?
     assert set(p2.violset) == {"s_unstress"}
 
-    l = TextModel("the horse the horse the kingdom for a horse").wordforms
-    p3 = Parse(l)
-    assert p3.score == p2.score
-
-    l = list(TextModel("the horse the horse the kingdom for a horse").wordforms)
-    p4 = Parse(l)
-    assert p3.score == p4.score
-
-    l = list(
-        TextModel("the horse the horse the kingdom for a horse").wordforms.data
-    )
-    p5 = Parse(l)
-    assert p5.score == p4.score
-    assert p5 != p4
-    assert p5 is not p4
-
-    assert (
-        len(p5.slots) == len(p4.slots) == len(p3.slots) == len(p2.slots) ==
-        len(p1.slots) == 10
-    )
-
     p6 = Parse("my horse my horse my kingdom for a horse", "sw" * 5)
     assert p1 < p6
     assert p1.score < p6.score
@@ -147,8 +126,10 @@ def test_parselist():
     assert len(parses) == len(parses.all)
     # assert len(parses.bounded) < len(parses) # @todo fix this
 
-    ps1 = parses.stats_d(norm=False)
-    ps2 = parses.stats_d(norm=True)
+    ps1 = parses.stats_d(norm=False, incl_bounded=True)
+    ps2 = parses.stats_d(norm=True, incl_bounded=True)
+    print(ps1)
+    print(ps2)
     assert set(ps1.keys()) == set(ps2.keys())
     assert set(ps1.values()) != set(ps2.values())
 

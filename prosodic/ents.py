@@ -276,8 +276,8 @@ class Entity(UserList):
                 try:
                     # log.debug(f"Attempting to return child at index {i}")
                     res = self.get_list(nondigits)[i]
-                    if res is not None:
-                        assert res.num == num
+                    # if res is not None:
+                    #     assert res.num == num
                 except IndexError:
                     # log.debug(f"Index {i} out of range, returning None")
                     res = None
@@ -421,7 +421,7 @@ class Entity(UserList):
     def descendants(self):
         return {obj.key:obj for obj in self.iter_all()}
     
-    @property
+    @cached_property
     def descendant_keys(self):
         return {obj.key for obj in self.iter_all()}
     

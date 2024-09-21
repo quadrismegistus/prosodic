@@ -81,7 +81,7 @@ class LanguageModel:
 
     @cache
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
-
+        token = token.lower()
         meta = {}
 
         if force_unstress is None and token in self.unstressed_words:
@@ -233,7 +233,6 @@ class LanguageModel:
         force_ambig_stress=None,
         **kwargs
     ) -> Tuple[List[Tuple[Tuple[str, str]]], Dict]:
-        
         sylls_ll, meta = self.get_sylls_ll_rule(tokenx)
         if sylls_ll:
             return sylls_ll, meta

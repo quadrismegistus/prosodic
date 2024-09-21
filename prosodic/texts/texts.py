@@ -280,6 +280,22 @@ class TextModel(Entity):
             bool: True if the text is rhyming, False otherwise.
         """
         return self.num_rhyming_lines > 0
+    
+    def render(
+        self, as_str: bool = False, blockquote: bool = False, **meter_kwargs
+    ) -> Any:
+        """
+        Render the parsed text.
+
+        Args:
+            as_str (bool): If True, return the result as a string. Default is False.
+            blockquote (bool): If True, render as a blockquote. Default is False.
+            **meter_kwargs: Additional keyword arguments for meter configuration.
+
+        Returns:
+            Any: The rendered text.
+        """
+        return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
 
 
 @stash.stashed_result

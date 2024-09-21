@@ -22,10 +22,10 @@ sonnets = prosodic.Text('https://raw.githubusercontent.com/quadrismegistus/proso
 
 ```{python}
 # parse sonnets beforehand if customizing
-sonnets.parse()
+parses = sonnets.parse()
 
 # the parses are here
-sonnets.parses
+parses = sonnets.parses
 ```
 
 ### Inspecting parses
@@ -35,26 +35,26 @@ By default these parses are shown with one row per parse, but we can also see pa
 #### By syllable
 
 ```{python}
-sonnets.parses.stats(by='syll')
+parses.stats(by='syll')
 ```
 
 #### By line
 
 ```{python}
-sonnets.parses.stats(by='line')
+parses.stats(by='line')
 ```
 
 #### By stanza
 
 ```{python}
-sonnets.parses.stats(by='stanza')
+parses.stats(by='stanza')
 ```
 
 ### Results
 
 ```{python}
 # so we can groupby stanza and average
-df = sonnets.parses.stats(by='stanza').sort_values('parse_score')
+df = parses.stats(by='stanza').sort_values('parse_score')
 df
 ```
 

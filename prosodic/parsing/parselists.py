@@ -726,3 +726,9 @@ class ParseListList(EntityList):
     @property
     def best(self):
         return self.best_parses
+
+    def render(self, **kwargs):
+        return ParseList.render(self, **kwargs)
+    
+    def to_html(self, **kwargs):
+        return ParseList.to_html(self, **kwargs)

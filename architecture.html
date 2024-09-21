@@ -211,7 +211,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="texts" class="level2">
 <h2 class="anchored" data-anchor-id="texts">Texts</h2>
-<p>Contained in <code>prosodic.text</code>.</p>
+<p>Code contained in <code>prosodic.texts</code>.</p>
 <section id="reading-texts" class="level3">
 <h3 class="anchored" data-anchor-id="reading-texts">Reading texts</h3>
 <section id="loading-by-string" class="level4">
@@ -237,38 +237,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="st">But flowers distill’d, though they with winter meet,</span></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="st">Leese but their show; their substance still lives sweet."""</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>⎾ building text with 104 words @ 2024-08-06 20:04:00,589
-￨ ⎾ tokenizing @ 2024-08-06 20:04:00,590
-￨ ⎿ 0 seconds @ 2024-08-06 20:04:00,595
-￨ ⎾ building stanzas @ 2024-08-06 20:04:00,595
-￨ ￨ iterating stanzas:   0%|          | 0/1 [00:00&lt;?, ?it/s]￨ ￨ iterating stanzas: 100%|██████████| 1/1 [00:01&lt;00:00,  1.65s/it]￨ ￨ iterating stanzas: 100%|██████████| 1/1 [00:01&lt;00:00,  1.65s/it]
-￨ ⎿ 1.7 seconds @ 2024-08-06 20:04:02,256
-⎿ 1.7 seconds @ 2024-08-06 20:04:02,256</code></pre>
-</div>
 </div>
 </section>
 <section id="loading-texts-by-filename" class="level4">
 <h4 class="anchored" data-anchor-id="loading-texts-by-filename">Loading texts by filename</h4>
 <p>Can also read texts (especially larger ones) by filename:</p>
 <div id="reading-texts-filename" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>shakespeare_sonnets_filename <span class="op">=</span> os.path.join(</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  prosodic.PATH_REPO, </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'corpora'</span>,<span class="st">'corppoetry_en'</span>,<span class="st">'en.shakespeare.txt'</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># read a text by string</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>sonnets <span class="op">=</span> prosodic.Text(fn<span class="op">=</span>shakespeare_sonnets_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>shakespeare_sonnets_filename <span class="op">=</span> os.path.join(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  prosodic.PATH_REPO, </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'corpora'</span>,<span class="st">'corppoetry_en'</span>,<span class="st">'en.shakespeare.txt'</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># read a text by string</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>sonnets <span class="op">=</span> prosodic.Text(fn<span class="op">=</span>shakespeare_sonnets_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>⎾ building text with 17,513 words @ 2024-08-06 20:04:02,261
-￨ ⎾ tokenizing @ 2024-08-06 20:04:02,262
-￨ ⎿ 0.1 seconds @ 2024-08-06 20:04:02,348
-￨ ⎾ building stanzas @ 2024-08-06 20:04:02,348
-￨ ￨ iterating stanzas:   0%|          | 0/154 [00:00&lt;?, ?it/s]￨ ￨ iterating stanzas:   3%|▎         | 5/154 [00:00&lt;00:03, 41.70it/s]￨ ￨ iterating stanzas:   6%|▋         | 10/154 [00:00&lt;00:05, 26.76it/s]￨ ￨ iterating stanzas:   9%|▉         | 14/154 [00:00&lt;00:04, 28.69it/s]￨ ￨ iterating stanzas:  12%|█▏        | 18/154 [00:00&lt;00:04, 28.43it/s]￨ ￨ iterating stanzas:  14%|█▍        | 22/154 [00:00&lt;00:04, 29.29it/s]￨ ￨ iterating stanzas:  17%|█▋        | 26/154 [00:00&lt;00:04, 29.31it/s]￨ ￨ iterating stanzas:  19%|█▉        | 30/154 [00:01&lt;00:05, 23.73it/s]￨ ￨ iterating stanzas:  23%|██▎       | 35/154 [00:01&lt;00:04, 28.63it/s]￨ ￨ iterating stanzas:  26%|██▌       | 40/154 [00:01&lt;00:03, 32.07it/s]￨ ￨ iterating stanzas:  29%|██▉       | 45/154 [00:01&lt;00:03, 35.00it/s]￨ ￨ iterating stanzas:  32%|███▏      | 50/154 [00:01&lt;00:02, 37.39it/s]￨ ￨ iterating stanzas:  36%|███▌      | 55/154 [00:01&lt;00:02, 39.51it/s]￨ ￨ iterating stanzas:  39%|███▉      | 60/154 [00:01&lt;00:03, 29.83it/s]￨ ￨ iterating stanzas:  42%|████▏     | 65/154 [00:02&lt;00:02, 33.06it/s]￨ ￨ iterating stanzas:  45%|████▍     | 69/154 [00:02&lt;00:02, 34.17it/s]￨ ￨ iterating stanzas:  47%|████▋     | 73/154 [00:02&lt;00:02, 35.03it/s]￨ ￨ iterating stanzas:  51%|█████     | 78/154 [00:02&lt;00:02, 37.66it/s]￨ ￨ iterating stanzas:  54%|█████▍    | 83/154 [00:02&lt;00:01, 40.15it/s]￨ ￨ iterating stanzas:  57%|█████▋    | 88/154 [00:02&lt;00:01, 41.52it/s]￨ ￨ iterating stanzas:  60%|██████    | 93/154 [00:02&lt;00:01, 41.47it/s]￨ ￨ iterating stanzas:  64%|██████▎   | 98/154 [00:03&lt;00:02, 27.83it/s]￨ ￨ iterating stanzas:  67%|██████▋   | 103/154 [00:03&lt;00:01, 31.22it/s]￨ ￨ iterating stanzas:  70%|███████   | 108/154 [00:03&lt;00:01, 34.72it/s]￨ ￨ iterating stanzas:  73%|███████▎  | 113/154 [00:03&lt;00:01, 37.34it/s]￨ ￨ iterating stanzas:  77%|███████▋  | 118/154 [00:03&lt;00:00, 39.48it/s]￨ ￨ iterating stanzas:  80%|███████▉  | 123/154 [00:03&lt;00:00, 41.01it/s]￨ ￨ iterating stanzas:  83%|████████▎ | 128/154 [00:03&lt;00:00, 42.32it/s]￨ ￨ iterating stanzas:  86%|████████▋ | 133/154 [00:03&lt;00:00, 43.05it/s]￨ ￨ iterating stanzas:  90%|████████▉ | 138/154 [00:03&lt;00:00, 43.22it/s]￨ ￨ iterating stanzas:  93%|█████████▎| 143/154 [00:04&lt;00:00, 25.93it/s]￨ ￨ iterating stanzas:  96%|█████████▌| 148/154 [00:04&lt;00:00, 29.92it/s]￨ ￨ iterating stanzas:  99%|█████████▉| 153/154 [00:04&lt;00:00, 33.25it/s]￨ ￨ iterating stanzas: 100%|██████████| 154/154 [00:04&lt;00:00, 33.86it/s]
-￨ ⎿ 4.6 seconds @ 2024-08-06 20:04:06,900
-⎿ 4.6 seconds @ 2024-08-06 20:04:06,900</code></pre>
+<pre><code>[2.46s] Building long text:   0%|          | 0/20317 [00:00&lt;?, ?it/s][2.46s] Building long text:   4%|▎         | 761/20317 [00:00&lt;00:02, 7609.15it/s][2.46s] Building long text:   7%|▋         | 1522/20317 [00:00&lt;00:04, 3936.37it/s][2.46s] Building long text:  11%|█▏        | 2321/20317 [00:00&lt;00:03, 5162.95it/s][2.46s] Building long text:  16%|█▌        | 3161/20317 [00:00&lt;00:02, 6139.10it/s][2.46s] Building long text:  20%|█▉        | 4026/20317 [00:00&lt;00:02, 6894.51it/s][2.46s] Building long text:  24%|██▍       | 4892/20317 [00:00&lt;00:02, 7424.50it/s][2.46s] Building long text:  28%|██▊       | 5787/20317 [00:00&lt;00:01, 7882.81it/s][2.46s] Building long text:  33%|███▎      | 6688/20317 [00:00&lt;00:01, 8219.73it/s][2.46s] Building long text:  37%|███▋      | 7570/20317 [00:01&lt;00:02, 5213.52it/s][2.46s] Building long text:  41%|████▏     | 8390/20317 [00:01&lt;00:02, 5840.28it/s][2.46s] Building long text:  46%|████▌     | 9252/20317 [00:01&lt;00:01, 6481.35it/s][2.46s] Building long text:  50%|████▉     | 10116/20317 [00:01&lt;00:01, 7014.78it/s][2.46s] Building long text:  54%|█████▍    | 11005/20317 [00:01&lt;00:01, 7504.10it/s][2.46s] Building long text:  59%|█████▊    | 11891/20317 [00:01&lt;00:01, 7871.11it/s][2.46s] Building long text:  63%|██████▎   | 12747/20317 [00:01&lt;00:00, 8056.46it/s][2.46s] Building long text:  67%|██████▋   | 13614/20317 [00:01&lt;00:00, 8231.36it/s][2.46s] Building long text:  71%|███████▏  | 14494/20317 [00:02&lt;00:00, 8395.19it/s][2.46s] Building long text:  76%|███████▌  | 15355/20317 [00:02&lt;00:00, 5247.51it/s][2.46s] Building long text:  80%|███████▉  | 16204/20317 [00:02&lt;00:00, 5913.21it/s][2.46s] Building long text:  84%|████████▍ | 17069/20317 [00:02&lt;00:00, 6535.04it/s][2.46s] Building long text:  89%|████████▊ | 17982/20317 [00:02&lt;00:00, 7168.13it/s][2.46s] Building long text:  93%|█████████▎| 18875/20317 [00:02&lt;00:00, 7624.63it/s][2.46s] Building long text:  97%|█████████▋| 19751/20317 [00:02&lt;00:00, 7929.59it/s]                                                                                   </code></pre>
 </div>
 </div>
 </section>
@@ -277,11 +262,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="displaying-texts">Displaying texts</h3>
 <p>In a notebook environmnent, texts objects will display a by-syllable dataframe of the text structure it contains, stored at <code>text.df</code></p>
 <div class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># these will display the same, but former actually points to the dataframe</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>sonnetV.df          </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>sonnetV</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># these will display the same, but former actually points to the dataframe</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>sonnetV.df          </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sonnetV</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div id="showing-texts" class="cell-output cell-output-display" data-execution_count="3">
-<div>
+<b>TextModel</b><br><div>
 
 
 <table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
@@ -298,32 +283,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">wordtoken_lang</th>
-<th data-quarto-table-cell-role="th">word_num_forms</th>
-<th data-quarto-table-cell-role="th">syll_is_stressed</th>
-<th data-quarto-table-cell-role="th">syll_is_heavy</th>
-<th data-quarto-table-cell-role="th">syll_is_strong</th>
-<th data-quarto-table-cell-role="th">syll_is_weak</th>
-<th data-quarto-table-cell-role="th">word_is_punc</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">wordtoken_is_punc</th>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">stanza_num</th>
 <th data-quarto-table-cell-role="th">line_num</th>
-<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">linepart_num</th>
 <th data-quarto-table-cell-role="th">sent_num</th>
 <th data-quarto-table-cell-role="th">sentpart_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordtype_txt</th>
 <th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">wordform_ipa_origin</th>
 <th data-quarto-table-cell-role="th">syll_num</th>
 <th data-quarto-table-cell-role="th">syll_txt</th>
 <th data-quarto-table-cell-role="th">syll_ipa</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 </tr>
 </thead>
@@ -331,76 +308,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Those hours, that with gentle work did frame</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">Those</td>
+<td data-quarto-table-cell-role="th">Those</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">Those</td>
 <td data-quarto-table-cell-role="th">ðoʊz</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
 <td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">2</td>
 <td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">hours</td>
-<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">hours</td>
 <td data-quarto-table-cell-role="th">1</td>
-<td data-quarto-table-cell-role="th">ho</td>
-<td data-quarto-table-cell-role="th">'aʊ</td>
-<td>en</td>
-<td>2</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td></td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td data-quarto-table-cell-role="th">urs</td>
-<td data-quarto-table-cell-role="th">ɛːz</td>
-<td>en</td>
-<td>2</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td></td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">hours</td>
 <td data-quarto-table-cell-role="th">'aʊrz</td>
-<td>en</td>
-<td>2</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">2</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">dict</td>
+<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">ho</td>
+<td data-quarto-table-cell-role="th">'aʊ</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">urs</td>
+<td data-quarto-table-cell-role="th">ɛːz</td>
+<td>0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">3</td>
 <td data-quarto-table-cell-role="th">,</td>
+<td data-quarto-table-cell-role="th">,</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
 <td>1</td>
 </tr>
 <tr class="even">
@@ -414,97 +368,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
 <td>...</td>
 </tr>
 <tr class="odd">
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">14</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Leese but their show; their substance still lives sweet.</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">30</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
-<td data-quarto-table-cell-role="th">7</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">17</td>
+<td data-quarto-table-cell-role="th">121</td>
+<td data-quarto-table-cell-role="th">substance</td>
 <td data-quarto-table-cell-role="th">substance</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">2</td>
 <td data-quarto-table-cell-role="th">tance</td>
 <td data-quarto-table-cell-role="th">stəns</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td></td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">8</td>
+<td data-quarto-table-cell-role="th">122</td>
+<td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">'stɪl</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">123</td>
+<td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">'lɪvz</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">124</td>
+<td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">'swiːt</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">11</td>
+<td data-quarto-table-cell-role="th">125</td>
+<td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
 <td>1</td>
 </tr>
 </tbody>
 </table>
 
-<p>195 rows × 7 columns</p>
+<p>187 rows × 1 columns</p>
 </div>
 </div>
 </div>
@@ -516,14 +446,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="accessing-stanzas">Accessing stanzas</h3>
 <p>Stanza separations are detected by two line breaks in the input text. You can access stanza objects through a text object:</p>
 <div class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">len</span>(sonnets.stanzas) <span class="op">==</span> <span class="dv">154</span>    <span class="co"># number of shakespeare sonnets</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># can iterate over them simply by iterating over text object:</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> stanza <span class="kw">in</span> sonnets:</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">pass</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach stanzas by .stanza###</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154.df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">len</span>(sonnets.stanzas) <span class="op">==</span> <span class="dv">154</span>    <span class="co"># number of shakespeare sonnets</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># can iterate over them simply by iterating over text object:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> stanza <span class="kw">in</span> sonnets:</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">pass</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach stanzas by .stanza###</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154.df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div>
 
@@ -542,111 +472,81 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">wordtoken_lang</th>
-<th data-quarto-table-cell-role="th">word_num_forms</th>
-<th data-quarto-table-cell-role="th">syll_is_stressed</th>
-<th data-quarto-table-cell-role="th">syll_is_heavy</th>
-<th data-quarto-table-cell-role="th">syll_is_strong</th>
-<th data-quarto-table-cell-role="th">syll_is_weak</th>
-<th data-quarto-table-cell-role="th">word_is_punc</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">wordtoken_is_punc</th>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">stanza_num</th>
 <th data-quarto-table-cell-role="th">line_num</th>
-<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">linepart_num</th>
 <th data-quarto-table-cell-role="th">sent_num</th>
 <th data-quarto-table-cell-role="th">sentpart_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordtype_txt</th>
 <th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">wordform_ipa_origin</th>
 <th data-quarto-table-cell-role="th">syll_num</th>
 <th data-quarto-table-cell-role="th">syll_txt</th>
 <th data-quarto-table-cell-role="th">syll_ipa</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">154</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">\nThe little Love-god lying once asleep</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">2142</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">4723</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">521</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">521</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">2582</td>
+<td data-quarto-table-cell-role="th">20194</td>
+<td data-quarto-table-cell-role="th">\n\nThe</td>
+<td data-quarto-table-cell-role="th">The</td>
 <td data-quarto-table-cell-role="th">1</td>
-<td data-quarto-table-cell-role="th">\nThe</td>
-<td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">The</td>
 <td data-quarto-table-cell-role="th">ðə</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>0</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
-<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">2</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">20195</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">little</td>
 <td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">little</td>
 <td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">lit</td>
 <td data-quarto-table-cell-role="th">'lɪ</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td>0</td>
-<td></td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">2</td>
 <td data-quarto-table-cell-role="th">tle</td>
 <td data-quarto-table-cell-role="th">təl</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td></td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
+<td data-quarto-table-cell-role="th">20196</td>
+<td data-quarto-table-cell-role="th">Love</td>
 <td data-quarto-table-cell-role="th">Love</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">Love</td>
 <td data-quarto-table-cell-role="th">'lʌv</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
+<td data-quarto-table-cell-role="th">20197</td>
+<td data-quarto-table-cell-role="th">-</td>
 <td data-quarto-table-cell-role="th">-</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
 <td>1</td>
 </tr>
 <tr class="even">
@@ -660,95 +560,70 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
 <td>...</td>
 </tr>
 <tr class="odd">
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">14</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">Love's fire heats water, water cools not love.</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">2155</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">4748</td>
 <td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">522</td>
-<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">522</td>
-<td data-quarto-table-cell-role="th">7</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">2594</td>
+<td data-quarto-table-cell-role="th">20314</td>
+<td data-quarto-table-cell-role="th">cools</td>
 <td data-quarto-table-cell-role="th">cools</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">cools</td>
 <td data-quarto-table-cell-role="th">'kuːlz</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
-<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">8</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">20315</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">not</td>
 <td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">not</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">not</td>
 <td data-quarto-table-cell-role="th">nɑt</td>
-<td>en</td>
-<td>2</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">not</td>
 <td data-quarto-table-cell-role="th">'nɑt</td>
-<td>en</td>
-<td>2</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">20316</td>
+<td data-quarto-table-cell-role="th">love</td>
 <td data-quarto-table-cell-role="th">love</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">love</td>
 <td data-quarto-table-cell-role="th">'lʌv</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">20317</td>
+<td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
 <td>1</td>
 </tr>
 </tbody>
 </table>
 
-<p>183 rows × 7 columns</p>
+<p>173 rows × 1 columns</p>
 </div>
 </div>
 </div>
@@ -757,13 +632,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="displaying-stanzas">Displaying stanzas</h3>
 <p>By default, sonnets will display parsed:</p>
 <div class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sonnets.stanza154</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>⎾ parsing text Stanza(num=154) @ 2024-08-06 20:04:06,958
-￨ ⎾ parsing 14 lines [5x] @ 2024-08-06 20:04:06,959
-￨ ￨ parsing [5x]:   0%|          | 0/14 [00:00&lt;?, ?it/s]￨ ￨ stanza 154, line 01: the LIT tle LOVE god LY ing ONCE a SLEEP         :   0%|          | 0/14 [00:00&lt;?, ?it/s]￨ ￨ stanza 154, line 01: the LIT tle LOVE god LY ing ONCE a SLEEP         :   7%|▋         | 1/14 [00:00&lt;00:01,  6.76it/s]￨ ￨ stanza 154, line 02: LAID by.his SIDE his HEART in FLA ming BRAND     :   7%|▋         | 1/14 [00:00&lt;00:01,  6.76it/s]￨ ￨ stanza 154, line 03: whilst MA ny NYMPHS that VOW'D chaste LIFE to KEE:   7%|▋         | 1/14 [00:00&lt;00:01,  6.76it/s]￨ ￨ stanza 154, line 03: whilst MA ny NYMPHS that VOW'D chaste LIFE to KEE:  21%|██▏       | 3/14 [00:00&lt;00:00, 11.39it/s]￨ ￨ stanza 154, line 04: came TRIP ping BY but IN her MAI den HAND        :  21%|██▏       | 3/14 [00:00&lt;00:00, 11.39it/s]￨ ￨ stanza 154, line 05: the FAI rest VO ta.ry TOOK up.that FI re         :  21%|██▏       | 3/14 [00:00&lt;00:00, 11.39it/s]￨ ￨ stanza 154, line 05: the FAI rest VO ta.ry TOOK up.that FI re         :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 06: which MA ny LE gions OF true HEARTS had WARM'D   :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 07: and SO the GE ne RAL of HOT de SIRE              :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 08: was SLEE ping BY a VIR gin HAND di SARM'D        :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 09: this BRAND she QUENCHED in A cool WELL by        :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 10: which.from LOVE'S fire TOOK heat PER.PE tu AL    :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 11: GRO wing.a BATH and HEALT hful RE me DY          :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 12: for MEN di SEASED but I my MIS tress' THRALL     :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 13: CAME there.for CURE and THIS by THAT i PROVE     :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 14: love's FI re HEATS.WA ter WA ter COOLS not LOVE  :  36%|███▌      | 5/14 [00:00&lt;00:00, 10.24it/s]￨ ￨ stanza 154, line 14: love's FI re HEATS.WA ter WA ter COOLS not LOVE  : 100%|██████████| 14/14 [00:00&lt;00:00, 27.43it/s]￨ ￨ stanza 154, line 14: love's FI re HEATS.WA ter WA ter COOLS not LOVE  : 100%|██████████| 14/14 [00:00&lt;00:00, 21.05it/s]
-￨ ⎿ 0.7 seconds @ 2024-08-06 20:04:07,627
-⎿ 0.7 seconds @ 2024-08-06 20:04:07,628</code></pre>
+<pre><code>[8.68s] Parsing lineparts [8x]:   0%|          | 0/19 [00:00&lt;?, ?it/s][8.68s] Parsing lineparts [8x]:   5%|▌         | 1/19 [00:00&lt;00:02,  8.30it/s][8.68s] Parsing lineparts [8x]:  37%|███▋      | 7/19 [00:00&lt;00:00, 36.20it/s][8.68s] Parsing lineparts [8x]:  58%|█████▊    | 11/19 [00:00&lt;00:00, 26.34it/s][8.68s] Parsing lineparts [8x]:  79%|███████▉  | 15/19 [00:00&lt;00:00, 24.34it/s][8.68s] Parsing lineparts [8x]:  95%|█████████▍| 18/19 [00:00&lt;00:00, 21.88it/s]</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <ol class="parselist"><li><style>
@@ -781,6 +652,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
 </style><div class="parse">
+
 <span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">lit</span><span class="mtr_w str_w viol_n">tle</span> <span class="mtr_s str_s viol_n">Love</span>-<span class="mtr_w str_s viol_y">god</span> <span class="mtr_s str_s viol_n">ly</span><span class="mtr_w str_w viol_n">ing</span> <span class="mtr_s str_s viol_n">once</span> <span class="mtr_w str_w viol_n">a</span><span class="mtr_s str_s viol_n">sleep</span></div></li>
 <li><style>
 
@@ -796,7 +668,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Laid</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">side</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">heart</span>-<span class="mtr_w str_w viol_n">in</span><span class="mtr_s str_s viol_n">fla</span><span class="mtr_w str_w viol_n">ming</span> <span class="mtr_s str_s viol_n">brand</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Laid</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">side</span> <span class="mtr_w str_w viol_n">his</span> <span class="mtr_s str_s viol_n">heart</span>-<span class="mtr_w str_w viol_n">in</span><span class="mtr_s str_s viol_n">fla</span><span class="mtr_w str_w viol_n">ming</span> <span class="mtr_s str_s viol_n">brand</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -811,7 +684,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_s viol_y">Whilst</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">nymphs</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">vow'd</span> <span class="mtr_w str_s viol_y">chaste</span> <span class="mtr_s str_s viol_n">life</span> <span class="mtr_w str_w viol_n">to</span> <span class="mtr_s str_s viol_n">keep</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_s viol_y">Whilst</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">nymphs</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">vow'd</span> <span class="mtr_w str_s viol_y">chaste</span> <span class="mtr_s str_s viol_n">life</span> <span class="mtr_w str_w viol_n">to</span> <span class="mtr_s str_s viol_n">keep</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -826,7 +700,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_s viol_y">Came</span> <span class="mtr_s str_s viol_n">trip</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_s str_s viol_n">in</span> <span class="mtr_w str_w viol_n">her</span> <span class="mtr_s str_s viol_n">mai</span><span class="mtr_w str_w viol_n">den</span> <span class="mtr_s str_s viol_n">hand</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_s viol_y">Came</span> <span class="mtr_s str_s viol_n">trip</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_s str_s viol_n">in</span> <span class="mtr_w str_w viol_n">her</span> <span class="mtr_s str_s viol_n">mai</span><span class="mtr_w str_w viol_n">den</span> <span class="mtr_s str_s viol_n">hand</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -841,7 +716,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">fai</span><span class="mtr_w str_w viol_n">rest</span> <span class="mtr_s str_s viol_n">vo</span><span class="mtr_w str_w viol_y">ta</span><span class="mtr_w str_w viol_y">ry</span> <span class="mtr_s str_s viol_n">took</span> <span class="mtr_w str_w viol_n">up</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">fai</span><span class="mtr_w str_w viol_n">rest</span> <span class="mtr_s str_s viol_n">vo</span><span class="mtr_w str_w viol_n">tary</span> <span class="mtr_s str_s viol_n">took</span> <span class="mtr_w str_w viol_n">up</span> <span class="mtr_w str_w viol_n">that</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -856,7 +732,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">Which</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">le</span><span class="mtr_w str_w viol_n">gions</span> <span class="mtr_s str_w viol_y">of</span> <span class="mtr_w str_s viol_y">true</span> <span class="mtr_s str_s viol_n">hearts</span> <span class="mtr_w str_w viol_n">had</span> <span class="mtr_s str_s viol_n">warm'd</span>;</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">Which</span> <span class="mtr_s str_s viol_n">ma</span><span class="mtr_w str_w viol_n">ny</span> <span class="mtr_s str_s viol_n">le</span><span class="mtr_w str_w viol_n">gions</span> <span class="mtr_s str_w viol_y">of</span> <span class="mtr_w str_s viol_y">true</span> <span class="mtr_s str_s viol_n">hearts</span> <span class="mtr_w str_w viol_n">had</span> <span class="mtr_s str_s viol_n">warm'd</span>;</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -871,7 +748,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_w viol_y">so</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ge</span><span class="mtr_w str_w viol_n">ne</span><span class="mtr_s str_w viol_y">ral</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">hot</span> <span class="mtr_w str_w viol_n">de</span><span class="mtr_s str_s viol_n">sire</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_w viol_y">so</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ge</span><span class="mtr_w str_w viol_n">ne</span><span class="mtr_s str_w viol_y">ral</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">hot</span> <span class="mtr_w str_w viol_n">de</span><span class="mtr_s str_s viol_n">sire</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -886,7 +764,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">Was</span> <span class="mtr_s str_s viol_n">slee</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span> <span class="mtr_w str_w viol_n">a</span> <span class="mtr_s str_s viol_n">vir</span><span class="mtr_w str_w viol_n">gin</span> <span class="mtr_s str_s viol_n">hand</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">sarm'd</span>.</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">Was</span> <span class="mtr_s str_s viol_n">slee</span><span class="mtr_w str_w viol_n">ping</span> <span class="mtr_s str_w viol_y">by</span> <span class="mtr_w str_w viol_n">a</span> <span class="mtr_s str_s viol_n">vir</span><span class="mtr_w str_w viol_n">gin</span> <span class="mtr_s str_s viol_n">hand</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">sarm'd</span>.</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -901,7 +780,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">This</span> <span class="mtr_s str_s viol_n">brand</span> <span class="mtr_w str_w viol_n">she</span> <span class="mtr_s str_s viol_n">quenched</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_s str_w viol_y">a</span> <span class="mtr_w str_s viol_y">cool</span> <span class="mtr_s str_s viol_n">well</span> <span class="mtr_w str_w viol_n">by</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">This</span> <span class="mtr_s str_s viol_n">brand</span> <span class="mtr_w str_w viol_n">she</span> <span class="mtr_s str_s viol_n">quenched</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_w str_w viol_n">a</span> <span class="mtr_s str_s viol_y">cool</span> <span class="mtr_s str_s viol_y">well</span> <span class="mtr_w str_w viol_n">by</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -916,7 +796,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">Which</span> <span class="mtr_w str_w viol_n">from</span> <span class="mtr_s str_s viol_n">Love's</span> <span class="mtr_w str_s viol_y">fire</span> <span class="mtr_s str_s viol_n">took</span> <span class="mtr_w str_s viol_y">heat</span> <span class="mtr_s str_w viol_y">per</span><span class="mtr_s str_s viol_y">pe</span><span class="mtr_w str_w viol_n">tu</span><span class="mtr_s str_w viol_y">al</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">Which</span> <span class="mtr_w str_w viol_n">from</span> <span class="mtr_s str_s viol_y">Love's</span> <span class="mtr_s str_s viol_y">fi</span><span class="mtr_w str_w viol_n">re</span> <span class="mtr_s str_s viol_y">took</span> <span class="mtr_s str_s viol_y">heat</span> <span class="mtr_w str_w viol_n">per</span><span class="mtr_s str_s viol_n">pe</span><span class="mtr_w str_w viol_n">tu</span><span class="mtr_s str_w viol_y">al</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -931,7 +812,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Gro</span><span class="mtr_w str_w viol_y">wing</span> <span class="mtr_w str_w viol_y">a</span> <span class="mtr_s str_s viol_n">bath</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">healt</span><span class="mtr_w str_w viol_n">hful</span> <span class="mtr_s str_s viol_n">re</span><span class="mtr_w str_w viol_n">me</span><span class="mtr_s str_w viol_y">dy</span></div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Gro</span><span class="mtr_w str_w viol_y">wing</span> <span class="mtr_w str_w viol_y">a</span> <span class="mtr_s str_s viol_n">bath</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">healt</span><span class="mtr_w str_w viol_n">hful</span> <span class="mtr_s str_s viol_n">re</span><span class="mtr_w str_w viol_n">me</span><span class="mtr_s str_w viol_y">dy</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -946,7 +828,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">men</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">seased</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_s str_s viol_n">I</span>, <span class="mtr_w str_w viol_n">my</span> <span class="mtr_s str_s viol_n">mis</span><span class="mtr_w str_w viol_n">tress'</span> <span class="mtr_s str_s viol_n">thrall</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">men</span> <span class="mtr_w str_w viol_n">di</span><span class="mtr_s str_s viol_n">seased</span>; <span class="mtr_w str_w viol_n">but</span> <span class="mtr_w str_w viol_n">I</span>, <span class="mtr_w str_w viol_n">my</span> <span class="mtr_s str_s viol_n">mis</span><span class="mtr_w str_w viol_n">tress'</span> <span class="mtr_s str_s viol_n">thrall</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -961,7 +844,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Came</span> <span class="mtr_w str_w viol_n">there</span> <span class="mtr_w str_w viol_n">for</span> <span class="mtr_s str_s viol_n">cure</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_w viol_y">this</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">I</span> <span class="mtr_s str_s viol_n">prove</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Came</span> <span class="mtr_w str_w viol_n">there</span> <span class="mtr_w str_w viol_n">for</span> <span class="mtr_s str_s viol_n">cure</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_w viol_y">this</span> <span class="mtr_w str_w viol_n">by</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">I</span> <span class="mtr_s str_s viol_n">prove</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -976,18 +860,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_s viol_y">Love's</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span> <span class="mtr_s str_s viol_y">heats</span> <span class="mtr_s str_s viol_y">wa</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_s viol_n">wa</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">cools</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">love</span>.</div></li></ol>
+</style><div class="parse">
+<span class="mtr_w str_s viol_y">Love's</span> <span class="mtr_s str_s viol_n">fi</span><span class="mtr_w str_w viol_n">re</span> <span class="mtr_s str_s viol_y">heats</span> <span class="mtr_s str_s viol_y">wa</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_s viol_n">wa</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">cools</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">love</span>.</div></li></ol>
 </div>
 </div>
 <p>The red indicates violations and allows for nice comparison with other poems and parses. You can display the same thing on a text with <code>text.render()</code></p>
 <div class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sonnetV.render()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sonnetV.render()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>⎾ parsing text Text() @ 2024-08-06 20:04:07,648
-￨ ⎾ parsing 14 lines [5x] @ 2024-08-06 20:04:07,649
-￨ ￨ parsing [5x]:   0%|          | 0/14 [00:00&lt;?, ?it/s]￨ ￨ stanza 01, line 01: those HO urs THAT with GEN tle WORK did FRAME     :   0%|          | 0/14 [00:00&lt;?, ?it/s]￨ ￨ stanza 01, line 01: those HO urs THAT with GEN tle WORK did FRAME     :   7%|▋         | 1/14 [00:00&lt;00:03,  3.84it/s]￨ ￨ stanza 01, line 02: the LO vely GAZE where E very EYE doth DWELL      :   7%|▋         | 1/14 [00:00&lt;00:03,  3.84it/s]￨ ￨ stanza 01, line 03: will PLAY the TY rants TO the VE ry SAME          :   7%|▋         | 1/14 [00:00&lt;00:03,  3.84it/s]￨ ￨ stanza 01, line 04: and THAT un FAIR which FAIR ly DOTH ex CEL        :   7%|▋         | 1/14 [00:00&lt;00:03,  3.84it/s]￨ ￨ stanza 01, line 04: and THAT un FAIR which FAIR ly DOTH ex CEL        :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 05: for NE ver RES ting TIME leads SUM mer ON         :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 06: to HI deo.us WIN ter AND con FOUNDS him.there     :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 07: sap CHECKED with FROST and LUS ty LEAVES quite GON:  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 08: BEA uty.o'er SNOWED and BA reness E very WHERE    :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 09: THEN were.not SUM mer's DIS til LA tion LEFT      :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 10: a LI quid PRI soner PENT in WALLS of GLASS        :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 11: BEA uty's EF.FECT with BEA uty WERE be REFT       :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 12: nor IT nor NO re MEM brance WHAT it.was           :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 13: but FLO wers.dis TILL'D though THEY with WIN ter M:  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 14: LEESE but.their SHOW their SUBS tance STILL lives :  29%|██▊       | 4/14 [00:00&lt;00:01,  6.71it/s]￨ ￨ stanza 01, line 14: LEESE but.their SHOW their SUBS tance STILL lives : 100%|██████████| 14/14 [00:00&lt;00:00, 20.93it/s]
-￨ ⎿ 0.7 seconds @ 2024-08-06 20:04:08,321
-⎿ 0.7 seconds @ 2024-08-06 20:04:08,322</code></pre>
+<pre><code>
+[1.26s] Parsing lineparts [8x]:   0%|          | 0/20 [00:00&lt;?, ?it/s]
+[1.26s] Parsing lineparts [8x]:  40%|████      | 8/20 [00:00&lt;00:00, 79.09it/s]
+[1.26s] Parsing lineparts [8x]:  95%|█████████▌| 19/20 [00:00&lt;00:00, 85.21it/s]</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <ol class="parselist"><li><style>
@@ -1019,7 +903,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">lo</span><span class="mtr_w str_w viol_n">vely</span> <span class="mtr_s str_s viol_n">gaze</span> <span class="mtr_w str_w viol_n">where</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">eye</span> <span class="mtr_w str_w viol_n">doth</span> <span class="mtr_s str_s viol_n">dwell</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">The</span> <span class="mtr_s str_s viol_n">lo</span><span class="mtr_w str_w viol_n">vely</span> <span class="mtr_s str_s viol_n">gaze</span> <span class="mtr_w str_w viol_n">where</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">eye</span> <span class="mtr_w str_w viol_n">doth</span> <span class="mtr_s str_s viol_n">dwell</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1034,7 +919,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">Will</span> <span class="mtr_s str_s viol_n">play</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ty</span><span class="mtr_w str_w viol_n">rants</span> <span class="mtr_s str_w viol_y">to</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ve</span><span class="mtr_w str_w viol_n">ry</span> <span class="mtr_s str_s viol_n">same</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">Will</span> <span class="mtr_s str_s viol_n">play</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ty</span><span class="mtr_w str_w viol_n">rants</span> <span class="mtr_s str_w viol_y">to</span> <span class="mtr_w str_w viol_n">the</span> <span class="mtr_s str_s viol_n">ve</span><span class="mtr_w str_w viol_n">ry</span> <span class="mtr_s str_s viol_n">same</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1049,7 +935,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">un</span><span class="mtr_s str_s viol_n">fair</span> <span class="mtr_w str_w viol_n">which</span> <span class="mtr_s str_s viol_n">fair</span><span class="mtr_w str_w viol_n">ly</span> <span class="mtr_s str_w viol_y">doth</span> <span class="mtr_w str_w viol_n">ex</span><span class="mtr_s str_s viol_n">cel</span>;</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">And</span> <span class="mtr_s str_s viol_n">that</span> <span class="mtr_w str_w viol_n">un</span><span class="mtr_s str_s viol_n">fair</span> <span class="mtr_w str_w viol_n">which</span> <span class="mtr_s str_s viol_n">fair</span><span class="mtr_w str_w viol_n">ly</span> <span class="mtr_s str_w viol_y">doth</span> <span class="mtr_w str_w viol_n">ex</span><span class="mtr_s str_s viol_n">cel</span>;</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1064,7 +951,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">ne</span><span class="mtr_w str_w viol_n">ver</span>-<span class="mtr_s str_s viol_n">res</span><span class="mtr_w str_w viol_n">ting</span> <span class="mtr_s str_s viol_n">time</span> <span class="mtr_w str_s viol_y">leads</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer</span> <span class="mtr_s str_w viol_y">on</span></div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">For</span> <span class="mtr_s str_s viol_n">ne</span><span class="mtr_w str_w viol_n">ver</span>-<span class="mtr_s str_s viol_n">res</span><span class="mtr_w str_w viol_n">ting</span> <span class="mtr_s str_s viol_n">time</span> <span class="mtr_w str_s viol_y">leads</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer</span> <span class="mtr_s str_w viol_y">on</span></div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1079,7 +967,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">To</span> <span class="mtr_s str_s viol_n">hi</span><span class="mtr_w str_w viol_y">deo</span><span class="mtr_w str_w viol_y">us</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_w viol_y">and</span> <span class="mtr_w str_w viol_n">con</span><span class="mtr_s str_s viol_n">founds</span> <span class="mtr_w str_w viol_n">him</span> <span class="mtr_w str_w viol_n">there</span>;</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">To</span> <span class="mtr_s str_s viol_n">hi</span><span class="mtr_w str_w viol_y">deo</span><span class="mtr_w str_w viol_y">us</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span>, <span class="mtr_s str_w viol_y">and</span> <span class="mtr_w str_w viol_n">con</span><span class="mtr_s str_s viol_n">founds</span> <span class="mtr_w str_w viol_n">him</span> <span class="mtr_w str_w viol_n">there</span>;</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1094,7 +983,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_s viol_y">Sap</span> <span class="mtr_s str_s viol_n">checked</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">frost</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">lus</span><span class="mtr_w str_w viol_n">ty</span> <span class="mtr_s str_s viol_n">leaves</span> <span class="mtr_w str_s viol_y">quite</span> <span class="mtr_s str_s viol_n">gone</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_s viol_y">Sap</span> <span class="mtr_s str_s viol_n">checked</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">frost</span>, <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">lus</span><span class="mtr_w str_w viol_n">ty</span> <span class="mtr_s str_s viol_n">leaves</span> <span class="mtr_w str_s viol_y">quite</span> <span class="mtr_s str_s viol_n">gone</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1109,7 +999,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_y">uty</span> <span class="mtr_w str_w viol_y">o'er</span>-<span class="mtr_s str_s viol_n">snowed</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">ba</span><span class="mtr_w str_w viol_n">reness</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">where</span>:</div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_y">uty</span> <span class="mtr_w str_w viol_y">o'er</span>-<span class="mtr_s str_s viol_n">snowed</span> <span class="mtr_w str_w viol_n">and</span> <span class="mtr_s str_s viol_n">ba</span><span class="mtr_w str_w viol_n">reness</span> <span class="mtr_s str_s viol_n">e</span><span class="mtr_w str_w viol_n">very</span> <span class="mtr_s str_s viol_n">where</span>:</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1124,7 +1015,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Then</span> <span class="mtr_w str_w viol_n">were</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer's</span> <span class="mtr_s str_s viol_n">dis</span><span class="mtr_w str_w viol_n">til</span><span class="mtr_s str_s viol_n">la</span><span class="mtr_w str_w viol_n">tion</span> <span class="mtr_s str_s viol_n">left</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Then</span> <span class="mtr_w str_w viol_n">were</span> <span class="mtr_w str_w viol_n">not</span> <span class="mtr_s str_s viol_n">sum</span><span class="mtr_w str_w viol_n">mer's</span> <span class="mtr_s str_s viol_n">dis</span><span class="mtr_w str_w viol_n">til</span><span class="mtr_s str_s viol_n">la</span><span class="mtr_w str_w viol_n">tion</span> <span class="mtr_s str_s viol_n">left</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1139,7 +1031,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">A</span> <span class="mtr_s str_s viol_n">li</span><span class="mtr_w str_w viol_n">quid</span> <span class="mtr_s str_s viol_n">pri</span><span class="mtr_w str_w viol_n">soner</span> <span class="mtr_s str_s viol_n">pent</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_s str_s viol_n">walls</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">glass</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">A</span> <span class="mtr_s str_s viol_n">li</span><span class="mtr_w str_w viol_n">quid</span> <span class="mtr_s str_s viol_n">pri</span><span class="mtr_w str_w viol_n">soner</span> <span class="mtr_s str_s viol_n">pent</span> <span class="mtr_w str_w viol_n">in</span> <span class="mtr_s str_s viol_n">walls</span> <span class="mtr_w str_w viol_n">of</span> <span class="mtr_s str_s viol_n">glass</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1154,7 +1047,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_n">uty's</span> <span class="mtr_s str_s viol_y">ef</span><span class="mtr_s str_w viol_y">fect</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">bea</span><span class="mtr_w str_w viol_n">uty</span> <span class="mtr_s str_w viol_y">were</span> <span class="mtr_w str_w viol_n">be</span><span class="mtr_s str_s viol_n">reft</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Bea</span><span class="mtr_w str_w viol_y">uty's</span> <span class="mtr_w str_w viol_y">ef</span><span class="mtr_s str_s viol_n">fect</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">bea</span><span class="mtr_w str_w viol_n">uty</span> <span class="mtr_s str_w viol_y">were</span> <span class="mtr_w str_w viol_n">be</span><span class="mtr_s str_s viol_n">reft</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1169,7 +1063,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">Nor</span> <span class="mtr_s str_s viol_n">it</span>, <span class="mtr_w str_w viol_n">nor</span> <span class="mtr_s str_s viol_n">no</span> <span class="mtr_w str_w viol_n">re</span><span class="mtr_s str_s viol_n">mem</span><span class="mtr_w str_w viol_n">brance</span> <span class="mtr_s str_s viol_n">what</span> <span class="mtr_w str_w viol_n">it</span> <span class="mtr_w str_w viol_n">was</span>:</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">Nor</span> <span class="mtr_w str_w viol_n">it</span>, <span class="mtr_w str_w viol_n">nor</span> <span class="mtr_s str_s viol_n">no</span> <span class="mtr_w str_w viol_n">re</span><span class="mtr_s str_s viol_n">mem</span><span class="mtr_w str_w viol_n">brance</span> <span class="mtr_s str_s viol_n">what</span> <span class="mtr_w str_w viol_n">it</span> <span class="mtr_w str_w viol_n">was</span>:</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1184,7 +1079,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_w str_w viol_n">But</span> <span class="mtr_s str_s viol_n">flo</span><span class="mtr_w str_w viol_y">wers</span> <span class="mtr_w str_w viol_y">dis</span><span class="mtr_s str_s viol_n">till'd</span>, <span class="mtr_w str_w viol_n">though</span> <span class="mtr_s str_s viol_n">they</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">meet</span>,</div></li>
+</style><div class="parse">
+<span class="mtr_w str_w viol_n">But</span> <span class="mtr_s str_s viol_n">flo</span><span class="mtr_w str_w viol_y">wers</span> <span class="mtr_w str_w viol_y">dis</span><span class="mtr_s str_s viol_n">till'd</span>, <span class="mtr_w str_w viol_n">though</span> <span class="mtr_s str_w viol_y">they</span> <span class="mtr_w str_w viol_n">with</span> <span class="mtr_s str_s viol_n">win</span><span class="mtr_w str_w viol_n">ter</span> <span class="mtr_s str_s viol_n">meet</span>,</div></li>
 <li><style>
 
 .miniquote { margin-left:0em;margin-top:.5em;font-family:monospace; font-size:.8em;}
@@ -1199,7 +1095,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 .str_s { font-weight:600; }
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
-</style><div class="parse"><span class="mtr_s str_s viol_n">Leese</span> <span class="mtr_w str_w viol_n">but</span> <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">show</span>; <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">subs</span><span class="mtr_w str_w viol_n">tance</span> <span class="mtr_s str_s viol_n">still</span> <span class="mtr_w str_s viol_y">lives</span> <span class="mtr_s str_s viol_n">sweet</span>.</div></li></ol>
+</style><div class="parse">
+<span class="mtr_s str_s viol_n">Leese</span> <span class="mtr_w str_w viol_n">but</span> <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">show</span>; <span class="mtr_w str_w viol_n">their</span> <span class="mtr_s str_s viol_n">subs</span><span class="mtr_w str_w viol_n">tance</span> <span class="mtr_s str_s viol_n">still</span> <span class="mtr_w str_s viol_y">lives</span> <span class="mtr_s str_s viol_n">sweet</span>.</div></li></ol>
 </div>
 </div>
 </section>
@@ -1209,13 +1106,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Lines are important objects because (at present) they are the only objects actually considered as the unit of metrical parsing to the parser.</p>
 <p>You can access them in a few ways:</p>
 <div class="cell" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach them by line number</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>sonnetV.line14</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># which are relative to the stanza</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>sonnets.stanza5.line14</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># you can also reach them by line number</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sonnetV.line14</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># which are relative to the stanza</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>sonnets.stanza5.line14</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<div>
+<b>Line</b><br><div>
 
 
 <table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
@@ -1232,113 +1129,87 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">wordtoken_lang</th>
-<th data-quarto-table-cell-role="th">word_num_forms</th>
-<th data-quarto-table-cell-role="th">syll_is_stressed</th>
-<th data-quarto-table-cell-role="th">syll_is_heavy</th>
-<th data-quarto-table-cell-role="th">word_is_punc</th>
-<th data-quarto-table-cell-role="th">syll_is_strong</th>
-<th data-quarto-table-cell-role="th">syll_is_weak</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">wordtoken_is_punc</th>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">stanza_num</th>
 <th data-quarto-table-cell-role="th">line_num</th>
-<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">linepart_num</th>
 <th data-quarto-table-cell-role="th">sent_num</th>
 <th data-quarto-table-cell-role="th">sentpart_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordtype_txt</th>
 <th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">wordform_ipa_origin</th>
 <th data-quarto-table-cell-role="th">syll_num</th>
 <th data-quarto-table-cell-role="th">syll_txt</th>
 <th data-quarto-table-cell-role="th">syll_ipa</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">5</td>
-<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">14</td>
-<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">Leese but their show; their substance still lives sweet.</td>
-<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">19</td>
-<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">19</td>
-<td data-quarto-table-cell-role="th">1</td>
+<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">70</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">150</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">19</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">81</td>
+<td data-quarto-table-cell-role="th">622</td>
+<td data-quarto-table-cell-role="th">\nLeese</td>
 <td data-quarto-table-cell-role="th">Leese</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">Leese</td>
 <td data-quarto-table-cell-role="th">'liːs</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">2</td>
+<td data-quarto-table-cell-role="th">623</td>
+<td data-quarto-table-cell-role="th">but</td>
 <td data-quarto-table-cell-role="th">but</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">but</td>
 <td data-quarto-table-cell-role="th">bət</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="odd">
-<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">3</td>
-<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">their</td>
+<td data-quarto-table-cell-role="th">624</td>
+<td data-quarto-table-cell-role="th">their</td>
+<td data-quarto-table-cell-role="th">their</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">their</td>
 <td data-quarto-table-cell-role="th">ðɛr</td>
-<td>en</td>
-<td>2</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">2</td>
-<td data-quarto-table-cell-role="th">1</td>
-<td data-quarto-table-cell-role="th">their</td>
-<td data-quarto-table-cell-role="th">'ðɛr</td>
-<td>en</td>
-<td>2</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
+<td data-quarto-table-cell-role="th">625</td>
+<td data-quarto-table-cell-role="th">show</td>
 <td data-quarto-table-cell-role="th">show</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">show</td>
 <td data-quarto-table-cell-role="th">'ʃoʊ</td>
-<td>en</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">626</td>
+<td data-quarto-table-cell-role="th">;</td>
+<td data-quarto-table-cell-role="th">;</td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
+<td data-quarto-table-cell-role="th"></td>
 <td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">...</td>
@@ -1347,106 +1218,84 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
 <td>...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">7</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">151</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">19</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">82</td>
+<td data-quarto-table-cell-role="th">628</td>
+<td data-quarto-table-cell-role="th">substance</td>
 <td data-quarto-table-cell-role="th">substance</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">2</td>
 <td data-quarto-table-cell-role="th">tance</td>
 <td data-quarto-table-cell-role="th">stəns</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td>0</td>
-<td>1</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">8</td>
+<td data-quarto-table-cell-role="th">629</td>
+<td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">still</td>
 <td data-quarto-table-cell-role="th">'stɪl</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">9</td>
+<td data-quarto-table-cell-role="th">630</td>
+<td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">lives</td>
 <td data-quarto-table-cell-role="th">'lɪvz</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">10</td>
+<td data-quarto-table-cell-role="th">631</td>
+<td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">sweet</td>
 <td data-quarto-table-cell-role="th">'swiːt</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">11</td>
+<td data-quarto-table-cell-role="th">632</td>
+<td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">.</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
 <td>1</td>
-<td></td>
-<td></td>
 </tr>
 </tbody>
 </table>
 
-<p>14 rows × 7 columns</p>
+<p>12 rows × 1 columns</p>
 </div>
 </div>
 </div>
 <p>You can also create them directly:</p>
 <div class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>line <span class="op">=</span> prosodic.Line(<span class="st">"A horse, a horse, my kingdom for a horse!"</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>line</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>⎾ tokenizing @ 2024-08-06 20:04:08,353
-⎿ 0 seconds @ 2024-08-06 20:04:08,353</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>line <span class="op">=</span> prosodic.Text(<span class="st">"A horse, a horse, my kingdom for a horse!"</span>).line1</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>line</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
-<div>
+<b>Line</b><br><div>
 
 
 <table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
@@ -1461,111 +1310,92 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">wordtoken_lang</th>
-<th data-quarto-table-cell-role="th">word_num_forms</th>
-<th data-quarto-table-cell-role="th">syll_is_stressed</th>
-<th data-quarto-table-cell-role="th">syll_is_heavy</th>
-<th data-quarto-table-cell-role="th">word_is_punc</th>
-<th data-quarto-table-cell-role="th">syll_is_strong</th>
-<th data-quarto-table-cell-role="th">syll_is_weak</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">wordtoken_is_punc</th>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">line_txt</th>
+<th data-quarto-table-cell-role="th">stanza_num</th>
+<th data-quarto-table-cell-role="th">line_num</th>
+<th data-quarto-table-cell-role="th">linepart_num</th>
 <th data-quarto-table-cell-role="th">sent_num</th>
 <th data-quarto-table-cell-role="th">sentpart_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_num</th>
 <th data-quarto-table-cell-role="th">wordtoken_txt</th>
+<th data-quarto-table-cell-role="th">wordtype_txt</th>
 <th data-quarto-table-cell-role="th">wordform_num</th>
+<th data-quarto-table-cell-role="th">wordform_ipa_origin</th>
 <th data-quarto-table-cell-role="th">syll_num</th>
 <th data-quarto-table-cell-role="th">syll_txt</th>
 <th data-quarto-table-cell-role="th">syll_ipa</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">A horse, a horse, my kingdom for a horse!</td>
 <td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td rowspan="11" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="3" data-quarto-table-cell-role="th" data-valign="top">1</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">A</td>
+<td data-quarto-table-cell-role="th">A</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">A</td>
 <td data-quarto-table-cell-role="th">eɪ</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">2</td>
 <td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">'hɔːrs</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">3</td>
 <td data-quarto-table-cell-role="th">,</td>
+<td data-quarto-table-cell-role="th">,</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
 <td>1</td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">2</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="2" data-quarto-table-cell-role="th" data-valign="top">2</td>
 <td data-quarto-table-cell-role="th">4</td>
 <td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">a</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">a</td>
 <td data-quarto-table-cell-role="th">eɪ</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">5</td>
 <td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">'hɔːrs</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">...</td>
@@ -1574,93 +1404,75 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
 <td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
+<td data-quarto-table-cell-role="th">...</td>
 <td>...</td>
 </tr>
 <tr class="odd">
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">3</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">1</td>
+<td rowspan="5" data-quarto-table-cell-role="th" data-valign="top">3</td>
 <td data-quarto-table-cell-role="th">8</td>
 <td data-quarto-table-cell-role="th">kingdom</td>
+<td data-quarto-table-cell-role="th">kingdom</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">2</td>
 <td data-quarto-table-cell-role="th">dom</td>
 <td data-quarto-table-cell-role="th">dəm</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td>0</td>
-<td>1</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">9</td>
 <td data-quarto-table-cell-role="th">for</td>
+<td data-quarto-table-cell-role="th">for</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">for</td>
 <td data-quarto-table-cell-role="th">fɔːr</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">10</td>
 <td data-quarto-table-cell-role="th">a</td>
+<td data-quarto-table-cell-role="th">a</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">a</td>
 <td data-quarto-table-cell-role="th">eɪ</td>
-<td>en</td>
-<td>1</td>
 <td>0</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">11</td>
 <td data-quarto-table-cell-role="th">horse</td>
+<td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">1</td>
+<td data-quarto-table-cell-role="th">dict</td>
 <td data-quarto-table-cell-role="th">1</td>
 <td data-quarto-table-cell-role="th">horse</td>
 <td data-quarto-table-cell-role="th">'hɔːrs</td>
-<td>en</td>
-<td>1</td>
-<td>1</td>
-<td>1</td>
-<td></td>
-<td></td>
-<td></td>
+<td>0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">12</td>
 <td data-quarto-table-cell-role="th">!</td>
+<td data-quarto-table-cell-role="th">!</td>
 <td data-quarto-table-cell-role="th">0</td>
+<td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th">0</td>
 <td data-quarto-table-cell-role="th"></td>
 <td data-quarto-table-cell-role="th"></td>
-<td>en</td>
-<td>0</td>
-<td></td>
-<td></td>
 <td>1</td>
-<td></td>
-<td></td>
 </tr>
 </tbody>
 </table>
 
-<p>13 rows × 7 columns</p>
+<p>13 rows × 1 columns</p>
 </div>
 </div>
 </div>

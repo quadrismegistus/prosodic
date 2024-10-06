@@ -1,5 +1,5 @@
 # coding=utf-8
-from finnish_functions import *
+from .finnish_functions import *
 
 # return the sonority of a syllable
 def get_sonority(vowel):

@@ -8,7 +8,7 @@ jupyter: python3
 
 ## Texts
 
-Contained in `prosodic.text`.
+Code contained in `prosodic.texts`.
 
 ### Reading texts
 
@@ -122,7 +122,7 @@ sonnets.stanza5.line14
 You can also create them directly:
 
 ```{python}
-line = prosodic.Line("A horse, a horse, my kingdom for a horse!")
+line = prosodic.Text("A horse, a horse, my kingdom for a horse!").line1
 line
 ```
 

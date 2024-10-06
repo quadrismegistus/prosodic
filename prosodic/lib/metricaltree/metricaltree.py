@@ -47,8 +47,16 @@ def set_paths(dir_root='.'):
     """
     sylcmu = {}
 
-
-sent_splitter = nltk.data.load('tokenizers/punkt/english.pickle')
+SENT_SPLITTER = None
+def get_sent_splitter():
+    global SENT_SPLITTER
+    if SENT_SPLITTER is None:
+        try:
+            SENT_SPLITTER = nltk.data.load('tokenizers/punkt/english.pickle')
+        except Exception:
+            nltk.download('punkt_tab')
+            SENT_SPLITTER = nltk.data.load('tokenizers/punkt/english.pickle')
+    return SENT_SPLITTER
 
 #***********************************************************************
 # Multiprocessing worker
@@ -84,7 +92,7 @@ def pause_splitter(s):
     s = s.strip()
     s = re.sub('([:;]|--+)', '\g<1>\n', s)
     s = s.split('\n')
-    s = [sent for sents in s for sent in sent_splitter.tokenize(sents)]
+    s = [sent for sents in s for sent in get_sent_splitter().tokenize(sents)]
     return s
 
 def pause_splitter_tokens(tokens,split_by={':',';','--','—','–'}):
@@ -100,7 +108,7 @@ def pause_splitter_tokens(tokens,split_by={':',';','--','—','–'}):
     return sents
 
 def split_sentences_from_tokens(l):
-    return sent_splitter.sentences_from_tokens(l)
+    return get_sent_splitter().sentences_from_tokens(l)
 
 #***********************************************************************
 # Metrical Tree class
@@ -350,18 +358,22 @@ class MetricalTree(DependencyTree):
     # Set the total of the tree
     def set_stress(self, stress=0):
         """"""
+        vals = [self._lstress, self._pstress]
+        if not np.isnan(stress): vals.append(stress)
+        self._stress = sum(vals) if vals else np.nan
 
-        self._stress = self._lstress + self._pstress + stress
         if not self._preterm:
             for child in self:
                 child.set_stress(self._stress)
+        
         self.set_label()
 
     #=====================================================================
     # Reset the label of the node (cat < dep < lstress < pstress < stress
     def set_label(self):
-        """"""
-
+        """
+        Reset the label of the node (cat < dep < lstress < pstress < stress
+        """
         if self._stress is not np.nan:
             self._label = '%s/%s' % (self._cat, self._stress)
         elif self._pstress is not np.nan:

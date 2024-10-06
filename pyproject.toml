@@ -44,8 +44,7 @@ dev = [
     "wheel",
     "pytest-cov",
     "pytest>=7.2",
-]
-test = [
+    "selenium",
     "pytest-cov",
     "pytest>=7.2",
 ]

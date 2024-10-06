@@ -1,7 +1,7 @@
 from ..imports import *
 
 
-class PhonemeClass(Entity):
+class Phoneme(Entity):
     """
     Represents a phoneme with various attributes.
 
@@ -10,19 +10,24 @@ class PhonemeClass(Entity):
     """
 
     prefix: str = "phon"
+    children = None
 
-    @profile
-    def __init__(self, txt: str, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
-        Initialize a PhonemeClass instance.
+        Initialize a Phoneme instance.
 
         Args:
-            txt (str): The text representation of the phoneme.
-            **kwargs: Additional keyword arguments.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(txt, **kwargs)
+        super().__init__(*args, **kwargs)
+        self._feats = get_phoneme_feats(self.txt)
 
-    @cached_property
+    @property
+    def feats(self):
+        return self._feats
+
+    @property
     def is_vowel(self) -> Optional[bool]:
         """
         Determine if the phoneme is a vowel.
@@ -30,25 +35,21 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if vowel, False if consonant, None if undetermined.
         """
-        if not hasattr(self, "cons") or self.cons is None:
+        cons = self.feats.get('cons')
+        if cons is None:
             return None
-        if self.cons > 0:
+        if cons > 0:
             return False
-        if self.cons < 1:
+        if cons < 1:
             return True
         return None
+    
+    @property
+    def is_cons(self):
+        return not self.is_vowel
 
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the phoneme to a JSON-serializable dictionary.
-
-        Returns:
-            Dict[str, Any]: A dictionary representation of the phoneme.
-        """
-        resd = super().to_json()
-        resd["_class"] = "Phoneme"
-        resd.pop("children")
-        return resd
+    def to_dict(self, incl_txt=True, **kwargs) -> dict:
+        return super().to_dict(incl_txt=incl_txt, **kwargs)
 
     @property
     def is_onset(self) -> Optional[bool]:
@@ -58,7 +59,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if onset, False otherwise, None if not set.
         """
-        return self._attrs.get("is_onset")
+        return self._feats.get("is_onset")
 
     @property
     def is_rime(self) -> Optional[bool]:
@@ -68,7 +69,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if rime, False otherwise, None if not set.
         """
-        return self._attrs.get("is_rime")
+        return self._feats.get("is_rime")
 
     @property
     def is_nucleus(self) -> Optional[bool]:
@@ -78,7 +79,7 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if nucleus, False otherwise, None if not set.
         """
-        return self._attrs.get("is_nucleus")
+        return self._feats.get("is_nucleus")
 
     @property
     def is_coda(self) -> Optional[bool]:
@@ -88,7 +89,12 @@ class PhonemeClass(Entity):
         Returns:
             Optional[bool]: True if coda, False otherwise, None if not set.
         """
-        return self._attrs.get("is_coda")
+        return self._feats.get("is_coda")
+    
+    @property
+    def feature_profile(self):
+        return {k: v for k, v in self.feats.items() if type(v) in {int, float}}
+    
 
 
 @cache
@@ -103,33 +109,29 @@ def get_phoneme_featuretable() -> panphon.FeatureTable:
     ft = panphon.FeatureTable()
     return ft
 
-
-@profile
-def Phoneme(txt: str, **kwargs: Any) -> PhonemeClass:
+@cache
+def get_phoneme_feats(phon: str) -> Dict[str, Any]:
     """
-    Create a Phoneme object from text.
+    Get the features of a phoneme.
 
     Args:
-        txt (str): The text representation of the phoneme.
-        **kwargs: Additional keyword arguments.
+        phon (str): The phoneme.
 
     Returns:
-        PhonemeClass: A PhonemeClass instance representing the phoneme.
+        Dict[str, Any]: The features of the phoneme.
     """
-    phon = txt
     ft = get_phoneme_featuretable()
     phonl = ft.word_fts(phon)
     if not phonl:
-        # logger.error(f'What is this phoneme? {phon}')
+        # log.error(f'What is this phoneme? {phon}')
         if phon in get_ipa_info():
             phond = get_ipa_info().get(phon, {})
         else:
-            # logger.error(f"What is this phoneme? No features found for it: {phon}")
+            # log.error(f"What is this phoneme? No features found for it: {phon}")
             phond = {}
     else:
         phond = phonl[0].data
-    phonobj = PhonemeClass(phon, **phond)
-    return phonobj
+    return phond
 
 
 FEATS_PANPHON: List[str] = [
@@ -189,35 +191,60 @@ class PhonemeList(EntityList):
         """
         super().__init__(*args, **kwargs)
 
-        def do_phons(phons: List[PhonemeClass]) -> None:
+    
+    def _annotate_phons(self) -> None:
+        def do_phons(phons: List[Phoneme]) -> None:
             """
             Process a list of phonemes to set syllable position attributes.
 
             Args:
-                phons (List[PhonemeClass]): A list of phonemes to process.
+                phons (List[Phoneme]): A list of phonemes to process.
             """
             vowel_yet = False
             for phon in phons:
                 if not phon.is_vowel:
                     if not vowel_yet:
-                        phon._attrs["is_onset"] = True
-                        phon._attrs["is_rime"] = False
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = False
+                        phon._feats["is_onset"] = True
+                        phon._feats["is_rime"] = False
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = False
                     else:
-                        phon._attrs["is_onset"] = False
-                        phon._attrs["is_rime"] = True
-                        phon._attrs["is_nucleus"] = False
-                        phon._attrs["is_coda"] = True
+                        phon._feats["is_onset"] = False
+                        phon._feats["is_rime"] = True
+                        phon._feats["is_nucleus"] = False
+                        phon._feats["is_coda"] = True
                 else:
                     vowel_yet = True
-                    phon._attrs["is_onset"] = False
-                    phon._attrs["is_rime"] = True
-                    phon._attrs["is_nucleus"] = True
-                    phon._attrs["is_coda"] = False
+                    phon._feats["is_onset"] = False
+                    phon._feats["is_rime"] = True
+                    phon._feats["is_nucleus"] = True
+                    phon._feats["is_coda"] = False
 
         # get syll specific feats
         phons_by_syll = group_ents(self.children, "syllable")
 
         for phons in phons_by_syll:
             do_phons(phons)
+    
+    
+    @property
+    def feature_profile(self):
+        import pandas as pd
+        self._annotate_phons()
+        df = pd.DataFrame([p.feature_profile for p in self.children])
+        return dict(df.mean())
+    
+    def feature_distance(self, other: "PhonemeList"):
+        from scipy.spatial.distance import euclidean
+
+        phons1_txt = ''.join(phon.txt for phon in self)
+        phons2_txt = ''.join(phon.txt for phon in other)
+        if phons1_txt == phons2_txt:
+            return 0
+
+        d1 = self.feature_profile
+        d2 = other.feature_profile
+        keys = set(d1.keys()) & set(d2.keys())
+        v1 = [d1[k] for k in keys]
+        v2 = [d2[k] for k in keys]
+        return float(euclidean(v1, v2))

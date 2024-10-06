@@ -4,32 +4,28 @@ from prosodic.imports import *
 
 @pytest.fixture
 def sample_text():
-    return Text("The cat\nsat on the mat.\nThe dog\nlay on the log.")
+    return TextModel("The cat\nsat on the mat.\nThe dog\nlay on the log.")
 
 @pytest.fixture
 def sample_stanza():
-    return Stanza("The cat\nsat on the mat.\nThe dog\nlay on the log.")
+    return TextModel("The cat\nsat on the mat.\nThe dog\nlay on the log.").stanza1
 
 @pytest.fixture
 def sample_lines():
     return [
-        Line("The cat"),
-        Line("sat on the mat"),
-        Line("The dog"),
-        Line("lay on the log.")
+        TextModel("The cat").line1,
+        TextModel("sat on the mat").line1,
+        TextModel("The dog").line1,
+        TextModel("lay on the log.").line1,
     ]
 
 @pytest.fixture
 def sample_wordforms():
     return [
-        # WordForm("mat", sylls_ipa=["mæt"], sylls_text=["mat"]),
-        # WordForm("cat", sylls_ipa=["kæt"], sylls_text=["cat"]),
-        # WordForm("log", sylls_ipa=["lɔg"], sylls_text=["log"]),
-        # WordForm("dog", sylls_ipa=["dɔg"], sylls_text=["dog"])
-        Word('silver').wordforms[0],
-        Word('blur').wordforms[0],
-        Word('log').wordforms[0],
-        Word('dog').wordforms[0],
+        TextModel('silver').wordform1,
+        TextModel('blur').wordform1,
+        TextModel('log').wordform1,
+        TextModel('dog').wordform1,
     ]
 
 def test_text_get_rhyming_lines(sample_text):

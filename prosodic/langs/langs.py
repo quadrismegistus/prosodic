@@ -1,29 +1,70 @@
 from ..imports import *
 
 
-class Language:
+class LanguageModel:
     pronunciation_dictionary_filename = ""
     pronunciation_dictionary_filename_sep = "\t"
     cache_fn = "lang_wordtypes"
     lang_espeak = None
     lang = None
+    name = None
     use_cache = False
+    filename_ambig_stress = "ambig_stress_words.txt"
+    filename_unstressed = "unstressed_words.txt"
+    filename_token2ipa = None
+    filename_token2ipa_sep = "\t"
 
     def __getitem__(self, token):
         return self.get(token)
 
-    def get(self, token):
-        return []
+    @property
+    def path(self):
+        path_langs = os.path.dirname(__file__)
+        return path_langs if not self.name else os.path.join(path_langs, self.name)
+
+    @property
+    def path_token2ipa(self):
+        if not self.filename_token2ipa and self.name:
+            self.filename_token2ipa = self.name + ".tsv"
+
+        if self.filename_token2ipa:
+            path = os.path.join(self.path, self.filename_token2ipa)
+            if os.path.exists(path):
+                return path
+        return None
+
+    @property
+    def path_unstressed(self):
+        path = os.path.join(self.path, self.filename_unstressed)
+        return path if os.path.exists(path) else None
+
+    @property
+    def path_ambig_stress(self):
+        path = os.path.join(self.path, self.filename_ambig_stress)
+        return path if os.path.exists(path) else None
+
+    @cached_property
+    def unstressed_words(self) -> set:
+        if self.path_unstressed:
+            with open(self.path_unstressed, encoding="utf-8") as f:
+                return set(f.read().strip().split())
+        return set()
+
+    @cached_property
+    def ambig_stressed_words(self) -> set:
+        if self.path_ambig_stress:
+            with open(self.path_ambig_stress, encoding="utf-8") as f:
+                return set(f.read().strip().split())
+        return set()
 
     @cached_property
     def token2ipa(self):
         d = {}
-        fn = self.pronunciation_dictionary_filename
-        if fn and os.path.exists(fn):
-            with open(fn, encoding="utf-8") as f:
+        if self.path_token2ipa:
+            with open(self.path_token2ipa, encoding="utf-8") as f:
                 for ln in f:
                     ln = ln.strip()
-                    if ln and self.pronunciation_dictionary_filename_sep in ln:
+                    if ln and self.filename_token2ipa_sep in ln:
                         token, ipa = ln.split(
                             self.pronunciation_dictionary_filename_sep, 1
                         )
@@ -32,61 +73,90 @@ class Language:
                         d[token].append(ipa.split("."))
         return d
 
-    # def phoneme(self, ipastr):
-    #     pass
-
-    @cached_property
-    @profile
-    def cached(self):
-        return SimpleCache(root_dir=os.path.join(PATH_HOME_DATA_CACHE, self.cache_fn))
-        # return SqliteDict(
-        #     os.path.join(PATH_HOME_DATA,
-        #                  self.cache_fn),
-        #     autocommit=True,
-        #     encode=orjson.dumps,
-        #     decode=orjson.loads,
-        #     journal_mode='WAL'
-        #     # encode=pickle.dumps,
-        #     # decode=pickle.loads
-        # )
+    def get_sylls_ipa_ll_dict(self, token):
+        return self.token2ipa.get(token, [])
+    
+    def get_sylls_ipa_ll_rule(self, token):
+        return [], {}
 
     @cache
-    @profile
-    def phoneticize(self, token):
-        if token in self.token2ipa:
-            return self.token2ipa[token]
-        # otherwise tts...
-        ipa_str = self.phonemize(token.lower())
-        if not ipa_str:
-            logger.exception(f"no phonemes from phonemize, token = {token}")
-            return []
+    def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
+        token = token.lower()
+        meta = {}
 
-        ipa_sylls = self.syllabify_ipa(ipa_str)
-        return [ipa_sylls]
+        if force_unstress is None and token in self.unstressed_words:
+            force_unstress = True
+        elif force_ambig_stress is None and token in self.ambig_stressed_words:
+            force_ambig_stress = True
+
+        ## try dictionary
+        sylls_ipa_ll = self.get_sylls_ipa_ll_dict(token)
+        if sylls_ipa_ll:
+            meta['ipa_origin']='dict'        
+        else:
+            ## use tts
+            sylls_ipa_ll = self.get_sylls_ipa_ll_tts(token)
+            if sylls_ipa_ll:
+                meta["ipa_origin"] = "tts"
+            else:
+                log.error(f'cannot parse syll IPAs in {token}')
+                meta['ipa_origin'] = 'error'
+        
+        ## format
+        sylls_ipa_ll = [
+            [format_syll_ipa_str(syll) for syll in sylls_ipa_l]
+            for sylls_ipa_l in sylls_ipa_ll
+        ]
+
+        ## modify stresses
+        if force_unstress and sylls_ipa_ll_has_stress(sylls_ipa_ll):
+            sylls_ipa_l = sylls_ipa_ll[0]
+            sylls_ipa_ll = [unstress_sylls_ipa_l(sylls_ipa_l)]
+        elif force_ambig_stress and not sylls_ipa_ll_has_ambig_stress(sylls_ipa_ll):
+            sylls_ipa_l = sylls_ipa_ll[0]
+            if not sylls_ipa_ll_has_stress(sylls_ipa_ll):
+                sylls_ipa_ll.append(stress_sylls_ipa_l(sylls_ipa_l))
+            if not sylls_ipa_ll_has_unstress(sylls_ipa_ll):
+                sylls_ipa_ll.append(unstress_sylls_ipa_l(sylls_ipa_l))
+
+        ##
+        sylls_ipa_lt = [tuple(x) for x in sylls_ipa_ll]
+        sylls_ipa_ll = [list(x) for x in set(sylls_ipa_lt)]
+        sylls_ipa_ll.sort(key=lambda x: (count_stresses_in_sylls_ipa_l(x), len(x)))
+        meta = {
+            "force_unstress": force_unstress,
+            "force_ambig_stress": force_ambig_stress,
+            **meta,
+        }
+        return sylls_ipa_ll, meta
 
     @cached_property
-    @profile
     def phonemizer(self):
         from phonemizer.backend import EspeakBackend
-        try:
-            return EspeakBackend(self.lang, preserve_punctuation=False, with_stress=True)
-        except Exception as e:
-            if self.lang == 'en':
-                lang = 'en-us'
-                return EspeakBackend(lang, preserve_punctuation=False, with_stress=True)
-            else:    
-                raise e
 
-    @cache
-    @profile
-    def phonemize(self, token):
-        from phonemizer.separator import Separator
-
-        logger.trace("phonemizing")
-        o = self.phonemizer.phonemize(
-            [token], separator=Separator(phone=" ", word="|", syllable="."), strip=True
+        return EspeakBackend(
+            self.lang_espeak if self.lang_espeak else self.lang,
+            preserve_punctuation=False,
+            with_stress=True,
         )
-        return o[0] if o else None
+
+    def get_sylls_ipa_l_tts(self, token):
+        return self.syllabify_ipa(self.get_sylls_ipa_str_tts(token))
+    
+    def get_sylls_ipa_ll_tts(self, token):
+        return [self.get_sylls_ipa_l_tts(token)]
+
+    def get_sylls_ipa_str_tts(self, token, force=False):
+        from phonemizer.separator import Separator
+        log.trace("phonemizing")
+        sep = Separator(phone=" ", word="|", syllable=".")
+        res = self.phonemizer.phonemize(
+            [token],
+            separator=sep,
+            strip=True,
+        )
+        obj = res[0]
+        return obj
 
     @cache
     @profile
@@ -120,25 +190,23 @@ class Language:
         osyll = []
         for syll in sylls:
             osyll.extend([sx for sx in syll])
-            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
                 osylls.append("".join(osyll))
                 osyll = []
         if osyll:
-            if any(Phoneme(ph).is_vowel for ph in osyll if ph.isalpha()):
+            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
                 osylls.append("".join(osyll))
             elif osylls:
                 osylls[-1] += "".join(osyll)
         return osylls
 
     @cached_property
-    @profile
     def syllabifier(self):
         from nltk.tokenize import SyllableTokenizer
 
         return SyllableTokenizer()
 
     @cached_property
-    @profile
     def syllabiphon(self):
         from prosodic.lib.syllabiphon.syllabify import Syllabify
 
@@ -146,46 +214,48 @@ class Language:
 
     @cache
     @profile
-    def syllabify(self, token, num_sylls=None):
+    def get_sylls_text_l(self, token, num_sylls=None):
         tokenl = token.lower()
         l = self.syllabifier.tokenize(tokenl)
         l = fix_recasing(l, token)
         if num_sylls:
             l = fix_num_sylls(l, num_sylls)
         return l
+    
+    def get_sylls_ll_rule(self, token):
+        return [], {}
 
     # @cache
-    @profile
-    def get(self, token):
-        from ..words import WordForm, WordType
+    def get_sylls_ll(
+        self,
+        tokenx,
+        force_unstress=None,
+        force_ambig_stress=None,
+        **kwargs
+    ) -> Tuple[List[Tuple[Tuple[str, str]]], Dict]:
+        sylls_ll, meta = self.get_sylls_ll_rule(tokenx)
+        if sylls_ll:
+            return sylls_ll, meta
 
-        tokenx = token.strip()
-        if any(x.isspace() for x in tokenx):
-            logger.error(
-                f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'
+        sylls_ipa_ll, meta_ipa = self.get_sylls_ipa_ll(
+            tokenx,
+            force_unstress=force_unstress,
+            force_ambig_stress=force_ambig_stress,
+        )
+
+        sylls_text_ll = [
+            self.get_sylls_text_l(
+                tokenx,
+                num_sylls=len(sylls_ipa_l),
             )
-            tokenx = "".join(x if not x.isspace() else "-" for x in tokenx)
+            for sylls_ipa_l in sylls_ipa_ll
+        ]
 
-        # if self.use_cache and tokenx in self.cached:
-        # logger.trace(f'found token {tokenx} in cache')
-        # wordforms = self.cached.get(tokenx)
-        # return WordType.from_json(self.cached[tokenx])
-
-        # else:
-        wordforms = []
-        if any(x.isalpha() for x in token):
-            tokenl = tokenx.lower()
-            ipa_l = self.phoneticize(tokenl)
-            for ipa in ipa_l:
-                sylls = self.syllabify(tokenx, num_sylls=len(ipa))
-                wf = WordForm(tokenx, sylls_ipa=ipa, sylls_text=sylls)
-                wordforms.append(wf)
-            wordforms.sort(key=lambda w: w.num_stressed_sylls)
-            # self.cached[tokenx] = wordforms
-        wordtype = WordType(tokenx, children=wordforms, lang=self.lang)
-        # if self.use_cache:
-        # self.cached[tokenx] = wordtype.to_json()
-        return wordtype
+        meta = {**meta_ipa}#, 'sylls_text_origin':'heuristic'}
+        return get_sylls_ll(sylls_ipa_ll, sylls_text_ll), meta
+    
+    def get(self, *args, **kwargs):
+        return self.get_sylls_ll(*args, **kwargs)
 
 
 def fix_recasing(l, token):
@@ -228,23 +298,116 @@ def stress(ipa, primary=True):
     return sstr + ipa
 
 
-def ensure_maybe_stressed(ipa_l):
-    if any(get_stress(syllipa) != "U" for ipa in ipa_l for syllipa in ipa):
-        ipa_l.append([unstress(syllipa) for syllipa in ipa_l[0]])
-    else:
-        ipa_l.append(
-            [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_l[0])]
-        )
-    ipa_l = [tuple(x) for x in ipa_l]
-    ipa_l = [list(x) for x in set(ipa_l)]
-    ipa_l.sort(
-        key=lambda ipal: sum(int(get_stress(syllipa) != "U") for syllipa in ipal)
+def stress_sylls_ipa_l(ipa_l):
+    return [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_l)]
+
+
+#     if any(get_stress(syllipa) != "U" for ipa in ipa_ll for syllipa in ipa):
+#         ipa_ll.append([unstress(syllipa) for syllipa in ipa_ll[0]])
+#     else:
+#         ipa_ll.append(
+#             [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_ll[0])]
+#         )
+#     ipa_ll = [tuple(x) for x in ipa_ll]
+#     ipa_ll = [list(x) for x in set(ipa_ll)]
+#     ipa_ll.sort(
+#         key=lambda ipal: sum(int(get_stress(syllipa) != "U") for syllipa in ipal)
+#     )
+#     return ipa_ll
+
+
+def count_stresses_in_sylls_ipa_l(sylls_ipa_l):
+    return sum(bool(get_syll_ipa_stress(syllipa) != "U") for syllipa in sylls_ipa_l)
+
+
+def sylls_ipa_l_has_stress(sylls_ipa_l):
+    return count_stresses_in_sylls_ipa_l(sylls_ipa_l) != 0
+
+
+def syll_ipa_str_is_stressed(syll_ipa_str):
+    return get_syll_ipa_stress(syll_ipa_str) != "U"
+
+
+def syll_ipa_str_is_unstressed(syll_ipa_str):
+    return not syll_ipa_str_is_stressed(syll_ipa_str)
+
+
+def sylls_ipa_l_has_unstress(sylls_ipa_l):
+    return any(syll_ipa_str_is_unstressed(syll_ipa_str) for syll_ipa_str in sylls_ipa_l)
+
+
+def sylls_ipa_l_is_unstressed(syll_ipa_l):
+    return not any(
+        syll_ipa_str_is_stressed(syll_ipa_str) for syll_ipa_str in syll_ipa_l
     )
-    return ipa_l
 
 
-def ensure_unstressed(ipa_l):
-    return [[unstress(syllipa) for syllipa in ipa_l[0]]]
+def sylls_ipa_l_has_stress(sylls_ipa_l):
+    return any(syll_ipa_str_is_stressed(syll_ipa_str) for syll_ipa_str in sylls_ipa_l)
+
+
+def sylls_ipa_ll_has_stress(sylls_ipa_ll):
+    return any(sylls_ipa_l_has_stress(sylls_ipa_l) for sylls_ipa_l in sylls_ipa_ll)
+
+
+def sylls_ipa_ll_has_unstress(sylls_ipa_ll):
+    return any(sylls_ipa_l_is_unstressed(sylls_ipa_l) for sylls_ipa_l in sylls_ipa_ll)
+
+
+def sylls_ipa_ll_has_ambig_stress(sylls_ipa_ll):
+    return sylls_ipa_ll_has_stress(sylls_ipa_ll) and sylls_ipa_ll_has_unstress(
+        sylls_ipa_ll
+    )
+
+
+def get_sylls_ll(sylls_ipa_ll, sylls_text_ll):
+    sylls_ll = []
+    for syll_ipa_l, syll_text_l in zip(sylls_ipa_ll, sylls_text_ll):
+        sylls_l = list(zip(syll_ipa_l, syll_text_l))
+        sylls_ll.append(sylls_l)
+    return sylls_ll
+
+
+def unstress_sylls_ipa_l(sylls_ipa_l):
+    return [unstress(syllipa) for syllipa in sylls_ipa_l]
+
+
+# def maybestress(sylls_ll):
+#     sylls_ipa_ll,sylls_text_ll=zip(*sylls_ll)
+#     if sylls_ipa_ll_has_unstress(sylls_ipa_ll) and sylls_ipa_ll_has_stress(sylls_ipa_ll):
+#         return sylls_ll
+
+#     if not sylls_ipa_ll_has_unstress(sylls_ipa_ll):
+#         unstressed_syll_ipa_l = [unstress_sylls_ipa_l
+#         new_syll = ()
+#         sylls_ll.insert(0,)
+
+
+#     # for sylls_text,sylls_ipa in sylls_ll:
+#         # if
+#     if any(get_stress(syllipa) != "U" for ipa in ipa_ll for syllipa in ipa):
+#         ipa_ll.append([unstress(syllipa) for syllipa in ipa_ll[0]])
+#     else:
+#         ipa_ll.append(
+#             [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_ll[0])]
+#         )
+#     ipa_ll = [tuple(x) for x in ipa_ll]
+#     ipa_ll = [list(x) for x in set(ipa_ll)]
+#     ipa_ll.sort(
+#         key=lambda ipal: sum(int(get_stress(syllipa) != "U") for syllipa in ipal)
+#     )
+#     return ipa_ll
+
+# def ensure_unstressed(ipa_ll):
+#     if not ipa_ll: return []
+#     ipa_l = ipa_ll[0]
+#     return [unstress(ipa_l)]
+
+
+# def ensure_unstressed(ipa_ll):
+#     if not ipa_ll: return []
+#     ipa_l = ipa_ll[0]
+#     return [unstress(ipa_l)]
 
 
 def get_espeak_error_msg(paths):
@@ -274,9 +437,12 @@ For more information on espeak: http://espeak.sourceforge.net
 
 
 def get_espeak_env(
-    path_or_paths=ESPEAK_PATHS, lib_fns={"libespeak.dylib", "libespeak.so", "libespeak-ng.dll"}
+    path_or_paths=ESPEAK_PATHS,
+    lib_fns={"libespeak.dylib", "libespeak.so", "libespeak-ng.dll"},
 ):
-    stored = os.environ.get("PATH_ESPEAK") or os.environ.get('PHONEMIZER_ESPEAK_LIBRARY')
+    stored = os.environ.get("PATH_ESPEAK") or os.environ.get(
+        "PHONEMIZER_ESPEAK_LIBRARY"
+    )
     if stored:
         return stored
     paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
@@ -292,7 +458,7 @@ def get_espeak_env(
             for lib_fn in lib_fns:
                 if lib_fn in fns:
                     return os.path.join(root, lib_fn)
-    logger.warning(get_espeak_error_msg(paths))
+    log.warning(get_espeak_error_msg(paths))
     return ""
 
 
@@ -305,3 +471,24 @@ def set_espeak_env(path_or_paths=ESPEAK_PATHS):
 
 # set now
 set_espeak_env()
+
+
+@cache
+def Language(lang: str = DEFAULT_LANG):
+    if lang == "en":
+        from .english import EnglishLanguage
+
+        return EnglishLanguage()
+    if lang == "fi":
+        from .finnish import FinnishLanguage
+
+        return FinnishLanguage()
+
+    lang_obj = LanguageModel()
+    lang_obj.lang = lang
+    return lang_obj
+
+
+@cache
+def get_word(tokenx, lang=DEFAULT_LANG, force_unstress=None, force_ambig_stress=None):
+    return Language(lang).get(tokenx, force_unstress=force_unstress, force_ambig_stress=force_ambig_stress)

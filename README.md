@@ -32,7 +32,7 @@ Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) softw
 
 * *Linux*: `apt-get install espeak libespeak1 libespeak-dev`
 
-* *Windows*: Download and install from https://github.com/espeak-ng/espeak-ng/releases/latest
+* *Windows*: Download and install from [github](https://github.com/espeak-ng/espeak-ng/releases/latest)
 
 ## Usage
 

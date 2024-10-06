@@ -20,6 +20,16 @@ class SimpleCache:
         self.root_dir = root_dir
         os.makedirs(root_dir, exist_ok=True)
 
+    def __enter__(self):
+        """Enter the runtime context for the cache."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context for the cache."""
+        # No specific cleanup needed, but could add it here if required
+        pass
+
+
     def _get_file_path(self, key: str) -> str:
         """Get the file path for a given key.
 
@@ -178,10 +188,9 @@ def get_txt(txt: Optional[str], fn: Optional[str]) -> str:
         The text content.
     """
     if txt:
-        if txt.startswith("http") or os.path.exists(txt):
+        if txt.startswith("http"):
             return get_txt(None, txt)
-
-        return txt
+        return txt.strip()
 
     if fn:
         if fn.startswith("http"):
@@ -190,23 +199,23 @@ def get_txt(txt: Optional[str], fn: Optional[str]) -> str:
 
         if os.path.exists(fn):
             with open(fn, encoding='utf-8') as f:
-                return f.read()
+                return f.read().strip()
 
     return ""
 
 
-def clean_text(txt: str) -> str:
-    """Clean and normalize text.
+# def clean_text(txt: str) -> str:
+#     """Clean and normalize text.
 
-    Args:
-        txt: The input text.
+#     Args:
+#         txt: The input text.
 
-    Returns:
-        Cleaned and normalized text.
-    """
-    txt = txt.replace("\r\n", "\n").replace("\r", "\n")
-    txt = ftfy.fix_text(txt)
-    return txt
+#     Returns:
+#         Cleaned and normalized text.
+#     """
+#     txt = txt.replace("\r\n", "\n").replace("\r", "\n")
+#     txt = ftfy.fix_text(txt)
+#     return txt
 
 
 def get_attr_str(attrs: Dict[str, Any], sep: str = ", ", bad_keys: Optional[List[str]] = None) -> str:
@@ -241,8 +250,21 @@ def safesum(l: List[Union[int, float]]) -> Union[int, float]:
     l = [x for x in l if type(x) in {int, float, np.float64, np.float32}]
     return sum(l)
 
+def niceindex(df):
+    df = df[[c for c in df if c not in DF_BADCOLS]]
+    df = df.rename(columns=DF_COLS_RENAME)
+    df=setindex(df, DF_INDEX)
+    df=df.sort_index()
+    return df
 
-def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
+def nicedict(d):
+    d = {k:v for k,v in d.items() if k not in DF_BADCOLS}
+    ordered_keys = [key for key in DF_INDEX if key in d]
+    remaining_keys = [key for key in d if key not in set(DF_INDEX)]
+    keys = ordered_keys + remaining_keys
+    return {k:d[k] for k in keys}
+
+def setindex(df: pd.DataFrame, cols: List[str] = DF_INDEX, sort=False) -> pd.DataFrame:
     """Set the index of a DataFrame to specified columns.
 
     Args:
@@ -254,12 +276,29 @@ def setindex(df: pd.DataFrame, cols: List[str] = []) -> pd.DataFrame:
     """
     if not cols:
         return df
+    df = df.copy()
     cols = [c for c in cols if c in set(df.columns)]
-    return df.set_index(cols) if cols else df
+    if not cols:
+        return df
+    
+    for c in cols:
+        if c.endswith('_num'):
+            df[c] = df[c].fillna(0).apply(int)
+        else:
+            df[c] = df[c].fillna('')
+    odf = df.set_index(cols)
+    return odf if not sort else odf.sort_index()
 
+def format_syll_ipa_str(ipa: str) -> str:
+    if not ipa:
+        return ""
+    if "'" in ipa:
+        return "'" + ipa.replace("`","").replace("'","")
+    if "`" in ipa:
+        return "`" + ipa.replace("`","")
+    return ipa
 
-
-def get_stress(ipa: str) -> str:
+def get_syll_ipa_stress(ipa: str) -> str:
     """Get the stress level from an IPA string.
 
     Args:
@@ -270,9 +309,9 @@ def get_stress(ipa: str) -> str:
     """
     if not ipa:
         return ""
-    if ipa[0] == "`":
+    if "`" in ipa:
         return "S"
-    if ipa[0] == "'":
+    if "'" in ipa:
         return "P"
     return "U"
 
@@ -319,7 +358,6 @@ def hashstr(*inputs: Any, length: int = HASHSTR_LEN) -> str:
         A hash string.
     """
     import hashlib
-
     input_string = str(inputs)
     sha256_hash = hashlib.sha256(str(input_string).encode()).hexdigest()
     return sha256_hash[:length]
@@ -340,7 +378,7 @@ def read_json(fn: str) -> Dict[str, Any]:
         return orjson.loads(f.read())
 
 
-def from_json(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
+def from_dict(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
     """Create an object from JSON data.
 
     Args:
@@ -362,7 +400,7 @@ def from_json(json_d: Union[str, Dict[str, Any]], **kwargs: Any) -> Any:
         raise Exception
     classname = json_d["_class"]
     classx = GLOBALS[classname]
-    return classx.from_json(json_d, **kwargs)
+    return classx.from_dict(json_d, **kwargs)
 
 
 def load(fn: str, **kwargs: Any) -> Any:
@@ -375,36 +413,7 @@ def load(fn: str, **kwargs: Any) -> Any:
     Returns:
         The loaded object.
     """
-    return from_json(fn, **kwargs)
-
-
-def to_json(obj: Any, fn: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Convert an object to JSON and optionally save to a file.
-
-    Args:
-        obj: The object to convert.
-        fn: The filename to save to (optional).
-
-    Returns:
-        The JSON data if fn is None, otherwise None.
-    """
-    if hasattr(obj, "to_json"):
-        data = obj.to_json()
-    else:
-        data = obj
-
-    if not fn:
-        return data
-    else:
-        fdir = os.path.dirname(fn)
-        if fdir:
-            os.makedirs(fdir, exist_ok=True)
-        with open(fn, "wb") as of:
-            of.write(
-                orjson.dumps(
-                    data, option=orjson.OPT_INDENT_2 | orjson.OPT_SERIALIZE_NUMPY
-                )
-            )
+    return from_dict(fn, **kwargs)
 
 
 def ensure_dir(fn: str) -> None:
@@ -417,43 +426,6 @@ def ensure_dir(fn: str) -> None:
     if dirname:
         os.makedirs(dirname, exist_ok=True)
 
-
-
-def encode_cache(x: Any) -> bytes:
-    """Encode an object for caching.
-
-    Args:
-        x: The object to encode.
-
-    Returns:
-        The encoded object as bytes.
-    """
-    return b64encode(
-        zlib.compress(
-            orjson.dumps(
-                x,
-                option=orjson.OPT_SERIALIZE_NUMPY,
-            )
-        )
-    )
-
-
-def decode_cache(x: bytes) -> Any:
-    """Decode a cached object.
-
-    Args:
-        x: The encoded object.
-
-    Returns:
-        The decoded object.
-    """
-    return orjson.loads(
-        zlib.decompress(
-            b64decode(
-                x,
-            ),
-        ),
-    )
 
 
 def to_html(html: Union[str, Any], as_str: bool = False, **kwargs: Any) -> Union[str, Any]:
@@ -470,7 +442,7 @@ def to_html(html: Union[str, Any], as_str: bool = False, **kwargs: Any) -> Union
     if type(html) is not str:
         if hasattr(html, "to_html"):
             return html.to_html(as_str=as_str, **kwargs)
-        logger.error(f"what type of data is this? {html}")
+        log.error(f"what type of data is this? {html}")
         return
 
     if as_str:
@@ -568,3 +540,59 @@ def tokenize_agnostic(txt: str) -> List[str]:
         A list of tokens.
     """
     return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
+
+
+
+def clean_text(txt):
+    txt=txt.replace('\r\n','\n').replace('\r','\n')
+    replacements={
+        '&eacute':'é',
+        '&hyphen;':'-',
+        '&sblank;':'--',
+        '&mdash;':' -- ',
+        '&ndash;':' - ',
+        '&longs;':'s',
+        '&wblank':' -- ',
+        '\u2223':'',
+        '\u2014':' -- ',
+        '&ldquo;':'“',
+        '&rdquo;':'”',
+        '&lsquo;':'‘’',
+        '&rsquo;':'’',
+        '&indent;':'     ',
+        '&amp;':'&',
+        '&euml;':'ë',
+        '&uuml;':'ü',
+        '&auml;':'ä',
+    }
+    for k,v in list(replacements.items()):
+        txt=txt.replace(k,v)
+        # elif k.startswith('&') and k.endswith(';') and k[:-1] in txt:
+            # txt=txt.replace(k[:-1],v)
+
+    import ftfy
+    txt=ftfy.fix_text(txt)
+    return txt
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, end='\n', **kwargs)
+
+def is_listlike(obj):
+    """
+    Check if an object is list-like (either a list, UserList, generator, or iterator).
+    
+    Args:
+        obj: The object to check.
+    
+    Returns:
+        bool: True if the object is list-like, False otherwise.
+    """
+    return isinstance(obj, (list, UserList, GeneratorType)) or hasattr(obj, '__iter__')
+
+
+def unique_list(obj):
+    if not is_listlike(obj):
+        log.error(f'not list like: {obj}')
+        return []
+    seen = set()
+    return [x for x in obj if not (x in seen or seen.add(x))]

@@ -1,6 +1,5 @@
-from typing import List, Optional, Any
-from ..imports import *
-from .phonemes import PhonemeList
+from . import *
+
 
 class Syllable(Entity):
     """
@@ -9,15 +8,21 @@ class Syllable(Entity):
     Attributes:
         prefix (str): Prefix for the syllable.
         child_type (str): Type of child entities (Phoneme).
-        list_type (str): Type of list for child entities (PhonemeList).
     """
 
     prefix: str = "syll"
     child_type: str = "Phoneme"
-    list_type: str = 'PhonemeList'
 
-    @profile
-    def __init__(self, txt: str, ipa: Optional[str] = None, parent: Optional[Any] = None, children: List[Any] = [], **kwargs: Any) -> None:
+    def __init__(
+        self,
+        children: List[Entity] = [],
+        txt: str = None,
+        ipa: Optional[str] = None,
+        parent: Optional[Any] = None,
+        text=None,
+        key=None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize a Syllable object.
 
@@ -28,27 +33,32 @@ class Syllable(Entity):
             children: List of child entities (Phonemes).
             **kwargs: Additional keyword arguments.
         """
-        from .phonemes import Phoneme
-        from gruut_ipa import Pronunciation
-
         assert ipa or children
-        if ipa and not children:
+        
+        super().__init__(
+            txt=txt,
+            children=children,
+            parent=parent,
+            text=text,
+            key=key,
+            ipa=ipa,
+            **kwargs,
+        )
+        
+        if self.ipa and not self.children:
+            from gruut_ipa import Pronunciation
+
             sipa = "".join(x for x in ipa if x.isalpha())
             pron = Pronunciation.from_string(sipa)
             phones = [p.text for p in pron if p.text]
-            children = [Phoneme(phon) for phon in phones]
-        super().__init__(txt=txt, ipa=ipa, children=children, parent=parent, **kwargs)
+            for phon in phones:
+                self.children.append(Phoneme(txt=phon))
+        
 
-    def to_json(self) -> dict:
-        """
-        Convert the syllable to a JSON-serializable dictionary.
+    def to_dict(self, incl_txt=True, incl_attrs=True, **kwargs) -> dict:
+        return super().to_dict(incl_txt=incl_txt, incl_attrs=incl_attrs, **kwargs)
 
-        Returns:
-            A dictionary representation of the syllable.
-        """
-        return super().to_json(ipa=self.ipa)
-
-    @cached_property
+    @property
     def stress(self) -> str:
         """
         Get the stress level of the syllable.
@@ -56,27 +66,40 @@ class Syllable(Entity):
         Returns:
             The stress level as a string.
         """
-        return get_stress(self.ipa)
+        return get_syll_ipa_stress(self.ipa)
 
-    @cached_property
-    def attrs(self) -> dict:
-        """
-        Get the attributes of the syllable.
+    @property
+    def weight(self):
+        return "L" if not self.is_heavy else "H"
 
-        Returns:
-            A dictionary of syllable attributes.
-        """
-        return {
-            **self._attrs,
-            "num": self.num,
-            "txt": self.txt,
-            "is_stressed": self.is_stressed,
-            "is_heavy": self.is_heavy,
-            "is_strong": self.is_strong,
-            "is_weak": self.is_weak,
-        }
+    @property
+    def stress_num(self) -> float:
+        if self.stress == "P":
+            return 1.0
+        elif self.stress == "S":
+            return 0.5
+        else:
+            return 0.0
 
-    @cached_property
+    # @property
+    # def attrs(self) -> dict:
+    #     """
+    #     Get the attributes of the syllable.
+
+    #     Returns:
+    #         A dictionary of syllable attributes.
+    #     """
+    #     return {
+    #         **self._attrs,
+    #         # "num": self.num,
+    #         # "txt": self.txt,
+    #         "is_stressed": self.is_stressed,
+    #         "is_heavy": self.is_heavy,
+    #         "is_strong": self.is_strong,
+    #         "is_weak": self.is_weak,
+    #     }
+
+    @property
     def has_consonant_ending(self) -> bool:
         """
         Check if the syllable ends with a consonant.
@@ -84,9 +107,9 @@ class Syllable(Entity):
         Returns:
             True if the syllable ends with a consonant, False otherwise.
         """
-        return self.children[-1].cons > 0
+        return self.children[-1].is_cons
 
-    @cached_property
+    @property
     def num_vowels(self) -> int:
         """
         Get the number of vowels in the syllable.
@@ -94,9 +117,9 @@ class Syllable(Entity):
         Returns:
             The number of vowels.
         """
-        return sum(1 for phon in self.children if phon.cons <= 0)
+        return sum(1 for phon in self.children if phon.is_vowel)
 
-    @cached_property
+    @property
     def has_dipthong(self) -> bool:
         """
         Check if the syllable contains a diphthong.
@@ -106,7 +129,7 @@ class Syllable(Entity):
         """
         return self.num_vowels > 1
 
-    @cached_property
+    @property
     def is_stressed(self) -> bool:
         """
         Check if the syllable is stressed.
@@ -116,7 +139,7 @@ class Syllable(Entity):
         """
         return self.stress in {"S", "P"}
 
-    @cached_property
+    @property
     def is_heavy(self) -> bool:
         """
         Check if the syllable is heavy.
@@ -126,7 +149,7 @@ class Syllable(Entity):
         """
         return bool(self.has_consonant_ending or self.has_dipthong)
 
-    @cached_property
+    @property
     def is_strong(self) -> Optional[bool]:
         """
         Check if the syllable is strong.
@@ -143,7 +166,7 @@ class Syllable(Entity):
         if self.next and not self.next.is_stressed:
             return True
 
-    @cached_property
+    @property
     def is_weak(self) -> Optional[bool]:
         """
         Check if the syllable is weak.
@@ -160,7 +183,7 @@ class Syllable(Entity):
         if self.next and self.next.is_stressed:
             return True
 
-    @cached_property
+    @property
     def onset(self) -> PhonemeList:
         """
         Get the onset of the syllable.
@@ -170,7 +193,7 @@ class Syllable(Entity):
         """
         return PhonemeList(p for p in self.children if p.is_onset)
 
-    @cached_property
+    @property
     def rime(self) -> PhonemeList:
         """
         Get the rime of the syllable.
@@ -178,9 +201,10 @@ class Syllable(Entity):
         Returns:
             A PhonemeList containing the rime phonemes.
         """
-        return PhonemeList(p for p in self.children if p.is_rime)
+        self.children._annotate_phons()
+        return PhonemeList([p for p in self.children if p.is_rime], parent=self)
 
-    @cached_property
+    @property
     def nucleus(self) -> PhonemeList:
         """
         Get the nucleus of the syllable.
@@ -190,7 +214,7 @@ class Syllable(Entity):
         """
         return PhonemeList(p for p in self.children if p.is_nucleus)
 
-    @cached_property
+    @property
     def coda(self) -> PhonemeList:
         """
         Get the coda of the syllable.
@@ -201,7 +225,7 @@ class Syllable(Entity):
         return PhonemeList(p for p in self.children if p.is_coda)
 
     @cache
-    def rime_distance(self, syllable: 'Syllable') -> float:
+    def rime_distance(self, syllable: "Syllable") -> float:
         """
         Calculate the rime distance between this syllable and another.
 
@@ -216,4 +240,5 @@ class Syllable(Entity):
 
 class SyllableList(EntityList):
     """A list of Syllable objects."""
+
     pass

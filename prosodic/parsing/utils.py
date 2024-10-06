@@ -44,7 +44,7 @@ def split_scansion(wsws: str) -> List[str]:
     Returns:
         A list of scansion positions.
     """
-    wsws = wsws.replace("-", "w").replace("+", "s")
+    wsws = wsws.replace(" ","").replace("-", "w").replace("+", "s")
     positions = []
     position = []
     last_x = None

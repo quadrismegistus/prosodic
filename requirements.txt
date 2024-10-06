@@ -28,3 +28,8 @@ PyYAML
 regex
 editdistance
 munkres
+
+hashstash[rec]
+stanza
+svgling
+plotnine

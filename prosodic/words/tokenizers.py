@@ -80,7 +80,7 @@ def tokenize_sentwords_df(txt: str) -> pd.DataFrame:
     Returns:
         A DataFrame containing tokenized sentences and words.
     """
-    with logmap("tokenizing"):
+    with logmap("tokenizing", level='trace'):
         return pd.DataFrame(tokenize_sentwords_iter(txt))
 
 
@@ -108,36 +108,38 @@ def tokenize_sentwords_iter(
     Yields:
         Dictionaries containing tokenized word information.
     """
-    char_i = 0
+    tok_i = 0
     line_i = 1
-    stanza_i = 1
+    para_i = 1
+    sentpart_i = 1
     linepart_i = 1
-    linepart_ii = 0
     start_offset = 0
-    txt = clean_text(txt)
+    # txt = clean_text(txt)
     if sents is None:
         sents = tokenize_sents_txt(txt)
     for sent_i, sent in enumerate(sents):
         tokens = tokenize_words_txt(sent)
-        for tok_i, word_str in enumerate(tokens):
+        for word_str in tokens:
+            tok_i+=1
             # word_tok=to_token(word_str)
             numlinebreaks = word_str.count(sep_line)
             if numlinebreaks > 1:
-                stanza_i += 1
+                para_i += 1
             if numlinebreaks:
                 line_i += 1
+                linepart_i+=1
             is_punc = int(not any(x.isalpha() for x in word_str))
             odx_word = dict(
-                **(dict(para_i=para_i) if para_i is not None else {}),
-                sent_i=sent_i + 1,
-                sentpart_i=linepart_i,
-                stanza_i=stanza_i,
-                line_i=line_i,
-                word_i=tok_i + 1,
-                word_str=word_str,
-                # word_tok=word_tok,
-                word_ispunc=is_punc
+                txt=word_str,
+                num=tok_i,
+                para_num=para_i,
+                line_num=line_i,
+                sent_num=sent_i + 1,
+                sentpart_num=sentpart_i,
+                linepart_num=linepart_i,
+                is_punc=is_punc
             )
             yield odx_word
             if set(word_str) & set(seps_phrase):
+                sentpart_i += 1
                 linepart_i += 1

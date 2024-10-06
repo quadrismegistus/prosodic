@@ -1,9 +1,11 @@
 from ..imports import *
-from .texts import Text
+from .texts import TextModel
 from .lines import Line
 from typing import List, Optional, Any
 
-class Stanza(Text):
+from ..words import WordTokenList
+
+class Stanza(WordTokenList):
     """
     A class representing a stanza in a poem or text.
 
@@ -14,59 +16,12 @@ class Stanza(Text):
         sep (str): Separator string used between lines. Default is an empty string.
         child_type (str): The type of child entities. Default is "Line".
         prefix (str): Prefix used for identification. Default is "stanza".
-        list_type (str): The type of list used for storing children. Default is 'LineList'.
     """
+    prefix = 'stanza'
 
-    sep: str = ""
-    child_type: str = "Line"
-    prefix: str = "stanza"
-    list_type: str = 'LineList'
+    def __repr__(self, **kwargs):
+        return f"Stanza(num={self.num}, txt={repr(self.txt)})"
 
-    @profile
-    def __init__(
-        self,
-        txt: str = "",
-        children: List[Any] = [],
-        parent: Optional[Any] = None,
-        tokens_df: Optional[pd.DataFrame] = None,
-        lang: str = DEFAULT_LANG,
-        **kwargs
-    ) -> None:
-        """
-        Initialize a Stanza object.
-
-        Args:
-            txt (str): The text content of the stanza.
-            children (List[Any]): List of child entities (usually Lines).
-            parent (Optional[Any]): The parent entity of this stanza.
-            tokens_df (Optional[pd.DataFrame]): DataFrame containing tokenized data.
-            lang (str): The language of the stanza. Defaults to DEFAULT_LANG.
-            **kwargs: Additional keyword arguments.
-
-        Raises:
-            Exception: If neither txt, children, nor tokens_df is provided.
-        """
-        from .lines import Line
-
-        if not txt and not children and tokens_df is None:
-            raise Exception("Must provide either txt, children, or tokens_df")
-        if not children:
-            if tokens_df is None:
-                tokens_df = tokenize_sentwords_df(txt)
-            children = [
-                Line(parent=self, tokens_df=line_df)
-                for line_i, line_df in tokens_df.groupby("line_i")
-            ]
-        Entity.__init__(self, txt, children=children, parent=parent, **kwargs)
-
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the Stanza object to a JSON-serializable dictionary.
-
-        Returns:
-            Dict[str, Any]: A dictionary representation of the Stanza object.
-        """
-        return Entity.to_json(self, no_txt=True)
 
     def _repr_html_(self, as_df: bool = False, df: Optional[pd.DataFrame] = None) -> str:
         """
@@ -91,9 +46,13 @@ class Stanza(Text):
         Returns:
             Dict[Any, Any]: A dictionary of rhyming lines.
         """
-        return self.children.get_rhyming_lines(max_dist=max_dist)
+        return self.lines.get_rhyming_lines(max_dist=max_dist)
+    
+    @property
+    def rhyming_lines(self):
+        return self.get_rhyming_lines(max_dist=RHYME_MAX_DIST)
 
-    @cached_property
+    @property
     def num_rhyming_lines(self) -> int:
         """
         Get the number of rhyming lines in the stanza.
@@ -101,9 +60,9 @@ class Stanza(Text):
         Returns:
             int: The number of rhyming lines.
         """
-        return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
+        return len(self.rhyming_lines)
 
-    @cached_property
+    @property
     def is_rhyming(self) -> bool:
         """
         Check if the stanza contains rhyming lines.
@@ -116,5 +75,7 @@ class Stanza(Text):
 
 
 class StanzaList(EntityList):
-    pass
-
+    
+    @classmethod
+    def from_wordtokens(cls, wordtokens, text=None):
+        return WordTokenList._from_wordtokens(wordtokens, 'stanza', 'para_num', text=text)

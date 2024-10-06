@@ -1,5 +1,5 @@
 # # coding=utf-8
-# from finnish_annotator import mark
+# from .finnish_annotator import mark
 
 # import string
 # import sys

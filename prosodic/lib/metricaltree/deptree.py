@@ -422,18 +422,18 @@ class DependencyTreeParser(ParserI):
         return stdout
 
 #***********************************************************************
-# Set up the module
-def setup_module(module):
-    """"""
+# # Set up the module
+# def setup_module(module):
+#     """"""
 
-    from nose import SkipTest
+#     from pytest import skip as SkipTest
 
-    try:
-        StanfordParser(
-          model_path='edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
-        )
-    except LookupError:
-        raise SkipTest('doctests from nltk.parse.stanford are skipped because the stanford parser jar doesn\'t exist')
+#     try:
+#         StanfordParser(
+#           model_path='edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz'
+#         )
+#     except LookupError:
+#         raise SkipTest('doctests from nltk.parse.stanford are skipped because the stanford parser jar doesn\'t exist')
 
 #***********************************************************************
 # Test the module

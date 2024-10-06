@@ -1,165 +1,109 @@
-# from .imports import *
-# from Entity import Entity,being
-# from tools import makeminlength,wordtoks2str
+from ..imports import *
+from ..ents import EntityList
+from ..words import WordTokenList
+
+class SentenceList(EntityList):
+    # def __init__(self, sents, **kwargs):
+    #     super().__init__(
+    #         children=sents,
+    #         txt = '\n'.join(sent._txt for sent in sents),
+    #         **kwargs
+    #     )
+
+    @classmethod
+    def from_wordtokens(cls, wordtokens, text=None):
+        return WordTokenList._from_wordtokens(wordtokens, 'sent', 'sent_num', text=text)
+
+    # @classmethod
+    # def from_wordtokens(cls, wordtokens, parent=None):
+    #     last = None
+    #     sent=[]
+    #     sents = []
+    #     for wtok in wordtokens:
+    #         if sent and wtok.sent_num!=last:
+    #             sents.append(Sentence(sent, parent=parent))
+    #             sent = []
+    #         sent.append(wtok)
+    #         last = wtok.sent_num
+    #     if sent: sents.append(Sentence(sent, parent=parent))
+    #     sl = SentenceList(sents)
+    #     sl.wordtokens = wordtokens
+    #     return sl
+    
+    @property
+    def parts(self):
+        return SentPartList([part for sent in self for part in sent.parts], parent=self)
+    
+
+    @property
+    def trees(self):
+        with logmap('parsing syntax in sentences') as lm:
+            return [sent.tree for sent in lm.iter_progress(self.children)]
+
+    @property
+    def trees_df(self):
+        l=[tree.df for tree in self.trees]
+        return pd.concat(l) if l else pd.DataFrame()
 
 
-# class Sentence(Entity):
-# 	def __init__(self,wordtokens,tree):
-# 		self.children=wordtokens
-# 		self.tree=tree
 
-# 		# link wordtokens to this sentence
-# 		for wtok in self.children:
-# 			wtok.sentence = self
+class SentPart(WordTokenList):
+    prefix = 'sentpart'
+    pass
 
-# 		preterminals = list(tree.preterminals())
-# 		assert len(preterminals) == len(wordtokens)
-# 		for wtok,preterm in zip(wordtokens,preterminals):
-# 			wtok.preterminal=preterm
-# 			preterm.wordtoken = wtok
-# 			#wtok.feats['phrasal_stress']=wtok.phrasal_stress
-
-# 		for i2,w2 in enumerate(self.children):
-# 			w1=self.children[i2-1] if i2 else None
-# 			w3=self.children[i2+1] if (i2+1)<len(self.children) else None
-# 			#print w1.phrasal_stress if w1 else None, w2.phrasal_stress if w2 else None, w3.phrasal_stress if w3 else None
-# 			if w2.phrasal_stress is None: continue
-
-# 			if w1 and w1.phrasal_stress!=None and w1.phrasal_stress > w2.phrasal_stress:
-# 				w1.feats['phrasal_stress_valley']=True
-# 				w2.feats['phrasal_stress_peak']=True
-# 			if w3 and w3.phrasal_stress!=None and w3.phrasal_stress > w2.phrasal_stress:
-# 				w3.feats['phrasal_stress_valley']=True
-# 				w2.feats['phrasal_stress_peak']=True
-
-# 		find_phrasal_heads(self.tree)
-
-# 	def __getitem__(self,key):
-# 		return self.children[key]
-
-# 	def __repr__(self):
-# 		return "<"+self.classname()+":"+' '.join([self.u2s(wtok.token) for wtok in self.children])+">"
-
-# 	@property
-# 	def token(self):
-# 		return wordtoks2str(self.children)
-
-# 	def lines(self):
-# 		## Resolve sentence back into lines in original text
-# 		lines=[]
-# 		lastLine=None
-# 		line=[]
-# 		for wtok in self.children:
-# 			if wtok.line!=lastLine:
-# 				lastLine=wtok.line
-# 				#lines+=[wtok.line]  # ends up repeating lines
-# 				if line:
-# 					lines+=[line]
-# 					line=[]
-# 			line+=[wtok]
-# 		if line: lines+=[line]
-# 		return lines
-
-# 	def grid(self,nspace=10):
+class SentPartList(EntityList):
+    @classmethod
+    def from_wordtokens(cls, wordtokens, text=None):
+        return cls(
+            [
+                SentPart(children=list(group), text=text)
+                for _, group in itertools.groupby(wordtokens, key=lambda x: x.sentpart_num)
+            ],
+            parent=wordtokens,
+            text=text
+        )
 
 
-# 		GRID_LINES=[]
+class Sentence(WordTokenList):
+    prefix = 'sent'
 
-# 		for LINE in self.lines():
-# 			# word line
-# 			line_words=[]
-# 			for i,wtok in enumerate(LINE):
-# 				if wtok.is_punct: continue
-# 				line_words+=[makeminlength(wtok.token,nspace)]
-# 			line_words = ' '.join(line_words)
+    @property
+    def nlp(self):
+        from .syntax import get_nlp_doc
 
-# 			# grid lines
-# 			import math,numpy as np
-# 			grid_lines=[]
-# 			max_grid = max([wtok.phrasal_stress for wtok in self.children if wtok.phrasal_stress!=None])
-# 			min_grid = min([wtok.phrasal_stress for wtok in self.children if wtok.phrasal_stress!=None])
-# 			#for line_num in range(int(math.ceil(min_grid))+1,int(math.ceil(max_grid))+1):
-# 			for line_num in range(1,int(math.ceil(max_grid))+1):
-# 				grid_line=[]
-# 				for i,wtok in enumerate(LINE):
-# 					if wtok.is_punct: continue
-# 					mark = 'X' if wtok.phrasal_stress!=None and wtok.phrasal_stress<=line_num else ''
-# 					grid_line+=[makeminlength(mark,nspace)]
-# 				grid_lines+=[' '.join(grid_line)]
+        ll=[[wtok._txt.strip() for wtok in self.children]]
+        doc = get_nlp_doc(ll)
+        sents = doc.sentences
+        assert len(sents) == 1, 'Should be 1 sentence only'
+        return sents[0]
 
-# 			# lines data
-# 			data_lines=[]
-# 			for datak in ['mean','mean_line','phrasal_stress_peak','phrasal_head']:
-# 				data_line=[]
-# 				for i,wtok in enumerate(LINE):
-# 					if wtok.is_punct: continue
+    @property
+    def tree(self):
+        from .trees import SentenceTree
+        return SentenceTree.from_sent(self)
 
-# 					v=wtok.feats.get(datak,'')
+    @property
+    def grid(self):
+        from .grids import SentenceGrid
+        return SentenceGrid.from_wordtokens(self.wordtokens)
+    
+    # def plot_grid(self, prom_type="total_stress", **kwargs):
+    #     import plotnine as p9
 
-# 					if v==None:
-# 						v=''
-# 					elif type(v) in [float,np.float64]:
-# 						if np.isnan(v):
-# 							v=''
-# 						else:
-# 							v=round(v,1)
-# 					elif v in [True,False]:
-# 						v='+' if v else '-'
-
-# 					if datak == 'phrasal_stress_peak':
-# 						v2=wtok.feats.get('phrasal_stress_valley')
-# 						if v2 and v:
-# 							v=v+'/-'
-# 						elif v2 and not v:
-# 							v='-'
-
-# 					mark = str(v)
-
-# 					data_line+=[makeminlength(mark,nspace)]
-# 				datak_name = datak
-# 				if datak=='mean': datak_name='stress [sent]'
-# 				if datak=='mean_line': datak_name='stress [line]'
-# 				if datak=='norm_mean': datak_name='stress [sent norm]'
-# 				if datak=='norm_mean_line': datak_name='stress [line norm]'
-# 				if datak=='phrasal_stress_peak': datak_name='peak/valley'
-# 				if datak=='phrasal_head': datak_name='head/foot'
-# 				data_line+=[makeminlength('('+datak_name+')',nspace)]
-# 				data_lines+=[' '.join(data_line)]
-
-# 			#grid_lines.insert(0,line_words)
-
-# 			grid_lines.append(line_words)
-# 			grid_lines.append('')
-# 			grid_lines.extend(data_lines)
-
-# 			maxlength = max([len(l) for l in grid_lines])
-
-# 			hdrftr='#' * maxlength
-# 			hdr='STRESS GRID: '+wordtoks2str(LINE)
-# 			#grid_lines.insert(0,self.token)
-# 			#grid_lines.insert(0,hdr)
-# 			#grid_lines.insert(0,hdrftr)
-# 			#grid_lines.append(hdrftr)
-
-# 			GRID_LINES+=['\n'.join(grid_lines)]
-
-# 		return '\n\n\n'.join(GRID_LINES)
-
-
-# def find_phrasal_heads(tree):
-# 	for subtree in tree:
-# 		if not type(subtree) in [str,str]:
-# 			#if is_branching(subtree):
-# 			#    subtree[-1].is_head_of_branch = True
-# 			if not subtree._preterm and len(subtree)>1 and subtree[-1]._preterm and not subtree[-1].wordtoken.is_punct:
-# 				subtree[-1].wordtoken.feats['phrasal_head']=True
-# 				for sti in range(len(subtree)-1):
-# 					"""
-# 					print sti
-# 					print subtree[sti]
-# 					print subtree[-1]
-# 					print
-# 					"""
-# 					if hasattr(subtree[sti],'wordtoken'):
-# 						subtree[sti].wordtoken.feats['phrasal_head']=False
-# 			find_phrasal_heads(subtree)
+    #     p9.options.figure_size = (11, 5)
+    #     figdf = self.tree_df.copy()
+    #     figdf[prom_type]=figdf[prom_type]+abs(figdf[prom_type].min())+1
+    #     figdf[prom_type]=figdf[prom_type].fillna(0)
+    #     return (
+    #         p9.ggplot(
+    #             figdf,
+    #             p9.aes(
+    #                 x="preterm_num",
+    #                 y=prom_type,
+    #                 label="preterm_str",
+    #             ),
+    #         )
+    #         + p9.geom_col(alpha=0.25)
+    #         + p9.geom_text(size=15)
+    #         + p9.theme_void()
+    #     )

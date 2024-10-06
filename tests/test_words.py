@@ -5,31 +5,26 @@ disable_caching()
 def test_WordFormList():
     # parsing not done yet so these are just testing the ordering of slot/word combos
 
-    l = Line('in door')
-    assert len(l.wordform_matrix)==2
-    assert not l.wordform_matrix[0][0].children[0].is_stressed
+    l = TextModel('in door').line1
+    assert len(l.wordtoken_matrix)==2
+    assert l.wordtoken_matrix[0].sylls[0].is_stressed is False
 
-    l = Line('in duty')
-    assert len(l.wordform_matrix)==2
-    assert not l.wordform_matrix[0][0].children[0].is_stressed
+    l = TextModel('in duty').line1
+    assert len(l.wordtoken_matrix)==2
+    assert l.wordtoken_matrix[0].sylls[0].is_stressed is False
 
-    l = Line('disaster in embrace')
-    assert len(l.wordform_matrix)==2
-    assert not l.wordform_matrix[0][0].children[0].is_stressed
+    l = TextModel('disaster in embrace').line1
+    assert len(l.wordtoken_matrix)==2
+    assert l.wordtoken_matrix[0].sylls[0].is_stressed is False
 
-    wfl = l.wordforms
-    wfl2 = Line('disaster in embrace').wordforms
-    assert wfl != wfl2
-    assert wfl is not wfl2
-    
 def test_word():
     try:
-        Word('szia',lang='hu')
+        TextModel('szia',lang='hu').wordtype1
         assert 0, 'Testing exception failed'
     except Exception:
         assert 1
 
-    word = Word('hello')
+    word = TextModel('hello').wordtype1
     assert word.num_sylls == 2
     assert word.num_stressed_sylls == 1
     

@@ -1,8 +1,7 @@
 from ..imports import *
-from .texts import Text
-from typing import List, Optional, Any
+from ..words.wordtokenlist import WordTokenList
 
-class Line(Text):
+class Line(WordTokenList):
     """
     A class representing a line of text in a poem or prose.
 
@@ -15,127 +14,12 @@ class Line(Text):
         child_type (str): The type of child entities. Default is "WordToken".
         is_parseable (bool): Whether the line can be parsed. Default is True.
         prefix (str): Prefix used for identification. Default is "line".
-        list_type (str): The type of list used for storing children. Default is 'WordTokenList'.
         use_cache (bool): Whether to use caching. Default is False.
     """
+    prefix = 'line'
 
-    line_sep: str = "\n"
-    sep: str = "\n"
-    child_type: str = "WordToken"
-    is_parseable: bool = True
-    prefix: str = "line"
-    list_type: str = 'WordTokenList'
-    use_cache: bool = False
-
-    @profile
-    def __init__(
-        self,
-        txt: str = "",
-        children: List[Any] = [],
-        parent: Optional[Any] = None,
-        tokens_df: Optional[pd.DataFrame] = None,
-        lang: str = DEFAULT_LANG,
-        **kwargs
-    ) -> None:
-        """
-        Initialize a Line object.
-
-        Args:
-            txt (str): The text content of the line.
-            children (List[Any]): List of child entities (usually WordTokens).
-            parent (Optional[Any]): The parent entity of this line.
-            tokens_df (Optional[pd.DataFrame]): DataFrame containing tokenized data.
-            lang (str): The language of the line. Defaults to DEFAULT_LANG.
-            **kwargs: Additional keyword arguments.
-
-        Raises:
-            Exception: If neither txt, children, nor tokens_df is provided.
-        """
-        from ..words import WordToken
-
-        if not txt and not children and tokens_df is None:
-            raise Exception("Must provide either txt, children, or tokens_df")
-        txt = txt.strip()
-
-        if not children:
-            if tokens_df is None:
-                tokens_df = tokenize_sentwords_df(txt)
-            children = [
-                WordToken(
-                    txt=word_d.get("word_str", ""),
-                    lang=lang,
-                    parent=self,
-                    sent_num=word_d.get("sent_i"),
-                    sentpart_num=word_d.get("sent_i"),
-                )
-                for word_d in tokens_df.to_dict("records")
-                if "word_str" in word_d
-            ]
-        Entity.__init__(self, txt=txt, children=children, parent=parent, **kwargs)
-        self._parses = []
-        self.is_parseable = True
-
-    @cached_property
-    def wordform_matrix(self) -> List[Any]:
-        """
-        Get the matrix of word forms for the line.
-
-        Returns:
-            List[Any]: A matrix of word forms.
-        """
-        return self.get_wordform_matrix()
-
-    def get_wordform_matrix(self, resolve_optionality: bool = True) -> List[Any]:
-        """
-        Generate a matrix of word forms for the line.
-
-        Args:
-            resolve_optionality (bool): Whether to resolve optional forms. Default is True.
-
-        Returns:
-            List[Any]: A matrix of word forms.
-        """
-        from ..words import WordFormList
-
-        lim = 1 if not resolve_optionality else None
-        ll = [l for l in self.wordforms_all if l]
-        ll = [WordFormList(l) for l in itertools.product(*ll)]
-        ll.sort()
-        return ll[:lim]
-
-    def match_wordforms(self, wordforms: List[Any]) -> Any:
-        """
-        Match given word forms to the line's word forms.
-
-        Args:
-            wordforms (List[Any]): List of word forms to match.
-
-        Returns:
-            Any: A WordFormList of matched word forms.
-        """
-        from ..words import WordFormList
-
-        wordforms_ll = [l for l in self.wordforms_all if l]
-        assert len(wordforms) == len(wordforms_ll)
-
-        def iterr():
-            for correct_wf, target_wfl in zip(wordforms, wordforms_ll):
-                targets = [wf for wf in target_wfl if wf.key == correct_wf.key]
-                if targets:
-                    yield targets[0]
-                else:
-                    yield target_wfl[0]
-
-        return WordFormList(iterr())
-
-    def to_json(self) -> Dict[str, Any]:
-        """
-        Convert the Line object to a JSON-serializable dictionary.
-
-        Returns:
-            Dict[str, Any]: A dictionary representation of the Line object.
-        """
-        return Entity.to_json(self, txt=self.txt)
+    def __repr__(self, **kwargs):
+        return f"Line(num={self.num}, txt={repr(self.txt)})"
 
     def to_html(self, parse: Optional[Any] = None, as_str: bool = False, css: str = HTML_CSS, tooltip: bool = False, **kwargs) -> Any:
         """
@@ -162,10 +46,10 @@ class Line(Text):
                 odx = {"txt": prefstr}
                 output.append(odx)
 
-            wordtoken_slots = parse.wordtoken2slots[wordtoken]
+            wordtoken_slots = parse.wordtoken2slots[wordtoken.key]
             if wordtoken_slots:
                 for slot in wordtoken_slots:
-                    pos = slot.parent
+                    pos = slot.position
                     spclass = f"mtr_{'s' if slot.is_prom else 'w'}"
                     stclass = f"str_{'s' if slot.unit.is_stressed else 'w'}"
                     vclass = f"viol_{'y' if pos.violset else 'n'}"
@@ -231,7 +115,7 @@ class Line(Text):
         """
         return self.parses.stats_d(by=by, **kwargs)
 
-    @cached_property
+    @property
     def num_sylls(self) -> int:
         """
         Get the number of syllables in the line.
@@ -256,9 +140,17 @@ class Line(Text):
             return np.nan
         return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1])
     
+    @property
+    def parts(self):
+        return LinePartList.from_wordtokens(self.wordtokens, parent=self)
+    
 
 
 class LineList(EntityList):
+    @classmethod
+    def from_wordtokens(cls, wordtokens, text=None):
+        return WordTokenList._from_wordtokens(wordtokens, 'line', 'line_num', text=text)
+
     def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
         line2rhyme = defaultdict(list)
         for line in self.data:
@@ -270,6 +162,36 @@ class LineList(EntityList):
                 if max_dist is None or dist <= max_dist:
                     line2rhyme[line].append((dist, line2))
         return {i: min(v) for i, v in line2rhyme.items()}
+    
+    @property
+    def rhyming(self):
+        return self.get_rhyming_lines()
+    
+    @property
+    def num_rhyming(self) -> int:
+        """
+        Get the number of rhyming lines in the stanza.
 
+        Returns:
+            int: The number of rhyming lines.
+        """
+        return len(self.rhyming)
 
+    @property
+    def is_rhyming(self) -> bool:
+        """
+        Check if the stanza contains rhyming lines.
 
+        Returns:
+            bool: True if the stanza contains rhyming lines, False otherwise.
+        """
+        return self.num_rhyming > 0
+
+class LinePart(WordTokenList): 
+    prefix = 'linepart'
+    pass
+
+class LinePartList(EntityList):
+    @classmethod
+    def from_wordtokens(cls, wordtokens, text=None):
+        return WordTokenList._from_wordtokens(wordtokens, 'linepart', 'linepart_num', text=text)

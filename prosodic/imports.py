@@ -293,35 +293,6 @@ from .parsing import *
 GLOBALS = globals()
 GLOBALS["list"] = list
 
-CLASSNAMES = {
-    TextModel: "text",
-    Stanza: "stanza",
-    Line: "line",
-    WordToken: "wordtoken",
-    WordType: "wordtype",
-    WordForm: "wordform",
-    Syllable: "syllable",
-    Phoneme: "phoneme",
-}
-
-CHILDCLASSES = {
-    "textmodel": Stanza,
-    "text": Stanza,
-    "stanza": Line,
-    "line": WordToken,
-    "wordtoken": WordType,
-    "word": WordType,
-    "wordtype": WordForm,
-    "wordform": Syllable,
-    "syllable": Phoneme,
-    "syll": Phoneme,
-    "phoneme": None,
-    "wordformlist": WordForm,
-    "parselist": Parse,
-    "parse": ParsePosition,
-    "parseposition": ParseSlot,
-}
-
 CHILDCLASSLISTS = {
     TextModel: WordTokenList,
     Stanza: LineList,
@@ -333,8 +304,11 @@ CHILDCLASSLISTS = {
     Phoneme: None,
 
     Parse: ParsePositionList,
-    ParsePosition: ParseSlotList
+    ParsePosition: ParseSlotList,
 
+    Sentence: WordTokenList,
+    SentPart: WordTokenList,
+    LinePart: WordTokenList,
 }
 
 SELFCLASSES = {
@@ -350,9 +324,16 @@ SELFCLASSES = {
     "syll": Syllable,
     "phoneme": Phoneme,
     "phoneme": Phoneme,
+    "parse": Parse,
+    "parseposition": ParsePosition,
+    "parseslot": ParseSlot,
+    "sentence": Sentence,
+    "sentpart": SentPart,
+    "linepart": LinePart,
+    "sent": Sentence,
 }
 
-PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words", "lineparts", "sentparts", "sentences", "sentences"}
+PLURAL_ATTRS = {"texts", "textmodels", "stanzas", "lines", "wordtokens", "wordtokens", "wordtypes", "wordforms", "syllables", "phonemes", "parses", "sylls", "words", "lineparts", "sentparts", "sentences", "sentences", "sents"}
 SINGULAR_ATTRS = {"text", "textmodel", "stanza", "line", "wordtoken", "word", "wordtype", "wordform", "syllable", "phoneme", "parse", "syll", "linepart", "sentpart", "sentence", "sent"}
 
 
@@ -388,6 +369,14 @@ LISTCLASSES = {
     "sylls": SyllableList,
     "phonemes": PhonemeList,
     "parses": ParseList,
+    "sentences": SentenceList,
+    "sentence": SentenceList,
+    "sentpart": SentPartList,
+    "sentparts": SentPartList,
+    "lineparts": LinePartList,
+    "linepart": LinePartList,
+    "sents": SentenceList,
+    "sent": SentenceList
 }
 
 CLASSPREFIXES = {
@@ -412,7 +401,16 @@ CLASSPREFIXES = {
     SyllableList: "Sylls",
     PhonemeList: "Phonemes",
     ParseList: "Parses",
+
+    SentenceList: "Sentences",
+    SentPartList: "SentParts",
+    LinePartList: "LineParts",
+    Sentence: "Sent",
+    SentPart: "SentPart",
+    LinePart: "LinePart",
 }
+
+ALL_CLASSES = {**LISTCLASSES, **SELFCLASSES}
 
 # Add this new dictionary after the existing class mappings
 CLASS_DEPTHS = {
@@ -477,96 +475,7 @@ def get_class(class_name):
         type: The corresponding class object, or None if not found.
     """
     class_name = str(class_name).lower().replace('_', '').replace(' ', '')
-    
-    # Define nickname mappings
-    nickname_map = {
-        'text': TextModel,
-        'textmodel': TextModel,
-        'stanza': Stanza,
-        'line': Line,
-        'word': WordToken,
-        'wordtoken': WordToken,
-        'token': WordToken,
-        'wordtype': WordType,
-        'type': WordType,
-        'wordform': WordForm,
-        'form': WordForm,
-        'syllable': Syllable,
-        'syll': Syllable,
-        'phoneme': Phoneme,
-        'phon': Phoneme,
-        'parse': Parse,
-        'parseposition': ParsePosition,
-        'position': ParsePosition,
-        'parseslot': ParseSlot,
-        'slot': ParseSlot,
-        "linepart": LinePart,
-        "sentpart": SentPart,
-        "sent": Sentence,
-        "sentence": Sentence,
-        
-        # List classes
-        'textlist': TextList,
-        'texts': TextList,
-        'stanzalist': StanzaList,
-        'stanzas': StanzaList,
-        'linelist': LineList,
-        'lines': LineList,
-        'linepartlist': LinePartList,
-        'lineparts': LinePartList,
-        "sents":SentenceList,
-        "sentences":SentenceList,
-        "sentparts":SentPartList,
-        "sentenceparts": SentPartList,
-        'wordtokenlist': WordTokenList,
-        'wordlist': WordTokenList,
-        'words': WordTokenList,
-        'tokens': WordTokenList,
-        'wordtypelist': WordTypeList,
-        'types': WordTypeList,
-        'wordformlist': WordFormList,
-        'forms': WordFormList,
-        'syllablelist': SyllableList,
-        'sylls': SyllableList,
-        'syllables': SyllableList,
-        'phonemelist': PhonemeList,
-        'phonemes': PhonemeList,
-        'phons': PhonemeList,
-        'parselist': ParseList,
-        'parses': ParseList,
-        
-        'parsepositionlist': ParsePositionList,
-        'positions': ParsePositionList,
-        'parsepositions': ParsePositionList,
-
-        'parseposition': ParsePosition,
-        'position': ParsePosition,
-        
-        'parseslotlist': ParseSlotList,
-        'parseslots': ParseSlotList,
-        'slots': ParseSlotList,
-
-        'parseslot': ParseSlot,
-        'slot': ParseSlot,
-    }
-    
-    # Check for exact match in nickname_map
-    if class_name in nickname_map:
-        return nickname_map[class_name]
-    
-    # Check for plural forms not explicitly listed
-    if class_name.endswith('s') and class_name[:-1] in nickname_map:
-        singular = nickname_map[class_name[:-1]]
-        return LISTCLASSES.get(singular.__name__.lower(), singular)
-    
-    # Check for 'list' suffix
-    if class_name.endswith('list'):
-        base_name = class_name[:-4]
-        if base_name in nickname_map:
-            return LISTCLASSES.get(nickname_map[base_name].__name__.lower(), nickname_map[base_name])
-    
-    # If no match found, return None
-    return None
+    return ALL_CLASSES.get(class_name)
 
 def get_list_class_name(list_class):
     return pluralize_class_name(list_class.lower())

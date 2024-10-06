@@ -108,6 +108,10 @@ class TextModel(Entity):
         from ..sents.sents import SentPartList
 
         return SentPartList.from_wordtokens(self.children, text=self)
+    
+    @property
+    def wordtokens(self):
+        return self.children
 
     def to_hash(self) -> str:
         """

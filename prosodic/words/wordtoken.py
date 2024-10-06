@@ -92,16 +92,16 @@ class WordToken(Entity):
         from .wordtype import WordType, WordTypeList
 
         wordtype = WordType(
-            self._txt, lang=self.lang, force_unstress=True, text=self.text
+            txt=self._txt, lang=self.lang, force_unstress=True
         )
-        self.children = WordTypeList([wordtype], parent=self, text=self.text)
+        self.children = WordTypeList([wordtype], parent=self, )
         wordtype.parent = self
 
     def force_ambig_stress(self):
         from .wordtype import WordType, WordTypeList
 
         wordtype = WordType(
-            self._txt, lang=self.lang, force_ambig_stress=True, text=self.text
+            txt=self._txt, lang=self.lang, force_ambig_stress=True
         )
-        self.children = WordTypeList([wordtype], parent=self, text=self.text)
+        self.children = WordTypeList([wordtype], parent=self)
         wordtype.parent = self

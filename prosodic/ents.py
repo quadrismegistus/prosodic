@@ -310,12 +310,12 @@ class Entity(UserList):
         cls_depth = get_class_depth(list_type)
         ent_class = get_ent_class(list_type)
         list_class = get_list_class(list_type)
-        # log.info(f"Getting list of type: {list_type}")
-        # log.info(f'My class: {self.__class__}')
-        # log.info(f'My depth: {self.class_depth}')
-        # log.info(f"Class depth: {cls_depth}")
-        # log.info(f"Entity class: {ent_class}")
-        # log.info(f"List class: {list_class}")
+        log.info(f"Getting list of type: {list_type}")
+        log.info(f'My class: {self.__class__}')
+        log.info(f'My depth: {self.class_depth}')
+        log.info(f"Class depth: {cls_depth}")
+        log.info(f"Entity class: {ent_class}")
+        log.info(f"List class: {list_class}")
 
         if list_class is None:
             return None

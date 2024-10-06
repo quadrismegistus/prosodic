@@ -122,11 +122,22 @@ class WordForm(Entity):
         """
         from .phonemes import PhonemeList
 
-        sylls = []
-        for syll in reversed(self.children):
-            sylls.insert(0, syll)
-            if syll.stress == "P":
-                break
+        if not len(self.children): return
+        last_syll = self.children[-1]
+        sylls = [last_syll]
+        if not last_syll.is_stressed and len(self.children)>1:
+            second_to_last_syll = self.children[-2]
+            if second_to_last_syll.is_stressed:
+                sylls.insert(0,second_to_last_syll)
+
+        print(sylls)
+        # for syll_num_r, syll in enumerate(reversed(self.children)):
+        #     sylls.insert(0, syll)
+        #     if syll.stress == "P":
+        #         break
+        #     print(syll_num_r,syll)
+        #     if syll_num_r>1:
+        #         break
         if not sylls:
             return
         o = sylls[0].rime.data + [phon for syll in sylls[1:] for phon in syll.children]

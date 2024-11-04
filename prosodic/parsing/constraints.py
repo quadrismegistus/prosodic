@@ -154,3 +154,6 @@ def s_trough(mpos):
 def pentameter(parse):
     return parse.num_peaks != 5
 
+@constraint(desc="Ensure the parse is iambic", scope="line")
+def iambic(parse):
+    return not parse.meter_str.startswith('-+')

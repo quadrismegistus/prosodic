@@ -610,7 +610,7 @@ class Parse(Entity):
             return "iambic" if self.is_rising else "trochaic"
         elif self.nary_feet == 3:
             return "anapestic" if self.is_rising else "dactylic"
-        log.error("foot type?")
+        log.error(f"foot type? {self.nary_feet}")
         return ""
 
     @property

@@ -302,7 +302,7 @@ class TextModel(Entity):
         return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
 
 
-@stash.stashed_result
+# @stash.stashed_result
 def Text(
     txt: str = "",
     fn: str = "",

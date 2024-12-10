@@ -64,7 +64,7 @@ import panphon
 import panphon.sonority
 
 
-USE_CACHE = True
+USE_CACHE = False
 USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
@@ -92,7 +92,7 @@ MIN_WORDS_IN_PHRASE = 2
 MAX_WORDS_IN_PHRASE = 15
 DEFAULT_LANG = "en"
 LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>"
-LOG_LEVEL = 5
+LOG_LEVEL = 'CRITICAL'
 DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2

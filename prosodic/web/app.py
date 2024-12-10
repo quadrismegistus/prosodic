@@ -24,6 +24,7 @@ def get_text(txt):
 @socketio.on('parse')
 def parse(data):
     data = unjsonify(data)
+    print(data)
     data = {
         d['name']: (
             int(d['value'])

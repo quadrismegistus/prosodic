@@ -310,12 +310,12 @@ class Entity(UserList):
         cls_depth = get_class_depth(list_type)
         ent_class = get_ent_class(list_type)
         list_class = get_list_class(list_type)
-        log.info(f"Getting list of type: {list_type}")
-        log.info(f'My class: {self.__class__}')
-        log.info(f'My depth: {self.class_depth}')
-        log.info(f"Class depth: {cls_depth}")
-        log.info(f"Entity class: {ent_class}")
-        log.info(f"List class: {list_class}")
+        log.debug(f"Getting list of type: {list_type}")
+        log.debug(f'My class: {self.__class__}')
+        log.debug(f'My depth: {self.class_depth}')
+        log.debug(f"Class depth: {cls_depth}")
+        log.debug(f"Entity class: {ent_class}")
+        log.debug(f"List class: {list_class}")
 
         if list_class is None:
             return None
@@ -329,31 +329,31 @@ class Entity(UserList):
             return self.children
 
         if cls_depth == 1:  # on text level
-            # log.info(f"Getting text list for type: {list_type}")
+            # log.debug(f"Getting text list for type: {list_type}")
             full_list = self.get_text_list(list_type)
             if self.is_text:
                 return full_list
             if full_list is not None:
-                # log.info(f"Found text list for type: {list_type}: {full_list[:1]}")
+                # log.debug(f"Found text list for type: {list_type}: {full_list[:1]}")
                 return self.get_overlapping_list(full_list)
 
         # If the current entity is above the requested type
         if self.class_depth < cls_depth:
-            # log.info(f"Current class depth ({self.class_depth}) is less than requested class depth ({cls_depth})")
-            # log.info(f"Getting descendants of type: {list_type}")
+            # log.debug(f"Current class depth ({self.class_depth}) is less than requested class depth ({cls_depth})")
+            # log.debug(f"Getting descendants of type: {list_type}")
             descendants = self.get_descendants(list_type)
-            # log.info(f"Found {len(descendants)} descendants")
+            # log.debug(f"Found {len(descendants)} descendants")
             if descendants:
-                # log.info("Creating new list with descendants")
+                # log.debug("Creating new list with descendants")
                 return list_class(descendants, parent=self, text=self.text)
             # else:
-            # log.info("No descendants found")
+            # log.debug("No descendants found")
         # If the current entity is below the requested type
         elif self.class_depth > cls_depth:
-            # log.info(f"Current class depth ({self.class_depth}) is greater than requested class depth ({cls_depth})")
-            # log.info(f"Searching for ancestor of type: {list_type}")
+            # log.debug(f"Current class depth ({self.class_depth}) is greater than requested class depth ({cls_depth})")
+            # log.debug(f"Searching for ancestor of type: {list_type}")
             ancestor = self._get_ancestor(list_type)
-            # log.info(f"Found ancestor: {ancestor}")
+            # log.debug(f"Found ancestor: {ancestor}")
             return (
                 list_class([ancestor], parent=ancestor.parent, text=self.text)
                 if ancestor
@@ -698,7 +698,7 @@ class Entity(UserList):
         except (IndexError, AttributeError):
             return None
 
-    # @log.info
+    # @log.debug
     def to_dict(
         self,
         incl_num=True,
@@ -771,7 +771,7 @@ class Entity(UserList):
         return self.to_html(as_str=as_str)
 
     @classmethod
-    # @log.info
+    # @log.debug
     def from_dict(cls, data, use_registry=DEFAULT_USE_REGISTRY):
         assert isinstance(data, dict)
         from .imports import GLOBALS
@@ -784,7 +784,7 @@ class Entity(UserList):
         key = cls_data.get("key")
         use_registry = cls_data.pop("_use_registry", use_registry)
         if use_registry and key is not None and key in OBJECTS:
-            # log.info(f'{cls_name}.from_dict({key}) returning from registry: {OBJECTS[key]}')
+            # log.debug(f'{cls_name}.from_dict({key}) returning from registry: {OBJECTS[key]}')
             return OBJECTS[key]
 
         cls2 = GLOBALS.get(cls_name)
@@ -812,9 +812,9 @@ class Entity(UserList):
     #     Returns:
     #         Entity: An instance of the appropriate Entity subclass.
     #     """
-    #     # log.info(f'stuffed: {data}')
+    #     # log.debug(f'stuffed: {data}')
     #     data = unstuff(data) if isinstance(data, dict) else data
-    #     # log.info(f'unstuffed: {data}')
+    #     # log.debug(f'unstuffed: {data}')
 
     #     # New code to handle children properly
     #     if isinstance(data, dict) and "children" in data:

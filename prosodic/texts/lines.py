@@ -40,7 +40,7 @@ class Line(WordTokenList):
 
         output = []
 
-        for wordtoken in self.wordtokens:
+        for i, wordtoken in enumerate(self.wordtokens):
             prefstr = get_initial_whitespace(wordtoken.txt)
             if prefstr:
                 odx = {"txt": prefstr}
@@ -52,13 +52,24 @@ class Line(WordTokenList):
                     pos = slot.position
                     spclass = f"mtr_{'s' if slot.is_prom else 'w'}"
                     stclass = f"str_{'s' if slot.unit.is_stressed else 'w'}"
-                    vclass = f"viol_{'y' if pos.violset else 'n'}"
+                    
+                    # Get position-level violations
+                    violations = list(slot.violset)
+                    
+                    # Add parse-wide violations to last slot
+                    is_last_slot = (i == len(self.wordtokens) - 1 and 
+                                  slot is wordtoken_slots[-1])
+                    if is_last_slot:
+                        violations.extend(parse.parse_viold.keys())
+                    
+                    vclass = f"viol_{'y' if violations else 'n'}"
+                    
                     odx = {
                         "txt": slot.unit.txt,
                         "meter": spclass,
                         "stress": stclass,
                         "viol": vclass,
-                        "viols": list(slot.violset),
+                        "viols": violations,
                     }
                     output.append(odx)
             else:

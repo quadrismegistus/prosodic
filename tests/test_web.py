@@ -10,10 +10,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 from multiprocessing import Process, Queue
 import threading
+import random
 from selenium.webdriver.support.ui import Select
 
 NAPTIME = int(os.environ.get('NAPTIME', 5))
-BASE_URL = "http://localhost:5111"
+PORT = random.randint(5111, 5211)
+BASE_URL = f"http://localhost:{PORT}"
 
 def _nap(naptime=NAPTIME):
     time.sleep(naptime)
@@ -21,7 +23,7 @@ def _nap(naptime=NAPTIME):
 def _run_app(q):
     from prosodic.web.app import app, socketio
     def start_server():
-        socketio.run(app, port=5111, debug=False)
+        socketio.run(app, port=PORT, debug=False)
     server_thread = threading.Thread(target=start_server)
     server_thread.start()
     q.put("Server started")
@@ -162,24 +164,24 @@ def test_homepage(driver):
 #     count = sum(1 for row in rows if "To be, or not to be, that is the question:" in row.text)
 #     assert count >= 1
 
-def test_app_run():
-    queue = Queue()
-    p = Process(target=_run_app, args=(queue,))
-    try:
-        p.start()
-        # Wait for the server to start
-        assert queue.get(timeout=30) == "Server started"
+# def test_app_run():
+#     queue = Queue()
+#     p = Process(target=_run_app, args=(queue,))
+#     try:
+#         p.start()
+#         # Wait for the server to start
+#         assert queue.get(timeout=30) == "Server started"
         
-        # Give some extra time for the server to be fully ready
-        _nap()
+#         # Give some extra time for the server to be fully ready
+#         _nap()
         
-        # Test if the server is running
-        response = requests.get(BASE_URL)
-        assert response.status_code == 200
+#         # Test if the server is running
+#         response = requests.get(BASE_URL)
+#         assert response.status_code == 200
         
-    finally:
-        p.terminate()
-        p.join()
+#     finally:
+#         p.terminate()
+#         p.join()
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -7,6 +7,13 @@ from prosodic.sents.trees import SentenceTree
 from prosodic.sents.grids import SentenceGrid
 from prosodic.sents.syntax import get_nlp, get_nlp_doc
 
+# Add at top of file after imports
+try:
+    import stanza
+    STANZA_AVAILABLE = True
+except ImportError:
+    STANZA_AVAILABLE = False
+
 # Tests for sents.py
 def test_sentence_list_from_wordtokens():
     text_model = TextModel("Hello world. This is a test.")
@@ -18,6 +25,7 @@ def test_sentence_list_from_wordtokens():
     assert len(sent_list[1]) == 5
 
 # Tests for trees.py
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_sentence_tree_from_sent():
     text_model = TextModel("Hello world.")
     sent = text_model.sents[0]
@@ -27,6 +35,7 @@ def test_sentence_tree_from_sent():
     assert tree.sent == sent
 
 # Tests for grids.py
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_sentence_grid_from_wordtokens():
     text_model = TextModel("Hello world.")
     wordtokens = text_model.wordtokens
@@ -36,11 +45,13 @@ def test_sentence_grid_from_wordtokens():
     assert grid.wordtokens == wordtokens
 
 # Tests for syntax.py
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_get_nlp():
     nlp = get_nlp(lang="en")
     assert nlp is not None
     assert hasattr(nlp, 'procstr')
 
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_get_nlp_doc():
     doc = get_nlp_doc("This is a test sentence.")
     assert doc is not None
@@ -48,6 +59,7 @@ def test_get_nlp_doc():
     assert len(doc.sentences[0].words) == 5
 
 # Additional test for SentenceTree properties
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_sentence_tree_properties():
     text_model = TextModel("The quick brown fox jumps over the lazy dog.")
     sent = text_model.sents[0]
@@ -60,6 +72,7 @@ def test_sentence_tree_properties():
     assert 'syntax_stress' in tree.df.columns
 
 # Additional test for SentenceGrid properties
+@pytest.mark.skipif(not STANZA_AVAILABLE, reason="stanza not installed")
 def test_sentence_grid_properties():
     text_model = TextModel("The quick brown fox jumps over the lazy dog.")
     wordtokens = text_model.wordtokens

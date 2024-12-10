@@ -30,6 +30,6 @@ editdistance
 munkres
 
 hashstash[rec]
-stanza
+# stanza
 svgling
 plotnine

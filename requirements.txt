@@ -29,7 +29,7 @@ regex
 editdistance
 munkres
 
-hashstash[rec]
+hashstash
 # stanza
 svgling
 plotnine

@@ -130,7 +130,7 @@ class WordForm(Entity):
             if second_to_last_syll.is_stressed:
                 sylls.insert(0,second_to_last_syll)
 
-        print(sylls)
+        # print(sylls)
         # for syll_num_r, syll in enumerate(reversed(self.children)):
         #     sylls.insert(0, syll)
         #     if syll.stress == "P":
@@ -145,7 +145,7 @@ class WordForm(Entity):
 
 
     @cache
-    def rime_distance(self, wordform: "WordForm") -> float:
+    def rime_distance(self, wordform: "WordForm", max_dist=RHYME_MAX_DIST) -> float:
         """
         Calculate the rime distance between this word form and another.
 
@@ -160,7 +160,9 @@ class WordForm(Entity):
 
         phons1 = self.rime
         phons2 = wordform.rime
-        return phons1.feature_distance(phons2)
+        if not max_dist:
+            return 0 if phons1.txt == phons2.txt else np.nan
+        return phons1.feature_distance(phons2, rime=True)
 
 
 

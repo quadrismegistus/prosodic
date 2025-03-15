@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(0,'/Users/ryan/github/hashstash')
 sys.path.insert(0,'/Users/rj416/github/hashstash')
 from logmap import logmap
-logmap.enable()
+# logmap.enable()
 import itertools
 from base64 import b64decode, b64encode
 from functools import wraps
@@ -206,7 +206,7 @@ HTML_CSS = """
 .parselist > li:first-of-type { list-style-type: decimal; }
 .parselist > li:last-of-type { list-style-type: decimal; }
 """
-RHYME_MAX_DIST = 1
+RHYME_MAX_DIST = 0
 
 
 # .str_s { text-decoration: underline dotted; text-underline-offset: 3px; }

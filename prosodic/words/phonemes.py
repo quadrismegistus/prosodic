@@ -1,5 +1,20 @@
 from ..imports import *
 
+RHYME_FEATS = {
+    # vowels
+    'hi',
+    'lo',
+    'back',
+    'round',
+    'tense',
+    'long',
+
+    # cons
+    'son',
+    'cons',
+    'nas',
+    'voi'
+}
 
 class Phoneme(Entity):
     """
@@ -94,6 +109,12 @@ class Phoneme(Entity):
     @property
     def feature_profile(self):
         return {k: v for k, v in self.feats.items() if type(v) in {int, float}}
+    
+    @property
+    def rime_feature_profile(self):
+        feats = RHYME_FEATS
+        d = {k:v for k,v in self.feature_profile.items() if k in feats}
+        return d
     
 
 
@@ -234,7 +255,19 @@ class PhonemeList(EntityList):
         df = pd.DataFrame([p.feature_profile for p in self.children])
         return dict(df.mean())
     
-    def feature_distance(self, other: "PhonemeList"):
+    @property
+    def rime_feature_profile(self):
+        import pandas as pd
+        self._annotate_phons()
+        df = pd.DataFrame([p.rime_feature_profile for p in self.children])
+        return dict(df.mean())
+    
+    @property
+    def txt(self):
+        return ''.join(ph.txt for ph in self)
+        
+    
+    def feature_distance(self, other: "PhonemeList", rime=False):
         from scipy.spatial.distance import euclidean
 
         phons1_txt = ''.join(phon.txt for phon in self)
@@ -242,8 +275,8 @@ class PhonemeList(EntityList):
         if phons1_txt == phons2_txt:
             return 0
 
-        d1 = self.feature_profile
-        d2 = other.feature_profile
+        d1 = self.feature_profile if not rime else self.rime_feature_profile
+        d2 = other.feature_profile if not rime else other.rime_feature_profile
         keys = set(d1.keys()) & set(d2.keys())
         v1 = [d1[k] for k in keys]
         v2 = [d2[k] for k in keys]

@@ -137,7 +137,7 @@ class Line(WordTokenList):
         return len(self.syllables)
 
     @cache
-    def rime_distance(self, line: 'Line') -> float:
+    def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:
         """
         Calculate the rime distance between this line and another line.
 
@@ -149,7 +149,7 @@ class Line(WordTokenList):
         """
         if not self.wordforms_nopunc or not line.wordforms_nopunc:
             return np.nan
-        return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1])
+        return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1], max_dist=max_dist)
     
     @property
     def parts(self):
@@ -164,12 +164,12 @@ class LineList(EntityList):
 
     def get_rhyming_lines(self, max_dist=RHYME_MAX_DIST):
         line2rhyme = defaultdict(list)
-        for line in self.data:
-            prev_lines = self.data[: line.i]
+        for line_i, line in enumerate(self.data):
+            prev_lines = self.data[:line_i]
             if not prev_lines:
                 continue
             for line2 in prev_lines:
-                dist = line.rime_distance(line2)
+                dist = line.rime_distance(line2, max_dist=max_dist)
                 if max_dist is None or dist <= max_dist:
                     line2rhyme[line].append((dist, line2))
         return {i: min(v) for i, v in line2rhyme.items()}

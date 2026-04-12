@@ -65,7 +65,12 @@ class TextModel(Entity):
 
     def _build_children(self):
         """Lazily construct WordToken Entity objects from stored token dicts."""
-        if self._children_built or self._token_dicts is None:
+        if self._children_built:
+            return
+        if self._token_dicts is None and self._syll_df is not None:
+            # loaded from parquet — reconstruct token dicts from syll_df
+            self._token_dicts = self._token_dicts_from_syll_df()
+        if self._token_dicts is None:
             return
         self._children_built = True
         for d in progress_bar(
@@ -77,10 +82,29 @@ class TextModel(Entity):
         if DEFAULT_USE_REGISTRY:
             self.register_objects()
 
+    def _token_dicts_from_syll_df(self):
+        """Reconstruct token dicts from _syll_df (for loaded texts)."""
+        df = self._syll_df
+        # one dict per unique word_num, using form_idx=0
+        seen = set()
+        dicts = []
+        for _, row in df[df['form_idx'].isin([0, -1])].drop_duplicates('word_num').iterrows():
+            dicts.append({
+                'txt': row['word_txt'],
+                'num': int(row['word_num']),
+                'line_num': int(row['line_num']),
+                'para_num': int(row['para_num']),
+                'sent_num': int(row['sent_num']),
+                'sentpart_num': int(row['sentpart_num']),
+                'linepart_num': int(row['linepart_num']),
+                'is_punc': int(row['is_punc']),
+            })
+        return dicts
+
     # property to intercept children access for lazy building
     @property
     def children(self):
-        if not self._children_built and self._token_dicts is not None:
+        if not self._children_built and (self._token_dicts is not None or self._syll_df is not None):
             self._build_children()
         return self._children_data
 
@@ -272,6 +296,9 @@ class TextModel(Entity):
         One row per syllable of the best parse per line, with meter_val,
         violations, and score. No entity construction needed.
         """
+        # use cached parsed_df from load() if available
+        if getattr(self, '_cached_parsed_df', None) is not None:
+            return self._cached_parsed_df
         return self.get_parsed_df()
 
     def get_parsed_df(self, **meter_kwargs):
@@ -309,7 +336,7 @@ class TextModel(Entity):
         return pd.DataFrame(rows)
 
     def save(self, path=None, **meter_kwargs):
-        """Save syllable DF + parse results to parquet files.
+        """Save text + syllable DF + parse results to parquet files.
 
         Args:
             path: directory to save into. Defaults to ~/prosodic_data/data/parsed/<hash>/
@@ -330,38 +357,71 @@ class TextModel(Entity):
         if len(pdf) > 0:
             pdf.to_parquet(os.path.join(path, "parsed.parquet"))
 
-        # save metadata
+        # save metadata + original text
         import json
-        meta = {"txt_hash": self.hash, "lang": self.lang, "num_lines": int(self._syll_df['line_num'].max())}
+        meta = {
+            "txt": self._txt,
+            "lang": self.lang,
+            "num_lines": int(self._syll_df['line_num'].max()),
+        }
         with open(os.path.join(path, "meta.json"), "w") as f:
             json.dump(meta, f)
 
         return path
 
-    @staticmethod
-    def load(path):
-        """Load saved syllable DF + parse results from parquet files.
+    @classmethod
+    def load(cls, path):
+        """Load a saved TextModel from parquet files.
+
+        Rebuilds TextModel with pre-computed _syll_df, skipping tokenization
+        and get_word() entirely. If parse results exist, they're available
+        via .parsed_df immediately.
 
         Args:
-            path: directory containing syll.parquet and parsed.parquet
+            path: directory containing syll.parquet and meta.json
 
         Returns:
-            dict with 'syll_df' and 'parsed_df' DataFrames
+            TextModel with _syll_df pre-loaded (entities still lazy)
         """
-        result = {}
+        import json
         syll_path = os.path.join(path, "syll.parquet")
-        parsed_path = os.path.join(path, "parsed.parquet")
         meta_path = os.path.join(path, "meta.json")
+        parsed_path = os.path.join(path, "parsed.parquet")
 
-        if os.path.exists(syll_path):
-            result['syll_df'] = pd.read_parquet(syll_path)
+        with open(meta_path) as f:
+            meta = json.load(f)
+
+        syll_df = pd.read_parquet(syll_path)
+
+        # build TextModel without re-tokenizing or calling get_word
+        obj = cls.__new__(cls)
+        obj._token_dicts = None
+        obj._syll_df = syll_df
+        obj._children_built = False
+        obj._children_data = obj.children_type(parent=obj) if obj.children_type is not None else []
+        obj._parse_results = {}
+        obj._line_parse_results = {}
+        obj._parses = None
+        obj._attrs = {'lang': meta.get('lang', DEFAULT_LANG)}
+        obj._num = None
+        obj._mtr = None
+        obj.parent = None
+        obj._text = None
+        obj._key = None
+        obj._txt = meta.get('txt', '')
+        obj.lang = meta.get('lang', DEFAULT_LANG)
+        for k, v in obj._attrs.items():
+            try:
+                setattr(obj, k, v)
+            except Exception:
+                pass
+
+        # load cached parsed_df if available
+        obj._cached_parsed_df = None
         if os.path.exists(parsed_path):
-            result['parsed_df'] = pd.read_parquet(parsed_path)
-        if os.path.exists(meta_path):
-            import json
-            with open(meta_path) as f:
-                result['meta'] = json.load(f)
-        return result
+            obj._cached_parsed_df = pd.read_parquet(parsed_path)
+
+        return obj
 
     def iter_wordtoken_matrix(self):
         yield from self.wordtokens.iter_wordtoken_matrix()

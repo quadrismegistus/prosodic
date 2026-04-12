@@ -69,7 +69,7 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 - `build_syll_df(token_dicts, lang)`: Builds the flat DataFrame from tokenized word dicts + `get_word()` output. Computes all syllable features (stress, weight, strong/weak, functionword) without constructing Entity objects.
 - `SyllData`: Lightweight `__slots__` class that duck-types the Syllable interface for Parse/ParseSlot.
-- `extract_features_from_df()`: Reads feature arrays from a DataFrame slice for one line.
+- `_phone_is_vowel()`, `_syll_is_heavy_from_ipa()`: Compute phonological features from IPA without Entity objects.
 
 ### Language Support (`langs/`)
 
@@ -83,15 +83,17 @@ All global constants, paths, and shared imports live in `imports.py`. Modules im
 
 ### Memory Management
 
-- `OBJECTS` in `ents.py` is a `weakref.WeakValueDictionary` — entities are garbage-collected when no longer referenced.
-- `DEFAULT_USE_REGISTRY` (in `imports.py`) gates all `register_objects()` calls. Set to `False` for batch workloads.
+- `DEFAULT_USE_REGISTRY` is `False` — the OBJECTS registry (WeakValueDictionary, register_objects, find, match) has been removed.
 - `TextModel.cleanup()` explicitly clears parse results and cached properties.
 - `Entity.clear_cached_properties()` removes all `@cached_property` values from an entity's `__dict__`.
 - TextModel children are lazy — if you only need parse results (no Entity access), ~280K objects are never created.
 
 ### Web App (`web/`)
 
-Flask + flask-socketio (WebSocket). Real-time parsing with progress updates.
+Flask + flask-socketio (WebSocket). Mobile-friendly single-page app.
+- `app.py`: Server with `parse` websocket handler. Uses `parse_batch()` with Entity-backed Syllables for HTML rendering (word boundaries, violation tooltips).
+- `templates/index.html`: Responsive layout (sidebar stacks on mobile). Collapsible "Configure Meter" panel. Best-only / All-unbounded toggle. Violation tooltips on tap/hover. Ambiguity column.
+- Run with `prosodic web` or `python -c "from prosodic.web.app import main; main(port=5111, host='0.0.0.0')"`
 
 ## Testing Notes
 
@@ -121,8 +123,11 @@ Without entity access (batch/corpus use): **~4.2s**
 - ✅ DataFrame-first architecture (syll_df)
 - ✅ Batched constraint evaluation across lines
 - ✅ Removed old branch-and-bound parser, hashstash parse caching
+- ✅ Removed OBJECTS registry, register_objects, find, match, equals
+- ✅ Dead code removal (MaxEnt.py, lexconvert.py, SimpleCache, branch/copy)
+- ✅ Save/load to parquet (text.save(), TextModel.load())
+- ✅ Web app rewrite (mobile-friendly, tooltips, ambiguity)
 
 ### Remaining
-- **`__slots__` on high-volume classes** (SyllData already uses it; ParseSlot, ParsePosition could benefit)
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)
 - **Lazy phoneme construction** (Syllable creates Phoneme objects eagerly; could defer to IPA-on-demand)

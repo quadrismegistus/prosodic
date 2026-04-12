@@ -12,11 +12,41 @@ app.config['SECRET_KEY'] = '0f m@ns dis0b3d13nc3'
 socketio = SocketIO(app, ping_timeout=60 * 5, ping_interval=5)
 
 linelim = 1000
+_text_cache = {}
 
 
-@cache(maxsize=10)
 def get_text(txt):
-    return TextModel(txt)
+    if txt not in _text_cache:
+        _text_cache[txt] = TextModel(txt)
+    return _text_cache[txt]
+
+
+def render_parse_html(parse):
+    """Render a parse as HTML with meter/stress/violation CSS classes."""
+    parts = []
+    last_word_id = None
+    for pos in parse.positions:
+        for slot in pos.children:
+            # detect word boundary via syllable parent chain
+            unit = slot.unit
+            word_id = None
+            if hasattr(unit, 'parent') and unit.parent is not None:
+                word_id = id(unit.parent)
+            if last_word_id is not None and word_id != last_word_id:
+                parts.append(' ')
+            last_word_id = word_id
+
+            mtr = 'mtr_s' if slot.is_prom else 'mtr_w'
+            strs = 'str_s' if unit.is_stressed else 'str_w'
+            viols = list(slot.violset)
+            viol = 'viol_y' if viols else 'viol_n'
+            classes = f'{mtr} {strs} {viol}'
+            if viols:
+                tip = ', '.join(f'*{v}' for v in viols)
+                parts.append(f'<span class="{classes}"><span class="tip">{tip}</span>{unit.txt}</span>')
+            else:
+                parts.append(f'<span class="{classes}">{unit.txt}</span>')
+    return ''.join(parts)
 
 
 @socketio.on('parse')
@@ -41,84 +71,52 @@ def parse(data):
 
     t = get_text(text_str)
 
-    # web app needs full entities for HTML rendering, so parse via Entity path
-    text_lines = t.lines  # triggers entity construction
+    # parse with Entity-based path (needed for HTML rendering with word boundaries)
+    from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
     meter = Meter(**meter_kwargs)
-    for line in text_lines:
-        line.parse(**meter_kwargs)
+    text_lines = t.lines  # triggers entity construction
+    results = parse_batch(text_lines, meter)
+    # attach results to lines
+    for i, (wt, pl) in enumerate(results):
+        pl.parent = wt
+        wt._parses = pl
+        text_lines[i]._parses = pl
 
     started = time.time()
     numtoiter = len(text_lines)
     numrows = 0
-    remainings = []
-    rates = []
 
     for i, line in enumerate(text_lines):
-        line_num = line.num
         pl = line._parses
         if not pl:
             continue
 
         data_out_l = []
-        parses_to_show = pl.unbounded if hasattr(pl, 'unbounded') else []
-        for pi, parse in enumerate(parses_to_show):
-            html = line.to_html(
-                parse=parse,
-                blockquote=False,
-                as_str=True,
-                tooltip=True
-            ) if hasattr(line, 'to_html') else str(parse)
-
-            resd = parse.stats_d() if hasattr(parse, 'stats_d') else {}
-            stanza_num = line.stanza.num if hasattr(line, 'stanza') and line.stanza else 1
-
-            row_data = {}
-            row_data['row'] = [
-                stanza_num,
-                line_num,
-                line.txt.strip(),
-                parse.parse_rank or (pi + 1),
-                f'<div class="parsestr">{html}</div>',
-                parse.txt,
-                parse.meter_str,
-                parse.stress_str,
-                parse.num_sylls,
-                round(resd.get('ambig', 0), 1),
-                round(resd.get('*total', -1), 1),
-            ] + [
-                round(resd.get(f'*{cname}', 0), 1)
-                for cname in get_all_constraints()
-            ]
-            row_data['row'] = ['' if not x else x for x in row_data['row']]
-
-            def ctype(pi):
-                return 'otherparse' if pi else 'bestparse'
-
-            row_data['row'] = [
-                f'<span class="{ctype(pi)}">{x}</span>' for x in row_data['row']
-            ]
-            sofar = time.time() - started
-            rate = sofar / (i + 1) if i > 0 else 0
-            remaining = (numtoiter - i - 1) * rate if rate else 0
-            remainings.append(remaining)
-            rates.append(rate)
-            row_data['progress'] = (i + 1) / max(numtoiter, 1)
-            row_data['remaining'] = float(np.median(remainings[-10:]))
-            row_data['rate'] = float(np.median(rates[-10:])) if rates else 0
-            row_data['rownum'] = numrows
-            row_data['numdone'] = i + 1
-            row_data['numtodo'] = numtoiter - (i + 1)
-            row_data['numlines'] = numtoiter
-            row_data['duration'] = sofar
-            data_out_l.append(row_data)
+        unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
+        for pi, p in enumerate(unbounded):
+            parse_html = render_parse_html(p)
+            row = {
+                'line_num': line.num,
+                'rank': pi + 1,
+                'parse_html': parse_html,
+                'parse_txt': p.txt,
+                'meter_str': p.meter_str,
+                'score': round(p.score, 1),
+                'num_sylls': p.num_sylls,
+                'num_unbounded': pl.num_unbounded,
+                'progress': (i + 1) / max(numtoiter, 1),
+                'numdone': i + 1,
+                'numtodo': numtoiter - (i + 1),
+                'numlines': numtoiter,
+            }
+            data_out_l.append(row)
             numrows += 1
 
-        gtime.sleep(.01)
-        out = jsonify(data_out_l)
-        emit('parse_result', out)
+        gtime.sleep(.005)
+        emit('parse_result', jsonify(data_out_l))
 
-    gtime.sleep(.1)
+    gtime.sleep(.05)
     emit('parse_done', {'duration': time.time() - started, 'numrows': numrows})
 
 

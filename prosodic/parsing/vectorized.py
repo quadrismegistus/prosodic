@@ -71,7 +71,7 @@ def parse_batch(parse_units, meter):
                 if constraint_index is None:
                     constraint_index = ci
 
-            # batch bounding: stack all lines' violation sums
+            # batch bounding
             all_viol_sums = np.stack([v.sum(axis=1) for v in all_viols])  # (L, S, C)
             unbounded_masks = compute_bounding_batch(all_viol_sums)  # (L, S)
 
@@ -634,6 +634,11 @@ class LazyParseList:
     def render(self, **kwargs):
         bp = self.best_parse
         return bp.render(**kwargs) if bp else ""
+
+    @property
+    def num_all(self):
+        """Total unique scansions (for compatibility with ParseList)."""
+        return len(self._all_scansions)
 
     @property
     def scansions(self):

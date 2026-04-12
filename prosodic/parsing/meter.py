@@ -167,7 +167,7 @@ class Meter(Entity):
             log.warning(f"cannot parse {text}")
             return
         if self.exhaustive: num_proc = 1 # @todo fix this
-        if self.vectorized and not self.exhaustive:
+        if self.vectorized:
             # batched vectorized path: group by syllable count, process in bulk
             from .vectorized import parse_batch
             results = parse_batch(parse_units[:lim], self)

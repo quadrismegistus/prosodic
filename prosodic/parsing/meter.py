@@ -227,8 +227,18 @@ class Meter(Entity):
             evaluate_constraints, compute_bounding, build_parses,
         )
 
+        # check if we need wordform matrix expansion
+        needs_matrix = self.resolve_optionality and any(
+            wt.wordtype.num_forms > 1 for wt in wordtokens if wt.has_wordform
+        )
+
         all_parses = []
-        for wtl in wordtokens.iter_wordtoken_matrix():
+        if needs_matrix:
+            wtl_iter = wordtokens.iter_wordtoken_matrix()
+        else:
+            wtl_iter = [wordtokens]  # skip costly copy when no ambiguity
+
+        for wtl in wtl_iter:
             features = extract_features(wtl)
             nsylls = len(features["stressed"])
 

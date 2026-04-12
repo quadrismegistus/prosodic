@@ -50,6 +50,8 @@ def extract_features(wordtokens):
     }
 
 
+_scansion_cache = {}
+
 def encode_scansions(scansions, nsylls):
     """Convert list of scansion lists to numpy arrays.
 
@@ -62,6 +64,11 @@ def encode_scansions(scansions, nsylls):
         position_ids: (S, N) int — which position index each syllable belongs to
         position_sizes: (S, N) int — size of the position each syllable belongs to
     """
+    # cache key: tuple of tuples (immutable)
+    cache_key = tuple(tuple(s) for s in scansions)
+    if cache_key in _scansion_cache:
+        return _scansion_cache[cache_key]
+
     S = len(scansions)
     N = nsylls
 
@@ -81,7 +88,9 @@ def encode_scansions(scansions, nsylls):
                     position_sizes[si, syll_idx] = pos_size
                     syll_idx += 1
 
-    return meter_vals, position_ids, position_sizes
+    result = (meter_vals, position_ids, position_sizes)
+    _scansion_cache[cache_key] = result
+    return result
 
 
 def evaluate_constraints(features, meter_vals, position_ids, position_sizes, constraint_names):

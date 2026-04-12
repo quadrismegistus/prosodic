@@ -307,6 +307,26 @@ class TestSyllData:
         assert sd.is_weak is False
         assert sd.stress == "P"
 
+    def test_sylldata_num_and_repr(self):
+        from prosodic.texts.syll_df import SyllData
+        sd = SyllData(ipa="'hɛ", txt="hel", is_stressed=True,
+                      is_heavy=False, is_strong=True, is_weak=False)
+        assert sd.num is None
+        assert "SyllData" in repr(sd)
+        assert "'hɛ" in repr(sd)
+
+    def test_sylldata_secondary_stress(self):
+        from prosodic.texts.syll_df import SyllData
+        sd = SyllData(ipa="`hɛ", txt="hel", is_stressed=True,
+                      is_heavy=False, is_strong=False, is_weak=False)
+        assert sd.stress == "S"  # secondary
+
+    def test_sylldata_unstressed(self):
+        from prosodic.texts.syll_df import SyllData
+        sd = SyllData(ipa="hɛ", txt="hel", is_stressed=False,
+                      is_heavy=False, is_strong=False, is_weak=True)
+        assert sd.stress == "U"
+
     def test_sylldata_in_parse(self):
         t = TextModel("From fairest creatures we desire increase")
         t.parse()
@@ -318,6 +338,37 @@ class TestSyllData:
                 # slot.unit should be SyllData (DF path)
                 assert hasattr(slot.unit, 'ipa')
                 assert hasattr(slot.unit, 'is_stressed')
+
+
+class TestSyllDfHelpers:
+    def test_phone_is_vowel(self):
+        from prosodic.texts.syll_df import _phone_is_vowel
+        assert _phone_is_vowel('a') is True
+        assert _phone_is_vowel('t') is False
+
+    def test_syll_is_heavy_consonant_ending(self):
+        from prosodic.texts.syll_df import _syll_is_heavy_from_ipa
+        # "rɪst" ends in consonant → heavy
+        assert _syll_is_heavy_from_ipa('rɪst') is True
+
+    def test_syll_is_heavy_diphthong(self):
+        from prosodic.texts.syll_df import _syll_is_heavy_from_ipa
+        # "'aʊ" has two vowels → heavy (diphthong)
+        assert _syll_is_heavy_from_ipa("'aʊ") is True
+
+    def test_syll_not_heavy(self):
+        from prosodic.texts.syll_df import _syll_is_heavy_from_ipa
+        # "'fɛ" — single vowel, no consonant ending → light
+        assert _syll_is_heavy_from_ipa("'fɛ") is False
+
+    def test_syll_heavy_empty(self):
+        from prosodic.texts.syll_df import _syll_is_heavy_from_ipa
+        assert _syll_is_heavy_from_ipa("") is False
+
+    def test_build_syll_df_empty(self):
+        from prosodic.texts.syll_df import build_syll_df
+        df = build_syll_df([], lang='en')
+        assert len(df) == 0
 
 
 # --- Sorted parses ---

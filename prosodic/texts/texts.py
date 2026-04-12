@@ -79,8 +79,6 @@ class TextModel(Entity):
             desc="Building long text",
         ):
             self._children_data.append(WordToken(lang=self.lang, **d))
-        if DEFAULT_USE_REGISTRY:
-            self.register_objects()
 
     def _token_dicts_from_syll_df(self):
         """Reconstruct token dicts from _syll_df (for loaded texts)."""
@@ -216,8 +214,6 @@ class TextModel(Entity):
             else:
                 pl._num = i+1
                 self._parses.append(pl)
-        if DEFAULT_USE_REGISTRY:
-            self._parses.register_objects()
         return self._parses
 
     def parse_iter(
@@ -246,8 +242,7 @@ class TextModel(Entity):
             ):
                 # DF-only path: parse_list.parent may be None
                 if parse_list.parent is not None:
-                    parsed_ent = self.match(parse_list.parent)
-                    parse_list.parent = parsed_ent
+                    parsed_ent = parse_list.parent
                     parsed_ent._parses = parse_list
                 else:
                     # DF path: results stored in _line_parse_results,
@@ -259,7 +254,7 @@ class TextModel(Entity):
                     yield parse_list
                 elif parsed_ent is not None:
                     this_unit = getattr(parsed_ent, combine_by)
-                    if units and not last_unit.equals(this_unit):
+                    if units and last_unit is not this_unit:
                         new_parselist = ParseList.from_combinations(units, parent=last_unit)
                         last_unit._parses = new_parselist
                         self._parse_results[parse_key].append(new_parselist)

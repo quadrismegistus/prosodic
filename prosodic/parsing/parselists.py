@@ -63,7 +63,6 @@ class ParseList(EntityList):
         assert new_parses.parent is parent
         new_parses.bound(progress=False)
         new_parses.rank()
-        new_parses.register_objects()
         return new_parses
 
     def to_dict(self, incl_children=True, **kwargs):

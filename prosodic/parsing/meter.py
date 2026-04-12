@@ -116,8 +116,6 @@ class Meter(Entity):
         for i, pl in enumerate(self.parse_text_iter(text, force=force, lim=lim)):
             pl._num = i + 1
             pll.append(pl)
-        if DEFAULT_USE_REGISTRY:
-            pll.register_objects()
         return pll
 
     def parse_text_iter(self, text, force: bool = False, lim=None):

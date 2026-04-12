@@ -1,8 +1,5 @@
-import weakref
 from typing import Any, List, Type
 from .imports import *
-
-OBJECTS = weakref.WeakValueDictionary()
 
 
 class Entity(UserList):
@@ -43,7 +40,6 @@ class Entity(UserList):
             parent (Entity): The parent entity.
             **kwargs: Additional attributes to set on the entity.
         """
-        global OBJECTS
         self._attrs = kwargs
         self._num = num
         self._mtr = None
@@ -114,39 +110,6 @@ class Entity(UserList):
         ]
         for k in to_clear:
             self.__dict__.pop(k, None)
-
-    def register_objects(self):
-        global OBJECTS
-        for obj in self.iter_all():
-            key = obj.key
-            if key in OBJECTS:
-                break
-            OBJECTS[key] = obj
-
-    def find(self, ent):
-        # log.info(f'Finding {ent.key}')
-        if ent.key in OBJECTS:
-            # log.info(f'Found {ent.key} in OBJECTS')
-            return OBJECTS[ent.key]
-        if ent.class_depth < 2:
-            # log.info(f'Finding {ent.key} in text by attr')
-            attr_name = ent.key.split(".")[-1].lower()
-            attr_name = ''.join(x for x in attr_name if x.isalnum())
-            return getattr(self.text, attr_name)
-        
-        log.error(f'Could not find {ent.key}')
-        return None
-
-    def match(self, ent, ent_type=None):
-        res = self.find(ent)
-        if res is not None:
-            return res
-        if ent_type is None:
-            ent_type = type(ent).__name__.lower()
-        ent_list = self.get_list(ent_type)
-        for ent2 in ent_list:
-            if ent2.equals(ent):
-                return ent2
 
     @property
     def list_type(self):
@@ -623,13 +586,6 @@ class Entity(UserList):
             bool: True if the objects are the same instance, False otherwise.
         """
         return self is other
-
-    def equals(self, other):
-        return (
-            self is other
-            or self.key == other.key
-            or self.serialized == other.serialized
-        )
 
     @property
     def meter(self):

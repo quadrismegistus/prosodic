@@ -75,7 +75,8 @@ class TextModel(Entity):
                 self.children.append(WordToken(lang=self.lang, **row.to_dict()))
         
         # assign objects to global OBJECTS dict
-        self.register_objects()
+        if DEFAULT_USE_REGISTRY:
+            self.register_objects()
         
 
     @cached_property
@@ -180,7 +181,8 @@ class TextModel(Entity):
             else:
                 pl._num = i+1
                 self._parses.append(pl)
-        self._parses.register_objects()
+        if DEFAULT_USE_REGISTRY:
+            self._parses.register_objects()
         return self._parses
 
     def parse_iter(

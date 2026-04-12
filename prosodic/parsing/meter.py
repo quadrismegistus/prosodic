@@ -155,7 +155,8 @@ class Meter(Entity):
         ):
             pl._num = i + 1
             pll.append(pl)
-        pll.register_objects()
+        if DEFAULT_USE_REGISTRY:
+            pll.register_objects()
         return pll
 
     def parse_text_iter(
@@ -216,7 +217,7 @@ class Meter(Entity):
             parses = self.parse_fast(wordtokens)
 
         wordtokens._parses = parses
-        if not self.vectorized:
+        if not self.vectorized and DEFAULT_USE_REGISTRY:
             parses.register_objects()
         return parses
 

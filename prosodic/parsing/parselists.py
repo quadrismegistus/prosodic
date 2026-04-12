@@ -331,7 +331,7 @@ class ParseList(EntityList):
     #         **super().prefix_attrs,
     #     }
 
-    @cache
+    @cache(maxsize=32)
     def stats_d(
         self,
         by: Optional[str] = None,
@@ -403,7 +403,7 @@ class ParseList(EntityList):
         aggby = {col: getagg(col) for col in df_q}
         return aggby
 
-    @cache
+    @cache(maxsize=32)
     def stats(
         self,
         norm: Optional[bool] = None,

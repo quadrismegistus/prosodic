@@ -133,6 +133,12 @@ class TextModel(Entity):
             self._key = f"{self.nice_type_name}({self.hash})"
         return self._key
     
+    def cleanup(self):
+        self._parse_results.clear()
+        self._parses = None
+        for obj in self.iter_all():
+            obj.clear_cached_properties()
+
     def __getitem__(self, item):
         if isinstance(item, slice):
             return self.children[item]

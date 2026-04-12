@@ -1,7 +1,8 @@
+import weakref
 from typing import Any, List, Type
 from .imports import *
 
-OBJECTS = {}
+OBJECTS = weakref.WeakValueDictionary()
 
 
 class Entity(UserList):
@@ -106,6 +107,15 @@ class Entity(UserList):
                     new_ent.parent = None
                     new.append(new_ent)
         return new
+
+    def clear_cached_properties(self):
+        cls = self.__class__
+        to_clear = self.cached_properties_to_clear or [
+            k for k in list(self.__dict__)
+            if isinstance(getattr(cls, k, None), cached_property)
+        ]
+        for k in to_clear:
+            self.__dict__.pop(k, None)
 
     def register_objects(self):
         global OBJECTS
@@ -570,7 +580,7 @@ class Entity(UserList):
         """
         return encode_hash(self.key)
 
-    @cached_property
+    @property
     def stuffed(self):
         return stuff(self)
 
@@ -578,7 +588,7 @@ class Entity(UserList):
     def unstuffed(self):
         return unstuff(self.stuffed)
 
-    @cached_property
+    @property
     def serialized(self):
         return serialize(self)
 
@@ -641,7 +651,7 @@ class Entity(UserList):
         """
         return True
 
-    @cached_property
+    @property
     def id(self):
         return encode_hash(serialize(self.key))
 

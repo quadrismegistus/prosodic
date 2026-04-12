@@ -64,6 +64,7 @@ import panphon.sonority
 
 
 USE_CACHE = False
+CACHE_LINE_LIMIT = 25
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."

@@ -163,6 +163,7 @@ class Meter(Entity):
             return
         if self.exhaustive: num_proc = 1 # @todo fix this
         if num_proc != 0:
+            use_stash = caching_is_enabled() and len(parse_units) <= CACHE_LINE_LIMIT
             yield from stash.map(
                 self.parse_wordspan,
                 parse_units.data,
@@ -170,8 +171,8 @@ class Meter(Entity):
                 total=lim,
                 _force=force,
                 desc=f"Parsing {self.parse_unit}s",
-                stash_runs=caching_is_enabled(),
-                stash_map=caching_is_enabled(),
+                stash_runs=use_stash,
+                stash_map=use_stash,
             ).results_iter()
         else:
             for wordtokens in progress_bar(

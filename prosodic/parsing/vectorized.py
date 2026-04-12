@@ -471,75 +471,89 @@ class LazyParseList:
         self.parse_unit = parse_unit
         self.parent = wordtokens
 
-        # filter to unbounded only
-        unbounded_indices = np.where(unbounded_mask)[0]
-        self._scansions = [scansions[i] for i in unbounded_indices]
-        self._viols = viols[unbounded_indices]  # (U, N, C)
+        # store ALL scansions with their bounded status
+        self._all_scansions = list(scansions)
+        self._all_viols = viols  # (S, N, C)
+        self._unbounded_mask = unbounded_mask  # (S,) bool
         self._constraint_index = constraint_index
         self._constraint_names = list(constraint_index.keys())
         self._sylls = sylls
-        self._built_parses = {}  # cache: local index -> Parse
+        self._built_parses = {}  # cache: scansion index -> Parse
         self._best_idx = None
         self._bound_init = True
         self._num = None
 
+        # unbounded indices for fast access
+        self._unbounded_indices = np.where(unbounded_mask)[0]
+
         # compute scores for ranking (weighted violation sums)
         constraint_weights = meter.constraints
         weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
-        viols_per_scansion = self._viols.sum(axis=1)  # (U, C)
-        self._scores = (viols_per_scansion * weights[None, :]).sum(axis=1)  # (U,)
-        self._viols_per_scansion = viols_per_scansion
+        all_viols_sum = viols.sum(axis=1)  # (S, C)
+        self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
+        # scores for unbounded only
+        self._scores = self._all_scores[self._unbounded_indices]
 
     def __len__(self):
-        return len(self._scansions)
+        return len(self._all_scansions)
 
     def __bool__(self):
-        return len(self._scansions) > 0
+        return len(self._all_scansions) > 0
 
     @property
     def num_parses(self):
-        return len(self._scansions)
+        return len(self._unbounded_indices)
 
     @property
     def num_unbounded(self):
-        return len(self._scansions)
+        return len(self._unbounded_indices)
 
     @property
     def best_parse(self):
-        if not self._scansions:
+        if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
-            self._best_idx = int(self._scores.argmin())
+            # best among unbounded
+            self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
         return self._get_parse(self._best_idx, rank=1)
 
     @property
     def best_parses(self):
-        if self.best_parse is None:
-            return self
-        return self
+        from .parselists import ParseList
+        bp = self.best_parse
+        return ParseList([bp], parse_unit=self.parse_unit, parent=self.parent) if bp else ParseList([], parse_unit=self.parse_unit, parent=self.parent)
 
     @property
     def unbounded(self):
-        return self
+        from .parselists import ParseList
+        return ParseList(
+            [self._get_parse(int(i)) for i in self._unbounded_indices],
+            parse_unit=self.parse_unit, parent=self.parent,
+        )
 
     @property
     def bounded(self):
         from .parselists import ParseList
-        return ParseList([], parse_unit=self.parse_unit, parent=self.parent)
+        bounded_indices = np.where(~self._unbounded_mask)[0]
+        return ParseList(
+            [self._get_parse(int(i), is_bounded=True) for i in bounded_indices],
+            parse_unit=self.parse_unit, parent=self.parent,
+        )
 
     @property
     def data(self):
-        return [self._get_parse(i) for i in range(len(self._scansions))]
+        return [self._get_parse(i, is_bounded=not self._unbounded_mask[i])
+                for i in range(len(self._all_scansions))]
 
     def __iter__(self):
-        for i in range(len(self._scansions)):
-            yield self._get_parse(i)
+        for i in range(len(self._all_scansions)):
+            yield self._get_parse(i, is_bounded=not self._unbounded_mask[i])
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
-            indices = range(*idx.indices(len(self._scansions)))
-            return [self._get_parse(i) for i in indices]
-        return self._get_parse(idx)
+            indices = range(*idx.indices(len(self._all_scansions)))
+            return [self._get_parse(i, is_bounded=not self._unbounded_mask[i]) for i in indices]
+        return self._get_parse(idx, is_bounded=not self._unbounded_mask[idx])
 
     def bound(self, progress=False):
         return self  # already bounded in numpy
@@ -557,16 +571,20 @@ class LazyParseList:
     def iter_all(self):
         yield from self._iter_all()
 
-    def _get_parse(self, idx, rank=None):
+    def _get_parse(self, idx, rank=None, is_bounded=False):
         """Build a Parse object for the given index, caching the result."""
         if idx in self._built_parses:
-            return self._built_parses[idx]
+            p = self._built_parses[idx]
+            if is_bounded:
+                p.is_bounded = True
+            return p
 
         parse = _build_single_parse(
-            idx, self._scansions[idx], self._viols, self._constraint_index,
+            idx, self._all_scansions[idx], self._all_viols, self._constraint_index,
             self._constraint_names, self._sylls, self.wordtokens, self.meter,
             rank=rank,
         )
+        parse.is_bounded = is_bounded
         parse.parent = self
         self._built_parses[idx] = parse
         return parse
@@ -580,9 +598,18 @@ class LazyParseList:
         from .parselists import ParseList
         return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
 
-    def to_html(self, **kwargs):
+    def to_html(self, as_str=False, css=None, **kwargs):
+        """Render HTML via wordtokens, not through Parse (avoids recursion)."""
         bp = self.best_parse
-        return bp.to_html(**kwargs) if bp else ""
+        if bp is None:
+            return ""
+        from ..imports import HTML_CSS, to_html, get_attr_str
+        if css is None:
+            css = HTML_CSS
+        out = self.wordtokens.to_html(as_str=True, css=css) if hasattr(self.wordtokens, 'to_html') else str(self.wordtokens)
+        reprstr = get_attr_str(bp.attrs, bad_keys={"txt", "line_txt"})
+        out += f'<div class="miniquote">⎿ {reprstr}</div>'
+        return to_html(out, as_str=as_str)
 
     def render(self, **kwargs):
         bp = self.best_parse

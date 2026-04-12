@@ -616,7 +616,8 @@ class ParseList(EntityList):
 
 class ParseListList(EntityList):
     def append(self, parse_list):
-        if not isinstance(parse_list, ParseList):
+        from .vectorized import LazyParseList
+        if not isinstance(parse_list, (ParseList, LazyParseList)):
             raise ValueError('parse_list must be a ParseList object')
         super().append(parse_list)
     

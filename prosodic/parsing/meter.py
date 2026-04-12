@@ -233,40 +233,56 @@ class Meter(Entity):
             wt.wordtype.num_forms > 1 for wt in wordtokens if wt.has_wordform
         )
 
-        all_parses = []
-        if needs_matrix:
-            wtl_iter = wordtokens.iter_wordtoken_matrix()
-        else:
-            wtl_iter = [wordtokens]  # skip costly copy when no ambiguity
-
-        for wtl in wtl_iter:
-            features = extract_features(wtl)
+        if not needs_matrix:
+            # fast path: single wordform per word, return LazyParseList directly
+            features = extract_features(wordtokens)
             nsylls = len(features["stressed"])
-
             all_scansions = self.get_possible_scansions(nsylls)
             if not all_scansions:
-                continue
+                return ParseList([], parse_unit=self.parse_unit, parent=wordtokens)
 
             meter_vals, position_ids, position_sizes = encode_scansions(all_scansions, nsylls)
-
             constraint_names = list(self.constraints.keys())
             viols, constraint_index = evaluate_constraints(
                 features, meter_vals, position_ids, position_sizes, constraint_names
             )
             unbounded_mask = compute_bounding(viols, constraint_index)
+            return build_parses(
+                wordtokens, self, all_scansions, viols, constraint_index, unbounded_mask
+            )
 
-            parses = build_parses(
+        # multi-variant path: pick the variant with the best parse
+        best_result = None
+        best_score = float('inf')
+        for wtl in wordtokens.iter_wordtoken_matrix():
+            features = extract_features(wtl)
+            nsylls = len(features["stressed"])
+            all_scansions = self.get_possible_scansions(nsylls)
+            if not all_scansions:
+                continue
+
+            meter_vals, position_ids, position_sizes = encode_scansions(all_scansions, nsylls)
+            constraint_names = list(self.constraints.keys())
+            viols, constraint_index = evaluate_constraints(
+                features, meter_vals, position_ids, position_sizes, constraint_names
+            )
+            unbounded_mask = compute_bounding(viols, constraint_index)
+            result = build_parses(
                 wtl, self, all_scansions, viols, constraint_index, unbounded_mask
             )
-            all_parses.extend(parses.data)
+            # pick variant with lowest best score (no Parse construction needed)
+            if result._scores.size > 0:
+                min_score = float(result._scores.min())
+                if min_score < best_score:
+                    best_score = min_score
+                    best_result = result
 
             if not self.resolve_optionality:
                 break
 
-        result = ParseList(all_parses, parse_unit=self.parse_unit, parent=wordtokens)
-        result.bound(progress=False)
-        result.rank()
-        return result
+        if best_result is not None:
+            return best_result
+        return ParseList([], parse_unit=self.parse_unit, parent=wordtokens)
 
     def get_one_parse(self, wordtokens: "WordTokenList"):
         for wtl in wordtokens.iter_wordtoken_matrix():

@@ -267,32 +267,263 @@ def compute_bounding(viols, constraint_index):
     return ~bounded
 
 
-def build_parses(wordtokens, meter, scansions, viols, constraint_index, unbounded_mask):
-    """Build Parse objects from vectorized results.
+class LazyParseList:
+    """Lightweight parse list that defers Parse object construction.
 
-    Only constructs Parse objects for unbounded scansions. Uses direct
-    attribute assignment to bypass expensive __init__ methods.
-
-    Args:
-        wordtokens: WordTokenList
-        meter: Meter object
-        scansions: list of scansion lists (original format)
-        viols: (S, N, C) violation matrix
-        constraint_index: dict mapping constraint name -> C index
-        unbounded_mask: (S,) bool
-
-    Returns:
-        ParseList with ranked Parse objects
+    Stores numpy violation data and scansion lists. Parse objects are
+    only built when accessed (e.g., via best_parse, iteration, or indexing).
     """
+
+    def __init__(self, wordtokens, meter, scansions, viols, constraint_index,
+                 unbounded_mask, sylls, parse_unit="line"):
+        self.wordtokens = wordtokens
+        self.meter = meter
+        self.parse_unit = parse_unit
+        self.parent = wordtokens
+
+        # filter to unbounded only
+        unbounded_indices = np.where(unbounded_mask)[0]
+        self._scansions = [scansions[i] for i in unbounded_indices]
+        self._viols = viols[unbounded_indices]  # (U, N, C)
+        self._constraint_index = constraint_index
+        self._constraint_names = list(constraint_index.keys())
+        self._sylls = sylls
+        self._built_parses = {}  # cache: local index -> Parse
+        self._best_idx = None
+        self._bound_init = True
+        self._num = None
+
+        # compute scores for ranking (weighted violation sums)
+        constraint_weights = meter.constraints
+        weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
+        viols_per_scansion = self._viols.sum(axis=1)  # (U, C)
+        self._scores = (viols_per_scansion * weights[None, :]).sum(axis=1)  # (U,)
+        self._viols_per_scansion = viols_per_scansion
+
+    def __len__(self):
+        return len(self._scansions)
+
+    def __bool__(self):
+        return len(self._scansions) > 0
+
+    @property
+    def num_parses(self):
+        return len(self._scansions)
+
+    @property
+    def num_unbounded(self):
+        return len(self._scansions)
+
+    @property
+    def best_parse(self):
+        if not self._scansions:
+            return None
+        if self._best_idx is None:
+            self._best_idx = int(self._scores.argmin())
+        return self._get_parse(self._best_idx, rank=1)
+
+    @property
+    def best_parses(self):
+        if self.best_parse is None:
+            return self
+        return self
+
+    @property
+    def unbounded(self):
+        return self
+
+    @property
+    def bounded(self):
+        from .parselists import ParseList
+        return ParseList([], parse_unit=self.parse_unit, parent=self.parent)
+
+    @property
+    def data(self):
+        return [self._get_parse(i) for i in range(len(self._scansions))]
+
+    def __iter__(self):
+        for i in range(len(self._scansions)):
+            yield self._get_parse(i)
+
+    def __getitem__(self, idx):
+        if isinstance(idx, slice):
+            indices = range(*idx.indices(len(self._scansions)))
+            return [self._get_parse(i) for i in indices]
+        return self._get_parse(idx)
+
+    def bound(self, progress=False):
+        return self  # already bounded in numpy
+
+    def rank(self):
+        pass  # ranking is implicit via _scores
+
+    def register_objects(self):
+        pass  # not needed for vectorized path
+
+    def _iter_all(self):
+        yield self
+        # don't iterate into Parse objects — they're lazy
+
+    def iter_all(self):
+        yield from self._iter_all()
+
+    def _get_parse(self, idx, rank=None):
+        """Build a Parse object for the given index, caching the result."""
+        if idx in self._built_parses:
+            return self._built_parses[idx]
+
+        parse = _build_single_parse(
+            idx, self._scansions[idx], self._viols, self._constraint_index,
+            self._constraint_names, self._sylls, self.wordtokens, self.meter,
+            rank=rank,
+        )
+        parse.parent = self
+        self._built_parses[idx] = parse
+        return parse
+
+    # ParseList interface compatibility
+    def stats_d(self, **kwargs):
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats_d(**kwargs)
+
+    def stats(self, **kwargs):
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
+
+    def to_html(self, **kwargs):
+        bp = self.best_parse
+        return bp.to_html(**kwargs) if bp else ""
+
+    def render(self, **kwargs):
+        bp = self.best_parse
+        return bp.render(**kwargs) if bp else ""
+
+    @property
+    def scansions(self):
+        return self
+
+    def get_df(self, **kwargs):
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).get_df(**kwargs)
+
+    def get_ld(self, **kwargs):
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).get_ld(**kwargs)
+
+
+def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names,
+                          sylls, wordtokens, meter, rank=None):
+    """Build a single Parse object from numpy data."""
     from .parses import Parse
-    from .parselists import ParseList
     from .positions import ParsePosition, ParsePositionList
     from .slots import ParseSlot
 
-    constraint_names = list(constraint_index.keys())
-    parses = []
+    nsylls = len(sylls)
+    wordforms = wordtokens.wordforms
+    constraint_weights = meter.constraints
+    parse_constraint_funcs = meter.parse_constraint_funcs
 
-    # pre-extract syllable units and wordforms once
+    syll_idx = 0
+    positions = []
+    for pos_str in scansion:
+        mval = pos_str[0]
+
+        mpos = ParsePosition.__new__(ParsePosition)
+        mpos._attrs = {"meter_val": mval}
+        mpos.meter_val = mval
+        mpos.parent = None
+        mpos._num = None
+        mpos._text = None
+        mpos._key = None
+        mpos._txt = ""
+        mpos._mtr = None
+        mpos._init = True
+
+        slots = []
+        for _ in pos_str:
+            if syll_idx >= nsylls:
+                break
+            slot = ParseSlot.__new__(ParseSlot)
+            slot.unit = sylls[syll_idx]
+            slot.parent = mpos
+            slot._attrs = {}
+            slot._num = None
+            slot._text = None
+            slot._key = None
+            slot._txt = ""
+            slot._mtr = None
+            slot.children = []
+            slot_viold = {}
+            for cname in constraint_names:
+                v = int(viols[idx, syll_idx, constraint_index[cname]])
+                if v:
+                    slot_viold[cname] = v
+            slot.viold = slot_viold
+            slot.constraint_weights = constraint_weights
+            slots.append(slot)
+            syll_idx += 1
+
+        mpos.children = slots
+        positions.append(mpos)
+
+    parse = Parse.__new__(Parse)
+    parse._attrs = {}
+    parse._num = None
+    parse._text = None
+    parse._key = None
+    parse._txt = ""
+    parse._mtr = None
+    parse.parent = None
+    parse.meter_obj = meter
+    parse._scope = None
+    parse.constraint_names = constraint_names
+    parse.parse_constraints = parse_constraint_funcs
+    parse.position_constraints = meter.position_constraint_funcs
+    parse.constraint_weights = constraint_weights
+    parse.wordtokens = wordtokens
+    parse.wordforms = wordforms
+    parse.slot_units = sylls
+    parse.scansion = list(scansion)
+    parse.is_bounded = False
+    parse.bounded_by = []
+    parse.unmetrical = False
+    parse.comparison_nums = set()
+    parse.comparison_parses = []
+    parse.parse_num = 0
+    parse.total_score = None
+    parse.pause_comparisons = False
+    parse.parse_rank = rank
+    parse.num_slots_positioned = syll_idx
+    parse.parse_viold = Counter()
+
+    pos_list = ParsePositionList.__new__(ParsePositionList)
+    pos_list.children = positions
+    pos_list.parent = parse
+    pos_list._attrs = {}
+    pos_list._num = None
+    pos_list._text = None
+    pos_list._key = None
+    pos_list._txt = ""
+    pos_list._mtr = None
+    parse.children = pos_list
+
+    for mpos in positions:
+        mpos.parent = pos_list
+
+    for cname, cfunc in parse_constraint_funcs.items():
+        res = cfunc(parse)
+        if isinstance(res, bool) and res:
+            parse.parse_viold[cname] = 1
+
+    return parse
+
+
+def build_parses(wordtokens, meter, scansions, viols, constraint_index, unbounded_mask):
+    """Build a LazyParseList from vectorized results.
+
+    Returns a lazy wrapper that defers Parse object construction until
+    accessed. Only best_parse triggers construction of a single Parse.
+    """
     sylls = []
     for wt in wordtokens:
         if not wt.has_wordform:
@@ -301,116 +532,7 @@ def build_parses(wordtokens, meter, scansions, viols, constraint_index, unbounde
         for syll in wf:
             sylls.append(syll)
 
-    nsylls = len(sylls)
-    wordforms = wordtokens.wordforms
-    constraint_weights = meter.constraints
-    parse_constraint_funcs = meter.parse_constraint_funcs
-
-    for si in range(len(scansions)):
-        if not unbounded_mask[si]:
-            continue
-
-        scansion = scansions[si]
-
-        # build positions with slots — minimal object construction
-        syll_idx = 0
-        positions = []
-        for pos_str in scansion:
-            mval = pos_str[0]
-
-            # build ParsePosition directly
-            mpos = ParsePosition.__new__(ParsePosition)
-            mpos._attrs = {"meter_val": mval}
-            mpos.meter_val = mval
-            mpos.parent = None
-            mpos._num = None
-            mpos._text = None
-            mpos._key = None
-            mpos._txt = ""
-            mpos._mtr = None
-            mpos._init = True
-
-            # build slots
-            slots = []
-            for _ in pos_str:
-                if syll_idx >= nsylls:
-                    break
-                slot = ParseSlot.__new__(ParseSlot)
-                slot.unit = sylls[syll_idx]
-                slot.parent = mpos
-                slot._attrs = {}
-                slot._num = None
-                slot._text = None
-                slot._key = None
-                slot._txt = ""
-                slot._mtr = None
-                slot.children = []
-                # set violations from numpy
-                slot_viold = {}
-                for cname in constraint_names:
-                    v = int(viols[si, syll_idx, constraint_index[cname]])
-                    if v:
-                        slot_viold[cname] = v
-                slot.viold = slot_viold
-                slot.constraint_weights = constraint_weights
-                slots.append(slot)
-                syll_idx += 1
-
-            mpos.children = slots
-            positions.append(mpos)
-
-        # build Parse directly — bypass __init__ and init()
-        parse = Parse.__new__(Parse)
-        parse._attrs = {}
-        parse._num = None
-        parse._text = None
-        parse._key = None
-        parse._txt = ""
-        parse._mtr = None
-        parse.parent = None
-        parse.meter_obj = meter
-        parse._scope = None
-        parse.constraint_names = constraint_names
-        parse.parse_constraints = parse_constraint_funcs
-        parse.position_constraints = meter.position_constraint_funcs
-        parse.constraint_weights = constraint_weights
-        parse.wordtokens = wordtokens
-        parse.wordforms = wordforms
-        parse.slot_units = sylls
-        parse.scansion = list(scansion)
-        parse.is_bounded = False
-        parse.bounded_by = []
-        parse.unmetrical = False
-        parse.comparison_nums = set()
-        parse.comparison_parses = []
-        parse.parse_num = 0
-        parse.total_score = None
-        parse.pause_comparisons = False
-        parse.parse_rank = None
-        parse.num_slots_positioned = syll_idx
-        parse.parse_viold = Counter()
-
-        pos_list = ParsePositionList.__new__(ParsePositionList)
-        pos_list.children = positions
-        pos_list.parent = parse
-        pos_list._attrs = {}
-        pos_list._num = None
-        pos_list._text = None
-        pos_list._key = None
-        pos_list._txt = ""
-        pos_list._mtr = None
-        parse.children = pos_list
-
-        # set parent refs
-        for mpos in positions:
-            mpos.parent = pos_list
-
-        # apply parse-level constraints (pentameter, iambic, etc.)
-        for cname, cfunc in parse_constraint_funcs.items():
-            res = cfunc(parse)
-            if isinstance(res, bool) and res:
-                parse.parse_viold[cname] = 1
-
-        parses.append(parse)
-
-    return ParseList(parses, parse_unit=meter.parse_unit, parent=wordtokens)
+    return LazyParseList(
+        wordtokens, meter, scansions, viols, constraint_index,
+        unbounded_mask, sylls, parse_unit=meter.parse_unit,
+    )

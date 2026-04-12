@@ -234,37 +234,64 @@ def _eval_unres_across(viols, ci, position_ids, position_sizes, word_ids, func_w
         viols[:, j, ci] |= violation.astype(np.int8)
 
 
+def _get_torch_device():
+    """Get the best available torch device (MPS, CUDA, or None for CPU-only)."""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+    except ImportError:
+        pass
+    return None
+
+_torch_device = None
+_torch_checked = False
+
+def get_device():
+    global _torch_device, _torch_checked
+    if not _torch_checked:
+        _torch_device = _get_torch_device()
+        _torch_checked = True
+    return _torch_device
+
+
 def compute_bounding(viols, constraint_index):
     """Compute harmonic bounding: mark scansions dominated by others.
 
-    Uses vectorized pairwise comparison: for each pair (i,j), check if
-    i's violations are a strict subset of j's (i bounds j) or vice versa.
-
-    Args:
-        viols: (S, N, C) violation matrix
-        constraint_index: dict of constraint name -> index
-
-    Returns:
-        unbounded: (S,) bool mask — True for unbounded scansions
+    Uses GPU (CUDA/MPS) when available via PyTorch, falls back to numpy.
     """
-    # Sum violations per constraint per scansion: (S, C)
     v = viols.sum(axis=1)  # (S, C)
     S = v.shape[0]
 
     if S <= 1:
         return np.ones(S, dtype=bool)
 
-    # Pairwise comparison: (S, 1, C) vs (1, S, C) -> (S, S, C)
-    # i_leq_j[i,j] = True if v[i] <= v[j] for all constraints
+    device = get_device()
+    if device is not None:
+        return _compute_bounding_torch(v, device)
+    return _compute_bounding_numpy(v)
+
+
+def _compute_bounding_numpy(v):
+    """Numpy fallback for harmonic bounding."""
     diff = v[:, None, :] - v[None, :, :]  # (S, S, C)
-    i_leq_j = (diff <= 0).all(axis=2)     # (S, S)
-    i_lt_j = i_leq_j & (diff < 0).any(axis=2)  # (S, S) strict subset
-
-    # i bounds j means i_lt_j[i,j] is True -> j is bounded
-    # j is bounded if ANY i strictly dominates it
-    bounded = i_lt_j.any(axis=0)  # (S,) — True if bounded by at least one other
-
+    i_leq_j = (diff <= 0).all(axis=2)
+    i_lt_j = i_leq_j & (diff < 0).any(axis=2)
+    bounded = i_lt_j.any(axis=0)
     return ~bounded
+
+
+def _compute_bounding_torch(v, device):
+    """GPU-accelerated harmonic bounding via PyTorch."""
+    import torch
+    vt = torch.tensor(v, dtype=torch.int16, device=device)
+    diff = vt[:, None, :] - vt[None, :, :]  # (S, S, C)
+    i_leq_j = (diff <= 0).all(dim=2)
+    i_lt_j = i_leq_j & (diff < 0).any(dim=2)
+    bounded = i_lt_j.any(dim=0)
+    return ~bounded.cpu().numpy()
 
 
 class LazyParseList:

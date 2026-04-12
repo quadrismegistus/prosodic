@@ -112,7 +112,13 @@ class ParseSlot(Entity):
         Returns:
             True if the slot is prominent, False otherwise.
         """
-        return self.position.is_prom
+        # walk up parent chain to find ParsePosition with meter_val
+        obj = self.parent
+        while obj is not None:
+            if hasattr(obj, 'meter_val') and obj.meter_val is not None:
+                return obj.meter_val == "s"
+            obj = getattr(obj, 'parent', None)
+        return False
 
     @property
     def wordform(self) -> Any:

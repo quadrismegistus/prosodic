@@ -57,14 +57,11 @@ PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-stash = HashStash(PATH_HOME_DATA_CACHE, engine='pairtree', serializer='hashstash', compress=False, b64=True)
-
 import panphon
 import panphon.sonority
 
 
 USE_CACHE = False
-CACHE_LINE_LIMIT = 25
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."

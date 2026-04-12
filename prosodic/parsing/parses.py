@@ -503,7 +503,7 @@ class Parse(Entity):
         Returns:
             int: Number of words.
         """
-        return len(self.wordforms)
+        return len(self.wordforms) if self.wordforms is not None else 0
 
     @property
     def num_peaks(self) -> int:
@@ -950,10 +950,11 @@ class Parse(Entity):
         for pos in self.positions:
             pos_attrs = {f'meterpos_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in pos.attrs.items()}
             for slot in pos.slots:
+                # get wordtoken info if available (Entity path), else fallback
+                wt = getattr(slot.unit, 'wordtoken', None) if hasattr(slot.unit, 'wordtoken') else None
                 slot_attrs = {
-                    'wordtoken_num':slot.unit.wordtoken.num,
-                    'wordtoken_txt':slot.unit.wordtoken.txt,
-                    # 'syll_num':slot.unit.num,
+                    'wordtoken_num': wt.num if wt else None,
+                    'wordtoken_txt': wt.txt if wt else slot.unit.txt,
                     **{f'meterslot_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in slot.attrs.items()}
                 }
                 all_attrs = {**attrs, **pos_attrs, **slot_attrs}

@@ -1,5 +1,6 @@
 from ..imports import *
 from ..words import WordTokenList, WordToken
+from .syll_df import build_syll_df
 
 NUMBUILT = 0
 
@@ -12,7 +13,6 @@ class TextModel(Entity):
     is_text = True
     prefix = "text"
 
-    # @#log.debug
     def __init__(
         self,
         children: Optional[list] = [],
@@ -23,26 +23,6 @@ class TextModel(Entity):
         tokens_df: Optional[pd.DataFrame] = None,
         **kwargs,
     ):
-        """
-        Initializes an instance of the class.
-
-        Args:
-            txt (str): The text string. Default is an empty string.
-            fn (str): A path or URL to a text file to read
-            lang (Optional[str]): The language of the text. Default is DEFAULT_LANG.
-            parent (Optional[Entity]): The parent entity. Default is None.
-            children (Optional[list]): The list of child entities. Default is an empty list.
-            tokens_df (Optional[pd.DataFrame]): The token dataframe. Default is None.
-            force (bool): Force parsing regardless of current state. Default is False.
-            **kwargs: Additional keyword arguments.
-
-        Raises:
-            Exception: If neither txt string, filename, nor token dataframe is provided.
-
-        Returns:
-            None
-        """
-
         if isinstance(children, str):
             txt = children
             children = []
@@ -54,7 +34,12 @@ class TextModel(Entity):
         txt = clean_text(get_txt(txt, fn)).strip()
         lang = lang if lang else detect_lang(txt)
 
-        # init entity
+        # store for lazy construction
+        self._token_dicts = None
+        self._syll_df = None
+        self._children_built = bool(children)
+
+        # init entity (sets self.children via property setter below)
         super().__init__(
             children=children,
             txt=txt,
@@ -62,30 +47,47 @@ class TextModel(Entity):
             **kwargs,
         )
         self._parse_results = {}
+        self._line_parse_results = {}
 
-        if not self.children:
+        if not self._children_built:
             if tokens_df is None:
-                # fast path: use list of dicts directly, skip DataFrame/iterrows
                 token_dicts = list(tokenize_sentwords_iter(txt))
-                for d in progress_bar(
-                    token_dicts,
-                    progress=len(token_dicts) >= 1000,
-                    desc="Building long text",
-                ):
-                    self.children.append(WordToken(lang=self.lang, **d))
             else:
-                # legacy path: accept pre-built DataFrame
-                for _, row in progress_bar(
-                    list(tokens_df.iterrows()),
-                    progress=len(tokens_df) >= 1000,
-                    desc="Building long text",
-                ):
-                    self.children.append(WordToken(lang=self.lang, **row.to_dict()))
-        
-        # assign objects to global OBJECTS dict
+                token_dicts = [row.to_dict() for _, row in tokens_df.iterrows()]
+
+            self._token_dicts = token_dicts
+
+            # build syllable DataFrame from raw get_word() output (fast)
+            self._syll_df = build_syll_df(token_dicts, lang=lang)
+
+            # DON'T build Entity children yet — defer to first access
+
+    def _build_children(self):
+        """Lazily construct WordToken Entity objects from stored token dicts."""
+        if self._children_built or self._token_dicts is None:
+            return
+        self._children_built = True
+        for d in progress_bar(
+            self._token_dicts,
+            progress=len(self._token_dicts) >= 1000,
+            desc="Building long text",
+        ):
+            self._children_data.append(WordToken(lang=self.lang, **d))
         if DEFAULT_USE_REGISTRY:
             self.register_objects()
-        
+
+    # property to intercept children access for lazy building
+    @property
+    def children(self):
+        if not self._children_built and self._token_dicts is not None:
+            self._build_children()
+        return self._children_data
+
+    @children.setter
+    def children(self, value):
+        self._children_data = value
+        if value and len(value) > 0:
+            self._children_built = True
 
     @cached_property
     def stanzas(self):
@@ -97,7 +99,23 @@ class TextModel(Entity):
     def lines(self):
         from ..texts.lines import LineList
 
-        return LineList.from_wordtokens(self.children, text=self)
+        lines = LineList.from_wordtokens(self.children, text=self)
+
+        # attach any DF-based parse results to the line entities
+        if self._line_parse_results:
+            for meter_key, line_results in self._line_parse_results.items():
+                for line in lines:
+                    line_num = line.num
+                    if line_num in line_results:
+                        pl = line_results[line_num]
+                        # set parent to the line's WordTokenList
+                        wt_list = line.children
+                        if hasattr(wt_list, '_parses'):
+                            pl.parent = wt_list
+                            wt_list._parses = pl
+                        line._parses = pl
+
+        return lines
 
     @cached_property
     def lineparts(self):
@@ -116,18 +134,12 @@ class TextModel(Entity):
         from ..sents.sents import SentPartList
 
         return SentPartList.from_wordtokens(self.children, text=self)
-    
+
     @property
     def wordtokens(self):
         return self.children
 
     def to_hash(self) -> str:
-        """
-        Generate a hash string for the text.
-
-        Returns:
-            str: A hash string representation of the text.
-        """
         return hashstr(self._txt)
 
     @property
@@ -140,7 +152,7 @@ class TextModel(Entity):
         if self._key is None:
             self._key = f"{self.nice_type_name}({self.hash})"
         return self._key
-    
+
     def cleanup(self):
         self._parse_results.clear()
         self._parses = None
@@ -151,34 +163,24 @@ class TextModel(Entity):
         if isinstance(item, slice):
             return self.children[item]
         return super().__getitem__(item)
-        
+
 
     @cache
     def parse(
         self,
         combine_by: Literal["line", "sent"] = DEFAULT_COMBINE_BY,
-        num_proc=None,
         lim=None,
         force=False,
         meter=None,
+        num_proc=None,  # deprecated, ignored
         **meter_kwargs,
     ):
-        """
-        Parse the text.
-
-        Args:
-            **kwargs: Keyword arguments for parsing configuration.
-
-        Returns:
-            Any: The parsed result.
-        """
         from ..parsing.parselists import ParseListList
 
         if combine_by != self.prefix:
             self._parses = ParseListList(parent=self)
         for i,pl in enumerate(self.parse_iter(
             combine_by=combine_by,
-            num_proc=num_proc,
             force=force,
             meter=meter,
             lim=lim,
@@ -196,7 +198,6 @@ class TextModel(Entity):
     def parse_iter(
         self,
         combine_by: Literal["line", "sent"] = DEFAULT_COMBINE_BY,
-        num_proc=None,
         lim=None,
         force=False,
         meter=None,
@@ -216,17 +217,22 @@ class TextModel(Entity):
             last_unit = None
             units = []
             for parse_list in meter.parse_text_iter(
-                self, num_proc=num_proc, force=force, lim=lim
+                self, force=force, lim=lim
             ):
-                # log.info(f'parse_list: {parse_list}')
-                # log.info(f'parsed_ent v1: {parse_list.parent}')
-                parsed_ent = self.match(parse_list.parent)
-                parse_list.parent = parsed_ent
-                parsed_ent._parses = parse_list
+                # DF-only path: parse_list.parent may be None
+                if parse_list.parent is not None:
+                    parsed_ent = self.match(parse_list.parent)
+                    parse_list.parent = parsed_ent
+                    parsed_ent._parses = parse_list
+                else:
+                    # DF path: results stored in _line_parse_results,
+                    # will be attached to entities when lines are accessed
+                    parsed_ent = None
+
                 if not combine_by:
                     self._parse_results[parse_key].append(parse_list)
                     yield parse_list
-                else:
+                elif parsed_ent is not None:
                     this_unit = getattr(parsed_ent, combine_by)
                     if units and not last_unit.equals(this_unit):
                         new_parselist = ParseList.from_combinations(units, parent=last_unit)
@@ -236,6 +242,10 @@ class TextModel(Entity):
                         units = []
                     units.append(parse_list)
                     last_unit = this_unit
+                else:
+                    # DF path without combine: just collect
+                    self._parse_results[parse_key].append(parse_list)
+                    yield parse_list
 
             if units:
                 new_parselist = ParseList.from_combinations(units, parent=last_unit)
@@ -245,12 +255,6 @@ class TextModel(Entity):
 
     @property
     def parses(self) -> Any:
-        """
-        Get the parses for the text.
-
-        Returns:
-            Any: The parses object.
-        """
         if not self._parses:
             self.parse()
         return self._parses
@@ -266,54 +270,22 @@ class TextModel(Entity):
         return self.get_list(combine_by) if combine_by is not None else self.meter.get_parse_units()
 
     def get_rhyming_lines(self, max_dist: int = RHYME_MAX_DIST) -> Dict[Any, Any]:
-        """
-        Get the rhyming lines within the stanza.
-
-        Args:
-            max_dist (int): Maximum distance between rhyming lines. Default is RHYME_MAX_DIST.
-
-        Returns:
-            Dict[Any, Any]: A dictionary of rhyming lines.
-        """
         d={}
         for stanza in self.stanzas:
             d.update(stanza.get_rhyming_lines(max_dist=max_dist))
         return d
-    
+
     @property
     def num_rhyming_lines(self) -> int:
-        """
-        Get the number of rhyming lines in the text.
-
-        Returns:
-            int: The number of rhyming lines.
-        """
         return len(self.get_rhyming_lines(max_dist=RHYME_MAX_DIST))
-    
+
     @property
     def is_rhyming(self) -> bool:
-        """
-        Check if the text is rhyming.
-
-        Returns:
-            bool: True if the text is rhyming, False otherwise.
-        """
         return self.num_rhyming_lines > 0
-    
+
     def render(
         self, as_str: bool = False, blockquote: bool = False, **meter_kwargs
     ) -> Any:
-        """
-        Render the parsed text.
-
-        Args:
-            as_str (bool): If True, return the result as a string. Default is False.
-            blockquote (bool): If True, render as a blockquote. Default is False.
-            **meter_kwargs: Additional keyword arguments for meter configuration.
-
-        Returns:
-            Any: The rendered text.
-        """
         return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
 
 

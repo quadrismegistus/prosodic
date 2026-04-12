@@ -69,19 +69,14 @@ def test_text_parsing():
 
 
 def test_exhaustive():
+    # vectorized parser is always exhaustive — exhaustive param is a no-op
     t = TextModel(sonnet)
+    parses1 = t.line1.parse(exhaustive=True)
     parses2 = t.line1.parse(exhaustive=True)
-    parses3 = t.line1.parse(exhaustive=True)
-    parses1 = t.line1.parse(exhaustive=False)
-    assert parses1 is not parses2
-    assert parses2 is parses3
+    assert parses1 is parses2  # same meter config, cached
 
     line = TextModel("A horse, a horse, my kingdom for a horse!").line1
-    line.parse(exhaustive=True, max_s=10, max_w=10)
-    assert line.parses.num_all == 1024
-
-    line.parse(max_s=10, max_w=10, force=True)
-    # vectorized evaluates all scansions but bounds most
+    line.parse(max_s=10, max_w=10)
     assert line.parses.num_all == 1024
     assert line.parses.num_unbounded < 1024
 

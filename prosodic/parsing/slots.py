@@ -216,7 +216,6 @@ class ParseSlot(Entity):
         Returns:
             The text representation of the slot.
         """
-        assert isinstance(self.unit, Syllable)
         o = self.unit.txt
         result = o.upper() if self.is_prom else o.lower()
         return result

@@ -644,7 +644,11 @@ class ParseListList(EntityList):
     
     @property
     def num_lines(self):
-        return len(self.lines)
+        n = len(self.lines)
+        if n == 0 and len(self) > 0:
+            # DF path: each entry is one parse unit (line)
+            return len(self)
+        return n
 
     @property
     def sents(self):

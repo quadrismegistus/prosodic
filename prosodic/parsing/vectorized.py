@@ -5,7 +5,262 @@ from collections import defaultdict
 from ..imports import *
 
 
-def parse_batch(parse_units, meter):
+def parse_batch_from_df(syll_df, meter, line_col='line_num'):
+    """Parse all lines from a syllable DataFrame without constructing Entity objects.
+
+    Groups lines by syllable count, evaluates constraints in batch,
+    returns results keyed by line number.
+    """
+    from .parselists import ParseList
+    from ..texts.syll_df import SyllData
+
+    # extract all non-punc rows as numpy arrays (single pass)
+    non_punc_mask = syll_df['is_punc'].values == 0
+    non_punc_idx = np.where(non_punc_mask)[0]
+
+    all_ipa = syll_df['syll_ipa'].values
+    all_txt = syll_df['syll_text'].values
+    all_stressed = syll_df['is_stressed'].values
+    all_heavy = syll_df['is_heavy'].values
+    all_strong = syll_df['is_strong'].values
+    all_weak = syll_df['is_weak'].values
+    all_wnum = syll_df['word_num'].values
+    all_func = syll_df['is_functionword'].values
+    all_line = syll_df[line_col].values
+    all_form = syll_df['form_idx'].values
+    all_nforms = syll_df['num_forms'].values
+
+    # subset arrays for non-punc rows
+    np_line = all_line[non_punc_idx]
+    np_form = all_form[non_punc_idx]
+    np_wnum = all_wnum[non_punc_idx]
+    np_nforms = all_nforms[non_punc_idx]
+
+    # --- Build form 0 data per line (fast numpy grouping) ---
+    form0_mask = np_form == 0
+    f0_idx = non_punc_idx[form0_mask]
+    f0_line = np_line[form0_mask]
+
+    # group form0 by line
+    f0_sort = np.argsort(f0_line, kind='stable')
+    f0_line_s = f0_line[f0_sort]
+    f0_idx_s = f0_idx[f0_sort]
+    f0_breaks = np.where(np.diff(f0_line_s, prepend=f0_line_s[0]-1) != 0)[0]
+    f0_breaks = np.append(f0_breaks, len(f0_line_s))
+
+    # line_data: line_num -> (feats, sylls, has_ambig, form_variants)
+    # form_variants: list of row-index arrays for each form combination
+    line_data = {}
+
+    for i in range(len(f0_breaks) - 1):
+        ln = int(f0_line_s[f0_breaks[i]])
+        rows = f0_idx_s[f0_breaks[i]:f0_breaks[i+1]]
+        n = len(rows)
+        if n < 2:
+            continue
+
+        sylls = [
+            SyllData(ipa=all_ipa[r], txt=all_txt[r],
+                     is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
+                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]))
+            for r in rows
+        ]
+        feats = {
+            "sylls": sylls,
+            "stressed": all_stressed[rows].astype(bool),
+            "heavy": all_heavy[rows].astype(bool),
+            "strong": all_strong[rows].astype(np.int8),
+            "weak": all_weak[rows].astype(np.int8),
+            "word_ids": all_wnum[rows].astype(np.int32),
+            "func_word": all_func[rows].astype(bool),
+        }
+
+        # check if any word in this line has multiple forms
+        line_np_mask = np_line == ln
+        has_ambig = bool(meter.resolve_optionality and (np_nforms[line_np_mask] > 1).any())
+        line_data[ln] = (feats, sylls, has_ambig, rows)
+
+    # --- Pre-build ambiguous form variants using numpy ---
+    ambig_form_variants = {}  # line_num -> list of row-index arrays
+    for ln, (feats, sylls, has_ambig, f0_rows) in line_data.items():
+        if not has_ambig:
+            continue
+        line_mask = np_line == ln
+        line_rows = non_punc_idx[line_mask]
+        line_wn = np_wnum[line_mask]
+        line_fi = np_form[line_mask]
+        max_fi = int(line_fi.max())
+        forms = [f0_rows]  # form 0 already computed
+        for fi in range(1, max_fi + 1):
+            selected = []
+            for wn in np.unique(line_wn):
+                wmask = line_wn == wn
+                wrows = line_rows[wmask]
+                wfi = line_fi[wmask]
+                if fi in wfi:
+                    selected.append(wrows[wfi == fi])
+                else:
+                    selected.append(wrows[wfi == 0])
+            forms.append(np.concatenate(selected))
+        ambig_form_variants[ln] = forms
+
+    # --- Group by nsylls and process ---
+    nsyll_groups = defaultdict(list)
+    for ln, (feats, sylls, has_ambig, _) in line_data.items():
+        nsylls = len(feats["stressed"])
+        nsyll_groups[nsylls].append(ln)
+
+    results = {}
+    constraint_names = list(meter.constraints.keys())
+
+    for nsylls, line_nums in nsyll_groups.items():
+        scansions = meter.get_possible_scansions(nsylls)
+        if not scansions:
+            for ln in line_nums:
+                results[ln] = ParseList([], parse_unit=meter.parse_unit)
+            continue
+
+        meter_vals, position_ids, position_sizes = encode_scansions(scansions, nsylls)
+
+        simple_lines = [ln for ln in line_nums if not line_data[ln][2]]
+        ambig_lines = [ln for ln in line_nums if line_data[ln][2]]
+        constraint_index = None
+
+        # batch simple lines: evaluate ALL constraints in one vectorized call
+        if simple_lines:
+            feats_list = [line_data[ln][0] for ln in simple_lines]
+            all_viols_4d, ci = evaluate_constraints_batch(
+                feats_list, meter_vals, position_ids, position_sizes, constraint_names
+            )
+            constraint_index = ci
+            # all_viols_4d is (L, S, N, C) — sum over N for bounding
+            all_viol_sums = all_viols_4d.sum(axis=2)  # (L, S, C)
+            unbounded_masks = compute_bounding_batch(all_viol_sums)
+
+            for i, ln in enumerate(simple_lines):
+                pl = LazyParseList(
+                    None, meter, scansions, all_viols_4d[i], constraint_index,
+                    unbounded_masks[i], line_data[ln][1], parse_unit=meter.parse_unit,
+                )
+                pl._unit_num = int(ln)
+                results[ln] = pl
+
+        # handle ambiguous lines: batch constraint eval, then batch bounding
+        if ambig_lines:
+            # Phase 1: collect all same-nsylls form variants, eval constraints
+            same_nsylls_viols = []  # viols for forms matching this nsylls
+            same_nsylls_meta = []   # (ln, form_idx, sylls) per entry
+            diff_nsylls_items = []  # (ln, rows) for forms with different nsylls
+
+            # collect same-nsylls and diff-nsylls form variants
+            same_feats_list = []
+            for ln in ambig_lines:
+                form_variants = ambig_form_variants[ln]
+                for fi, rows in enumerate(form_variants):
+                    wnsylls = len(rows)
+                    if wnsylls < 2:
+                        continue
+                    feats = {
+                        "stressed": all_stressed[rows].astype(bool),
+                        "heavy": all_heavy[rows].astype(bool),
+                        "strong": all_strong[rows].astype(np.int8),
+                        "weak": all_weak[rows].astype(np.int8),
+                        "word_ids": all_wnum[rows].astype(np.int32),
+                        "func_word": all_func[rows].astype(bool),
+                    }
+                    if wnsylls == nsylls:
+                        same_feats_list.append(feats)
+                        same_nsylls_meta.append((ln, fi, rows))
+                    else:
+                        diff_nsylls_items.append((ln, fi, rows, feats, wnsylls))
+                    if not meter.resolve_optionality:
+                        break
+
+            # Phase 2: batch eval + bounding for same-nsylls ambig forms
+            ambig_unbounded = {}
+            if same_feats_list:
+                ambig_viols_4d, ci = evaluate_constraints_batch(
+                    same_feats_list, meter_vals, position_ids, position_sizes, constraint_names
+                )
+                if constraint_index is None:
+                    constraint_index = ci
+                same_nsylls_viols = [ambig_viols_4d[i] for i in range(len(same_feats_list))]
+                ambig_viol_sums = ambig_viols_4d.sum(axis=2)  # (L, S, C)
+                ambig_masks = compute_bounding_batch(ambig_viol_sums)
+                for i in range(len(same_feats_list)):
+                    ambig_unbounded[i] = ambig_masks[i]
+
+            # Phase 3: batch eval + bounding for diff-nsylls forms
+            diff_by_nsylls = defaultdict(list)
+            for item in diff_nsylls_items:
+                ln, fi, rows, feats, wnsylls = item
+                diff_by_nsylls[wnsylls].append(item)
+
+            diff_results = {}
+            for dns, items in diff_by_nsylls.items():
+                wscans = meter.get_possible_scansions(dns)
+                if not wscans:
+                    continue
+                wmv, wpi, wps = encode_scansions(wscans, dns)
+                d_feats = [item[3] for item in items]
+                d_viols_4d, ci2 = evaluate_constraints_batch(
+                    d_feats, wmv, wpi, wps, constraint_names
+                )
+                d_viol_sums = d_viols_4d.sum(axis=2)
+                d_masks = compute_bounding_batch(d_viol_sums)
+                for i, item in enumerate(items):
+                    diff_results[id(item)] = (d_viols_4d[i], d_masks[i], wscans)
+
+            # Phase 4: pick best form per ambig line
+            # collect all candidates per line
+            line_candidates = defaultdict(list)  # ln -> [(viols, unbounded, scansions, rows)]
+
+            for i, (ln, fi, rows) in enumerate(same_nsylls_meta):
+                line_candidates[ln].append((
+                    same_nsylls_viols[i], ambig_unbounded[i], scansions, rows
+                ))
+
+            for item in diff_nsylls_items:
+                ln, fi, rows, feats, wnsylls = item
+                if id(item) in diff_results:
+                    v, unb, ws = diff_results[id(item)]
+                    line_candidates[ln].append((v, unb, ws, rows))
+
+            constraint_weights = meter.constraints
+            weight_arr = np.array([constraint_weights.get(c, 1) for c in constraint_names])
+
+            for ln in ambig_lines:
+                candidates = line_candidates.get(ln, [])
+                best_result = None
+                best_score = float('inf')
+                for viols, unbounded_mask, cand_scansions, rows in candidates:
+                    unb_idx = np.where(unbounded_mask)[0]
+                    if len(unb_idx) == 0:
+                        continue
+                    scores = (viols.sum(axis=1) * weight_arr[None, :]).sum(axis=1)
+                    unb_scores = scores[unb_idx]
+                    ms = float(unb_scores.min())
+                    if ms < best_score:
+                        best_score = ms
+                        sylls = [
+                            SyllData(ipa=all_ipa[r], txt=all_txt[r],
+                                     is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
+                                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]))
+                            for r in rows
+                        ]
+                        ci_use = constraint_index if constraint_index is not None else {c: i for i, c in enumerate(constraint_names)}
+                        best_result = LazyParseList(
+                            None, meter, cand_scansions, viols, ci_use,
+                            unbounded_mask, sylls, parse_unit=meter.parse_unit,
+                        )
+                pl = best_result if best_result else ParseList([], parse_unit=meter.parse_unit)
+                pl._unit_num = int(ln)
+                results[ln] = pl
+
+    return results
+
+
+def parse_batch(parse_units, meter, syll_df=None):
     """Parse all units in a single batched operation.
 
     Groups lines by syllable count to share scansion encodings,
@@ -14,11 +269,17 @@ def parse_batch(parse_units, meter):
     Args:
         parse_units: list of WordTokenList objects (lines/lineparts)
         meter: Meter object
+        syll_df: optional syllable DataFrame from TextModel._syll_df.
+            When provided, features are read from the DF instead of
+            walking Entity objects (faster).
 
     Returns:
         list of (wordtokens, LazyParseList) pairs in original order
     """
     from .parselists import ParseList
+
+    # choose feature extraction strategy
+    use_df = syll_df is not None and len(syll_df) > 0
 
     # extract features for all lines and group by nsylls
     groups = defaultdict(list)  # nsylls -> [(idx, wordtokens, features, sylls)]
@@ -27,7 +288,17 @@ def parse_batch(parse_units, meter):
         if wt.num_sylls < 2:
             all_features.append(None)
             continue
-        feats = extract_features(wt)
+
+        if use_df:
+            # read numpy arrays from the DF (fast), but keep real Syllable objects
+            line_num = wt[0].line_num if hasattr(wt[0], 'line_num') else None
+            if line_num is not None:
+                feats = _extract_features_hybrid(wt, syll_df, line_num)
+            else:
+                feats = extract_features(wt)
+        else:
+            feats = extract_features(wt)
+
         nsylls = len(feats["stressed"])
         sylls = feats["sylls"]
         groups[nsylls].append((idx, wt, feats, sylls))
@@ -174,6 +445,42 @@ def extract_features(wordtokens):
     }
 
 
+def _extract_features_hybrid(wordtokens, syll_df, line_num):
+    """Extract features using DF for arrays but Entity objects for sylls.
+
+    Reads pre-computed numpy arrays from the syllable DataFrame (fast),
+    but keeps real Syllable objects for Parse construction (compatibility).
+    """
+    # get real Syllable objects from Entity tree
+    sylls = []
+    for wt in wordtokens:
+        if not wt.has_wordform:
+            continue
+        wf = wt.wordtype.children[0]
+        for syll in wf:
+            sylls.append(syll)
+
+    # read arrays from DF (form_idx=0 only, non-punc)
+    line_df = syll_df[(syll_df['line_num'] == line_num) &
+                      (syll_df['form_idx'] == 0) &
+                      (syll_df['is_punc'] == 0)]
+
+    n = len(line_df)
+    if n != len(sylls):
+        # mismatch — fall back to Entity-based extraction
+        return extract_features(wordtokens)
+
+    return {
+        "sylls": sylls,
+        "stressed": line_df['is_stressed'].values.astype(bool),
+        "heavy": line_df['is_heavy'].values.astype(bool),
+        "strong": line_df['is_strong'].values.astype(np.int8),
+        "weak": line_df['is_weak'].values.astype(np.int8),
+        "word_ids": line_df['word_num'].values.astype(np.int32),
+        "func_word": line_df['is_functionword'].values.astype(bool),
+    }
+
+
 def prefilter_scansions(scansions, num_stressed):
     """Remove scansions that can't possibly be optimal.
 
@@ -237,10 +544,10 @@ def encode_scansions(scansions, nsylls):
 
 
 def evaluate_constraints(features, meter_vals, position_ids, position_sizes, constraint_names):
-    """Batch-evaluate all constraints across all scansions.
+    """Batch-evaluate all constraints across all scansions for a single line.
 
     Args:
-        features: dict from extract_features()
+        features: dict with arrays of shape (N,)
         meter_vals: (S, N) bool
         position_ids: (S, N) int
         position_sizes: (S, N) int
@@ -255,52 +562,107 @@ def evaluate_constraints(features, meter_vals, position_ids, position_sizes, con
     viols = np.zeros((S, N, C), dtype=np.int8)
     constraint_index = {name: i for i, name in enumerate(constraint_names)}
 
-    # broadcast features to (1, N) for operations against (S, N)
     stressed = features["stressed"][None, :]   # (1, N)
     heavy = features["heavy"][None, :]
     strong = features["strong"][None, :]
     weak = features["weak"][None, :]
-    word_ids = features["word_ids"][None, :]   # (1, N)
-    func_word = features["func_word"][None, :] # (1, N)
+    word_ids = features["word_ids"][None, :]
+    func_word = features["func_word"][None, :]
 
-    is_strong_pos = meter_vals   # (S, N) True = strong/prominent
-    is_weak_pos = ~meter_vals    # (S, N) True = weak
+    is_strong_pos = meter_vals
+    is_weak_pos = ~meter_vals
 
     for cname in constraint_names:
         ci = constraint_index[cname]
-
         if cname == "w_stress":
-            # stressed syllable on weak position
             viols[:, :, ci] = (stressed & is_weak_pos).astype(np.int8)
-
         elif cname == "s_unstress":
-            # unstressed syllable on strong position
             viols[:, :, ci] = (~stressed & is_strong_pos).astype(np.int8)
-
         elif cname == "w_peak":
-            # polysyllabic stress on weak position
             viols[:, :, ci] = (strong.astype(bool) & is_weak_pos).astype(np.int8)
-
         elif cname == "s_trough":
-            # polysyllabic unstress on strong position
             viols[:, :, ci] = (weak.astype(bool) & is_strong_pos).astype(np.int8)
-
         elif cname == "foot_size":
-            # position exceeds 2 syllables
             viols[:, :, ci] = (position_sizes > 2).astype(np.int8)
-
         elif cname == "unres_within":
-            # disyllabic position within same word: first syll must be light+stressed
-            # only applies to 2nd+ syllable in a multi-syll position
             _eval_unres_within(viols, ci, position_ids, position_sizes,
                                word_ids, heavy, stressed, S, N)
-
         elif cname == "unres_across":
-            # disyllabic position crossing words: both must be function words, pos must be weak
             _eval_unres_across(viols, ci, position_ids, position_sizes,
                                 word_ids, func_word, is_strong_pos, S, N)
 
     return viols, constraint_index
+
+
+def evaluate_constraints_batch(features_list, meter_vals, position_ids, position_sizes, constraint_names):
+    """Evaluate constraints for multiple lines at once.
+
+    Instead of calling evaluate_constraints L times in a Python loop,
+    stacks features into (L, N) arrays and broadcasts against (S, N) scansions.
+
+    Args:
+        features_list: list of L feature dicts, each with arrays of shape (N,)
+        meter_vals: (S, N) bool
+        position_ids: (S, N) int
+        position_sizes: (S, N) int
+        constraint_names: list of constraint name strings
+
+    Returns:
+        all_viols: (L, S, N, C) int8
+        constraint_index: dict
+    """
+    S, N = meter_vals.shape
+    L = len(features_list)
+    C = len(constraint_names)
+    constraint_index = {name: i for i, name in enumerate(constraint_names)}
+
+    # stack features: (L, N)
+    stressed = np.stack([f["stressed"] for f in features_list])  # (L, N)
+    heavy = np.stack([f["heavy"] for f in features_list])
+    strong = np.stack([f["strong"] for f in features_list])
+    weak = np.stack([f["weak"] for f in features_list])
+    word_ids = np.stack([f["word_ids"] for f in features_list])
+    func_word = np.stack([f["func_word"] for f in features_list])
+
+    # broadcast: features (L, 1, N) vs scansions (1, S, N) -> (L, S, N)
+    all_viols = np.zeros((L, S, N, C), dtype=np.int8)
+
+    stressed_b = stressed[:, None, :]    # (L, 1, N)
+    heavy_b = heavy[:, None, :]
+    strong_b = strong[:, None, :]
+    weak_b = weak[:, None, :]
+
+    is_strong_pos = meter_vals[None, :, :]  # (1, S, N)
+    is_weak_pos = ~meter_vals[None, :, :]
+
+    for cname in constraint_names:
+        ci = constraint_index[cname]
+        if cname == "w_stress":
+            all_viols[:, :, :, ci] = (stressed_b & is_weak_pos).astype(np.int8)
+        elif cname == "s_unstress":
+            all_viols[:, :, :, ci] = (~stressed_b & is_strong_pos).astype(np.int8)
+        elif cname == "w_peak":
+            all_viols[:, :, :, ci] = (strong_b.astype(bool) & is_weak_pos).astype(np.int8)
+        elif cname == "s_trough":
+            all_viols[:, :, :, ci] = (weak_b.astype(bool) & is_strong_pos).astype(np.int8)
+        elif cname == "foot_size":
+            all_viols[:, :, :, ci] = (position_sizes[None, :, :] > 2).astype(np.int8)
+        elif cname in ("unres_within", "unres_across"):
+            # these depend on per-line word boundaries, must eval per line
+            for li in range(L):
+                feats_i = features_list[li]
+                wi = feats_i["word_ids"][None, :]
+                hi = feats_i["heavy"][None, :]
+                si = feats_i["stressed"][None, :]
+                fi = feats_i["func_word"][None, :]
+                if cname == "unres_within":
+                    _eval_unres_within(all_viols[li], ci, position_ids, position_sizes,
+                                       wi, hi, si, S, N)
+                else:
+                    _eval_unres_across(all_viols[li], ci, position_ids, position_sizes,
+                                        wi, fi, meter_vals, S, N)
+
+    return all_viols, constraint_index
 
 
 def _eval_unres_within(viols, ci, position_ids, position_sizes, word_ids, heavy, stressed, S, N):
@@ -380,17 +742,29 @@ def get_device():
         _torch_checked = True
     return _torch_device
 
+# eagerly initialize on import to avoid cold-start penalty during first parse
+get_device()
+
 
 def compute_bounding(viols, constraint_index):
-    """Compute harmonic bounding: mark scansions dominated by others.
-
-    Uses GPU (CUDA/MPS) when available via PyTorch, falls back to numpy.
-    """
+    """Compute harmonic bounding: mark scansions dominated by others."""
     v = viols.sum(axis=1)  # (S, C)
-    S = v.shape[0]
+    return _bound_viol_sums(v)
 
+
+def _bound_viol_sums(v):
+    """Bound a single (S, C) violation-sum matrix. Returns (S,) bool mask."""
+    S = v.shape[0]
     if S <= 1:
         return np.ones(S, dtype=bool)
+
+    # fast path: if any scansion has 0 on all constraints, it bounds everything else
+    totals = v.sum(axis=1)  # (S,)
+    perfect = totals == 0
+    if perfect.any():
+        # perfect scansions are unbounded; everything with >0 total is bounded
+        # but among perfect scansions, none bounds another (all equal)
+        return perfect
 
     device = get_device()
     if device is not None:
@@ -411,10 +785,40 @@ def compute_bounding_batch(viol_sums):
     if S <= 1:
         return np.ones((L, S), dtype=bool)
 
-    device = get_device()
-    if device is not None:
-        return _compute_bounding_batch_torch(viol_sums, device)
-    return _compute_bounding_batch_numpy(viol_sums)
+    # fast path: lines with a perfect (all-zero) scansion
+    totals = viol_sums.sum(axis=2)  # (L, S)
+    has_perfect = (totals == 0).any(axis=1)  # (L,) bool
+
+    if has_perfect.all():
+        # all lines have at least one perfect parse — shortcut
+        return totals == 0
+
+    if not has_perfect.any():
+        # no shortcuts possible, full pairwise
+        device = get_device()
+        if device is not None:
+            return _compute_bounding_batch_torch(viol_sums, device)
+        return _compute_bounding_batch_numpy(viol_sums)
+
+    # mixed: shortcut some lines, full pairwise for others
+    result = np.zeros((L, S), dtype=bool)
+
+    # perfect lines: unbounded = score 0
+    perfect_idx = np.where(has_perfect)[0]
+    result[perfect_idx] = (totals[perfect_idx] == 0)
+
+    # non-perfect lines: full pairwise bounding
+    nonperfect_idx = np.where(~has_perfect)[0]
+    if len(nonperfect_idx) > 0:
+        sub = viol_sums[nonperfect_idx]
+        device = get_device()
+        if device is not None:
+            sub_result = _compute_bounding_batch_torch(sub, device)
+        else:
+            sub_result = _compute_bounding_batch_numpy(sub)
+        result[nonperfect_idx] = sub_result
+
+    return result
 
 
 def _compute_bounding_batch_numpy(viol_sums):
@@ -527,9 +931,11 @@ class LazyParseList:
 
     @property
     def unbounded(self):
+        """Unbounded parses sorted by score (best first)."""
         from .parselists import ParseList
+        sorted_idx = self._unbounded_indices[np.argsort(self._scores)]
         return ParseList(
-            [self._get_parse(int(i)) for i in self._unbounded_indices],
+            [self._get_parse(int(i)) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent,
         )
 
@@ -537,19 +943,25 @@ class LazyParseList:
     def bounded(self):
         from .parselists import ParseList
         bounded_indices = np.where(~self._unbounded_mask)[0]
+        bounded_scores = self._all_scores[bounded_indices]
+        sorted_idx = bounded_indices[np.argsort(bounded_scores)]
         return ParseList(
-            [self._get_parse(int(i), is_bounded=True) for i in bounded_indices],
+            [self._get_parse(int(i), is_bounded=True) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent,
         )
 
     @property
     def data(self):
-        return [self._get_parse(i, is_bounded=not self._unbounded_mask[i])
-                for i in range(len(self._all_scansions))]
+        """All parses sorted by score (best first), unbounded before bounded."""
+        sorted_idx = np.argsort(self._all_scores)
+        return [self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
+                for i in sorted_idx]
 
     def __iter__(self):
-        for i in range(len(self._all_scansions)):
-            yield self._get_parse(i, is_bounded=not self._unbounded_mask[i])
+        """Iterate all parses sorted by score."""
+        sorted_idx = np.argsort(self._all_scores)
+        for i in sorted_idx:
+            yield self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -564,7 +976,16 @@ class LazyParseList:
     @property
     def line(self):
         """Get the line this parse list belongs to."""
-        return getattr(self.parent, 'line', self.parent) if self.parent else None
+        if self.parent is not None:
+            return getattr(self.parent, 'line', self.parent)
+        # DF path: find line from text's _line_parse_results
+        unit_num = getattr(self, '_unit_num', None)
+        text = getattr(self, '_text', None)
+        if unit_num is not None and text is not None:
+            for line in text.lines:
+                if line.num == unit_num:
+                    return line
+        return None
 
     @property
     def all(self):
@@ -616,7 +1037,12 @@ class LazyParseList:
 
     def stats(self, **kwargs):
         from .parselists import ParseList
-        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
+        df = ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
+        # inject unit num (e.g. line_num) for DF-path results
+        unit_num = getattr(self, '_unit_num', None)
+        if unit_num is not None and self.parse_unit + '_num' not in df.columns:
+            df.insert(0, self.parse_unit + '_num', unit_num)
+        return df
 
     def to_html(self, as_str=False, css=None, **kwargs):
         """Render HTML via wordtokens, not through Parse (avoids recursion)."""
@@ -626,7 +1052,7 @@ class LazyParseList:
         from ..imports import HTML_CSS, to_html, get_attr_str
         if css is None:
             css = HTML_CSS
-        out = self.wordtokens.to_html(as_str=True, css=css) if hasattr(self.wordtokens, 'to_html') else str(self.wordtokens)
+        out = self.wordtokens.to_html(as_str=True, css=css) if self.wordtokens and hasattr(self.wordtokens, 'to_html') else str(self.wordtokens)
         reprstr = get_attr_str(bp.attrs, bad_keys={"txt", "line_txt"})
         out += f'<div class="miniquote">⎿ {reprstr}</div>'
         return to_html(out, as_str=as_str)
@@ -661,7 +1087,7 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
     from .slots import ParseSlot
 
     nsylls = len(sylls)
-    wordforms = wordtokens.wordforms
+    wordforms = wordtokens.wordforms if wordtokens is not None else None
     constraint_weights = meter.constraints
     parse_constraint_funcs = meter.parse_constraint_funcs
 

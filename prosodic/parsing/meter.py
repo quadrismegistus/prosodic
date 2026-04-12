@@ -168,11 +168,12 @@ class Meter(Entity):
             return
         if self.exhaustive: num_proc = 1 # @todo fix this
         if self.vectorized:
-            # vectorized path: direct iteration, no stash.map overhead
-            for wordtokens in progress_bar(
-                parse_units[:lim], desc=f"Parsing {self.parse_unit}s"
-            ):
-                yield self.parse_wordspan(wordtokens)
+            # batched vectorized path: group by syllable count, process in bulk
+            from .vectorized import parse_batch
+            results = parse_batch(parse_units[:lim], self)
+            for wt, pl in results:
+                wt._parses = pl
+                yield pl
         elif num_proc != 0:
             use_stash = caching_is_enabled() and len(parse_units) <= CACHE_LINE_LIMIT
             yield from stash.map(

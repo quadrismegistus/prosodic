@@ -1,7 +1,129 @@
 """Vectorized metrical parser using numpy for batch constraint evaluation."""
 
 import numpy as np
+from collections import defaultdict
 from ..imports import *
+
+
+def parse_batch(parse_units, meter):
+    """Parse all units in a single batched operation.
+
+    Groups lines by syllable count to share scansion encodings,
+    then evaluates constraints and bounding for each group.
+
+    Args:
+        parse_units: list of WordTokenList objects (lines/lineparts)
+        meter: Meter object
+
+    Returns:
+        list of (wordtokens, LazyParseList) pairs in original order
+    """
+    from .parselists import ParseList
+
+    # extract features for all lines and group by nsylls
+    groups = defaultdict(list)  # nsylls -> [(idx, wordtokens, features, sylls)]
+    all_features = []
+    for idx, wt in enumerate(parse_units):
+        if wt.num_sylls < 2:
+            all_features.append(None)
+            continue
+        feats = extract_features(wt)
+        nsylls = len(feats["stressed"])
+        sylls = feats["sylls"]
+        groups[nsylls].append((idx, wt, feats, sylls))
+        all_features.append(feats)
+
+    # process each syllable-count group
+    results = [None] * len(parse_units)
+
+    for nsylls, group in groups.items():
+        scansions = meter.get_possible_scansions(nsylls)
+        if not scansions:
+            for idx, wt, _, _ in group:
+                results[idx] = (wt, ParseList([], parse_unit=meter.parse_unit, parent=wt))
+            continue
+
+        meter_vals, position_ids, position_sizes = encode_scansions(scansions, nsylls)
+        constraint_names = list(meter.constraints.keys())
+
+        # split group into simple (no ambiguity) and ambiguous lines
+        simple_lines = []
+        ambig_lines = []
+        for item in group:
+            idx, wt, feats, sylls = item
+            needs_matrix = meter.resolve_optionality and any(
+                w.wordtype.num_forms > 1 for w in wt if w.has_wordform
+            )
+            if needs_matrix:
+                ambig_lines.append(item)
+            else:
+                simple_lines.append(item)
+
+        # batch simple lines: evaluate constraints, then batch bounding on GPU
+        if simple_lines:
+            all_viols = []
+            constraint_index = None
+            for idx, wt, feats, sylls in simple_lines:
+                viols, ci = evaluate_constraints(
+                    feats, meter_vals, position_ids, position_sizes, constraint_names
+                )
+                all_viols.append(viols)
+                if constraint_index is None:
+                    constraint_index = ci
+
+            # batch bounding: stack all lines' violation sums
+            all_viol_sums = np.stack([v.sum(axis=1) for v in all_viols])  # (L, S, C)
+            unbounded_masks = compute_bounding_batch(all_viol_sums)  # (L, S)
+
+            for i, (idx, wt, feats, sylls) in enumerate(simple_lines):
+                pl = LazyParseList(
+                    wt, meter, scansions, all_viols[i], constraint_index,
+                    unbounded_masks[i], sylls, parse_unit=meter.parse_unit,
+                )
+                results[idx] = (wt, pl)
+
+        # handle ambiguous lines individually
+        for idx, wt, feats, sylls in ambig_lines:
+            best_result = None
+            best_score = float('inf')
+            for wtl in wt.iter_wordtoken_matrix():
+                wfeats = extract_features(wtl)
+                wnsylls = len(wfeats["stressed"])
+                if wnsylls != nsylls:
+                    wscans = meter.get_possible_scansions(wnsylls)
+                    if not wscans:
+                        continue
+                    wmv, wpi, wps = encode_scansions(wscans, wnsylls)
+                else:
+                    wscans, wmv, wpi, wps = scansions, meter_vals, position_ids, position_sizes
+                wviols, wci = evaluate_constraints(
+                    wfeats, wmv, wpi, wps, constraint_names
+                )
+                wunb = compute_bounding(wviols, wci)
+                wsylls = wfeats["sylls"]
+                wpl = LazyParseList(
+                    wtl, meter, wscans, wviols, wci, wunb, wsylls,
+                    parse_unit=meter.parse_unit,
+                )
+                if wpl._scores.size > 0:
+                    ms = float(wpl._scores.min())
+                    if ms < best_score:
+                        best_score = ms
+                        best_result = wpl
+                if not meter.resolve_optionality:
+                    break
+            pl = best_result if best_result else ParseList(
+                [], parse_unit=meter.parse_unit, parent=wt
+            )
+            results[idx] = (wt, pl)
+
+    # fill in empty results for lines with < 2 syllables
+    for idx in range(len(parse_units)):
+        if results[idx] is None:
+            wt = parse_units[idx]
+            results[idx] = (wt, ParseList([], parse_unit=meter.parse_unit, parent=wt))
+
+    return results
 
 
 def extract_features(wordtokens):
@@ -274,8 +396,49 @@ def compute_bounding(viols, constraint_index):
     return _compute_bounding_numpy(v)
 
 
+def compute_bounding_batch(viol_sums):
+    """Batch bounding for multiple lines at once.
+
+    Args:
+        viol_sums: (L, S, C) — violation sums per constraint per scansion per line
+
+    Returns:
+        (L, S) bool — unbounded mask per line
+    """
+    L, S, C = viol_sums.shape
+    if S <= 1:
+        return np.ones((L, S), dtype=bool)
+
+    device = get_device()
+    if device is not None:
+        return _compute_bounding_batch_torch(viol_sums, device)
+    return _compute_bounding_batch_numpy(viol_sums)
+
+
+def _compute_bounding_batch_numpy(viol_sums):
+    """Numpy batched bounding for L lines."""
+    L, S, C = viol_sums.shape
+    # (L, S, 1, C) - (L, 1, S, C) -> (L, S, S, C)
+    diff = viol_sums[:, :, None, :] - viol_sums[:, None, :, :]
+    i_leq_j = (diff <= 0).all(axis=3)  # (L, S, S)
+    i_lt_j = i_leq_j & (diff < 0).any(axis=3)
+    bounded = i_lt_j.any(axis=1)  # (L, S)
+    return ~bounded
+
+
+def _compute_bounding_batch_torch(viol_sums, device):
+    """GPU batched bounding for L lines in a single kernel launch."""
+    import torch
+    vt = torch.tensor(viol_sums, dtype=torch.int16, device=device)  # (L, S, C)
+    diff = vt[:, :, None, :] - vt[:, None, :, :]  # (L, S, S, C)
+    i_leq_j = (diff <= 0).all(dim=3)
+    i_lt_j = i_leq_j & (diff < 0).any(dim=3)
+    bounded = i_lt_j.any(dim=1)  # (L, S)
+    return ~bounded.cpu().numpy()
+
+
 def _compute_bounding_numpy(v):
-    """Numpy fallback for harmonic bounding."""
+    """Numpy fallback for harmonic bounding (single line)."""
     diff = v[:, None, :] - v[None, :, :]  # (S, S, C)
     i_leq_j = (diff <= 0).all(axis=2)
     i_lt_j = i_leq_j & (diff < 0).any(axis=2)
@@ -284,7 +447,7 @@ def _compute_bounding_numpy(v):
 
 
 def _compute_bounding_torch(v, device):
-    """GPU-accelerated harmonic bounding via PyTorch."""
+    """GPU-accelerated harmonic bounding via PyTorch (single line)."""
     import torch
     vt = torch.tensor(v, dtype=torch.int16, device=device)
     diff = vt[:, None, :] - vt[None, :, :]  # (S, S, C)

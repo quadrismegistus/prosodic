@@ -170,7 +170,8 @@ class Meter(Entity):
                 total=lim,
                 _force=force,
                 desc=f"Parsing {self.parse_unit}s",
-                stash_map=False,
+                stash_runs=caching_is_enabled(),
+                stash_map=caching_is_enabled(),
             ).results_iter()
         else:
             for wordtokens in progress_bar(
@@ -178,7 +179,6 @@ class Meter(Entity):
             ):
                 yield self.parse_wordspan(wordtokens)
 
-    # @stash.stashed_result
     def parse_wordspan(self, wordtokens: "WordTokenList", **kwargs: Any) -> "ParseList":
         """
         Parse a wordtoken list.
@@ -218,7 +218,6 @@ class Meter(Entity):
                 )
                 return parse
 
-    # @stash.stashed_result
     def parse_fast(self, wordtokens: "WordTokenList") -> ParseList:
         """
         Parse a line using the fast parsing method.

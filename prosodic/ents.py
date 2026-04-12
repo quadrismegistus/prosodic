@@ -20,7 +20,6 @@ class Entity(UserList):
         prefix (str): A prefix used for attribute naming.
         list_type (type): The type of list used for storing children.
         cached_properties_to_clear (list): Properties to clear from cache.
-        use_cache (bool): Whether to use caching for this entity.
         sep (str): Separator used when joining child texts.
     """
 
@@ -28,7 +27,6 @@ class Entity(UserList):
     index_name = None
     prefix = "ent"
     cached_properties_to_clear = []
-    use_cache = False
     is_text = False
     sep = ""
 

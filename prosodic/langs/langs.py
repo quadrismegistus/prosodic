@@ -8,7 +8,6 @@ class LanguageModel:
     lang_espeak = None
     lang = None
     name = None
-    use_cache = False
     filename_ambig_stress = "ambig_stress_words.txt"
     filename_unstressed = "unstressed_words.txt"
     filename_token2ipa = None

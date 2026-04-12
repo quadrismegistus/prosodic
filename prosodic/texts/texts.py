@@ -33,7 +33,6 @@ class TextModel(Entity):
             parent (Optional[Entity]): The parent entity. Default is None.
             children (Optional[list]): The list of child entities. Default is an empty list.
             tokens_df (Optional[pd.DataFrame]): The token dataframe. Default is None.
-            use_cache (bool): Whether to use cache. Default is USE_CACHE.
             force (bool): Force parsing regardless of current state. Default is False.
             **kwargs: Additional keyword arguments.
 
@@ -308,7 +307,6 @@ class TextModel(Entity):
         return self.parse(**meter_kwargs).render(as_str=as_str, blockquote=blockquote)
 
 
-# @stash.stashed_result
 def Text(
     txt: str = "",
     fn: str = "",

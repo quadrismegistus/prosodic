@@ -226,7 +226,6 @@ class Meter(Entity):
         from .vectorized import (
             extract_features, encode_scansions,
             evaluate_constraints, compute_bounding, build_parses,
-            prefilter_scansions,
         )
 
         # check if we need wordform matrix expansion
@@ -247,9 +246,6 @@ class Meter(Entity):
             all_scansions = self.get_possible_scansions(nsylls)
             if not all_scansions:
                 continue
-
-            num_stressed = int(features["stressed"].sum())
-            all_scansions = prefilter_scansions(all_scansions, num_stressed)
 
             meter_vals, position_ids, position_sizes = encode_scansions(all_scansions, nsylls)
 

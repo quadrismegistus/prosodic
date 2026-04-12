@@ -15,6 +15,7 @@ DEFAULT_METER_KWARGS = dict(
     max_w=METER_MAX_W,
     resolve_optionality=METER_RESOLVE_OPTIONALITY,
     exhaustive=False,
+    vectorized=False,
     parse_unit="linepart",
 )
 MTRDEFAULT = DEFAULT_METER_KWARGS
@@ -45,6 +46,7 @@ class Meter(Entity):
         max_w: int = MTRDEFAULT["max_w"],
         resolve_optionality: bool = MTRDEFAULT["resolve_optionality"],
         exhaustive: bool = MTRDEFAULT["exhaustive"],
+        vectorized: bool = MTRDEFAULT["vectorized"],
         parse_unit: Literal["line", "sentpart", "linepart"] = MTRDEFAULT["parse_unit"],
         **kwargs: Any,
     ) -> None:
@@ -57,8 +59,10 @@ class Meter(Entity):
             max_w (int): Maximum number of consecutive weak positions.
             resolve_optionality (bool): Whether to resolve optional syllables.
             exhaustive (bool): Whether to perform exhaustive parsing.
+            vectorized (bool): Whether to use the vectorized numpy parser.
             **kwargs: Additional keyword arguments.
         """
+        self.vectorized = vectorized
         super().__init__(
             constraints=(
                 parse_constraint_weights(constraints)
@@ -162,7 +166,13 @@ class Meter(Entity):
             log.warning(f"cannot parse {text}")
             return
         if self.exhaustive: num_proc = 1 # @todo fix this
-        if num_proc != 0:
+        if self.vectorized:
+            # vectorized path: direct iteration, no stash.map overhead
+            for wordtokens in progress_bar(
+                parse_units[:lim], desc=f"Parsing {self.parse_unit}s"
+            ):
+                yield self.parse_wordspan(wordtokens)
+        elif num_proc != 0:
             use_stash = caching_is_enabled() and len(parse_units) <= CACHE_LINE_LIMIT
             yield from stash.map(
                 self.parse_wordspan,
@@ -200,12 +210,52 @@ class Meter(Entity):
 
         if self.exhaustive:
             parses = self.parse_exhaustive(wordtokens)
+        elif self.vectorized:
+            parses = self.parse_vectorized(wordtokens)
         else:
             parses = self.parse_fast(wordtokens)
 
         wordtokens._parses = parses
-        parses.register_objects()
+        if not self.vectorized:
+            parses.register_objects()
         return parses
+
+    def parse_vectorized(self, wordtokens: "WordTokenList") -> "ParseList":
+        """Parse using vectorized numpy engine for batch constraint evaluation."""
+        from .vectorized import (
+            extract_features, encode_scansions,
+            evaluate_constraints, compute_bounding, build_parses,
+        )
+
+        all_parses = []
+        for wtl in wordtokens.iter_wordtoken_matrix():
+            features = extract_features(wtl)
+            nsylls = len(features["stressed"])
+
+            all_scansions = self.get_possible_scansions(nsylls)
+            if not all_scansions:
+                continue
+
+            meter_vals, position_ids, position_sizes = encode_scansions(all_scansions, nsylls)
+
+            constraint_names = list(self.constraints.keys())
+            viols, constraint_index = evaluate_constraints(
+                features, meter_vals, position_ids, position_sizes, constraint_names
+            )
+            unbounded_mask = compute_bounding(viols, constraint_index)
+
+            parses = build_parses(
+                wtl, self, all_scansions, viols, constraint_index, unbounded_mask
+            )
+            all_parses.extend(parses.data)
+
+            if not self.resolve_optionality:
+                break
+
+        result = ParseList(all_parses, parse_unit=self.parse_unit, parent=wordtokens)
+        result.bound(progress=False)
+        result.rank()
+        return result
 
     def get_one_parse(self, wordtokens: "WordTokenList"):
         for wtl in wordtokens.iter_wordtoken_matrix():

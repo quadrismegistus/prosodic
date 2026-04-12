@@ -3,6 +3,7 @@ from ..words import WordTokenList, WordToken
 from .syll_df import build_syll_df
 
 NUMBUILT = 0
+PARSED_CACHE_DIR = os.path.join(PATH_HOME_DATA, "parsed")
 
 
 class TextModel(Entity):
@@ -264,11 +265,22 @@ class TextModel(Entity):
         """The syllable DataFrame — no entity construction needed."""
         return self._syll_df
 
-    def parse_df(self, **meter_kwargs):
+    @cached_property
+    def parsed_df(self):
+        """Parse with default meter and return results as a DataFrame.
+
+        One row per syllable of the best parse per line, with meter_val,
+        violations, and score. No entity construction needed.
+        """
+        return self.get_parsed_df()
+
+    def get_parsed_df(self, **meter_kwargs):
         """Parse and return results as a DataFrame. No entity construction.
 
-        Returns a DataFrame with one row per syllable of the best parse per line,
-        including meter_val (s/w), violations, and score.
+        Args:
+            **meter_kwargs: Custom meter config (max_s, max_w, etc.)
+
+        Returns a DataFrame with one row per syllable of the best parse per line.
         """
         self.parse(**meter_kwargs)
         if not self._line_parse_results:
@@ -295,6 +307,61 @@ class TextModel(Entity):
                             **{f'*{k}': v for k, v in slot.viold.items()},
                         })
         return pd.DataFrame(rows)
+
+    def save(self, path=None, **meter_kwargs):
+        """Save syllable DF + parse results to parquet files.
+
+        Args:
+            path: directory to save into. Defaults to ~/prosodic_data/data/parsed/<hash>/
+            **meter_kwargs: passed to parse() if not already parsed
+
+        Returns:
+            str: path to the saved directory
+        """
+        if path is None:
+            path = os.path.join(PARSED_CACHE_DIR, self.hash)
+        os.makedirs(path, exist_ok=True)
+
+        # save syll_df
+        self._syll_df.to_parquet(os.path.join(path, "syll.parquet"))
+
+        # save parsed_df
+        pdf = self.get_parsed_df(**meter_kwargs)
+        if len(pdf) > 0:
+            pdf.to_parquet(os.path.join(path, "parsed.parquet"))
+
+        # save metadata
+        import json
+        meta = {"txt_hash": self.hash, "lang": self.lang, "num_lines": int(self._syll_df['line_num'].max())}
+        with open(os.path.join(path, "meta.json"), "w") as f:
+            json.dump(meta, f)
+
+        return path
+
+    @staticmethod
+    def load(path):
+        """Load saved syllable DF + parse results from parquet files.
+
+        Args:
+            path: directory containing syll.parquet and parsed.parquet
+
+        Returns:
+            dict with 'syll_df' and 'parsed_df' DataFrames
+        """
+        result = {}
+        syll_path = os.path.join(path, "syll.parquet")
+        parsed_path = os.path.join(path, "parsed.parquet")
+        meta_path = os.path.join(path, "meta.json")
+
+        if os.path.exists(syll_path):
+            result['syll_df'] = pd.read_parquet(syll_path)
+        if os.path.exists(parsed_path):
+            result['parsed_df'] = pd.read_parquet(parsed_path)
+        if os.path.exists(meta_path):
+            import json
+            with open(meta_path) as f:
+                result['meta'] = json.load(f)
+        return result
 
     def iter_wordtoken_matrix(self):
         yield from self.wordtokens.iter_wordtoken_matrix()

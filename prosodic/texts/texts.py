@@ -259,6 +259,43 @@ class TextModel(Entity):
             self.parse()
         return self._parses
 
+    @property
+    def df(self):
+        """The syllable DataFrame — no entity construction needed."""
+        return self._syll_df
+
+    def parse_df(self, **meter_kwargs):
+        """Parse and return results as a DataFrame. No entity construction.
+
+        Returns a DataFrame with one row per syllable of the best parse per line,
+        including meter_val (s/w), violations, and score.
+        """
+        self.parse(**meter_kwargs)
+        if not self._line_parse_results:
+            return pd.DataFrame()
+
+        rows = []
+        for meter_key, line_results in self._line_parse_results.items():
+            for line_num in sorted(line_results.keys()):
+                pl = line_results[line_num]
+                bp = pl.best_parse
+                if bp is None:
+                    continue
+                for pos in bp.positions:
+                    mval = pos.meter_val
+                    for slot in pos.children:
+                        rows.append({
+                            'line_num': line_num,
+                            'syll_txt': slot.unit.txt if hasattr(slot.unit, 'txt') else '',
+                            'syll_ipa': slot.unit.ipa if hasattr(slot.unit, 'ipa') else '',
+                            'meter_val': mval,
+                            'is_stressed': slot.unit.is_stressed,
+                            'is_prom': slot.is_prom,
+                            'score': slot.score,
+                            **{f'*{k}': v for k, v in slot.viold.items()},
+                        })
+        return pd.DataFrame(rows)
+
     def iter_wordtoken_matrix(self):
         yield from self.wordtokens.iter_wordtoken_matrix()
 

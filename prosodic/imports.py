@@ -66,7 +66,7 @@ HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."
 
-DEFAULT_USE_REGISTRY = True
+DEFAULT_USE_REGISTRY = False
 DEFAULT_COMBINE_BY = "line"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")

@@ -65,14 +65,22 @@ class TextModel(Entity):
 
         if not self.children:
             if tokens_df is None:
-                tokens_df = tokenize_sentwords_df(txt)
-
-            for _, row in progress_bar(
-                list(tokens_df.iterrows()),
-                progress=len(tokens_df) >= 1000,
-                desc="Building long text",
-            ):
-                self.children.append(WordToken(lang=self.lang, **row.to_dict()))
+                # fast path: use list of dicts directly, skip DataFrame/iterrows
+                token_dicts = list(tokenize_sentwords_iter(txt))
+                for d in progress_bar(
+                    token_dicts,
+                    progress=len(token_dicts) >= 1000,
+                    desc="Building long text",
+                ):
+                    self.children.append(WordToken(lang=self.lang, **d))
+            else:
+                # legacy path: accept pre-built DataFrame
+                for _, row in progress_bar(
+                    list(tokens_df.iterrows()),
+                    progress=len(tokens_df) >= 1000,
+                    desc="Building long text",
+                ):
+                    self.children.append(WordToken(lang=self.lang, **row.to_dict()))
         
         # assign objects to global OBJECTS dict
         if DEFAULT_USE_REGISTRY:

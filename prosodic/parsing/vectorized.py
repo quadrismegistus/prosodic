@@ -50,6 +50,25 @@ def extract_features(wordtokens):
     }
 
 
+def prefilter_scansions(scansions, num_stressed):
+    """Remove scansions that can't possibly be optimal.
+
+    Filters out scansions where the number of strong positions differs
+    from the number of stressed syllables by more than a threshold.
+    """
+    if not scansions or num_stressed == 0:
+        return scansions
+
+    filtered = []
+    for scan in scansions:
+        num_strong = sum(1 for pos in scan if pos[0] == 's')
+        # allow some mismatch but skip extreme cases
+        if abs(num_strong - num_stressed) <= num_stressed:
+            filtered.append(scan)
+
+    return filtered if filtered else scansions
+
+
 _scansion_cache = {}
 
 def encode_scansions(scansions, nsylls):
@@ -218,6 +237,9 @@ def _eval_unres_across(viols, ci, position_ids, position_sizes, word_ids, func_w
 def compute_bounding(viols, constraint_index):
     """Compute harmonic bounding: mark scansions dominated by others.
 
+    Uses vectorized pairwise comparison: for each pair (i,j), check if
+    i's violations are a strict subset of j's (i bounds j) or vice versa.
+
     Args:
         viols: (S, N, C) violation matrix
         constraint_index: dict of constraint name -> index
@@ -226,35 +248,23 @@ def compute_bounding(viols, constraint_index):
         unbounded: (S,) bool mask — True for unbounded scansions
     """
     # Sum violations per constraint per scansion: (S, C)
-    viols_per_scansion = viols.sum(axis=1)
-    S = viols_per_scansion.shape[0]
+    v = viols.sum(axis=1)  # (S, C)
+    S = v.shape[0]
 
-    unbounded = np.ones(S, dtype=bool)
+    if S <= 1:
+        return np.ones(S, dtype=bool)
 
-    for i in range(S):
-        if not unbounded[i]:
-            continue
-        for j in range(i + 1, S):
-            if not unbounded[j]:
-                continue
+    # Pairwise comparison: (S, 1, C) vs (1, S, C) -> (S, S, C)
+    # i_leq_j[i,j] = True if v[i] <= v[j] for all constraints
+    diff = v[:, None, :] - v[None, :, :]  # (S, S, C)
+    i_leq_j = (diff <= 0).all(axis=2)     # (S, S)
+    i_lt_j = i_leq_j & (diff < 0).any(axis=2)  # (S, S) strict subset
 
-            vi = viols_per_scansion[i]
-            vj = viols_per_scansion[j]
+    # i bounds j means i_lt_j[i,j] is True -> j is bounded
+    # j is bounded if ANY i strictly dominates it
+    bounded = i_lt_j.any(axis=0)  # (S,) — True if bounded by at least one other
 
-            i_leq_j = (vi <= vj).all()
-            j_leq_i = (vj <= vi).all()
-            i_lt_j = i_leq_j and (vi < vj).any()
-            j_lt_i = j_leq_i and (vj < vi).any()
-
-            if i_lt_j:
-                # i bounds j
-                unbounded[j] = False
-            elif j_lt_i:
-                # j bounds i
-                unbounded[i] = False
-                break
-
-    return unbounded
+    return ~bounded
 
 
 def build_parses(wordtokens, meter, scansions, viols, constraint_index, unbounded_mask):

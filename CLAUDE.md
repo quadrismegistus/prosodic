@@ -95,6 +95,20 @@ Flask + flask-socketio (WebSocket). Mobile-friendly single-page app.
 - `templates/index.html`: Responsive layout (sidebar stacks on mobile). Collapsible "Configure Meter" panel. Best-only / All-unbounded toggle. Violation tooltips on tap/hover. Ambiguity column.
 - Run with `prosodic web` or `python -c "from prosodic.web.app import main; main(port=5111, host='0.0.0.0')"`
 
+## Two Parse Paths
+
+There are two ways parsing happens, and it matters which one you're in:
+
+1. **DF path** (`parse_batch_from_df`): Used by `text.parse()`. Works entirely from `_syll_df`. Parse objects contain `SyllData` (lightweight, no parent chain). `parse.wordtokens` is None. Good for batch processing, `text.parsed_df`, `text.save()`. No entities built.
+
+2. **Entity path** (`parse_batch`): Used by the web app and when you call `parse_batch(text.lines, meter)` directly. Parse objects contain real `Syllable` entities with parent chains (wordform → wordtype → wordtoken). Needed for HTML rendering (word boundaries, `line.to_html()`).
+
+**Gotchas:**
+- DF-path parses have `slot.unit.parent = None` — can't traverse to wordtoken/wordform.
+- `text.parse()` stores results in `text._line_parse_results[meter_key]`. When `text.lines` is first accessed, results are attached to line entities via line_num matching.
+- `LazyParseList` defers Parse object construction. `best_parse` builds exactly 1 Parse via `argmin`. Iterating builds all.
+- `text.parsed_df` is a cached property (default meter). Use `text.get_parsed_df(**kwargs)` for custom meters.
+
 ## Testing Notes
 
 - Tests import everything via `from prosodic.imports import *` and call `disable_caching()` at the top (now a no-op).

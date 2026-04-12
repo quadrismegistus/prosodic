@@ -15,8 +15,8 @@ DEFAULT_METER_KWARGS = dict(
     max_w=METER_MAX_W,
     resolve_optionality=METER_RESOLVE_OPTIONALITY,
     exhaustive=False,
-    vectorized=False,
-    parse_unit="linepart",
+    vectorized=True,
+    parse_unit="line",
 )
 MTRDEFAULT = DEFAULT_METER_KWARGS
 
@@ -167,11 +167,12 @@ class Meter(Entity):
             log.warning(f"cannot parse {text}")
             return
         if self.exhaustive: num_proc = 1 # @todo fix this
-        if self.vectorized:
+        if self.vectorized and not self.exhaustive:
             # batched vectorized path: group by syllable count, process in bulk
             from .vectorized import parse_batch
             results = parse_batch(parse_units[:lim], self)
             for wt, pl in results:
+                pl.parent = wt  # ensure parent is the original parse unit
                 wt._parses = pl
                 yield pl
         elif num_proc != 0:

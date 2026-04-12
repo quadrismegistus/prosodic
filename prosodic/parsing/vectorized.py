@@ -112,9 +112,11 @@ def parse_batch(parse_units, meter):
                         best_result = wpl
                 if not meter.resolve_optionality:
                     break
-            pl = best_result if best_result else ParseList(
-                [], parse_unit=meter.parse_unit, parent=wt
-            )
+            if best_result:
+                best_result.parent = wt  # ensure parent is original line, not copy
+                pl = best_result
+            else:
+                pl = ParseList([], parse_unit=meter.parse_unit, parent=wt)
             results[idx] = (wt, pl)
 
     # fill in empty results for lines with < 2 syllables
@@ -554,6 +556,24 @@ class LazyParseList:
             indices = range(*idx.indices(len(self._all_scansions)))
             return [self._get_parse(i, is_bounded=not self._unbounded_mask[i]) for i in indices]
         return self._get_parse(idx, is_bounded=not self._unbounded_mask[idx])
+
+    @property
+    def scope(self):
+        return self.parse_unit
+
+    @property
+    def line(self):
+        """Get the line this parse list belongs to."""
+        return getattr(self.parent, 'line', self.parent) if self.parent else None
+
+    @property
+    def all(self):
+        """Alias for data — all parses including bounded."""
+        return self.data
+
+    def _repr_html_(self):
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent)._repr_html_()
 
     def bound(self, progress=False):
         return self  # already bounded in numpy

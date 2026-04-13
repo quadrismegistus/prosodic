@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Prosodic</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Georgia, serif; font-size: 16px; background: #fafafa; color: #222; }
 
-        /* layout */
         .app { display: flex; flex-direction: column; min-height: 100vh; }
         .header { padding: 1rem; text-align: center; border-bottom: 1px solid #ddd; background: #fff; }
         .header h1 { font-size: 1.4rem; font-weight: normal; }
@@ -20,37 +20,48 @@
                    overflow-y: auto; padding: 1rem; flex-shrink: 0; }
         .content { flex: 1; padding: 1rem; overflow-x: auto; }
 
-        /* mobile: stack */
         @media (max-width: 768px) {
             .main { flex-direction: column; }
-            .sidebar { width: 100%; min-width: 100%; border-right: none; border-bottom: 1px solid #ddd;
-                       max-height: none; }
+            .sidebar { width: 100%; min-width: 100%; border-right: none; border-bottom: 1px solid #ddd; }
             .content { padding: .5rem; }
         }
 
-        /* input */
         textarea { width: 100%; min-height: 200px; font-family: Georgia, serif; font-size: 15px;
-                   line-height: 1.6; padding: .75rem; border: 1px solid #ccc; border-radius: 4px;
-                   resize: vertical; }
-        .parse-btn { width: 100%; padding: .75rem; font-family: Georgia, serif; font-size: 1.1rem;
+                   line-height: 1.6; padding: .75rem; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        .action-btn { width: 100%; padding: .75rem; font-family: Georgia, serif; font-size: 1.1rem;
                      background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;
-                     margin: .75rem 0; }
-        .parse-btn:hover { background: #555; }
-        .parse-btn:disabled { background: #999; cursor: default; }
+                     margin: .5rem 0; }
+        .action-btn:hover { background: #555; }
+
+        /* tabs */
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid #ddd; margin-bottom: .75rem; }
+        .tab { padding: .5rem 1.2rem; font-family: Georgia, serif; font-size: 1rem; border: none;
+               background: none; cursor: pointer; color: #888; border-bottom: 2px solid transparent;
+               margin-bottom: -2px; }
+        .tab.active { color: #222; border-bottom-color: #333; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* config */
-        .config-section { margin-top: 1rem; }
+        .config-section { margin-top: .75rem; }
         .config-title { font-size: .9rem; font-weight: normal; background: #e8e8e8; padding: .4rem .6rem;
-                        border-radius: 3px; margin-bottom: .5rem; }
+                        border-radius: 3px; margin-bottom: .5rem; cursor: pointer; }
+        .config-title:hover { background: #ddd; }
+        .config-body { }
+        .config-body.collapsed { display: none; }
         .config-row { display: flex; justify-content: space-between; align-items: center;
                       padding: .4rem .6rem; border-bottom: 1px solid #eee; font-size: .9rem; }
         .config-row:last-child { border-bottom: none; }
         .config-row label { flex: 1; }
         .config-row .desc { font-size: .75rem; color: #888; display: block; }
-        .config-row select, .config-row input[type=checkbox] { flex-shrink: 0; }
+        .config-row select, .config-row input[type=checkbox], .config-row input[type=text],
+        .config-row input[type=number] { flex-shrink: 0; }
+        .config-row input[type=text], .config-row input[type=number] {
+            width: 120px; padding: .2rem .4rem; font-family: Georgia, serif; font-size: .85rem;
+            border: 1px solid #ccc; border-radius: 3px; }
 
         /* toggle */
-        .toggle-row { display: flex; gap: .5rem; margin-bottom: .75rem; align-items: center; }
+        .toggle-row { display: flex; gap: .5rem; margin-bottom: .75rem; align-items: center; flex-wrap: wrap; }
         .toggle-btn { padding: .3rem .7rem; font-size: .8rem; border: 1px solid #ccc; border-radius: 3px;
                       background: #fff; cursor: pointer; font-family: Georgia, serif; }
         .toggle-btn.active { background: #333; color: #fff; border-color: #333; }
@@ -77,39 +88,38 @@
                        font-family: monospace; pointer-events: none; }
         .viol_y:hover .tip, .viol_y:active .tip, .viol_y.touched .tip { display: block; }
 
-        /* progress */
-        .progress-bar { height: 3px; background: #333; transition: width .2s; position: fixed;
-                        top: 0; left: 0; z-index: 100; }
+        /* weights table */
+        .weights-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+        .weights-table th { text-align: left; padding: .4rem .5rem; border-bottom: 2px solid #ccc;
+                           font-weight: normal; font-size: .8rem; color: #666; }
+        .weights-table td { padding: .3rem .5rem; border-bottom: 1px solid #eee; font-family: monospace; }
+        .weights-table .bar { background: #5b8def; height: 14px; border-radius: 2px; min-width: 2px; }
 
-        /* legend */
         .legend { font-size: .8rem; color: #888; padding: .5rem 0; }
         .legend .mtr_s { color: #222; }
         .legend .str_s { color: #222; }
         .legend .viol_y { color: #e03030; }
 
-        /* stats row */
         .stat { font-size: .75rem; color: #888; font-family: monospace; }
-
-        /* empty state */
         .empty { color: #aaa; text-align: center; padding: 3rem; font-style: italic; }
         .hidden { display: none; }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline; }
+        .htmx-request .action-btn { background: #999; }
+        .info { font-size: .8rem; color: #666; padding: .5rem 0; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
-        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
-        crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="app">
-    <div class="progress-bar" id="progress" style="width:0%"></div>
-
     <div class="header">
-        <h1><a href="https://github.com/quadrismegistus/prosodic">Prosodic</a> <span style="font-size:.8em;color:#888">[prə.'sɑ.dɪk]</span></h1>
+        <h1><a href="https://github.com/quadrismegistus/prosodic">Prosodic</a>
+            <span style="font-size:.8em;color:#888">[prə.'sɑ.dɪk]</span></h1>
         <div class="subtitle">A metrical parser for English and Finnish</div>
     </div>
 
     <div class="main">
         <div class="sidebar">
-            <form id="inputform" onsubmit="return false;">
+            <form id="mainform">
                 <textarea id="inputtext" name="text">From fairest creatures we desire increase,
 That thereby beauty's rose might never die,
 But as the riper should by time decease,
@@ -125,169 +135,188 @@ And, tender churl, makest waste in niggarding.
 Pity the world, or else this glutton be,
 To eat the world's due, by the grave and thee.</textarea>
 
-                <button class="parse-btn" id="parsebtn" type="button">Parse</button>
-
-                <button class="toggle-btn" style="width:100%;margin:.5rem 0;padding:.5rem;font-size:.9rem;"
-                        onclick="document.getElementById('meter-config').classList.toggle('hidden')">
-                    Configure Meter
+                <!-- Parse button (shown on Parse tab) -->
+                <button type="submit" class="action-btn" id="parse-btn"
+                        hx-post="/parse" hx-target="#results" hx-include="#mainform"
+                        hx-indicator="#parse-btn">
+                    Parse <span class="htmx-indicator">...</span>
                 </button>
 
-                <div id="meter-config" class="hidden">
+                <!-- MaxEnt buttons (shown on MaxEnt tab, hidden by default) -->
+                <div id="maxent-buttons" class="hidden">
+                    <button type="button" class="action-btn"
+                            hx-post="/maxent/fit" hx-target="#results" hx-include="#mainform"
+                            hx-indicator="this">
+                        Train Weights <span class="htmx-indicator">...</span>
+                    </button>
+                    <button type="button" class="action-btn" style="background:#555;"
+                            hx-post="/maxent/reparse" hx-target="#results" hx-include="#mainform"
+                            hx-indicator="this">
+                        Re-parse with Weights <span class="htmx-indicator">...</span>
+                    </button>
+                </div>
+
+                <!-- Meter config (shared) -->
                 <div class="config-section">
-                    <div class="config-title">Constraints</div>
+                    <div class="config-title" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+                        Constraints
+                    </div>
+                    <div class="config-body collapsed">
                     {% for cname in all_constraints %}
                     <div class="config-row">
                         <label>*{{cname}}<span class="desc">{{constraint_descs[cname]}}</span></label>
-                        <input type="checkbox" name="*{{cname}}" value="1" {% if cname in constraints %}checked{%endif%}>
+                        <input type="checkbox" name="*{{cname}}" value="1" {% if cname in constraints %}checked{% endif %}>
                     </div>
                     {% endfor %}
+                    </div>
                 </div>
 
                 <div class="config-section">
-                    <div class="config-title">Position sizes</div>
+                    <div class="config-title" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+                        Position sizes
+                    </div>
+                    <div class="config-body collapsed">
                     <div class="config-row">
-                        <label>max_w <span class="desc">{{constraint_descs['max_w']}}</span></label>
+                        <label>max_w</label>
                         <select name="max_w">
                             {% for n in range(1,6) %}
-                            <option value="{{n}}" {% if max_w==n %}selected{%endif%}>{{n}}</option>
+                            <option value="{{n}}" {% if max_w==n %}selected{% endif %}>{{n}}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="config-row">
-                        <label>max_s <span class="desc">{{constraint_descs['max_s']}}</span></label>
+                        <label>max_s</label>
                         <select name="max_s">
                             {% for n in range(1,6) %}
-                            <option value="{{n}}" {% if max_s==n %}selected{%endif%}>{{n}}</option>
+                            <option value="{{n}}" {% if max_s==n %}selected{% endif %}>{{n}}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="config-row">
+                        <label>resolve_optionality</label>
+                        <input type="checkbox" name="resolve_optionality" value="1"
+                               {% if resolve_optionality %}checked{% endif %}>
+                    </div>
                     </div>
                 </div>
 
+                <!-- MaxEnt config (shown on MaxEnt tab) -->
+                <div id="maxent-config" class="hidden">
                 <div class="config-section">
-                    <div class="config-title">Options</div>
+                    <div class="config-title">MaxEnt Training</div>
+                    <div class="config-body">
                     <div class="config-row">
-                        <label>resolve_optionality <span class="desc">{{constraint_descs['resolve_optionality']}}</span></label>
-                        <input type="checkbox" name="resolve_optionality" value="1" {%if resolve_optionality %}checked{%endif%}>
+                        <label>Target scansion<span class="desc">e.g. wswswswsws for iambic pentameter</span></label>
+                        <input type="text" name="target_scansion" value="wswswswsws">
+                    </div>
+                    <div class="config-row">
+                        <label>Zones<span class="desc">Positional zone splitting</span></label>
+                        <select name="zones">
+                            <option value="none">None</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="initial">Initial</option>
+                            <option value="foot">Foot</option>
+                        </select>
+                    </div>
+                    <div class="config-row">
+                        <label>Regularization<span class="desc">L2 penalty (higher = more conservative)</span></label>
+                        <input type="number" name="regularization" value="100" step="10" min="1">
+                    </div>
+                    <div class="config-row">
+                        <label>Syntax<span class="desc">Add phrasal stress (spaCy)</span></label>
+                        <input type="checkbox" name="syntax" value="1">
+                    </div>
                     </div>
                 </div>
-                </div><!-- /meter-config -->
+                <div class="config-section">
+                    <div class="config-title">Or: Upload Annotations</div>
+                    <div class="config-body">
+                    <div class="config-row" style="flex-direction:column;align-items:stretch;">
+                        <label>TSV file<span class="desc">Columns: text, scansion, frequency</span></label>
+                        <input type="file" name="annotations_file" accept=".tsv,.csv,.txt"
+                               style="margin-top:.3rem;font-size:.85rem;">
+                    </div>
+                    <button type="button" class="action-btn" style="background:#666;font-size:.9rem;"
+                            hx-post="/maxent/fit-annotations" hx-target="#results"
+                            hx-include="#mainform" hx-encoding="multipart/form-data"
+                            hx-indicator="this">
+                        Train from Annotations <span class="htmx-indicator">...</span>
+                    </button>
+                    </div>
+                </div>
+                </div>
             </form>
         </div>
 
         <div class="content">
-            <div class="toggle-row">
-                <button class="toggle-btn active" id="btn-best" onclick="toggleView('best')">Best only</button>
-                <button class="toggle-btn" id="btn-unbounded" onclick="toggleView('unbounded')">All unbounded</button>
-                <span class="legend" style="margin-left:auto;">
-                    <span class="mtr_s">over</span>line = strong &nbsp;
-                    <span class="str_s">bold</span> = stressed &nbsp;
-                    <span class="viol_y">red</span> = violation
-                </span>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('parse')">Parse</button>
+                <button class="tab" onclick="switchTab('maxent')">MaxEnt</button>
+            </div>
+            <div id="tab-parse-header" class="tab-content active">
+                <div class="toggle-row">
+                    <button class="toggle-btn active" onclick="toggleView('best', this)">Best only</button>
+                    <button class="toggle-btn" onclick="toggleView('unbounded', this)">All unbounded</button>
+                    <span class="legend" style="margin-left:auto;">
+                        <span class="mtr_s">over</span>line = strong &nbsp;
+                        <span class="str_s">bold</span> = stressed &nbsp;
+                        <span class="viol_y">red</span> = violation
+                    </span>
+                </div>
+            </div>
+            <div id="tab-maxent-header" class="tab-content">
+                <div class="info">Train MaxEnt constraint weights from text or annotations, then re-parse with learned weights.</div>
             </div>
             <div class="results" id="results">
-                <div class="empty" id="empty-msg">Paste text and hit Parse</div>
+                <div class="empty">Paste text and hit Parse</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-var viewMode = 'best';
-var allRows = [];
-var socket = io();
-var startedAt = 0;
-
-function toggleView(mode) {
-    viewMode = mode;
-    document.getElementById('btn-best').classList.toggle('active', mode === 'best');
-    document.getElementById('btn-unbounded').classList.toggle('active', mode === 'unbounded');
-    renderTable();
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(function(el, i) {
+        el.classList.toggle('active', (tab === 'parse' && i === 0) || (tab === 'maxent' && i === 1));
+    });
+    document.getElementById('tab-parse-header').classList.toggle('active', tab === 'parse');
+    document.getElementById('tab-maxent-header').classList.toggle('active', tab === 'maxent');
+    document.getElementById('parse-btn').classList.toggle('hidden', tab !== 'parse');
+    document.getElementById('maxent-buttons').classList.toggle('hidden', tab !== 'maxent');
+    document.getElementById('maxent-config').classList.toggle('hidden', tab !== 'maxent');
 }
 
-function renderTable() {
-    var container = document.getElementById('results');
-    if (!allRows.length) {
-        container.innerHTML = '<div class="empty">Paste text and hit Parse</div>';
-        return;
-    }
-
-    var html = '<table><thead><tr><th>Line</th><th>Parse</th><th>Meter</th><th>Viols</th><th>Ambig</th></tr></thead><tbody>';
-    for (var i = 0; i < allRows.length; i++) {
-        var r = allRows[i];
-        var isBest = r.rank === 1;
-        var show = viewMode === 'unbounded' || isBest;
-        var cls = isBest ? 'best' : 'other';
-        if (!show) cls += ' hidden';
-        html += '<tr class="' + cls + '">';
-        html += '<td>' + r.line_num + '</td>';
-        html += '<td class="parse-text">' + r.parse_html + '</td>';
-        html += '<td class="stat">' + r.meter_str + '</td>';
-        html += '<td class="stat">' + r.score + '</td>';
-        html += '<td class="stat">' + (isBest ? r.num_unbounded : '') + '</td>';
-        html += '</tr>';
-    }
-    html += '</tbody></table>';
-    container.innerHTML = html;
+function toggleView(mode, btn) {
+    document.querySelectorAll('.toggle-btn').forEach(function(el) { el.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.results tr.other').forEach(function(el) {
+        el.classList.toggle('hidden', mode === 'best');
+    });
 }
-
-document.getElementById('parsebtn').addEventListener('click', function() {
-    var btn = this;
-    btn.disabled = true;
-    btn.textContent = 'Parsing...';
-    allRows = [];
-    renderTable();
-    startedAt = Date.now() / 1000;
-
-    var data = [];
-    var form = document.getElementById('inputform');
-    var textarea = form.querySelector('textarea');
-    data.push({name: textarea.name, value: textarea.value});
-
-    form.querySelectorAll('select').forEach(function(el) {
-        data.push({name: el.name, value: el.value});
-    });
-    form.querySelectorAll('input[type=checkbox]').forEach(function(el) {
-        if (el.checked) data.push({name: el.name, value: el.value});
-    });
-
-    socket.emit('parse', JSON.stringify(data));
-});
-
-socket.on('parse_result', function(json_str) {
-    var data_l = JSON.parse(json_str);
-    for (var i = 0; i < data_l.length; i++) {
-        allRows.push(data_l[i]);
-    }
-    renderTable();
-
-    // progress
-    if (data_l.length) {
-        var d = data_l[0];
-        var pct = Math.round(d.progress * 100);
-        document.getElementById('progress').style.width = pct + '%';
-        var btn = document.getElementById('parsebtn');
-        var elapsed = Math.round(Date.now()/1000 - startedAt);
-        btn.textContent = 'Parsing... ' + d.numdone + '/' + d.numlines + ' (' + elapsed + 's)';
-    }
-});
-
-socket.on('parse_done', function(d) {
-    document.getElementById('parsebtn').disabled = false;
-    document.getElementById('parsebtn').textContent = 'Parse';
-    document.getElementById('progress').style.width = '0%';
-});
 
 // mobile touch tooltips
 document.addEventListener('touchstart', function(e) {
-    // clear previous
     document.querySelectorAll('.viol_y.touched').forEach(function(el) { el.classList.remove('touched'); });
     if (e.target.closest('.viol_y')) {
         e.target.closest('.viol_y').classList.add('touched');
     }
 });
 
+// re-apply view mode after HTMX swap
+document.body.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target.id === 'results') {
+        var bestActive = document.querySelector('.toggle-btn.active');
+        if (bestActive && bestActive.textContent.trim() === 'Best only') {
+            document.querySelectorAll('.results tr.other').forEach(function(el) {
+                el.classList.add('hidden');
+            });
+        }
+    }
+});
+
 // auto-parse on load
-setTimeout(function() { document.getElementById('parsebtn').click(); }, 300);
+setTimeout(function() { document.getElementById('parse-btn').click(); }, 300);
 </script>
 </body>
 </html>

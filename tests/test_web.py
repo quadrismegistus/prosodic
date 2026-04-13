@@ -6,206 +6,143 @@ import random
 import threading
 from multiprocessing import Process, Queue
 
-# ── Flask / SocketIO test client tests (no browser needed) ────���─────────
+# -- Flask test client tests (no browser needed) --
 
 @pytest.fixture(scope="module")
 def flask_app():
-    from prosodic.web.app import app, socketio
+    from prosodic.web.app import app
     app.config['TESTING'] = True
-    return app, socketio
+    return app
 
 
 def test_index_route(flask_app):
-    app, socketio = flask_app
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         resp = client.get('/')
         assert resp.status_code == 200
         html = resp.data.decode('utf-8')
         assert '<title>Prosodic</title>' in html
         assert 'inputtext' in html
-        assert 'parsebtn' in html
+        assert 'htmx' in html
 
 
 def test_index_has_constraints(flask_app):
-    app, socketio = flask_app
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         html = client.get('/').data.decode('utf-8')
-        # all default constraints should appear as checkboxes
         for cname in ['w_stress', 's_unstress', 'w_peak', 'unres_across', 'unres_within', 'foot_size']:
             assert f'*{cname}' in html, f"Constraint {cname} not found in HTML"
 
 
 def test_index_has_meter_config(flask_app):
-    app, socketio = flask_app
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         html = client.get('/').data.decode('utf-8')
-        assert 'meter-config' in html
         assert 'max_w' in html
         assert 'max_s' in html
         assert 'resolve_optionality' in html
 
 
+def test_index_has_tabs(flask_app):
+    with flask_app.test_client() as client:
+        html = client.get('/').data.decode('utf-8')
+        assert 'Parse' in html
+        assert 'MaxEnt' in html
+        assert 'maxent-config' in html
+
+
 def test_index_has_default_text(flask_app):
-    app, socketio = flask_app
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         html = client.get('/').data.decode('utf-8')
         assert 'From fairest creatures we desire increase' in html
 
 
-def test_index_has_view_toggles(flask_app):
-    app, socketio = flask_app
-    with app.test_client() as client:
-        html = client.get('/').data.decode('utf-8')
-        assert 'btn-best' in html
-        assert 'btn-unbounded' in html
+def _default_form_data(**overrides):
+    data = {
+        'text': 'To be or not to be',
+        '*w_stress': '1',
+        '*s_unstress': '1',
+        '*w_peak': '1',
+        '*unres_across': '1',
+        '*unres_within': '1',
+        '*foot_size': '1',
+        'max_s': '2',
+        'max_w': '2',
+        'resolve_optionality': '1',
+    }
+    data.update(overrides)
+    return data
 
 
-def test_socketio_parse(flask_app):
-    app, socketio = flask_app
-    client = socketio.test_client(app)
-    assert client.is_connected()
-
-    # send parse request (mimics the form serialization from the frontend)
-    form_data = [
-        {'name': 'text', 'value': 'To be or not to be'},
-        {'name': '*w_stress', 'value': '1'},
-        {'name': '*s_unstress', 'value': '1'},
-        {'name': '*w_peak', 'value': '1'},
-        {'name': '*unres_across', 'value': '1'},
-        {'name': '*unres_within', 'value': '1'},
-        {'name': '*foot_size', 'value': '1'},
-        {'name': 'max_s', 'value': '2'},
-        {'name': 'max_w', 'value': '2'},
-    ]
-    from prosodic.web.app import jsonify
-    client.emit('parse', jsonify(form_data))
-
-    # collect responses
-    received = client.get_received()
-    events = {r['name']: r['args'] for r in received}
-
-    assert 'parse_result' in events, f"No parse_result event. Got: {list(events.keys())}"
-    assert 'parse_done' in events, f"No parse_done event. Got: {list(events.keys())}"
-
-    # parse_result should contain parse data
-    result_data = json.loads(events['parse_result'][0])
-    assert len(result_data) > 0, "No parse results returned"
-    row = result_data[0]
-    assert 'parse_html' in row
-    assert 'meter_str' in row
-    assert 'score' in row
-    assert row['line_num'] == 1
-
-    client.disconnect()
+def test_parse_route(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/parse', data=_default_form_data())
+        assert resp.status_code == 200
+        html = resp.data.decode('utf-8')
+        assert 'parse-text' in html
+        assert 'Parsed' in html
 
 
-def test_socketio_parse_multiline(flask_app):
-    app, socketio = flask_app
-    client = socketio.test_client(app)
-
-    form_data = [
-        {'name': 'text', 'value': 'Shall I compare thee to a summers day\nThou art more lovely and more temperate'},
-        {'name': '*w_stress', 'value': '1'},
-        {'name': '*s_unstress', 'value': '1'},
-        {'name': '*w_peak', 'value': '1'},
-        {'name': '*unres_across', 'value': '1'},
-        {'name': '*unres_within', 'value': '1'},
-        {'name': '*foot_size', 'value': '1'},
-        {'name': 'max_s', 'value': '2'},
-        {'name': 'max_w', 'value': '2'},
-    ]
-    from prosodic.web.app import jsonify
-    client.emit('parse', jsonify(form_data))
-
-    received = client.get_received()
-    parse_results = [r for r in received if r['name'] == 'parse_result']
-    done_events = [r for r in received if r['name'] == 'parse_done']
-
-    # should get results for 2 lines
-    assert len(parse_results) == 2, f"Expected 2 parse_result events, got {len(parse_results)}"
-    assert len(done_events) == 1
-
-    # check line numbers
-    line_nums = set()
-    for pr in parse_results:
-        rows = json.loads(pr['args'][0])
-        for row in rows:
-            line_nums.add(row['line_num'])
-    assert line_nums == {1, 2}, f"Expected line_nums {{1, 2}}, got {line_nums}"
-
-    client.disconnect()
+def test_parse_multiline(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/parse', data=_default_form_data(
+            text='Shall I compare thee to a summers day\nThou art more lovely and more temperate'
+        ))
+        assert resp.status_code == 200
+        html = resp.data.decode('utf-8')
+        assert 'Parsed 2 lines' in html
 
 
-def test_socketio_parse_html_has_classes(flask_app):
-    app, socketio = flask_app
-    client = socketio.test_client(app)
-
-    form_data = [
-        {'name': 'text', 'value': 'The world is too much with us'},
-        {'name': '*w_stress', 'value': '1'},
-        {'name': '*s_unstress', 'value': '1'},
-        {'name': '*w_peak', 'value': '1'},
-        {'name': '*unres_across', 'value': '1'},
-        {'name': '*unres_within', 'value': '1'},
-        {'name': '*foot_size', 'value': '1'},
-        {'name': 'max_s', 'value': '2'},
-        {'name': 'max_w', 'value': '2'},
-    ]
-    from prosodic.web.app import jsonify
-    client.emit('parse', jsonify(form_data))
-
-    received = client.get_received()
-    parse_results = [r for r in received if r['name'] == 'parse_result']
-    rows = json.loads(parse_results[0]['args'][0])
-    html = rows[0]['parse_html']
-
-    # HTML should contain metrical position classes
-    assert 'mtr_s' in html or 'mtr_w' in html, f"No meter classes in HTML: {html}"
-    # and stress classes
-    assert 'str_s' in html or 'str_w' in html, f"No stress classes in HTML: {html}"
-
-    client.disconnect()
+def test_parse_html_has_classes(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/parse', data=_default_form_data(
+            text='The world is too much with us'
+        ))
+        html = resp.data.decode('utf-8')
+        assert 'mtr_s' in html or 'mtr_w' in html
+        assert 'str_s' in html or 'str_w' in html
 
 
-def test_socketio_parse_done_has_duration(flask_app):
-    app, socketio = flask_app
-    client = socketio.test_client(app)
-
-    form_data = [
-        {'name': 'text', 'value': 'To be or not to be'},
-        {'name': '*w_stress', 'value': '1'},
-        {'name': '*s_unstress', 'value': '1'},
-        {'name': '*w_peak', 'value': '1'},
-        {'name': '*unres_across', 'value': '1'},
-        {'name': '*unres_within', 'value': '1'},
-        {'name': '*foot_size', 'value': '1'},
-        {'name': 'max_s', 'value': '2'},
-        {'name': 'max_w', 'value': '2'},
-    ]
-    from prosodic.web.app import jsonify
-    client.emit('parse', jsonify(form_data))
-
-    received = client.get_received()
-    done = [r for r in received if r['name'] == 'parse_done']
-    assert len(done) == 1
-    done_data = done[0]['args'][0]
-    assert 'duration' in done_data
-    assert 'numrows' in done_data
-    assert done_data['numrows'] > 0
-
-    client.disconnect()
+def test_parse_empty_text(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/parse', data=_default_form_data(text=''))
+        assert resp.status_code == 200
+        assert b'No text' in resp.data
 
 
-# ── Selenium browser tests (skip if no browser available) ───────────────
+def test_maxent_fit(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/maxent/fit', data={
+            'text': 'From fairest creatures we desire increase\nThat thereby beautys rose might never die',
+            'target_scansion': 'wswswswsws',
+            'zones': '3',
+            'regularization': '100',
+            '*w_stress': '1',
+            '*s_unstress': '1',
+            '*w_peak': '1',
+            'max_s': '2',
+            'max_w': '2',
+        })
+        assert resp.status_code == 200
+        html = resp.data.decode('utf-8')
+        assert 'Trained' in html
+        assert 'weights-table' in html or 'No weights' in html
+
+
+def test_maxent_fit_no_text(flask_app):
+    with flask_app.test_client() as client:
+        resp = client.post('/maxent/fit', data={'text': ''})
+        assert resp.status_code == 200
+        assert b'No text' in resp.data
+
+
+# -- Selenium browser tests (skip if no browser available) --
 
 NAPTIME = int(os.environ.get('NAPTIME', 5))
 PORT = random.randint(5111, 5211)
 BASE_URL = f"http://localhost:{PORT}"
 
 def _run_app(q):
-    from prosodic.web.app import app, socketio
+    from prosodic.web.app import app
     def start_server():
-        socketio.run(app, port=PORT, debug=False)
+        app.run(port=PORT, debug=False)
     server_thread = threading.Thread(target=start_server)
     server_thread.start()
     q.put("Server started")

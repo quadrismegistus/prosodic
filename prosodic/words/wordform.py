@@ -160,9 +160,12 @@ class WordForm(Entity):
 
         phons1 = self.rime
         phons2 = wordform.rime
-        if not max_dist:
+        if max_dist == 0:
             return 0 if phons1.txt == phons2.txt else np.nan
-        return phons1.feature_distance(phons2, rime=True)
+        dist = phons1.feature_distance(phons2, rime=True)
+        if max_dist is not None and dist > max_dist:
+            return np.nan
+        return dist
 
 
 

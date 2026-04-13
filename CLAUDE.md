@@ -77,6 +77,10 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 **Key design**: operates on the `(S, N, C)` violation matrices already produced by the parser. Zone splitting is post-hoc feature engineering — partitions the N (syllable) axis into zones before summing, creating `C * n_zones` features. No parser changes needed.
 
+**`meter.fit()` pipeline**: `Meter.fit(text, "wswswswsws", zones=3)` trains MaxEnt weights on a corpus and stores `meter.zone_weights` (dict of zone-expanded constraint names → weights) and `meter.zones` on the meter. `LazyParseList` scoring checks for these and uses zone-aware scoring when available — splits `(S, N, C)` violations by syllable position before weighting. This means learned positional sensitivity transfers to parsing unseen text. Also `meter.fit_annotations(data)` for annotated data (list of tuples or DataFrame).
+
+**Shared utilities**: `zone_split(viols_3d, zones)`, `zone_boundaries(zones, N)`, `make_zone_names(base_names, nsylls, zones)` — used by both MaxEntTrainer and LazyParseList.
+
 **Constraint entailment**: w_peak entails w_stress (100% co-occurrence). In MaxEnt/HG, overlapping constraints stack: w_peak violation costs w_peak + w_stress. This is how the model makes w_peak effectively inviolable (Kiparsky) without infinite weight.
 
 ### Syllable DataFrame (`texts/syll_df.py`)

@@ -8,7 +8,6 @@ class LanguageModel:
     lang_espeak = None
     lang = None
     name = None
-    use_cache = False
     filename_ambig_stress = "ambig_stress_words.txt"
     filename_unstressed = "unstressed_words.txt"
     filename_token2ipa = None
@@ -57,21 +56,49 @@ class LanguageModel:
                 return set(f.read().strip().split())
         return set()
 
+    @property
+    def path_token2ipa_cache(self):
+        """Path to user-local TTS pronunciation cache file."""
+        if not self.name:
+            return None
+        path = os.path.join(PATH_HOME_DATA, f"{self.name}_cache.tsv")
+        return path
+
     @cached_property
     def token2ipa(self):
         d = {}
+        # load main pronunciation dictionary
         if self.path_token2ipa:
-            with open(self.path_token2ipa, encoding="utf-8") as f:
-                for ln in f:
-                    ln = ln.strip()
-                    if ln and self.filename_token2ipa_sep in ln:
-                        token, ipa = ln.split(
-                            self.pronunciation_dictionary_filename_sep, 1
-                        )
-                        if not token in d:
-                            d[token] = []
-                        d[token].append(ipa.split("."))
+            d = self._load_token2ipa_file(self.path_token2ipa, d)
+        # load user-local TTS cache
+        cache_path = self.path_token2ipa_cache
+        if cache_path and os.path.exists(cache_path):
+            d = self._load_token2ipa_file(cache_path, d)
         return d
+
+    def _load_token2ipa_file(self, path, d=None):
+        if d is None:
+            d = {}
+        sep = self.pronunciation_dictionary_filename_sep
+        with open(path, encoding="utf-8") as f:
+            for ln in f:
+                ln = ln.strip()
+                if ln and sep in ln:
+                    token, ipa = ln.split(sep, 1)
+                    if token not in d:
+                        d[token] = []
+                    d[token].append(ipa.split("."))
+        return d
+
+    def _cache_tts_result(self, token, sylls_ipa_l):
+        """Append a TTS pronunciation result to the user-local cache file."""
+        cache_path = self.path_token2ipa_cache
+        if not cache_path:
+            return
+        ipa_str = ".".join(sylls_ipa_l)
+        sep = self.pronunciation_dictionary_filename_sep
+        with open(cache_path, "a", encoding="utf-8") as f:
+            f.write(f"{token}{sep}{ipa_str}\n")
 
     def get_sylls_ipa_ll_dict(self, token):
         return self.token2ipa.get(token, [])
@@ -89,15 +116,18 @@ class LanguageModel:
         elif force_ambig_stress is None and token in self.ambig_stressed_words:
             force_ambig_stress = True
 
-        ## try dictionary
+        ## try dictionary (includes user cache)
         sylls_ipa_ll = self.get_sylls_ipa_ll_dict(token)
         if sylls_ipa_ll:
-            meta['ipa_origin']='dict'        
+            meta['ipa_origin']='dict'
         else:
             ## use tts
             sylls_ipa_ll = self.get_sylls_ipa_ll_tts(token)
             if sylls_ipa_ll:
                 meta["ipa_origin"] = "tts"
+                # cache TTS result to disk for next startup
+                for sylls_ipa_l in sylls_ipa_ll:
+                    self._cache_tts_result(token, sylls_ipa_l)
             else:
                 log.error(f'cannot parse syll IPAs in {token}')
                 meta['ipa_origin'] = 'error'

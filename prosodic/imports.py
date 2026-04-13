@@ -57,20 +57,16 @@ PATH_HOME_DATA = os.path.join(PATH_HOME, "data")
 PATH_HOME_DATA_CACHE = os.path.join(PATH_HOME_DATA, "cache")
 os.makedirs(PATH_HOME_DATA, exist_ok=True)
 
-stash = HashStash(PATH_HOME_DATA_CACHE, engine='pairtree', serializer='hashstash', compress=False, b64=True)
-stash_was = None
-
 import panphon
 import panphon.sonority
 
 
 USE_CACHE = False
-USE_REDIS = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."
 
-DEFAULT_USE_REGISTRY = True
+DEFAULT_USE_REGISTRY = False
 DEFAULT_COMBINE_BY = "line"
 
 PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
@@ -91,6 +87,8 @@ MIN_SYLL_IN_PARSE_UNIT = None
 MIN_WORDS_IN_PHRASE = 2
 MAX_WORDS_IN_PHRASE = 15
 DEFAULT_LANG = "en"
+DEFAULT_SYNTAX = False
+DEFAULT_SYNTAX_MODEL = "en_core_web_sm"
 LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <cyan>{function}</cyan> | <level>{message}</level> | <cyan>{file}</cyan>:<cyan>{line}</cyan>"
 LOG_LEVEL = 'CRITICAL'
 DEFAULT_METER = "default_english"

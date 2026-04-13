@@ -1,8 +1,6 @@
 from typing import Any, List, Type
 from .imports import *
 
-OBJECTS = {}
-
 
 class Entity(UserList):
     """
@@ -19,7 +17,6 @@ class Entity(UserList):
         prefix (str): A prefix used for attribute naming.
         list_type (type): The type of list used for storing children.
         cached_properties_to_clear (list): Properties to clear from cache.
-        use_cache (bool): Whether to use caching for this entity.
         sep (str): Separator used when joining child texts.
     """
 
@@ -27,7 +24,6 @@ class Entity(UserList):
     index_name = None
     prefix = "ent"
     cached_properties_to_clear = []
-    use_cache = False
     is_text = False
     sep = ""
 
@@ -44,7 +40,6 @@ class Entity(UserList):
             parent (Entity): The parent entity.
             **kwargs: Additional attributes to set on the entity.
         """
-        global OBJECTS
         self._attrs = kwargs
         self._num = num
         self._mtr = None
@@ -107,38 +102,14 @@ class Entity(UserList):
                     new.append(new_ent)
         return new
 
-    def register_objects(self):
-        global OBJECTS
-        for obj in self.iter_all():
-            key = obj.key
-            if key in OBJECTS:
-                break
-            OBJECTS[key] = obj
-
-    def find(self, ent):
-        # log.info(f'Finding {ent.key}')
-        if ent.key in OBJECTS:
-            # log.info(f'Found {ent.key} in OBJECTS')
-            return OBJECTS[ent.key]
-        if ent.class_depth < 2:
-            # log.info(f'Finding {ent.key} in text by attr')
-            attr_name = ent.key.split(".")[-1].lower()
-            attr_name = ''.join(x for x in attr_name if x.isalnum())
-            return getattr(self.text, attr_name)
-        
-        log.error(f'Could not find {ent.key}')
-        return None
-
-    def match(self, ent, ent_type=None):
-        res = self.find(ent)
-        if res is not None:
-            return res
-        if ent_type is None:
-            ent_type = type(ent).__name__.lower()
-        ent_list = self.get_list(ent_type)
-        for ent2 in ent_list:
-            if ent2.equals(ent):
-                return ent2
+    def clear_cached_properties(self):
+        cls = self.__class__
+        to_clear = self.cached_properties_to_clear or [
+            k for k in list(self.__dict__)
+            if isinstance(getattr(cls, k, None), cached_property)
+        ]
+        for k in to_clear:
+            self.__dict__.pop(k, None)
 
     @property
     def list_type(self):
@@ -570,7 +541,7 @@ class Entity(UserList):
         """
         return encode_hash(self.key)
 
-    @cached_property
+    @property
     def stuffed(self):
         return stuff(self)
 
@@ -578,7 +549,7 @@ class Entity(UserList):
     def unstuffed(self):
         return unstuff(self.stuffed)
 
-    @cached_property
+    @property
     def serialized(self):
         return serialize(self)
 
@@ -616,13 +587,6 @@ class Entity(UserList):
         """
         return self is other
 
-    def equals(self, other):
-        return (
-            self is other
-            or self.key == other.key
-            or self.serialized == other.serialized
-        )
-
     @property
     def meter(self):
         text = self.text
@@ -641,7 +605,7 @@ class Entity(UserList):
         """
         return True
 
-    @cached_property
+    @property
     def id(self):
         return encode_hash(serialize(self.key))
 

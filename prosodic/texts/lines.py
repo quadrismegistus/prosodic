@@ -14,7 +14,6 @@ class Line(WordTokenList):
         child_type (str): The type of child entities. Default is "WordToken".
         is_parseable (bool): Whether the line can be parsed. Default is True.
         prefix (str): Prefix used for identification. Default is "line".
-        use_cache (bool): Whether to use caching. Default is False.
     """
     prefix = 'line'
 

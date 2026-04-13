@@ -69,7 +69,6 @@ class Parse(Entity):
     ) -> None:
         from .meter import Meter
 
-        global OBJECTS
         # meter
         # if meter is None and parent:
         # meter = parent.meter
@@ -249,7 +248,7 @@ class Parse(Entity):
         #     if wordtokens is not None:
         #         parse.wordtokens = wordtokens
         #     return parse
-        assert all(parses[0].meter_obj.equals(parse.meter_obj) for parse in parses[1:])
+        assert all(parses[0].meter_obj.key == parse.meter_obj.key for parse in parses[1:])
         # parses = [parse.copy() for parse in parses]
         positions = ParsePositionList(
             [mpos for parse in parses for mpos in parse.positions],
@@ -342,43 +341,6 @@ class Parse(Entity):
             s.update(mpos.violset)
         s.update(self.parse_violset)
         return s
-
-    # # @log.info
-    # def copy(self):
-    #     """
-    #     Create a shallow copy of the parse.
-
-    #     Returns:
-    #         Parse: A shallow copy of the parse.
-    #     """
-    #     from .positions import ParsePositionList
-    #     new = Parse.__new__(Parse)
-    #     new.__dict__.update({k: v for k, v in self.__dict__.items() if not isinstance(getattr(self.__class__, k, None), cached_property)})
-    #     new.children = ParsePositionList(parent=new)
-    #     for pos in self.children:
-    #         new.children.append(pos.copy())
-    #     return new
-
-    def branch(self) -> List["Parse"]:
-        """
-        Create branching parses from this parse.
-
-        Returns:
-            List[Parse]: List of branching parses.
-        """
-        if self.is_bounded:
-            return []
-        if not self.positions or not len(self.positions):
-            # log.debug("needs to start with some positions")
-            return []
-        mval = self.positions[-1].meter_val
-        otypes = self.meter_obj.get_pos_types(self.wordforms.num_sylls)
-        otypes = [x for x in otypes if x[0] != mval]
-        o = [self.copy().extend(posstr) for posstr in otypes]
-        o = [x for x in o if x is not None]
-        o = o if o else [self]
-        o = [p for p in o if not p.is_bounded]
-        return o
 
     @property
     def is_complete(self) -> bool:
@@ -503,7 +465,7 @@ class Parse(Entity):
         Returns:
             int: Number of words.
         """
-        return len(self.wordforms)
+        return len(self.wordforms) if self.wordforms is not None else 0
 
     @property
     def num_peaks(self) -> int:
@@ -950,10 +912,11 @@ class Parse(Entity):
         for pos in self.positions:
             pos_attrs = {f'meterpos_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in pos.attrs.items()}
             for slot in pos.slots:
+                # get wordtoken info if available (Entity path), else fallback
+                wt = getattr(slot.unit, 'wordtoken', None) if hasattr(slot.unit, 'wordtoken') else None
                 slot_attrs = {
-                    'wordtoken_num':slot.unit.wordtoken.num,
-                    'wordtoken_txt':slot.unit.wordtoken.txt,
-                    # 'syll_num':slot.unit.num,
+                    'wordtoken_num': wt.num if wt else None,
+                    'wordtoken_txt': wt.txt if wt else slot.unit.txt,
                     **{f'meterslot_{k}' if not k.endswith('_num') and k[0]!='*' else k:v for k,v in slot.attrs.items()}
                 }
                 all_attrs = {**attrs, **pos_attrs, **slot_attrs}

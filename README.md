@@ -4,7 +4,7 @@
 
 Prosodic is a metrical-phonological parser written in Python. Currently, it can parse English and Finnish text, but adding additional languages is easy with a pronunciation dictionary or a custom python function. Prosodic was built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/). Josh also maintains [another repository](https://github.com/jsfalk/prosodic1b), in which he has rewritten the part of this project that does phonetic transcription for English and Finnish. [Sam Bowman](https://github.com/sleepinyourhat) has contributed to the codebase as well, adding several new metrical constraints.
 
-This version, Prosodic 2.x, is a near-total rewrite of the original Prosodic.
+Prosodic 3.x features a DataFrame-first architecture with vectorized numpy constraint evaluation, GPU-accelerated harmonic bounding, and a Maximum Entropy weight learner for training constraint weights from annotated data. See [CLAUDE.md](CLAUDE.md) for full architecture docs.
 
 Supports Python>=3.9.
 
@@ -12,6 +12,20 @@ Supports Python>=3.9.
 
 You can view and use a web app demo of the current Prosodic app at **[prosodic.dev](https://prosodic.dev/)**.
 
+
+## Performance
+
+Shakespeare sonnets (2155 lines, Apple M1). Run `python -m prosodic.profiling` to regenerate.
+
+| Step | v2 | v3 | Speedup |
+|---|---|---|---|
+| Init (tokenize + pronunciations + entities) | 5.29s | 1.80s | 3x |
+| Parse (CPU) | 72.97s | 5.0s | 15x |
+| Parse (GPU) | 72.97s | 1.3s | 57x |
+| **End-to-end (CPU)** | **78.3s** | **6.8s** | **12x** |
+| **End-to-end (GPU)** | **78.3s** | **3.1s** | **26x** |
+| **DF-only (no entities, GPU)** | **78.3s** | **1.8s** | **42x** |
+| Syntax (dep parse) | 160.2s | 2.7s | 58x |
 
 ## Install
 
@@ -850,6 +864,44 @@ line_from_richardIII
 </div>
 
 
+
+#### Phrasal stress (syntax)
+
+Prosodic can optionally compute phrasal stress from dependency parsing (Liberman & Prince 1977), using spaCy. This adds a `phrasal_stress` column to the syllable DataFrame, indicating each word's syntactic prominence (0 = sentence root, more negative = more deeply embedded).
+
+```bash
+# Install spaCy (optional dependency)
+pip install prosodic[syntax]
+python -m spacy download en_core_web_sm
+```
+
+```python
+# Enable with syntax=True
+t = prosodic.Text("Shall I compare thee to a summers day", syntax=True)
+
+# Phrasal stress values per word
+df = t._syll_df
+df[['word_txt', 'phrasal_stress']].drop_duplicates('word_num')
+#   word_txt  phrasal_stress
+#      Shall              -1
+#          I              -1
+#    compare               0   # ROOT (most prominent)
+#       thee              -1
+#         to              -1
+#          a              -3
+#    summers              -2
+#        day              -1
+```
+
+Two metrical constraints use phrasal stress (both inert when `syntax=False`):
+- `w_prom`: penalizes phrasally prominent words (root/direct dependents) on weak metrical positions
+- `s_demoted`: penalizes deeply embedded words on strong metrical positions
+
+```python
+from prosodic.parsing.meter import Meter
+m = Meter(constraints=['w_stress', 's_unstress', 'w_peak', 'w_prom', 's_demoted'])
+t.parse(meter=m)
+```
 
 #### Metrical parsing
 

@@ -63,28 +63,7 @@ class ParseList(EntityList):
         assert new_parses.parent is parent
         new_parses.bound(progress=False)
         new_parses.rank()
-        new_parses.register_objects()
         return new_parses
-
-    def to_dict(self, incl_children=True, **kwargs):
-        return super().to_dict(
-            parent=self.parent.to_dict(incl_children=incl_children), **kwargs
-        )
-
-    @classmethod
-    def from_dict(cls, data, use_registry=DEFAULT_USE_REGISTRY):
-        cls_name, cls_data = next(iter(data.items()))
-        assert cls.__name__ == cls_name
-        children = [
-            Entity.from_dict(xdata, use_registry=use_registry)
-            for xdata in cls_data.pop("children", [])
-        ]
-        parent = (
-            Entity.from_dict(cls_data.pop("parent"), use_registry=use_registry)
-            if "parent" in cls_data
-            else None
-        )
-        return cls(children=children, parent=parent, **cls_data)
 
     @property
     def key(self):
@@ -318,20 +297,7 @@ class ParseList(EntityList):
         """
         return LineList(unique(parse.line for parse in self.data), parent=self.text)
 
-    # @property
-    # def prefix_attrs(self) -> Dict[str, Any]:
-    #     """
-    #     Get prefix attributes for this ParseList.
-
-    #     Returns:
-    #         A dictionary of prefix attributes.
-    #     """
-    #     return {
-    #         **({} if not self.parent or not hasattr(self.parent, 'prefix_attrs') else self.parent.prefix_attrs),
-    #         **super().prefix_attrs,
-    #     }
-
-    @cache
+    @cache(maxsize=32)
     def stats_d(
         self,
         by: Optional[str] = None,
@@ -353,7 +319,6 @@ class ParseList(EntityList):
         """
         odf = self.stats(by=by, norm=norm, incl_bounded=incl_bounded, **kwargs)
         aggby = self._get_aggby(odf)
-        print(aggby)
         resd = {k: float(v) for k, v in dict(odf.agg(aggby)).items()}
         return {
             **self.prefix_attrs,
@@ -403,7 +368,7 @@ class ParseList(EntityList):
         aggby = {col: getagg(col) for col in df_q}
         return aggby
 
-    @cache
+    @cache(maxsize=32)
     def stats(
         self,
         norm: Optional[bool] = None,
@@ -447,24 +412,6 @@ class ParseList(EntityList):
         ]
         odf = setindex(odf, sort=True)
         return odf
-        # groupby = self._get_groupby(by=by)
-        # if groupby:
-        #     print(odf.columns)
-        #     print(odf)
-        #     odf = setindex(odf, groupby)
-        #     aggby = self._get_aggby(odf)
-        #     odf = odf.groupby(groupby).agg(aggby)
-        #     odf = odf.drop("parse_rank", axis=1)
-        #     if not "line_num" in set(groupby):
-        #         odf = odf.drop("line_num", axis=1)
-        #     return odf.sort_index()
-        # else:
-        #     odf["parse_rank"] = (
-        #         odf.groupby(["stanza_num", "line_num"])
-        #         .parse_rank.rank(method="min")
-        #         .apply(force_int)
-        #     )
-        #     return setindex(odf, DF_INDEX).sort_index()
 
     @property
     def scope(self):
@@ -616,7 +563,8 @@ class ParseList(EntityList):
 
 class ParseListList(EntityList):
     def append(self, parse_list):
-        if not isinstance(parse_list, ParseList):
+        from .vectorized import LazyParseList
+        if not isinstance(parse_list, (ParseList, LazyParseList)):
             raise ValueError('parse_list must be a ParseList object')
         super().append(parse_list)
     
@@ -643,7 +591,11 @@ class ParseListList(EntityList):
     
     @property
     def num_lines(self):
-        return len(self.lines)
+        n = len(self.lines)
+        if n == 0 and len(self) > 0:
+            # DF path: each entry is one parse unit (line)
+            return len(self)
+        return n
 
     @property
     def sents(self):

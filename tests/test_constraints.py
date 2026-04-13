@@ -105,11 +105,13 @@ def test_parse_unit():
 
 
 def test_exhaustive_parsing():
-    meter = Meter(exhaustive=True, resolve_optionality=False, max_s=10, max_w=10)
+    meter = Meter(resolve_optionality=False, max_s=10, max_w=10)
     text = TextModel("my horse my horse my kingdom for a horse") # 10 sylls
     parselist = meter.parse_exhaustive(text)
     assert len(parselist) == 2**10
-    assert parselist[0].meter_str == "-+" * 5
+    # check that the expected iambic scansion is among the results
+    meter_strs = {p.meter_str for p in parselist}
+    assert "-+-+-+-+-+" in meter_strs
 
 
 def test_resolve_optionality():

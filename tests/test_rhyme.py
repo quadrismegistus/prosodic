@@ -22,8 +22,8 @@ def sample_lines():
 @pytest.fixture
 def sample_wordforms():
     return [
-        TextModel('silver').wordform1,
-        TextModel('blur').wordform1,
+        TextModel('mat').wordform1,
+        TextModel('cat').wordform1,
         TextModel('log').wordform1,
         TextModel('dog').wordform1,
     ]
@@ -53,10 +53,16 @@ def test_line_rime_distance(sample_lines):
 
 def test_wordform_rime_distance(sample_wordforms):
     mat, cat, log, dog = sample_wordforms
-    
-    # Test similar rimes
-    assert mat.rime_distance(cat) < mat.rime_distance(log), "Distance between 'mat' and 'cat' should be less than 'mat' and 'log'"
-    assert log.rime_distance(dog) < log.rime_distance(mat), "Distance between 'log' and 'dog' should be less than 'log' and 'mat'"
+
+    # Test with feature distance (max_dist=None for gradient distances)
+    assert mat.rime_distance(cat, max_dist=None) < mat.rime_distance(log, max_dist=None), \
+        "Distance between 'mat' and 'cat' should be less than 'mat' and 'log'"
+    assert log.rime_distance(dog, max_dist=None) < log.rime_distance(mat, max_dist=None), \
+        "Distance between 'log' and 'dog' should be less than 'log' and 'mat'"
+
+    # Test exact-match mode (default max_dist=0)
+    assert mat.rime_distance(cat) == 0, "'mat' and 'cat' should have identical rimes"
+    assert log.rime_distance(dog) == 0, "'log' and 'dog' should have identical rimes"
 
 def test_syllable_rime(sample_wordforms):
     mat = sample_wordforms[0]

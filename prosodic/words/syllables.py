@@ -1,5 +1,18 @@
 from . import *
 
+_ipa_phone_cache = {}
+
+def _parse_ipa_cached(ipa):
+    """Cache gruut_ipa Pronunciation.from_string() results."""
+    sipa = "".join(x for x in ipa if x.isalpha())
+    if sipa in _ipa_phone_cache:
+        return _ipa_phone_cache[sipa]
+    from gruut_ipa import Pronunciation
+    pron = Pronunciation.from_string(sipa)
+    phones = tuple(p.text for p in pron if p.text)
+    _ipa_phone_cache[sipa] = phones
+    return phones
+
 
 class Syllable(Entity):
     """
@@ -46,11 +59,7 @@ class Syllable(Entity):
         )
         
         if self.ipa and not self.children:
-            from gruut_ipa import Pronunciation
-
-            sipa = "".join(x for x in ipa if x.isalpha())
-            pron = Pronunciation.from_string(sipa)
-            phones = [p.text for p in pron if p.text]
+            phones = _parse_ipa_cached(ipa)
             for phon in phones:
                 self.children.append(Phoneme(txt=phon))
         

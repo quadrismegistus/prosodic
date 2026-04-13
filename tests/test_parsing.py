@@ -69,19 +69,16 @@ def test_text_parsing():
 
 
 def test_exhaustive():
+    # vectorized parser is always exhaustive — exhaustive param is a no-op
     t = TextModel(sonnet)
+    parses1 = t.line1.parse(exhaustive=True)
     parses2 = t.line1.parse(exhaustive=True)
-    parses3 = t.line1.parse(exhaustive=True)
-    parses1 = t.line1.parse(exhaustive=False)
-    assert parses1 is not parses2
-    assert parses2 is parses3
+    assert parses1 is parses2  # same meter config, cached
 
     line = TextModel("A horse, a horse, my kingdom for a horse!").line1
-    line.parse(exhaustive=True, max_s=10, max_w=10)
+    line.parse(max_s=10, max_w=10)
     assert line.parses.num_all == 1024
-
-    line.parse(exhaustive=False, max_s=10, max_w=10)
-    assert line.parses.num_all < 1024
+    assert line.parses.num_unbounded < 1024
 
     # ?
     # assert len(parses1.unbounded) < len(parses2.unbounded)
@@ -166,4 +163,62 @@ def test_parse_iter():
 def test_scansion():
     t = TextModel("into " * 2).line1
     t.parse(exhaustive=True, force=True)
-    assert len(t.parses.data) > len(t.parses.scansions.data)
+    # vectorized parser picks best wordform variant, so all scansions are unique
+    # original parser generates duplicates from multiple wordform combos
+    assert len(t.parses.data) >= len(t.parses.scansions.data)
+
+
+def test_vectorized_parser():
+    """Test that vectorized parser matches original parser results."""
+    from prosodic.parsing.meter import Meter
+    m_vec = Meter(vectorized=True, parse_unit="line")
+
+    cases = [
+        ("embrace " * 5, "iambic"),
+        ("dungeon " * 5, "trochaic"),
+        ("disembark " * 4, "anapestic"),
+        ("dangerous " * 4, "dactylic"),
+        ("a horse a horse my kingdom for a horse", "iambic"),
+        ("Shall I compare thee to a summers day", None),
+        ("To be or not to be that is the question", None),
+    ]
+
+    for txt, expected_foot in cases:
+        t_orig = TextModel(txt)
+        t_orig.parse()
+        orig = t_orig.lines[0].best_parse
+
+        t_vec = TextModel(txt)
+        t_vec.parse(meter=m_vec, combine_by=None)
+        vec = t_vec.lines[0].best_parse
+
+        # violations must match (exact meter_str may differ on ties)
+        assert orig.num_viols == vec.num_viols, (
+            f"{txt!r}: viols mismatch {orig.num_viols} vs {vec.num_viols}"
+        )
+        assert orig.score == vec.score, (
+            f"{txt!r}: score mismatch {orig.score} vs {vec.score}"
+        )
+
+        # foot type must match
+        if expected_foot:
+            assert vec.foot_type == expected_foot, (
+                f"{txt!r}: expected {expected_foot}, got {vec.foot_type}"
+            )
+        assert orig.foot_type == vec.foot_type, (
+            f"{txt!r}: foot mismatch {orig.foot_type} vs {vec.foot_type}"
+        )
+
+
+def test_vectorized_bounding():
+    """Test that iambic bounds trochaic for 'a horse...'"""
+    from prosodic.parsing.meter import Meter
+    m_vec = Meter(vectorized=True, parse_unit="line")
+
+    txt = "a horse a horse my kingdom for a horse"
+    t = TextModel(txt)
+    t.parse(meter=m_vec, combine_by=None)
+    bp = t.lines[0].best_parse
+
+    assert bp.foot_type == "iambic"
+    assert bp.meter_str == "-+-+-+-+-+"

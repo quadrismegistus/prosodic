@@ -1,110 +1,6 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from .imports import *
 
-class SimpleCache:
-    """A simple file-based caching system.
-
-    This class provides a dictionary-like interface for caching objects to disk.
-    It uses a two-level directory structure to organize cached files.
-
-    Attributes:
-        root_dir (str): The root directory for storing cached files.
-    """
-
-    def __init__(self, root_dir: str = PATH_HOME_DATA_CACHE) -> None:
-        """Initialize the SimpleCache.
-
-        Args:
-            root_dir: The root directory for storing cached files.
-        """
-        self.root_dir = root_dir
-        os.makedirs(root_dir, exist_ok=True)
-
-    def __enter__(self):
-        """Enter the runtime context for the cache."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the runtime context for the cache."""
-        # No specific cleanup needed, but could add it here if required
-        pass
-
-
-    def _get_file_path(self, key: str) -> str:
-        """Get the file path for a given key.
-
-        Args:
-            key: The cache key.
-
-        Returns:
-            The file path for the given key.
-        """
-        # Use the first 2 characters for the first level directory
-        # and the next 2 characters for the second level directory
-        dir1 = key[:2]
-        dir2 = key[2:4]
-        file_name = key[4:]
-        
-        dir_path = os.path.join(self.root_dir, dir1, dir2)
-        os.makedirs(dir_path, exist_ok=True)
-        
-        return os.path.join(dir_path, file_name)
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        """Set an item in the cache.
-
-        Args:
-            key: The cache key.
-            value: The value to cache.
-        """
-        file_path = self._get_file_path(key)
-        with open(file_path, 'wb') as f:
-            f.write(encode_cache(value))
-
-    def __getitem__(self, key: str) -> Any:
-        """Get an item from the cache.
-
-        Args:
-            key: The cache key.
-
-        Returns:
-            The cached value.
-
-        Raises:
-            KeyError: If the key is not found in the cache.
-        """
-        file_path = self._get_file_path(key)
-        if not os.path.exists(file_path):
-            raise KeyError(key)
-        with open(file_path, 'rb') as f:
-            return decode_cache(f.read())
-
-    def __contains__(self, key: str) -> bool:
-        """Check if a key exists in the cache.
-
-        Args:
-            key: The cache key.
-
-        Returns:
-            True if the key exists, False otherwise.
-        """
-        return os.path.exists(self._get_file_path(key))
-
-    def get(self, key: str, default: Any = None) -> Any:
-        """Get an item from the cache with a default value.
-
-        Args:
-            key: The cache key.
-            default: The default value to return if the key is not found.
-
-        Returns:
-            The cached value or the default value.
-        """
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
 def retry_on_io_error(max_attempts: int = 3, delay: float = 0.1) -> Callable:
     """Decorator to retry a function on IOError.
 
@@ -457,24 +353,22 @@ def to_html(html: Union[str, Any], as_str: bool = False, **kwargs: Any) -> Union
 
 
 def enable_caching() -> None:
-    """Enable caching."""
-    global USE_CACHE
-    USE_CACHE = True
+    """Enable caching (no-op, caching removed)."""
+    pass
 
 
 def caching_is_enabled() -> bool:
     """Check if caching is enabled.
 
     Returns:
-        True if caching is enabled, False otherwise.
+        Always returns False (caching removed).
     """
-    return USE_CACHE
+    return False
 
 
 def disable_caching() -> None:
-    """Disable caching."""
-    global USE_CACHE
-    USE_CACHE = False
+    """Disable caching (no-op, caching removed)."""
+    pass
 
 
 @contextmanager

@@ -105,7 +105,6 @@ def get_processors(
 
 
 ### NLP FUNCS
-# @stash.stashed_result
 def get_nlp_doc(doc_ll_or_txt,nlp=None,**kwargs):
     if nlp is None: nlp=get_nlp(**kwargs)
     try:

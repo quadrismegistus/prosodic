@@ -59,7 +59,7 @@ def split_scansion(wsws: str) -> List[str]:
     return ["".join(pos) for pos in positions]
 
 
-@cache
+@cache(maxsize=128)
 def get_possible_scansions(nsyll: int, max_s: Optional[int] = METER_MAX_S, max_w: Optional[int] = METER_MAX_W) -> List[List[str]]:
     """Get all possible scansions for a given number of syllables.
 

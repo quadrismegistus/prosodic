@@ -149,20 +149,35 @@ class WordForm(Entity):
         """
         Calculate the rime distance between this word form and another.
 
+        Uses feature-weighted edit distance on rime phonemes (via panphon),
+        which properly aligns phonemes of different lengths and weights
+        substitution cost by phonetic similarity. Returns a value in [0, 1]
+        where 0 is a perfect rhyme.
+
         Args:
             wordform (WordForm): The word form to compare with.
+            max_dist: Maximum distance threshold. Distances above this return
+                np.nan. 0 = exact match only. None = no limit.
 
         Returns:
-            float: The rime distance between the two word forms.
+            float: The rime distance (0-1), or np.nan if above max_dist
+                or comparing identical words.
         """
         if self.txt == wordform.txt:
             return np.nan
 
         phons1 = self.rime
         phons2 = wordform.rime
+        if phons1 is None or phons2 is None:
+            return np.nan
+
+        if phons1.txt == phons2.txt:
+            return 0.0
+
         if max_dist == 0:
-            return 0 if phons1.txt == phons2.txt else np.nan
-        dist = phons1.feature_distance(phons2, rime=True)
+            return np.nan
+
+        dist = phons1.feature_edit_distance(phons2)
         if max_dist is not None and dist > max_dist:
             return np.nan
         return dist

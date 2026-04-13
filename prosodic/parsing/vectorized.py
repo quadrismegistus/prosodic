@@ -597,8 +597,8 @@ def evaluate_constraints(features, meter_vals, position_ids, position_sizes, con
 def evaluate_constraints_batch(features_list, meter_vals, position_ids, position_sizes, constraint_names):
     """Evaluate constraints for multiple lines at once.
 
-    Instead of calling evaluate_constraints L times in a Python loop,
-    stacks features into (L, N) arrays and broadcasts against (S, N) scansions.
+    Constraints with a `.vectorized` attribute are dispatched automatically.
+    The unres_within/unres_across constraints use legacy per-line evaluation.
 
     Args:
         features_list: list of L feature dicts, each with arrays of shape (N,)
@@ -611,44 +611,50 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
         all_viols: (L, S, N, C) int8
         constraint_index: dict
     """
+    from .constraint_utils import get_all_constraints
+
     S, N = meter_vals.shape
     L = len(features_list)
     C = len(constraint_names)
     constraint_index = {name: i for i, name in enumerate(constraint_names)}
 
     # stack features: (L, N)
-    stressed = np.stack([f["stressed"] for f in features_list])  # (L, N)
+    stressed = np.stack([f["stressed"] for f in features_list])
     heavy = np.stack([f["heavy"] for f in features_list])
     strong = np.stack([f["strong"] for f in features_list])
     weak = np.stack([f["weak"] for f in features_list])
     word_ids = np.stack([f["word_ids"] for f in features_list])
     func_word = np.stack([f["func_word"] for f in features_list])
 
-    # broadcast: features (L, 1, N) vs scansions (1, S, N) -> (L, S, N)
     all_viols = np.zeros((L, S, N, C), dtype=np.int8)
 
-    stressed_b = stressed[:, None, :]    # (L, 1, N)
-    heavy_b = heavy[:, None, :]
-    strong_b = strong[:, None, :]
-    weak_b = weak[:, None, :]
+    # build feature dict for vectorized constraints
+    features = {
+        "stressed": stressed[:, None, :],     # (L, 1, N)
+        "heavy": heavy[:, None, :],
+        "strong": strong[:, None, :],
+        "weak": weak[:, None, :],
+        "func_word": func_word[:, None, :],
+        "word_ids": word_ids[:, None, :],
+        "word_ids_raw": word_ids,              # (L, N) for per-line ops
+        "is_strong_pos": meter_vals[None, :, :],  # (1, S, N)
+        "is_weak_pos": ~meter_vals[None, :, :],
+        "position_ids": position_ids,          # (S, N)
+        "position_sizes": position_sizes,      # (S, N)
+        "L": L, "S": S, "N": N,
+    }
 
-    is_strong_pos = meter_vals[None, :, :]  # (1, S, N)
-    is_weak_pos = ~meter_vals[None, :, :]
+    all_constraints = get_all_constraints()
 
     for cname in constraint_names:
         ci = constraint_index[cname]
-        if cname == "w_stress":
-            all_viols[:, :, :, ci] = (stressed_b & is_weak_pos).astype(np.int8)
-        elif cname == "s_unstress":
-            all_viols[:, :, :, ci] = (~stressed_b & is_strong_pos).astype(np.int8)
-        elif cname == "w_peak":
-            all_viols[:, :, :, ci] = (strong_b.astype(bool) & is_weak_pos).astype(np.int8)
-        elif cname == "s_trough":
-            all_viols[:, :, :, ci] = (weak_b.astype(bool) & is_strong_pos).astype(np.int8)
-        elif cname == "foot_size":
-            all_viols[:, :, :, ci] = (position_sizes[None, :, :] > 2).astype(np.int8)
+        cfunc = all_constraints.get(cname)
+
+        # use vectorized implementation if available
+        if cfunc is not None and cfunc.vectorized is not None:
+            all_viols[:, :, :, ci] = cfunc.vectorized(features)
         elif cname in ("unres_within", "unres_across"):
-            # these depend on per-line word boundaries, must eval per line
+            # legacy per-line evaluation for word-boundary constraints
             for li in range(L):
                 feats_i = features_list[li]
                 wi = feats_i["word_ids"][None, :]

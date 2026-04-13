@@ -57,13 +57,27 @@ TextModel → Stanza → Line → WordToken → WordType → WordForm → Syllab
 The parser is always vectorized and exhaustive — it evaluates ALL possible scansions via numpy and uses harmonic bounding to identify optimal parses.
 
 - **Meter** (`meter.py`): Configuration object with constraints, max strong/weak positions (`max_s`, `max_w`). The `exhaustive` and `vectorized` params are accepted but ignored (always both).
-- **Constraints** (`constraints.py`): Functions like `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size` that evaluate violations.
+- **Constraints** (`constraints.py`): Each constraint has a `@constraint` decorator with `desc`, `scope`, and optional `vectorized` lambda. The vectorized lambda receives broadcast feature arrays and returns `(L, S, N)` int8 violations — this is what runs during parsing. The entity-based function body is a reference implementation used only by manually-constructed Parse objects. Default constraints: `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size`. Additional: `s_trough`, `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`. Adding a new constraint = one decorated function in `constraints.py` with a `vectorized` lambda; no changes to `vectorized.py` needed.
 - **Parse** (`parses.py`): A single candidate parse. Ranked by weighted violation score; `best_parse` = lowest score among unbounded.
 - **LazyParseList** (`vectorized.py`): Stores numpy violation data. Parse objects built only on access. `.unbounded` returns sorted by score. `.best_parse` uses `argmin` — no sorting needed.
 
 **Parsing flow:** `TextModel.parse()` → `parse_batch_from_df(syll_df, meter)` → groups by line, extracts features from numpy arrays → `evaluate_constraints_batch()` broadcasts features against scansion matrices → `compute_bounding_batch()` on GPU → results stored by line_num, attached to Entity lines lazily.
 
 **Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else.
+
+### MaxEnt Weight Learning (`parsing/maxent.py`)
+
+`MaxEntTrainer` learns constraint weights from annotated data or a target scansion using Maximum Entropy (log-linear) optimization. Based on Goldwater & Johnson (2003) / Hayes MaxEnt OT.
+
+- **`MaxEntTrainer(meter, regularization=100.0, zones=None)`**: zones splits the violation matrix by syllable position before training. `"initial"` = first 2 syllables vs rest. `3` = three equal zones. `"foot"` = per foot.
+- **`load_annotations(data)`**: accepts `[(text, scansion, frequency), ...]` or DataFrame with those columns. Parses all lines via `parse_batch_from_df`, matches annotations to candidate scansions.
+- **`load_text(text, "wswswswsws")`**: assigns a uniform target scansion to all lines — no annotation file needed.
+- **`train()`**: L-BFGS-B optimization (scipy). Converges in <1s on 2000+ lines. Vectorized gradient via `einsum` over groups of same-length lines.
+- **`learned_weights()`** / **`apply_to_meter()`**: extract or apply learned weights.
+
+**Key design**: operates on the `(S, N, C)` violation matrices already produced by the parser. Zone splitting is post-hoc feature engineering — partitions the N (syllable) axis into zones before summing, creating `C * n_zones` features. No parser changes needed.
+
+**Constraint entailment**: w_peak entails w_stress (100% co-occurrence). In MaxEnt/HG, overlapping constraints stack: w_peak violation costs w_peak + w_stress. This is how the model makes w_peak effectively inviolable (Kiparsky) without infinite weight.
 
 ### Syllable DataFrame (`texts/syll_df.py`)
 
@@ -138,9 +152,12 @@ Without entity access (batch/corpus use): **~4.2s**
 - ✅ Batched constraint evaluation across lines
 - ✅ Removed old branch-and-bound parser, hashstash parse caching
 - ✅ Removed OBJECTS registry, register_objects, find, match, equals
-- ✅ Dead code removal (MaxEnt.py, lexconvert.py, SimpleCache, branch/copy)
+- ✅ Dead code removal (old MaxEnt.py, lexconvert.py, SimpleCache, branch/copy)
 - ✅ Save/load to parquet (text.save(), TextModel.load())
 - ✅ Web app rewrite (mobile-friendly, tooltips, ambiguity)
+- ✅ MaxEnt weight learner (L-BFGS, vectorized, zone splitting, <1s training on 2K lines)
+- ✅ Self-describing constraints (vectorized lambda on decorator, auto-dispatch)
+- ✅ New constraints: clash, lapse, w_heavy, s_light, s_func, word_foot
 
 ### Remaining
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)

@@ -168,6 +168,10 @@ def format_markdown(results, meta):
     rows.append(row("**End-to-end (CPU)**", e2e_v2, init_v3 + parse_cpu_v3))
     if parse_gpu_v3:
         rows.append(row("**End-to-end (GPU)**", e2e_v2, init_v3 + parse_gpu_v3))
+    init_only = r.get("init", 0)
+    if parse_gpu_v3:
+        batch_total = init_only + parse_gpu_v3
+        rows.append(row("**DF-only (no entities, GPU)**", e2e_v2, batch_total))
     if syntax_overhead is not None:
         rows.append(f"| + syntax (spaCy dep parse) | — | +{syntax_overhead:.2f}s | — |")
 
@@ -177,13 +181,6 @@ def format_markdown(results, meta):
         "|---|---|---|---|",
         *rows,
     ]
-
-    # batch-only note
-    init_only = r.get("init", 0)
-    if parse_gpu_v3:
-        batch_total = init_only + parse_gpu_v3
-        batch_speedup = e2e_v2 / batch_total
-        lines.append(f"\nv3 without entity access (DF-only): **{batch_total:.1f}s** = **{batch_speedup:.0f}x faster**")
 
     return "\n".join(lines)
 

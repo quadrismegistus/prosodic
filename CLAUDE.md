@@ -127,13 +127,22 @@ There are two ways parsing happens, and it matters which one you're in:
 - `LazyParseList` defers Parse object construction. `best_parse` builds exactly 1 Parse via `argmin`. Iterating builds all.
 - `text.parsed_df` is a cached property (default meter). Use `text.get_parsed_df(**kwargs)` for custom meters.
 
+### Rhyme Detection (`words/wordform.py`, `words/phonemes.py`)
+
+- `WordForm.rime_distance(other, max_dist)` computes distance between word rimes.
+- Uses **feature-weighted edit distance** on IPA segments via panphon: aligns phonemes via DP where substitution cost = normalized feature distance. Returns 0-1 (0 = perfect rhyme).
+- `max_dist=0` (default, `RHYME_MAX_DIST`): binary exact match. `max_dist=None`: no limit, returns gradient distance.
+- `PhonemeList.feature_edit_distance(other)`: the core DP alignment. `PhonemeList.feature_distance(other)`: legacy euclidean on averaged features (still available but not used by rime_distance).
+- `Line.rime_distance(line2)`: delegates to final wordform's rime_distance.
+- `Text.get_rhyming_lines()`, `Text.is_rhyming`, `Text.num_rhyming_lines`: aggregate rhyme detection.
+
 ## Testing Notes
 
+- 189 tests, all passing. Python 3.10 in `.venv`.
 - Tests import everything via `from prosodic.imports import *` and call `disable_caching()` at the top (now a no-op).
 - Common test fixture: Shakespeare sonnets via `sonnet` variable.
-- Web tests use Selenium with ChromeDriver; env var `NAPTIME=30` controls WebSocket timeouts.
+- Web tests use Flask test client + socketio test client (no browser needed). Selenium browser test skips gracefully if no driver. `NAPTIME` env var controls WebSocket timeouts.
 - CI runs on Python 3.12.0 and requires espeak system package.
-- One pre-existing test failure: `test_wordform_rime_distance` (fixture mismatch).
 
 ## Performance (Shakespeare, 2155 lines, MPS GPU)
 
@@ -166,3 +175,6 @@ Without entity access (batch/corpus use): **~4.2s**
 ### Remaining
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)
 - **Lazy phoneme construction** (Syllable creates Phoneme objects eagerly; could defer to IPA-on-demand)
+- **Ternary meter identification** (MaxEnt meter.fit works for binary iambic/trochaic but ternary anapestic/dactylic needs ternary-aware constraints or dynamic template matching)
+- **Vectorize unres_within/unres_across** (last two constraints still use per-line Python loops in evaluate_constraints_batch; could be lifted to numpy with word boundary masking)
+- **Rhyme detection threshold tuning** (RHYME_MAX_DIST=0 default is binary; gradient rime_distance works but no calibrated threshold for "slant rhyme" vs "not rhyme")

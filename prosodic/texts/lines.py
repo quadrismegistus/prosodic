@@ -76,7 +76,7 @@ class Line(WordTokenList):
                 output.append(odx)
 
         odf = pd.DataFrame(output)
-        odf = odf.fillna(method="ffill")
+        odf = odf.ffill()
 
         def htmlx(row, tooltip=tooltip):
             if not row.txt.strip() or not row.txt[0].isalpha():

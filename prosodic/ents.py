@@ -919,7 +919,7 @@ class Entity(UserList):
                 return ""
             return x
 
-        return f"<b>{self.__class__.__name__}</b><br>{ (self.df if df is None else df).applymap(blank)._repr_html_() }"
+        return f"<b>{self.__class__.__name__}</b><br>{ (self.df if df is None else df).map(blank)._repr_html_() }"
 
     def __repr__(self, kwarg_str_lim=100):
         kwargs = {}
@@ -1017,7 +1017,7 @@ class Entity(UserList):
                 return 0
             return x
 
-        odf = odf.applymap(unbool)
+        odf = odf.map(unbool)
         return odf
 
     @property

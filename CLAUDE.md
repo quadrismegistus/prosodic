@@ -161,17 +161,16 @@ There are two ways parsing happens, and it matters which one you're in:
 
 Run `python -m prosodic.profiling` to regenerate.
 
-| Step | Time | Lines/sec |
-|---|---|---|
-| v3 init (tokenize + get_word + syll_df) | 0.56s | 3,860 |
-| v3 parse (CPU) | 5.02s | 430 |
-| v3 parse (GPU: Apple MPS) | 1.28s | 1,690 |
-| v3 entities (lazy, on .lines access) | 1.20s | 1,795 |
-| v3 init + syntax (spaCy dep parse) | 2.75s | 784 |
-| v2 init (eager entities) | 5.29s | 407 |
-| v2 parse (per-line, no GPU) | 72.97s | 30 |
+| Step | v2 | v3 | Speedup |
+|---|---|---|---|
+| Init (tokenize + pronunciations + entities) | 5.29s | 1.76s | 3x |
+| Parse (CPU) | 72.97s | 5.02s | 15x |
+| Parse (GPU) | — | 1.28s | 57x |
+| **End-to-end (CPU)** | **78.3s** | **6.8s** | **12x** |
+| **End-to-end (GPU)** | **78.3s** | **3.0s** | **26x** |
+| + syntax (spaCy dep parse) | — | +1.2s | — |
 
-**v3 total (init + GPU parse): ~1.8s vs v2 total: ~78s (43x faster)**.
+v3 without entity access (batch/DF use only): **1.8s** (init 0.56s + GPU parse 1.28s) = **43x faster**.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

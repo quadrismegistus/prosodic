@@ -140,6 +140,7 @@ def run_benchmarks(sonnet_path=SONNET_PATH, repeat=1):
 # v2 reference timings (master branch, Apple M1, measured 2026-04-13)
 V2_INIT = 5.29
 V2_PARSE = 72.97
+V2_SYNTAX = 160.20  # stanza constituency + depparse, 522 sentences
 
 
 def format_markdown(results, meta):
@@ -173,7 +174,8 @@ def format_markdown(results, meta):
         batch_total = init_only + parse_gpu_v3
         rows.append(row("**DF-only (no entities, GPU)**", e2e_v2, batch_total))
     if syntax_overhead is not None:
-        rows.append(f"| + syntax (spaCy dep parse) | — | +{syntax_overhead:.2f}s | — |")
+        syntax_v3 = r.get("syntax_init", 0)
+        rows.append(row("Syntax (dep parse)", V2_SYNTAX, syntax_v3))
 
     lines = [
         f"Shakespeare sonnets ({n} lines). `python -m prosodic.profiling`\n",

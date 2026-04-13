@@ -169,7 +169,7 @@ Run `python -m prosodic.profiling` to regenerate.
 | **End-to-end (CPU)** | **78.3s** | **6.8s** | **12x** |
 | **End-to-end (GPU)** | **78.3s** | **3.1s** | **26x** |
 | **DF-only (no entities, GPU)** | **78.3s** | **1.8s** | **42x** |
-| + syntax (spaCy dep parse) | — | +2.1s | — |
+| Syntax (dep parse) | 160.2s | 2.7s | 58x |
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

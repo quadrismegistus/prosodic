@@ -25,7 +25,7 @@ Shakespeare sonnets (2155 lines, Apple M1). Run `python -m prosodic.profiling` t
 | **End-to-end (CPU)** | **78.3s** | **6.8s** | **12x** |
 | **End-to-end (GPU)** | **78.3s** | **3.1s** | **26x** |
 | **DF-only (no entities, GPU)** | **78.3s** | **1.8s** | **42x** |
-| + syntax (spaCy dep parse) | — | +2.1s | — |
+| Syntax (dep parse) | 160.2s | 2.7s | 58x |
 
 ## Install
 

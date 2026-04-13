@@ -899,10 +899,22 @@ class LazyParseList:
         self._unbounded_indices = np.where(unbounded_mask)[0]
 
         # compute scores for ranking (weighted violation sums)
-        constraint_weights = meter.constraints
-        weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
-        all_viols_sum = viols.sum(axis=1)  # (S, C)
-        self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
+        zones = getattr(meter, 'zones', None)
+        zone_weights = getattr(meter, 'zone_weights', None)
+
+        if zones is not None and zone_weights is not None:
+            # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights
+            from .maxent import zone_split, make_zone_names
+            zone_viols = zone_split(viols, zones)  # (S, C*Z)
+            zone_names = make_zone_names(self._constraint_names, viols.shape[1], zones)
+            weights = np.array([zone_weights.get(c, 1) for c in zone_names])
+            self._all_scores = (zone_viols * weights[None, :]).sum(axis=1)  # (S,)
+        else:
+            constraint_weights = meter.constraints
+            weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
+            all_viols_sum = viols.sum(axis=1)  # (S, C)
+            self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
+
         # scores for unbounded only
         self._scores = self._all_scores[self._unbounded_indices]
 

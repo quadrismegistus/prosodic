@@ -96,6 +96,60 @@ class Meter(Entity):
     def is_parse_unit(self, entity):
         return entity.__class__.__name__.lower() == self.parse_unit
 
+    def fit(self, text, target_scansion, zones=3, regularization=100.0,
+            lang=DEFAULT_LANG, **train_kwargs):
+        """Learn constraint weights from a text with a target scansion.
+
+        Trains a MaxEnt model on the text and stores the learned zone
+        weights on this meter. Subsequent parsing will use the learned
+        positional weights for scoring.
+
+        Args:
+            text: a string, list of line strings, or TextModel.
+            target_scansion: e.g. "wswswswsws" for iambic pentameter.
+            zones: positional zone splitting (None, "initial", int N).
+            regularization: L2 regularization strength.
+            lang: language code for parsing.
+            **train_kwargs: extra args for MaxEntTrainer.train().
+
+        Returns:
+            self (for chaining).
+        """
+        from .maxent import MaxEntTrainer
+        trainer = MaxEntTrainer(self, regularization=regularization, zones=zones)
+        trainer.load_text(text, target_scansion, lang=lang)
+        trainer.train(**train_kwargs)
+        self.zones = zones
+        self.zone_weights = trainer.learned_weights()
+        self._trainer = trainer
+        # reset key since meter config changed
+        self._key = None
+        return self
+
+    def fit_annotations(self, data, zones=3, regularization=100.0,
+                        lang=DEFAULT_LANG, **train_kwargs):
+        """Learn constraint weights from annotated scansion data.
+
+        Args:
+            data: list of (text, scansion, frequency) tuples or DataFrame.
+            zones: positional zone splitting (None, "initial", int N).
+            regularization: L2 regularization strength.
+            lang: language code for parsing.
+            **train_kwargs: extra args for MaxEntTrainer.train().
+
+        Returns:
+            self (for chaining).
+        """
+        from .maxent import MaxEntTrainer
+        trainer = MaxEntTrainer(self, regularization=regularization, zones=zones)
+        trainer.load_annotations(data, lang=lang)
+        trainer.train(**train_kwargs)
+        self.zones = zones
+        self.zone_weights = trainer.learned_weights()
+        self._trainer = trainer
+        self._key = None
+        return self
+
     def parse(
         self, entity: "Entity", force: bool = False, lim=None, **kwargs: Any
     ) -> "ParseList":

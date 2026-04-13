@@ -26,6 +26,68 @@ from ..imports import *
 from .vectorized import parse_batch_from_df
 
 
+def zone_split(viols_3d, zones):
+    """Split (S, N, C) violations into zone-aware (S, C*Z) features.
+
+    Sums violations within each zone of the syllable axis, producing
+    separate feature columns for each (constraint, zone) pair.
+
+    Args:
+        viols_3d: (S, N, C) int8 array of per-syllable violations.
+        zones: None, "initial", "foot", or int N.
+
+    Returns:
+        (S, C*Z) float64 array of zone-summed violations.
+    """
+    S, N, C = viols_3d.shape
+
+    if zones is None:
+        return viols_3d.sum(axis=1).astype(np.float64)  # (S, C)
+
+    boundaries = zone_boundaries(zones, N)
+    Z = len(boundaries)
+    result = np.zeros((S, C * Z), dtype=np.float64)
+    for z, (start, end) in enumerate(boundaries):
+        result[:, z * C:(z + 1) * C] = viols_3d[:, start:end, :].sum(axis=1)
+    return result
+
+
+def zone_boundaries(zones, N):
+    """Return list of (start, end) tuples for zone slicing."""
+    if zones == "initial":
+        return [(0, 2), (2, N)]
+    elif zones == "foot":
+        return [(i, min(i + 2, N)) for i in range(0, N, 2)]
+    elif isinstance(zones, int):
+        step = max(1, N // zones)
+        boundaries = []
+        for z in range(zones):
+            start = z * step
+            end = (z + 1) * step if z < zones - 1 else N
+            boundaries.append((start, end))
+        return boundaries
+    else:
+        raise ValueError(f"Unknown zones: {zones!r}")
+
+
+def make_zone_names(base_names, nsylls, zones):
+    """Generate expanded constraint names with zone suffixes."""
+    if zones is None:
+        return list(base_names)
+
+    if zones == "initial":
+        zone_labels = ["_init", "_rest"]
+    elif zones == "foot":
+        n_feet = (nsylls + 1) // 2
+        zone_labels = [f"_f{i+1}" for i in range(n_feet)]
+    elif isinstance(zones, int):
+        zone_labels = [f"_z{i+1}" for i in range(zones)]
+    else:
+        raise ValueError(f"Unknown zones: {zones!r}")
+
+    return [f"{name}{zlabel}" for zlabel in zone_labels for name in base_names]
+
+
 class MaxEntTrainer:
     """Learns constraint weights from annotated scansion data.
 
@@ -84,61 +146,10 @@ class MaxEntTrainer:
         return results, line_texts
 
     def _zone_split(self, viols_3d):
-        """Split (S, N, C) violations into zone-aware (S, C*Z) features.
-
-        Sums violations within each zone of the syllable axis, producing
-        separate feature columns for each (constraint, zone) pair.
-
-        Args:
-            viols_3d: (S, N, C) int8 array of per-syllable violations.
-
-        Returns:
-            (S, C*Z) float64 array of zone-summed violations.
-        """
-        S, N, C = viols_3d.shape
-        zones = self.zones
-
-        if zones is None:
-            return viols_3d.sum(axis=1).astype(np.float64)  # (S, C)
-
-        # build zone boundaries: list of (start, end) slices
-        if zones == "initial":
-            boundaries = [(0, 2), (2, N)]
-        elif zones == "foot":
-            boundaries = [(i, min(i + 2, N)) for i in range(0, N, 2)]
-        elif isinstance(zones, int):
-            step = max(1, N // zones)
-            boundaries = []
-            for z in range(zones):
-                start = z * step
-                end = (z + 1) * step if z < zones - 1 else N
-                boundaries.append((start, end))
-        else:
-            raise ValueError(f"Unknown zones: {zones!r}")
-
-        Z = len(boundaries)
-        result = np.zeros((S, C * Z), dtype=np.float64)
-        for z, (start, end) in enumerate(boundaries):
-            result[:, z * C:(z + 1) * C] = viols_3d[:, start:end, :].sum(axis=1)
-        return result
+        return zone_split(viols_3d, self.zones)
 
     def _make_zone_names(self, base_names, nsylls):
-        """Generate expanded constraint names with zone suffixes."""
-        zones = self.zones
-        if zones is None:
-            return list(base_names)
-
-        if zones == "initial":
-            zone_labels = ["_init", "_rest"]
-        elif zones == "foot":
-            n_feet = (nsylls + 1) // 2
-            zone_labels = [f"_f{i+1}" for i in range(n_feet)]
-        elif isinstance(zones, int):
-            zone_labels = [f"_z{i+1}" for i in range(zones)]
-        else:
-            raise ValueError(f"Unknown zones: {zones!r}")
-
-        return [f"{name}{zlabel}" for zlabel in zone_labels for name in base_names]
+        return make_zone_names(base_names, nsylls, self.zones)
 
     def _build_line_data(self, results, line_texts, scansion_map):
         """Build self._line_data from parse results and a scansion mapping.

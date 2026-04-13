@@ -29,6 +29,12 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     all_line = syll_df[line_col].values
     all_form = syll_df['form_idx'].values
     all_nforms = syll_df['num_forms'].values
+    has_phrasal = 'phrasal_stress' in syll_df.columns and syll_df['phrasal_stress'].notna().any()
+    if has_phrasal:
+        # fill NaN with 0 for vectorized ops
+        all_phrasal = syll_df['phrasal_stress'].fillna(0).values.astype(np.int32)
+    else:
+        all_phrasal = np.zeros(len(syll_df), dtype=np.int32)
 
     # subset arrays for non-punc rows
     np_line = all_line[non_punc_idx]
@@ -73,6 +79,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
             "weak": all_weak[rows].astype(np.int8),
             "word_ids": all_wnum[rows].astype(np.int32),
             "func_word": all_func[rows].astype(bool),
+            "phrasal_stress": all_phrasal[rows].astype(np.int32),
         }
 
         # check if any word in this line has multiple forms
@@ -167,6 +174,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                         "weak": all_weak[rows].astype(np.int8),
                         "word_ids": all_wnum[rows].astype(np.int32),
                         "func_word": all_func[rows].astype(bool),
+                        "phrasal_stress": all_phrasal[rows].astype(np.int32),
                     }
                     if wnsylls == nsylls:
                         same_feats_list.append(feats)
@@ -442,6 +450,7 @@ def extract_features(wordtokens):
         "weak": weak,
         "word_ids": np.array(word_ids, dtype=np.int32),
         "func_word": np.array(func_word, dtype=bool),
+        "phrasal_stress": np.zeros(n, dtype=np.int32),
     }
 
 
@@ -470,6 +479,10 @@ def _extract_features_hybrid(wordtokens, syll_df, line_num):
         # mismatch — fall back to Entity-based extraction
         return extract_features(wordtokens)
 
+    phrasal = np.zeros(n, dtype=np.int32)
+    if 'phrasal_stress' in line_df.columns:
+        phrasal = line_df['phrasal_stress'].fillna(0).values.astype(np.int32)
+
     return {
         "sylls": sylls,
         "stressed": line_df['is_stressed'].values.astype(bool),
@@ -478,6 +491,7 @@ def _extract_features_hybrid(wordtokens, syll_df, line_num):
         "weak": line_df['is_weak'].values.astype(np.int8),
         "word_ids": line_df['word_num'].values.astype(np.int32),
         "func_word": line_df['is_functionword'].values.astype(bool),
+        "phrasal_stress": phrasal,
     }
 
 
@@ -625,6 +639,8 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
     weak = np.stack([f["weak"] for f in features_list])
     word_ids = np.stack([f["word_ids"] for f in features_list])
     func_word = np.stack([f["func_word"] for f in features_list])
+    phrasal_stress = np.stack([f["phrasal_stress"] for f in features_list])
+    has_phrasal = bool(np.any(phrasal_stress != 0))
 
     all_viols = np.zeros((L, S, N, C), dtype=np.int8)
 
@@ -636,6 +652,8 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
         "weak": weak[:, None, :],
         "func_word": func_word[:, None, :],
         "word_ids": word_ids[:, None, :],
+        "phrasal_stress": phrasal_stress[:, None, :],  # (L, 1, N)
+        "has_phrasal": has_phrasal,
         "word_ids_raw": word_ids,              # (L, N) for per-line ops
         "is_strong_pos": meter_vals[None, :, :],  # (1, S, N)
         "is_weak_pos": ~meter_vals[None, :, :],

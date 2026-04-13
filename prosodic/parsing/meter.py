@@ -127,7 +127,7 @@ class Meter(Entity):
         return self
 
     def fit_annotations(self, data, zones=3, regularization=100.0,
-                        lang=DEFAULT_LANG, **train_kwargs):
+                        lang=DEFAULT_LANG, text=None, **train_kwargs):
         """Learn constraint weights from annotated scansion data.
 
         Args:
@@ -135,6 +135,7 @@ class Meter(Entity):
             zones: positional zone splitting (None, "initial", int N).
             regularization: L2 regularization strength.
             lang: language code for parsing.
+            text: optional pre-built TextModel (e.g. with syntax=True).
             **train_kwargs: extra args for MaxEntTrainer.train().
 
         Returns:
@@ -142,7 +143,7 @@ class Meter(Entity):
         """
         from .maxent import MaxEntTrainer
         trainer = MaxEntTrainer(self, regularization=regularization, zones=zones)
-        trainer.load_annotations(data, lang=lang)
+        trainer.load_annotations(data, lang=lang, text=text)
         trainer.train(**train_kwargs)
         self.zones = zones
         self.zone_weights = trainer.learned_weights()

@@ -851,6 +851,44 @@ line_from_richardIII
 
 
 
+#### Phrasal stress (syntax)
+
+Prosodic can optionally compute phrasal stress from dependency parsing (Liberman & Prince 1977), using spaCy. This adds a `phrasal_stress` column to the syllable DataFrame, indicating each word's syntactic prominence (0 = sentence root, more negative = more deeply embedded).
+
+```bash
+# Install spaCy (optional dependency)
+pip install prosodic[syntax]
+python -m spacy download en_core_web_sm
+```
+
+```python
+# Enable with syntax=True
+t = prosodic.Text("Shall I compare thee to a summers day", syntax=True)
+
+# Phrasal stress values per word
+df = t._syll_df
+df[['word_txt', 'phrasal_stress']].drop_duplicates('word_num')
+#   word_txt  phrasal_stress
+#      Shall              -1
+#          I              -1
+#    compare               0   # ROOT (most prominent)
+#       thee              -1
+#         to              -1
+#          a              -3
+#    summers              -2
+#        day              -1
+```
+
+Two metrical constraints use phrasal stress (both inert when `syntax=False`):
+- `w_prom`: penalizes phrasally prominent words (root/direct dependents) on weak metrical positions
+- `s_demoted`: penalizes deeply embedded words on strong metrical positions
+
+```python
+from prosodic.parsing.meter import Meter
+m = Meter(constraints=['w_stress', 's_unstress', 'w_peak', 'w_prom', 's_demoted'])
+t.parse(meter=m)
+```
+
 #### Metrical parsing
 
 ##### Parsing lines

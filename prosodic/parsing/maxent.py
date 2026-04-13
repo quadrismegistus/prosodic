@@ -233,13 +233,14 @@ class MaxEntTrainer:
 
         self._weights = np.zeros(n_features, dtype=np.float64)
 
-    def load_annotations(self, data, lang=DEFAULT_LANG):
+    def load_annotations(self, data, lang=DEFAULT_LANG, text=None):
         """Load annotated scansion data and parse all lines.
 
         Args:
             data: list of (line_text, scansion_str, frequency) tuples,
                   or a DataFrame with columns: text, scansion, frequency.
             lang: language code for parsing.
+            text: optional pre-built TextModel (e.g. with syntax=True).
         """
         if isinstance(data, list):
             df = pd.DataFrame(data, columns=["text", "scansion", "frequency"])
@@ -247,8 +248,11 @@ class MaxEntTrainer:
             df = data.copy()
         self._annotations = df
 
-        unique_texts = df["text"].unique().tolist()
-        results, line_texts = self._parse_text(unique_texts, lang=lang)
+        if text is not None:
+            results, line_texts = self._parse_text(text, lang=lang)
+        else:
+            unique_texts = df["text"].unique().tolist()
+            results, line_texts = self._parse_text(unique_texts, lang=lang)
 
         # build scansion_map: {text: [(scansion, frequency), ...]}
         scansion_map = {}

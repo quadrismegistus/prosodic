@@ -35,6 +35,9 @@ packages = {find = {}}
 include-package-data = true
 
 [project.optional-dependencies]
+syntax = [
+    "spacy>=3.0",
+]
 dev = [
     "black>=22.10.0",
     "pre-commit>=2.20.0",

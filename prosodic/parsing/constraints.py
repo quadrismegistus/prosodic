@@ -247,6 +247,40 @@ def word_foot(mpos):
     return [None] * len(mpos.slots)
 
 
+# === Phrasal stress constraints (require syntax=True) ===
+
+def _w_prom_vectorized(f):
+    if not f.get("has_phrasal"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["phrasal_stress"] >= -1) & f["is_weak_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No phrasally prominent word on weak position",
+    scope="position",
+    vectorized=_w_prom_vectorized,
+)
+def w_prom(mpos):
+    if mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'phrasal_stress', -99) >= -1 for slot in mpos.slots]
+
+
+def _s_demoted_vectorized(f):
+    if not f.get("has_phrasal"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["phrasal_stress"] <= -2) & f["is_strong_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No phrasally demoted word on strong position",
+    scope="position",
+    vectorized=_s_demoted_vectorized,
+)
+def s_demoted(mpos):
+    if not mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'phrasal_stress', 0) <= -2 for slot in mpos.slots]
+
+
 # === Line-scope constraints (not used in vectorized parsing) ===
 
 @constraint(desc="Ensure the parse has exactly 5 peaks", scope="line")

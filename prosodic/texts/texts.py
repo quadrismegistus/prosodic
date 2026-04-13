@@ -1,6 +1,7 @@
 from ..imports import *
 from ..words import WordTokenList, WordToken
 from .syll_df import build_syll_df
+from .phrasal_stress import add_phrasal_stress
 
 NUMBUILT = 0
 PARSED_CACHE_DIR = os.path.join(PATH_HOME_DATA, "parsed")
@@ -22,6 +23,8 @@ class TextModel(Entity):
         lang: Optional[str] = DEFAULT_LANG,
         parent: Optional[Entity] = None,
         tokens_df: Optional[pd.DataFrame] = None,
+        syntax: Optional[bool] = None,
+        syntax_model: Optional[str] = None,
         **kwargs,
     ):
         if isinstance(children, str):
@@ -34,6 +37,10 @@ class TextModel(Entity):
             )
         txt = clean_text(get_txt(txt, fn)).strip()
         lang = lang if lang else detect_lang(txt)
+
+        # syntax options
+        self._syntax = syntax if syntax is not None else DEFAULT_SYNTAX
+        self._syntax_model = syntax_model or DEFAULT_SYNTAX_MODEL
 
         # store for lazy construction
         self._token_dicts = None
@@ -60,6 +67,10 @@ class TextModel(Entity):
 
             # build syllable DataFrame from raw get_word() output (fast)
             self._syll_df = build_syll_df(token_dicts, lang=lang)
+
+            # optionally add phrasal stress from dependency parse
+            if self._syntax:
+                add_phrasal_stress(self._syll_df, model=self._syntax_model)
 
             # DON'T build Entity children yet — defer to first access
 

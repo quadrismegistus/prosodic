@@ -4,7 +4,6 @@ import codecs
 import copy
 import os.path
 
-import pkg_resources
 import yaml
 
 import regex as re
@@ -48,7 +47,7 @@ class PermissiveFeatureTable(_panphon.FeatureTable):
             dias (str): path from panphon root to YAML file containing rules for
                         diacritics and modifiers
         """
-        dias = pkg_resources.resource_filename(__name__, dias)
+        dias = os.path.join(os.path.dirname(__file__), dias)
         self.bases, self.names = self._read_ipa_bases(ipa_bases)
         self.prefix_dias, self.postfix_dias = self._read_dias(dias)
         self.pre_regex, self.post_regex, self.seg_regex = self._compile_seg_regexes(self.bases, self.prefix_dias, self.postfix_dias)
@@ -56,7 +55,7 @@ class PermissiveFeatureTable(_panphon.FeatureTable):
         self.weights = self._read_weights()
 
     def _read_ipa_bases(self, fn):
-        fn = pkg_resources.resource_filename(__name__, fn)
+        fn = os.path.join(os.path.dirname(__file__), fn)
         with open(fn, 'rb') as f:
             reader = csv.reader(f, delimiter=str(','))
             names = next(reader)[1:]
@@ -90,8 +89,7 @@ class PermissiveFeatureTable(_panphon.FeatureTable):
         return self.seg_regex
 
     def _read_weights(self, filename=os.path.join('data', 'feature_weights.csv')):
-        filename = pkg_resources.resource_filename(
-            __name__, filename)
+        filename = os.path.join(os.path.dirname(__file__), filename)
         with open(filename, 'rb') as f:
             reader = csv.reader(f)
             next(reader)

@@ -8,7 +8,6 @@ import unicodedata
 import collections
 
 import numpy
-import pkg_resources
 
 import regex as re
 import csv
@@ -75,7 +74,7 @@ class FeatureTable(object):
         return unicodedata.normalize('NFD', data)
 
     def _read_bases(self, fn: str, weights):
-        fn = pkg_resources.resource_filename(__name__, fn)
+        fn = os.path.join(os.path.dirname(__file__), fn)
         segments = []
         with open(fn, encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -92,7 +91,7 @@ class FeatureTable(object):
         return segments, seg_dict, names
 
     def _read_weights(self, weights_fn: str) -> list[float]:
-        weights_fn = pkg_resources.resource_filename(__name__, weights_fn)
+        weights_fn = os.path.join(os.path.dirname(__file__), weights_fn)
         with open(weights_fn, encoding='utf-8') as f:
             reader = csv.reader(f)
             next(reader)

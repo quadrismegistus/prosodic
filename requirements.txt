@@ -29,7 +29,6 @@ regex
 editdistance
 munkres
 
-setuptools
 hashstash
 # stanza
 svgling

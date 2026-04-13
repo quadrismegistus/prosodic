@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import os.path
 
-import pkg_resources
 import yaml
 
 from panphon import _panphon
@@ -19,7 +18,7 @@ class Collapser(object):
 
     def _load_table(self, tablename):
         fn = os.path.join('data', tablename)
-        fn = pkg_resources.resource_filename(__name__, fn)
+        fn = os.path.join(os.path.dirname(__file__), fn)
         with open(fn, 'r', encoding='utf-8') as f:
             rules = []
             table = yaml.load(f.read(), Loader=yaml.FullLoader)

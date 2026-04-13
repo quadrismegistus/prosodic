@@ -151,12 +151,16 @@ def run_benchmarks(sonnet_path=SONNET_PATH, repeat=1):
             "lines": n_lines,
         })
 
-    # --- v2 reference (master branch, measured offline) ---
+    # --- v2 reference (master branch, measured on same hardware) ---
     results.append({
-        "step": "v2 reference (init + parse, no GPU)",
-        "time": 81.4,
+        "step": "**v2 init** (eager entities)",
+        "time": 5.29,
         "lines": n_lines,
-        "note": "pre-v3 branch, entity-based parser",
+    })
+    results.append({
+        "step": "**v2 parse** (per-line, no GPU)",
+        "time": 72.97,
+        "lines": n_lines,
     })
 
     return results

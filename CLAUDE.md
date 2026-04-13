@@ -163,14 +163,15 @@ Run `python -m prosodic.profiling` to regenerate.
 
 | Step | Time | Lines/sec |
 |---|---|---|
-| Init (tokenize + get_word + syll_df) | 0.56s | 3,860 |
-| Parse (CPU) | 5.02s | 430 |
-| Parse (GPU: Apple MPS) | 1.28s | 1,690 |
-| Build entities (lazy, on first .lines access) | 1.20s | 1,795 |
-| Init + syntax (spaCy dep parse) | 2.75s | 784 |
-| v2 reference (init + parse, no GPU) | 81.40s | 26 |
+| v3 init (tokenize + get_word + syll_df) | 0.56s | 3,860 |
+| v3 parse (CPU) | 5.02s | 430 |
+| v3 parse (GPU: Apple MPS) | 1.28s | 1,690 |
+| v3 entities (lazy, on .lines access) | 1.20s | 1,795 |
+| v3 init + syntax (spaCy dep parse) | 2.75s | 784 |
+| v2 init (eager entities) | 5.29s | 407 |
+| v2 parse (per-line, no GPU) | 72.97s | 30 |
 
-Without entity access (batch/corpus use): **~1.8s** (init + GPU parse).
+**v3 total (init + GPU parse): ~1.8s vs v2 total: ~78s (43x faster)**.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

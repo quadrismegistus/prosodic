@@ -157,15 +157,22 @@ There are two ways parsing happens, and it matters which one you're in:
 - Web tests use Flask test client + socketio test client (no browser needed). Selenium browser test skips gracefully if no driver. `NAPTIME` env var controls WebSocket timeouts.
 - CI runs on Python 3.12.0 and requires espeak system package.
 
-## Performance (Shakespeare, 2155 lines, MPS GPU)
+## Performance (Shakespeare sonnets, 2155 lines, Apple MPS GPU)
 
-Cold start end-to-end: **~7.4s**
-- Import: 1.1s (includes torch init)
-- Init (tokenize + get_word + syll_df): 1.9s
-- Parse (constraint eval + GPU bounding): 1.9s
-- Lines (lazy entity build + attach): 2.5s
+Run `python -m prosodic.profiling` to regenerate.
 
-Without entity access (batch/corpus use): **~4.2s**
+| Step | Time | Lines/sec |
+|---|---|---|
+| Init (tokenize + get_word + syll_df) | 0.56s | 3,860 |
+| Parse (CPU) | 5.02s | 430 |
+| Parse (GPU: Apple MPS) | 1.28s | 1,690 |
+| Build entities (lazy, on first .lines access) | 1.20s | 1,795 |
+| Init + syntax (spaCy dep parse) | 2.75s | 784 |
+| v2 reference (init + parse, no GPU) | 81.40s | 26 |
+
+Without entity access (batch/corpus use): **~1.8s** (init + GPU parse).
+
+**TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 
 ## Performance Improvement Plan
 
@@ -184,6 +191,9 @@ Without entity access (batch/corpus use): **~4.2s**
 - ✅ MaxEnt weight learner (L-BFGS, vectorized, zone splitting, <1s training on 2K lines)
 - ✅ Self-describing constraints (vectorized lambda on decorator, auto-dispatch)
 - ✅ New constraints: clash, lapse, w_heavy, s_light, s_func, word_foot
+- ✅ Phrasal stress from dependency parsing (spaCy, Liberman & Prince 1977)
+- ✅ TTS pronunciation cache to disk (`~/prosodic_data/data/{lang}_cache.tsv`)
+- ✅ Profiling module (`python -m prosodic.profiling`)
 
 ### Remaining
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)

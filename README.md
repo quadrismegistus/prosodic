@@ -13,6 +13,19 @@ Supports Python>=3.9.
 You can view and use a web app demo of the current Prosodic app at **[prosodic.dev](https://prosodic.dev/)**.
 
 
+## Performance
+
+Shakespeare sonnets (2155 lines). Run `python -m prosodic.profiling` to regenerate.
+
+| Step | Time | Lines/sec |
+|---|---|---|
+| Init (tokenize + get_word + syll_df) | 0.56s | 3,860 |
+| Parse (CPU) | 5.02s | 430 |
+| Parse (GPU: Apple MPS) | 1.28s | 1,690 |
+| Build entities (lazy, on first .lines access) | 1.20s | 1,795 |
+| Init + syntax (spaCy dep parse) | 2.75s | 784 |
+| v2 reference (init + parse, no GPU) | 81.40s | 26 |
+
 ## Install
 
 ### 1. Install python package

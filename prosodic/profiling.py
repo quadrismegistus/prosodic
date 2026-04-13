@@ -151,19 +151,27 @@ def run_benchmarks(sonnet_path=SONNET_PATH, repeat=1):
             "lines": n_lines,
         })
 
+    # --- v2 reference (master branch, measured offline) ---
+    results.append({
+        "step": "v2 reference (init + parse, no GPU)",
+        "time": 81.4,
+        "lines": n_lines,
+        "note": "pre-v3 branch, entity-based parser",
+    })
+
     return results
 
 
 def format_markdown(results):
     """Format results as a markdown table."""
     lines = []
-    lines.append("| Step | Time | Lines | Lines/sec |")
-    lines.append("|---|---|---|---|")
+    lines.append("| Step | Time | Lines/sec |")
+    lines.append("|---|---|---|")
     for r in results:
         t = r["time"]
         n = r["lines"]
         lps = n / t if t > 0 else float('inf')
-        lines.append(f"| {r['step']} | {t:.2f}s | {n} | {lps:,.0f} |")
+        lines.append(f"| {r['step']} | {t:.2f}s | {lps:,.0f} |")
     return "\n".join(lines)
 
 
@@ -173,6 +181,8 @@ def format_json(results):
 
 
 def main():
+    import os
+    os.environ["LOGURU_LEVEL"] = "ERROR"
     output_json = "--json" in sys.argv
     results = run_benchmarks()
     if output_json:

@@ -60,6 +60,9 @@ export const maxentConfig = persisted('prosodic:maxent', {
 	syntax: false
 });
 
+// Active tab (persisted so refresh stays on same tab)
+export const activeTab = persisted('prosodic:tab', 'parse');
+
 // --- Non-persisted stores ---
 
 export const allConstraints = writable([]);
@@ -75,3 +78,6 @@ export const reparseResults = writable(null);
 export const reparseLoading = writable(false);
 
 export const corporaList = writable([]);
+
+// Selected line for LineView tab
+export const selectedLine = writable(null);  // { line_num, line_text, rows }

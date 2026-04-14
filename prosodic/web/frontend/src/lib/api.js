@@ -1,4 +1,10 @@
-const BASE = '';
+// In Tauri, the sidecar runs on a dynamic port; in browser, proxy handles it
+function getBase() {
+	if (typeof window !== 'undefined' && window.__PROSODIC_PORT__) {
+		return `http://127.0.0.1:${window.__PROSODIC_PORT__}`;
+	}
+	return '';
+}
 
 async function request(method, path, body) {
 	const opts = {
@@ -8,7 +14,7 @@ async function request(method, path, body) {
 	if (body) {
 		opts.body = body instanceof FormData ? body : JSON.stringify(body);
 	}
-	const res = await fetch(`${BASE}${path}`, opts);
+	const res = await fetch(`${getBase()}${path}`, opts);
 	if (!res.ok) {
 		const detail = await res.json().catch(() => ({ detail: res.statusText }));
 		throw new Error(detail.detail || res.statusText);
@@ -27,7 +33,7 @@ export function getMeterDefaults() {
  * Returns { elapsed, num_lines } when done.
  */
 export async function parseStream(data, { onProgress, onRows }) {
-	const res = await fetch(`${BASE}/api/parse/stream`, {
+	const res = await fetch(`${getBase()}/api/parse/stream`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(data),
@@ -60,6 +66,10 @@ export async function parseStream(data, { onProgress, onRows }) {
 		}
 	}
 	return meta;
+}
+
+export function parseLine(data) {
+	return request('POST', '/api/parse/line', data);
 }
 
 export function maxentFit(data) {

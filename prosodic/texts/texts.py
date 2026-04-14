@@ -466,7 +466,14 @@ def Text(
     parent: Optional[Entity] = None,
     children: Optional[list] = [],
     tokens_df: Optional[pd.DataFrame] = None,
+    server: Optional[str] = None,
 ):
+    # Check for remote server (explicit arg or global setting)
+    from ..client import get_server, RemoteText
+    remote = server or get_server()
+    if remote:
+        return RemoteText(txt=txt, fn=fn, server=remote)
+
     return TextModel(
         txt=txt, fn=fn, lang=lang, parent=parent, children=children, tokens_df=tokens_df
     )

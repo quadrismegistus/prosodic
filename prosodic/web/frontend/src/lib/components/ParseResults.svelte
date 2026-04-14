@@ -1,5 +1,5 @@
 <script>
-	let { rows = [], elapsed = 0, numLines = 0 } = $props();
+	let { rows = [], elapsed = 0, numLines = 0, onLineClick = null } = $props();
 	let viewMode = $state('best');
 	let sortCol = $state(null);
 	let sortAsc = $state(true);
@@ -98,7 +98,8 @@
 			</thead>
 			<tbody>
 				{#each pagedRows as row (row.line_num + '-' + row.rank)}
-					<tr class:best={row.rank === 1} class:other={row.rank !== 1}>
+					<tr class:best={row.rank === 1} class:other={row.rank !== 1} class:clickable={row.rank === 1 && onLineClick}
+						onclick={() => row.rank === 1 && onLineClick && onLineClick(row)}>
 						<td>{row.line_num}</td>
 						<td class="parse-text">{@html row.parse_html}</td>
 						<td class="stat">{row.meter_str}</td>
@@ -243,6 +244,12 @@
 	}
 	tr.other:hover td {
 		opacity: 0.8;
+	}
+	tr.clickable {
+		cursor: pointer;
+	}
+	tr.clickable:hover td {
+		background: #f0f7ff;
 	}
 
 	/* Parse rendering styles (server-rendered HTML) */

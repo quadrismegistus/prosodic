@@ -187,6 +187,7 @@ def parse_text(req: dict):
             rows.append({
                 'line_num': line.num,
                 'rank': pi + 1,
+                'line_text': line.txt.strip(),
                 'parse_html': render_parse_html(p),
                 'meter_str': p.meter_str,
                 'score': round(score, 2),
@@ -264,6 +265,7 @@ async def parse_stream(req: dict):
                 batch.append({
                     'line_num': line.num,
                     'rank': pi + 1,
+                    'line_text': line.txt.strip(),
                     'parse_html': render_parse_html(p),
                     'meter_str': p.meter_str,
                     'score': round(score, 2),
@@ -440,6 +442,100 @@ def maxent_reparse(req: MaxEntReparseRequest):
 
     elapsed = time.time() - t0
     return MaxEntReparseResponse(rows=rows, elapsed=round(elapsed, 3))
+
+
+@app.post("/api/parse/line")
+def parse_line(req: dict):
+    """Parse a single line and return ALL scansions sorted by score."""
+    text_str = req.get('text', '').strip()
+    if not text_str:
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.meter import Meter
+
+    # Take first line only
+    line_text = text_str.split('\n')[0].strip()
+    if not line_text:
+        raise HTTPException(status_code=400, detail="Empty line")
+
+    syntax = req.get('syntax', False)
+    meter_kwargs = _build_meter_kwargs(
+        req.get('constraints'), req.get('max_s', 2),
+        req.get('max_w', 2), req.get('resolve_optionality', True))
+
+    t0 = time.time()
+    t = get_text(line_text, syntax=syntax)
+    meter = Meter(**meter_kwargs)
+
+    zw = req.get('zone_weights')
+    if zw:
+        meter.zone_weights = zw
+        meter.zones = _normalize_zones(req.get('zones', 3))
+
+    text_lines = t.lines
+    if not text_lines:
+        return {'parses': [], 'elapsed': 0, 'line_text': line_text}
+
+    results = parse_batch(text_lines, meter)
+    for i, (wt, pl) in enumerate(results):
+        pl.parent = wt
+        wt._parses = pl
+        text_lines[i]._parses = pl
+
+    line = text_lines[0]
+    pl = line._parses
+    parses = []
+    if pl:
+        import numpy as np
+        # Sort all parses by score, using _all_scores for proper weighted values
+        sorted_indices = np.argsort(pl._all_scores)
+        for pi, idx in enumerate(sorted_indices):
+            p = pl._get_parse(int(idx), is_bounded=not pl._unbounded_mask[idx])
+            score = round(float(pl._all_scores[idx]), 2)
+            is_bounded = not pl._unbounded_mask[idx]
+            # Collect per-position violation details
+            positions = []
+            for pos in p.positions:
+                slots = []
+                for slot in pos.children:
+                    unit = slot.unit
+                    slots.append({
+                        'text': unit.txt,
+                        'is_stressed': bool(unit.is_stressed),
+                        'is_prom': bool(slot.is_prom),
+                        'violations': list(slot.violset),
+                    })
+                positions.append({
+                    'mtr': 's' if pos.is_prom else 'w',
+                    'slots': slots,
+                })
+            # Build violation summary
+            viol_counts = {}
+            for pos in positions:
+                for s in pos['slots']:
+                    for v in s['violations']:
+                        viol_counts[v] = viol_counts.get(v, 0) + 1
+            parses.append({
+                'rank': pi + 1,
+                'parse_html': render_parse_html(p),
+                'meter_str': p.meter_str,
+                'score': score,
+                'is_bounded': is_bounded,
+                'positions': positions,
+                'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
+                'viol_summary': viol_counts,
+            })
+
+    elapsed = time.time() - t0
+    num_unbounded = sum(1 for p in parses if not p['is_bounded'])
+    return {
+        'parses': parses,
+        'elapsed': round(elapsed, 3),
+        'line_text': line_text,
+        'num_parses': len(parses),
+        'num_unbounded': num_unbounded,
+    }
 
 
 # Serve built SvelteKit frontend

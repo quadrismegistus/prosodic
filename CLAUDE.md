@@ -129,7 +129,8 @@ All global constants, paths, and shared imports live in `imports.py`. Modules im
 FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobile-friendly.
 
 **Backend** (`api.py`):
-- FastAPI JSON API with endpoints: `/api/meter/defaults`, `/api/parse`, `/api/parse/stream` (SSE), `/api/maxent/fit`, `/api/maxent/fit-annotations`, `/api/maxent/reparse`, `/api/corpora`, `/api/corpora/read`
+- FastAPI JSON API with endpoints: `/api/meter/defaults`, `/api/parse`, `/api/parse/stream` (SSE), `/api/parse/line` (single-line detail), `/api/maxent/fit`, `/api/maxent/fit-annotations`, `/api/maxent/reparse`, `/api/corpora`, `/api/corpora/read`
+- `/api/parse/line` returns ALL scansions (unbounded + bounded) for a single line, with per-position violation details and violation summaries
 - `render_parse_html(parse)` returns server-rendered HTML strings with CSS classes for meter/stress/violation styling (same as v2, fast for large texts)
 - `serialize_parse()` removed — Pydantic SlotData objects were too slow for 10K+ line texts
 - Serves built SvelteKit frontend from `static_build/` directory
@@ -138,10 +139,14 @@ FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobi
 
 **Frontend** (`frontend/` → builds to `static_build/`):
 - SvelteKit with `adapter-static`, builds to ~180KB (replaced 13MB of jQuery/DataTables)
-- 3 tabs: **Parse** (text input + corpus dropdown + results), **Meter** (constraint config + weights), **MaxEnt** (file upload + training)
+- **Component-based tabs** (not routes): all tabs stay mounted, preserving state and scroll position across tab switches. Active tab stored in `activeTab` persisted store.
+- 5 tabs: **Parse** (text input + corpus dropdown + results), **Line** (single-line detail with all scansions), **Meter** (constraint config + weights), **MaxEnt** (file upload + training), **Settings** (global options)
+- Parse tab: clicking a line navigates to Line View with full scansion detail (unbounded + bounded)
+- Line View: text input for manual line entry, shows all scansions sorted by score with violation badges, bounded parses grayed out
+- Settings tab: syntax toggle, spaCy model, language, max syllables, parse timeout
 - Parse results: sortable columns (Line, Meter, Score, Ambig), pagination (50/100/250/500 per page), best-only / all-unbounded toggle
 - MaxEnt zone weights saved to Meter config and used for zone-aware scoring in Parse
-- All config persisted in localStorage (meter config, weights, zone weights, last text, maxent params)
+- All config persisted in localStorage (meter config, weights, zone weights, last text, maxent params, active tab, settings)
 - Corpus dropdown loads texts from `corpora/` directory
 
 **Pydantic models** (`models.py`): `MaxEntFitRequest/Response`, `MaxEntReparseRequest/Response`, `MeterDefaultsResponse`, `CorpusFile/ListResponse`, `WeightEntry`
@@ -151,6 +156,54 @@ FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobi
 2. **Zone weights**: learned by MaxEnt, stored as `meter.zone_weights` dict (zone-expanded names → weights). When active, override manual weights for scoring. Reset via "Reset Weights" button.
 
 - Run with `prosodic web` or `python -c "from prosodic.web.api import main; main(port=8181, host='0.0.0.0')"`
+
+### Remote Client (`client.py`)
+
+`prosodic.client` provides a remote API client that duck-types the local `TextModel`/`Line`/`Parse` interfaces. Only requires `requests` — no numpy, espeak, or prosodic internals.
+
+**Usage:**
+```python
+import prosodic
+prosodic.set_server("https://prosodic.app")  # or "http://localhost:8181"
+
+t = prosodic.Text("From fairest creatures we desire increase")  # returns RemoteText
+t.parse()                           # calls /api/parse
+for line in t.lines:
+    print(line.best_parse.meter_str, line.best_parse.score)
+
+t.parse_lines()                     # calls /api/parse/line per line (all scansions)
+for p in t.lines[0].parses.bounded:
+    print(p.meter_str, p.score)
+
+result = t.fit(target_scansion='wswswswsws', zones=3)  # calls /api/maxent/fit
+print(result.weights, result.accuracy)
+```
+
+**Key design:** `Text()` factory checks `get_server()` — if set, returns `RemoteText`; otherwise returns local `TextModel`. Downstream code using `.lines`, `.parse()`, `.best_parse` works identically.
+
+**Proxy objects:** `RemoteText`, `RemoteLine`, `RemoteParse`, `RemoteParseList` duck-type their local equivalents. `_HttpTransport` wraps either `requests` (URL string) or FastAPI `TestClient` (for tests).
+
+**Save/load:** `t.save(path)` saves parse results as JSON (`remote_parse.json`) + optional parquet. `RemoteText.load(path)` reconstructs from JSON without a server.
+
+### Deployment (`deploy/`)
+
+Server deployment config for running prosodic.app (and optionally lltk.net) on a single VPS.
+
+- `nginx-prosodic.conf`: Nginx vhost config for prosodic.app. TLS added by certbot on first setup.
+- `prosodic.service`: systemd unit file for the FastAPI server.
+- `setup.sh`: One-shot provisioning script (apt, venv, clone, build, start).
+
+Target: Hetzner CCX33 (~$35/mo), CPU-only (GPU not needed for serving).
+
+### Desktop App (`desktop/`)
+
+Tauri v2 desktop app scaffold. Bundles the Python backend via PyInstaller as a sidecar, including espeak. No Python installation required for end users.
+
+- `build.sh`: Builds frontend → PyInstaller sidecar → Tauri `.app` bundle.
+- `src-tauri/src/main.rs`: Launches sidecar on random port, passes port to webview via `window.__PROSODIC_PORT__`.
+- `scripts/prosodic_server.py`: Server entry point for PyInstaller with port negotiation and bundled espeak path setup.
+- `scripts/prosodic_server.spec`: PyInstaller spec bundling Python + prosodic + espeak (~300MB).
+- GPU (torch) and spaCy excluded from bundle to keep size manageable.
 
 ## Two Parse Paths
 
@@ -177,10 +230,11 @@ There are two ways parsing happens, and it matters which one you're in:
 
 ## Testing Notes
 
-- 191 tests, all passing. Python 3.10 in `.venv`.
+- 219 tests, all passing. Python 3.10 in `.venv`.
 - Tests import everything via `from prosodic.imports import *` and call `disable_caching()` at the top (now a no-op).
 - Common test fixture: Shakespeare sonnets via `sonnet` variable.
 - Web tests use FastAPI TestClient (httpx-based). 12 tests covering meter defaults, parse, maxent, corpora, and static files. Selenium browser test skips gracefully if no driver.
+- Client tests (`test_client.py`): 28 tests for remote API client. Uses FastAPI TestClient (no running server needed). Covers parsing, line-level detail, bounded/unbounded, MaxEnt, save/load roundtrips, and `Text()` factory dispatch.
 - CI runs on Python 3.12.0 and requires espeak system package.
 
 ## Performance (Shakespeare sonnets, 2155 lines, Apple MPS GPU)
@@ -219,6 +273,10 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ Phrasal stress from dependency parsing (spaCy, Liberman & Prince 1977)
 - ✅ TTS pronunciation cache to disk (`~/prosodic_data/data/{lang}_cache.tsv`)
 - ✅ Profiling module (`python -m prosodic.profiling`)
+- ✅ Web app: component-based tabs (state/scroll preserved across switches), Line View tab, Settings tab
+- ✅ Remote client API (`prosodic.client`): same interface as local, delegates to HTTP API, save/load support
+- ✅ Desktop app scaffold (Tauri v2 + PyInstaller sidecar + bundled espeak)
+- ✅ Server deployment config (nginx + certbot + systemd + setup script for prosodic.app, co-hosts with lltk.net)
 
 ### Remaining
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)

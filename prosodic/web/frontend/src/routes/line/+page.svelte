@@ -4,7 +4,7 @@
 	import { activeTab } from '$lib/stores.js';
 
 	onMount(() => {
-		$activeTab = 'meter';
+		$activeTab = 'line';
 		goto('/', { replaceState: true });
 	});
 </script>

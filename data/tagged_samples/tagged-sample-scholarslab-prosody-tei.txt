@@ -1,0 +1,1588 @@
+author	title	date	text	scansion	num_sylls	frequency
+Anonymous	Roses Are Red	1784?	Roses are red,	wsws	4	1
+Anonymous	Roses Are Red	1784?	Violets are blue,	wsws	4	1
+Anonymous	Roses Are Red	1784?	Sugar is sweet,	wsws	4	1
+Anonymous	Roses Are Red	1784?	And so are you.	wsws	4	1
+Anonymous	Westron Wynde	1500?	Westron wynde when wyll thow blow	wswswsws	8	1
+Anonymous	Westron Wynde	1500?	The smalle rayne downe can rayne	wswsws	6	1
+Anonymous	Westron Wynde	1500?	Chryst yf my love wer in my armes	wswswsws	8	1
+Anonymous	Westron Wynde	1500?	And I yn my bed agayne	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	The sea is calm tonight.	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	The tide is full, the moon lies fair	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Upon the straits; on the French coast, the light	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Gleams and is gone; the cliffs of England stand,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Glimmering and vast, out in the tranquil bay.	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Come to the window, sweet is the night-air!	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Only, from the long line of spray	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Where the sea meets the moon-blanched land,	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Listen! you hear the grating roar	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Of pebbles which the waves draw back, and fling,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	At their return up the high strand,	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Begin, and cease, and then again begin,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	With tremulous cadence slow, and bring	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	The eternal note of sadness in.	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Sophocles long ago	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	Heard it on the Aegean, and it brought	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Into his mind the turbid ebb and flow	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Of human misery; we	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	Find also in the sound a thought,	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Hearing it by this distant northern sea.	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	The Sea of Faith	wsws	4	1
+Matthew Arnold	Dover Beach	1867	Was once, too, at the full, and round earth's shore	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Lay like the folds of a bright girdle furled.	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	But now I only hear	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	Its melancholy, long, withdrawing roar,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Retreating, to the breath	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	Of the night-wind, down the vast edges drear	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	And naked shingles of the world.	wswswsws	8	1
+Matthew Arnold	Dover Beach	1867	Ah, love, let us be true	wswsws	6	1
+Matthew Arnold	Dover Beach	1867	To one another! for the world, which seems	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	To lie before us like a land of dreams,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	So various, so beautiful, so new,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Hath really neither joy, nor love, nor light,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Nor certitude, nor peace, nor help for pain;	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	And we are here as on a darkling plain	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Swept with confused alarms of struggle and flight,	wswswswsws	10	1
+Matthew Arnold	Dover Beach	1867	Where ignorant armies clash by night.	wswswsws	8	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	With how sad steps, O Moone, thou climb'st the skies,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	How silently, and with how wanne a face,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	What, may it be that even in heav'nly place	wswswswswsws	12	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	That busie archer his sharpe arrowes tries?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Sure, if that long with Love acquainted eyes	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Can judge of Love, thou feel'st a Lover's case;	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	I reade it in thy lookes, thy languisht grace,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	To me that feele the like, thy state descries.	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Then ev'n of fellowship, O Moone, tell me	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Is constant Love deem'd there but want of wit?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Are Beauties there as proud as here they be?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Do they above love to be lov'd, and yet	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Those Lovers scorne whom that Love doth Possesse?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Do they call Vertue there ungratefulnesse?	wswswswsws	10	1
+William Blake	Ah Sun-flower	1794	Ah Sun-flower, weary of time,	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Who countest the steps of the Sun,	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Seeking after that sweet golden clime	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Where the traveller's journey is done;	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Where the Youth pined away with desire,	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	And the pale Virgin shrouded in snow,	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Arise from their graves and aspire,	wwswwswws	9	1
+William Blake	Ah Sun-flower	1794	Where my Sun-flower wishes to go.	wwswwswws	9	1
+William Blake	Eternity	Before 1818	He who binds to himself a joy	wswswsws	8	1
+William Blake	Eternity	Before 1818	Doth the winged life destroy,	wswswsws	8	1
+William Blake	Eternity	Before 1818	But he who kisses the joy as it flies	wswswsws	8	1
+William Blake	Eternity	Before 1818	Lives in Eternity's sun rise.	wswswsws	8	1
+William Blake	The Sick Rose	1794	O Rose, thou art sick!	wwswws	6	1
+William Blake	The Sick Rose	1794	The invisible worm	wwswws	6	1
+William Blake	The Sick Rose	1794	That flies in the night	wwswws	6	1
+William Blake	The Sick Rose	1794	In the howling storm	wwswws	6	1
+William Blake	The Sick Rose	1794	Has found out thy bed	wwswws	6	1
+William Blake	The Sick Rose	1794	Of crimson joy,	wwswws	6	1
+William Blake	The Sick Rose	1794	And his dark secret love	wwswws	6	1
+William Blake	The Sick Rose	1794	Does thy life destroy.	wwswws	6	1
+William Blake	The Tyger	1794	Tyger! tyger! burning bright	wswswsws	8	1
+William Blake	The Tyger	1794	In the forests of the night,	wswswsws	8	1
+William Blake	The Tyger	1794	What immortal hand or eye	wswswsws	8	1
+William Blake	The Tyger	1794	Could frame thy fearful symmetry?	wswswsws	8	1
+William Blake	The Tyger	1794	In what distant deeps or skies	wswswsws	8	1
+William Blake	The Tyger	1794	Burnt the fire of thine eyes?	wswswsws	8	1
+William Blake	The Tyger	1794	On what wings dare he aspire?	wswswsws	8	1
+William Blake	The Tyger	1794	What the hand dare seize the fire?	wswswsws	8	1
+William Blake	The Tyger	1794	And what shoulder, & what art,	wswswsws	8	1
+William Blake	The Tyger	1794	Could twist the sinews of thy heart?	wswswsws	8	1
+William Blake	The Tyger	1794	And when thy heart began to beat,	wswswsws	8	1
+William Blake	The Tyger	1794	What dread hand? & what dread feet?	wswswsws	8	1
+William Blake	The Tyger	1794	What the hammer? what the chain?	wswswsws	8	1
+William Blake	The Tyger	1794	In what furnace was thy brain?	wswswsws	8	1
+William Blake	The Tyger	1794	What the anvil? what dread grasp	wswswsws	8	1
+William Blake	The Tyger	1794	Dare its deadly terrors clasp?	wswswsws	8	1
+William Blake	The Tyger	1794	When the stars threw down their spears,	wswswsws	8	1
+William Blake	The Tyger	1794	And watered heaven with their tears,	wswswsws	8	1
+William Blake	The Tyger	1794	Did he smile his work to see?	wswswsws	8	1
+William Blake	The Tyger	1794	Did he who made the Lamb make thee?	wswswsws	8	1
+William Blake	The Tyger	1794	Tyger! tyger! burning bright	wswswsws	8	1
+William Blake	The Tyger	1794	In the forests of the night,	wswswsws	8	1
+William Blake	The Tyger	1794	What immortal hand or eye	wswswsws	8	1
+William Blake	The Tyger	1794	Dare frame thy fearful symmetry?	wswswsws	8	1
+Lord Byron	Beppo: Stanza XLIV	1817	I love the language that soft bastard Latin,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	Which melts like kisses from a female mouth,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	And sounds as if it should be writ on satin,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	With syllables which breathe of the sweet South,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	And gentle liquids gliding all so pat in,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	That not a single accent seems uncouth.	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	Like our harsh northern whistling, grunting guttural,	wswswswsws	10	1
+Lord Byron	Beppo: Stanza XLIV	1817	Which we're obliged to hiss, and spit, and sputter all.	wswswswsws	10	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	When a man hath no freedom to fight for at home,	wwswwswwswws	12	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	Let him combat for that of his neighbours;	wwswwswws	9	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	Let him think of the glories of Greece and of Rome,	wwswwswwswws	12	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	And get knocked on the head for his labours,	wwswwswws	9	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	To do good to mankind is the chivalrous plan,	wwswwswwswws	12	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	And is always as nobly requited;	wwswwswws	9	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	Then battle for freedom wherever you can,	wwswwswwswws	12	1
+George Gordon, Lord Byron	When a Man Hath No Freedom	1820	And if not shot or hanged you'll get knighted.	wwswwswws	9	1
+Thomas Campion	My Sweetest Lesbia	1601	My sweetest Lesbia, let us live and love,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	And though the sager sort our deeds reprove,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Let us not weigh them. Heaven's great lamps do dive	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Into their west, and straight again revive,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	But soon as once set is our little light,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Then must we sleep one ever-during night.	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	If all would lead their lives in love like me,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Then bloody swords and armor should not be;	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	No drum nor trumpet peaceful sleeps should move,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Unless alarm came from the camp of love.	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	But fools do live and waste their little light,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	And seek with pain their ever-during night.	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	When timely death my life and fortune ends,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	Let not my hearse be vexed with mourning friends,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	But let all lovers, rich in triumph, come	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	And with sweet pastimes grace my happy tomb;	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	And Lesbia, close up thou my little light,	wswswswsws	10	1
+Thomas Campion	My Sweetest Lesbia	1601	And crown with love my ever-during night.	wswswswsws	10	1
+Lewis Carroll	Jabberwocky	1855	'Twas brillig, and the slithy toves	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Did gyre and gimble in the wabe;	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	All mimsy were the borogoves,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	And the mome raths outgrabe.	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	"""Beware the Jabberwock, my son!"	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	The jaws that bite, the claws that catch!	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Beware the Jubjub bird, and shun	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	"The frumious Bandersnatch!"""	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	He took his vorpal sword in hand:	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Long time the manxome foe he sought-	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	So rested he by the Tumtum tree,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	And stood awhile in thought.	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	And as in uffish thought he stood,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	The Jabberwock, with eyes of flame,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Came whiffling through the tulgey wood,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	And burbled as it came!	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	One, two! One, two! And through and through	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	The vorpal blade went snicker-snack!	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	He left it dead, and with its head	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	He went galumphing back.	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	"""And hast thou slain the Jabberwock?"	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Come to my arms, my beamish boy!	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	"O frabjous day! Callooh! Callay!"""	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	He chortled in his joy.	wswsws	6	1
+Lewis Carroll	Jabberwocky	1855	'Twas brillig, and the slithy toves	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	Did gyre and gimble in the wabe;	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	All mimsy were the borogoves,	wswswsws	8	1
+Lewis Carroll	Jabberwocky	1855	And the mome raths outgrabe.	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	In Xanadu did Kubla Khan	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A stately pleasure dome decree:	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where Alph, the sacred river, ran	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Through caverns measureless to man	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Down to a sunless sea.	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	So twice five miles of fertile ground	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	With walls and towers were girdled round:	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And there were gardens bright with sinuous rills,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where blossomed many an incense-bearing tree;	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And here were forests ancient as the hills,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Enfolding sunny spots of greenery.	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	But oh! that deep romantic chasm which slanted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Down the green hill athwart a cedarn cover!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A savage place! as holy and enchanted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	As e'er beneath a waning moon was haunted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	By woman wailing for her demon-lover!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And from this chasm, with ceaseless turmoil seething,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	As if this earth in fast thick pants were breathing,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A mighty fountain momently was forced:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Amid whose swift half-intermitted burst	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Huge fragments vaulted like rebounding hail,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Or chaffy grain beneath the thresher's flail:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And 'mid these dancing rocks, at once and ever	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It flung up momently the sacred river.	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Five miles meandering with a mazy motion	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Through wood and dale the sacred river ran,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Then reached the caverns measureless to man,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And sank in tumult to a lifeless ocean:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And 'mid this tumult Kubla heard from far	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Ancestral voices prophesying war!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	The shadow of the dome of pleasure	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Floated midway on the waves;	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where was heard the mingled measure	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	From the fountain and the caves.	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It was a miracle of rare device,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A sunny pleasure-dome with caves of ice!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A damsel with a dulcimer	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	In a vision once I saw:	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It was an Abyssinian maid,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And on her dulcimer she played,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Singing of Mount Abora.	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Could I revive within me	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Her symphony and song,	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	To such a deep delight 'twould win me,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	That with music loud and long,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	I would build that dome in air,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	That sunny dome! those caves of ice!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And all who heard should see them there,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And all should cry, Beware! Beware!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	His flashing eyes! his floating hair!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Weave a circle round him thrice,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And close your eyes with holy dread,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	For he on honey-dew hath fed,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And drunk the milk of Paradise.	wswswsws	8	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	Trochee trips from long to short.	swswswsw	8	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	From long to long in solemn sort,	wswswsws	8	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	Slow Spondee stalks; strong foot! yet ill able	ssssssss	8	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	Ever to come up with Dactyl trisyllable.	swwswwswwsww	12	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	Iambics march from short to long.	wswswsws	8	1
+Samuel Taylor Coleridge	Metrical Feet: Lesson for a Boy	1806	With a leap and a bound the swift Anapests throng.	wwswwswwswws	12	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	I felt a Funeral, in my Brain,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And Mourners to and fro	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	Kept treading- treading- till it seemed	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	That Sense was breaking through-	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And when they all were seated,	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	A service like a Drum-	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	Kept beating- beating- till I thought	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	My mind was going numb-	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And then I heard them lift a Box	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And creak across my Soul	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	With those same Boots of Lead, again,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	Then Space- began to toll,	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	As all the Heavens were a Bell,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And Being, but an Ear,	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And I, and Silence, some strange Race,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	Wrecked, solitary, here-	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And then a Plank in Reason broke,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And I dropped down, and down-	wswsws	6	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And hit a World, at every plunge,	wswswsws	8	1
+Emily Dickinson	I Felt a Funeral in My Brain	1861	And Finished knowing- then-	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	The Brain--is wider than the Sky	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	For-- put them side by side--	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	The one the other will contain	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	With ease-- and You--beside--	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	The Brain is deeper than the sea--	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	For-- hold them-- Blue to Blue--	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	The one the other will absorb--	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	As sponges-- buckets-- do--	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	The Brain is just the weight of God--	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	For-- Heft them-- Pound for Pound--	wswsws	6	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	And they will differ-- if they do--	wswswsws	8	1
+Emily Dickinson	The Brain Is Wider than the Sky	1862	As Syllable from Sound--	wswsws	6	1
+John Donne	Holy Sonnet 1	1609	Thou hast made me, and shall thy work decay?	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	Repair me now, for now mine end doth haste;	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	I run to death, and death meets me as fast,	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	And all my pleasures are like yesterday.	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	I dare not move my dim eyes any way,	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	Despair behind and death before doth cast	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	Such terror, and my feeble flesh doth waste	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	By sin in it, which it towards hell doth weigh.	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	Only thou art above, and when towards thee	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	By thy leave I can look, I rise again;	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	But our old subtle foe so tempteth me	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	That not one hour myself I can sustain.	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	Thy grace may wing me to prevent his art,	wswswswsws	10	1
+John Donne	Holy Sonnet 1	1609	And thou like adamant draw mine iron heart.	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Batter my heart, three-personed God; for you	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	As yet but knock, breathe, shine, and seek to mend;	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	That I may rise and stand, o'erthrow me and bend	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Your force to break, blow, burn, and make me new.	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	I, like an usurped town, to another due,	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Labor to admit you, but O, to no end;	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Reason, your viceroy in me, me should defend,	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	But is captived, and proves weak or untrue.	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Yet dearly I love you, and would be lovèd fain,	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	But am betrothed unto your enemy.	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Divorce me, untie or break that knot again;	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Take me to you, imprison me, for I,	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Except you enthrall me, never shall be free,	wswswswsws	10	1
+John Donne	Holy Sonnet 14	1609	Nor ever chaste, except you ravish me.	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	I wonder, by my troth, what thou and I	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Did, till we loved: Were we not weaned till then?	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	But sucked on country pleasures, childishly?	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Or snorted we in the Seven Sleepers' den?	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	'Twas so; but this, all pleasures fancies be.	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	If ever any beauty I did see,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Which I desired, and got, 'twas but a dream of thee.	wswswswswsws	12	1
+John Donne	The Good-Morrow	1633	And now good-morrow to our waking souls,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Which watch not one another out of fear;	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	For love, all love of other sights controls,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	And makes one little room an everywhere.	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Let sea-discoverers to new worlds have gone,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Let maps to others, worlds on worlds have shown,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Let us possess one world, each hath one, and is one.	wswswswswsws	12	1
+John Donne	The Good-Morrow	1633	My face in thine eye, thine in mine appears,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	And true plain hearts do in the faces rest;	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Where can we find two better hemispheres,	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Without sharp north, without declining West?	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Whatever dies was not mixed equally;	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	If our two loves be one, or thou and I	wswswswsws	10	1
+John Donne	The Good-Morrow	1633	Love so alike that none do slacken, none can die.	wswswswswsws	12	1
+Michael Drayton	Since There's No Help	1599	Since there's no help, come let us kiss and part;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Nay, Ihave done, you get no more of me,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And I am glad, yea glad with all my heart	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That thus so clean ly I myself can free;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Shake hands forever, can cel all our vows,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And when we meet at any time again,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Be it not seen in either of our brows	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That we one jot of former love retain.	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now at the last gasp of love's latest breath	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When, his pulse failing, Passion speechless lies,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When Faith is kneeling by his bed of death,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And Innocence is closing up his eyes,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now if thou wouldst, when all have given him over,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	From death to life thou mightst him yet recover.	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Since there's no help, come let us kiss and part;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Nay, I have done, you get no more of me,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And I am glad, yea glad with all my heart	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That thus so cleanly I myself can free;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Shake hands forever, cancel all our vows,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And when we meet at any time again,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Be it not seen in either of our brows	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That we one jot of former love retain.	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now at the last gasp of Love's latest breath	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When, his pulse failing, Passion speechless lies,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When Faith is kneeling by his bed of death,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And Innocence is closing up his eyes,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now if thou wouldst, when all have given him over,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	From death to life thou mightst him yet recover.	wswswswsws	10	1
+Robert Frost	In Neglect	1913	They leave us so to the way we took,	wswswsws	8	1
+Robert Frost	In Neglect	1913	As two in whom they were proved mistaken,	wswswsws	8	1
+Robert Frost	In Neglect	1913	That we sit sometimes in the wayside nook,	wswswsws	8	1
+Robert Frost	In Neglect	1913	With mis chievous, vagrant, seraphic look,	wswswsws	8	1
+Robert Frost	In Neglect	1913	And try if we cannot feel forsaken.	wswswsws	8	1
+Robert Frost	Mowing	1913	There was never a sound beside the wood but one,	wswswswsws	10	1
+Robert Frost	Mowing	1913	And that was my long scythe whispering to the ground.	wswswswsws	10	1
+Robert Frost	Mowing	1913	What was it it whispered? I knew not well myself;	wswswswsws	10	1
+Robert Frost	Mowing	1913	Perhaps it was something about the heat of the sun,	wswswswsws	10	1
+Robert Frost	Mowing	1913	Something, perhaps, about the lack of sound--	wswswswsws	10	1
+Robert Frost	Mowing	1913	And that was why it whispered and did not speak.	wswswswsws	10	1
+Robert Frost	Mowing	1913	It was no dream of the gift of idle hours,	wswswswsws	10	1
+Robert Frost	Mowing	1913	Or easy gold at the hand of fay or elf:	wswswswsws	10	1
+Robert Frost	Mowing	1913	Anything more than the truth would have seemed too weak	wswswswsws	10	1
+Robert Frost	Mowing	1913	To the earnest love that laid the swale in rows,	wswswswsws	10	1
+Robert Frost	Mowing	1913	Not without feeble pointed spikes of flowers	wswswswsws	10	1
+Robert Frost	Mowing	1913	(Pale orchises), and scared a bright green snake.-	wswswswsws	10	1
+Robert Frost	Mowing	1913	The fact is the sweetest dream that labor knows.	wswswswsws	10	1
+Robert Frost	Mowing	1913	My long scythe whispered and left the hay to make.	wswswswsws	10	1
+Robert Frost	The Span of Life	1937	The old dog barks backwards without getting up.	wswswswsws	10	1
+Robert Frost	The Span of Life	1937	I can remember when he was a pup.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Out walking in the frozen swamp one gray day,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	"I paused and said, ""I will turn back from here."	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	"No, I will go on farther--and we shall see."""	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	The hard snow held me, save where now and then	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	One foot went through. The view was all in lines	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Straight up and down of tall slim trees	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Too much alike to mark or name a place by	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	So as to say for certain I was here	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Or somewhere else: I was just far from home.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	A small bird flew before me. He was careful	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	To put a tree between us when he lighted,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And say no word to tell me who he was	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Who was so foolish as to think what he thought.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	He thought that I was after him for a feather--	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	The white one in his tail; like one who takes	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Everything said as personal to himself.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	One flight out sideways would have undeceived him.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And then there was a pile of wood for which	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	I forgot him and let his little fear	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Carry him off the way I might have gone,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Without so much as wishing him good-night.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	He went behind it to make his last stand.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	It was a cord of maple, cut and split	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And piled--and measured, four by four by eight.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And not another like it could I see.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	No runner tracks in this year's snow looped near it.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And it was older sure than this year's cutting,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Or even last year's or the year's before.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	The wood was gray and the bark warping off it	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And the pile somewhat sunken. Clematis	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Had wound strings round and round it like a bundle.	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	What held it though on one side was a tree	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Still growing, and on one a stake and prop,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	These latter about to fall. I thought that only	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Someone who lived in turning to fresh tasks	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	Could so forget his handiwork on which	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	He spent himself, the labor of his ax,	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	And leave it there far from a useful fireplace	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	To warm the frozen swamp as best it could	wswswswsws	10	1
+Robert Frost	The Wood-Pile	1914	With the slow smokeless burning of decay.	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	The world is charged with the grandeur of God.	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	It will flame out, like shining from shook foil;	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	It gathers to a greatness, like the ooze of oil	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	Crushed. Why do men then now not reck his rod?	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	Generations have trod, have trod, have trod;	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	And all is seared with trade; bleared, smeared with toil;	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	And wears man's smudge and shares man's smell: the soil	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	Is bare now, nor can foot feel, being shod.	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	And for all this, nature is never spent;	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	There lives the dearest freshness deep down things;	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	And though the last lights off the black West went	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	Oh, morning, at the brown brink eastward, springs--	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	Because the Holy Ghost over the bent	wswswswsws	10	1
+Gerard Manley Hopkins	God's Grandeur	1918	World broods with warm breast and with ah! bright wings.	wswswswsws	10	1
+Thomas Hardy	I Look Into My Glass	1898	I look into my glass,	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	And view my wasting skin,	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	"And say, ""Would God it came to pass"	wswswsws	8	1
+Thomas Hardy	I Look Into My Glass	1898	"My heart had shrunk as thin!"""	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	For then, I, undistrest	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	By hearts grown cold to me,	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	Could lonely wait my endless rest	wswswsws	8	1
+Thomas Hardy	I Look Into My Glass	1898	With equanimity.	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	But Time to make me grieve,	wswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	Part steals, lets part abide;	sswsws	6	1
+Thomas Hardy	I Look Into My Glass	1898	And shakes this fragile frame at eve	wswswsws	8	1
+Thomas Hardy	I Look Into My Glass	1898	With throbbings of noontide.	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Wintertime nighs;	wsws	4	1
+Thomas Hardy	In Tenebris	1901	But my bereavement-pain	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	It cannot bring again:	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Twice no one dies.	wsws	4	1
+Thomas Hardy	In Tenebris	1901	Flower-petals flee;	wsws	4	1
+Thomas Hardy	In Tenebris	1901	But, since it once hath been,	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	No more that severing scene	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Can harrow me.	wsws	4	1
+Thomas Hardy	In Tenebris	1901	Birds faint in dread:	wsws	4	1
+Thomas Hardy	In Tenebris	1901	I shall not lose old strength	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	In the lone frost's black length:	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Strength long since fled!	wsws	4	1
+Thomas Hardy	In Tenebris	1901	Leaves freeze to dun;	wsws	4	1
+Thomas Hardy	In Tenebris	1901	But friends can not turn cold	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	This season as of old	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	For him with none.	wsws	4	1
+Thomas Hardy	In Tenebris	1901	Tempests may scath;	wsws	4	1
+Thomas Hardy	In Tenebris	1901	But love can not make smart	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Again this year his heart	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Who no heart hath.	wsws	4	1
+Thomas Hardy	In Tenebris	1901	Black is night's cope;	wsws	4	1
+Thomas Hardy	In Tenebris	1901	But death will not appal	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	One who, past doubtings all,	wswsws	6	1
+Thomas Hardy	In Tenebris	1901	Waits in unhope.	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	My spirit will not haunt the mound	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	Above my breast,	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	But travel, memory possessed,	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	To where my tremulous being found	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	Life largest, best.	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	My phantom-footed shape will go	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	When nightfall grays	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	Hither and thither along the ways	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	I and another used to know	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	In backward days.	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	And there you'll find me, if a jot	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	You still should care	wsws	4	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	For me, and for my curious air;	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	If otherwise, then I shall not,	wswswsws	8	1
+Thomas Hardy	My Spirit Will Not Haunt the Mound	1914	For you, be there.	wsws	4	1
+Thomas Hardy	The Oxen	1917	Christmas Eve, and twelve of the clock.	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	"""Now they are all on their knees,"""	wswsws	6	1
+Thomas Hardy	The Oxen	1917	An elder said as we sat in a flock	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	By the embers in hearthside ease.	wswsws	6	1
+Thomas Hardy	The Oxen	1917	We pictured the meek mild creatures where	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	They dwelt in their strawy pen,	wswsws	6	1
+Thomas Hardy	The Oxen	1917	Nor did it occur to one of us there	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	To doubt they were kneeling then.	wswsws	6	1
+Thomas Hardy	The Oxen	1917	So fair a fancy few would weave	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	In these years! Yet, I feel,	wswsws	6	1
+Thomas Hardy	The Oxen	1917	If someone said on Christmas Eve,	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	"""Come; see the oxen kneel"	wswsws	6	1
+Thomas Hardy	The Oxen	1917	In the lonely barton by yonder coomb	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	"Our childhood used to know,"""	wswsws	6	1
+Thomas Hardy	The Oxen	1917	I should go with him in the gloom,	wswswsws	8	1
+Thomas Hardy	The Oxen	1917	Hoping it might be so.	wswsws	6	1
+Thomas Hardy	The Voice	1914	Woman much missed, how you call to me, call to me,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Saying that now you are not as you were	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	When you had changed from the one who was all to me,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	But as at first, when our day was fair.	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Can it be you that I hear? Let me view you, then,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Standing as when I drew near to the town	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Where you would wait for me: yes, as I knew you then,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Even to the original air-blue gown!	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Or is it only the breeze, in its listlessness	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Travelling across the wet mead to me here,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	You being ever dissolved to wan wistlessness,	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Heard no more again far or near?	swwswwswwsww	12	1
+Thomas Hardy	The Voice	1914	Thus I; faltering forward,	swswsw	6	1
+Thomas Hardy	The Voice	1914	Leaves around me falling,	swswsw	6	1
+Thomas Hardy	The Voice	1914	Wind oozing thin through the thorn from norward,	swswswsw	8	1
+Thomas Hardy	The Voice	1914	And the woman calling.	swswsw	6	1
+George Herbert	Jordan	1633	Who says that fictions only and false hair	wswswswsws	10	1
+George Herbert	Jordan	1633	Become a verse? Is there in truth no beauty?	wswswswsws	10	1
+George Herbert	Jordan	1633	Is all good structure in a winding stair?	wswswswsws	10	1
+George Herbert	Jordan	1633	May no lines pass, except they do their duty	wswswswsws	10	1
+George Herbert	Jordan	1633	Not to a true, but painted chair?	wswswsws	8	1
+George Herbert	Jordan	1633	Is it no verse, except enchanted groves	wswswswsws	10	1
+George Herbert	Jordan	1633	And sudden arbors shadow coarse-spun lines?	wswswswsws	10	1
+George Herbert	Jordan	1633	Must purling streams refresh a lover's loves?	wswswswsws	10	1
+George Herbert	Jordan	1633	Must all be veiled, while he that reads, divines,	wswswswsws	10	1
+George Herbert	Jordan	1633	Catching the sense at two removes?	wswswsws	8	1
+George Herbert	Jordan	1633	Shepherds are honest people; let them sing:	wswswswsws	10	1
+George Herbert	Jordan	1633	Riddle who list, for me, and pull for Prime;	wswswswsws	10	1
+George Herbert	Jordan	1633	I envy no man's nightingale or spring;	wswswswsws	10	1
+George Herbert	Jordan	1633	Nor let them punish me with loss of rhyme,	wswswswsws	10	1
+George Herbert	Jordan	1633	Who plainly say, My God, My King.	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	Fair Daffodils, we weep to see	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	You haste away so soon;	wswsws	6	1
+Robert Herrick	To Daffodils	1648	As yet the early rising sun	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	Has not attain'd his noon.	wswsws	6	1
+Robert Herrick	To Daffodils	1648	Stay, stay,	ws	2	1
+Robert Herrick	To Daffodils	1648	Until the hasting day	wswsws	6	1
+Robert Herrick	To Daffodils	1648	Has run	ws	2	1
+Robert Herrick	To Daffodils	1648	But to the even-song;	wswsws	6	1
+Robert Herrick	To Daffodils	1648	And, having pray'd together, we	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	Will go with you along.	wswsws	6	1
+Robert Herrick	To Daffodils	1648	We have short time to stay, as you,	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	We have as short a spring;	wswsws	6	1
+Robert Herrick	To Daffodils	1648	As quick a growth to meet decay,	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	As you, or anything.	wswsws	6	1
+Robert Herrick	To Daffodils	1648	We die	ws	2	1
+Robert Herrick	To Daffodils	1648	As your hours do, and dry	wswsws	6	1
+Robert Herrick	To Daffodils	1648	Away,	ws	2	1
+Robert Herrick	To Daffodils	1648	Like to the summer's rain;	wswsws	6	1
+Robert Herrick	To Daffodils	1648	Or as the pearls of morning's dew,	wswswsws	8	1
+Robert Herrick	To Daffodils	1648	Ne'er to be found again.	wswsws	6	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	I have desired to go	wswsws	6	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	Where springs not fail,	wsws	4	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	To fields where flies no sharp and sided hail	wswswswsws	10	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	And a few lilies blow.	wswsws	6	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	And I have asked to be	wswsws	6	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	Where no storms come,	wsws	4	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	Where the green swell is in the havens dumb,	wswswswsws	10	1
+Gerard Manley Hopkins	Heaven-Haven: A Nun Takes the Veil	1864	And out of the swing of the sea.	wswsws	6	1
+Gerard Manley Hopkins	The Windhover	1877	I caught this morning morning's minion, king-	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	dom of daylight's dauphin, dapple-dawn-drawn Falcon, in his riding	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Of the rolling level underneath him steady air, and striding	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	High there, how he rung upon the rein of a wimpling wing	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	In his ecstasy! then off, off forth on swing,	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	As a skate's heel sweeps smooth on a bow-bend: the hurl and gliding	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Rebuffed the big wind. My heart in hiding	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Stirred for a bird,-- the achieve of, the mastery of the thing!	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Brute beauty and vallour and act, oh, air, pride, plume, here	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Buckle! AND the fire that breaks from thee then, a billion	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Times told lovelier, more dangerous, O my chevalier!	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	No wonder of it: sheer plod makes plough down sillion	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Shine, and blue-bleak embers, ah my dear,	wswswswsws	10	1
+Gerard Manley Hopkins	The Windhover	1877	Fall, gall themselves and gash gold-vermilion.	wswswswsws	10	1
+A. E. Housman	The Night is Freezing Fast	1922	The night is freezing fast,	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	To-morrow comes December;	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	And winter falls of old	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	Are with me from the past;	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	And chiefly I remember	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	How Dick would hate the cold.	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	Fall, winter, fall; for he,	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	Prompt hand and headpiece clever,	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	Has woven a winter robe,	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	And made of earth and sea	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	His overcoat for ever,	wswsws	6	1
+A. E. Housman	The Night is Freezing Fast	1922	And wears the turning globe.	wswsws	6	1
+Robert Frost	In Neglect	1913	They leave us so to the way we took,	wswswsws	8	1
+Robert Frost	In Neglect	1913	As two in whom they were proved mistaken,	wswswsws	8	1
+Robert Frost	In Neglect	1913	That we sit sometimes in the wayside nook,	wswswsws	8	1
+Robert Frost	In Neglect	1913	With mis chievous, vagrant, seraphic look,	wswswsws	8	1
+Robert Frost	In Neglect	1913	And try if we cannot feel forsaken.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Condemned to Hope's delusive mine,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	As on we toil from day to day,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	By sudden blasts, or slow decline,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Our social comforts drop away.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Well tried through many a varying year,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	See Levet to the grave descend;	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Officious, innocent, sincere,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Of every friendless name the friend.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Yet still he fills Affection's eye,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Obscurely wise, and coarsely kind;	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Nor, lettered Arrogance, deny	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Thy praise to merit unrefined.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	When fainting Nature called for aid,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	And hovering Death prepared the blow,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	His vigorous remedy displayed	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	The power of art without the show.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	In Misery's darkest cavern known,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	His useful care was ever nigh,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Where hopeless Anguish poured his groan,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	And lonely Want retired to die.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	No summons mocked by chill delay,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	No petty gain disdained by pride,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	The modest wants of every day	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	The toil of every day supplied.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	His virtues walked their narrow round,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Nor made a pause, nor left a void;	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	And sure the Eternal Master found	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	The single talent well employed.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	The busy day, the peaceful night,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Unfelt, uncounted, glided by;	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	His frame was firm, his powers were bright,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Though now his eightieth year was nigh.	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Then with no throbbing fiery pain,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	No cold gradations of decay,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	Death broke at once the vital chain,	wswswsws	8	1
+Samuel Johnson	On the Death of Dr. Robert Levet	1783	And freed his soul the nearest way.	wswswsws	8	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	It is not growing like a tree	wswswsws	8	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	In bulke, doth make man better bee;	wswswsws	8	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	Or, standing long an Oake, three hundred yeare,	wswswswsws	10	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	To fall a logge, at last, dry, bald, and seare:	wswswswsws	10	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	A Lillie of a Day	wswsws	6	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	Is fairer farre, in May;	wswsws	6	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	Although it fall and die that night;	wswswsws	8	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	It was the Plant, and flowre of light.	wswswsws	8	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	In small proportions we just beauties see:	wswswswsws	10	1
+Ben Jonson	Cary/Morison Ode: The Turn 65-74	1640	And in short measures, life may perfect bee.	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Slow, slow, fresh fount, keep time with my salt tears;	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Yet slower, yet, O faintly, gentle springs!	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	List to the heavy part the music bears,	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Woe weeps out her division when she sings.	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Droop herbs and flowers;	wsws	4	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Fall grief in showers;	wsws	4	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Our beauties are not ours. O, I could still,	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Like melting snow upon some craggy hill,	wswswswsws	10	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Drop, drop, drop, drop,	wsws	4	1
+Ben Jonson	Slow, Slow, Fresh Fount	1601	Since nature's pride is now a withered daffodil.	wswswswswsws	12	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Though I am young, and cannot tell	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Either what Death or Love is well,	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Yet I have heard they both bear darts,	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	And both do aim at human hearts.	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	And then again, I have been told	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Love wounds with heat, as Death with cold;	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	So that I fear they do but bring	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Extremes to touch, and mean one thing.	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	As in a ruin we it call	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	One thing to be blown up, or fall;	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Or to our end like way may have	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	By a flash of lightning, or a wave;	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	So Love's inflamèd shaft or brand	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	May kill as soon as Death's cold hand;	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	Except Love's fires the virtue have	wswswsws	8	1
+Ben Jonson	Though I Am Young and Cannot Tell	1640	To fright the frost out of the grave.	wswswsws	8	1
+George Herbert	Jordan	1633	Who says that fictions only and false hair	wswswswsws	10	1
+George Herbert	Jordan	1633	Become a verse? Is there in truth no beauty?	wswswswsws	10	1
+George Herbert	Jordan	1633	Is all good structure in a winding stair?	wswswswsws	10	1
+George Herbert	Jordan	1633	May no lines pass, except they do their duty	wswswswsws	10	1
+George Herbert	Jordan	1633	Not to a true, but painted chair?	wswswsws	8	1
+George Herbert	Jordan	1633	Is it no verse, except enchanted groves	wswswswsws	10	1
+George Herbert	Jordan	1633	And sudden arbors shadow coarse-spun lines?	wswswswsws	10	1
+George Herbert	Jordan	1633	Must purling streams refresh a lover's loves?	wswswswsws	10	1
+George Herbert	Jordan	1633	Must all be veiled, while he that reads, divines,	wswswswsws	10	1
+George Herbert	Jordan	1633	Catching the sense at two removes?	wswswsws	8	1
+George Herbert	Jordan	1633	Shepherds are honest people; let them sing:	wswswswsws	10	1
+George Herbert	Jordan	1633	Riddle who list, for me, and pull for Prime;	wswswswsws	10	1
+George Herbert	Jordan	1633	I envy no man's nightingale or spring;	wswswswsws	10	1
+George Herbert	Jordan	1633	Nor let them punish me with loss of rhyme,	wswswswsws	10	1
+George Herbert	Jordan	1633	Who plainly say, My God, My King.	wswswsws	8	1
+John Keats	Bright Star	1819	Bright star, would I were steadfast as thou art--	wswswswsws	10	1
+John Keats	Bright Star	1819	Not in lone splendour hung aloft the night	wswswswsws	10	1
+John Keats	Bright Star	1819	And watching, with eternal lids apart,	wswswswsws	10	1
+John Keats	Bright Star	1819	Like nature's patient, sleepless Eremite,	wswswswsws	10	1
+John Keats	Bright Star	1819	The moving waters at their priestlike task	wswswswsws	10	1
+John Keats	Bright Star	1819	Of pure ablution round earth's human shores,	wswswswsws	10	1
+John Keats	Bright Star	1819	Or gazing on the new soft-fallen mask	wswswswsws	10	1
+John Keats	Bright Star	1819	Of snow upon the mountains and the moors--	wswswswsws	10	1
+John Keats	Bright Star	1819	No--yet still steadfast, still unchangeable,	wswswswsws	10	1
+John Keats	Bright Star	1819	Pillow'd upon my fair love's ripening breast,	wswswswsws	10	1
+John Keats	Bright Star	1819	To feel for ever its soft fall and swell,	wswswswsws	10	1
+John Keats	Bright Star	1819	Awake for ever in a sweet unrest,	wswswswsws	10	1
+John Keats	Bright Star	1819	Still, still to hear her tender-taken breath,	wswswswsws	10	1
+John Keats	Bright Star	1819	And so live ever--or else swoon to death.	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Deep in the shady sadness of a vale	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Far sunken from the healthy breath of morn,	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Far from the fiery noon, and eve's one star,	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Sat gray-hair'd Saturn quiet as a stone,	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Still as the silence round about his lair;	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Forest on forest hung above his head	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Like cloud on cloud. No stir of air was there,	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Not so much life as on a summer's day	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Robs not one light seed from the feather'd grass,	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	But where the dead leaf fell, there did it rest.	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	A stream went voiceless by, still deaden'd more	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	By reason of his fallen divinity	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Spreading a shade: the Naiad mid her reeds	wswswswsws	10	1
+John Keats	Hyperion I.1-14	1820	Press'd her cold finger closer to her lips.	wswswswsws	10	1
+John Keats	La Belle Dame sans Merci	1820	O what can ail thee, knight-at-arms,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Alone and palely loitering?	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	The sedge has withered from the lake,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And no birds sing.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	O what can ail thee, knight-at-arms,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	So haggard and so woe-begone?	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	The squirrel's granary is full,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And the harvest's done.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I see a lily on thy brow,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	With anguish moist and fever-dew,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And on thy cheeks a fading rose	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Fast withereth too.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I met a lady in the meads,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Full beautiful-- a faery's child,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Her hair was long, her foot was light,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And her eyes were wild.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I made a garland for her head,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And bracelets too, and fragrant zone;	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	She looked at me as she did love,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And made sweet moan.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I set her on my pacing steed,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And nothing else saw all day long	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	For sidelong would she bend, and sing	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	A faery's song.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	She found me roots of relish sweet,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And honey wild and manna-dew;	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And sure in language strange she said,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	"""I love thee true."""	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	She took me to her elfin grot,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And there she wept and sighed full sore;	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And there I shut her wild, wild eyes	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	With kisses four.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	And there she lullèd me asleep,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And there I dreamed-- Ah! woe betide!--	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	The latest dream I ever dreamed	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	On the cold hill's side.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I saw pale kings and princes too,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Pale warriors, death-pale were they all;	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	"They cried, ""La Belle Dame sans Merci"	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	"Hath thee in thrall!"""	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	I saw their starved lips in the gloam	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	With horrid warning gapèd wide,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And I awoke and found me here	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	On the cold hill's side.	wsws	4	1
+John Keats	La Belle Dame sans Merci	1820	And this is why I sojourn here	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Alone and palely loitering,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	Though the sedge is withered from the lake,	wswswsws	8	1
+John Keats	La Belle Dame sans Merci	1820	And no birds sing.	wsws	4	1
+Samuel Taylor Coleridge	Kubla Khan	1798	In Xanadu did Kubla Khan	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A stately pleasure dome decree:	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where Alph, the sacred river, ran	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Through caverns measureless to man	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Down to a sunless sea.	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	So twice five miles of fertile ground	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	With walls and towers were girdled round:	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And there were gardens bright with sinuous rills,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where blossomed many an incense-bearing tree;	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And here were forests ancient as the hills,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Enfolding sunny spots of greenery.	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	But oh! that deep romantic chasm which slanted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Down the green hill athwart a cedarn cover!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A savage place! as holy and enchanted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	As e'er beneath a waning moon was haunted	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	By woman wailing for her demon-lover!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And from this chasm, with ceaseless turmoil seething,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	As if this earth in fast thick pants were breathing,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A mighty fountain momently was forced:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Amid whose swift half-intermitted burst	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Huge fragments vaulted like rebounding hail,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Or chaffy grain beneath the thresher's flail:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And 'mid these dancing rocks, at once and ever	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It flung up momently the sacred river.	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Five miles meandering with a mazy motion	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Through wood and dale the sacred river ran,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Then reached the caverns measureless to man,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And sank in tumult to a lifeless ocean:	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And 'mid this tumult Kubla heard from far	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Ancestral voices prophesying war!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	The shadow of the dome of pleasure	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Floated midway on the waves;	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Where was heard the mingled measure	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	From the fountain and the caves.	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It was a miracle of rare device,	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A sunny pleasure-dome with caves of ice!	wswswswsws	10	1
+Samuel Taylor Coleridge	Kubla Khan	1798	A damsel with a dulcimer	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	In a vision once I saw:	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	It was an Abyssinian maid,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And on her dulcimer she played,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Singing of Mount Abora.	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Could I revive within me	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Her symphony and song,	wswsws	6	1
+Samuel Taylor Coleridge	Kubla Khan	1798	To such a deep delight 'twould win me,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	That with music loud and long,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	I would build that dome in air,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	That sunny dome! those caves of ice!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And all who heard should see them there,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And all should cry, Beware! Beware!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	His flashing eyes! his floating hair!	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	Weave a circle round him thrice,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And close your eyes with holy dread,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	For he on honey-dew hath fed,	wswswsws	8	1
+Samuel Taylor Coleridge	Kubla Khan	1798	And drunk the milk of Paradise.	wswswsws	8	1
+Walter Savage Landor	Dying Speech of an Old Philosopher	1849	I strove with none, for none was worth my strife:	wswswswsws	10	1
+Walter Savage Landor	Dying Speech of an Old Philosopher	1849	Nature I loved, and, next to Nature, Art:	wswswswsws	10	1
+Walter Savage Landor	Dying Speech of an Old Philosopher	1849	I warm'd both hands before the fire of Life;	wswswswsws	10	1
+Walter Savage Landor	Dying Speech of an Old Philosopher	1849	It sinks; and I am ready to depart.	wswswswsws	10	1
+D.H. Lawrence	Piano	1918	Softly, in the dusk, a woman is singing to me;	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	Taking me back down the vista of years, till I see	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	A child sitting under the piano, in the boom of the tinkling strings	wwswwswwswwswwswws	18	1
+D.H. Lawrence	Piano	1918	And pressing the small, poised feet of a mother who smiles as she sings.	wwswwswwswwswwswws	18	1
+D.H. Lawrence	Piano	1918	In spite of myself, the insidious mastery of song	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	Betrays me back, till the heart of me weeps to belong	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	To the old Sunday evenings at home, with winter outside	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	And hymns in the cosy parlour, the tinkling piano our guide.	wwswwswwswwswwswws	18	1
+D.H. Lawrence	Piano	1918	So now it is vain for the singer to burst into clamour	wwswwswwswwswwsw	16	1
+D.H. Lawrence	Piano	1918	With the great black piano appassionato. The glamour	wwswwswwswwswwsw	16	1
+D.H. Lawrence	Piano	1918	Of childish days is upon me, my manhood is cast	wwswwswwswwswws	15	1
+D.H. Lawrence	Piano	1918	Down in the flood of remembrance, I weep like a child for the past.	wwswwswwswwswwswws	18	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Life of Life! thy lips enkindle	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	With their love the breath between them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And thy smiles before they dwindle	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Make the cold air fire; then screen them	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	In those looks, where whoso gazes	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Faints, entangled in their mazes.	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Child of Light! thy limbs are burning	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Thro' the vest which seems to hide them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	As the radiant lines of morning	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Thro' the clouds ere they divide them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And this atmosphere divinest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Shrouds thee wheresoe'er thou shinest.	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Fair are others; none beholds thee,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	But thy voice sounds low and tender	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Like the fairest, for it folds thee	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	From the sight, that liquid splendour,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And all feel, yet see thee never,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	As I feel now, lost forever!	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Lamp of Earth! where'er thou movest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Its dim shapes are clad with brightness	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And the souls of whom thou lovest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Walk upon the winds with lightness,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Till they fail, as I am failing,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Dizzy, lost, yet unbewailing!	swswswsw	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Out of the bosom of the Air,	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Out of the cloud-folds of her garments shaken,	wswswswswsw	11	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Over the woodlands brown and bare,	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Over the harvest-fields forsaken,	wswswswsw	9	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Silent, and soft, and slow	wswsws	6	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Descends the snow.	wsws	4	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Even as our cloudy fancies take	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Suddenly shape in some divine expression,	wswswswswsw	11	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Even as the troubled heart doth make	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	In the white countenance confession,	wswswswsw	9	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	The troubled sky reveals	wswsws	6	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	The grief it feels.	wsws	4	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	This is the poem of the air,	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Slowly in silent syllables recorded;	wswswswswsw	11	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	This is the secret of despair,	wswswsws	8	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Long in its cloudy bosom hoarded,	wswswswsw	9	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	Now whispered and revealed	wswsws	6	1
+Henry Wadsworth Longfellow	Snow-Flakes	1863	To wood and field.	wsws	4	1
+Alice Meynell	Renouncement	1893	I must not think of thee; and, red yet strong,	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	I shun the love that lurks in all delight--	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	The love of thee--and in the blue heaven's height,	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	And in the dearest passage of a song.	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	Oh, just beyond the sweetest thoughts that throng	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	This breast, the thought of thee waits, hidden yet bright;	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	But it must never, never come in sight;	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	I must stop short of thee the whole day long.	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	But when sleep comes to close each difficult day,	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	When night gives pause to the long watch I keep,	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	And all my bonds I needs must loose apart,	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	Must doff my will as raiment laid away--	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	With the first dream that comes with the first sleep	wswswswsws	10	1
+Alice Meynell	Renouncement	1893	I run, I run, I am gathered to thy heart.	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	It is the fash ion now to wave aside	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	As tedious, obvious, vacuous, trivial, trite,	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	All things which do not tickle, tease, excite	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	To some subversion, or in verbiage hide	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	Intent, or mock, or with hot sauce provide	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	A dish to prick the thickened appetite;	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	Straightforwardness is wrong, evasion right;	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	It is correct, de rigueur, to deride.	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	What funny wits these modern wags expose,	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	For all their versatility: Voltaire,	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	Who wore to bed, a night-cap, and would close,	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	In fear of drafts, all windows, could declare	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	In antique stuffiness, a phrase that blows	wswswswsws	10	1
+Edna Vincent Millay	Sonnect 165: It Is Fashionable Now	1954	Still through men's smoky minds, and clears the air.	wswswswsws	10	1
+John Milton	On His Blindness	1652	When I consider how my light is spent	wswswswsws	10	1
+John Milton	On His Blindness	1652	Ere half my days, in this dark world and wide,	wswswswsws	10	1
+John Milton	On His Blindness	1652	And that one talent which is death to hide	wswswswsws	10	1
+John Milton	On His Blindness	1652	Lodged with me useless, though my soul more bent	wswswswsws	10	1
+John Milton	On His Blindness	1652	To serve therewith my Maker, and present	wswswswsws	10	1
+John Milton	On His Blindness	1652	My true account, lest he returning chide;	wswswswsws	10	1
+John Milton	On His Blindness	1652	"""Doth God exact day-labor, light denied?"""	wswswswsws	10	1
+John Milton	On His Blindness	1652	I fondly ask; but patience to prevent	wswswswsws	10	1
+John Milton	On His Blindness	1652	"That murmur, soon replies, ""God doth not need"	wswswswsws	10	1
+John Milton	On His Blindness	1652	Either man's work or his own gifts: who best	wswswswsws	10	1
+John Milton	On His Blindness	1652	Bear his mild yoke, they serve him best. His state	wswswswsws	10	1
+John Milton	On His Blindness	1652	Is kingly. Thousands at his bidding speed	wswswswsws	10	1
+John Milton	On His Blindness	1652	And post o'er land and ocean without rest:	wswswswsws	10	1
+John Milton	On His Blindness	1652	"They also serve who only stand and wait."""	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Southward through Eden went a river large,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Nor chang'd his course, but through the shaggy hill	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Pass'd underneath ingulft, for God had thrown	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	That mountain as his garden mould high rais'd	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Upon the rapid current, which through veins	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Of porous Earth with kindly thirst up-drawn,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Rose a fresh fountain, and with many a rill	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Water'd the Garden; thence united fell	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Down the steep glade, and met the nether Flood,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Which from his darksome passage now appears,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	And now divided into four main Streams,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Runs diverse, wand'ring many a famous Realm	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	And country whereof here needs no account,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	But rather to tell how, if Art could tell,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	How from that Sapphire Fount the crisped Brooks,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Rolling on Orient Pearl and sands of Gold,	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	With mazy error under pendant shades	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Ran nectar, visiting each plant, and fed	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Flow'rs worthy of Paradise, which not nice Art	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	In Beds and curious Knots, but Nature boon	wswswswsws	10	1
+John Milton	from Paradise Lost (IV.222-44)	1667	Pour'd forth profuse on Hill and Dale and Plain.	wswswswsws	10	1
+John Milton	Sabrina Fair (from Comus)	1634	Sabrina fair,	wsws	4	1
+John Milton	Sabrina Fair (from Comus)	1634	Listen where thou art sitting	wswsws	6	1
+John Milton	Sabrina Fair (from Comus)	1634	Under the glassie, cool, translucent wave,	wswswswsws	10	1
+John Milton	Sabrina Fair (from Comus)	1634	In twisted braids of Lillies knitting	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	The loose train of thy amber-dropping hair,	wswswswsws	10	1
+John Milton	Sabrina Fair (from Comus)	1634	Listen for dear honour's sake,	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	Goddess of the silver lake,	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	Listen and save.	wsws	4	1
+John Milton	Sabrina Fair (from Comus)	1634	By the rushy-fringèd bank,	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	Where grows the Willow and the Osier dank,	wswswswsws	10	1
+John Milton	Sabrina Fair (from Comus)	1634	My sliding Chariot stayes,	wswsws	6	1
+John Milton	Sabrina Fair (from Comus)	1634	Thick set with Agat, and the azure sheen	wswswswsws	10	1
+John Milton	Sabrina Fair (from Comus)	1634	Of Turkis blew, and Emrauld green,	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	That in the channell strayes;	wswsws	6	1
+John Milton	Sabrina Fair (from Comus)	1634	Whilst from off the waters fleet	wswsws	6	1
+John Milton	Sabrina Fair (from Comus)	1634	Thus I set my printless feet	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	O'er the Cowslip's Velvet head,	wsws	4	1
+John Milton	Sabrina Fair (from Comus)	1634	That bends not as I tread,	wswsws	6	1
+John Milton	Sabrina Fair (from Comus)	1634	Gentle swain at thy request	wswswsws	8	1
+John Milton	Sabrina Fair (from Comus)	1634	I am here.	wsws	4	1
+John Milton	On His Blindness	1652	When I consider how my light is spent	wswswswsws	10	1
+John Milton	On His Blindness	1652	Ere half my days, in this dark world and wide,	wswswswsws	10	1
+John Milton	On His Blindness	1652	And that one talent which is death to hide	wswswswsws	10	1
+John Milton	On His Blindness	1652	Lodged with me useless, though my soul more bent	wswswswsws	10	1
+John Milton	On His Blindness	1652	To serve therewith my Maker, and present	wswswswsws	10	1
+John Milton	On His Blindness	1652	My true account, lest he returning chide;	wswswswsws	10	1
+John Milton	On His Blindness	1652	"""Doth God exact day-labor, light denied?"""	wswswswsws	10	1
+John Milton	On His Blindness	1652	I fondly ask; but Patience to prevent	wswswswsws	10	1
+John Milton	On His Blindness	1652	"That murmur, soon replies, ""God doth not need"	wswswswsws	10	1
+John Milton	On His Blindness	1652	Either man's work or his own gifts: who best	wswswswsws	10	1
+John Milton	On His Blindness	1652	Bear his mild yoke, they serve him best. His state	wswswswsws	10	1
+John Milton	On His Blindness	1652	Is kingly. Thousands at his bidding speed	wswswswsws	10	1
+John Milton	On His Blindness	1652	And post o'er land and ocean without rest:	wswswswsws	10	1
+John Milton	On His Blindness	1652	"They also serve who only stand and wait."""	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	What passing-bells for these who die as cattle?	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Only the monstrous anger of the guns.	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Only the stuttering rifles' rapid rattle	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Can patter out their hasty orisons.	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	No mockeries now for them; no prayers nor bells;	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Nor any voice of mourning save the choirs,--	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	The shrill, demented choirs of wailing shells;	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	And bugles calling for them from sad shires.	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	What candles may be held to speed them all?	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Not in the hands of boys but in their eyes	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Shall shine the holy glimmers of goodbyes.	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	The pallor of girls' brows shall be their pall;	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	Their flowers the tenderness of patient minds,	wswswswsws	10	1
+Wilfred Owen	Anthem for Doomed Youth	1917	And each slow dusk a drawing-down of blinds.	wswswswsws	10	1
+Dorothy Parker	Resume	1926	Razors pain you;	wsws	4	1
+Dorothy Parker	Resume	1926	Rivers are damp;	wsws	4	1
+Dorothy Parker	Resume	1926	Ac ids stain you;	wsws	4	1
+Dorothy Parker	Resume	1926	And drugs cause cramp;	wsws	4	1
+Dorothy Parker	Resume	1926	Guns aren’t lawful;	wsws	4	1
+Dorothy Parker	Resume	1926	Nooses give;	wsws	4	1
+Dorothy Parker	Resume	1926	Gas smells awful;	wsws	4	1
+Dorothy Parker	Resume	1926	You might as well live.	wsws	4	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	In vain, in vain— the all-composing hour	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Resistless falls; the Muse obeys the power.	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	She comes! she comes! the sable throne behold	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Of Night primeval, and of Chaos old!	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Before her Fancy's gilded clouds decay,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	And all its varying rainbows die away.	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Wit shoots in vain its momentary fires,	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	The meteor drops, and in a flash expires.	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	As one by one, at dread Medea's strain,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	The sick'ning stars fade off th' ethereal plain;	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	As Argus' eyes, by Hermes' wand opprest,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Closed one by one to everlasting rest;	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Thus at her felt approach, and secret might,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Art after Art goes out, and all is night.	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	See skulking Truth to her old cavern fled,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Mountains of casuistry heap'd o'er her head!	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Philosophy, that lean'd on Heaven before,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Shrinks to her second cause, and is no more.	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Physic of Metaphysic begs defence,	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	And Metaphysic calls for aid on Sense!	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	See Mystery to Mathematics fly!	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	In vain! they gaze, turn giddy, rave, and die.	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Religion blushing veils her sacred fires,	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	And unawares Morality expires.	wswswswswsw	11	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Nor public flame, nor private, dares to shine;	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Nor human spark is left, nor glimpse divine!	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Lo! thy dread empire Chaos! is restor'd;	wswswsws	8	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Light dies before thy uncreating word:	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	Thy hand, great Anarch! lets the curtain fall;	wswswswsws	10	1
+Alexander Pope	Dulness’ Apocalypse (The Dunciad 4.627-56)	1742	And universal Darkness buries all.	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	True Ease in Writing comes from Art, not Chance,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	As those move easiest who have learn'd to dance.	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	'Tis not enough no Harshness gives Offence,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	The Sound must seem an Echo to the Sense.	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	Soft is the Strain when Zephyr gently blows,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	And the smooth Stream in smoother Numbers flows;	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	But when loud Surges lash the sounding Shore,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	The hoarse, rough Verse shou'd like the Torrent roar.	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	When Ajax strives some Rock's vast Weight to throw,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	The Line too labours, and the Words move slow;	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	Not so, when swift Camilla scours the Plain,	wswswswsws	10	1
+Alexander Pope	An Essay on Criticism (excerpt: ll. 362-73)	1711	Flies o'er th'unbending Corn, and skims along the Main.	wswswswswsws	12	1
+Walter Ralegh	Even Such Is Time		Even such is time, which takes in trust	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		Our youth, our joys, and all we have,	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		And pays us but with age and dust;	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		Who in the dark and silent grave	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		When we have wandered all our ways	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		Shuts up the story of our days;	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		And from which earth, and grave, and dust	wswswsws	8	1
+Walter Ralegh	Even Such Is Time		The Lord shall raise me up, I trust.	wswswsws	8	1
+Dorothy Parker	Resume	1926	Razors pain you;	wsws	4	1
+Dorothy Parker	Resume	1926	Rivers are damp;	wsws	4	1
+Dorothy Parker	Resume	1926	Ac ids stain you;	wsws	4	1
+Dorothy Parker	Resume	1926	And drugs cause cramp;	wsws	4	1
+Dorothy Parker	Resume	1926	Guns aren’t lawful;	wsws	4	1
+Dorothy Parker	Resume	1926	Nooses give;	wsws	4	1
+Dorothy Parker	Resume	1926	Gas smells awful;	wsws	4	1
+Dorothy Parker	Resume	1926	You might as well live.	wsws	4	1
+Christina Rossetti	Echo	1862	Come to me in the silence of the night;	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Come in the speaking silence of a dream;	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Come with soft rounded cheeks and eyes as bright	wswswswsws	10	1
+Christina Rossetti	Echo	1862	As sunlight on a stream;	wswsws	6	1
+Christina Rossetti	Echo	1862	Come back in tears,	wsws	4	1
+Christina Rossetti	Echo	1862	O memory, hope, love of finished years.	wswswswsws	10	1
+Christina Rossetti	Echo	1862	O dream how sweet, too sweet, too bitter-sweet,	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Whose wakening should have been in Paradise,	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Where souls brim-full of love abide and meet;	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Where thirsting longing eyes	wswsws	6	1
+Christina Rossetti	Echo	1862	Watch the slow door	wsws	4	1
+Christina Rossetti	Echo	1862	That opening, letting in, lets out no more.	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Yet come to me in dreams, that I may live	wswswswsws	10	1
+Christina Rossetti	Echo	1862	My very life again though cold in death;	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Come back to me in dreams, that I may give	wswswswsws	10	1
+Christina Rossetti	Echo	1862	Pulse for pulse, breath for breath:	wswsws	6	1
+Christina Rossetti	Echo	1862	Speak low, lean low,	wsws	4	1
+Christina Rossetti	Echo	1862	As long ago, my love, how long ago.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	I have been here before,	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	But when or how I cannot tell:	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	I know the grass beyond the door,	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	The sweet keen smell,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	The sighing sound, the lights around the shore.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	You have been mine before,--	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	How long ago I may not know:	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	But just when at that swallow's soar	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Your neck turned so,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	Some veil did fall,--I knew it all of yore.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	Then, now,--perchance again!	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	O round mine eyes your tresses shake!	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Shall we not lie as we have lain	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Thus for Love's sake,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	And sleep, and wake, yet never break the chain?	wswswswsws	10	1
+Christina Rossetti	The Lowest Place	1866	Give me the lowest place: not that I dare	wswswswsws	10	1
+Christina Rossetti	The Lowest Place	1866	Ask for that lowest place, but Thou hast died	wswswswsws	10	1
+Christina Rossetti	The Lowest Place	1866	That I might live and share	wswsws	6	1
+Christina Rossetti	The Lowest Place	1866	Thy glory by Thy side.	wswsws	6	1
+Christina Rossetti	The Lowest Place	1866	Give me the lowest place: or if for me	wswswswsws	10	1
+Christina Rossetti	The Lowest Place	1866	That lowest place too high, make one more low	wswswswsws	10	1
+Christina Rossetti	The Lowest Place	1866	Where I may sit and see	wswsws	6	1
+Christina Rossetti	The Lowest Place	1866	My God and love Thee so.	wswsws	6	1
+William Shakespeare	Sonnet 18	1609	Shall I compare thee to a summer's day?	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	Thou art more lovely and more temperate:	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	Rough winds do shake the darling buds of May,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	And summer's lease hath all too short a date;	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	Sometimes too hot the eye of heaven shines,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	And often is his gold complexion dimmed;	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	And every fair from fair sometimes declines,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	By chance or nature's changing course untrimmed;	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	But thy eternal summer shall not fade,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	Nor lose possession of that fair thou ow'st;	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	Nor shall death brag thou wand'rest in his shade,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	When in eternal lines to Time thou grow'st;	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	So long as men can breathe, or eyes can see,	wswswswsws	10	1
+William Shakespeare	Sonnet 18	1609	So long lives this, and this gives life to thee.	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	When, in disgrace with fortune and men's eyes,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	I all alone beweep my outcast state,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	And trouble deaf heaven with my bootless cries,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	And look upon myself, and curse my fate,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Wishing me like to one more rich in hope,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Featured like him, like him with friends possessed,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Desiring this man's art and that man's scope,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	With what I most enjoy contented least;	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Yet in these thoughts myself almost despising,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Haply I think on thee--and then my state,	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	Like to the lark at break of day arising	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	From sullen earth, sings hymns at heaven's gate;	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	For thy sweet love remembered such wealth brings	wswswswsws	10	1
+William Shakespeare	Sonnet 29	1609	That then I scorn to change my state with kings.	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	That time of year thou mayst in me behold	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	When yellow leaves, or none, or few, do hang	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	Upon those boughs which shake against the cold,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	Bare ruined choirs, where late the sweet birds sang.	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	In me thou seest the twilight of such day	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	As after sunset fadeth in the west;	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	Which by and by black night doth take away,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	Death's second self, that seals up all in rest.	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	In me thou seest the glowing of such fire,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	That on the ashes of his youth doth lie,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	As the deathbed whereon it must expire,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	Consumed with that which it was nourished by.	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	This thou perceiv'st, which makes thy love more strong,	wswswswsws	10	1
+William Shakespeare	Sonnet 73	1609	To love that well which thou must leave ere long.	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Thus with imagined wing our swift scene flies,	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	In motion of no less celerity	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Than that of thought. Suppose that you have seen	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	The well-appointed king at Hampton pier	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Embark his royalty; and his brave fleet	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	With silken streamers the young Phoebus fanning.	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Play with your fancies, and in them behold	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Upon the hempen tackle shipboys climbing:	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Hear the shrill whistle which doth order give	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	To sounds confused; behold the threaden sails,	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Borne with the invisible and creeping wind,	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Draw the huge bottoms through the furrowed sea,	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Breasting the lofty surge. O, do but think	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	You stand upon the rivage and behold	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	A city on the inconstant billows dancing;	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	For so appears this fleet majestical,	wswswswsws	10	1
+William Shakespeare	Chorus (from Henry the Fifth III.i.1-17)	1599	Holding due course to Harfleur. Follow, follow!	wswswswsws	10	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Full fathom five thy father lies;	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Of his bones are coral made;	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Those are pearls that were his eyes:	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Nothing of him that doth fade,	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	But doth suffer a sea change	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Into something rich and strange.	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Sea nymphs hourly ring his knell:	wswswsws	8	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Ding-dong.	ss	2	1
+William Shakespeare	Full Fathom Five (from The Tempest)	1611	Hark! Now I hear them: Ding-dong, bell.	wswswsws	8	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Gallop apace, you fiery-footed steeds,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Towards Phoebus' lodging! Such a wagoner	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	As Phaeton would whip you to the west	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	And bring in cloudy night immediately.	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Spread thy close curtain, love-performing night,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	That runaways' eyes may wink, and Romeo	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Leap to these arms untalked of and unseen.	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Lovers can see to do their amorous rites	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	By their own beauties; or, if love be blind,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	It best agrees with night. Come, civil night,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Thou sober-suited matron all in black,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	And learn me how to lose a winning match,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Played for a pair of stainless maidenhoods.	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Hood my unmanned blood, bating in my cheeks,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	With thy black mantle till strange love grow bold,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Think true love acted simple modesty.	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Come, night; come, Romeo; come, thou day in night;	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	For thou wilt lie upon the wings of night	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Whiter than new snow upon a Raven's back.	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Come, gentle night; come, loving, black-browed night;	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Give me my Romeo; and, when he shall die,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	Take him and cut him out in little stars,	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	And he will make the face of heaven so fine	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	That all the world will be in love with night	wswswswsws	10	1
+William Shakespeare	Juliet's Soliloquy (from Romeo and Juliet III.ii.1-25)	1596	And pay no worship to the garish sun.	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Blow, winds, and crack your cheeks. Rage, blow.	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	You cataracts and hurricanoes, spout	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Till you have drenched our steeples, drowned the cocks.	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	You sulph'rous and thought-executing fires,	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Vaunt-couriers of oak-cleaving thunderbolts,	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Singe my white head. And thou, all-shaking thunder,	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Strike flat the thick rotundity of the world,	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	Crack Nature's moulds, all germains spill at once,	wswswswsws	10	1
+William Shakespeare	Lear on the Heath (from King Lear III.ii.1-9)	1605	That makes ingrateful man.	wswsws	6	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Our revels now are ended. These our actors,	wswswswswsw	11	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	As I foretold you, were all spirits and	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Are melted into air, into thin air;	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	And, like the baseless fabric of this vision,	wswswswswsw	11	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	The cloud-capped towers, the gorgeous palaces	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	The solemn temples, the great globe itself,	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Yea, all which it inherit, shall dissolve,	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	And, like this insubstantial pageant faded,	wswswswswsw	11	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Leave not a rack behind. We are such stuff	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	As dreams are made on, and our little life	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Is rounded with a sleep. Sir, I am vexed.	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Bear with my weakness: my old brain is troubled.	wswswswswsw	11	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	Be not disturbed with my infirmity.	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	If you be pleased, retire into my cell	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	And there repose. A turn or two I'll walk	wswswswsws	10	1
+William Shakespeare	Prospero Explains (from The Tempest IV.i.148-63)	1611	To still my beating mind.	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	She dwelt among the untrodden ways,	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	Beside the springs of Dove,	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	A maid whom there were none to praise,	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	And very few to love.	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	A violet by a mossy stone	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	Half hidden from the eye!	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	—Fair as a star, when only one	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	Is shining in the sky.	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	She lived unknown, and few could know	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	When Lucy ceased to be;	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	But she is in her grave, and, oh,	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	The difference to me!	wswsws	6	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	That light whose smile kindles the Universe,	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	That Beauty in which all things work and move,	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	That Benediction which the eclipsing curse	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Of birth can quench not, that sustaining Love	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Which through the web of being blindly wove	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	By man and beast and earth and air and sea,	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Burns bright or dim as each are mirrors of	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	The fire for which all thirst; now beams on me,	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Consuming the last clouds of cold mortality.	wswswswswsws	12	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	The breath whose might I have invoked in song	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Descends on me; my spirit's bark is driven	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Far from the shore, far from the trembling throng	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Whose sails were never to the tempest given;	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	The massy earth and sphered skies are riven!	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	I am borne darkly, fearfully, afar;	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Whilst, burning through the inmost veil of Heaven,	wswswswswsw	11	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	The soul of Adonais, like a star,	wswswswsws	10	1
+Percy Bysshe Shelley	Adonais (stanzas 54-55)	1821	Beacons from the abode where the Eternal are.	wswswswswsws	12	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Life of Life! thy lips enkindle	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	With their love the breath between them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And thy smiles before they dwindle	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Make the cold air fire; then screen them	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	In those looks, where whoso gazes	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Faints, entangled in their mazes.	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Child of Light! thy limbs are burning	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Thro' the vest which seems to hide them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	As the radiant lines of morning	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Thro' the clouds ere they divide them;	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And this atmosphere divinest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Shrouds thee wheresoe'er thou shinest.	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Fair are others; none beholds thee,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	But thy voice sounds low and tender	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Like the fairest, for it folds thee	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	From the sight, that liquid splendour,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And all feel, yet see thee never,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	As I feel now, lost forever!	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Lamp of Earth! where'er thou movest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Its dim shapes are clad with brightness	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	And the souls of whom thou lovest	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Walk upon the winds with lightness,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Till they fail, as I am failing,	swswswsw	8	1
+Percy Bysshe Shelley	Life of Life (from Prometheus Unbound II.v.48-71)	1820	Dizzy, lost, yet unbewailing!	swswswsw	8	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	The everlasting universe of things	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Flows through the mind, and rolls its rapid waves,	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Now dark--now glittering--now reflecting gloom--	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Now lending splendour, where from secret springs	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	The source of human thought its tribute brings	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Of waters,--with a sound but half its own,	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Such as a feeble brook will oft assume	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	In the wild woods, among the mountains lone,	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Where waterfalls around it leap for ever,	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Where woods and winds contend, and a vast river	wswswswsws	10	1
+Percy Bysshe Shelley	Mont Blanc ll. 1-11	1817	Over its rocks ceaselessly bursts and raves.	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	I met a traveller from an antique land,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Who said: Two vast and trunkless legs of stone	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Stand in the desert.... Near them, on the sand,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Half sunk, a shattered visage lies, whose frown,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	And wrinkled lip, and sneer of cold command,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Tell that its sculptor well those passions read	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Which yet survive, stamped on these lifeless things,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	The hand that mocked them, and the heart that fed:	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	And on the pedestal these words appear:	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	My name is Ozymandias, king of kings:	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Look on my works, ye Mighty, and despair!	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Nothing beside remains. Round the decay	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	Of that colossal wreck, boundless and bare,	wswswswsws	10	1
+Percy Bysshe Shelley	Ozymandias	1818	The lone and level sands stretch far away.	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	With how sad steps, O Moone, thou climb'st the skies,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	How silently, and with how wanne a face,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	What, may it be that even in heavenly place	wswswswswsws	12	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	That busie archer his sharpe arrowes tries?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Sure, if that long with Love acquainted eyes	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Can judge of Love, thou feel'st a Lover's case;	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	I reade it in thy lookes, thy languisht grace,	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	To me that feele the like, thy state descries.	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Then ev'n of fellowship, O Moone, tell me	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Is constant Love deem'd there but want of wit?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Are Beauties there as proud as here they be?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Do they above love to be lov'd, and yet	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Those Lovers scorne whom that Love doth Possesse?	wswswswsws	10	1
+Sir Philip Sidney	Astrophel and Stella: 31	1591	Do they call Vertue there ungratefulnesse?	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Since there's no help, come let us kiss and part;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Nay, I have done, you get no more of me,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And I am glad, yea glad with all my heart	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That thus so cleanly I myself can free;	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Shake hands forever, cancel all our vows,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And when we meet at any time again,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Be it not seen in either of our brows	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	That we one jot of former love retain.	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now at the last gasp of Love's latest breath	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When, his pulse failing, Passion speechless lies,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	When Faith is kneeling by his bed of death,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	And Innocence is closing up his eyes,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	Now if thou wouldst, when all have given him over,	wswswswsws	10	1
+Michael Drayton	Since There's No Help	1599	From death to life thou mightst him yet recover.	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	The face of all the world is changed, I think,	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Since first I heard the footsteps of thy soul	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Move still, oh, still, beside me, as they stole	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Betwixt me and the dreadful outer brink	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Of obvious death, where I, who thought to sink,	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Was caught up into love, and taught the whole	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Of life in a new rhythm. The cup of dole	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	God gave for baptism, I am fain to drink,	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	And praise its sweetness, Sweet, with thee anear.	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	The names of country, heaven, are changed away	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	For where thou art or shalt be, there or here;	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	And this... this lute and song... loved yesterday,	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	(The singing angels know) are only dear,	wswswswsws	10	1
+Elizabeth Barrett Browning	Sonnets from the Portuguese #7	1850	Because thy name moves right in what they say.	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	One day I wrote her name upon the strand,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	But came the waves and washèd it away:	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	Agayne I wrote it with a second hand,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	But came the tyde, and made my paynes his pray.	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	Vayne man, sayd she, that doest in vaine assay,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	A mortall thing so to immortalize.	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	For I my selve shall lyke to this decay,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	And eek my name bee wyped out lykewize.	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	Not so, (quod I) let baser things devize	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	To dy in dust, but you shall live by fame:	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	My verse your vertues rare shall eternize,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	And in the hevens wryte your glorrious name,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	Where whenas death shall all the world subdew,	wswswswsws	10	1
+Edmund Spenser	Amoretti 75	1595	Our love shall live, and later life renew.	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Who travels by the wearie wandring way,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	To come vnto his wished home in haste,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	And meetes a flood, that doth his passage stay,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Is not great grace to helpe him ouer past,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Or free his feet, that in the myre sticke fast?	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Most enuious man, that grieues at neighbours good,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	And fond, that ioyest in the woe thou hast,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Why wilt not let him pass, that long hath stood	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Vpon the banke, yet wilt thy selfe not passe the flood?	wswswswswsws	12	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	He there does now enjoy eternall rest	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	And happie ease, which thou doest want and craue,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	And further from it daily wanderest:	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	What if some little paine the passage haue,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	That makes fraile flesh to feare the bitter waue?	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Is not short paine well borne, that brings long ease,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	And layes the soule to sleepe in quiet graue?	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Sleepe after toyle, port after stormy seas,	wswswswsws	10	1
+Edmund Spenser	Despayre in Praise of Suicide (Faerie Queene 1.9.39-40)	1596	Ease after warre, death after life does greatly please.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	I have been here before,	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	But when or how I cannot tell:	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	I know the grass beyond the door,	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	The sweet keen smell,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	The sighing sound, the lights around the shore.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	You have been mine before,--	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	How long ago I may not know:	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	But just when at that swallow's soar	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Your neck turned so,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	Some veil did fall,--I knew it all of yore.	wswswswsws	10	1
+Dante Gabriel Rossetti	Sudden Light	1863	Then, now,--perchance again!	wswsws	6	1
+Dante Gabriel Rossetti	Sudden Light	1863	O round mine eyes your tresses shake!	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Shall we not lie as we have lain	wswswsws	8	1
+Dante Gabriel Rossetti	Sudden Light	1863	Thus for Love's sake,	wsws	4	1
+Dante Gabriel Rossetti	Sudden Light	1863	And sleep, and wake, yet never break the chain?	wswswswsws	10	1
+Algernon Charles Swinburne	The Roundel	1883	A roundel is wrought as a ring or a starbright sphere,	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	With craft of delight and with cunning of sound unsought,	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	That the heart of the hearer may smile if to pleasure his ear	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	A roundel is wrought.	wwswws	6	1
+Algernon Charles Swinburne	The Roundel	1883	Its jewel of music is carven of all or of aught--	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	Love, laughter, or mourning--remembrance of rapture or fear--	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	That fancy may fashion to hang in the ear of thought.	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	As a bird's quick song runs round, and the hearts in us hear	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	Pause answer to pause, and again the same strain caught,	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	So moves the device whence, round as a pearl or tear,	wwswwswwswwswws	15	1
+Algernon Charles Swinburne	The Roundel	1883	A roundel is wrought.	wwswws	6	1
+Alfred Tennyson	Enoch Arden	1859	Long lines of cliff breaking have left a chasm;	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	And in the chasm are foam and yellow sands;	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	Beyond red roofs about a narrow wharf	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	In cluster; then a mouldered church; and higher	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	A long street climbs to one tall-towered mill;	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	And high in heaven behind it a gray down	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	With Danish barrows; and a hazel wood,	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	By autumn nutters haunted, flourishes	wswswswsws	10	1
+Alfred Tennyson	Enoch Arden	1859	Green in a cuplike hollow of the down.	wswswswsws	10	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	Dark house, by which once more I stand	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	Here in the long unlovely street,	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	Doors, where my heart was used to beat	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	So quickly, waiting for a hand,	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	A hand that can be clasped no more-	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	Behold me, for I cannot sleep,	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	And like a guilty thing I creep	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	At earliest morning to the door.	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	He is not here; but far away	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	The noise of life begins again,	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	And ghastly through the drizzling rain	wswswsws	8	1
+from In Memoriam; section 7	Alfred Lord Tennyson	1850	On the bald street breaks the blank day.	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	He clasps the crag with crooked hands;	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	Close to the sun in lonely lands,	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	Ringed with the azure world, he stands.	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	The wrinkled sea beneath him crawls;	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	He watches from his mountain walls,	wswswsws	8	1
+Alfred Lord Tennyson	The Eagle	1851	And like a thunderbolt he falls.	wswswsws	8	1
+Alfred Lord Tennyson	The Kraken	1830	Below the thunders of the upper deep,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Far, far beneath in the abysmal sea,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	His ancient, dreamless, uninvaded sleep	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	The Kraken sleepeth: faintest sunlights flee	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	About his shadowy sides: above him swell	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Huge sponges of millennial growth and height;	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	And far away into the sickly light,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	From many a wondrous grot and secret cell	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Unnumbered and enormous polypi	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Winnow with giant arms the slumbering green.	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	There hath he lain for ages and will lie	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Battening upon huge seaworms in his sleep,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Until the latter fire shall heat the deep;	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Then once by man and angels to be seen,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	In roaring he shall rise and on the surface die.	wswswswsws	10	1
+Edward Thomas	Rain	1916	Rain, midnight rain, nothing but the wild rain	wswswswsws	10	1
+Edward Thomas	Rain	1916	On this bleak hut, and solitude, and me	wswswswsws	10	1
+Edward Thomas	Rain	1916	Remembering again that I shall die	wswswswsws	10	1
+Edward Thomas	Rain	1916	And neither hear the rain nor give it thanks	wswswswsws	10	1
+Edward Thomas	Rain	1916	For washing me cleaner than I have been	wswswswsws	10	1
+Edward Thomas	Rain	1916	Since I was born unto this solitude.	wswswswsws	10	1
+Edward Thomas	Rain	1916	Blessed are the dead that the rain rains upon:	wswswswsws	10	1
+Edward Thomas	Rain	1916	But here I pray that none whom once I loved	wswswswsws	10	1
+Edward Thomas	Rain	1916	Is dying tonight or lying still awake	wswswswsws	10	1
+Edward Thomas	Rain	1916	Solitary, listening to the rain,	wswswswsws	10	1
+Edward Thomas	Rain	1916	Either in pain or thus in sympathy	wswswswsws	10	1
+Edward Thomas	Rain	1916	Helpless among the living and the dead,	wswswswsws	10	1
+Edward Thomas	Rain	1916	Like a cold water among broken reeds,	wswswswsws	10	1
+Edward Thomas	Rain	1916	Myriads of broken reeds all still and stiff,	wswswswsws	10	1
+Edward Thomas	Rain	1916	Like me who have no love which this wild rain	wswswswsws	10	1
+Edward Thomas	Rain	1916	Has not dissolved except the love of death,	wswswswsws	10	1
+Edward Thomas	Rain	1916	If love it be towards what is perfect and	wswswswsws	10	1
+Edward Thomas	Rain	1916	Cannot, the tempest tells me, disappoint.	wswswswsws	10	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	She dotes on what the wild birds say	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Or hint or mock at, night and day,--	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Thrush, blackbird, all that sing in May	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	And songless plover,	wsws	4	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Hawk, heron, owl, and woodpecker.	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	They never say a word to her	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	About her lover.	wsws	4	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	She laughs at them for childishness,	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	She cries at them for carelessness	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Who see her going loverless	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Yet sing and chatter	wsws	4	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Just as when he was not a ghost,	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Nor ever ask her what she has lost	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Or what is the matter.	wsws	4	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Yet she has fancied blackbirds hide	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	A secret, and that thrushes chide	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Because she thinks death can divide	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Her from her lover;	wsws	4	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	And she has slept, trying to translate	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	The word the cuckoo cries to his mate	wswswsws	8	1
+Edward Thomas	She Dotes on What the Wild Birds Say	1915	Over and over.	wsws	4	1
+Edward Thomas	Thaw	1916	Over the land freckled with snow half-thawed	wswswswsws	10	1
+Edward Thomas	Thaw	1916	The speculating rooks at their nests cawed	wswswswsws	10	1
+Edward Thomas	Thaw	1916	And saw from elm-tops, delicate as flower of grass,	wswswswsws	10	1
+Edward Thomas	Thaw	1916	What we below could not see, Winter pass.	wswswswsws	10	1
+Edmund Waller	Song	1645	Go, lovely rose!	wsws	4	1
+Edmund Waller	Song	1645	Tell her that wastes her time and me	wswswsws	8	1
+Edmund Waller	Song	1645	That now she knows,	wsws	4	1
+Edmund Waller	Song	1645	When I resemble her to thee,	wswswsws	8	1
+Edmund Waller	Song	1645	How sweet and fair she seems to be.	wswswsws	8	1
+Edmund Waller	Song	1645	Tell her that's young	wsws	4	1
+Edmund Waller	Song	1645	And shuns to have her graces spied,	wswswsws	8	1
+Edmund Waller	Song	1645	That had'st thou sprung	wsws	4	1
+Edmund Waller	Song	1645	In deserts, where no men abide,	wswswsws	8	1
+Edmund Waller	Song	1645	Thou must have uncommended died.	wswswsws	8	1
+Edmund Waller	Song	1645	Small is the worth	wsws	4	1
+Edmund Waller	Song	1645	Of beauty from the light retired;	wswswsws	8	1
+Edmund Waller	Song	1645	Bid her come forth,	wsws	4	1
+Edmund Waller	Song	1645	Suffer herself to be desired,	wswswsws	8	1
+Edmund Waller	Song	1645	And not blush so to be admired.	wswswsws	8	1
+Edmund Waller	Song	1645	Then die! that she	wsws	4	1
+Edmund Waller	Song	1645	The common fate of all things rare	wswswsws	8	1
+Edmund Waller	Song	1645	May read in thee;	wsws	4	1
+Edmund Waller	Song	1645	How small a part of time they share	wswswsws	8	1
+Edmund Waller	Song	1645	That are so wondrous sweet and fair!	wswswsws	8	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	A slumber did my spirit seal;	wswswsws	8	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	I had no human fears:	wswsws	6	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	She seemed a thing that could not feel	wswswsws	8	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	The touch of earthly years.	wswsws	6	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	No motion has she now, no force;	wswswsws	8	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	She neither hears nor sees;	wswsws	6	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	Rolled round in earth's diurnal course,	wswswsws	8	1
+William Wordsworth	A Slumber Did My Spirit Seal	1800	With rocks and stones and trees.	wswsws	6	1
+William Wordsworth	The Sonnet	1807	Nuns fret not at their convent's narrow room,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	And hermits are contented with their cells,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	And students with their pensive citadels;	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Maids at the wheel, the weaver at his loom,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Sit blithe and happy; bees that soar for bloom,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	High as the highest peak of Furness fells,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Will murmur by the hour in foxglove bells:	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	In truth the prison, unto which we doom	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Ourselves, no prison is: and hence for me,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	In sundry moods, 'twas pastime to be bound	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Within the Sonnet's scanty plot of ground;	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Pleased if some souls (for such there needs must be)	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Who have felt the weight of too much liberty,	wswswswsws	10	1
+William Wordsworth	The Sonnet	1807	Should find brief solace there, as I have found.	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Nor less, when spring had warmed the cultured Vale,	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Moved we as plunderers where the mother bird	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Had in high places built her lodge; though mean	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Our object and inglorious, yet the end	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Was not ignoble. Oh! when I have hung	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Above the raven's nest, by knots of grass	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	And half-inch fissures in the slippery rock	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	But ill sustained, and almost (so it seemed)	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Suspended by the blast that blew amain,	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Shouldering the naked crag, oh, at that time	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	While on the perilous ridge I hung alone,	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	With what strange utterance did the loud dry wind	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Blow through my ear! the sky seemed not a sky	wswswswsws	10	1
+William Wordsworth	from The Prelude (I.326-39)	1805	Of earth—and with what motion moved the clouds!	wswswswsws	10	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	She dwelt among the untrodden ways,	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	Beside the springs of Dove,	wswsws	6	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	A maid whom there were none to praise,	wswswsws	8	1
+William Wordsworth	She Dwelt Among the Untrodden Ways	1800	And very few to love.	wswsws	6	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	Had I the heavens' embroidered cloths,	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	Enwrought with golden and silver light,	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	The blue and the dim and the dark cloths	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	Of night and light and the half-light,	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	I would spread the cloths under your feet:	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	But I, being poor, have only my dreams;	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	I have spread my dreams under your feet;	wswswsws	8	1
+W.B. Yeats	He Wishes for the Cloths of Heaven	1899	Tread softly because you tread on my dreams.	wswswsws	8	1
+W. B. Yeats	The Balloon of the Mind	1919	Hands, do what you're bid:	wswsws	6	1
+W. B. Yeats	The Balloon of the Mind	1919	Bring the balloon of the mind,	wswsws	6	1
+W. B. Yeats	The Balloon of the Mind	1919	That bellies and drags in the wind,	wswsws	6	1
+W. B. Yeats	The Balloon of the Mind	1919	Into its narrow shed.	wswsws	6	1
+W.B. Yeats	The Cold Heaven	1912	Suddenly I saw the cold and rook-delighting heaven	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	That seemed as though ice burned and was but the more ice,	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	And thereupon imagination and heart were driven	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	So wild that every casual thought of that and this	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	Vanished, and left but memories, that should be out of season	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	With the hot blood of youth, of love crossed long ago;	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	And I took all the blame out of all sense and reason,	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	Until I cried and trembled and rocked to and fro,	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	Riddled with light. Ah! when the ghost begins to quicken,	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	Confusion of the death-bed over, is it sent	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	Out naked on the roads, as the books say, and stricken	wswswswswsws	12	1
+W.B. Yeats	The Cold Heaven	1912	By the injustice of the skies for punishment?	wswswswswsws	12	1
+W.B. Yeats	The Witch	1914	Toil and grow rich,	wwswws	6	1
+W.B. Yeats	The Witch	1914	What's that but to lie	wwswws	6	1
+W.B. Yeats	The Witch	1914	With a foul witch	wwswws	6	1
+W.B. Yeats	The Witch	1914	And after, drained dry,	wwswws	6	1
+W.B. Yeats	The Witch	1914	To be brought	wws	3	1
+W.B. Yeats	The Witch	1914	To the chamber where	wwswws	6	1
+W.B. Yeats	The Witch	1914	Lies one long sought	wwswws	6	1
+W.B. Yeats	The Witch	1914	With despair?	wws	3	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Now all the truth is out,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Be secret and take defeat	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	From any brazen throat,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	For how can you compete,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Being honour bred, with one	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Who, were it proved he lies,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Were neither shamed in his own	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Nor in his neighbours' eyes?	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Bred to a harder thing	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Than Triumph, turn away	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	And like a laughing string	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Whereon mad fingers play	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Amid a place of stone,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Be secret and exult,	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	Because of all things known	wswsws	6	1
+W. B. Yeats	To a Friend Whose Work Has Come to Nothing	1913	That is most difficult.	wswsws	6	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	He ended: Arthur knew the voice; the face	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Well nigh was helmet-hidden, and the name	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Went wandering somewhere darkling in his mind.	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	And Arthur deigned not use of word or sword,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	But let the drunkard, as he stretched from horse	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	To strike him, overbalancing his bulk,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Down from the causeway heavily to the swamp	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Fall, as the crest of some slow-arching wave,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Heard in dead night along that table-shore,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Drops flat, and after the great waters break	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Whitening for half a league, and thin themselves,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Far over sands marbled with moon and cloud,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	From less and less to nothing; thus he fell	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Head-heavy; then the knights, who watched him, roared	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	And shouted and leapt down upon the fallen;	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	There trampled out his face from being known,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	And sank his head in mire, and slimed themselves:	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Nor heard the King for their own cries, but sprang	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Through open doors, and swording right and left	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Men, women, on their sodden faces, hurled	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	The tables over and the wines, and slew	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	Till all the rafters rang with woman-yells,	wswswswsws	10	1
+Alfred Tennyson	Idylls of the King (X.454-76)	1859	And all the pavement streamed with massacre.	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Below the thunders of the upper deep,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Far, far beneath in the abysmal sea,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	His ancient, dreamless, uninvaded sleep	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	The Kraken sleepeth: faintest sunlights flee	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	About his shadowy sides: above him swell	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Huge sponges ofmillennial growth and height;	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	And far away into the sickly light,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	From many a wondrous grotand secret cell	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Unnumbered and enormous polypipi	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Winnow with giant arms the slumbering green.	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	There hath he lain for ages andwill lie	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Battening upon huge seaworms in his sleep,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Until the latter fire shall heat the deep;	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	Then once by man and angels to be seen,	wswswswsws	10	1
+Alfred Lord Tennyson	The Kraken	1830	In roaring he shall rise and on the surface die.	wswswswsws	10	1

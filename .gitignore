@@ -2,6 +2,10 @@
 
 flask_session
 
+# SvelteKit frontend dev artifacts
+prosodic/web/frontend/node_modules/
+prosodic/web/frontend/.svelte-kit/
+
 # C extensions
 *.so
 

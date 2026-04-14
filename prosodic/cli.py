@@ -26,7 +26,7 @@ def web(host='127.0.0.1', port=8181, debug=False):
     Returns:
         None
     """
-    from .web.app import main
+    from .web.api import main
     msg = f'Starting prosodic as a webserver at http://{host}:{port}...'
     click.echo(msg)
     logmap.enable()

@@ -18,8 +18,13 @@ pytest tests/test_parsing.py              # single file
 pytest tests/test_parsing.py::test_feet   # single test
 pytest --cov=prosodic --cov-report=xml    # with coverage
 
-# Web app
-prosodic web
+# Web app (FastAPI + uvicorn)
+prosodic web                              # starts on 127.0.0.1:8181
+prosodic web --host 0.0.0.0 --port 5111  # custom host/port
+
+# Frontend dev (requires Node.js)
+cd prosodic/web/frontend && npm install && npm run dev  # dev server with hot reload
+cd prosodic/web/frontend && npm run build               # build to ../static_build/
 
 # Code formatting
 yapf --style .style.yapf -i <file>
@@ -121,10 +126,31 @@ All global constants, paths, and shared imports live in `imports.py`. Modules im
 
 ### Web App (`web/`)
 
-Flask + flask-socketio (WebSocket). Mobile-friendly single-page app.
-- `app.py`: Server with `parse` websocket handler. Uses `parse_batch()` with Entity-backed Syllables for HTML rendering (word boundaries, violation tooltips).
-- `templates/index.html`: Responsive layout (sidebar stacks on mobile). Collapsible "Configure Meter" panel. Best-only / All-unbounded toggle. Violation tooltips on tap/hover. Ambiguity column.
-- Run with `prosodic web` or `python -c "from prosodic.web.app import main; main(port=5111, host='0.0.0.0')"`
+FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobile-friendly.
+
+**Backend** (`api.py`):
+- FastAPI JSON API with endpoints: `/api/meter/defaults`, `/api/parse`, `/api/parse/stream` (SSE), `/api/maxent/fit`, `/api/maxent/fit-annotations`, `/api/maxent/reparse`, `/api/corpora`, `/api/corpora/read`
+- `render_parse_html(parse)` returns server-rendered HTML strings with CSS classes for meter/stress/violation styling (same as v2, fast for large texts)
+- `serialize_parse()` removed — Pydantic SlotData objects were too slow for 10K+ line texts
+- Serves built SvelteKit frontend from `static_build/` directory
+- Streaming parse results via SSE in batches of 50 lines for progressive rendering
+- MaxEnt accuracy computed from trainer: `_compute_accuracy()` checks predicted vs observed best scansion per line
+
+**Frontend** (`frontend/` → builds to `static_build/`):
+- SvelteKit with `adapter-static`, builds to ~180KB (replaced 13MB of jQuery/DataTables)
+- 3 tabs: **Parse** (text input + corpus dropdown + results), **Meter** (constraint config + weights), **MaxEnt** (file upload + training)
+- Parse results: sortable columns (Line, Meter, Score, Ambig), pagination (50/100/250/500 per page), best-only / all-unbounded toggle
+- MaxEnt zone weights saved to Meter config and used for zone-aware scoring in Parse
+- All config persisted in localStorage (meter config, weights, zone weights, last text, maxent params)
+- Corpus dropdown loads texts from `corpora/` directory
+
+**Pydantic models** (`models.py`): `MaxEntFitRequest/Response`, `MaxEntReparseRequest/Response`, `MeterDefaultsResponse`, `CorpusFile/ListResponse`, `WeightEntry`
+
+**Weight system**: Two modes of scoring:
+1. **Manual weights**: per-constraint weight boxes on Meter page (default 1.0), sent as `name/weight` format
+2. **Zone weights**: learned by MaxEnt, stored as `meter.zone_weights` dict (zone-expanded names → weights). When active, override manual weights for scoring. Reset via "Reset Weights" button.
+
+- Run with `prosodic web` or `python -c "from prosodic.web.api import main; main(port=8181, host='0.0.0.0')"`
 
 ## Two Parse Paths
 
@@ -151,10 +177,10 @@ There are two ways parsing happens, and it matters which one you're in:
 
 ## Testing Notes
 
-- 189 tests, all passing. Python 3.10 in `.venv`.
+- 191 tests, all passing. Python 3.10 in `.venv`.
 - Tests import everything via `from prosodic.imports import *` and call `disable_caching()` at the top (now a no-op).
 - Common test fixture: Shakespeare sonnets via `sonnet` variable.
-- Web tests use Flask test client + socketio test client (no browser needed). Selenium browser test skips gracefully if no driver. `NAPTIME` env var controls WebSocket timeouts.
+- Web tests use FastAPI TestClient (httpx-based). 12 tests covering meter defaults, parse, maxent, corpora, and static files. Selenium browser test skips gracefully if no driver.
 - CI runs on Python 3.12.0 and requires espeak system package.
 
 ## Performance (Shakespeare sonnets, 2155 lines, Apple MPS GPU)
@@ -186,7 +212,7 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ Removed OBJECTS registry, register_objects, find, match, equals
 - ✅ Dead code removal (old MaxEnt.py, lexconvert.py, SimpleCache, branch/copy)
 - ✅ Save/load to parquet (text.save(), TextModel.load())
-- ✅ Web app rewrite (mobile-friendly, tooltips, ambiguity)
+- ✅ Web app rewrite: Flask+HTMX → FastAPI+SvelteKit (PWA, 3 tabs, streaming, sortable, paginated, localStorage, 180KB vs 13MB)
 - ✅ MaxEnt weight learner (L-BFGS, vectorized, zone splitting, <1s training on 2K lines)
 - ✅ Self-describing constraints (vectorized lambda on decorator, auto-dispatch)
 - ✅ New constraints: clash, lapse, w_heavy, s_light, s_func, word_foot

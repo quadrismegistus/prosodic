@@ -1,1 +1,0 @@
-import"../chunks/Bzak7iHL.js";import"../chunks/69_IOA4Y.js";import{p as s,o as a,a as e,s as r,b as p}from"../chunks/BPpoBFJ_.js";import{i,a as m}from"../chunks/CVpnQTwf.js";import{g as n}from"../chunks/B3RWgrO0.js";function b(c,o){s(o,!1);const[u,t]=r();a(()=>{p(m,"meter"),n("/",{replaceState:!0})}),i(),e(),t()}export{b as component};

@@ -40,6 +40,17 @@
 	}
 
 	let hasZoneWeights = $derived($zoneWeights != null);
+	let maxWeight = $derived.by(() => {
+		if (!$zoneWeights) return 1;
+		const vals = Object.values($zoneWeights);
+		return vals.length ? Math.max(...vals) : 1;
+	});
+	let sortedWeightEntries = $derived.by(() => {
+		if (!$zoneWeights) return [];
+		return Object.entries($zoneWeights)
+			.filter(([, w]) => w > 0.001)
+			.sort((a, b) => b[1] - a[1]);
+	});
 </script>
 
 <div class="page">
@@ -85,18 +96,16 @@
 	{#if hasZoneWeights}
 		<section class="section">
 			<h3 class="section-title">
-				Zone Weights <span class="badge">from MaxEnt</span>
+				Constraint Weights <span class="badge">from MaxEnt</span>
 			</h3>
-			<p class="zone-note">These zone-expanded weights were learned by MaxEnt training and are used for scoring. Reset to clear.</p>
+			<p class="zone-note">Learned by MaxEnt training and used for scoring. Reset to clear.</p>
 			<div class="zone-list">
-				{#each Object.entries($zoneWeights).sort((a,b) => b[1] - a[1]) as [name, weight]}
-					{#if weight > 0.001}
-						<div class="zone-row">
-							<span class="z-name">{name}</span>
-							<span class="z-weight">{weight.toFixed(3)}</span>
-							<div class="z-bar" style="width: {Math.min(weight / Object.values($zoneWeights).reduce((a,b) => Math.max(a,b), 1) * 100, 100).toFixed(0)}%"></div>
-						</div>
-					{/if}
+				{#each sortedWeightEntries as [name, weight]}
+					<div class="zone-row">
+						<span class="z-name">{name}</span>
+						<span class="z-weight">{weight.toFixed(3)}</span>
+						<div class="z-bar" style="width: {(weight / maxWeight * 100).toFixed(1)}%"></div>
+					</div>
 				{/each}
 			</div>
 		</section>

@@ -213,11 +213,14 @@ def _aggregate_lineparts(line_to_parts, render_html_fn):
         if not parts:
             continue
         meter_strs = []
-        html_parts = []  # list of (html_str, is_parsed)
+        html_parts = []  # list of (html_str, kind)
         total_score = 0.0
         ambig_product = 1
         line_text_parts = []
         n_parsed = 0
+        total_sylls = 0
+        total_viols = 0
+        agg_viols = {}
         for unit, pl in parts:
             line_text_parts.append(unit.txt.strip())
             bp = pl.best_parse if pl else None
@@ -238,6 +241,11 @@ def _aggregate_lineparts(line_to_parts, render_html_fn):
             total_score += score
             ambig_product *= max(1, pl.num_unbounded)
             n_parsed += 1
+            ns, nv, vs = _parse_viol_stats(bp)
+            total_sylls += ns
+            total_viols += nv
+            for k, v in vs.items():
+                agg_viols[k] = agg_viols.get(k, 0) + v
 
         # Stitch html: each new parsed (or unparsed) clause starts on its own
         # line within the table row via <br>. Punctuation lineparts attach to
@@ -261,6 +269,9 @@ def _aggregate_lineparts(line_to_parts, render_html_fn):
             'num_unbounded': ambig_product,
             'num_parts': len(parts),
             'num_parts_parsed': n_parsed,
+            'num_sylls': total_sylls,
+            'num_viols': total_viols,
+            'viols': agg_viols,
         })
     return rows
 
@@ -374,7 +385,26 @@ def parse_text(req: dict):
         'elapsed': round(elapsed, 3),
         'num_lines': num_lines,
         'prose_mode': prose_mode,
+        'constraints': list(meter.constraints.keys()),
     }
+
+
+def _parse_viol_stats(p):
+    """Extract violation stats from a Parse: num_sylls, num_viols, per-constraint counts."""
+    num_sylls = 0
+    num_viols = 0
+    viols = {}
+    for pos in p.positions:
+        for slot in pos.children:
+            num_sylls += 1
+            for k, v in (getattr(slot, 'viold', {}) or {}).items():
+                try:
+                    vi = int(v)
+                except (TypeError, ValueError):
+                    vi = 0
+                viols[k] = viols.get(k, 0) + vi
+                num_viols += vi
+    return num_sylls, num_viols, viols
 
 
 def _parse_and_build_rows(t, meter):
@@ -443,6 +473,7 @@ def _parse_and_build_rows(t, meter):
         has_zone = hasattr(pl, '_scores') and pl._scores is not None
         for pi, p in enumerate(unbounded):
             score = float(pl._scores[pi]) if has_zone and pi < len(pl._scores) else p.score
+            num_sylls, num_viols, viols = _parse_viol_stats(p)
             rows.append({
                 'line_num': line.num,
                 'rank': pi + 1,
@@ -451,6 +482,9 @@ def _parse_and_build_rows(t, meter):
                 'meter_str': p.meter_str,
                 'score': round(score, 2),
                 'num_unbounded': pl.num_unbounded,
+                'num_sylls': num_sylls,
+                'num_viols': num_viols,
+                'viols': viols,
             })
 
     # Long lines: aggregate lineparts into one row per line
@@ -464,11 +498,10 @@ def _parse_and_build_rows(t, meter):
 
 @app.post("/api/parse/export")
 def parse_export(req: dict):
-    """Parse text and return all unbounded parses as CSV or JSON.
+    """Parse text and export per-line stats as CSV, TSV, or JSON.
 
-    Request body same shape as /api/parse, plus:
-      - format: 'csv' | 'tsv' | 'json' (default 'csv')
-    Returns one row per (line_num, parse_rank, syllable).
+    Uses the same prose-fallback parsing as /api/parse. Returns one row per
+    line with best-parse stats + mean-over-unbounded stats.
     """
     text_str = req.get('text', '').strip()
     if not text_str:
@@ -478,11 +511,10 @@ def parse_export(req: dict):
     if fmt not in ('csv', 'tsv', 'json'):
         raise HTTPException(status_code=400, detail="format must be csv, tsv, or json")
 
-    from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
 
-    lines = text_str.split('\n')[:linelim]
-    text_str = '\n'.join(lines)
+    input_lines = text_str.split('\n')[:linelim]
+    text_str = '\n'.join(input_lines)
     syntax = req.get('syntax', False)
     syntax_model = req.get('syntax_model') or DEFAULT_SYNTAX_MODEL
     meter_kwargs = _build_meter_kwargs(
@@ -496,92 +528,112 @@ def parse_export(req: dict):
         meter.zone_weights = zw
         meter.zones = _normalize_zones(req.get('zones', 3))
 
-    text_lines = t.lines
-    results = parse_batch(text_lines, meter)
-    for i, (wt, pl) in enumerate(results):
-        pl.parent = wt
-        wt._parses = pl
-        text_lines[i]._parses = pl
+    # Parse (handles prose fallback)
+    display_rows, _, _ = _parse_and_build_rows(t, meter)
 
-    # One row per line: best-parse stats + averaged-across-unbounded stats.
-    # "_unbounded" columns = sum across all unbounded parses / sum of syllables
-    # across all unbounded parses (per-syllable average).
-    def _viols_for_parse(p):
-        """Return dict of {constraint: total_violations, ...} and total count."""
-        counts = {}
-        total = 0
-        num_sylls = 0
-        for pos in p.positions:
-            for slot in pos.children:
-                num_sylls += 1
-                for k, v in (getattr(slot, 'viold', {}) or {}).items():
-                    try:
-                        vi = int(v)
-                    except (TypeError, ValueError):
-                        vi = 0
-                    counts[k] = counts.get(k, 0) + vi
-                    total += vi
-        return counts, total, num_sylls
+    # Build export rows: one per line (best-parse only) + unbounded averages.
+    # Group display_rows by line_num, take rank=1.
+    best_by_line = {}
+    for r in display_rows:
+        if r.get('rank', 1) == 1 and r['line_num'] not in best_by_line:
+            best_by_line[r['line_num']] = r
+
+    # For unbounded averages, walk parse lists on short lines.
+    # For prose (long) lines, best-only (no per-linepart unbounded aggregation).
+    long_lnums = _long_line_nums(t)
+
+    def _unbounded_sums(pl):
+        """Sum score, viols, sylls across all unbounded parses of a ParseList."""
+        unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
+        has_zone = hasattr(pl, '_scores') and pl._scores is not None
+        total_score = 0.0
+        total_viols = 0
+        total_sylls = 0
+        viol_sums = {}
+        for pi, p in enumerate(unbounded):
+            sc = float(pl._scores[pi]) if has_zone and pi < len(pl._scores) else p.score
+            total_score += sc
+            ns, nv, vs = _parse_viol_stats(p)
+            total_sylls += ns
+            total_viols += nv
+            for k, v in vs.items():
+                viol_sums[k] = viol_sums.get(k, 0) + v
+        return total_score, total_viols, total_sylls, viol_sums
 
     rows = []
     all_viol_keys = set()
-    for line in text_lines:
-        pl = line._parses
-        if not pl:
-            continue
-        unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
-        if not unbounded:
-            continue
-        has_zone_scores = hasattr(pl, '_scores') and pl._scores is not None
-        bp = unbounded[0]  # best (lowest-score) unbounded
-        bp_score = float(pl._scores[0]) if has_zone_scores and len(pl._scores) > 0 else bp.score
-        bp_viols, bp_total, bp_sylls = _viols_for_parse(bp)
-
-        # Aggregate across all unbounded
-        unb_viols_sum = {}
-        unb_total_sum = 0
-        unb_sylls_sum = 0
-        unb_score_sum = 0.0
-        for pi, p in enumerate(unbounded):
-            pscore = float(pl._scores[pi]) if has_zone_scores and pi < len(pl._scores) else p.score
-            counts, total, nsylls = _viols_for_parse(p)
-            unb_score_sum += pscore
-            unb_total_sum += total
-            unb_sylls_sum += nsylls
-            for k, v in counts.items():
-                unb_viols_sum[k] = unb_viols_sum.get(k, 0) + v
+    for line_num, best in sorted(best_by_line.items()):
+        viols = best.get('viols') or {}
+        all_viol_keys.update(viols.keys())
 
         row = {
-            'line_num': line.num,
-            'line_text': line.txt.strip(),
-            'num_sylls': bp_sylls,
-            'ambiguity': pl.num_unbounded,
-            'meter_str': bp.meter_str,
-            'score': round(bp_score, 3),
-            'num_viols': bp_total,
-            'score_unbounded': round(unb_score_sum / unb_sylls_sum, 4) if unb_sylls_sum else 0,
-            'num_viols_unbounded': round(unb_total_sum / unb_sylls_sum, 4) if unb_sylls_sum else 0,
+            'line_num': line_num,
+            'line_text': best['line_text'],
+            'num_sylls': best.get('num_sylls', 0),
+            'ambiguity': best.get('num_unbounded', 1),
+            'meter_str': best['meter_str'].replace('<br>', ' | '),
+            'score': best['score'],
+            'num_viols': best.get('num_viols', 0),
         }
-        for k, v in bp_viols.items():
-            col = f'*{k}'
-            row[col] = v
+        for k, v in viols.items():
+            row[f'*{k}'] = v
             all_viol_keys.add(k)
-        for k, v in unb_viols_sum.items():
-            col = f'*{k}_unbounded'
-            row[col] = round(v / unb_sylls_sum, 4) if unb_sylls_sum else 0
+
+        # Sum across all unbounded parses
+        unb_score = 0.0
+        unb_viols = 0
+        unb_sylls = 0
+        unb_vs = {}
+
+        if line_num not in long_lnums:
+            # Short line: single parse list on the line entity
+            line_ent = next((l for l in t.lines if l.num == line_num), None)
+            pl = getattr(line_ent, '_parses', None) if line_ent else None
+            if pl:
+                s, v, sy, vs = _unbounded_sums(pl)
+                unb_score += s
+                unb_viols += v
+                unb_sylls += sy
+                for k, val in vs.items():
+                    unb_vs[k] = unb_vs.get(k, 0) + val
+        else:
+            # Long (prose) line: sum across lineparts' parse lists
+            for lp in t.lineparts:
+                if lp[0].line_num != line_num:
+                    continue
+                pl = getattr(lp, '_parses', None)
+                if not pl:
+                    continue
+                s, v, sy, vs = _unbounded_sums(pl)
+                unb_score += s
+                unb_viols += v
+                unb_sylls += sy
+                for k, val in vs.items():
+                    unb_vs[k] = unb_vs.get(k, 0) + val
+
+        row['score_unbounded'] = round(unb_score, 4)
+        row['num_viols_unbounded'] = round(unb_viols, 4) if unb_viols else row.get('num_viols', 0)
+        row['num_sylls_unbounded'] = unb_sylls if unb_sylls else row.get('num_sylls', 0)
+        for k, val in unb_vs.items():
+            row[f'*{k}_unbounded'] = round(val, 4)
             all_viol_keys.add(k)
         rows.append(row)
 
-    base_cols = [
-        'line_num', 'line_text', 'num_sylls', 'ambiguity', 'meter_str',
-        'score', 'num_viols', 'score_unbounded', 'num_viols_unbounded',
+    # Rename ambiguity → num_parses
+    for r in rows:
+        r['num_parses'] = r.pop('ambiguity', 1)
+
+    sorted_constraints = sorted(all_viol_keys)
+    best_viol_cols = [f'*{k}' for k in sorted_constraints]
+    unb_viol_cols = [f'*{k}_unbounded' for k in sorted_constraints]
+    cols = [
+        'line_num', 'line_text', 'meter_str',
+        'num_sylls', 'num_viols', 'num_parses', 'score',
+        *best_viol_cols,
+        'num_sylls_unbounded', 'num_viols_unbounded', 'score_unbounded',
+        *unb_viol_cols,
     ]
-    viol_cols = []
-    for k in sorted(all_viol_keys):
-        viol_cols.append(f'*{k}')
-        viol_cols.append(f'*{k}_unbounded')
-    cols = base_cols + viol_cols
-    # Fill missing violation columns with 0 for consistency
+    viol_cols = best_viol_cols + unb_viol_cols
     for r in rows:
         for c in viol_cols:
             r.setdefault(c, 0)
@@ -672,7 +724,7 @@ async def parse_stream(req: dict):
             yield sse({'phase': 'rows', 'rows': batch})
 
         elapsed = time.time() - t0
-        yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode})
+        yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode, 'constraints': list(meter.constraints.keys())})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -868,26 +920,19 @@ def parse_line(req: dict):
 
     text_lines = t.lines
     if not text_lines:
-        return {'parses': [], 'elapsed': 0, 'line_text': line_text}
+        return {'parses': [], 'elapsed': 0, 'line_text': line_text, 'parts': []}
 
-    results = parse_batch(text_lines, meter)
-    for i, (wt, pl) in enumerate(results):
-        pl.parent = wt
-        wt._parses = pl
-        text_lines[i]._parses = pl
-
-    line = text_lines[0]
-    pl = line._parses
-    parses = []
-    if pl:
+    def _build_parses_for_pl(pl, context_unit):
+        """Build parse detail dicts from a ParseList."""
         import numpy as np
-        # Sort all parses by score, using _all_scores for proper weighted values
+        if not pl or not hasattr(pl, '_all_scores') or pl._all_scores is None:
+            return []
         sorted_indices = np.argsort(pl._all_scores)
+        out = []
         for pi, idx in enumerate(sorted_indices):
             p = pl._get_parse(int(idx), is_bounded=not pl._unbounded_mask[idx])
             score = round(float(pl._all_scores[idx]), 2)
             is_bounded = not pl._unbounded_mask[idx]
-            # Collect per-position violation details
             positions = []
             for pos in p.positions:
                 slots = []
@@ -903,15 +948,14 @@ def parse_line(req: dict):
                     'mtr': 's' if pos.is_prom else 'w',
                     'slots': slots,
                 })
-            # Build violation summary
             viol_counts = {}
             for pos in positions:
                 for s in pos['slots']:
                     for v in s['violations']:
                         viol_counts[v] = viol_counts.get(v, 0) + 1
-            parses.append({
+            out.append({
                 'rank': pi + 1,
-                'parse_html': render_parse_html(p, line),
+                'parse_html': render_parse_html(p, context_unit),
                 'meter_str': p.meter_str,
                 'score': score,
                 'is_bounded': is_bounded,
@@ -919,16 +963,74 @@ def parse_line(req: dict):
                 'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
                 'viol_summary': viol_counts,
             })
+        return out
 
-    elapsed = time.time() - t0
-    num_unbounded = sum(1 for p in parses if not p['is_bounded'])
-    return {
-        'parses': parses,
-        'elapsed': round(elapsed, 3),
-        'line_text': line_text,
-        'num_parses': len(parses),
-        'num_unbounded': num_unbounded,
-    }
+    long_lnums = _long_line_nums(t)
+    is_long = bool(long_lnums)
+
+    if not is_long:
+        # Normal single-line parse
+        results = parse_batch(text_lines, meter)
+        for i, (wt, pl) in enumerate(results):
+            pl.parent = wt
+            wt._parses = pl
+            text_lines[i]._parses = pl
+        line = text_lines[0]
+        parses = _build_parses_for_pl(line._parses, line)
+        elapsed = time.time() - t0
+        num_unbounded = sum(1 for p in parses if not p['is_bounded'])
+        return {
+            'parses': parses,
+            'elapsed': round(elapsed, 3),
+            'line_text': line_text,
+            'num_parses': len(parses),
+            'num_unbounded': num_unbounded,
+            'parts': [],
+        }
+    else:
+        # Multi-part: parse each linepart, return per-part results
+        use_syntax = getattr(t, '_syntax', False)
+        raw_lineparts = list(t.lineparts)
+        expanded = []
+        for lp in raw_lineparts:
+            if lp.num_sylls > MAX_SYLL_IN_PARSE_UNIT and use_syntax:
+                expanded.extend(_syntax_subsplit(lp, t))
+            else:
+                expanded.append(lp)
+
+        meter.parse_unit = 'linepart'
+        units_to_parse = [u for u in expanded if u.num_sylls >= 2]
+        if units_to_parse:
+            lp_results = parse_batch(units_to_parse, meter)
+            for i, (wt, pl) in enumerate(lp_results):
+                if pl is None:
+                    continue
+                pl.parent = wt
+                wt._parses = pl
+                units_to_parse[i]._parses = pl
+
+        parts = []
+        for lp in expanded:
+            pl = getattr(lp, '_parses', None)
+            part_parses = _build_parses_for_pl(pl, lp) if pl else []
+            num_unb = sum(1 for p in part_parses if not p['is_bounded'])
+            parts.append({
+                'part_text': lp.txt.strip(),
+                'num_sylls': lp.num_sylls,
+                'parses': part_parses,
+                'num_parses': len(part_parses),
+                'num_unbounded': num_unb,
+            })
+
+        elapsed = time.time() - t0
+        return {
+            'parses': [],
+            'elapsed': round(elapsed, 3),
+            'line_text': line_text,
+            'num_parses': sum(p['num_parses'] for p in parts),
+            'num_unbounded': sum(p['num_unbounded'] for p in parts),
+            'parts': parts,
+        }
 
 
 # Serve built SvelteKit frontend

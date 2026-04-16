@@ -10,6 +10,7 @@
 	let rows = $state([]);
 	let elapsed = $state(0);
 	let numLines = $state(0);
+	let activeConstraints = $state([]);
 
 	function buildConstraintList() {
 		if ($zoneWeights) {
@@ -49,6 +50,7 @@
 			if (meta) {
 				elapsed = meta.elapsed;
 				numLines = meta.num_lines;
+				activeConstraints = meta.constraints || [];
 			}
 		} catch (e) {
 			error = e.message;
@@ -85,7 +87,7 @@
 			<div class="error">{error}</div>
 		{/if}
 		{#if rows.length > 0}
-			<ParseResults {rows} {elapsed} {numLines} onLineClick={handleLineClick} />
+			<ParseResults {rows} {elapsed} {numLines} constraints={activeConstraints} onLineClick={handleLineClick} />
 		{:else if !$parseLoading}
 			<div class="empty">Paste text and hit Parse</div>
 		{/if}

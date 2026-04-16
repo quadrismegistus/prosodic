@@ -3,7 +3,7 @@
 	import { inputText, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
 	import { Download } from 'lucide-svelte';
 
-	let { rows = [], elapsed = 0, numLines = 0, onLineClick = null } = $props();
+	let { rows = [], elapsed = 0, numLines = 0, constraints = [], onLineClick = null } = $props();
 	let viewMode = $state('best');
 	let sortCol = $state(null);
 	let sortAsc = $state(true);
@@ -11,6 +11,28 @@
 	let pageSize = $state(100);
 	let exporting = $state(false);
 	let exportMenuOpen = $state(false);
+	let normalize = $state(false);
+
+	function fmt(val, row) {
+		if (val == null) return '';
+		if (!normalize || !row.num_sylls) return val;
+		return (val * 10 / row.num_sylls).toFixed(1);
+	}
+
+	function violVal(row, c) {
+		if (!row.viols) return 0;
+		return row.viols[c] || 0;
+	}
+
+	function sortKey(row, col) {
+		if (col === 'num_sylls' || col === 'num_viols' || col === 'score' || col === 'num_unbounded') {
+			return row[col] ?? 0;
+		}
+		if (col.startsWith('*')) {
+			return violVal(row, col.slice(1));
+		}
+		return row[col];
+	}
 
 	function buildPayload() {
 		const constraints = $zoneWeights
@@ -47,6 +69,54 @@
 		}
 	}
 
+	function downloadWeights() {
+		exportMenuOpen = false;
+		const lines = ['constraint,zone,weight'];
+
+		if ($zoneWeights) {
+			// Zone weights active: export per-zone + mean per constraint
+			const byBase = {};
+			const entries = [];
+			for (const [k, w] of Object.entries($zoneWeights)) {
+				const match = k.match(/^(.+?)_(z\d+)$/);
+				if (match) {
+					const [, base, zone] = match;
+					entries.push({ constraint: base, zone, weight: w });
+					if (!byBase[base]) byBase[base] = [];
+					byBase[base].push(w);
+				} else {
+					entries.push({ constraint: k, zone: '', weight: w });
+				}
+			}
+			for (const [base, vals] of Object.entries(byBase)) {
+				const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+				entries.push({ constraint: base, zone: 'mean', weight: parseFloat(mean.toFixed(4)) });
+			}
+			entries.sort((a, b) => b.weight - a.weight);
+			for (const e of entries) {
+				lines.push(`${e.constraint},${e.zone},${e.weight}`);
+			}
+		} else {
+			const entries = $meterConfig.constraints.map(c => ({
+				constraint: c, weight: $constraintWeights[c] ?? 1.0
+			}));
+			entries.sort((a, b) => b.weight - a.weight);
+			for (const e of entries) {
+				lines.push(`${e.constraint},,${e.weight}`);
+			}
+		}
+
+		const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'prosodic-weights.csv';
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		URL.revokeObjectURL(url);
+	}
+
 	function toggleSort(col) {
 		if (sortCol === col) {
 			sortAsc = !sortAsc;
@@ -63,11 +133,11 @@
 			: rows;
 		if (sortCol) {
 			filtered = [...filtered].sort((a, b) => {
-				let va = a[sortCol], vb = b[sortCol];
+				let va = sortKey(a, sortCol), vb = sortKey(b, sortCol);
 				if (typeof va === 'string') {
 					return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
 				}
-				return sortAsc ? va - vb : vb - va;
+				return sortAsc ? (va - vb) : (vb - va);
 			});
 		}
 		return filtered;
@@ -108,12 +178,18 @@
 			</button>
 			{#if exportMenuOpen}
 				<div class="export-menu" role="menu">
-					<button onclick={() => doExport('csv')}>CSV</button>
-					<button onclick={() => doExport('tsv')}>TSV</button>
-					<button onclick={() => doExport('json')}>JSON</button>
+					<button onclick={() => doExport('csv')}>Parses (CSV)</button>
+					<button onclick={() => doExport('tsv')}>Parses (TSV)</button>
+					<button onclick={() => doExport('json')}>Parses (JSON)</button>
+					<hr />
+					<button onclick={downloadWeights}>Weights (CSV)</button>
 				</div>
 			{/if}
 		</div>
+		<label class="norm-toggle" title="Normalize counts per 10 syllables">
+			<input type="checkbox" bind:checked={normalize} />
+			<span>per 10σ</span>
+		</label>
 		<span class="legend">
 			<span class="mtr_s">over</span>line = strong &nbsp;
 			<span class="str_s">bold</span> = stressed &nbsp;
@@ -146,8 +222,13 @@
 					<th class="sortable" onclick={() => toggleSort('line_num')}>Line{sortIndicator('line_num')}</th>
 					<th>Parse</th>
 					<th class="sortable" onclick={() => toggleSort('meter_str')}>Meter{sortIndicator('meter_str')}</th>
-					<th class="sortable" onclick={() => toggleSort('score')}>Score{sortIndicator('score')}</th>
-					<th class="sortable" onclick={() => toggleSort('num_unbounded')}>Ambig{sortIndicator('num_unbounded')}</th>
+					<th class="sortable num-col" onclick={() => toggleSort('num_sylls')}>σ{sortIndicator('num_sylls')}</th>
+					<th class="sortable num-col" onclick={() => toggleSort('score')}>Score{sortIndicator('score')}</th>
+					<th class="sortable num-col" onclick={() => toggleSort('num_viols')}>Viols{sortIndicator('num_viols')}</th>
+					<th class="sortable num-col" onclick={() => toggleSort('num_unbounded')}>Ambig{sortIndicator('num_unbounded')}</th>
+					{#each constraints as c}
+						<th class="sortable num-col constraint-col" onclick={() => toggleSort('*' + c)} title={c}>*{c}{sortIndicator('*' + c)}</th>
+					{/each}
 				</tr>
 			</thead>
 			<tbody>
@@ -162,8 +243,13 @@
 						</td>
 						<td class="parse-text">{@html row.parse_html}</td>
 						<td class="stat meter-cell">{@html row.meter_str}</td>
-						<td class="stat">{row.score}</td>
-						<td class="stat">{row.rank === 1 ? row.num_unbounded : ''}</td>
+						<td class="stat num-col">{row.num_sylls || ''}</td>
+						<td class="stat num-col">{fmt(row.score, row)}</td>
+						<td class="stat num-col">{fmt(row.num_viols, row)}</td>
+						<td class="stat num-col">{row.rank === 1 ? row.num_unbounded : ''}</td>
+						{#each constraints as c}
+							<td class="stat num-col constraint-col">{#if row.viols}{fmt(violVal(row, c), row)}{/if}</td>
+						{/each}
 					</tr>
 				{/each}
 			</tbody>
@@ -212,10 +298,30 @@
 		color: #fff;
 		border-color: var(--accent);
 	}
+	.norm-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.78rem;
+		color: var(--text-dim);
+		cursor: pointer;
+		user-select: none;
+	}
+	.norm-toggle input { margin: 0; }
 	.legend {
 		font-size: 0.78rem;
 		color: var(--text-dim);
 		margin-left: auto;
+	}
+	.num-col {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+	.constraint-col {
+		font-size: 0.7rem;
+		max-width: 60px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.export-wrap {
 		position: relative;
@@ -263,6 +369,11 @@
 	}
 	.export-menu button:hover {
 		background: var(--bg-alt);
+	}
+	.export-menu hr {
+		margin: 0.15rem 0;
+		border: none;
+		border-top: 1px solid var(--border-light);
 	}
 	.legend :global(.mtr_s) { text-decoration: overline; color: var(--text); }
 	.legend .str_s { font-weight: 600; color: var(--text); }

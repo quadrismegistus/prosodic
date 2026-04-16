@@ -4,6 +4,7 @@
 
 	let lineInput = $state('');
 	let parses = $state([]);
+	let parts = $state([]);
 	let lineText = $state('');
 	let loading = $state(false);
 	let error = $state('');
@@ -49,6 +50,7 @@
 			}
 			const res = await parseLine(payload);
 			parses = res.parses || [];
+			parts = res.parts || [];
 			lineText = res.line_text || t;
 			elapsed = res.elapsed || 0;
 			numUnbounded = res.num_unbounded || 0;
@@ -94,6 +96,38 @@
 			<span class="meta">{numUnbounded} unbounded, {parses.length - numUnbounded} bounded ({parses.length} total) in {elapsed.toFixed(2)}s</span>
 		</div>
 
+		{@render parseTable(parses)}
+
+	{:else if parts.length > 0}
+		<div class="line-header">
+			<span class="line-text">{lineText}</span>
+			<span class="meta">{parts.length} parts, {elapsed.toFixed(2)}s</span>
+		</div>
+
+		{#each parts as part, pi}
+			{#if part.parses.length > 0}
+				<div class="part-header">
+					<span class="part-label">Part {pi + 1}</span>
+					<span class="part-text">{part.part_text}</span>
+					<span class="meta">{part.num_sylls}σ, {part.num_unbounded} unbounded, {part.num_parses} total</span>
+				</div>
+				{@render parseTable(part.parses)}
+			{:else if part.num_sylls > 0}
+				<div class="part-header unparsed-part">
+					<span class="part-label">Part {pi + 1}</span>
+					<span class="part-text">{part.part_text}</span>
+					<span class="meta">{part.num_sylls}σ — too long to parse exhaustively</span>
+				</div>
+			{/if}
+		{/each}
+
+	{:else if !loading && lineInput}
+		<div class="empty">Press Enter or click Parse to analyze</div>
+	{:else if !loading}
+		<div class="empty">Click a line in Parse results or type a line above</div>
+	{/if}
+
+	{#snippet parseTable(items)}
 		<div class="table-wrap">
 			<table>
 				<thead>
@@ -106,7 +140,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each parses as p, i}
+					{#each items as p, i}
 						<tr class:best={p.rank === 1} class:bounded={p.is_bounded}>
 							<td class="rank-col">{p.rank}</td>
 							<td class="parse-text">{@html p.parse_html}</td>
@@ -126,11 +160,7 @@
 				</tbody>
 			</table>
 		</div>
-	{:else if !loading && lineInput}
-		<div class="empty">Press Enter or click Parse to analyze</div>
-	{:else if !loading}
-		<div class="empty">Click a line in Parse results or type a line above</div>
-	{/if}
+	{/snippet}
 </div>
 
 <style>
@@ -296,5 +326,26 @@
 		font-size: 0.72rem;
 		color: var(--text-dim);
 		font-style: italic;
+	}
+	.part-header {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		padding: 0.5rem 0 0.25rem;
+		border-bottom: 1px solid var(--border-light);
+		margin-top: 1rem;
+	}
+	.part-label {
+		font-size: 0.72rem;
+		font-weight: 600;
+		color: var(--accent);
+		text-transform: uppercase;
+	}
+	.part-text {
+		font-style: italic;
+		font-size: 0.92rem;
+	}
+	.unparsed-part {
+		opacity: 0.5;
 	}
 </style>

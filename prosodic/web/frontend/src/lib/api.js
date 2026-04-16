@@ -61,7 +61,7 @@ export async function parseStream(data, { onProgress, onRows }) {
 			} else if (event.phase === 'rows' && onRows) {
 				onRows(event.rows);
 			} else if (event.phase === 'done') {
-				meta = { elapsed: event.elapsed, num_lines: event.num_lines };
+				meta = { elapsed: event.elapsed, num_lines: event.num_lines, constraints: event.constraints || [] };
 			}
 		}
 	}

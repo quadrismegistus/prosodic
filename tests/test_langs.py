@@ -152,6 +152,65 @@ def test_no_silent_ipa_drops():
             )
 
 
+def test_espeak_vs_cmu_agreement():
+    """Benchmark: for common English words that have a single CMU
+    pronunciation, the espeak+panphon+syllabify path should agree with
+    CMU on syllable count and stress position. The floor values below
+    are set with margin under the observed baseline so real regressions
+    (e.g., a new silent-drop symbol) fire this test."""
+    from collections import defaultdict
+    lang = Language('en')
+    # load CMU dict, keep words with exactly one pronunciation
+    all_ent = defaultdict(list)
+    cmu_path = os.path.join(
+        os.path.dirname(__file__), '..', 'prosodic', 'langs', 'english',
+        'english.tsv',
+    )
+    with open(cmu_path, encoding='utf-8') as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or '\t' not in ln: continue
+            w, ipa = ln.split('\t', 1)
+            all_ent[w.lower()].append(ipa)
+
+    def stress_pos(sylls):
+        for i, s in enumerate(sylls):
+            if "'" in s or 'ˈ' in s: return i
+        return -1
+
+    syll_ok = stress_ok = tested = 0
+    disagreements = []
+    for w in english_words:
+        wl = w.lower()
+        ipas = all_ent.get(wl, [])
+        if len(ipas) != 1:
+            continue
+        cmu_sylls = ipas[0].split('.')
+        esp_sylls = lang.get_sylls_ipa_l_tts(wl)
+        if not esp_sylls:
+            continue
+        tested += 1
+        if len(cmu_sylls) == len(esp_sylls):
+            syll_ok += 1
+        else:
+            disagreements.append((wl, cmu_sylls, esp_sylls))
+        if stress_pos(cmu_sylls) == stress_pos(esp_sylls):
+            stress_ok += 1
+
+    assert tested >= 800, f"too few words tested: {tested}"
+    syll_pct = syll_ok / tested * 100
+    stress_pct = stress_ok / tested * 100
+    # set floor below baseline (97.8% / 97.4% as of r-colored-schwa fix)
+    assert syll_pct >= 95.0, (
+        f"espeak vs CMU syll-count agreement dropped to {syll_pct:.1f}% "
+        f"(was 97.8%). First 10 disagreements: {disagreements[:10]}"
+    )
+    assert stress_pct >= 95.0, (
+        f"espeak vs CMU stress-position agreement dropped to {stress_pct:.1f}% "
+        f"(was 97.4%)"
+    )
+
+
 def test_every_syllable_has_a_vowel():
     """Every syllable the tokenizer produces should have a vowel nucleus.
     A vowel-less syllable is a symptom of alignment drift between phns and segs."""

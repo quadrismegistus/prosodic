@@ -8,9 +8,13 @@ Prosodic 3.x features a DataFrame-first architecture with vectorized numpy const
 
 Supports Python>=3.9.
 
-## [Demo](https://prosodic.dev/)
+## [Demo](https://prosodic.app)
 
-You can view and use a web app demo of the current Prosodic app at **[prosodic.dev](https://prosodic.dev/)**.
+Try the web app at **[prosodic.app](https://prosodic.app)**. Features:
+- Parse poetry and prose with constraint-satisfaction metrical analysis
+- Five tabs: Parse (results table with sortable columns), Line View (all scansions for a single line), Meter (constraint config), MaxEnt (weight learning), Settings (syntax/language)
+- Data export (CSV/TSV/JSON) with per-constraint violation counts and unbounded averages
+- Prose handling: auto-fallback to linepart parsing for long lines, with optional syntax-based sub-splitting via spaCy
 
 
 ## Performance
@@ -52,15 +56,15 @@ Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) softw
 
 ### Web app
 
-Prosodic has a new GUI (graphical user interface) in a web app. After installing, run:
+Prosodic has a web app GUI. After installing, run:
 
 ```
-prosodic web
+prosodic web                    # production mode
+prosodic web --dev              # auto-reload on Python/Svelte changes
+prosodic web --host 0.0.0.0     # expose to network
 ```
 
-Then navigate to [http://127.0.0.1:8181/](http://127.0.0.1:8181/). It should look like this:
-
-<img width="900" alt="prosodic-web-preview-3" src="https://github.com/user-attachments/assets/d34278fd-a28e-4337-9bcf-8c3c57992bc2">
+Then navigate to [http://127.0.0.1:8181/](http://127.0.0.1:8181/), or visit the live demo at [prosodic.app](https://prosodic.app).
 
 
 ### Python

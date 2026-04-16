@@ -292,6 +292,7 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ Punctuation preserved in parse HTML via render_parse_html(parse, line)
 
 ### Remaining
+- **Parse table design polish** (grid stress view — Hayes-style metrical grid over syllables)
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)
 - **Lazy phoneme construction** (Syllable creates Phoneme objects eagerly; could defer to IPA-on-demand)
 - **Ternary meter identification** (MaxEnt meter.fit works for binary iambic/trochaic but ternary anapestic/dactylic needs ternary-aware constraints or dynamic template matching)

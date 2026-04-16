@@ -186,6 +186,12 @@ class LanguageModel:
             strip=True,
         )
         obj = res[0]
+        # panphon drops ɚ/ɝ from ipa_segs, which causes trailing r-colored
+        # schwas to vanish or to merge into the preceding syllable (riper →
+        # 'ɹaɪpɚ instead of 'ɹaɪ.pɚ). Decompose to ə + ɹ so both segmenter
+        # and syllabiphon see a real vowel in the final syllable.
+        obj = obj.replace("ɚ", "ə ɹ").replace("ɝ", "ˈə ɹ")
+        obj = " ".join(obj.split())
         return obj
 
     @cache

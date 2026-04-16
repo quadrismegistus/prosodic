@@ -1,10 +1,51 @@
 <script>
+	import { parseExport } from '$lib/api.js';
+	import { inputText, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
+	import { Download } from 'lucide-svelte';
+
 	let { rows = [], elapsed = 0, numLines = 0, onLineClick = null } = $props();
 	let viewMode = $state('best');
 	let sortCol = $state(null);
 	let sortAsc = $state(true);
 	let currentPage = $state(1);
 	let pageSize = $state(100);
+	let exporting = $state(false);
+	let exportMenuOpen = $state(false);
+
+	function buildPayload() {
+		const constraints = $zoneWeights
+			? $meterConfig.constraints
+			: $meterConfig.constraints.map(c => {
+				const w = $constraintWeights[c];
+				return (w != null && w !== 1.0) ? `${c}/${w}` : c;
+			});
+		const payload = {
+			text: $inputText,
+			constraints,
+			max_s: $meterConfig.max_s,
+			max_w: $meterConfig.max_w,
+			resolve_optionality: $meterConfig.resolve_optionality,
+			syntax: $settings.syntax,
+			syntax_model: $settings.syntax_model,
+		};
+		if ($zoneWeights) {
+			payload.zone_weights = $zoneWeights;
+			payload.zones = $maxentConfig.zones;
+		}
+		return payload;
+	}
+
+	async function doExport(format) {
+		exportMenuOpen = false;
+		exporting = true;
+		try {
+			await parseExport(buildPayload(), format);
+		} catch (e) {
+			alert(`Export failed: ${e.message}`);
+		} finally {
+			exporting = false;
+		}
+	}
 
 	function toggleSort(col) {
 		if (sortCol === col) {
@@ -60,6 +101,19 @@
 			<button class="toggle-btn" class:active={viewMode === 'unbounded'}
 				onclick={() => { viewMode = 'unbounded'; currentPage = 1; }}>All unbounded</button>
 		</div>
+		<div class="export-wrap">
+			<button class="export-btn" onclick={() => exportMenuOpen = !exportMenuOpen} disabled={exporting} title="Export all unbounded parses">
+				<Download size={14} strokeWidth={1.75} />
+				{exporting ? 'Exporting…' : 'Export'}
+			</button>
+			{#if exportMenuOpen}
+				<div class="export-menu" role="menu">
+					<button onclick={() => doExport('csv')}>CSV</button>
+					<button onclick={() => doExport('tsv')}>TSV</button>
+					<button onclick={() => doExport('json')}>JSON</button>
+				</div>
+			{/if}
+		</div>
 		<span class="legend">
 			<span class="mtr_s">over</span>line = strong &nbsp;
 			<span class="str_s">bold</span> = stressed &nbsp;
@@ -100,9 +154,14 @@
 				{#each pagedRows as row (row.line_num + '-' + row.rank)}
 					<tr class:best={row.rank === 1} class:other={row.rank !== 1} class:clickable={row.rank === 1 && onLineClick}
 						onclick={() => row.rank === 1 && onLineClick && onLineClick(row)}>
-						<td>{row.line_num}</td>
+						<td>
+							{row.line_num}
+							{#if row.num_parts && row.num_parts > 1}
+								<span class="parts-badge" title="Line parsed as {row.num_parts} lineparts">·{row.num_parts}</span>
+							{/if}
+						</td>
 						<td class="parse-text">{@html row.parse_html}</td>
-						<td class="stat">{row.meter_str}</td>
+						<td class="stat meter-cell">{@html row.meter_str}</td>
 						<td class="stat">{row.score}</td>
 						<td class="stat">{row.rank === 1 ? row.num_unbounded : ''}</td>
 					</tr>
@@ -157,6 +216,53 @@
 		font-size: 0.78rem;
 		color: var(--text-dim);
 		margin-left: auto;
+	}
+	.export-wrap {
+		position: relative;
+	}
+	.export-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.25rem 0.6rem;
+		font-size: 0.78rem;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: #fff;
+		color: var(--text);
+		cursor: pointer;
+	}
+	.export-btn:hover:not(:disabled) {
+		background: var(--bg-alt);
+	}
+	.export-btn:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.export-menu {
+		position: absolute;
+		top: calc(100% + 4px);
+		right: 0;
+		background: #fff;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+		z-index: 50;
+		min-width: 80px;
+		display: flex;
+		flex-direction: column;
+	}
+	.export-menu button {
+		padding: 0.4rem 0.75rem;
+		font-size: 0.82rem;
+		text-align: left;
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-family: var(--font);
+	}
+	.export-menu button:hover {
+		background: var(--bg-alt);
 	}
 	.legend :global(.mtr_s) { text-decoration: overline; color: var(--text); }
 	.legend .str_s { font-weight: 600; color: var(--text); }
@@ -252,10 +358,36 @@
 		background: #f0f7ff;
 	}
 
+	.parts-badge {
+		display: inline-block;
+		margin-left: 0.2rem;
+		padding: 1px 5px;
+		font-size: 0.65rem;
+		color: var(--text-dim);
+		background: var(--bg-alt);
+		border-radius: 3px;
+		vertical-align: middle;
+	}
+	:global(.part-sep) {
+		color: var(--text-dim);
+		font-weight: 300;
+		padding: 0 0.3rem;
+	}
+	:global(.unparsed) {
+		color: var(--text-dim);
+		font-style: italic;
+	}
+
 	/* Parse rendering styles (server-rendered HTML) */
 	.parse-text {
 		line-height: 2.2em;
+		white-space: normal;
+		max-width: 700px;
+		min-width: 320px;
+	}
+	.meter-cell {
 		white-space: nowrap;
+		vertical-align: top;
 	}
 	:global(.mtr_s) {
 		text-decoration: overline;

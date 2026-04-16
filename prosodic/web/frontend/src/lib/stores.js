@@ -63,6 +63,18 @@ export const maxentConfig = persisted('prosodic:maxent', {
 // Active tab (persisted so refresh stays on same tab)
 export const activeTab = persisted('prosodic:tab', 'parse');
 
+// Switch tab + sync URL (use instead of setting activeTab directly when you
+// want back/forward to work and the URL to reflect the tab).
+export function goTab(id) {
+	if (browser) {
+		const path = id === 'parse' ? '/' : `/${id}`;
+		if (window.location.pathname !== path) {
+			history.pushState({ tab: id }, '', path);
+		}
+	}
+	activeTab.set(id);
+}
+
 // --- Non-persisted stores ---
 
 export const allConstraints = writable([]);
@@ -81,3 +93,12 @@ export const corporaList = writable([]);
 
 // Selected line for LineView tab
 export const selectedLine = writable(null);  // { line_num, line_text, rows }
+
+// Global settings (Settings tab)
+export const settings = persisted('prosodic:settings', {
+	syntax: false,
+	syntax_model: 'en_core_web_sm',
+	lang: 'en',
+	max_syll: 18,
+	parse_timeout: 30,
+});

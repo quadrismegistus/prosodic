@@ -1,37 +1,15 @@
 <script>
-	let settings = $state(loadSettings());
+	import { settings } from '$lib/stores.js';
 
-	function loadSettings() {
-		try {
-			const v = localStorage.getItem('prosodic:settings');
-			return v ? JSON.parse(v) : defaults();
-		} catch { return defaults(); }
-	}
-
-	function defaults() {
-		return {
+	function reset() {
+		settings.set({
 			syntax: false,
 			syntax_model: 'en_core_web_sm',
 			lang: 'en',
-			max_syll: 14,
+			max_syll: 18,
 			parse_timeout: 30,
-		};
+		});
 	}
-
-	function save() {
-		localStorage.setItem('prosodic:settings', JSON.stringify(settings));
-	}
-
-	function reset() {
-		settings = defaults();
-		save();
-	}
-
-	$effect(() => {
-		// Track all fields to trigger save on any change
-		JSON.stringify(settings);
-		save();
-	});
 </script>
 
 <div class="page">
@@ -45,14 +23,14 @@
 				<span>Enable phrasal stress</span>
 				<span class="desc">Compute phrasal prominence via spaCy dependency parsing (Liberman & Prince 1977). Enables w_prom and s_demoted constraints.</span>
 			</div>
-			<input type="checkbox" bind:checked={settings.syntax} />
+			<input type="checkbox" bind:checked={$settings.syntax} />
 		</label>
 		<label class="config-row">
 			<div>
 				<span>spaCy model</span>
 				<span class="desc">Dependency parse model for phrasal stress</span>
 			</div>
-			<select bind:value={settings.syntax_model}>
+			<select bind:value={$settings.syntax_model}>
 				<option value="en_core_web_sm">en_core_web_sm</option>
 				<option value="en_core_web_md">en_core_web_md</option>
 				<option value="en_core_web_lg">en_core_web_lg</option>
@@ -68,7 +46,7 @@
 				<span>Default language</span>
 				<span class="desc">Language for tokenization and pronunciation lookup</span>
 			</div>
-			<select bind:value={settings.lang}>
+			<select bind:value={$settings.lang}>
 				<option value="en">English</option>
 				<option value="fi">Finnish</option>
 			</select>
@@ -82,14 +60,14 @@
 				<span>Max syllables per parse unit</span>
 				<span class="desc">Lines longer than this are skipped (exponential complexity). Default 14.</span>
 			</div>
-			<input type="number" class="num-input" bind:value={settings.max_syll} min="6" max="30" step="1" />
+			<input type="number" class="num-input" bind:value={$settings.max_syll} min="6" max="30" step="1" />
 		</label>
 		<label class="config-row">
 			<div>
 				<span>Parse timeout (seconds)</span>
 				<span class="desc">Maximum time per line before giving up</span>
 			</div>
-			<input type="number" class="num-input" bind:value={settings.parse_timeout} min="5" max="300" step="5" />
+			<input type="number" class="num-input" bind:value={$settings.parse_timeout} min="5" max="300" step="5" />
 		</label>
 	</section>
 

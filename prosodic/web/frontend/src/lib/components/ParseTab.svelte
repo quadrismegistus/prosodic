@@ -3,7 +3,7 @@
 	import ParseResults from '$lib/components/ParseResults.svelte';
 	import CorpusSelect from '$lib/components/CorpusSelect.svelte';
 	import { parseStream } from '$lib/api.js';
-	import { inputText, meterConfig, constraintWeights, zoneWeights, maxentConfig, parseLoading, activeTab, selectedLine } from '$lib/stores.js';
+	import { inputText, meterConfig, constraintWeights, zoneWeights, maxentConfig, parseLoading, selectedLine, goTab, settings } from '$lib/stores.js';
 
 	let error = $state('');
 	let progress = $state('');
@@ -34,7 +34,9 @@
 				constraints: buildConstraintList(),
 				max_s: $meterConfig.max_s,
 				max_w: $meterConfig.max_w,
-				resolve_optionality: $meterConfig.resolve_optionality
+				resolve_optionality: $meterConfig.resolve_optionality,
+				syntax: $settings.syntax,
+				syntax_model: $settings.syntax_model,
 			};
 			if ($zoneWeights) {
 				payload.zone_weights = $zoneWeights;
@@ -58,25 +60,27 @@
 
 	function handleLineClick(row) {
 		$selectedLine = { line_num: row.line_num, line_text: row.line_text };
-		$activeTab = 'line';
+		goTab('line');
 	}
 </script>
 
 <div class="page">
-	<section class="input-section">
-		<CorpusSelect />
-		<TextInput />
-		<button class="action-btn" onclick={handleParse} disabled={$parseLoading}>
-			{#if $parseLoading}
-				<span class="spinner"></span> {progress || 'Parsing...'}
-			{:else}
-				Parse
-			{/if}
-		</button>
-		<button class="meter-link" onclick={() => $activeTab = 'meter'}>Meter settings</button>
-	</section>
+	<aside class="input-col">
+		<div class="input-sticky">
+			<CorpusSelect />
+			<TextInput />
+			<button class="action-btn" onclick={handleParse} disabled={$parseLoading}>
+				{#if $parseLoading}
+					<span class="spinner"></span> {progress || 'Parsing...'}
+				{:else}
+					Parse
+				{/if}
+			</button>
+			<button class="meter-link" onclick={() => goTab('meter')}>Meter settings</button>
+		</div>
+	</aside>
 
-	<section class="results-section">
+	<section class="results-col">
 		{#if error}
 			<div class="error">{error}</div>
 		{/if}
@@ -90,9 +94,21 @@
 
 <style>
 	.page {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+	.input-col {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+	}
+	.input-sticky {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.results-col {
+		min-width: 0;
 	}
 	.action-btn {
 		width: 100%;
@@ -102,11 +118,11 @@
 		color: #fff;
 		border: none;
 		border-radius: 6px;
-		margin-bottom: 0.25rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
+		cursor: pointer;
 	}
 	.action-btn:hover:not(:disabled) {
 		background: var(--accent-hover);
@@ -121,11 +137,10 @@
 		font-size: 0.78rem;
 		color: var(--text-dim);
 		text-decoration: underline;
-		margin-bottom: 0.5rem;
 		background: none;
 		border: none;
 		cursor: pointer;
-		padding: 0;
+		padding: 0.25rem 0;
 	}
 	.spinner {
 		display: inline-block;
@@ -149,5 +164,17 @@
 		text-align: center;
 		padding: 3rem;
 		font-style: italic;
+	}
+
+	@media (min-width: 1024px) {
+		.page {
+			grid-template-columns: minmax(320px, 380px) 1fr;
+			gap: 1.5rem;
+			align-items: start;
+		}
+		.input-sticky {
+			position: sticky;
+			top: 1rem;
+		}
 	}
 </style>

@@ -68,6 +68,27 @@ export async function parseStream(data, { onProgress, onRows }) {
 	return meta;
 }
 
+export async function parseExport(data, format = 'csv') {
+	const res = await fetch(`${getBase()}/api/parse/export`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ ...data, format }),
+	});
+	if (!res.ok) {
+		const detail = await res.json().catch(() => ({ detail: res.statusText }));
+		throw new Error(detail.detail || res.statusText);
+	}
+	const blob = await res.blob();
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `prosodic-parse.${format}`;
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	URL.revokeObjectURL(url);
+}
+
 export function parseLine(data) {
 	return request('POST', '/api/parse/line', data);
 }

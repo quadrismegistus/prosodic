@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -9,11 +10,28 @@
 	import LineViewTab from '$lib/components/LineViewTab.svelte';
 	import SettingsTab from '$lib/components/SettingsTab.svelte';
 	import { getMeterDefaults } from '$lib/api.js';
-	import { meterConfig, allConstraints, constraintDescriptions, defaultConstraints, constraintWeights, activeTab } from '$lib/stores.js';
+	import { meterConfig, allConstraints, constraintDescriptions, defaultConstraints, constraintWeights, activeTab, goTab } from '$lib/stores.js';
+	import { AlignLeft, FileText, Music, Sigma, Settings as SettingsIcon } from 'lucide-svelte';
+
+	const tabs = [
+		{ id: 'parse', label: 'Parse', icon: FileText },
+		{ id: 'line', label: 'Line', icon: AlignLeft },
+		{ id: 'meter', label: 'Meter', icon: Music },
+		{ id: 'maxent', label: 'MaxEnt', icon: Sigma }
+	];
+	const settingsTab = { id: 'settings', label: 'Settings', icon: SettingsIcon };
+
+	const VALID_TABS = ['parse', 'line', 'meter', 'maxent', 'settings'];
 
 	// Save/restore scroll position per tab
 	const scrollPositions = { parse: 0, meter: 0, maxent: 0, line: 0, settings: 0 };
 	let prevTab = $state($activeTab);
+	let syncingFromUrl = false;
+
+	function tabFromPath(pathname) {
+		const seg = pathname.replace(/^\/+/, '').split('/')[0];
+		return VALID_TABS.includes(seg) ? seg : 'parse';
+	}
 
 	$effect(() => {
 		const tab = $activeTab;
@@ -25,6 +43,19 @@
 	});
 
 	onMount(async () => {
+		// Sync initial tab from URL, not localStorage
+		const urlTab = tabFromPath(window.location.pathname);
+		$activeTab = urlTab;
+		prevTab = urlTab;
+		// Replace current history entry so back doesn't go to blank
+		history.replaceState({ tab: urlTab }, '', window.location.pathname);
+
+		window.addEventListener('popstate', () => {
+			syncingFromUrl = true;
+			$activeTab = tabFromPath(window.location.pathname);
+			syncingFromUrl = false;
+		});
+
 		try {
 			const data = await getMeterDefaults();
 			allConstraints.set(data.all_constraints);
@@ -58,12 +89,17 @@
 <div class="app">
 	<Header />
 	<nav class="top-nav">
-		<button class:active={$activeTab === 'parse'} onclick={() => $activeTab = 'parse'}>Parse</button>
-		<button class:active={$activeTab === 'line'} onclick={() => $activeTab = 'line'}>Line</button>
-		<button class:active={$activeTab === 'meter'} onclick={() => $activeTab = 'meter'}>Meter</button>
-		<button class:active={$activeTab === 'maxent'} onclick={() => $activeTab = 'maxent'}>MaxEnt</button>
+		{#each tabs as t (t.id)}
+			<button class:active={$activeTab === t.id} onclick={() => goTab(t.id)}>
+				<t.icon size={16} strokeWidth={1.75} />
+				<span>{t.label}</span>
+			</button>
+		{/each}
 		<span class="spacer"></span>
-		<button class:active={$activeTab === 'settings'} onclick={() => $activeTab = 'settings'}>Settings</button>
+		<button class:active={$activeTab === settingsTab.id} onclick={() => goTab(settingsTab.id)}>
+			<settingsTab.icon size={16} strokeWidth={1.75} />
+			<span>{settingsTab.label}</span>
+		</button>
 	</nav>
 	<main>
 		<div class="tab-panel" class:hidden={$activeTab !== 'parse'}>
@@ -96,11 +132,14 @@
 		gap: 0;
 		border-bottom: 2px solid var(--border);
 		background: #fff;
-		padding: 0 1rem;
+		padding: 0 1.5rem;
 	}
 	.top-nav button {
-		padding: 0.6rem 1.2rem;
-		font-size: 1rem;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.65rem 1rem;
+		font-size: 0.95rem;
 		color: var(--text-dim);
 		border: none;
 		border-bottom: 2px solid transparent;
@@ -109,6 +148,9 @@
 		background: none;
 		cursor: pointer;
 		font-family: var(--font);
+	}
+	.top-nav button:hover {
+		color: var(--text);
 	}
 	.top-nav button.active {
 		color: var(--text);
@@ -119,10 +161,8 @@
 	}
 	main {
 		flex: 1;
-		max-width: 960px;
 		width: 100%;
-		margin: 0 auto;
-		padding: 1rem;
+		padding: 1rem 1.5rem;
 	}
 	.tab-panel.hidden {
 		display: none;
@@ -135,6 +175,7 @@
 		main {
 			padding: 0.75rem;
 			padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+			max-width: 100%;
 		}
 	}
 </style>

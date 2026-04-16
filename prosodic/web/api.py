@@ -12,7 +12,7 @@ from prosodic.web.models import (
 )
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, Response
 from typing import Optional
 import json
 import asyncio
@@ -34,30 +34,76 @@ def get_text(txt, **kwargs):
     return _text_cache[key]
 
 
-def render_parse_html(parse):
-    """Render a parse as HTML with meter/stress/violation CSS classes."""
-    parts = []
-    last_word_id = None
+def _render_slot(slot):
+    unit = slot.unit
+    mtr = 'mtr_s' if slot.is_prom else 'mtr_w'
+    strs = 'str_s' if unit.is_stressed else 'str_w'
+    viols = list(slot.violset)
+    viol = 'viol_y' if viols else 'viol_n'
+    classes = f'{mtr} {strs} {viol}'
+    if viols:
+        tip = ', '.join(f'*{v}' for v in viols)
+        return f'<span class="{classes}"><span class="tip">{tip}</span>{unit.txt}</span>'
+    return f'<span class="{classes}">{unit.txt}</span>'
+
+
+def render_parse_html(parse, line=None):
+    """Render a parse as HTML with meter/stress/violation CSS classes.
+
+    If `line` is provided, interleaves punctuation tokens so the original
+    surface form is preserved. Otherwise falls back to word-space joining
+    of parsed syllables only.
+    """
+    # Group slots by their containing wordtoken (walk up parent chain
+    # until we find a WordToken — chain is Syllable → SyllableList →
+    # WordForm → WordFormList → WordType → WordTypeList → WordToken).
+    def _find_wordtoken(unit):
+        ent = unit
+        for _ in range(8):
+            ent = getattr(ent, 'parent', None)
+            if ent is None:
+                return None
+            if ent.__class__.__name__ == 'WordToken':
+                return ent
+        return None
+
+    slots_by_wt = {}
+    ordered_wt_ids = []
     for pos in parse.positions:
         for slot in pos.children:
-            unit = slot.unit
-            word_id = None
-            if hasattr(unit, 'parent') and unit.parent is not None:
-                word_id = id(unit.parent)
-            if last_word_id is not None and word_id != last_word_id:
-                parts.append(' ')
-            last_word_id = word_id
+            wt = _find_wordtoken(slot.unit)
+            key = id(wt) if wt is not None else None
+            if key not in slots_by_wt:
+                slots_by_wt[key] = []
+                ordered_wt_ids.append(key)
+            slots_by_wt[key].append(slot)
 
-            mtr = 'mtr_s' if slot.is_prom else 'mtr_w'
-            strs = 'str_s' if unit.is_stressed else 'str_w'
-            viols = list(slot.violset)
-            viol = 'viol_y' if viols else 'viol_n'
-            classes = f'{mtr} {strs} {viol}'
-            if viols:
-                tip = ', '.join(f'*{v}' for v in viols)
-                parts.append(f'<span class="{classes}"><span class="tip">{tip}</span>{unit.txt}</span>')
+    # If we have a line with wordtokens (incl. punctuation), interleave
+    if line is not None and hasattr(line, 'wordtokens'):
+        parts = []
+        for wt in line.wordtokens:
+            txt = wt.txt
+            # preserve any leading whitespace from the original tokenization
+            stripped = txt.lstrip()
+            lead = txt[:len(txt) - len(stripped)]
+            if lead:
+                parts.append(lead)
+            if getattr(wt, 'is_punc', False):
+                parts.append(stripped)
+                continue
+            slots = slots_by_wt.get(id(wt))
+            if slots:
+                parts.extend(_render_slot(s) for s in slots)
             else:
-                parts.append(f'<span class="{classes}">{unit.txt}</span>')
+                parts.append(stripped)
+        return ''.join(parts)
+
+    # Fallback: just join by word boundary using slot-side parents
+    parts = []
+    for i, key in enumerate(ordered_wt_ids):
+        if i > 0:
+            parts.append(' ')
+        parts.extend(_render_slot(s) for s in slots_by_wt[key])
     return ''.join(parts)
 
 
@@ -66,6 +112,157 @@ def _build_meter_kwargs(constraints=None, max_s=2, max_w=2, resolve_optionality=
     if constraints:
         kwargs['constraints'] = constraints
     return kwargs
+
+
+def _syntax_subsplit(linepart, t):
+    """Split an oversized linepart into sub-WordTokenLists at clause boundaries
+    inferred via spaCy's dependency parse. Returns a list of WordTokenList
+    sub-units (or [linepart] if splitting failed/wasn't possible).
+
+    Splits BEFORE tokens with these dep relations: cc, mark, advcl, ccomp,
+    relcl, conj, parataxis, prep (when long).
+    """
+    try:
+        from spacy.tokens import Doc
+        from prosodic.texts.phrasal_stress import _get_nlp
+        from prosodic.words.wordtokenlist import WordTokenList
+    except Exception:
+        return [linepart]
+
+    # Filter out pure-punc tokens for spaCy
+    content_idx = [i for i, wt in enumerate(linepart) if not getattr(wt, 'is_punc', False)]
+    if len(content_idx) < 2:
+        return [linepart]
+    words = [linepart[i].txt.strip() for i in content_idx]
+    if not all(words):
+        return [linepart]
+
+    try:
+        nlp = _get_nlp()
+        spaces = [True] * len(words)
+        spaces[-1] = False
+        doc = Doc(nlp.vocab, words=words, spaces=spaces)
+        for _, proc in nlp.pipeline:
+            doc = proc(doc)
+    except Exception:
+        return [linepart]
+
+    SPLIT_DEPS = {'cc', 'mark', 'advcl', 'ccomp', 'relcl', 'conj', 'parataxis'}
+    # split BEFORE these tokens (in content_idx terms)
+    split_at_content = set()
+    for tok_i, tok in enumerate(doc):
+        if tok_i == 0:
+            continue
+        if tok.dep_ in SPLIT_DEPS:
+            split_at_content.add(tok_i)
+
+    if not split_at_content:
+        return [linepart]
+
+    # Translate content-token splits → linepart-index splits
+    boundaries = sorted(content_idx[i] for i in split_at_content)
+
+    # Build sub-units using all linepart indices, splitting at the boundaries.
+    # Punctuation between content words sticks with the preceding chunk.
+    sub_units = []
+    start = 0
+    for b in boundaries:
+        if b > start:
+            chunk = list(linepart[start:b])
+            if chunk:
+                sub_units.append(WordTokenList(children=chunk, parent=linepart.parent))
+        start = b
+    chunk = list(linepart[start:])
+    if chunk:
+        sub_units.append(WordTokenList(children=chunk, parent=linepart.parent))
+    return sub_units if len(sub_units) > 1 else [linepart]
+
+
+def _long_line_nums(t):
+    """Set of line_nums that exceed MAX_SYLL_IN_PARSE_UNIT syllables.
+
+    Counts canonical (form_idx=0) pronunciation only — variant pronunciations
+    in the syll_df would otherwise inflate the syllable count.
+    """
+    df = getattr(t, '_syll_df', None)
+    if df is None or len(df) == 0:
+        return set()
+    canonical = df[(df['is_punc'] == 0) & (df['form_idx'] == 0)]
+    per_line = canonical.groupby('line_num').size()
+    return set(int(ln) for ln, n in per_line.items() if n > MAX_SYLL_IN_PARSE_UNIT)
+
+
+def _raw_linepart_html(unit):
+    """Render a linepart's raw text (no parse styling) by concatenating
+    its wordtokens — used when the linepart is too short/long to parse."""
+    parts = []
+    for wt in unit:
+        parts.append(wt.txt)
+    return ''.join(parts)
+
+
+def _aggregate_lineparts(line_to_parts, render_html_fn):
+    """Aggregate ordered (linepart, ParseList|None) pairs per line into rows.
+
+    line_to_parts: dict[line_num] -> list of (linepart_unit, parse_list_or_none),
+        in original linepart order. Lineparts without a parse list still get
+        their raw text emitted so no content is silently dropped.
+    """
+    rows = []
+    for line_num, parts in line_to_parts.items():
+        if not parts:
+            continue
+        meter_strs = []
+        html_parts = []  # list of (html_str, is_parsed)
+        total_score = 0.0
+        ambig_product = 1
+        line_text_parts = []
+        n_parsed = 0
+        for unit, pl in parts:
+            line_text_parts.append(unit.txt.strip())
+            bp = pl.best_parse if pl else None
+            if bp is None:
+                # Pure-punctuation lineparts render as plain interstitial text
+                # (no italic, no separator). Content lineparts that couldn't
+                # parse get italic styling so the user sees they were skipped.
+                if unit.num_sylls < 1:
+                    html_parts.append((_raw_linepart_html(unit), 'punc'))
+                else:
+                    meter_strs.append('—')
+                    html_parts.append((f'<span class="unparsed">{_raw_linepart_html(unit)}</span>', 'unparsed'))
+                continue
+            has_zone = hasattr(pl, '_scores') and pl._scores is not None
+            score = float(pl._scores[0]) if has_zone and len(pl._scores) > 0 else bp.score
+            meter_strs.append(bp.meter_str)
+            html_parts.append((render_html_fn(bp, unit), 'parsed'))
+            total_score += score
+            ambig_product *= max(1, pl.num_unbounded)
+            n_parsed += 1
+
+        # Stitch html: each new parsed (or unparsed) clause starts on its own
+        # line within the table row via <br>. Punctuation lineparts attach to
+        # whichever clause they fall after (no break before/after them).
+        out = []
+        seen_clause = False  # has any 'parsed' or 'unparsed' been emitted yet?
+        for h, kind in html_parts:
+            if kind in ('parsed', 'unparsed'):
+                if seen_clause:
+                    out.append('<br>')
+                seen_clause = True
+            out.append(h)
+
+        rows.append({
+            'line_num': int(line_num),
+            'rank': 1,
+            'line_text': ' '.join(line_text_parts),
+            'parse_html': ''.join(out),
+            'meter_str': '<br>'.join(meter_strs),
+            'score': round(total_score, 2),
+            'num_unbounded': ambig_product,
+            'num_parts': len(parts),
+            'num_parts_parsed': n_parsed,
+        })
+    return rows
 
 
 def _normalize_zones(zones):
@@ -154,15 +351,146 @@ def parse_text(req: dict):
     lines = text_str.split('\n')[:linelim]
     text_str = '\n'.join(lines)
     syntax = req.get('syntax', False)
+    syntax_model = req.get('syntax_model') or DEFAULT_SYNTAX_MODEL
     meter_kwargs = _build_meter_kwargs(
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
 
     t0 = time.time()
-    t = get_text(text_str, syntax=syntax)
+    t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
     meter = Meter(**meter_kwargs)
 
     # Apply zone weights from MaxEnt if provided
+    zw = req.get('zone_weights')
+    if zw:
+        meter.zone_weights = zw
+        meter.zones = _normalize_zones(req.get('zones', 3))
+
+    rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
+    elapsed = time.time() - t0
+
+    return {
+        'rows': rows,
+        'elapsed': round(elapsed, 3),
+        'num_lines': num_lines,
+        'prose_mode': prose_mode,
+    }
+
+
+def _parse_and_build_rows(t, meter):
+    """Parse lines + (for any long line) its lineparts. Return combined rows,
+    sorted by line_num, rank. Returns (rows, num_lines, prose_mode_flag).
+    """
+    from prosodic.parsing.vectorized import parse_batch
+
+    long_lnums = _long_line_nums(t)
+    prose_mode = len(long_lnums) > 0
+
+    # Pass 1: parse short lines normally
+    short_lines = [ln for ln in t.lines if ln.num not in long_lnums]
+    if short_lines:
+        meter.parse_unit = 'line'
+        results = parse_batch(short_lines, meter)
+        for i, (wt, pl) in enumerate(results):
+            if pl is None:
+                continue
+            pl.parent = wt
+            wt._parses = pl
+            short_lines[i]._parses = pl
+
+    # Pass 2: for long lines, parse their lineparts (with optional syntax sub-split)
+    from collections import OrderedDict
+    long_lineparts_by_line = OrderedDict()  # line_num -> [(unit, ParseList|None), ...]
+    if long_lnums:
+        raw_lineparts = [lp for lp in t.lineparts if lp[0].line_num in long_lnums]
+        # Expand any over-cap lineparts into syntax-derived sub-units when
+        # spaCy is enabled on the text.
+        use_syntax = getattr(t, '_syntax', False)
+        expanded = []  # list of (line_num, unit)
+        for lp in raw_lineparts:
+            if lp.num_sylls > MAX_SYLL_IN_PARSE_UNIT and use_syntax:
+                subs = _syntax_subsplit(lp, t)
+            else:
+                subs = [lp]
+            for u in subs:
+                expanded.append((lp[0].line_num, u))
+
+        units_to_parse = [u for _, u in expanded]
+        if units_to_parse:
+            meter.parse_unit = 'linepart'
+            lp_results = parse_batch(units_to_parse, meter)
+            for i, (ln, u) in enumerate(expanded):
+                long_lineparts_by_line.setdefault(ln, []).append((u, None))
+            for i, (wt, pl) in enumerate(lp_results):
+                if pl is None:
+                    continue
+                pl.parent = wt
+                wt._parses = pl
+                units_to_parse[i]._parses = pl
+                ln = expanded[i][0]
+                for j, (u_in_list, _) in enumerate(long_lineparts_by_line[ln]):
+                    if u_in_list is units_to_parse[i]:
+                        long_lineparts_by_line[ln][j] = (u_in_list, pl)
+                        break
+
+    rows = []
+    # Short lines: one row per unbounded parse
+    for line in short_lines:
+        pl = getattr(line, '_parses', None)
+        if not pl:
+            continue
+        unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
+        has_zone = hasattr(pl, '_scores') and pl._scores is not None
+        for pi, p in enumerate(unbounded):
+            score = float(pl._scores[pi]) if has_zone and pi < len(pl._scores) else p.score
+            rows.append({
+                'line_num': line.num,
+                'rank': pi + 1,
+                'line_text': line.txt.strip(),
+                'parse_html': render_parse_html(p, line),
+                'meter_str': p.meter_str,
+                'score': round(score, 2),
+                'num_unbounded': pl.num_unbounded,
+            })
+
+    # Long lines: aggregate lineparts into one row per line
+    if long_lineparts_by_line:
+        rows.extend(_aggregate_lineparts(long_lineparts_by_line, render_parse_html))
+
+    rows.sort(key=lambda r: (r['line_num'], r['rank']))
+    num_lines = len({r['line_num'] for r in rows})
+    return rows, num_lines, prose_mode
+
+
+@app.post("/api/parse/export")
+def parse_export(req: dict):
+    """Parse text and return all unbounded parses as CSV or JSON.
+
+    Request body same shape as /api/parse, plus:
+      - format: 'csv' | 'tsv' | 'json' (default 'csv')
+    Returns one row per (line_num, parse_rank, syllable).
+    """
+    text_str = req.get('text', '').strip()
+    if not text_str:
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    fmt = (req.get('format') or 'csv').lower()
+    if fmt not in ('csv', 'tsv', 'json'):
+        raise HTTPException(status_code=400, detail="format must be csv, tsv, or json")
+
+    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.meter import Meter
+
+    lines = text_str.split('\n')[:linelim]
+    text_str = '\n'.join(lines)
+    syntax = req.get('syntax', False)
+    syntax_model = req.get('syntax_model') or DEFAULT_SYNTAX_MODEL
+    meter_kwargs = _build_meter_kwargs(
+        req.get('constraints'), req.get('max_s', 2),
+        req.get('max_w', 2), req.get('resolve_optionality', True))
+
+    t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
+    meter = Meter(**meter_kwargs)
     zw = req.get('zone_weights')
     if zw:
         meter.zone_weights = zw
@@ -175,31 +503,111 @@ def parse_text(req: dict):
         wt._parses = pl
         text_lines[i]._parses = pl
 
+    # One row per line: best-parse stats + averaged-across-unbounded stats.
+    # "_unbounded" columns = sum across all unbounded parses / sum of syllables
+    # across all unbounded parses (per-syllable average).
+    def _viols_for_parse(p):
+        """Return dict of {constraint: total_violations, ...} and total count."""
+        counts = {}
+        total = 0
+        num_sylls = 0
+        for pos in p.positions:
+            for slot in pos.children:
+                num_sylls += 1
+                for k, v in (getattr(slot, 'viold', {}) or {}).items():
+                    try:
+                        vi = int(v)
+                    except (TypeError, ValueError):
+                        vi = 0
+                    counts[k] = counts.get(k, 0) + vi
+                    total += vi
+        return counts, total, num_sylls
+
     rows = []
+    all_viol_keys = set()
     for line in text_lines:
         pl = line._parses
         if not pl:
             continue
         unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
+        if not unbounded:
+            continue
         has_zone_scores = hasattr(pl, '_scores') and pl._scores is not None
-        for pi, p in enumerate(unbounded):
-            score = float(pl._scores[pi]) if has_zone_scores and pi < len(pl._scores) else p.score
-            rows.append({
-                'line_num': line.num,
-                'rank': pi + 1,
-                'line_text': line.txt.strip(),
-                'parse_html': render_parse_html(p),
-                'meter_str': p.meter_str,
-                'score': round(score, 2),
-                'num_unbounded': pl.num_unbounded,
-            })
-    elapsed = time.time() - t0
+        bp = unbounded[0]  # best (lowest-score) unbounded
+        bp_score = float(pl._scores[0]) if has_zone_scores and len(pl._scores) > 0 else bp.score
+        bp_viols, bp_total, bp_sylls = _viols_for_parse(bp)
 
-    return {
-        'rows': rows,
-        'elapsed': round(elapsed, 3),
-        'num_lines': len([l for l in text_lines if l._parses]),
-    }
+        # Aggregate across all unbounded
+        unb_viols_sum = {}
+        unb_total_sum = 0
+        unb_sylls_sum = 0
+        unb_score_sum = 0.0
+        for pi, p in enumerate(unbounded):
+            pscore = float(pl._scores[pi]) if has_zone_scores and pi < len(pl._scores) else p.score
+            counts, total, nsylls = _viols_for_parse(p)
+            unb_score_sum += pscore
+            unb_total_sum += total
+            unb_sylls_sum += nsylls
+            for k, v in counts.items():
+                unb_viols_sum[k] = unb_viols_sum.get(k, 0) + v
+
+        row = {
+            'line_num': line.num,
+            'line_text': line.txt.strip(),
+            'num_sylls': bp_sylls,
+            'ambiguity': pl.num_unbounded,
+            'meter_str': bp.meter_str,
+            'score': round(bp_score, 3),
+            'num_viols': bp_total,
+            'score_unbounded': round(unb_score_sum / unb_sylls_sum, 4) if unb_sylls_sum else 0,
+            'num_viols_unbounded': round(unb_total_sum / unb_sylls_sum, 4) if unb_sylls_sum else 0,
+        }
+        for k, v in bp_viols.items():
+            col = f'*{k}'
+            row[col] = v
+            all_viol_keys.add(k)
+        for k, v in unb_viols_sum.items():
+            col = f'*{k}_unbounded'
+            row[col] = round(v / unb_sylls_sum, 4) if unb_sylls_sum else 0
+            all_viol_keys.add(k)
+        rows.append(row)
+
+    base_cols = [
+        'line_num', 'line_text', 'num_sylls', 'ambiguity', 'meter_str',
+        'score', 'num_viols', 'score_unbounded', 'num_viols_unbounded',
+    ]
+    viol_cols = []
+    for k in sorted(all_viol_keys):
+        viol_cols.append(f'*{k}')
+        viol_cols.append(f'*{k}_unbounded')
+    cols = base_cols + viol_cols
+    # Fill missing violation columns with 0 for consistency
+    for r in rows:
+        for c in viol_cols:
+            r.setdefault(c, 0)
+
+    if fmt == 'json':
+        return Response(
+            content=json.dumps(rows),
+            media_type='application/json',
+            headers={'Content-Disposition': 'attachment; filename="prosodic-parse.json"'},
+        )
+
+    # CSV / TSV
+    import csv as _csv
+    import io
+    buf = io.StringIO()
+    delim = '\t' if fmt == 'tsv' else ','
+    writer = _csv.DictWriter(buf, fieldnames=cols, delimiter=delim, extrasaction='ignore')
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+    filename = f"prosodic-parse.{fmt}"
+    return Response(
+        content=buf.getvalue(),
+        media_type='text/tab-separated-values' if fmt == 'tsv' else 'text/csv',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
 
 
 @app.post("/api/parse/stream")
@@ -215,6 +623,7 @@ async def parse_stream(req: dict):
     input_lines = text_str.split('\n')[:linelim]
     text_str = '\n'.join(input_lines)
     syntax = req.get('syntax', False)
+    syntax_model = req.get('syntax_model') or DEFAULT_SYNTAX_MODEL
     meter_kwargs = _build_meter_kwargs(
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
@@ -227,7 +636,7 @@ async def parse_stream(req: dict):
         await asyncio.sleep(0)
 
         t0 = time.time()
-        t = get_text(text_str, syntax=syntax)
+        t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
 
         yield sse({'phase': 'progress', 'message': f'Parsing {len(t.lines)} lines...'})
         await asyncio.sleep(0)
@@ -238,39 +647,22 @@ async def parse_stream(req: dict):
             meter.zone_weights = zw
             meter.zones = _normalize_zones(req.get('zones', 3))
 
-        text_lines = t.lines
-        results = parse_batch(text_lines, meter)
-        for i, (wt, pl) in enumerate(results):
-            pl.parent = wt
-            wt._parses = pl
-            text_lines[i]._parses = pl
+        long_lnums = _long_line_nums(t)
+        if long_lnums:
+            yield sse({'phase': 'progress',
+                       'message': f'{len(long_lnums)} long line(s) detected — parsing by linepart...'})
+            await asyncio.sleep(0)
+
+        rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
 
         parse_elapsed = time.time() - t0
         yield sse({'phase': 'progress', 'message': f'Parsed in {parse_elapsed:.1f}s. Rendering...'})
         await asyncio.sleep(0)
 
-        # Stream rows in batches
-        num_lines = 0
-        batch = []
         BATCH_SIZE = 50
-        for line in text_lines:
-            pl = line._parses
-            if not pl:
-                continue
-            num_lines += 1
-            unbounded = pl.unbounded if hasattr(pl, 'unbounded') else []
-            has_zone_scores = hasattr(pl, '_scores') and pl._scores is not None
-            for pi, p in enumerate(unbounded):
-                score = float(pl._scores[pi]) if has_zone_scores and pi < len(pl._scores) else p.score
-                batch.append({
-                    'line_num': line.num,
-                    'rank': pi + 1,
-                    'line_text': line.txt.strip(),
-                    'parse_html': render_parse_html(p),
-                    'meter_str': p.meter_str,
-                    'score': round(score, 2),
-                    'num_unbounded': pl.num_unbounded,
-                })
+        batch = []
+        for r in rows:
+            batch.append(r)
             if len(batch) >= BATCH_SIZE:
                 yield sse({'phase': 'rows', 'rows': batch})
                 batch = []
@@ -280,7 +672,7 @@ async def parse_stream(req: dict):
             yield sse({'phase': 'rows', 'rows': batch})
 
         elapsed = time.time() - t0
-        yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines})
+        yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -460,6 +852,7 @@ def parse_line(req: dict):
         raise HTTPException(status_code=400, detail="Empty line")
 
     syntax = req.get('syntax', False)
+    syntax_model = req.get('syntax_model') or DEFAULT_SYNTAX_MODEL
     meter_kwargs = _build_meter_kwargs(
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
@@ -518,7 +911,7 @@ def parse_line(req: dict):
                         viol_counts[v] = viol_counts.get(v, 0) + 1
             parses.append({
                 'rank': pi + 1,
-                'parse_html': render_parse_html(p),
+                'parse_html': render_parse_html(p, line),
                 'meter_str': p.meter_str,
                 'score': score,
                 'is_bounded': is_bounded,
@@ -555,7 +948,7 @@ else:
         return {"message": "Frontend not built. Run 'npm run build' in prosodic/web/frontend/"}
 
 
-def main(port=None, host=None, debug=True, **kwargs):
+def main(port=None, host=None, debug=True, dev=False, **kwargs):
     import uvicorn
     if port is None:
         port = 8181
@@ -563,7 +956,72 @@ def main(port=None, host=None, debug=True, **kwargs):
         host = "127.0.0.1"
     if debug:
         logmap.enable()
+
+    if dev:
+        _run_dev(host=host, port=port, debug=debug)
+        return
+
     uvicorn.run(app, host=host, port=port, log_level="info" if debug else "warning")
+
+
+def _run_dev(host, port, debug):
+    """Run backend with uvicorn --reload + frontend vite build --watch.
+
+    Runs uvicorn in a subprocess (rather than uvicorn.run in-process) so its
+    multiprocessing-based reloader starts from a clean entry point on macOS.
+    """
+    import atexit
+    import signal
+    import subprocess
+
+    frontend_dir = os.path.join(PATH_WEB, "frontend")
+    procs = []
+
+    def cleanup(*_):
+        for p in procs:
+            if p.poll() is None:
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+        for p in procs:
+            try:
+                p.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                p.kill()
+
+    atexit.register(cleanup)
+    signal.signal(signal.SIGINT, lambda *_: (cleanup(), sys.exit(0)))
+    signal.signal(signal.SIGTERM, lambda *_: (cleanup(), sys.exit(0)))
+
+    if os.path.isdir(os.path.join(frontend_dir, "node_modules")):
+        print("[dev] starting frontend watcher (vite build --watch)...")
+        procs.append(subprocess.Popen(
+            ["npm", "run", "build", "--", "--watch"],
+            cwd=frontend_dir,
+        ))
+    else:
+        print(
+            "[dev] frontend/node_modules not found — skipping frontend watch. "
+            f"Run `cd {frontend_dir} && npm install` to enable."
+        )
+
+    print("[dev] starting uvicorn with --reload (watching prosodic/)...")
+    uvicorn_proc = subprocess.Popen([
+        sys.executable, "-m", "uvicorn",
+        "prosodic.web.api:app",
+        "--host", str(host),
+        "--port", str(port),
+        "--reload",
+        "--reload-dir", PATH_PROSODIC,
+        "--log-level", "info" if debug else "warning",
+    ])
+    procs.append(uvicorn_proc)
+
+    try:
+        uvicorn_proc.wait()
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":

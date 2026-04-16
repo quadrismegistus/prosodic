@@ -21,6 +21,7 @@ pytest --cov=prosodic --cov-report=xml    # with coverage
 # Web app (FastAPI + uvicorn)
 prosodic web                              # starts on 127.0.0.1:8181
 prosodic web --host 0.0.0.0 --port 5111  # custom host/port
+prosodic web --dev                        # auto-reload backend + frontend on change
 
 # Frontend dev (requires Node.js)
 cd prosodic/web/frontend && npm install && npm run dev  # dev server with hot reload
@@ -115,7 +116,7 @@ Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Use
 
 ### Centralized Imports (`imports.py`)
 
-All global constants, paths, and shared imports live in `imports.py`. Modules import from it via `from prosodic.imports import *`. Key constants: `DEFAULT_LANG`, `DEFAULT_METER`, `METER_MAX_S`, `METER_MAX_W`, `MAX_SYLL_IN_PARSE_UNIT`.
+All global constants, paths, and shared imports live in `imports.py`. Modules import from it via `from prosodic.imports import *`. Key constants: `DEFAULT_LANG`, `DEFAULT_METER`, `METER_MAX_S`, `METER_MAX_W`, `MAX_SYLL_IN_PARSE_UNIT` (18, bumped from 14 — 50ms GPU, 2.1s CPU at this cap). `SEPS_PHRASE` defines punctuation that triggers linepart boundaries; ASCII `--` is normalized to em-dash in the tokenizer.
 
 ### Memory Management
 
@@ -129,17 +130,21 @@ All global constants, paths, and shared imports live in `imports.py`. Modules im
 FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobile-friendly.
 
 **Backend** (`api.py`):
-- FastAPI JSON API with endpoints: `/api/meter/defaults`, `/api/parse`, `/api/parse/stream` (SSE), `/api/parse/line` (single-line detail), `/api/maxent/fit`, `/api/maxent/fit-annotations`, `/api/maxent/reparse`, `/api/corpora`, `/api/corpora/read`
+- FastAPI JSON API with endpoints: `/api/meter/defaults`, `/api/parse`, `/api/parse/stream` (SSE), `/api/parse/line` (single-line detail), `/api/parse/export` (CSV/TSV/JSON download), `/api/maxent/fit`, `/api/maxent/fit-annotations`, `/api/maxent/reparse`, `/api/corpora`, `/api/corpora/read`
 - `/api/parse/line` returns ALL scansions (unbounded + bounded) for a single line, with per-position violation details and violation summaries
-- `render_parse_html(parse)` returns server-rendered HTML strings with CSS classes for meter/stress/violation styling (same as v2, fast for large texts)
+- `render_parse_html(parse, line)` returns server-rendered HTML strings with CSS classes for meter/stress/violation styling. When `line` is passed, walks `line.wordtokens` to interleave punctuation tokens. Parent chain from syllable to WordToken is 5 hops (use `_find_wordtoken` which walks up by class name).
 - `serialize_parse()` removed — Pydantic SlotData objects were too slow for 10K+ line texts
 - Serves built SvelteKit frontend from `static_build/` directory
 - Streaming parse results via SSE in batches of 50 lines for progressive rendering
 - MaxEnt accuracy computed from trainer: `_compute_accuracy()` checks predicted vs observed best scansion per line
+- **Prose handling**: `_long_line_nums(t)` detects lines > `MAX_SYLL_IN_PARSE_UNIT` (canonical syllable count via `form_idx==0`). Those lines fall back to linepart-level parsing; short lines stay on the normal line path. `_aggregate_lineparts()` stitches linepart results back per line_num with `<br>` line breaks in both Parse and Meter columns. Punctuation-only lineparts (0 sylls) render as plain interstitial text; content lineparts that couldn't parse (>MAX) render as italic. When `syntax=True`, oversized lineparts are further sub-split at dep-tree clause boundaries via `_syntax_subsplit()`.
+- **Data export**: `/api/parse/export` returns per-line CSV/TSV/JSON with best-parse stats + `_unbounded` averages (sum across unbounded / total syllables). Frontend Export button with format dropdown in ParseResults.
+- **`--dev` mode**: `prosodic web --dev` runs uvicorn as subprocess with `--reload` watching `prosodic/` + spawns `npm run build --watch` for frontend. Uvicorn run as subprocess (not in-process) to avoid macOS multiprocessing spawn issues.
+- **Settings store**: shared persisted store in `stores.js`; `syntax`/`syntax_model` flow through to all parse endpoints. Settings tab reads/writes the shared store.
 
 **Frontend** (`frontend/` → builds to `static_build/`):
 - SvelteKit with `adapter-static`, builds to ~180KB (replaced 13MB of jQuery/DataTables)
-- **Component-based tabs** (not routes): all tabs stay mounted, preserving state and scroll position across tab switches. Active tab stored in `activeTab` persisted store.
+- **Component-based tabs with URL routing**: all tabs stay mounted, preserving state and scroll position. `goTab()` uses `pushState` for shallow routing (`/`, `/line`, `/meter`, `/maxent`, `/settings`) — back/forward works. Active tab in `activeTab` persisted store. Lucide icons on both top nav (desktop) and bottom nav (mobile).
 - 5 tabs: **Parse** (text input + corpus dropdown + results), **Line** (single-line detail with all scansions), **Meter** (constraint config + weights), **MaxEnt** (file upload + training), **Settings** (global options)
 - Parse tab: clicking a line navigates to Line View with full scansion detail (unbounded + bounded)
 - Line View: text input for manual line entry, shows all scansions sorted by score with violation badges, bounded parses grayed out
@@ -277,6 +282,14 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ Remote client API (`prosodic.client`): same interface as local, delegates to HTTP API, save/load support
 - ✅ Desktop app scaffold (Tauri v2 + PyInstaller sidecar + bundled espeak)
 - ✅ Server deployment config (nginx + certbot + systemd + setup script for prosodic.app, co-hosts with lltk.net)
+- ✅ prosodic.app deployed LIVE (2026-04-14, app3 branch, 65.109.29.122)
+- ✅ Prose handling: auto-fallback to linepart parsing for long lines, syntax-based sub-splitting
+- ✅ Dash normalization (`--` → em-dash in tokenizer)
+- ✅ MAX_SYLL_IN_PARSE_UNIT bumped 14 → 18 (50ms GPU, 2.1s CPU)
+- ✅ Data export (CSV/TSV/JSON per-line with best + unbounded averages)
+- ✅ URL routing with back/forward, lucide icons, two-column desktop layout
+- ✅ `--dev` flag for prosodic web (auto-reload backend + frontend)
+- ✅ Punctuation preserved in parse HTML via render_parse_html(parse, line)
 
 ### Remaining
 - **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)
@@ -284,3 +297,7 @@ Run `python -m prosodic.profiling` to regenerate.
 - **Ternary meter identification** (MaxEnt meter.fit works for binary iambic/trochaic but ternary anapestic/dactylic needs ternary-aware constraints or dynamic template matching)
 - **Vectorize unres_within/unres_across** (last two constraints still use per-line Python loops in evaluate_constraints_batch; could be lifted to numpy with word boundary masking)
 - **Rhyme detection threshold tuning** (RHYME_MAX_DIST=0 default is binary; gradient rime_distance works but no calibrated threshold for "slant rhyme" vs "not rhyme")
+- **Grid stress view** (Hayes-style metrical grid visualization for Line View tab — asterisks stacked over syllables by stress level)
+- **Auto-deploy on push** (GitHub Actions SSH workflow: `git pull && pip install -e . && npm run build && systemctl restart prosodic`)
+- **GPU/CPU dispatch optimization** (CPU wins for n<11 single-line, GPU wins for n≥11 or batched; auto-dispatch by total work per nsylls group)
+- **Merge app3 → master** (app3 currently ahead; deployment is on app3 branch)

@@ -46,8 +46,9 @@ VENV=/opt/prosodic/.venv
 if [ ! -d "$VENV" ]; then
     sudo -u prosodic python3 -m venv "$VENV"
 fi
-sudo -u prosodic "$VENV/bin/pip" install --upgrade pip
-sudo -u prosodic "$VENV/bin/pip" install -e "$REPO"
+cd /opt/prosodic
+sudo -Hu prosodic "$VENV/bin/pip" install --upgrade pip
+sudo -Hu prosodic "$VENV/bin/pip" install -e "$REPO"
 
 # --- Build frontend ---
 cd "$REPO/prosodic/web/frontend"

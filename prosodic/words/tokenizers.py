@@ -21,6 +21,12 @@ def get_sent_tokenizer() -> Callable[[str], List[str]]:
     return nltk.sent_tokenize
 
 
+def normalize_dashes(txt: str) -> str:
+    """Normalize ASCII double/triple hyphens to em-dash so they trigger
+    phrase splitting (SEPS_PHRASE includes — but not --)."""
+    return re.sub(r'-{2,}', '\u2014', txt)
+
+
 def tokenize_sents_txt(txt: str, **y: Any) -> List[str]:
     """
     Tokenize text into sentences.
@@ -32,6 +38,7 @@ def tokenize_sents_txt(txt: str, **y: Any) -> List[str]:
     Returns:
         A list of sentences.
     """
+    txt = normalize_dashes(txt)
     sents = get_sent_tokenizer()(txt)
     lastoffset = 0
     osents = []

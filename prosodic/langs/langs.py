@@ -1,6 +1,30 @@
 from ..imports import *
 
 
+# Normalize IPA symbols that panphon's ipa_segs drops or mis-segments.
+# Each replacement must be a sequence of phonemes panphon can segment,
+# joined by spaces so it stays consistent with espeak's space-delimited
+# output. Without this, the zip between espeak phns and panphon segs in
+# syllabify_ipa misaligns and segments vanish (see tests/test_ipa_norm).
+_ESPEAK_IPA_NORMALIZATIONS = [
+    # (a) characters panphon's ipa_segs drops entirely — silent segment loss
+    ("ɚ", "ə ɹ"),   # unstressed r-colored schwa (riper, teacher)
+    ("ɝ", "ˈə ɹ"),  # stressed r-colored schwa (defined for completeness;
+                    # en-us espeak uses ɜː instead)
+    ("ᵻ", "ɪ"),     # barred-i: reduced /ɪ/ in roses, hunted, wishes
+    # (b) hiatus tokens espeak emits as one phn but represent two syllables
+    # (split so syllabiphon can find the boundary between them)
+    ("ˈaɪə", "ˈaɪ ə"), ("ˌaɪə", "ˌaɪ ə"), ("aɪə", "aɪ ə"),
+    ("ˈiə",  "ˈi ə"),  ("ˌiə",  "ˌi ə"),  ("iə",  "i ə"),
+]
+
+
+def _normalize_espeak_ipa(ipa_str):
+    for src, tgt in _ESPEAK_IPA_NORMALIZATIONS:
+        ipa_str = ipa_str.replace(src, tgt)
+    return " ".join(ipa_str.split())
+
+
 class LanguageModel:
     pronunciation_dictionary_filename = ""
     pronunciation_dictionary_filename_sep = "\t"
@@ -186,12 +210,7 @@ class LanguageModel:
             strip=True,
         )
         obj = res[0]
-        # panphon drops ɚ/ɝ from ipa_segs, which causes trailing r-colored
-        # schwas to vanish or to merge into the preceding syllable (riper →
-        # 'ɹaɪpɚ instead of 'ɹaɪ.pɚ). Decompose to ə + ɹ so both segmenter
-        # and syllabiphon see a real vowel in the final syllable.
-        obj = obj.replace("ɚ", "ə ɹ").replace("ɝ", "ˈə ɹ")
-        obj = " ".join(obj.split())
+        obj = _normalize_espeak_ipa(obj)
         return obj
 
     @cache

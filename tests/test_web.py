@@ -6,131 +6,145 @@ import random
 import threading
 from multiprocessing import Process, Queue
 
-# -- Flask test client tests (no browser needed) --
+# -- FastAPI test client tests (no browser needed) --
 
 @pytest.fixture(scope="module")
-def flask_app():
-    from prosodic.web.app import app
-    app.config['TESTING'] = True
-    return app
+def client():
+    from fastapi.testclient import TestClient
+    from prosodic.web.api import app
+    return TestClient(app)
 
 
-def test_index_route(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.get('/')
-        assert resp.status_code == 200
-        html = resp.data.decode('utf-8')
-        assert '<title>Prosodic</title>' in html
-        assert 'inputtext' in html
-        assert 'htmx' in html
+def test_meter_defaults(client):
+    resp = client.get('/api/meter/defaults')
+    assert resp.status_code == 200
+    data = resp.json()
+    assert 'all_constraints' in data
+    assert 'constraint_descriptions' in data
+    assert 'defaults' in data
+    assert 'constraints' in data['defaults']
+    assert 'max_s' in data['defaults']
+    assert 'max_w' in data['defaults']
+    for cname in ['w_stress', 's_unstress', 'w_peak', 'unres_across', 'unres_within', 'foot_size']:
+        assert cname in data['all_constraints'], f"Constraint {cname} not found"
 
 
-def test_index_has_constraints(flask_app):
-    with flask_app.test_client() as client:
-        html = client.get('/').data.decode('utf-8')
-        for cname in ['w_stress', 's_unstress', 'w_peak', 'unres_across', 'unres_within', 'foot_size']:
-            assert f'*{cname}' in html, f"Constraint {cname} not found in HTML"
+def test_meter_defaults_descriptions(client):
+    resp = client.get('/api/meter/defaults')
+    data = resp.json()
+    descs = data['constraint_descriptions']
+    assert isinstance(descs, dict)
+    assert len(descs) > 0
+    assert 'w_stress' in descs
 
 
-def test_index_has_meter_config(flask_app):
-    with flask_app.test_client() as client:
-        html = client.get('/').data.decode('utf-8')
-        assert 'max_w' in html
-        assert 'max_s' in html
-        assert 'resolve_optionality' in html
-
-
-def test_index_has_tabs(flask_app):
-    with flask_app.test_client() as client:
-        html = client.get('/').data.decode('utf-8')
-        assert 'Parse' in html
-        assert 'MaxEnt' in html
-        assert 'maxent-config' in html
-
-
-def test_index_has_default_text(flask_app):
-    with flask_app.test_client() as client:
-        html = client.get('/').data.decode('utf-8')
-        assert 'From fairest creatures we desire increase' in html
-
-
-def _default_form_data(**overrides):
+def _default_parse_data(**overrides):
     data = {
         'text': 'To be or not to be',
-        '*w_stress': '1',
-        '*s_unstress': '1',
-        '*w_peak': '1',
-        '*unres_across': '1',
-        '*unres_within': '1',
-        '*foot_size': '1',
-        'max_s': '2',
-        'max_w': '2',
-        'resolve_optionality': '1',
+        'constraints': ['w_stress', 's_unstress', 'w_peak', 'unres_across', 'unres_within', 'foot_size'],
+        'max_s': 2,
+        'max_w': 2,
+        'resolve_optionality': True,
     }
     data.update(overrides)
     return data
 
 
-def test_parse_route(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/parse', data=_default_form_data())
-        assert resp.status_code == 200
-        html = resp.data.decode('utf-8')
-        assert 'parse-text' in html
-        assert 'Parsed' in html
+def test_parse_route(client):
+    resp = client.post('/api/parse', json=_default_parse_data())
+    assert resp.status_code == 200
+    data = resp.json()
+    assert 'rows' in data
+    assert 'elapsed' in data
+    assert 'num_lines' in data
+    assert data['num_lines'] >= 1
+    assert len(data['rows']) >= 1
 
 
-def test_parse_multiline(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/parse', data=_default_form_data(
-            text='Shall I compare thee to a summers day\nThou art more lovely and more temperate'
-        ))
-        assert resp.status_code == 200
-        html = resp.data.decode('utf-8')
-        assert 'Parsed 2 lines' in html
+def test_parse_row_structure(client):
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text='The world is too much with us'
+    ))
+    data = resp.json()
+    assert len(data['rows']) >= 1
+    row = data['rows'][0]
+    assert 'parse_html' in row
+    assert 'meter_str' in row
+    assert 'score' in row
+    assert 'rank' in row
+    assert 'num_unbounded' in row
+    assert 'mtr_s' in row['parse_html'] or 'mtr_w' in row['parse_html']
 
 
-def test_parse_html_has_classes(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/parse', data=_default_form_data(
-            text='The world is too much with us'
-        ))
-        html = resp.data.decode('utf-8')
-        assert 'mtr_s' in html or 'mtr_w' in html
-        assert 'str_s' in html or 'str_w' in html
+def test_parse_multiline(client):
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text='Shall I compare thee to a summers day\nThou art more lovely and more temperate'
+    ))
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data['num_lines'] == 2
 
 
-def test_parse_empty_text(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/parse', data=_default_form_data(text=''))
-        assert resp.status_code == 200
-        assert b'No text' in resp.data
+def test_parse_empty_text(client):
+    resp = client.post('/api/parse', json=_default_parse_data(text=''))
+    assert resp.status_code == 400
 
 
-def test_maxent_fit(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/maxent/fit', data={
-            'text': 'From fairest creatures we desire increase\nThat thereby beautys rose might never die',
-            'target_scansion': 'wswswswsws',
-            'zones': '3',
-            'regularization': '100',
-            '*w_stress': '1',
-            '*s_unstress': '1',
-            '*w_peak': '1',
-            'max_s': '2',
-            'max_w': '2',
-        })
-        assert resp.status_code == 200
-        html = resp.data.decode('utf-8')
-        assert 'Trained' in html
-        assert 'weights-table' in html or 'No weights' in html
+def test_maxent_fit(client):
+    resp = client.post('/api/maxent/fit', json={
+        'text': 'From fairest creatures we desire increase\nThat thereby beautys rose might never die',
+        'target_scansion': 'wswswswsws',
+        'zones': 3,
+        'regularization': 100,
+        'constraints': ['w_stress', 's_unstress', 'w_peak'],
+        'max_s': 2,
+        'max_w': 2,
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert 'weights' in data
+    assert 'elapsed' in data
+    assert 'config' in data
+    assert isinstance(data['weights'], list)
 
 
-def test_maxent_fit_no_text(flask_app):
-    with flask_app.test_client() as client:
-        resp = client.post('/maxent/fit', data={'text': ''})
-        assert resp.status_code == 200
-        assert b'No text' in resp.data
+def test_maxent_fit_accuracy(client):
+    resp = client.post('/api/maxent/fit', json={
+        'text': 'From fairest creatures we desire increase\nThat thereby beautys rose might never die',
+        'target_scansion': 'wswswswsws',
+        'zones': 3,
+        'regularization': 100,
+        'constraints': ['w_stress', 's_unstress', 'w_peak'],
+        'max_s': 2,
+        'max_w': 2,
+    })
+    data = resp.json()
+    assert 'accuracy' in data
+    assert 'num_lines' in data
+    assert 'num_matched' in data
+    assert 'log_likelihood' in data
+    assert isinstance(data['accuracy'], float)
+    assert 0 <= data['accuracy'] <= 1
+
+
+def test_corpora_list(client):
+    resp = client.get('/api/corpora')
+    assert resp.status_code == 200
+    data = resp.json()
+    assert 'files' in data
+    names = [f['name'] for f in data['files']]
+    assert any('shakespeare' in n for n in names)
+
+
+def test_maxent_fit_no_text(client):
+    resp = client.post('/api/maxent/fit', json={'text': ''})
+    assert resp.status_code == 400
+
+
+def test_static_files(client):
+    resp = client.get('/')
+    assert resp.status_code == 200
+    assert 'Prosodic' in resp.text
 
 
 # -- Selenium browser tests (skip if no browser available) --
@@ -140,9 +154,10 @@ PORT = random.randint(5111, 5211)
 BASE_URL = f"http://localhost:{PORT}"
 
 def _run_app(q):
-    from prosodic.web.app import app
+    import uvicorn
+    from prosodic.web.api import app
     def start_server():
-        app.run(port=PORT, debug=False)
+        uvicorn.run(app, port=PORT, log_level="warning")
     server_thread = threading.Thread(target=start_server)
     server_thread.start()
     q.put("Server started")

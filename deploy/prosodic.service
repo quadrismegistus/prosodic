@@ -1,0 +1,31 @@
+# systemd service for prosodic web app
+# Install:
+#   cp prosodic.service /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now prosodic
+
+[Unit]
+Description=Prosodic metrical parser web app
+After=network.target
+
+[Service]
+Type=simple
+User=prosodic
+Group=prosodic
+WorkingDirectory=/opt/prosodic
+ExecStart=/opt/prosodic/.venv/bin/python -m uvicorn prosodic.web.api:app --host 127.0.0.1 --port 8181
+Restart=on-failure
+RestartSec=5
+
+# Env
+Environment=PATH=/opt/prosodic/.venv/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/prosodic
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

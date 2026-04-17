@@ -1,0 +1,1 @@
+import"../chunks/Bzak7iHL.js";import"../chunks/69_IOA4Y.js";import{p as a,o as s,a as e,s as p,b as r}from"../chunks/lMnkE9e3.js";import{i as n,a as i}from"../chunks/B_nmIT1f.js";import{g as m}from"../chunks/D2aKyncn.js";function b(c,o){a(o,!1);const[u,t]=p();s(()=>{r(i,"maxent"),m("/",{replaceState:!0})}),n(),e(),t()}export{b as component};

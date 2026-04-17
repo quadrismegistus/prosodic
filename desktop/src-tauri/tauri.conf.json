@@ -1,0 +1,43 @@
+{
+  "productName": "Prosodic",
+  "version": "0.1.0",
+  "identifier": "com.prosodic.app",
+  "build": {
+    "frontendDist": "../../prosodic/web/static_build",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "cd ../prosodic/web/frontend && npm run build",
+    "beforeDevCommand": ""
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Prosodic — Metrical Parser",
+        "width": 1100,
+        "height": 750,
+        "minWidth": 400,
+        "minHeight": 500,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://127.0.0.1:* http://localhost:*"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": ["sidecar/.gitkeep"],
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
+  }
+}

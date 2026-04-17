@@ -87,6 +87,151 @@ def test_english():
         assert wtype.syllables
         assert wtype.phonemes
 
+def test_normalize_espeak_ipa():
+    """The normalizer fixes IPA tokens that panphon's ipa_segs drops
+    or that espeak bundles into one token but span two syllables."""
+    from prosodic.langs.langs import _normalize_espeak_ipa
+    # silent-drop class: ɚ, ɝ, ᵻ
+    assert _normalize_espeak_ipa("ɹ ˈaɪ p ɚ") == "ɹ ˈaɪ p ə ɹ"
+    assert _normalize_espeak_ipa("ɹ ˈoʊ z ᵻ z") == "ɹ ˈoʊ z ɪ z"
+    assert _normalize_espeak_ipa("b ɝ d") == "b ˈə ɹ d"
+    # hiatus-class: aɪə, iə and their stress variants
+    assert _normalize_espeak_ipa("s ˈaɪə n s") == "s ˈaɪ ə n s"
+    assert _normalize_espeak_ipa("m æ m ˈeɪ l iə n") == "m æ m ˈeɪ l i ə n"
+    # idempotent
+    clean = "t ˈɛ s t"
+    assert _normalize_espeak_ipa(clean) == clean
+
+
+def test_syllabify_known_bugs():
+    """Regression tests for words that used to syllabify incorrectly
+    due to panphon/espeak/syllabiphon interactions."""
+    lang = Language('en')
+    # r-colored schwa: riper must be 2 sylls with ˈɹaɪ.pəɹ
+    sylls = lang.get_sylls_ipa_l_tts('riper')
+    assert len(sylls) == 2, f"riper should be disyllabic, got {sylls}"
+    assert "ɹ" in sylls[1], f"riper's final syllable should contain ɹ, got {sylls}"
+    assert "ə" in sylls[1]
+    # deeper, super: ɚ used to be dropped entirely (1 syll, no ɹ)
+    for w in ['deeper', 'super', 'teacher', 'mother', 'over']:
+        s = lang.get_sylls_ipa_l_tts(w)
+        assert len(s) == 2, f"{w}: expected 2 sylls, got {s}"
+        assert "ɹ" in s[-1], f"{w}: final syll should contain ɹ, got {s}"
+    # ᵻ (barred-i): these used to lose their final consonant too
+    for w, expected_n in [('roses', 2), ('hunted', 2), ('wanted', 2), ('wishes', 2)]:
+        s = lang.get_sylls_ipa_l_tts(w)
+        assert len(s) == expected_n, f"{w}: expected {expected_n} sylls, got {s}"
+    # hiatus: aɪə / iə used to collapse to one syll
+    for w, expected_n in [('science', 2), ('zion', 2), ('lion', 2), ('quiet', 2),
+                           ('defiance', 3), ('prescient', 3)]:
+        s = lang.get_sylls_ipa_l_tts(w)
+        assert len(s) == expected_n, f"{w}: expected {expected_n} sylls, got {s}"
+
+
+def test_no_silent_ipa_drops():
+    """For a set of common words, no phn token emitted by espeak should
+    vanish at the panphon stage. This is the invariant violated by ɚ/ɝ/ᵻ
+    (and any future such symbol)."""
+    from prosodic.lib.syllabiphon.syllabify import Syllabify
+    lang = Language('en')
+    syl = Syllabify()
+    # Variety: plurals (ᵻ), -er words (ɚ), hiatus (aɪə/iə), stress
+    probe = ['teacher', 'riper', 'roses', 'hunted', 'wishes', 'science',
+             'zion', 'quiet', 'media', 'serial', 'inhabited', 'convinces',
+             'differences', 'bird', 'mother', 'river', 'never']
+    for w in probe:
+        ipa = lang.get_sylls_ipa_str_tts(w)
+        phns = ipa.split()
+        # every phn must contribute at least one segment to panphon's segs
+        for p in phns:
+            pc = p.replace('ˈ', '').replace('ˌ', '')
+            segs = syl.ft.ipa_segs(pc)
+            assert segs, (
+                f"word={w!r} ipa={ipa!r}: phn {p!r} is invisible to panphon "
+                f"(no ipa_segs) — this is the class of bug that loses sylls"
+            )
+
+
+def test_espeak_vs_cmu_agreement():
+    """Benchmark: for common English words that have a single CMU
+    pronunciation, the espeak+panphon+syllabify path should agree with
+    CMU on syllable count and stress position. The floor values below
+    are set with margin under the observed baseline so real regressions
+    (e.g., a new silent-drop symbol) fire this test."""
+    from collections import defaultdict
+    lang = Language('en')
+    # load CMU dict, keep words with exactly one pronunciation
+    all_ent = defaultdict(list)
+    cmu_path = os.path.join(
+        os.path.dirname(__file__), '..', 'prosodic', 'langs', 'english',
+        'english.tsv',
+    )
+    with open(cmu_path, encoding='utf-8') as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or '\t' not in ln: continue
+            w, ipa = ln.split('\t', 1)
+            all_ent[w.lower()].append(ipa)
+
+    def stress_pos(sylls):
+        for i, s in enumerate(sylls):
+            if "'" in s or 'ˈ' in s: return i
+        return -1
+
+    syll_ok = stress_ok = tested = 0
+    disagreements = []
+    for w in english_words:
+        wl = w.lower()
+        ipas = all_ent.get(wl, [])
+        if len(ipas) != 1:
+            continue
+        cmu_sylls = ipas[0].split('.')
+        esp_sylls = lang.get_sylls_ipa_l_tts(wl)
+        if not esp_sylls:
+            continue
+        tested += 1
+        if len(cmu_sylls) == len(esp_sylls):
+            syll_ok += 1
+        else:
+            disagreements.append((wl, cmu_sylls, esp_sylls))
+        if stress_pos(cmu_sylls) == stress_pos(esp_sylls):
+            stress_ok += 1
+
+    assert tested >= 800, f"too few words tested: {tested}"
+    syll_pct = syll_ok / tested * 100
+    stress_pct = stress_ok / tested * 100
+    # set floor below baseline (97.8% / 97.4% as of r-colored-schwa fix)
+    assert syll_pct >= 95.0, (
+        f"espeak vs CMU syll-count agreement dropped to {syll_pct:.1f}% "
+        f"(was 97.8%). First 10 disagreements: {disagreements[:10]}"
+    )
+    assert stress_pct >= 95.0, (
+        f"espeak vs CMU stress-position agreement dropped to {stress_pct:.1f}% "
+        f"(was 97.4%)"
+    )
+
+
+def test_every_syllable_has_a_vowel():
+    """Every syllable the tokenizer produces should have a vowel nucleus.
+    A vowel-less syllable is a symptom of alignment drift between phns and segs."""
+    from prosodic.words import Phoneme
+    lang = Language('en')
+    probe = ['teacher', 'riper', 'roses', 'hunted', 'wishes', 'science',
+             'zion', 'defiance', 'media', 'serial', 'mammalian', 'ironwork',
+             'inhabited', 'immaterial']
+    for w in probe:
+        sylls = lang.get_sylls_ipa_l_tts(w)
+        assert sylls, f"{w}: no syllables produced"
+        for i, s in enumerate(sylls):
+            clean = s.replace("'", "").replace("`", "")
+            has_vowel = any(
+                Phoneme(txt=ch).is_vowel is True for ch in clean if ch.isalpha()
+            )
+            assert has_vowel, (
+                f"{w}: syll {i} ({s!r}) has no vowel nucleus — sylls={sylls}"
+            )
+
+
 def test_stresses():
     # Test sylls_ipa_l_has_stress
     assert sylls_ipa_l_has_stress(["'maɪ"])

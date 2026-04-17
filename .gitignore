@@ -2,6 +2,10 @@
 
 flask_session
 
+# SvelteKit frontend dev artifacts
+prosodic/web/frontend/node_modules/
+prosodic/web/frontend/.svelte-kit/
+
 # C extensions
 *.so
 
@@ -77,3 +81,7 @@ prosodic/lib/panphon/doc
 venv*
 profile_output*
 .venv
+# Rust/Tauri desktop build artifacts
+desktop/target/
+desktop/src-tauri/sidecar/prosodic-server*
+desktop/src-tauri/gen/

@@ -115,6 +115,8 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     nsyll_groups = defaultdict(list)
     for ln, (feats, sylls, has_ambig, _) in line_data.items():
         nsylls = len(feats["stressed"])
+        if nsylls > MAX_SYLL_IN_PARSE_UNIT:
+            continue  # too long to parse exhaustively; skip
         nsyll_groups[nsylls].append(ln)
 
     results = {}
@@ -308,6 +310,9 @@ def parse_batch(parse_units, meter, syll_df=None):
             feats = extract_features(wt)
 
         nsylls = len(feats["stressed"])
+        if nsylls > MAX_SYLL_IN_PARSE_UNIT:
+            all_features.append(None)
+            continue
         sylls = feats["sylls"]
         groups[nsylls].append((idx, wt, feats, sylls))
         all_features.append(feats)

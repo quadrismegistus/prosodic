@@ -7,3 +7,4 @@ quartodoc
 selenium
 snakeviz
 nbformat
+httpx

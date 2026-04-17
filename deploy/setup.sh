@@ -38,7 +38,7 @@ REPO=/opt/prosodic/repo
 if [ -d "$REPO/.git" ]; then
     cd "$REPO" && sudo -u prosodic git pull
 else
-    sudo -u prosodic git clone -b app3 https://github.com/quadrismegistus/prosodic.git "$REPO"
+    sudo -u prosodic git clone https://github.com/quadrismegistus/prosodic.git "$REPO"
 fi
 
 # --- Python venv ---

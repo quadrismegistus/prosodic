@@ -43,4 +43,30 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           python -m build
-          twine upload dist/*
+          twine upload --skip-existing dist/*
+
+  deploy:
+    name: "Deploy to prosodic.app"
+    needs: [tests]
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: SSH and update
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd /opt/prosodic/repo
+            sudo -u prosodic git fetch origin
+            sudo -u prosodic git checkout master
+            sudo -u prosodic git pull origin master
+            sudo -u prosodic /opt/prosodic/.venv/bin/pip install -e . --quiet
+            cd prosodic/web/frontend
+            sudo -u prosodic npm install --no-audit --no-fund --silent
+            sudo -u prosodic npm run build
+            systemctl restart prosodic
+            sleep 3
+            curl -f -s -o /dev/null http://127.0.0.1:8181/ && echo "health check: OK"

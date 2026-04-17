@@ -362,125 +362,128 @@ class TextModel(Entity):
         chunks = []
         constraint_names = None
 
-        for _meter_key, line_results in self._line_parse_results.items():
-            for line_num in sorted(line_results.keys()):
-                pl = line_results[line_num]
-                sylls = getattr(pl, '_sylls', None)
-                viols = getattr(pl, '_all_viols', None)
-                if not sylls or viols is None:
-                    continue
-                N = len(sylls)
-                if N == 0:
-                    continue
+        # use only the most recent meter's results — mixing constraint sets
+        # across meters would break the shared violation columns
+        latest_key = next(reversed(self._line_parse_results))
+        line_results = self._line_parse_results[latest_key]
+        for line_num in sorted(line_results.keys()):
+            pl = line_results[line_num]
+            sylls = getattr(pl, '_sylls', None)
+            viols = getattr(pl, '_all_viols', None)
+            if not sylls or viols is None:
+                continue
+            N = len(sylls)
+            if N == 0:
+                continue
 
-                unbounded_mask = pl._unbounded_mask
-                all_scores = pl._all_scores
-                unb_idx = pl._unbounded_indices
+            unbounded_mask = pl._unbounded_mask
+            all_scores = pl._all_scores
+            unb_idx = pl._unbounded_indices
 
-                if len(unb_idx) == 0 and mode != 'all':
-                    continue
+            if len(unb_idx) == 0 and mode != 'all':
+                continue
 
-                # rank among unbounded (1-indexed, -1 sentinel for bounded)
-                S_total = len(unbounded_mask)
-                rank_of = np.full(S_total, -1, dtype=np.int32)
-                if len(unb_idx) > 0:
-                    ub_sorted = unb_idx[np.argsort(pl._scores)]
-                    rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
-                    best_idx = int(ub_sorted[0])
-                else:
-                    best_idx = -1
+            # rank among unbounded (1-indexed, -1 sentinel for bounded)
+            S_total = len(unbounded_mask)
+            rank_of = np.full(S_total, -1, dtype=np.int32)
+            if len(unb_idx) > 0:
+                ub_sorted = unb_idx[np.argsort(pl._scores)]
+                rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
+                best_idx = int(ub_sorted[0])
+            else:
+                best_idx = -1
 
-                if mode == 'best':
-                    parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
-                elif mode == 'unbounded':
-                    parse_indices = unb_idx[np.argsort(pl._scores)]
-                else:
-                    parse_indices = np.argsort(all_scores)
+            if mode == 'best':
+                parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
+            elif mode == 'unbounded':
+                parse_indices = unb_idx[np.argsort(pl._scores)]
+            else:
+                parse_indices = np.argsort(all_scores)
 
-                P = len(parse_indices)
-                if P == 0:
-                    continue
+            P = len(parse_indices)
+            if P == 0:
+                continue
 
-                if constraint_names is None:
-                    constraint_names = list(pl._constraint_names)
+            if constraint_names is None:
+                constraint_names = list(pl._constraint_names)
 
-                # Scansion-derived features: (S, N) arrays.
-                # meter_val is 's'/'w' from meter_vals bool; fall back to scansion list.
-                mv_arr = getattr(pl, '_meter_vals', None)
-                pi_arr = getattr(pl, '_position_ids', None)
-                ps_arr = getattr(pl, '_position_sizes', None)
-                if mv_arr is None or pi_arr is None or ps_arr is None:
-                    from ..parsing.vectorized import encode_scansions
-                    mv_arr, pi_arr, ps_arr = encode_scansions(pl._all_scansions, N)
+            # Scansion-derived features: (S, N) arrays.
+            # meter_val is 's'/'w' from meter_vals bool; fall back to scansion list.
+            mv_arr = getattr(pl, '_meter_vals', None)
+            pi_arr = getattr(pl, '_position_ids', None)
+            ps_arr = getattr(pl, '_position_sizes', None)
+            if mv_arr is None or pi_arr is None or ps_arr is None:
+                from ..parsing.vectorized import encode_scansions
+                mv_arr, pi_arr, ps_arr = encode_scansions(pl._all_scansions, N)
 
-                sel_mv = mv_arr[parse_indices]       # (P, N) bool
-                sel_pi = pi_arr[parse_indices]       # (P, N) int
-                sel_ps = ps_arr[parse_indices]       # (P, N) int
+            sel_mv = mv_arr[parse_indices]       # (P, N) bool
+            sel_pi = pi_arr[parse_indices]       # (P, N) int
+            sel_ps = ps_arr[parse_indices]       # (P, N) int
 
-                PN = P * N
+            PN = P * N
 
-                # Parse-level columns broadcast over N syllables
-                parse_idx_col = np.repeat(parse_indices.astype(np.int32), N)
-                parse_score_col = np.repeat(all_scores[parse_indices].astype(np.float64), N)
-                is_bounded_col = np.repeat(~unbounded_mask[parse_indices], N)
-                is_best_col = np.repeat(parse_indices == best_idx, N)
-                parse_rank_col = np.repeat(rank_of[parse_indices], N)
-                line_num_col = np.full(PN, int(line_num), dtype=np.int32)
+            # Parse-level columns broadcast over N syllables
+            parse_idx_col = np.repeat(parse_indices.astype(np.int32), N)
+            parse_score_col = np.repeat(all_scores[parse_indices].astype(np.float64), N)
+            is_bounded_col = np.repeat(~unbounded_mask[parse_indices], N)
+            is_best_col = np.repeat(parse_indices == best_idx, N)
+            parse_rank_col = np.repeat(rank_of[parse_indices], N)
+            line_num_col = np.full(PN, int(line_num), dtype=np.int32)
 
-                # Syll-level columns tiled across P parses
-                line_syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
-                row_idx = getattr(pl, '_syll_row_idx', None)
-                if row_idx is not None:
-                    r_arr = np.asarray(row_idx)
-                    word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
-                    form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
-                    syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
-                else:
-                    word_num_col = np.full(PN, -1, dtype=np.int32)
-                    form_idx_col = np.zeros(PN, dtype=np.int32)
-                    syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
+            # Syll-level columns tiled across P parses
+            line_syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
+            row_idx = getattr(pl, '_syll_row_idx', None)
+            if row_idx is not None:
+                r_arr = np.asarray(row_idx)
+                word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
+                form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
+                syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
+            else:
+                word_num_col = np.full(PN, -1, dtype=np.int32)
+                form_idx_col = np.zeros(PN, dtype=np.int32)
+                syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
 
-                syll_txt_arr = np.array(
-                    [getattr(s, 'txt', '') or '' for s in sylls], dtype=object,
-                )
-                syll_ipa_arr = np.array(
-                    [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object,
-                )
-                is_stressed_arr = np.array(
-                    [bool(s.is_stressed) for s in sylls], dtype=bool,
-                )
-                syll_txt_col = np.tile(syll_txt_arr, P)
-                syll_ipa_col = np.tile(syll_ipa_arr, P)
-                is_stressed_col = np.tile(is_stressed_arr, P)
+            syll_txt_arr = np.array(
+                [getattr(s, 'txt', '') or '' for s in sylls], dtype=object,
+            )
+            syll_ipa_arr = np.array(
+                [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object,
+            )
+            is_stressed_arr = np.array(
+                [bool(s.is_stressed) for s in sylls], dtype=bool,
+            )
+            syll_txt_col = np.tile(syll_txt_arr, P)
+            syll_ipa_col = np.tile(syll_ipa_arr, P)
+            is_stressed_col = np.tile(is_stressed_arr, P)
 
-                # Flatten (P, N) -> (P*N,)
-                meter_val_col = np.where(sel_mv.ravel(), 's', 'w')
-                pos_idx_col = sel_pi.ravel().astype(np.int32)
-                pos_size_col = sel_ps.ravel().astype(np.int32)
+            # Flatten (P, N) -> (P*N,)
+            meter_val_col = np.where(sel_mv.ravel(), 's', 'w')
+            pos_idx_col = sel_pi.ravel().astype(np.int32)
+            pos_size_col = sel_ps.ravel().astype(np.int32)
 
-                # Violations: viols[parse_indices] -> (P, N, C) -> (P*N, C)
-                sel_viols = viols[parse_indices].reshape(PN, -1).astype(np.int8)
+            # Violations: viols[parse_indices] -> (P, N, C) -> (P*N, C)
+            sel_viols = viols[parse_indices].reshape(PN, -1).astype(np.int8)
 
-                chunks.append({
-                    'line_num': line_num_col,
-                    'word_num': word_num_col,
-                    'form_idx': form_idx_col,
-                    'syll_idx': syll_idx_col,
-                    'line_syll_idx': line_syll_idx_col,
-                    'parse_idx': parse_idx_col,
-                    'parse_rank': parse_rank_col,
-                    'parse_score': parse_score_col,
-                    'is_best': is_best_col,
-                    'is_bounded': is_bounded_col,
-                    'pos_idx': pos_idx_col,
-                    'pos_size': pos_size_col,
-                    'meter_val': meter_val_col,
-                    'syll_txt': syll_txt_col,
-                    'syll_ipa': syll_ipa_col,
-                    'is_stressed': is_stressed_col,
-                    '_viols': sel_viols,
-                    '_c_names': pl._constraint_names,
-                })
+            chunks.append({
+                'line_num': line_num_col,
+                'word_num': word_num_col,
+                'form_idx': form_idx_col,
+                'syll_idx': syll_idx_col,
+                'line_syll_idx': line_syll_idx_col,
+                'parse_idx': parse_idx_col,
+                'parse_rank': parse_rank_col,
+                'parse_score': parse_score_col,
+                'is_best': is_best_col,
+                'is_bounded': is_bounded_col,
+                'pos_idx': pos_idx_col,
+                'pos_size': pos_size_col,
+                'meter_val': meter_val_col,
+                'syll_txt': syll_txt_col,
+                'syll_ipa': syll_ipa_col,
+                'is_stressed': is_stressed_col,
+                '_viols': sel_viols,
+                '_c_names': pl._constraint_names,
+            })
 
         if not chunks:
             return pd.DataFrame()

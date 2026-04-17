@@ -213,14 +213,16 @@ class TestParsedDf:
         assert pdf['parse_rank'].max() >= 1
 
     def test_get_parses_df_modes(self):
-        t = TextModel("From fairest creatures we desire increase")
+        # sonnet ensures at least one line has bounded parses, so 'all' is
+        # strictly larger than 'unbounded' and contains is_bounded=True rows.
+        t = TextModel(sonnet)
         best = t.get_parses_df(mode='best')
         unb = t.get_parses_df(mode='unbounded')
         allp = t.get_parses_df(mode='all')
-        assert len(best) <= len(unb) <= len(allp)
+        assert len(best) < len(unb) < len(allp)
         assert best['is_best'].all()
         assert not unb['is_bounded'].any()
-        assert allp['is_bounded'].any() or len(allp) == len(unb)
+        assert allp['is_bounded'].any()
 
     def test_parsed_df_no_entities(self):
         t = TextModel("From fairest creatures we desire increase")

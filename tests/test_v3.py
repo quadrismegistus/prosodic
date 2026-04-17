@@ -183,8 +183,44 @@ class TestParsedDf:
         t = TextModel("From fairest creatures we desire increase")
         pdf = t.parsed_df
         assert 'is_stressed' in pdf.columns
-        assert 'is_prom' in pdf.columns
-        assert 'score' in pdf.columns
+        assert 'parse_score' in pdf.columns
+        assert 'parse_rank' in pdf.columns
+        assert 'is_best' in pdf.columns
+        assert 'is_bounded' in pdf.columns
+
+    def test_parsed_df_join_keys(self):
+        t = TextModel("From fairest creatures we desire increase")
+        pdf = t.parsed_df
+        for col in ('line_num', 'word_num', 'form_idx', 'syll_idx', 'line_syll_idx'):
+            assert col in pdf.columns
+        # parsed.parquet joins cleanly to syll.parquet
+        sdf = t.df
+        best = pdf[pdf['is_best']]
+        merged = best.merge(
+            sdf[['line_num', 'word_num', 'form_idx', 'syll_idx', 'syll_ipa']],
+            on=['line_num', 'word_num', 'form_idx', 'syll_idx'],
+            suffixes=('', '_df'),
+        )
+        assert len(merged) == len(best)
+        assert (merged['syll_ipa'] == merged['syll_ipa_df']).all()
+
+    def test_parsed_df_default_unbounded(self):
+        t = TextModel("From fairest creatures we desire increase")
+        pdf = t.parsed_df
+        # default mode is 'unbounded' — all rows should be non-bounded
+        assert not pdf['is_bounded'].any()
+        # multiple unbounded parses exist for most lines
+        assert pdf['parse_rank'].max() >= 1
+
+    def test_get_parses_df_modes(self):
+        t = TextModel("From fairest creatures we desire increase")
+        best = t.get_parses_df(mode='best')
+        unb = t.get_parses_df(mode='unbounded')
+        allp = t.get_parses_df(mode='all')
+        assert len(best) <= len(unb) <= len(allp)
+        assert best['is_best'].all()
+        assert not unb['is_bounded'].any()
+        assert allp['is_bounded'].any() or len(allp) == len(unb)
 
     def test_parsed_df_no_entities(self):
         t = TextModel("From fairest creatures we desire increase")
@@ -203,6 +239,19 @@ class TestParsedDf:
         t = TextModel(sonnet)
         pdf = t.parsed_df
         assert pdf['line_num'].nunique() == 14
+
+    def test_save_parsed_parquet_gzip(self):
+        import tempfile, os
+        t = TextModel("From fairest creatures we desire increase")
+        with tempfile.TemporaryDirectory() as d:
+            path = t.save(d)
+            pq = os.path.join(path, 'parsed.parquet')
+            assert os.path.exists(pq)
+            # parquet with gzip codec still loads cleanly
+            df = pd.read_parquet(pq)
+            assert len(df) > 0
+            assert 'word_num' in df.columns
+            assert not df['is_bounded'].any()  # default mode is unbounded
 
 
 # --- Save / Load ---
@@ -224,12 +273,44 @@ class TestSaveLoad:
     def test_meta_json_contents(self):
         t = TextModel("hello world")
         path = t.save(os.path.join(self.tmpdir, "test2"))
+        import json, gzip
+        with open(os.path.join(path, "meta.json")) as f:
+            meta = json.load(f)
+        assert meta['lang'] == "en"
+        assert 'num_lines' in meta
+        assert 'saved_at' in meta
+        assert meta['save_parses'] == 'unbounded'
+        # text stored separately, not inlined
+        assert 'txt' not in meta
+        assert meta['text_file'].endswith('.gz')
+        with gzip.open(os.path.join(path, meta['text_file']), 'rb') as f:
+            assert f.read().decode('utf-8') == "hello world"
+
+    def test_meta_json_meter(self):
+        t = TextModel("From fairest creatures we desire increase")
+        path = t.save(os.path.join(self.tmpdir, "test2b"))
         import json
         with open(os.path.join(path, "meta.json")) as f:
             meta = json.load(f)
-        assert meta['txt'] == "hello world"
-        assert meta['lang'] == "en"
-        assert 'num_lines' in meta
+        m = meta['meter']
+        assert 'constraints' in m
+        assert 'w_stress' in m['constraints']
+        assert isinstance(m['constraints']['w_stress'], float)
+        assert m['max_s'] == 2
+        assert m['max_w'] == 2
+        assert m['parse_unit'] == 'line'
+
+    def test_meta_json_zone_weights(self):
+        # meter.fit populates zones + zone_weights; these should round-trip
+        t = TextModel(sonnet)
+        t.meter.fit(t, 'wswswswsws', zones=3)
+        path = t.save(os.path.join(self.tmpdir, "test2c"))
+        import json
+        with open(os.path.join(path, "meta.json")) as f:
+            meta = json.load(f)
+        assert meta['meter']['zones'] == 3
+        assert 'zone_weights' in meta['meter']
+        assert len(meta['meter']['zone_weights']) > 0
 
     def test_load_returns_textmodel(self):
         t = TextModel("From fairest creatures we desire increase")

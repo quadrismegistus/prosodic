@@ -208,6 +208,12 @@ class Entity(UserList):
         Returns:
             Any: The value of the attribute.
         """
+        # Dunder / private names (e.g. IPython's canary, __reduce__, _foo) must
+        # raise AttributeError rather than silently returning None, or
+        # introspection tools break and pickle/copy flows get confused.
+        if attr.startswith("_"):
+            raise AttributeError(attr)
+
         attr = self._rename_attr(attr)
 
         try:
@@ -261,6 +267,9 @@ class Entity(UserList):
             if res is not None:
                 self.__dict__[attr] = res
                 return res
+            # Preserve legacy behavior: non-underscore attrs fall through to
+            # None so `obj.missing_thing` stays falsy. (Underscored names are
+            # already handled above.)
 
     # @cache
     def get_list(self, list_type: str):

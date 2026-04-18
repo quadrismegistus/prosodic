@@ -113,13 +113,25 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
 
     # --- Group by nsylls and process ---
     nsyll_groups = defaultdict(list)
+    results = {}
+    oversized = []
     for ln, (feats, sylls, has_ambig, _) in line_data.items():
         nsylls = len(feats["stressed"])
         if nsylls > MAX_SYLL_IN_PARSE_UNIT:
-            continue  # too long to parse exhaustively; skip
+            oversized.append((ln, nsylls))
+            results[ln] = ParseList([], parse_unit=meter.parse_unit)
+            continue
         nsyll_groups[nsylls].append(ln)
+    if oversized:
+        unit_name = line_col.split('_')[0]
+        tail = "; falling back to linepart parsing" if unit_name == 'line' else ""
+        log.warning(
+            f"{len(oversized)} {unit_name}(s) exceed MAX_SYLL_IN_PARSE_UNIT="
+            f"{MAX_SYLL_IN_PARSE_UNIT} and were not parsed "
+            f"(max={max(n for _, n in oversized)} sylls){tail}"
+        )
 
-    results = {}
+
     constraint_names = list(meter.constraints.keys())
 
     for nsylls, line_nums in nsyll_groups.items():
@@ -150,6 +162,9 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                 pl = LazyParseList(
                     None, meter, scansions, all_viols_4d[i], constraint_index,
                     unbounded_masks[i], line_data[ln][1], parse_unit=meter.parse_unit,
+                    syll_row_idx=line_data[ln][3],
+                    meter_vals=meter_vals, position_ids=position_ids,
+                    position_sizes=position_sizes,
                 )
                 pl._unit_num = int(ln)
                 results[ln] = pl
@@ -219,22 +234,24 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                 d_viol_sums = d_viols_4d.sum(axis=2)
                 d_masks = compute_bounding_batch(d_viol_sums)
                 for i, item in enumerate(items):
-                    diff_results[id(item)] = (d_viols_4d[i], d_masks[i], wscans)
+                    diff_results[id(item)] = (d_viols_4d[i], d_masks[i], wscans,
+                                              wmv, wpi, wps)
 
             # Phase 4: pick best form per ambig line
-            # collect all candidates per line
-            line_candidates = defaultdict(list)  # ln -> [(viols, unbounded, scansions, rows)]
+            # ln -> [(viols, unbounded, scansions, rows, mv, pi, ps)]
+            line_candidates = defaultdict(list)
 
             for i, (ln, fi, rows) in enumerate(same_nsylls_meta):
                 line_candidates[ln].append((
-                    same_nsylls_viols[i], ambig_unbounded[i], scansions, rows
+                    same_nsylls_viols[i], ambig_unbounded[i], scansions, rows,
+                    meter_vals, position_ids, position_sizes,
                 ))
 
             for item in diff_nsylls_items:
                 ln, fi, rows, feats, wnsylls = item
                 if id(item) in diff_results:
-                    v, unb, ws = diff_results[id(item)]
-                    line_candidates[ln].append((v, unb, ws, rows))
+                    v, unb, ws, mv, pi_, ps = diff_results[id(item)]
+                    line_candidates[ln].append((v, unb, ws, rows, mv, pi_, ps))
 
             constraint_weights = meter.constraints
             weight_arr = np.array([constraint_weights.get(c, 1) for c in constraint_names])
@@ -243,7 +260,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                 candidates = line_candidates.get(ln, [])
                 best_result = None
                 best_score = float('inf')
-                for viols, unbounded_mask, cand_scansions, rows in candidates:
+                for viols, unbounded_mask, cand_scansions, rows, mv, pi_, ps in candidates:
                     unb_idx = np.where(unbounded_mask)[0]
                     if len(unb_idx) == 0:
                         continue
@@ -262,6 +279,8 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                         best_result = LazyParseList(
                             None, meter, cand_scansions, viols, ci_use,
                             unbounded_mask, sylls, parse_unit=meter.parse_unit,
+                            syll_row_idx=rows,
+                            meter_vals=mv, position_ids=pi_, position_sizes=ps,
                         )
                 pl = best_result if best_result else ParseList([], parse_unit=meter.parse_unit)
                 pl._unit_num = int(ln)
@@ -900,7 +919,8 @@ class LazyParseList:
     """
 
     def __init__(self, wordtokens, meter, scansions, viols, constraint_index,
-                 unbounded_mask, sylls, parse_unit="line"):
+                 unbounded_mask, sylls, parse_unit="line", syll_row_idx=None,
+                 meter_vals=None, position_ids=None, position_sizes=None):
         self.wordtokens = wordtokens
         self.meter = meter
         self.parse_unit = parse_unit
@@ -913,6 +933,12 @@ class LazyParseList:
         self._constraint_index = constraint_index
         self._constraint_names = list(constraint_index.keys())
         self._sylls = sylls
+        # row indices into the source syll_df for each syll in _sylls (DF path)
+        self._syll_row_idx = syll_row_idx
+        # scansion encoding, shape (S, N) each — lazily recomputed if missing
+        self._meter_vals = meter_vals
+        self._position_ids = position_ids
+        self._position_sizes = position_sizes
         self._built_parses = {}  # cache: scansion index -> Parse
         self._best_idx = None
         self._bound_init = True

@@ -185,6 +185,20 @@ class Meter(Entity):
             if getattr(text, '_line_parse_results', None) is None:
                 text._line_parse_results = {}
             text._line_parse_results[self.key] = line_results
+
+            # Prose fallback: for lines the parser skipped (too long), parse
+            # their lineparts and stash under text._linepart_parse_results so
+            # line.linepart_parses can retrieve them.
+            if self.parse_unit == 'line':
+                long_lnums = {ln for ln, pl in line_results.items() if len(pl) == 0}
+                if long_lnums:
+                    long_df = syll_df[syll_df['line_num'].isin(long_lnums)]
+                    if len(long_df) > 0:
+                        lp_results = parse_batch_from_df(long_df, self, line_col='linepart_num')
+                        if getattr(text, '_linepart_parse_results', None) is None:
+                            text._linepart_parse_results = {}
+                        text._linepart_parse_results[self.key] = lp_results
+
             for line_num in sorted(line_results.keys()):
                 pl = line_results[line_num]
                 pl._text = text

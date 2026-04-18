@@ -76,6 +76,7 @@ class TextModel(Entity):
         )
         self._parse_results = {}
         self._line_parse_results = {}
+        self._linepart_parse_results = {}
 
         if not self._children_built:
             if tokens_df is None:
@@ -175,7 +176,18 @@ class TextModel(Entity):
     def lineparts(self):
         from ..texts.lines import LinePartList
 
-        return LinePartList.from_wordtokens(self.children, text=self)
+        lineparts = LinePartList.from_wordtokens(self.children, text=self)
+
+        if self._linepart_parse_results:
+            for meter_key, lp_results in self._linepart_parse_results.items():
+                for lp in lineparts:
+                    lp_num = lp[0].linepart_num if len(lp) else None
+                    if lp_num is not None and lp_num in lp_results:
+                        pl = lp_results[lp_num]
+                        pl.parent = lp
+                        lp._parses = pl
+
+        return lineparts
 
     @cached_property
     def sents(self):

@@ -113,13 +113,25 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
 
     # --- Group by nsylls and process ---
     nsyll_groups = defaultdict(list)
+    results = {}
+    oversized = []
     for ln, (feats, sylls, has_ambig, _) in line_data.items():
         nsylls = len(feats["stressed"])
         if nsylls > MAX_SYLL_IN_PARSE_UNIT:
-            continue  # too long to parse exhaustively; skip
+            oversized.append((ln, nsylls))
+            results[ln] = ParseList([], parse_unit=meter.parse_unit)
+            continue
         nsyll_groups[nsylls].append(ln)
+    if oversized:
+        unit_name = line_col.split('_')[0]
+        tail = "; falling back to linepart parsing" if unit_name == 'line' else ""
+        log.warning(
+            f"{len(oversized)} {unit_name}(s) exceed MAX_SYLL_IN_PARSE_UNIT="
+            f"{MAX_SYLL_IN_PARSE_UNIT} and were not parsed "
+            f"(max={max(n for _, n in oversized)} sylls){tail}"
+        )
 
-    results = {}
+
     constraint_names = list(meter.constraints.keys())
 
     for nsylls, line_nums in nsyll_groups.items():

@@ -153,7 +153,26 @@ class Line(WordTokenList):
     @property
     def parts(self):
         return LinePartList.from_wordtokens(self.wordtokens, parent=self)
-    
+
+    @property
+    def linepart_parses(self):
+        """LazyParseList per linepart for this line. Populated by the prose
+        fallback when the line exceeds MAX_SYLL_IN_PARSE_UNIT. Returns a list
+        aligned with self.parts; entries may be None if a linepart was itself
+        too long to parse.
+        """
+        results = getattr(self.text, '_linepart_parse_results', None)
+        if not results:
+            return []
+        lp_nums = {wt.linepart_num for wt in self.wordtokens if not wt.is_punc}
+        for _, lp_results in results.items():
+            out = []
+            for lp_num in sorted(lp_nums):
+                out.append(lp_results.get(lp_num))
+            if any(pl is not None for pl in out):
+                return out
+        return []
+
 
 
 class LineList(EntityList):

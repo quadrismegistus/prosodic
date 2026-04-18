@@ -165,6 +165,19 @@ class TestDfParsePath:
         t.parse(parse_unit='linepart', combine_by=None)
         assert t._children_built is False
 
+    def test_prose_fallback_long_line(self):
+        # 20-syll single line > MAX_SYLL_IN_PARSE_UNIT=18; parser must skip the
+        # line, emit a warning, and fall back to linepart parsing via comma.
+        t = TextModel("from fairest creatures we desire increase, "
+                      "that thereby beauty's rose might never die")
+        r = t.parse()
+        assert len(r) == 1
+        assert len(r[0]) == 0  # line itself gets empty placeholder
+        lpp = t.lines[0].linepart_parses
+        assert len(lpp) == 2
+        assert lpp[0].best_parse.meter_str == "-+-+-+-+-+"
+        assert lpp[1].best_parse.meter_str == "-+-+-+-+-+"
+
 
 # --- parsed_df / get_parsed_df ---
 

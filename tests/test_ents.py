@@ -210,6 +210,16 @@ def test_exceptions():
         TextModel(children=[Entity()])
 
 
+def test_getattr_underscore_raises():
+    # Underscore-prefixed attrs must raise AttributeError, not return None,
+    # so IPython's introspection (t.save?) and pickle/copy machinery work.
+    t = TextModel('hello')
+    assert not hasattr(t, '_ipython_canary_method_should_not_exist_')
+    assert not hasattr(t, '_some_private_thing')
+    # But non-underscored missing attrs still fall through to None (legacy).
+    assert t.missing_thing is None
+
+
 def test_new_parent_system():
     t = TextModel('hello')
     assert t.parent is None

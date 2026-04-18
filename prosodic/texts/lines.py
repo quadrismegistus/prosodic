@@ -164,14 +164,10 @@ class Line(WordTokenList):
         results = getattr(self.text, '_linepart_parse_results', None)
         if not results:
             return []
-        lp_nums = {wt.linepart_num for wt in self.wordtokens if not wt.is_punc}
-        for _, lp_results in results.items():
-            out = []
-            for lp_num in sorted(lp_nums):
-                out.append(lp_results.get(lp_num))
-            if any(pl is not None for pl in out):
-                return out
-        return []
+        latest_key = next(reversed(results))
+        lp_results = results[latest_key]
+        lp_nums = sorted({wt.linepart_num for wt in self.wordtokens if not wt.is_punc})
+        return [lp_results.get(lp_num) for lp_num in lp_nums]
 
 
 

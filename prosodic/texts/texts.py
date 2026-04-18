@@ -568,20 +568,11 @@ class TextModel(Entity):
 
         import json
         from datetime import datetime, timezone
-        _prosodic_version = None
         try:
-            _vpath = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', '_version.py')
-            _vpath = os.path.normpath(_vpath)
-            if os.path.exists(_vpath):
-                _ns = {}
-                with open(_vpath) as _vf:
-                    exec(_vf.read(), _ns)
-                _prosodic_version = _ns.get('__version__')
-            if _prosodic_version is None:
-                import importlib.metadata as _im
-                _prosodic_version = _im.version('prosodic')
+            import importlib.metadata as _im
+            _prosodic_version = _im.version('prosodic')
         except Exception:
-            pass
+            _prosodic_version = None
 
         meta = {
             "prosodic_version": _prosodic_version,

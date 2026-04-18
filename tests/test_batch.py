@@ -53,6 +53,25 @@ def test_roundtrip_load(tmp_out):
     assert t._cached_parsed_df is not None
 
 
+def test_save_kwargs_propagates(tmp_out):
+    # 'all' mode includes bounded parses; default 'unbounded' excludes them.
+    prosodic.parse_corpus(TEXTS[:1], tmp_out, progress=False)
+    default_df = prosodic.TextModel.load(os.path.join(tmp_out, "t001"))._cached_parsed_df
+    assert not default_df['is_bounded'].any()
+
+    all_out = tempfile.mkdtemp(prefix="prosodic_batch_all_")
+    try:
+        prosodic.parse_corpus(
+            TEXTS[:1], all_out, progress=False,
+            save_kwargs={'save_parses': 'all'},
+        )
+        all_df = prosodic.TextModel.load(os.path.join(all_out, "t001"))._cached_parsed_df
+        assert len(all_df) > len(default_df)
+        assert all_df['is_bounded'].any()
+    finally:
+        shutil.rmtree(all_out, ignore_errors=True)
+
+
 # --- resume ---
 
 def test_resume_skips(tmp_out):

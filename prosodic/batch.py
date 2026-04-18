@@ -50,7 +50,7 @@ def _normalize_item(item):
 
 
 def _parse_one(args):
-    tid, txt, out_dir, resume, text_kwargs, meter_kwargs = args
+    tid, txt, out_dir, resume, text_kwargs, meter_kwargs, save_kwargs = args
     text_dir = os.path.join(out_dir, tid)
     if resume and os.path.exists(os.path.join(text_dir, _SENTINEL)):
         return (tid, 'skipped', None)
@@ -58,7 +58,7 @@ def _parse_one(args):
         import prosodic
         t = prosodic.TextModel(txt, **(text_kwargs or {}))
         t.parse(**(meter_kwargs or {}))
-        t.save(text_dir)
+        t.save(text_dir, **(save_kwargs or {}))
         t.cleanup()
         return (tid, 'done', None)
     except Exception as e:
@@ -79,6 +79,7 @@ def parse_corpus(
     progress=True,
     text_kwargs=None,
     meter_kwargs=None,
+    save_kwargs=None,
     on_error='log',
     total=None,
 ):
@@ -107,7 +108,7 @@ def parse_corpus(
     def _iter_args():
         for item in items:
             tid, txt = _normalize_item(item)
-            yield (tid, txt, out_dir, resume, text_kwargs, meter_kwargs)
+            yield (tid, txt, out_dir, resume, text_kwargs, meter_kwargs, save_kwargs)
 
     stats = {'n_done': 0, 'n_skipped': 0, 'n_failed': 0, 'errors': []}
 

@@ -127,7 +127,7 @@ def match_rhyme_scheme(rhyme_ids: List[int]) -> Optional[dict]:
     }
 
 
-def compute_rhyme_ids(text, max_dist: float = 0.4, window: int = 4) -> List[int]:
+def compute_rhyme_ids(text, max_dist: float = 0.35, window: int = 4) -> List[int]:
     """Compute per-line integer rhyme IDs from a TextModel.
 
     For each line, find the closest other line within ±``window`` (default 4)
@@ -135,9 +135,11 @@ def compute_rhyme_ids(text, max_dist: float = 0.4, window: int = 4) -> List[int]
     ``max_dist``, union the two lines into the same rhyme group. Lines whose
     closest neighbor is too far get ID 0 (no rhyme).
 
-    Default ``max_dist=0.4`` catches Shakespeare's near-rhymes (knights/wights,
-    eyes/days) without merging unrelated finals; tighten for stricter, loosen
-    for slant rhyme.
+    Default ``max_dist=0.35`` is the F1-optimal threshold against Walker's
+    1775 rhyming dictionary (perfect-rhyme vs cross-row binary task; AUC 0.91,
+    TPR 0.88, FPR 0.18, precision 0.87). See ``scripts/rime_eval.py`` to
+    regenerate. Tighten toward 0.20 for stricter precision; loosen toward
+    0.50 to catch more slant rhyme at the cost of false positives.
     """
     lines = list(text.lines)
     n = len(lines)

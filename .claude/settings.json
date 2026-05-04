@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pyenv versions)",
+      "Bash(pyenv version)",
+      "Bash(brew list)",
+      "Bash(brew list *)",
+      "Bash(brew info *)",
+      "Bash(brew --version)",
+      "Bash(.venv/bin/pip list)",
+      "Bash(.venv/bin/pip list *)",
+      "Bash(.venv/bin/pip show *)",
+      "Bash(.venv/bin/jupyter --version)"
+    ]
+  }
+}

@@ -171,3 +171,53 @@ def test_empty_text_does_not_crash():
     _ = t.syllable_scheme
     _ = t.rhyme_scheme
     _ = t.is_sonnet
+
+
+# ----------------------------------------------------- rime distance calibration
+
+# A small static subset of Walker (1775) rhyme groups, baked in so this test
+# doesn't depend on data/walker5.csv being present at test time. Picked to be
+# pronunciation-stable between 1775 and modern English.
+WALKER_PERFECT_PAIRS = [
+    # within-group perfect rhymes (should distance ≤ 0.35)
+    ("cab", "dab"), ("nab", "stab"),
+    ("ace", "face"), ("brace", "place"), ("pace", "race"),
+    ("attach", "detach"), ("batch", "match"),
+    ("back", "hack"), ("pack", "track"), ("attack", "black"),
+]
+WALKER_CROSS_PAIRS = [
+    # across-group pairs (should distance > 0.35)
+    ("cab", "ace"), ("dab", "place"),
+    ("attach", "back"), ("match", "track"),
+    ("nab", "race"), ("stab", "attack"),
+]
+
+
+@pytest.mark.parametrize("w1,w2", WALKER_PERFECT_PAIRS)
+def test_walker_perfect_rhyme_below_threshold(w1, w2):
+    """Walker's perfect-rhyme pairs should be within the calibrated max_dist."""
+    wf1 = TextModel(w1).wordtokens[0].wordform
+    wf2 = TextModel(w2).wordtokens[0].wordform
+    if wf1 is None or wf2 is None:
+        pytest.skip(f"unparseable: {w1!r} or {w2!r}")
+    d = wf1.rime_distance(wf2, max_dist=None)
+    assert d is not None
+    assert d <= 0.35, f"perfect rhyme {w1!r}/{w2!r} got distance {d:.3f}"
+
+
+def test_walker_cross_pairs_mostly_above_threshold():
+    """Most across-group pairs should land above max_dist (FPR around 18% empirically)."""
+    distances = []
+    for w1, w2 in WALKER_CROSS_PAIRS:
+        wf1 = TextModel(w1).wordtokens[0].wordform
+        wf2 = TextModel(w2).wordtokens[0].wordform
+        if wf1 is None or wf2 is None:
+            continue
+        d = wf1.rime_distance(wf2, max_dist=None)
+        if d is not None:
+            distances.append(d)
+    assert distances, "no parseable cross pairs"
+    above = sum(1 for d in distances if d > 0.35)
+    assert above / len(distances) >= 0.6, (
+        f"only {above}/{len(distances)} cross-pairs above 0.35"
+    )

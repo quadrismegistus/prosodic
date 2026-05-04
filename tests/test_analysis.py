@@ -4,9 +4,14 @@ Covers rhyme scheme matching, line-length scheme detection, meter-type
 classification, and the integrated TextModel properties (text.meter_type,
 text.rhyme_scheme, text.summary, text.is_sonnet).
 """
+import os
+import sys
+
 import pytest
 
-from prosodic.analysis import (
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from prosodic.imports import *  # noqa: F401,F403,E402
+from prosodic.analysis import (  # noqa: E402
     classify_meter_type,
     compute_rhyme_ids,
     detect_line_scheme,
@@ -16,7 +21,6 @@ from prosodic.analysis import (
     scheme_repr,
     scheme_to_nums,
 )
-from prosodic.imports import *  # noqa: F401,F403
 
 SHAKESPEARE_106 = """When in the chronicle of wasted time
 I see descriptions of the fairest wights,

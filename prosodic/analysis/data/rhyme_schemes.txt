@@ -1,0 +1,39 @@
+Form	Scheme
+Couplet	aa
+Alternating A	abab
+Alternating B	abcb
+Aternating C	ababa
+Alternating D	ababb
+Alternating E	ababab
+Sestet A	aabccb
+Sestet B	ababcc
+Triplet	aaa
+4-Rhyme	aaaa
+Sonnet, Petrarchan A	abba abba cdecde
+Sonnet, Petrarchan B	abba abba cdcdcd
+Sonnet, Petrarchan C	abba abba ccdccd
+Sonnet, Petrarchan D	abba abba cdcdee
+Sonnet, Petrarchan E	abba abba cddece
+Sonnet, Shakespearean	abab cdcd efefgg
+Sonnet, Spenserian	abab bcbc cdcdee
+Sonnet A	abab cdcd eefeff
+Sonnet B	abab cdcd effegg
+Sonnet C	abab abab cdcdcd
+Sonnet D	abab abab cdcdee
+Sonnet E	abab cbcd cdedee
+Sonnet F	abba abba cbbcbc
+Sonnet G	abba acca ddeffe
+Sonnet H	abba cddc efefef
+Sonnet I	abba cddc effegg
+Sonnet J	abba cddc efgefg
+Sonnet J	abbabacd cddeee
+Sonnet C	ababacdc edefef
+Sonnet D	ababbcdc ceceff
+Ottava Rima	abababcc
+Rhyme Royal	ababbcc
+Spenserian Stanza	ababbcbcc
+Enclosed Rhyme	abba
+Scottish Stanza	aaabab
+Quatrain And Triplet	ababccc
+Octet	aaab cccb
+Monk'S Tale Stanza	ababbcbc

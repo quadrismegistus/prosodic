@@ -233,6 +233,20 @@ There are two ways parsing happens, and it matters which one you're in:
 - `Line.rime_distance(line2)`: delegates to final wordform's rime_distance.
 - `Text.get_rhyming_lines()`, `Text.is_rhyming`, `Text.num_rhyming_lines`: aggregate rhyme detection.
 
+### Poem-Level Analysis (`analysis/`)
+
+Higher-order summary statistics over a parsed text. Surfaced as TextModel properties; ported from the standalone `poesy` package (Heuser et al., Stanford LitLab) into prosodic v3.
+
+- **`text.meter_type`**: dict with `foot` (binary/ternary), `head` (initial/final), `type` (iambic/trochaic/anapestic/dactylic), and per-position frequencies. Aggregates across all best parses; uses fraction of `ww` positions > 17.5% threshold to detect ternary verse, and 4th-syllable strong/weak frequency to detect head direction.
+- **`text.line_scheme`**: repeating beat-length template (e.g. `(5,)` for invariable pentameter, `(4,3)` for ballad meter). `analysis/line_scheme.py:detect_line_scheme()` searches divisor-length cycles, prefers shorter (less overfit) templates.
+- **`text.syllable_scheme`**: same as above but counted in canonical (form_idx==0) syllables.
+- **`text.rhyme_ids`**: per-line integer IDs grouping rhyming lines. Algorithm: pairwise rime distance within ±4-line window, mutual-nearest-neighbor union below `max_dist=0.4` threshold (or distance ≤ 0.2 if not mutual). 0 = no rhyme partner.
+- **`text.rhyme_scheme`**: best-fit named scheme via Jaccard similarity on rhyme-edge sets. Schemes catalog at `analysis/data/rhyme_schemes.txt` (39 named forms: Sonnet variants, Couplet, Sestet, Triplet, etc.). Returns `{name, form, accuracy, candidates}`.
+- **`text.is_sonnet` / `text.is_shakespearean_sonnet`**: 14 lines + median 9–11 sylls + scheme matches a sonnet variant.
+- **`text.summary()`**: tabulated per-line annotations + estimated schema block (uses `tabulate`).
+
+The `_syll_df`-backed canonical syllable count is essential for line/syllable scheme detection — `line.num_sylls` includes all pronunciation variants and inflates counts.
+
 ## Testing Notes
 
 - 219 tests, all passing. Python 3.10 in `.venv`.
@@ -290,6 +304,7 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ URL routing with back/forward, lucide icons, two-column desktop layout
 - ✅ `--dev` flag for prosodic web (auto-reload backend + frontend)
 - ✅ Punctuation preserved in parse HTML via render_parse_html(parse, line)
+- ✅ Poesy port: meter type / line scheme / rhyme scheme / sonnet detection / summary table now in `prosodic/analysis/` (was a separate `poesy` package, replaced)
 
 ### Remaining
 - **Parse table design polish** (grid stress view — Hayes-style metrical grid over syllables)

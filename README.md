@@ -1,12 +1,35 @@
 # Prosodic 3
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
 [![Code coverage](https://codecov.io/gh/quadrismegistus/prosodic/branch/master/graph/badge.svg)](https://codecov.io/gh/quadrismegistus/prosodic)
 
 **Prosodic** is a Python library and web app for metrical-phonological analysis of poetry. It parses text into a linguistic hierarchy (text → stanza → line → word → syllable → phoneme), runs a constraint-satisfaction metrical parser, and identifies stress patterns (iambic, trochaic, anapestic, dactylic), foot/syllable schemes, and named rhyme schemes (sonnet variants, couplet, ballad, etc.).
 
-This notebook walks through Prosodic 3's full API — from parsing a single line up to poem-level form classification.
+This notebook walks through Prosodic 3's full API — from parsing a single line up to poem-level form classification. Click the **Open in Colab** badge above to run it in your browser.
 
 Built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), with contributions from [Sam Bowman](https://github.com/sleepinyourhat).
+
+### Setup (Colab only)
+
+Skip this cell when running locally. It installs system + Python deps in a Colab runtime.
+
+
+```python
+# Auto-install dependencies if running in Google Colab.
+# Locally this is a no-op.
+import sys
+IN_COLAB = "google.colab" in sys.modules
+if IN_COLAB:
+    import subprocess
+    subprocess.run(["apt-get", "-qq", "install", "-y", "espeak"], check=True)
+    subprocess.run(["pip", "install", "-q", "prosodic"], check=True)
+    print("Colab setup complete.")
+else:
+    print("Local environment — skipping Colab setup.")
+```
+
+    Local environment — skipping Colab setup.
+
 
 ## Install
 
@@ -98,19 +121,17 @@ print(f"single line: {line}")
     short: 1 line(s)
 
 
-    [32m[0.75s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
+    [32m[0.62s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
 
-    [32m[0.75s] Building long text[0m:  16%|█▌        | 3233/20307 [00:00<00:00, 24454.97it/s]
+    [32m[0.62s] Building long text[0m:  16%|█▌        | 3186/20307 [00:00<00:00, 24951.41it/s]
 
-    [32m[0.75s] Building long text[0m:  35%|███▍      | 7027/20307 [00:00<00:00, 31456.39it/s]
+    [32m[0.62s] Building long text[0m:  33%|███▎      | 6793/20307 [00:00<00:00, 30820.25it/s]
 
-    [32m[0.75s] Building long text[0m:  51%|█████     | 10266/20307 [00:00<00:00, 25022.51it/s]
+    [32m[0.62s] Building long text[0m:  49%|████▉     | 9942/20307 [00:00<00:00, 27555.92it/s]
 
-    [32m[0.75s] Building long text[0m:  64%|██████▎   | 12927/20307 [00:00<00:00, 24867.06it/s]
+    [32m[0.62s] Building long text[0m:  67%|██████▋   | 13556/20307 [00:00<00:00, 30579.85it/s]
 
-    [32m[0.75s] Building long text[0m:  76%|███████▋  | 15508/20307 [00:00<00:00, 24668.23it/s]
-
-    [32m[0.75s] Building long text[0m:  89%|████████▉ | 18033/20307 [00:00<00:00, 21125.21it/s]
+    [32m[0.62s] Building long text[0m:  82%|████████▏ | 16688/20307 [00:00<00:00, 27377.62it/s]
 
                                                                                         
 
@@ -1185,7 +1206,7 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
     print(f"  {w:+.3f}  {name}")
 ```
 
-    [93m[0.97s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
+    [93m[0.82s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
 
 
     top learned weights (zone × constraint):

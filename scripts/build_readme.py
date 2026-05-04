@@ -32,13 +32,28 @@ def code(src):
 md("""# Prosodic 3
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
+[![Demo](https://img.shields.io/badge/demo-prosodic.app-blue)](https://prosodic.app)
 [![Code coverage](https://codecov.io/gh/quadrismegistus/prosodic/branch/master/graph/badge.svg)](https://codecov.io/gh/quadrismegistus/prosodic)
 
 **Prosodic** is a Python library and web app for metrical-phonological analysis of poetry. It parses text into a linguistic hierarchy (text → stanza → line → word → syllable → phoneme), runs a constraint-satisfaction metrical parser, and identifies stress patterns (iambic, trochaic, anapestic, dactylic), foot/syllable schemes, and named rhyme schemes (sonnet variants, couplet, ballad, etc.).
 
-This notebook walks through Prosodic 3's full API — from parsing a single line up to poem-level form classification. Click the **Open in Colab** badge above to run it in your browser.
+Try the hosted version at **[prosodic.app](https://prosodic.app)** — paste a poem, see scansions, rhyme schemes, and form classification immediately. This notebook walks through the full Python API — from parsing a single line up to poem-level form classification. Click the **Open in Colab** badge above to run it in your browser.
 
 Built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), with contributions from [Sam Bowman](https://github.com/sleepinyourhat).""")
+
+md("""## Install
+
+```bash
+pip install prosodic
+# or for development:
+pip install git+https://github.com/quadrismegistus/prosodic
+```
+
+You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
+
+- **Mac**: `brew install espeak`
+- **Linux**: `apt-get install espeak`
+- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)""")
 
 md("""### Setup (Colab only)
 
@@ -55,20 +70,6 @@ if IN_COLAB:
     print("Colab setup complete.")
 else:
     print("Local environment — skipping Colab setup.")""")
-
-md("""## Install
-
-```bash
-pip install prosodic
-# or for development:
-pip install git+https://github.com/quadrismegistus/prosodic
-```
-
-You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
-
-- **Mac**: `brew install espeak`
-- **Linux**: `apt-get install espeak`
-- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)""")
 
 md("""## Quickstart
 
@@ -287,7 +288,7 @@ shutil.rmtree(out)""")
 
 md("""## Web app
 
-Prosodic ships with a FastAPI + SvelteKit web GUI:
+A hosted instance is live at **[prosodic.app](https://prosodic.app)** — no install required. To run it locally:
 
 ```bash
 prosodic web                     # http://127.0.0.1:8181

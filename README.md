@@ -1,13 +1,28 @@
 # Prosodic 3
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
+[![Demo](https://img.shields.io/badge/demo-prosodic.app-blue)](https://prosodic.app)
 [![Code coverage](https://codecov.io/gh/quadrismegistus/prosodic/branch/master/graph/badge.svg)](https://codecov.io/gh/quadrismegistus/prosodic)
 
 **Prosodic** is a Python library and web app for metrical-phonological analysis of poetry. It parses text into a linguistic hierarchy (text → stanza → line → word → syllable → phoneme), runs a constraint-satisfaction metrical parser, and identifies stress patterns (iambic, trochaic, anapestic, dactylic), foot/syllable schemes, and named rhyme schemes (sonnet variants, couplet, ballad, etc.).
 
-This notebook walks through Prosodic 3's full API — from parsing a single line up to poem-level form classification. Click the **Open in Colab** badge above to run it in your browser.
+Try the hosted version at **[prosodic.app](https://prosodic.app)** — paste a poem, see scansions, rhyme schemes, and form classification immediately. This notebook walks through the full Python API — from parsing a single line up to poem-level form classification. Click the **Open in Colab** badge above to run it in your browser.
 
 Built by [Ryan Heuser](https://github.com/quadrismegistus), [Josh Falk](https://github.com/jsfalk), and [Arto Anttila](http://web.stanford.edu/~anttila/), with contributions from [Sam Bowman](https://github.com/sleepinyourhat).
+
+## Install
+
+```bash
+pip install prosodic
+# or for development:
+pip install git+https://github.com/quadrismegistus/prosodic
+```
+
+You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
+
+- **Mac**: `brew install espeak`
+- **Linux**: `apt-get install espeak`
+- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)
 
 ### Setup (Colab only)
 
@@ -30,20 +45,6 @@ else:
 
     Local environment — skipping Colab setup.
 
-
-## Install
-
-```bash
-pip install prosodic
-# or for development:
-pip install git+https://github.com/quadrismegistus/prosodic
-```
-
-You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
-
-- **Mac**: `brew install espeak`
-- **Linux**: `apt-get install espeak`
-- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)
 
 ## Quickstart
 
@@ -121,17 +122,17 @@ print(f"single line: {line}")
     short: 1 line(s)
 
 
-    [32m[0.62s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
+    [32m[0.66s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
 
-    [32m[0.62s] Building long text[0m:  16%|█▌        | 3186/20307 [00:00<00:00, 24951.41it/s]
+    [32m[0.66s] Building long text[0m:  16%|█▌        | 3188/20307 [00:00<00:00, 25089.11it/s]
 
-    [32m[0.62s] Building long text[0m:  33%|███▎      | 6793/20307 [00:00<00:00, 30820.25it/s]
+    [32m[0.66s] Building long text[0m:  34%|███▍      | 6970/20307 [00:00<00:00, 31819.71it/s]
 
-    [32m[0.62s] Building long text[0m:  49%|████▉     | 9942/20307 [00:00<00:00, 27555.92it/s]
+    [32m[0.66s] Building long text[0m:  50%|█████     | 10227/20307 [00:00<00:00, 28083.98it/s]
 
-    [32m[0.62s] Building long text[0m:  67%|██████▋   | 13556/20307 [00:00<00:00, 30579.85it/s]
+    [32m[0.66s] Building long text[0m:  69%|██████▉   | 14030/20307 [00:00<00:00, 31558.56it/s]
 
-    [32m[0.62s] Building long text[0m:  82%|████████▏ | 16688/20307 [00:00<00:00, 27377.62it/s]
+    [32m[0.66s] Building long text[0m:  85%|████████▌ | 17277/20307 [00:00<00:00, 27517.94it/s]
 
                                                                                         
 
@@ -1263,7 +1264,7 @@ shutil.rmtree(out)
 
 ## Web app
 
-Prosodic ships with a FastAPI + SvelteKit web GUI:
+A hosted instance is live at **[prosodic.app](https://prosodic.app)** — no install required. To run it locally:
 
 ```bash
 prosodic web                     # http://127.0.0.1:8181

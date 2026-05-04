@@ -18,11 +18,11 @@ pip install prosodic
 pip install git+https://github.com/quadrismegistus/prosodic
 ```
 
-You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
+You'll also need [espeak](https://github.com/espeak-ng/espeak-ng) (free TTS) to phonemize words not in the CMU dictionary:
 
 - **Mac**: `brew install espeak`
-- **Linux**: `apt-get install espeak`
-- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)
+- **Linux**: `apt-get install espeak libespeak1 libespeak-dev`
+- **Windows**: download from the [espeak-ng releases](https://github.com/espeak-ng/espeak-ng/releases/latest)
 
 ### Setup (Colab only)
 
@@ -36,7 +36,11 @@ import sys
 IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
     import subprocess
-    subprocess.run(["apt-get", "-qq", "install", "-y", "espeak"], check=True)
+    subprocess.run(
+        ["apt-get", "-qq", "install", "-y",
+         "espeak", "libespeak1", "libespeak-dev"],
+        check=True,
+    )
     subprocess.run(["pip", "install", "-q", "prosodic"], check=True)
     print("Colab setup complete.")
 else:
@@ -122,17 +126,17 @@ print(f"single line: {line}")
     short: 1 line(s)
 
 
-    [32m[0.66s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
+    [32m[0.70s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
 
-    [32m[0.66s] Building long text[0m:  16%|█▌        | 3188/20307 [00:00<00:00, 25089.11it/s]
+    [32m[0.70s] Building long text[0m:  16%|█▌        | 3167/20307 [00:00<00:00, 23428.02it/s]
 
-    [32m[0.66s] Building long text[0m:  34%|███▍      | 6970/20307 [00:00<00:00, 31819.71it/s]
+    [32m[0.70s] Building long text[0m:  34%|███▍      | 6964/20307 [00:00<00:00, 30897.07it/s]
 
-    [32m[0.66s] Building long text[0m:  50%|█████     | 10227/20307 [00:00<00:00, 28083.98it/s]
+    [32m[0.70s] Building long text[0m:  50%|█████     | 10162/20307 [00:00<00:00, 27076.62it/s]
 
-    [32m[0.66s] Building long text[0m:  69%|██████▉   | 14030/20307 [00:00<00:00, 31558.56it/s]
+    [32m[0.70s] Building long text[0m:  68%|██████▊   | 13899/20307 [00:00<00:00, 30605.57it/s]
 
-    [32m[0.66s] Building long text[0m:  85%|████████▌ | 17277/20307 [00:00<00:00, 27517.94it/s]
+    [32m[0.70s] Building long text[0m:  84%|████████▍ | 17070/20307 [00:00<00:00, 26902.80it/s]
 
                                                                                         
 
@@ -1207,7 +1211,7 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
     print(f"  {w:+.3f}  {name}")
 ```
 
-    [93m[0.82s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
+    [93m[0.84s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
 
 
     top learned weights (zone × constraint):
@@ -1259,7 +1263,9 @@ shutil.rmtree(out)
 
 
     
-    reloaded: 14 lines, parse cached? True
+    reloaded: 14 lines, parse cached?
+
+     True
 
 
 ## Web app

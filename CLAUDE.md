@@ -9,7 +9,8 @@ Prosodic is a Python library and web app for metrical-phonological analysis of p
 ## Commands
 
 ```bash
-# Install (espeak required: brew install espeak on Mac, apt-get install espeak on Linux)
+# Install (espeak required: brew install espeak on Mac;
+#   apt-get install espeak libespeak1 libespeak-dev on Linux)
 pip install -e .
 
 # Run tests

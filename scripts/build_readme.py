@@ -49,11 +49,11 @@ pip install prosodic
 pip install git+https://github.com/quadrismegistus/prosodic
 ```
 
-You'll also need [espeak](https://espeak.sourceforge.net) (free TTS) to phonemize words not in the CMU dictionary:
+You'll also need [espeak](https://github.com/espeak-ng/espeak-ng) (free TTS) to phonemize words not in the CMU dictionary:
 
 - **Mac**: `brew install espeak`
-- **Linux**: `apt-get install espeak`
-- **Windows**: download from the [espeak site](http://espeak.sourceforge.net/download.html)""")
+- **Linux**: `apt-get install espeak libespeak1 libespeak-dev`
+- **Windows**: download from the [espeak-ng releases](https://github.com/espeak-ng/espeak-ng/releases/latest)""")
 
 md("""### Setup (Colab only)
 
@@ -65,7 +65,11 @@ import sys
 IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
     import subprocess
-    subprocess.run(["apt-get", "-qq", "install", "-y", "espeak"], check=True)
+    subprocess.run(
+        ["apt-get", "-qq", "install", "-y",
+         "espeak", "libespeak1", "libespeak-dev"],
+        check=True,
+    )
     subprocess.run(["pip", "install", "-q", "prosodic"], check=True)
     print("Colab setup complete.")
 else:

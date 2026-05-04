@@ -30,6 +30,7 @@ munkres
 
 pyarrow
 hashstash
+tabulate
 # stanza
 svgling
 plotnine

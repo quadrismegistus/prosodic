@@ -1,5 +1,12 @@
 *.py[cod]
 
+# Claude Code: keep project settings.json, ignore per-machine/personal
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Editor config (personal, not project policy)
+.vscode/
+
 flask_session
 
 # SvelteKit frontend dev artifacts

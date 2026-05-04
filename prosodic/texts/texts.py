@@ -680,6 +680,72 @@ class TextModel(Entity):
     def is_rhyming(self) -> bool:
         return self.num_rhyming_lines > 0
 
+    # ------------------------------------------------------------------
+    # Poem-level analysis (formerly the poesy package)
+    # ------------------------------------------------------------------
+
+    @cached_property
+    def rhyme_ids(self):
+        from ..analysis.rhyme_scheme import compute_rhyme_ids
+        return compute_rhyme_ids(self)
+
+    @cached_property
+    def rhyme_scheme(self):
+        """Best-fit named rhyme scheme. ``None`` if the text doesn't rhyme."""
+        from ..analysis.rhyme_scheme import match_rhyme_scheme
+        return match_rhyme_scheme(self.rhyme_ids)
+
+    @cached_property
+    def meter_type(self):
+        """Aggregate meter classification. Triggers parsing if not already done."""
+        from ..analysis.meter_type import classify_meter_type
+        already_parsed = self.__dict__.get("_parsed", False) or \
+            self.__dict__.get("_cached_parsed_df") is not None
+        if not already_parsed:
+            self.parse()
+        return classify_meter_type(self)
+
+    @cached_property
+    def line_scheme(self):
+        """Repeating beat-length template (e.g. invariable pentameter)."""
+        from ..analysis.line_scheme import detect_line_scheme
+        feet = []
+        for line in self.lines:
+            try:
+                bp = line.best_parse
+            except Exception:
+                bp = None
+            if bp is not None:
+                feet.append(bp.num_peaks)
+        combo, diff = detect_line_scheme(feet, beat=True)
+        return {"combo": combo, "diff": diff}
+
+    @cached_property
+    def syllable_scheme(self):
+        """Repeating syllable-length template (canonical sylls, form_idx==0)."""
+        from ..analysis.line_scheme import detect_line_scheme
+        df = self._syll_df
+        canonical = df[(df["form_idx"] == 0) & (~df["is_punc"])]
+        sylls_by_line = canonical.groupby("line_num").size().to_dict()
+        sylls = [int(sylls_by_line.get(line.num, 0)) for line in self.lines]
+        combo, diff = detect_line_scheme(sylls, beat=False)
+        return {"combo": combo, "diff": diff}
+
+    @property
+    def is_sonnet(self) -> bool:
+        from ..analysis.form import is_sonnet
+        return is_sonnet(self, rhyme_match=self.rhyme_scheme)
+
+    @property
+    def is_shakespearean_sonnet(self) -> bool:
+        from ..analysis.form import is_shakespearean_sonnet
+        return is_shakespearean_sonnet(self, rhyme_match=self.rhyme_scheme)
+
+    def summary(self, **kwargs) -> str:
+        """Tabular per-line summary + estimated schema. Returns a string."""
+        from ..analysis.summary import summary as _summary
+        return _summary(self, **kwargs)
+
     def render(
         self, as_str: bool = False, blockquote: bool = False, **meter_kwargs
     ) -> Any:

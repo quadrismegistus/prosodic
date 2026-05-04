@@ -29,7 +29,16 @@ cd prosodic/web/frontend && npm run build               # build to ../static_bui
 
 # Code formatting
 yapf --style .style.yapf -i <file>
+
+# Rebuild README.ipynb + README.md (after API or analysis-module changes)
+.venv/bin/python scripts/build_readme.py            # executes cells, writes README.ipynb
+.venv/bin/jupyter nbconvert --to markdown README.ipynb --output README
+
+# Recalibrate rhyme threshold against Walker (1775)
+.venv/bin/python scripts/rime_eval.py               # ROC, AUC, suggested max_dist
 ```
+
+The notebook (and the markdown derived from it) is canonical: edit `scripts/build_readme.py`, not `README.ipynb` directly. nbformat regenerates cell UUIDs on every run, so a fresh build will always produce a UUID-only diff — discard it unless content actually changed.
 
 ## Architecture
 

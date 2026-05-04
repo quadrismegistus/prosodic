@@ -106,8 +106,8 @@ You can build a `Text` from a string, a file, or just a single line.""")
 code("""# from a string
 short = prosodic.Text("A horse, a horse, my kingdom for a horse!")
 
-# from a file
-shaksonnets = prosodic.Text(fn='corpora/corppoetry_en/en.shakespeare.txt')
+# from a file (local path or URL)
+shaksonnets = prosodic.Text(fn='https://raw.githubusercontent.com/quadrismegistus/prosodic/refs/heads/master/corpora/corppoetry_en/en.shakespeare.txt')
 
 # a single line via .line1
 line = prosodic.Text("Shall I compare thee to a summer's day?").line1

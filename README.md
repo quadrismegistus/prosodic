@@ -112,8 +112,8 @@ You can build a `Text` from a string, a file, or just a single line.
 # from a string
 short = prosodic.Text("A horse, a horse, my kingdom for a horse!")
 
-# from a file
-shaksonnets = prosodic.Text(fn='corpora/corppoetry_en/en.shakespeare.txt')
+# from a file (local path or URL)
+shaksonnets = prosodic.Text(fn='https://raw.githubusercontent.com/quadrismegistus/prosodic/refs/heads/master/corpora/corppoetry_en/en.shakespeare.txt')
 
 # a single line via .line1
 line = prosodic.Text("Shall I compare thee to a summer's day?").line1
@@ -126,17 +126,17 @@ print(f"single line: {line}")
     short: 1 line(s)
 
 
-    [32m[0.70s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
+    [32m[1.93s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
 
-    [32m[0.70s] Building long text[0m:  16%|█▌        | 3167/20307 [00:00<00:00, 23428.02it/s]
+    [32m[1.93s] Building long text[0m:  16%|█▌        | 3167/20307 [00:00<00:00, 24475.44it/s]
 
-    [32m[0.70s] Building long text[0m:  34%|███▍      | 6964/20307 [00:00<00:00, 30897.07it/s]
+    [32m[1.93s] Building long text[0m:  35%|███▍      | 7015/20307 [00:00<00:00, 31822.63it/s]
 
-    [32m[0.70s] Building long text[0m:  50%|█████     | 10162/20307 [00:00<00:00, 27076.62it/s]
+    [32m[1.93s] Building long text[0m:  51%|█████     | 10287/20307 [00:00<00:00, 28739.40it/s]
 
-    [32m[0.70s] Building long text[0m:  68%|██████▊   | 13899/20307 [00:00<00:00, 30605.57it/s]
+    [32m[1.93s] Building long text[0m:  70%|██████▉   | 14152/20307 [00:00<00:00, 32236.26it/s]
 
-    [32m[0.70s] Building long text[0m:  84%|████████▍ | 17070/20307 [00:00<00:00, 26902.80it/s]
+    [32m[1.93s] Building long text[0m:  86%|████████▌ | 17459/20307 [00:00<00:00, 28657.85it/s]
 
                                                                                         
 
@@ -1211,7 +1211,7 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
     print(f"  {w:+.3f}  {name}")
 ```
 
-    [93m[0.84s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
+    [93m[0.83s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
 
 
     top learned weights (zone × constraint):

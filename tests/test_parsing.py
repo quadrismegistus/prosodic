@@ -388,3 +388,39 @@ def test_best_parse_cooptimal_signal():
     assert res[0].best_parse.num_cooptimal == 1
     assert res[1].best_parse.is_tied is True
     assert res[1].best_parse.num_cooptimal >= 2
+
+
+def test_zone_aware_bounding_mechanism():
+    """Flat bounding drops a parse that is optimal under zone weights; zone-aware
+    bounding keeps it. AUDIT C11: harmonic bounding must dominate on the same
+    (constraint x zone) feature space that zone-weighted scoring uses."""
+    import numpy as np
+    from prosodic.parsing.vectorized import compute_bounding_batch, _zone_split_batch
+    viols = np.zeros((1, 2, 4, 1), dtype=np.int8)
+    viols[0, 0, :, 0] = [1, 1, 0, 0]   # P: 2 violations, both in zone 0
+    viols[0, 1, :, 0] = [0, 0, 1, 0]   # Q: 1 violation in zone 1
+    flat = compute_bounding_batch(viols.sum(axis=2))[0]
+    zone = compute_bounding_batch(_zone_split_batch(viols, 2))[0]
+    assert flat.tolist() == [False, True]   # flat: Q dominates P on totals -> P dropped
+    assert zone.tolist() == [True, True]     # zones: neither dominates -> both kept
+
+
+def test_zone_aware_bounding_selects_zone_optimal():
+    """End-to-end: under skewed zone weights, best-parse selection must be the
+    true zone-minimum. With flat bounding this line's zone-optimal parse is
+    dropped and a ~1000-scoring parse is returned instead. AUDIT C11."""
+    import numpy as np
+    from prosodic.parsing.meter import Meter
+    from prosodic.parsing.vectorized import parse_batch_from_df
+    t = TextModel("Despite of wrinkles this thy golden time.")
+    m = Meter()
+    cn = list(m.constraints.keys())
+    m.zones = 2
+    m.zone_weights = {f"{c}_z1": 0.001 for c in cn}
+    m.zone_weights.update({f"{c}_z2": 1000.0 for c in cn})
+    pl = list(parse_batch_from_df(t._syll_df, m).values())[0]
+    best_idx = int(pl._unbounded_indices[pl._scores.argmin()])
+    # the selected best must BE the global zone-minimum (not a flat-unbounded pick)
+    assert pl._all_scores[best_idx] <= pl._all_scores.min() + 1e-9
+    # concretely: the zone-optimal here is far below the flat pick's ~1000
+    assert pl._all_scores.min() < 1.0

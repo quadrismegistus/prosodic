@@ -251,3 +251,78 @@ def test_entity_path_evaluates_all_constraints():
     df_mass = list(parse_batch_from_df(t._syll_df, m).values())[0]._all_viols.sum(axis=(0, 1))
     assert [int(x) for x in df_mass] == [int(x) for x in ent_mass], \
         "DF and entity paths disagree on constraint totals"
+
+
+def _reference_bounding(viol_sums):
+    """Straightforward, un-tiled harmonic bounding. A scansion j is bounded iff
+    some scansion i dominates it (<= on every constraint, < on at least one).
+    Used as the ground truth the chunked/tiled implementation must match."""
+    import numpy as np
+    L, S, C = viol_sums.shape
+    if S <= 1:
+        return np.ones((L, S), dtype=bool)
+    diff = viol_sums[:, :, None, :] - viol_sums[:, None, :, :]  # (L, S, S, C)
+    i_leq_j = (diff <= 0).all(axis=3)
+    i_lt_j = i_leq_j & (diff < 0).any(axis=3)
+    bounded = i_lt_j.any(axis=1)
+    return ~bounded
+
+
+def test_bounding_tiled_equals_reference():
+    """Memory-budgeted (chunked over L, tiled over S x S) harmonic bounding must
+    return the exact same unbounded mask as the plain O(S^2 C) reference, for
+    inputs of varied L / S / C and at several memory budgets that force real
+    tiling. This guards the C6/F4 optimization: a memory win that changed which
+    parses are bounded would be a silent correctness bug."""
+    import numpy as np
+    from prosodic.parsing import vectorized as V
+
+    rng = np.random.default_rng(12345)
+    dev = V.get_device()
+
+    cases = []
+    # (L, S, C, make_perfect)
+    for L, S, C in [(1, 1, 4), (2, 2, 3), (3, 10, 5), (4, 25, 6),
+                    (2, 40, 4), (3, 64, 7), (1, 128, 8), (5, 30, 5),
+                    (2, 200, 6)]:
+        # non-perfect: shift up by 1 so no all-zero row (forces pairwise path)
+        cases.append((rng.integers(0, 3, size=(L, S, C)) + 1).astype(np.int64))
+        # binary values -> many ties / duplicate rows (dominance edge cases)
+        cases.append(rng.integers(0, 2, size=(L, S, C)).astype(np.int64))
+
+    # a case with duplicate rows (equal vectors must NOT bound each other)
+    dup = (rng.integers(0, 3, size=(2, 50, 4)) + 1).astype(np.int64)
+    dup[:, 1, :] = dup[:, 0, :]
+    dup[:, 7, :] = dup[:, 0, :]
+    cases.append(dup)
+
+    # budgets small enough to force multi-tile / multi-chunk decomposition,
+    # plus the module default (no forced tiling for small S).
+    budgets = [4096, 50_000, 500_000, None]
+
+    for arr in cases:
+        ref = _reference_bounding(arr)
+        for budget in budgets:
+            got = V._compute_bounding_batch_numpy(arr.copy(), budget=budget)
+            assert np.array_equal(ref, got), (
+                f"numpy tiled != reference (shape={arr.shape}, budget={budget})")
+            if dev is not None:
+                got_t = V._compute_bounding_batch_torch(arr.copy(), dev, budget=budget)
+                assert np.array_equal(ref, got_t), (
+                    f"torch tiled != reference (shape={arr.shape}, budget={budget})")
+
+        # single-line entry points must agree with the batch reference too
+        for li in range(arr.shape[0]):
+            v_sc = arr[li]
+            exp = ref[li]
+            got_sl = V._compute_bounding_numpy(v_sc.copy(), budget=4096)
+            assert np.array_equal(exp, got_sl), "single-line numpy tiled mismatch"
+            if dev is not None:
+                got_slt = V._compute_bounding_torch(v_sc.copy(), dev, budget=4096)
+                assert np.array_equal(exp, got_slt), "single-line torch tiled mismatch"
+
+    # block-size helper never exceeds the requested element budget
+    Lc, Ti, Tj = V._bounding_block_sizes(4, 8362, 14, bytes_per_elem=8, budget=V.BOUNDING_MEM_BUDGET)
+    assert Lc * Ti * Tj * 14 * 8 <= V.BOUNDING_MEM_BUDGET
+    # small problems are not tiled (single-shot, identical to the old path)
+    assert V._bounding_block_sizes(3, 20, 6, bytes_per_elem=8) == (3, 20, 20)

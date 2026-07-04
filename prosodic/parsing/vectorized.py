@@ -820,46 +820,117 @@ def compute_bounding_batch(viol_sums):
     return result
 
 
-def _compute_bounding_batch_numpy(viol_sums):
-    """Numpy batched bounding for L lines."""
+# Peak-memory budget (bytes) for the largest pairwise-difference intermediate
+# built during harmonic bounding. The pre-tiling implementation materialized a
+# single (L, S, S, C) tensor — ~1 GB (GPU int16) / ~4 GB (numpy int64) per
+# non-perfect line at the syllable cap (S ~ 8000+). The chunked/tiled path below
+# keeps the (Lc, Ti, Tj, C) diff tensor under this budget (derived boolean
+# masks add a small constant multiple). Tiling is a pure reassociation of the
+# same per-pair AND/OR dominance reduction, so the unbounded/bounded RESULT is
+# byte-identical to the untiled computation.
+BOUNDING_MEM_BUDGET = 128 * 1024 * 1024  # 128 MB
+
+
+def _bounding_block_sizes(L, S, C, bytes_per_elem, budget=None):
+    """Pick (Lc, Ti, Tj) block sizes so the (Lc, Ti, Tj, C) diff intermediate
+    stays within ``budget`` bytes.
+
+    Purely a memory-vs-speed tradeoff — it changes how the S x S comparison is
+    decomposed into tiles, never the bounded/unbounded result. When the whole
+    (L, S, S) comparison already fits the budget, returns (L, S, S) so the
+    computation is done in a single allocation (identical to the untiled path).
+    """
+    import math
+    if budget is None:
+        budget = BOUNDING_MEM_BUDGET
+    C = max(1, int(C))
+    # number of (line, i, j) triples whose diff (times C, times bytes) fits
+    max_elems = max(1, int(budget) // (int(bytes_per_elem) * C))
+    if L * S * S <= max_elems:
+        return L, S, S
+    # tile the S x S plane into square-ish tiles, then batch as many lines as
+    # the remaining budget allows.
+    tile = max(1, min(S, math.isqrt(max_elems)))
+    per_line_pairs = tile * tile
+    Lc = max(1, min(L, max_elems // per_line_pairs))
+    return int(Lc), int(tile), int(tile)
+
+
+def _compute_bounding_batch_numpy(viol_sums, budget=None):
+    """Numpy batched bounding for L lines (chunked over L, tiled over S x S).
+
+    Result is byte-identical to the untiled version: bounded[l, j] is the OR
+    over all i of (i dominates j), computed here by ORing partial reductions
+    over i-tiles.
+    """
     L, S, C = viol_sums.shape
-    # (L, S, 1, C) - (L, 1, S, C) -> (L, S, S, C)
-    diff = viol_sums[:, :, None, :] - viol_sums[:, None, :, :]
-    i_leq_j = (diff <= 0).all(axis=3)  # (L, S, S)
-    i_lt_j = i_leq_j & (diff < 0).any(axis=3)
-    bounded = i_lt_j.any(axis=1)  # (L, S)
+    if S <= 1:
+        return np.ones((L, S), dtype=bool)
+    Lc, Ti, Tj = _bounding_block_sizes(L, S, C, bytes_per_elem=8, budget=budget)
+    bounded = np.zeros((L, S), dtype=bool)
+    for l0 in range(0, L, Lc):
+        l1 = min(l0 + Lc, L)
+        vL = viol_sums[l0:l1]  # (lc, S, C)
+        for j0 in range(0, S, Tj):
+            j1 = min(j0 + Tj, S)
+            vj = vL[:, j0:j1, :]  # (lc, tj, C)
+            acc = np.zeros((l1 - l0, j1 - j0), dtype=bool)  # bounded within j-tile
+            for i0 in range(0, S, Ti):
+                i1 = min(i0 + Ti, S)
+                vi = vL[:, i0:i1, :]  # (lc, ti, C)
+                diff = vi[:, :, None, :] - vj[:, None, :, :]  # (lc, ti, tj, C)
+                i_leq_j = (diff <= 0).all(axis=3)
+                i_lt_j = i_leq_j & (diff < 0).any(axis=3)
+                acc |= i_lt_j.any(axis=1)  # reduce over this i-tile
+            bounded[l0:l1, j0:j1] = acc
     return ~bounded
 
 
-def _compute_bounding_batch_torch(viol_sums, device):
-    """GPU batched bounding for L lines in a single kernel launch."""
+def _compute_bounding_batch_torch(viol_sums, device, budget=None):
+    """GPU batched bounding for L lines (chunked over L, tiled over S x S).
+
+    Only the (Lc, Ti, Tj, C) diff tensor is tiled; the (L, S, C) input tensor is
+    uploaded once. Result is byte-identical to the untiled kernel.
+    """
     import torch
+    L, S, C = viol_sums.shape
+    if S <= 1:
+        return np.ones((L, S), dtype=bool)
     vt = torch.tensor(viol_sums, dtype=torch.int16, device=device)  # (L, S, C)
-    diff = vt[:, :, None, :] - vt[:, None, :, :]  # (L, S, S, C)
-    i_leq_j = (diff <= 0).all(dim=3)
-    i_lt_j = i_leq_j & (diff < 0).any(dim=3)
-    bounded = i_lt_j.any(dim=1)  # (L, S)
+    Lc, Ti, Tj = _bounding_block_sizes(L, S, C, bytes_per_elem=2, budget=budget)
+    bounded = torch.zeros((L, S), dtype=torch.bool, device=device)
+    for l0 in range(0, L, Lc):
+        l1 = min(l0 + Lc, L)
+        vL = vt[l0:l1]  # (lc, S, C)
+        for j0 in range(0, S, Tj):
+            j1 = min(j0 + Tj, S)
+            vj = vL[:, j0:j1, :]  # (lc, tj, C)
+            acc = torch.zeros((l1 - l0, j1 - j0), dtype=torch.bool, device=device)
+            for i0 in range(0, S, Ti):
+                i1 = min(i0 + Ti, S)
+                vi = vL[:, i0:i1, :]  # (lc, ti, C)
+                diff = vi[:, :, None, :] - vj[:, None, :, :]  # (lc, ti, tj, C)
+                i_leq_j = (diff <= 0).all(dim=3)
+                i_lt_j = i_leq_j & (diff < 0).any(dim=3)
+                acc |= i_lt_j.any(dim=1)  # reduce over this i-tile
+            bounded[l0:l1, j0:j1] = acc
     return ~bounded.cpu().numpy()
 
 
-def _compute_bounding_numpy(v):
-    """Numpy fallback for harmonic bounding (single line)."""
-    diff = v[:, None, :] - v[None, :, :]  # (S, S, C)
-    i_leq_j = (diff <= 0).all(axis=2)
-    i_lt_j = i_leq_j & (diff < 0).any(axis=2)
-    bounded = i_lt_j.any(axis=0)
-    return ~bounded
+def _compute_bounding_numpy(v, budget=None):
+    """Numpy fallback for harmonic bounding (single line). Tiled for large S."""
+    S = v.shape[0]
+    if S <= 1:
+        return np.ones(S, dtype=bool)
+    return _compute_bounding_batch_numpy(v[None, :, :], budget=budget)[0]
 
 
-def _compute_bounding_torch(v, device):
-    """GPU-accelerated harmonic bounding via PyTorch (single line)."""
-    import torch
-    vt = torch.tensor(v, dtype=torch.int16, device=device)
-    diff = vt[:, None, :] - vt[None, :, :]  # (S, S, C)
-    i_leq_j = (diff <= 0).all(dim=2)
-    i_lt_j = i_leq_j & (diff < 0).any(dim=2)
-    bounded = i_lt_j.any(dim=0)
-    return ~bounded.cpu().numpy()
+def _compute_bounding_torch(v, device, budget=None):
+    """GPU-accelerated harmonic bounding (single line). Tiled for large S."""
+    S = v.shape[0]
+    if S <= 1:
+        return np.ones(S, dtype=bool)
+    return _compute_bounding_batch_torch(v[None, :, :], device, budget=budget)[0]
 
 
 class LazyParseList:

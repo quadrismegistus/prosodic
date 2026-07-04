@@ -32,14 +32,14 @@ cd prosodic/web/frontend && npm run build               # build to ../static_bui
 yapf --style .style.yapf -i <file>
 
 # Rebuild README.ipynb + README.md (after API or analysis-module changes)
-.venv/bin/python scripts/build_readme.py            # executes cells, writes README.ipynb
-.venv/bin/jupyter nbconvert --to markdown README.ipynb --output README
+.venv/bin/python scripts/build_readme.py            # executes cells → README.ipynb AND clean README.md
+#   (requires: pip install nbconvert nbclient)
 
 # Recalibrate rhyme threshold against Walker (1775)
 .venv/bin/python scripts/rime_eval.py               # ROC, AUC, suggested max_dist
 ```
 
-The notebook (and the markdown derived from it) is canonical: edit `scripts/build_readme.py`, not `README.ipynb` directly. nbformat regenerates cell UUIDs on every run, so a fresh build will always produce a UUID-only diff — discard it unless content actually changed.
+`scripts/build_readme.py` is the single source: it executes the cells, writes `README.ipynb` (canonical, Colab-runnable), then converts to a clean `README.md` in the same run — no separate `nbconvert` step. The conversion drops the Colab-only bootstrap cell (tagged `remove_cell`), strips pandas `<style>` blocks, and round-trips DataFrame `<table>` HTML into GitHub-native markdown tables, so `README.md` stays HTML-free. Edit `build_readme.py`, not `README.ipynb` directly. nbformat regenerates cell UUIDs on every run, so a fresh build always produces a UUID-only `.ipynb` diff — discard it unless content actually changed.
 
 ## Architecture
 

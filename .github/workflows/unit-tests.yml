@@ -45,8 +45,8 @@ jobs:
         run: python -m compileall -q prosodic
         continue-on-error: true
 
-      - name: Prepare Selenium
-        uses: nanasess/setup-chromedriver@master
+      - name: Install Playwright browser
+        run: python -m playwright install --with-deps chromium
 
       - name: Run pytest
         run: env NAPTIME=30 pytest --cov=prosodic --cov-report=xml

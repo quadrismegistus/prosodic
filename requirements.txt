@@ -9,6 +9,7 @@ phonemizer
 orjson
 ordered-set
 click
+num2words
 editdistance
 logmap
 loguru

@@ -148,6 +148,16 @@ class WordTypeList(EntityList):
 
 def get_wordform_token(token):
     tokenx = token.strip()
+    # Number normalization: spell out a pure-number token ("3" -> "three") so it
+    # is treated as a real (scannable) word rather than punctuation. The tokenizer
+    # normally expands numerals into separate words before they reach here; this
+    # covers WordTypes constructed directly from a numeral. Degrades to the old
+    # behavior (token left as-is, classified as punctuation) if conversion fails.
+    from .tokenizers import is_numeral, numeral_to_words
+    if is_numeral(tokenx):
+        spoken = numeral_to_words(tokenx)
+        if spoken:
+            tokenx = spoken.strip()
     if any(x.isspace() for x in tokenx):
         log.warning(
             f'Word "{tokenx}" has spaces in it, replacing them with hyphens for parsing'

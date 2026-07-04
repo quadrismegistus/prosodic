@@ -439,7 +439,7 @@ def parse_batch(parse_units, meter, syll_df=None):
                 wsylls = wfeats["sylls"]
                 wpl = LazyParseList(
                     wtl, meter, wscans, wviols, wci, wunb, wsylls,
-                    parse_unit=meter.parse_unit,
+                    parse_unit=meter.parse_unit, meter_vals=wmv,
                 )
                 if wpl._scores.size > 0:
                     ms = float(wpl._scores.min())
@@ -1036,21 +1036,27 @@ class LazyParseList:
 
     @property
     def num_cooptimal(self):
-        """How many unbounded parses tie at the best (minimum) score.
+        """How many DISTINCT best scansions (meter strings) tie at the minimum score.
 
-        1 = the best parse is uniquely optimal. >1 = the grammar is indifferent
-        among that many co-optimal parses, and best_parse is an arbitrary (but
-        deterministic) pick among them — surfaced so a tie isn't read as a
-        decisive result.
+        1 = the reported best scansion is unique. >1 = the grammar is indifferent
+        among that many distinct co-optimal scansions, and best_parse's meter_str
+        is an arbitrary (but deterministic) pick among them — surfaced so a tie
+        isn't read as a decisive result.
 
-        Counts co-optimal *scansions of this parse's pronunciation*. When a line
-        has ambiguous pronunciations, a tie between the best parses of two
-        different pronunciations is not counted here (that's pronunciation
-        ambiguity rather than metrical indifference).
+        Distinct *meter strings*: two scansions yielding the same +/- pattern
+        (e.g. via resolution) count once. This is metrical indifference *given
+        the pronunciation the parser chose* — it does not fold in ties between
+        different pronunciations (that's a separate, pronunciation-choice axis;
+        the pick there is made deterministic by variant ordering, not here).
         """
         if len(self._scores) == 0:
             return 0
-        return int(np.count_nonzero(np.isclose(self._scores, self._scores.min())))
+        coopt_idx = self._unbounded_indices[np.isclose(self._scores, self._scores.min())]
+        if self._meter_vals is not None:
+            meters = {"".join("+" if v else "-" for v in self._meter_vals[i]) for i in coopt_idx}
+        else:
+            meters = {self._get_parse(int(i)).meter_str for i in coopt_idx}
+        return len(meters)
 
     @property
     def best_parse(self):

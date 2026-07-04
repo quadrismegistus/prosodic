@@ -368,7 +368,8 @@ def test_best_parse_cooptimal_signal():
     """best_parse exposes num_cooptimal / is_tied so a co-optimal tie among
     equally-scoring scansions is visible instead of being silently resolved.
     The tiebreak itself stays metrically neutral; this only reports how many
-    parses were equally best."""
+    DISTINCT best meter strings were equally optimal (given the chosen
+    pronunciation)."""
     unique_line = "Shall I compare thee to a summers day"
     tied_line = "Were an all-eating shame and thriftless praise"
     t = TextModel(unique_line + "\n" + tied_line)
@@ -378,8 +379,9 @@ def test_best_parse_cooptimal_signal():
         assert bp is not None
         assert bp.num_cooptimal >= 1
         assert bp.is_tied == (bp.num_cooptimal > 1)
-        # num_cooptimal equals the count of unbounded parses at the best score
-        n = sum(1 for p in pl.unbounded if abs(p.score - bp.score) < 1e-9)
+        # num_cooptimal == number of DISTINCT co-optimal meter strings among the
+        # unbounded parses (resolution ties on the same +/- pattern count once)
+        n = len({p.meter_str for p in pl.unbounded if abs(p.score - bp.score) < 1e-9})
         assert bp.num_cooptimal == n
 
     assert res[0].best_parse.is_tied is False

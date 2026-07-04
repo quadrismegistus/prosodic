@@ -364,20 +364,6 @@ def stress_sylls_ipa_l(ipa_l):
     return [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_l)]
 
 
-#     if any(get_stress(syllipa) != "U" for ipa in ipa_ll for syllipa in ipa):
-#         ipa_ll.append([unstress(syllipa) for syllipa in ipa_ll[0]])
-#     else:
-#         ipa_ll.append(
-#             [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_ll[0])]
-#         )
-#     ipa_ll = [tuple(x) for x in ipa_ll]
-#     ipa_ll = [list(x) for x in set(ipa_ll)]
-#     ipa_ll.sort(
-#         key=lambda ipal: sum(int(get_stress(syllipa) != "U") for syllipa in ipal)
-#     )
-#     return ipa_ll
-
-
 def count_stresses_in_sylls_ipa_l(sylls_ipa_l):
     return sum(bool(get_syll_ipa_stress(syllipa) != "U") for syllipa in sylls_ipa_l)
 
@@ -432,44 +418,6 @@ def get_sylls_ll(sylls_ipa_ll, sylls_text_ll):
 
 def unstress_sylls_ipa_l(sylls_ipa_l):
     return [unstress(syllipa) for syllipa in sylls_ipa_l]
-
-
-# def maybestress(sylls_ll):
-#     sylls_ipa_ll,sylls_text_ll=zip(*sylls_ll)
-#     if sylls_ipa_ll_has_unstress(sylls_ipa_ll) and sylls_ipa_ll_has_stress(sylls_ipa_ll):
-#         return sylls_ll
-
-#     if not sylls_ipa_ll_has_unstress(sylls_ipa_ll):
-#         unstressed_syll_ipa_l = [unstress_sylls_ipa_l
-#         new_syll = ()
-#         sylls_ll.insert(0,)
-
-
-#     # for sylls_text,sylls_ipa in sylls_ll:
-#         # if
-#     if any(get_stress(syllipa) != "U" for ipa in ipa_ll for syllipa in ipa):
-#         ipa_ll.append([unstress(syllipa) for syllipa in ipa_ll[0]])
-#     else:
-#         ipa_ll.append(
-#             [stress(syllipa, primary=not i) for i, syllipa in enumerate(ipa_ll[0])]
-#         )
-#     ipa_ll = [tuple(x) for x in ipa_ll]
-#     ipa_ll = [list(x) for x in set(ipa_ll)]
-#     ipa_ll.sort(
-#         key=lambda ipal: sum(int(get_stress(syllipa) != "U") for syllipa in ipal)
-#     )
-#     return ipa_ll
-
-# def ensure_unstressed(ipa_ll):
-#     if not ipa_ll: return []
-#     ipa_l = ipa_ll[0]
-#     return [unstress(ipa_l)]
-
-
-# def ensure_unstressed(ipa_ll):
-#     if not ipa_ll: return []
-#     ipa_l = ipa_ll[0]
-#     return [unstress(ipa_l)]
 
 
 def get_espeak_error_msg(paths):

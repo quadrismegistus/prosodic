@@ -82,10 +82,6 @@ class WordType(Entity):
             self.clear_cached_properties()
 
     @property
-    def wtoken(self) -> "WordToken":
-        return WordToken(self.txt, lang=self.lang, children=self.children)
-
-    @property
     def forms(self) -> List["WordForm"]:
         return self.children
 

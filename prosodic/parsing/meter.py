@@ -6,7 +6,6 @@ from ..texts import TextModel, Line, Stanza
 from .parselists import ParseList
 from .utils import *
 
-NUM_GOING = 0
 DEFAULT_METER_KWARGS = dict(
     constraints=DEFAULT_CONSTRAINTS,
     max_s=METER_MAX_S,
@@ -94,13 +93,6 @@ class Meter(Entity):
             for cname, cfunc in self.constraint_funcs.items()
             if cfunc.scope == "position"
         }
-
-    def get_pos_types(self, nsylls: Optional[int] = None) -> List[str]:
-        max_w = nsylls if self.max_w is None else self.max_w
-        max_s = nsylls if self.max_s is None else self.max_s
-        wtypes = ["w" * n for n in range(1, max_w + 1)]
-        stypes = ["s" * n for n in range(1, max_s + 1)]
-        return wtypes + stypes
 
     def get_possible_scansions(self, nsylls: int):
         return get_possible_scansions(nsylls, max_s=self.max_s, max_w=self.max_w)

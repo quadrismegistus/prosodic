@@ -6,6 +6,14 @@ on:
       - "main"
       - "master"
 
+# Serialize release+deploy runs so rapid master pushes (e.g. merging a batch of
+# PRs) don't launch concurrent deploys that race on the server (overlapping
+# `npm run build` / `systemctl restart`). A newer pending run supersedes older
+# pending ones, so the final run deploys the latest master.
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests

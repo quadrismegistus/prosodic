@@ -1,5 +1,3 @@
-codecov:
-  token: a6cb4510-38d6-4a03-bea2-4fd132e2a6ad
 ignore:
   - "prosodic/lib/**"
   - "tests/**"

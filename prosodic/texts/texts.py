@@ -231,7 +231,6 @@ class TextModel(Entity):
         return super().__getitem__(item)
 
 
-    @cache
     def parse(
         self,
         combine_by: Literal["line", "sent"] = DEFAULT_COMBINE_BY,

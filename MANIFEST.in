@@ -5,14 +5,10 @@ include *.txt
 include _version.py
 
 graft prosodic
-graft metricaltree
-graft syllabiphon
-graft tagged_samples
-
 graft corpora
-graft meters
-graft dicts
-graft web
+
+prune prosodic/web/frontend/node_modules
+prune prosodic/web/frontend/.svelte-kit
 
 global-exclude .DS_Store
 global-exclude *.py[cod]

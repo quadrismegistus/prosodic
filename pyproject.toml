@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prosodic"
-description = "Prosodic 2: a metrical-phonological parser, written in Python. For English and Finnish, with flexible language support."
+description = "A metrical-phonological parser for poetry, written in Python. For English and Finnish, with flexible language support."
 authors = [
     {name = "Ryan Heuser", email = "ryan.heuser@princeton.edu"},
 ]
 readme = "README.md"
 license = {text = "Apache License, Version 2.0"}
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
@@ -22,7 +22,7 @@ classifiers = [
 dynamic = ["dependencies", "version"]
 
 [project.urls]
-"Homepage" = "https://github.com/quadrismegistus/prosodic/tree/develop"
+"Homepage" = "https://github.com/quadrismegistus/prosodic"
 "Project Home" = "https://prosodic.stanford.edu"
 "Bug Tracker" = "https://github.com/quadrismegistus/prosodic/issues"
 
@@ -48,8 +48,6 @@ dev = [
     "pytest-cov",
     "pytest>=7.2",
     "selenium",
-    "pytest-cov",
-    "pytest>=7.2",
 ]
 all = [
     "black>=22.10.0",

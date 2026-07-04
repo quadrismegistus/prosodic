@@ -327,6 +327,45 @@ class TestSaveLoad:
         assert 'zone_weights' in meta['meter']
         assert len(meta['meter']['zone_weights']) > 0
 
+    def test_maxent_gradient_correct_with_unmatched_line(self):
+        # The MaxEnt gradient must match finite differences even when a line's
+        # annotation matches no candidate scansion (obs_sum == 0). Regression
+        # for `diff = observed - obs_sum * probs` (unmatched lines must
+        # contribute 0 gradient, matching their 0 log-likelihood).
+        from prosodic.parsing.meter import Meter
+        from prosodic.parsing.maxent import MaxEntTrainer
+        tr = MaxEntTrainer(Meter(), regularization=100.0)
+        tr.load_annotations([
+            ("Shall I compare thee to a summers day", "wswswswsws", 1.0),
+            # deliberately wrong-length scansion -> matches nothing -> obs_sum 0
+            ("Rough winds do shake the darling buds of May", "wswswsws", 1.0),
+        ])
+        tr._precompute()
+        assert any(ld["observed"].sum() == 0 for ld in tr._line_data), \
+            "test must exercise an unmatched line"
+        w = np.full(len(tr._constraint_names), -0.3)
+        _, grad = tr._neg_log_likelihood_and_grad(w)
+        eps = 1e-6
+        fd = np.zeros_like(w)
+        for i in range(len(w)):
+            wp = w.copy(); wp[i] += eps
+            wm = w.copy(); wm[i] -= eps
+            fp, _ = tr._neg_log_likelihood_and_grad(wp)
+            fm, _ = tr._neg_log_likelihood_and_grad(wm)
+            fd[i] = (fp - fm) / (2 * eps)
+        assert np.max(np.abs(grad - fd)) < 1e-4
+
+    def test_maxent_fit_prose_no_crash(self):
+        # meter.fit() must not crash when the text contains an oversized (prose)
+        # line the parser can't scan (comes back as a bare ParseList). Regression C4.
+        from prosodic.parsing.meter import Meter
+        prose = ("Shall I compare thee to a summers day\n"
+                 "this is a very long prose sentence that exceeds the maximum "
+                 "syllable parse unit limit and falls outside the normal line path")
+        m = Meter()
+        m.fit(prose, "wswswswsws")  # must not raise
+        assert m.zone_weights is not None
+
     def test_load_returns_textmodel(self):
         t = TextModel("From fairest creatures we desire increase")
         path = t.save(os.path.join(self.tmpdir, "test3"))

@@ -140,9 +140,12 @@ class MaxEntTrainer:
             text = TextModel(text_input, lang=lang)
         results = parse_batch_from_df(text._syll_df, self.meter)
         line_nums = sorted(results.keys())
-        # map line_num -> original text by position
-        line_texts = [input_lines[i] if i < len(input_lines) else ""
-                      for i in range(len(line_nums))]
+        # Map each parsed line back to its source text by line_num. line_num is
+        # 1-based over non-empty lines (matching input_lines, which also drops
+        # blanks); the parser omits <2-syllable lines, so we must index by ln,
+        # not by enumerate position, or annotations attach to the wrong lines.
+        line_texts = [input_lines[ln - 1] if 0 <= ln - 1 < len(input_lines) else ""
+                      for ln in line_nums]
         return results, line_texts
 
     def _zone_split(self, viols_3d):
@@ -172,10 +175,16 @@ class MaxEntTrainer:
             lpl = results[ln]
             line_text = line_texts[i]
 
+            # Oversized/empty lines come back as a bare ParseList([]) with no
+            # violation matrix — skip them instead of crashing on _all_viols.
+            viols = getattr(lpl, "_all_viols", None)
+            if viols is None or viols.shape[0] == 0:
+                continue
+
             if self._base_constraint_names is None:
                 self._base_constraint_names = list(lpl._constraint_names)
 
-            nsylls = lpl._all_viols.shape[1]
+            nsylls = viols.shape[1]
             if nsylls > max_nsylls:
                 max_nsylls = nsylls
 
@@ -331,10 +340,14 @@ class MaxEntTrainer:
             safe_probs = np.clip(probs, 1e-30, None)
             neg_ll -= (observed * np.log(safe_probs)).sum()
 
-            # gradient: sum over lines of (observed - predicted) @ viols
-            diff = observed - probs  # (L, S)
-            # (L, S).T @ ... but we want sum over L of diff[l] @ viols[l]
-            # = einsum('ls,lsc->c', diff, viols)
+            # gradient: sum over lines of (observed - obs_sum * predicted) @ viols.
+            # obs_sum is 1 for a line with a matched annotation and 0 for a line
+            # whose annotation matched no candidate scansion; the latter must
+            # contribute 0 gradient, matching its 0 contribution to the LL.
+            # (Using plain `observed - probs` gives unmatched lines a spurious
+            # -probs gradient that pushes every weight toward -inf.)
+            obs_sum = observed.sum(axis=-1, keepdims=True)  # (L, 1)
+            diff = observed - obs_sum * probs  # (L, S)
             neg_grad -= np.einsum('ls,lsc->c', diff, viols)
 
         # L2 regularization

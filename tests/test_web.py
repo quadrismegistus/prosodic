@@ -303,64 +303,81 @@ def test_permalink_gzip_bomb_rejected():
     assert ei.value.status_code == 413
 
 
-# -- Selenium browser tests (skip if no browser available) --
+# -- Playwright browser tests --
+# Migrated off Selenium: Selenium 4's Selenium Manager auto-provisions a driver
+# over the network at test time, which in CI hung/retried for ~400s instead of
+# failing fast (flaking unrelated PRs). Playwright uses a pinned, pre-installed
+# browser (`playwright install chromium`), so launch() either works or raises
+# immediately — no network hang. The test runs in CI (see unit-tests.yml) and
+# skips cleanly if the browser binary isn't present locally. (AUDIT R11)
 
-NAPTIME = int(os.environ.get('NAPTIME', 5))
-PORT = random.randint(5111, 5211)
-BASE_URL = f"http://localhost:{PORT}"
+NAPTIME = int(os.environ.get('NAPTIME', 30))
 
-def _run_app(q):
+def _run_app(port, q):
     import uvicorn
     from prosodic.web.api import app
     def start_server():
-        uvicorn.run(app, port=PORT, log_level="warning")
-    server_thread = threading.Thread(target=start_server)
+        uvicorn.run(app, port=port, log_level="warning")
+    server_thread = threading.Thread(target=start_server, daemon=True)
     server_thread.start()
     q.put("Server started")
     server_thread.join()
 
+def _wait_for_server(url, timeout=NAPTIME):
+    """Poll until the server answers, instead of a fixed sleep (AUDIT R11)."""
+    import urllib.request
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            urllib.request.urlopen(url, timeout=2)
+            return
+        except Exception:
+            time.sleep(0.25)
+    raise RuntimeError(f"server did not come up within {timeout}s at {url}")
+
 @pytest.fixture(scope="module")
 def app_server():
+    import socket
+    # Pick a free port and PASS it to the child process. macOS uses spawn, so a
+    # module-level random PORT would be re-randomized on re-import in the child
+    # and never match the URL the test hits (latent bug the skipped selenium
+    # test never exercised).
+    s = socket.socket()
+    s.bind(('127.0.0.1', 0))
+    port = s.getsockname()[1]
+    s.close()
+    base_url = f"http://127.0.0.1:{port}"
     queue = Queue()
-    p = Process(target=_run_app, args=(queue,))
+    p = Process(target=_run_app, args=(port, queue))
     p.start()
     assert queue.get(timeout=30) == "Server started"
-    time.sleep(NAPTIME)
-    yield
+    _wait_for_server(base_url)
+    yield base_url
     p.terminate()
     p.join()
 
 @pytest.fixture(scope="module")
-def driver(app_server):
+def page(app_server):
     try:
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        d = webdriver.Chrome(options=options)
-    except Exception:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        pytest.skip("playwright not installed (pip install playwright)")
+    with sync_playwright() as pw:
         try:
-            from selenium import webdriver
-            options = webdriver.FirefoxOptions()
-            options.add_argument('--headless')
-            d = webdriver.Firefox(options=options)
-        except Exception:
-            pytest.skip("No browser driver available")
-    yield d
-    d.quit()
+            browser = pw.chromium.launch(headless=True)
+        except Exception as e:
+            # browser binary not installed — fail fast to a skip (no network hang)
+            pytest.skip(f"playwright chromium not available: {e} "
+                        "(run: playwright install chromium)")
+        pg = browser.new_page()
+        try:
+            yield pg
+        finally:
+            browser.close()
 
-@pytest.mark.skipif(
-    not os.environ.get("PROSODIC_BROWSER_TEST"),
-    reason="opt-in only (set PROSODIC_BROWSER_TEST=1). Selenium 4's Selenium "
-    "Manager makes network calls to auto-provision a driver, which hangs and "
-    "retries for minutes in CI instead of skipping — flaking unrelated PRs. "
-    "skipif evaluates at collection time, before the app_server/driver fixtures "
-    "spin a uvicorn server, so nothing is started when it skips. (AUDIT R11)",
-)
-def test_browser_homepage(driver):
-    driver.get(BASE_URL)
-    assert "Prosodic" in driver.title
+def test_browser_homepage(page, app_server):
+    page.goto(app_server)
+    assert "Prosodic" in page.title()
 
 
 if __name__ == "__main__":

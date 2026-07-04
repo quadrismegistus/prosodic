@@ -47,7 +47,7 @@ dev = [
     "wheel",
     "pytest-cov",
     "pytest>=7.2",
-    "selenium",
+    "playwright",
 ]
 all = [
     "black>=22.10.0",

@@ -4,6 +4,6 @@ nbformat
 nbclient
 quarto
 quartodoc
-selenium
+playwright
 snakeviz
 httpx

@@ -677,77 +677,66 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
         # use vectorized implementation if available
         if cfunc is not None and cfunc.vectorized is not None:
             all_viols[:, :, :, ci] = cfunc.vectorized(features)
-        elif cname in ("unres_within", "unres_across"):
-            # legacy per-line evaluation for word-boundary constraints
-            for li in range(L):
-                feats_i = features_list[li]
-                wi = feats_i["word_ids"][None, :]
-                hi = feats_i["heavy"][None, :]
-                si = feats_i["stressed"][None, :]
-                fi = feats_i["func_word"][None, :]
-                if cname == "unres_within":
-                    _eval_unres_within(all_viols[li], ci, position_ids, position_sizes,
-                                       wi, hi, si, S, N)
-                else:
-                    _eval_unres_across(all_viols[li], ci, position_ids, position_sizes,
-                                        wi, fi, meter_vals, S, N)
+        elif cname == "unres_within":
+            all_viols[:, :, :, ci] = _unres_within_batch(
+                position_ids, position_sizes, word_ids, heavy, stressed)
+        elif cname == "unres_across":
+            all_viols[:, :, :, ci] = _unres_across_batch(
+                position_ids, position_sizes, word_ids, func_word, meter_vals)
 
     return all_viols, constraint_index
 
 
-def _eval_unres_within(viols, ci, position_ids, position_sizes, word_ids, heavy, stressed, S, N):
-    """Evaluate unres_within constraint for all scansions."""
+def _in_multisyll_position(position_ids, position_sizes):
+    """(S, N) bool: syllable j is a 2nd+ syllable sharing a multi-syllable
+    metrical position with syllable j-1 (the site of a resolution violation)."""
+    S, N = position_ids.shape
+    same_pos = np.zeros((S, N), dtype=bool)
+    same_pos[:, 1:] = position_ids[:, 1:] == position_ids[:, :-1]
+    return same_pos & (position_sizes >= 2)
+
+
+def _unres_within_batch(position_ids, position_sizes, word_ids, heavy, stressed):
+    """(L, S, N) int8 unres_within violations, fully vectorized over lines.
+
+    Violation on syllable j iff it resolves within a word (same word_id as j-1)
+    and the first syllable of the position is heavy or unstressed. Byte-identical
+    to the former per-line/per-syllable loop.
+    """
+    S, N = position_ids.shape
+    L = word_ids.shape[0]
     if N < 2:
-        return
-    for j in range(1, N):
-        # is this syllable in a multi-syll position AND same position as previous syll?
-        same_pos = position_ids[:, j] == position_ids[:, j - 1]  # (S,)
-        multi_syll = position_sizes[:, j] >= 2  # (S,)
-        same_word = word_ids[0, j] == word_ids[0, j - 1]  # scalar
-
-        if not same_word:
-            continue  # unres_within only applies within same word
-
-        in_position = same_pos & multi_syll  # (S,)
-        if not in_position.any():
-            continue
-
-        # first syll of position must be light AND stressed, else violation on 2nd syll
-        prev_heavy = heavy[0, j - 1]  # scalar
-        prev_stressed = stressed[0, j - 1]  # scalar
-        if prev_heavy or not prev_stressed:
-            viols[:, j, ci] |= in_position.astype(np.int8)
+        return np.zeros((L, S, N), dtype=np.int8)
+    in_position = _in_multisyll_position(position_ids, position_sizes)  # (S, N)
+    same_word = np.zeros((L, N), dtype=bool)
+    same_word[:, 1:] = word_ids[:, 1:] == word_ids[:, :-1]
+    bad_first = np.zeros((L, N), dtype=bool)  # prev syll heavy OR unstressed
+    bad_first[:, 1:] = heavy[:, :-1].astype(bool) | ~stressed[:, :-1].astype(bool)
+    line_mask = same_word & bad_first  # (L, N)
+    return (in_position[None, :, :] & line_mask[:, None, :]).astype(np.int8)
 
 
-def _eval_unres_across(viols, ci, position_ids, position_sizes, word_ids, func_word, is_strong_pos, S, N):
-    """Evaluate unres_across constraint for all scansions."""
+def _unres_across_batch(position_ids, position_sizes, word_ids, func_word, meter_vals):
+    """(L, S, N) int8 unres_across violations, fully vectorized over lines.
+
+    Violation on syllable j iff it resolves across a word boundary (different
+    word_id from j-1) AND the position is strong OR the two syllables are not
+    both function words. Byte-identical to the former per-line loop.
+    """
+    S, N = position_ids.shape
+    L = word_ids.shape[0]
     if N < 2:
-        return
-    for j in range(1, N):
-        same_pos = position_ids[:, j] == position_ids[:, j - 1]  # (S,)
-        multi_syll = position_sizes[:, j] >= 2  # (S,)
-        diff_word = word_ids[0, j] != word_ids[0, j - 1]  # scalar
-
-        if not diff_word:
-            continue  # unres_across only applies across word boundaries
-
-        in_position = same_pos & multi_syll  # (S,)
-        if not in_position.any():
-            continue
-
-        # violation if: strong position, OR not both function words
-        prev_func = func_word[0, j - 1]  # scalar
-        curr_func = func_word[0, j]  # scalar
-
-        if is_strong_pos.ndim > 0:
-            # strong position always violates for across-word resolution
-            strong_viol = is_strong_pos[:, j]  # (S,)
-            not_both_func = not (prev_func and curr_func)
-            violation = in_position & (strong_viol | not_both_func)
-        else:
-            violation = in_position
-
-        viols[:, j, ci] |= violation.astype(np.int8)
+        return np.zeros((L, S, N), dtype=np.int8)
+    in_position = _in_multisyll_position(position_ids, position_sizes)  # (S, N)
+    diff_word = np.zeros((L, N), dtype=bool)
+    diff_word[:, 1:] = word_ids[:, 1:] != word_ids[:, :-1]
+    fw = func_word.astype(bool)
+    not_both_func = np.zeros((L, N), dtype=bool)
+    not_both_func[:, 1:] = ~(fw[:, :-1] & fw[:, 1:])
+    strong = meter_vals.astype(bool)  # (S, N)
+    viol = in_position[None, :, :] & diff_word[:, None, :] & (
+        strong[None, :, :] | not_both_func[:, None, :])
+    return viol.astype(np.int8)
 
 
 def _get_torch_device():

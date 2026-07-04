@@ -350,6 +350,14 @@ def driver(app_server):
     yield d
     d.quit()
 
+@pytest.mark.skipif(
+    not os.environ.get("PROSODIC_BROWSER_TEST"),
+    reason="opt-in only (set PROSODIC_BROWSER_TEST=1). Selenium 4's Selenium "
+    "Manager makes network calls to auto-provision a driver, which hangs and "
+    "retries for minutes in CI instead of skipping — flaking unrelated PRs. "
+    "skipif evaluates at collection time, before the app_server/driver fixtures "
+    "spin a uvicorn server, so nothing is started when it skips. (AUDIT R11)",
+)
 def test_browser_homepage(driver):
     driver.get(BASE_URL)
     assert "Prosodic" in driver.title

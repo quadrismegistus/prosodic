@@ -22,11 +22,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 nb = nbformat.v4.new_notebook()
 cells = []
 
-def md(text):
-    cells.append(nbformat.v4.new_markdown_cell(text))
+def md(text, tags=None):
+    cell = nbformat.v4.new_markdown_cell(text)
+    if tags:
+        cell.metadata["tags"] = tags
+    cells.append(cell)
 
-def code(src):
-    cells.append(nbformat.v4.new_code_cell(src))
+def code(src, tags=None):
+    cell = nbformat.v4.new_code_cell(src)
+    if tags:
+        cell.metadata["tags"] = tags
+    cells.append(cell)
 
 
 md("""# Prosodic 3
@@ -57,7 +63,8 @@ You'll also need [espeak](https://github.com/espeak-ng/espeak-ng) (free TTS) to 
 
 md("""### Setup (Colab only)
 
-Skip this cell when running locally. It installs system + Python deps in a Colab runtime.""")
+Skip this cell when running locally. It installs system + Python deps in a Colab runtime.""",
+   tags=["remove_cell"])
 
 code("""# Auto-install dependencies if running in Google Colab.
 # Locally this is a no-op.
@@ -73,7 +80,8 @@ if IN_COLAB:
     subprocess.run(["pip", "install", "-q", "prosodic"], check=True)
     print("Colab setup complete.")
 else:
-    print("Local environment — skipping Colab setup.")""")
+    print("Local environment — skipping Colab setup.")""",
+     tags=["remove_cell"])
 
 md("""## Quickstart
 
@@ -300,7 +308,7 @@ prosodic web --port 5111
 prosodic web --dev               # auto-reload backend + frontend
 ```
 
-Five tabs: **Parse** (text input + corpus dropdown + sortable, paginated results), **Line** (single-line scansion detail showing all candidates), **Meter** (constraint config + weights), **MaxEnt** (annotated-data training), **Settings**. See `prosodic/web/` for the implementation.""")
+Five tabs: **Parse** (text input + corpus dropdown + sortable, paginated results), **Line** (single-line scansion detail showing all candidates), **Meter** (constraint config + weights), **MaxEnt** (annotated-data training), **Settings**. Results are **shareable via permalink**, exportable as CSV/TSV/JSON, and long/prose lines fall back to phrase-level parsing automatically. See `prosodic/web/` for the implementation.""")
 
 md("""## Remote client
 
@@ -332,9 +340,67 @@ nb["cells"] = cells
 client = NotebookClient(nb, timeout=300, kernel_name="python3")
 client.execute(cwd=str(REPO_ROOT))
 
-# Save
+# Save notebook (canonical, Colab-runnable)
 out_path = REPO_ROOT / "README.ipynb"
 with out_path.open("w") as f:
     nbformat.write(nb, f)
+print(f"Wrote {out_path} with {len(cells)} cells.")
 
-print(f"\nWrote {out_path} with {len(cells)} cells.")
+
+def write_readme_md(nb):
+    """Convert the executed notebook to a clean README.md.
+
+    nbconvert alone leaves junk in the markdown: the Colab-only bootstrap cell,
+    pandas DataFrame ``<style scoped>`` CSS blocks (which GitHub strips anyway),
+    and raw ``<table>`` HTML. We drop the tagged Colab cells, strip the CSS, and
+    round-trip the DataFrame tables back through pandas into GitHub-native
+    markdown tables.
+    """
+    import io
+    import re
+    import pandas as pd
+    from nbconvert import MarkdownExporter
+    from traitlets.config import Config
+
+    cfg = Config()
+    cfg.TagRemovePreprocessor.remove_cell_tags = ("remove_cell",)
+    cfg.TagRemovePreprocessor.enabled = True
+    cfg.MarkdownExporter.preprocessors = [
+        "nbconvert.preprocessors.TagRemovePreprocessor"
+    ]
+    body, _ = MarkdownExporter(config=cfg).from_notebook_node(nb)
+
+    # pandas DataFrame CSS is dead weight (GitHub ignores <style>)
+    body = re.sub(r"<style.*?</style>", "", body, flags=re.DOTALL)
+
+    # entity _repr_html_ labels ("<b>Line</b><br>...") -> a bold markdown line
+    body = re.sub(r"<b>(.*?)</b>\s*<br\s*/?>", r"**\1**\n\n", body, flags=re.DOTALL)
+
+    def _clean_col(c):
+        # flatten MultiIndex headers and drop pandas' "Unnamed: N_level" filler
+        if isinstance(c, tuple):
+            parts = [str(x) for x in c if not str(x).startswith("Unnamed")]
+            return " ".join(parts).strip()
+        return "" if str(c).startswith("Unnamed") else str(c)
+
+    # DataFrame HTML tables -> markdown tables
+    def _table_to_md(match):
+        try:
+            df = pd.read_html(io.StringIO(match.group(0)))[0]
+            df.columns = [_clean_col(c) for c in df.columns]
+            return df.to_markdown(index=False)
+        except Exception:
+            return match.group(0)
+
+    body = re.sub(r"<table.*?</table>", _table_to_md, body, flags=re.DOTALL)
+    body = re.sub(r"</?div>\s*", "", body)      # unwrap leftover df <div>s
+    body = re.sub(r"<p>(.*?)</p>", r"*\1*", body, flags=re.DOTALL)  # "N rows × M cols" footer
+    body = re.sub(r"\n{3,}", "\n\n", body)      # collapse blank-line runs
+    body = body.rstrip() + "\n"
+
+    md_path = REPO_ROOT / "README.md"
+    md_path.write_text(body)
+    print(f"Wrote {md_path} ({body.count(chr(10))} lines).")
+
+
+write_readme_md(nb)

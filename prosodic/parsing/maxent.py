@@ -96,7 +96,9 @@ class MaxEntTrainer:
 
     Args:
         meter: Meter object for parsing.
-        regularization: L2 regularization strength (higher = more shrinkage).
+        regularization: L2 regularization strength, i.e. the Gaussian prior
+            variance on weights (higher = weaker penalty = less shrinkage;
+            lower = stronger penalty = more shrinkage toward 0).
         zones: positional zone splitting for constraints.
             - None: no splitting (default). One weight per constraint.
             - "initial": split into initial (first 2 syllables) vs rest.

@@ -12,6 +12,10 @@ from multiset import Multiset
 from tqdm import tqdm
 import logging
 from langdetect import detect as detect_lang
+from langdetect import DetectorFactory as _LangDetectFactory
+# Seed langdetect so language detection is deterministic across runs — without
+# this it uses a random seed and flakily mis-detects short texts (and flaked CI).
+_LangDetectFactory.seed = 0
 import pandas as pd
 import nltk
 import numpy as np

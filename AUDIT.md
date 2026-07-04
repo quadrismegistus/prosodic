@@ -66,28 +66,30 @@ This is a working document for successive sessions. Each finding has: a checkbox
 
 ---
 
+**Update — W2–W8 landed in PR #91** (`harden-web-app`, off master): XSS escaping at all `{@html}` sinks, event-loop offload for `/api/parse/stream`, bounded LRU text cache + per-text parse lock (concurrency), 500K-char input cap, security-headers middleware (CSP/nosniff/frame), corpora separator fix, SSE error events. Remaining: W9 (client.py error detail), W10 (cli os.system).
+
 ## Web app & deployment (`prosodic/web/`, `client.py`, `cli.py`, `deploy/`)
 
 Publicly deployed at https://prosodic.app — security-relevant. No auth (intentional, public tool); no CORS middleware (safe same-origin default — not a finding).
 
 - [x] **W1. Path traversal** — see **P1**. `api.py:1038`. HIGH. ✓
-- [ ] **W2. `parse_stream` blocks the event loop.** `api.py:665`; `deploy/prosodic.service:16`. MED. *(traced)*
+- [x] **W2. `parse_stream` blocks the event loop.** `api.py:665`; `deploy/prosodic.service:16`. MED. *(traced)*
   `parse_stream` is `async def` but calls sync CPU-bound `get_text()` / `_parse_and_build_rows()` directly (no `run_in_threadpool`). systemd runs uvicorn with no `--workers` → single loop. One large parse freezes the whole site.
   **Fix:** `await anyio.to_thread.run_sync(...)` for the parse; add workers + a concurrency cap.
-- [ ] **W3. XSS: user text embedded unescaped, rendered via `{@html}`.** `api.py:37` (`_render_slot`), `195` (`_raw_linepart_html`), `235`; sinks `ParseResults.svelte:244`, `LineViewTab.svelte:146`. MED. ✓
+- [x] **W3. XSS: user text embedded unescaped, rendered via `{@html}`.** `api.py:37` (`_render_slot`), `195` (`_raw_linepart_html`), `235`; sinks `ParseResults.svelte:244`, `LineViewTab.svelte:146`. MED. ✓
   `unit.txt` interpolated into HTML with no escaping. Inline words are fragmented (defuses most tags), but the **prose fallback** emits a linepart's raw text contiguously. Repro: an oversized (>18-syll, no phrase punctuation) line with `<svg onload=alert\`1\`>` produces the executable tag intact in `parse_html`. Self-XSS today; stored/reflected the moment a share link exists.
   **Fix:** `html.escape()` every `unit.txt`/`wt.txt` before interpolation.
-- [ ] **W4. Unbounded `_text_cache` + shared-mutable TextModel.** `api.py:24,30,410,971`. MED. *(traced)*
+- [x] **W4. Unbounded `_text_cache` + shared-mutable TextModel.** `api.py:24,30,410,971`. MED. *(traced)*
   Cache keyed by `(text, kwargs)`, never evicted → memory DoS. Worse: `get_text()` returns a *shared* TextModel; parsing writes results onto its line entities. Two concurrent `/api/parse` on the same text (e.g. the default Sonnet 1) with different weights clobber each other → a user can receive another user's scansion.
   **Fix:** bound the cache (LRU/size cap); don't store per-request parse state on the shared object (parse into request-local structures, or key cache by meter).
-- [ ] **W5. No server-side parse timeout or input-size guard.** `api.py:23` (`linelim=15000`). MED. *(traced)*
+- [x] **W5. No server-side parse timeout or input-size guard.** `api.py:23` (`linelim=15000`). MED. *(traced)*
   `linelim` caps line count only — no per-line/char cap, no timeout. The Settings `parse_timeout` is never sent to the backend or enforced. Combined with W2, a few max-size requests pin the CPU.
   **Fix:** `asyncio.wait_for` around a threadpool parse; cap total syllables/chars; plumb `parse_timeout` through.
-- [ ] **W6. Corpora path check lacks trailing separator.** `api.py:343`. LOW. *(traced)*
+- [x] **W6. Corpora path check lacks trailing separator.** `api.py:343`. LOW. *(traced)*
   `startswith(corpora_dir)` without `os.sep` — a sibling dir like `corpora-secret` passes. No such sibling today; guard is subtly wrong. **Fix:** compare against `corpora_dir + os.sep`, use `os.path.realpath`.
-- [ ] **W7. nginx/deploy hardening gaps.** `deploy/nginx-prosodic.conf`. LOW.
+- [x] **W7. nginx/deploy hardening gaps.** `deploy/nginx-prosodic.conf`. LOW.
   No `limit_req`/`limit_conn`; no `client_max_body_size` (relies on nginx 1 MB default); no CSP / `X-Content-Type-Options`; `proxy_read_timeout 300s` lets one request hold a connection 5 min (amplifies W2/W5). `prosodic.service` is otherwise good (non-root, `NoNewPrivileges`, `ProtectSystem=strict`, `PrivateTmp`). **Fix:** add a rate-limit zone + CSP header.
-- [ ] **W8. SSE swallows mid-stream errors.** `api.py:686`; `api.js:35`. LOW.
+- [x] **W8. SSE swallows mid-stream errors.** `api.py:686`; `api.js:35`. LOW.
   If the parse raises after headers are sent, the generator dies with no `{'phase':'error'}` event; client `meta` stays null, UI hangs. **Fix:** wrap generator body in try/except, `yield sse({'phase':'error',...})`.
 - [ ] **W9. client.py mismatches.** LOW.
   `client.py:66,75` `raise_for_status()` discards the FastAPI `{"detail":...}` message → opaque remote errors. `client.py:294` `RemoteText.parse()` hardcodes `is_bounded=False` for all `/api/parse` rows, so `line.parses.bounded` is always empty on that path (only `parse_lines()` populates bounded).

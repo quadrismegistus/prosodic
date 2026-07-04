@@ -533,6 +533,20 @@ ESPEAK_LIB_GLOBS = [
 ]
 
 
+# Broad system library directories that must NOT be recursively searched:
+# a full walk here is exactly the multi-second import penalty T15 fixes. They
+# are covered instead by the bounded, fixed-depth globs in _glob_espeak_lib().
+# Compared by os.path.normpath, so trailing slashes don't matter.
+ESPEAK_NO_RECURSE = {
+    "/usr/lib",
+    "/usr/lib/x86_64-linux-gnu",
+    "/usr/lib64",
+    "/lib",
+    "/lib64",
+    "/usr/local/lib",
+}
+
+
 def _glob_espeak_lib(globs=ESPEAK_LIB_GLOBS, preferred=ESPEAK_LIB_FNS):
     """Find the espeak shared library via a bounded set of shallow globs.
 
@@ -552,6 +566,32 @@ def _glob_espeak_lib(globs=ESPEAK_LIB_GLOBS, preferred=ESPEAK_LIB_FNS):
             if os.path.basename(m) in preferred:
                 return m
         return matches[0]
+    return ""
+
+
+def _find_espeak_lib_recursive(paths, lib_fns, skip=ESPEAK_NO_RECURSE):
+    """Recursively search each explicitly-provided directory for a library.
+
+    Only the paths passed in are walked -- and broad system dirs (see
+    ESPEAK_NO_RECURSE) are skipped so we never reintroduce the slow /usr/lib
+    walk. Returns the first match in sorted (deterministic) order, or "".
+    Never raises.
+    """
+    for path in paths:
+        try:
+            if not os.path.isdir(path):
+                continue
+            if os.path.normpath(path) in skip:
+                continue
+            hits = []
+            for fn in lib_fns:
+                hits.extend(
+                    glob.glob(os.path.join(path, "**", fn), recursive=True)
+                )
+            if hits:
+                return sorted(hits)[0]
+        except OSError:
+            continue
     return ""
 
 
@@ -578,9 +618,15 @@ def get_espeak_env(
                 return path
         except OSError:
             continue
-    # 2. Bounded glob of well-known library locations (see ESPEAK_LIB_GLOBS).
-    #    Replaces the old full os.walk of /usr/lib/** and also catches
-    #    libespeak-ng.so, which the previous name set missed.
+    # 2. Recursively search the explicitly-provided directories (small, known
+    #    espeak locations like Homebrew's Cellar), skipping broad system dirs.
+    #    Passed dirs win over the system libraries found in step 3.
+    found = _find_espeak_lib_recursive(paths, lib_fns)
+    if found:
+        return found
+    # 3. Bounded glob of well-known system library locations (see
+    #    ESPEAK_LIB_GLOBS). Replaces the old full os.walk of /usr/lib/** and
+    #    also catches libespeak-ng.so, which the previous name set missed.
     found = _glob_espeak_lib()
     if found:
         return found

@@ -54,7 +54,22 @@ class Meter(Entity):
     @property
     def key(self):
         if self._key is None:
-            self._key = f"{self.nice_type_name}({encode_hash(serialize(self._attrs))})"
+            # Fold learned zones/zone_weights (set by fit/fit_annotations) into
+            # the key so a fitted meter hashes differently from an unfitted one.
+            # These live as instance attrs (not in _attrs), so without this a
+            # fit() would leave meter.key unchanged and callers keyed on it
+            # (TextModel._parse_results / _line_parse_results) would return
+            # stale, pre-fit parses. (C10)
+            attrs = dict(self._attrs)
+            zones = getattr(self, 'zones', None)
+            zone_weights = getattr(self, 'zone_weights', None)
+            if zones is not None:
+                attrs['zones'] = zones if isinstance(zones, (str, int)) else str(zones)
+            if zone_weights is not None:
+                attrs['zone_weights'] = {
+                    str(k): float(v) for k, v in dict(zone_weights).items()
+                }
+            self._key = f"{self.nice_type_name}({encode_hash(serialize(attrs))})"
         return self._key
 
     def to_dict(self, incl_attrs=True, **kwargs) -> Dict[str, Any]:

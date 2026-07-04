@@ -584,3 +584,61 @@ class TestEdgeCases:
         t = TextModel(sonnet)
         pdf = t.parsed_df
         assert pdf['line_num'].nunique() == 14
+
+
+# --- Parse-cache correctness (force / partial-iter / fit invalidation) ---
+
+class TestParseCache:
+    def test_force_recomputes(self):
+        # force=True must re-parse, not replay the stale cached objects (T4/T2).
+        t = TextModel(sonnet)
+        r0 = t.parse()
+        first0 = r0[0]
+        r1 = t.parse(force=True)
+        first1 = r1[0]
+        assert first0 is not first1  # fresh parse, distinct object
+        assert len(r0) == len(r1) == 14
+
+    def test_partial_iter_does_not_truncate(self):
+        # Consuming only the first item of parse_iter() must not poison the
+        # cache so that a later parse() returns a truncated prefix (T4).
+        t = TextModel(sonnet)
+        g = t.parse_iter()
+        next(g)          # consume just the first line
+        del g
+        assert len(t.parse()) == 14
+
+    def test_lim_does_not_poison_cache(self):
+        # A limited parse_iter run must not be cached under the full key (T4).
+        t = TextModel(sonnet)
+        list(t.parse_iter(lim=3))
+        assert len(list(t.parse_iter())) == 14
+
+    def test_single_line_parse_is_cached(self):
+        # Single-unit parse() (Line.parse) must still cache: two calls with the
+        # same meter config return the same object.
+        line = TextModel("embrace " * 5).line1
+        p1 = line.parse()
+        p2 = line.parse()
+        assert p1 is p2
+        p3 = line.parse(force=True)
+        assert p3 is not p1  # force recomputes even for single-unit
+
+    def test_fit_invalidates_cache(self):
+        # meter.fit() must change meter.key so a re-parse recomputes with the
+        # learned zone weights instead of returning pre-fit results (C10).
+        t = TextModel(sonnet)
+        t.parse()
+        meter = t.get_meter()
+        key_pre = meter.key
+        line_pre = t._line_parse_results[key_pre][1]
+        scores_pre = np.array(line_pre._all_scores).copy()
+
+        meter.fit(t, "wswswswsws", zones=3)
+        assert meter.key != key_pre  # key reflects zones/zone_weights
+
+        t.parse()
+        line_post = t._line_parse_results[meter.key][1]
+        assert line_post is not line_pre  # recomputed, not stale cache
+        scores_post = np.array(line_post._all_scores).copy()
+        assert not np.allclose(scores_pre, scores_post)  # fitted weights applied

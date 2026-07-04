@@ -95,8 +95,13 @@ def unres_within(mpos):
     for si in range(1, len(slots)):
         slot1, slot2 = slots[si - 1], slots[si]
         unit1, unit2 = slot1.unit, slot2.unit
-        wf1, wf2 = unit1.parent, unit2.parent
-        if wf1 is not wf2:
+        # Same-word test must use the word *occurrence* (wordtoken), not the
+        # WordForm: WordForms are shared across repeated tokens of a word type
+        # (cached get_word), so `wf1 is wf2` misclassified adjacent repeats
+        # (e.g. "the the") as word-internal. This mirrors the DF path's
+        # per-syllable word_num comparison. (AUDIT C17)
+        wt1, wt2 = getattr(unit1, "wordtoken", None), getattr(unit2, "wordtoken", None)
+        if wt1 is not wt2:
             ol.append(None)
         else:
             if unit1.is_heavy or not unit1.is_stressed:
@@ -118,11 +123,16 @@ def unres_across(mpos):
     for si in range(1, len(slots)):
         slot1, slot2 = slots[si - 1], slots[si]
         unit1, unit2 = slot1.unit, slot2.unit
-        wf1, wf2 = unit1.wordform, unit2.wordform
-        if wf1 is wf2:
+        # Word-boundary test uses the word *occurrence* (wordtoken), not the
+        # shared WordForm, so adjacent repeats of the same word type (e.g.
+        # "the the") count as a boundary. Matches the DF path's word_num
+        # comparison. (AUDIT C17)
+        wt1, wt2 = getattr(unit1, "wordtoken", None), getattr(unit2, "wordtoken", None)
+        if wt1 is wt2:
             ol.append(None)
         else:
-            if mpos.is_prom or not wf1.is_functionword or not wf2.is_functionword:
+            func1, func2 = _slot_is_functionword(slot1), _slot_is_functionword(slot2)
+            if mpos.is_prom or not func1 or not func2:
                 ol.append(True)
             else:
                 ol.append(False)
@@ -140,6 +150,25 @@ def foot_size(mpos):
 
 
 # === Adjacency constraints (shifted arrays) ===
+
+def _global_slot_context(mpos):
+    """Return ``(all_slots, start_index)`` for a position.
+
+    ``all_slots`` is the parent parse's full ordered slot list and
+    ``start_index`` is the global index of ``mpos``'s first slot. Adjacency
+    constraints (clash/lapse) compare each syllable to its predecessor, which
+    may live in the *previous* position, so they need the parse-wide sequence
+    rather than just ``mpos.slots``.
+    """
+    all_slots = list(mpos.parse.slots)
+    if not mpos.slots:
+        return all_slots, 0
+    first = mpos.slots[0]
+    for i, slot in enumerate(all_slots):
+        if slot is first:
+            return all_slots, i
+    return all_slots, 0
+
 
 def _clash_vectorized(f):
     N = f["N"]
@@ -159,7 +188,21 @@ def _clash_vectorized(f):
     vectorized=_clash_vectorized,
 )
 def clash(mpos):
-    return [None] * len(mpos.slots)
+    # Entity reference impl mirroring ``_clash_vectorized`` (AUDIT C16): mark a
+    # violation on syllable j (global order, j>=1) when j-1 and j are both
+    # stressed and at least one of the two positions is weak.
+    all_slots, start = _global_slot_context(mpos)
+    out = []
+    for k, slot in enumerate(mpos.slots):
+        j = start + k
+        if j <= 0:
+            out.append(None)
+            continue
+        prev = all_slots[j - 1]
+        both_stressed = bool(slot.unit.is_stressed) and bool(prev.unit.is_stressed)
+        one_weak = (not slot.is_prom) or (not prev.is_prom)
+        out.append(bool(both_stressed and one_weak))
+    return out
 
 
 def _lapse_vectorized(f):
@@ -180,7 +223,21 @@ def _lapse_vectorized(f):
     vectorized=_lapse_vectorized,
 )
 def lapse(mpos):
-    return [None] * len(mpos.slots)
+    # Entity reference impl mirroring ``_lapse_vectorized`` (AUDIT C16): mark a
+    # violation on syllable j (global order, j>=1) when j-1 and j are both
+    # unstressed and at least one of the two positions is strong.
+    all_slots, start = _global_slot_context(mpos)
+    out = []
+    for k, slot in enumerate(mpos.slots):
+        j = start + k
+        if j <= 0:
+            out.append(None)
+            continue
+        prev = all_slots[j - 1]
+        both_unstressed = (not slot.unit.is_stressed) and (not prev.unit.is_stressed)
+        one_strong = bool(slot.is_prom) or bool(prev.is_prom)
+        out.append(bool(both_unstressed and one_strong))
+    return out
 
 
 # === New constraints ===
@@ -207,6 +264,23 @@ def s_light(mpos):
     return [not slot.unit.is_heavy for slot in mpos.slots]
 
 
+def _slot_is_functionword(slot):
+    """Whether the word occupying ``slot`` is a function word.
+
+    ``is_functionword`` lives on WordForm; reading it off the Syllable
+    (``slot.unit.is_functionword``) goes through ``Entity.__getattr__``'s
+    ``is_*`` branch, which returns ``False`` for every syllable — silently
+    turning ``s_func`` into a no-op. Resolve via the wordform instead. (AUDIT C16)
+    """
+    wf = getattr(slot.unit, "wordform", None)
+    if wf is not None:
+        try:
+            return bool(wf.is_functionword)
+        except AttributeError:
+            pass
+    return bool(getattr(slot.unit, "is_functionword", False))
+
+
 @constraint(
     desc="No function word on strong position",
     scope="position",
@@ -215,7 +289,7 @@ def s_light(mpos):
 def s_func(mpos):
     if not mpos.is_prom:
         return [None] * len(mpos.slots)
-    return [getattr(slot.unit, 'is_functionword', False) for slot in mpos.slots]
+    return [_slot_is_functionword(slot) for slot in mpos.slots]
 
 
 def _word_boundary_vectorized(f):
@@ -240,7 +314,21 @@ def _word_boundary_vectorized(f):
     vectorized=_word_boundary_vectorized,
 )
 def word_foot(mpos):
-    return [None] * len(mpos.slots)
+    # Entity reference impl mirroring ``_word_boundary_vectorized`` (AUDIT C16):
+    # a violation falls on a syllable that shares a metrical position with the
+    # preceding syllable (no foot boundary) but belongs to a different word
+    # occurrence (word boundary). A position's first slot always sits at a foot
+    # boundary, so it never violates.
+    out = []
+    prev_wt = None
+    for k, slot in enumerate(mpos.slots):
+        wt = getattr(slot.unit, "wordtoken", None)
+        if k == 0:
+            out.append(None)  # foot boundary (or line start): not applicable
+        else:
+            out.append(bool(wt is not prev_wt))
+        prev_wt = wt
+    return out
 
 
 # === Phrasal stress constraints (require syntax=True) ===

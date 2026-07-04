@@ -6,5 +6,4 @@ quarto
 quartodoc
 selenium
 snakeviz
-nbformat
 httpx

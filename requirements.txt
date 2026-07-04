@@ -12,12 +12,13 @@ click
 editdistance
 logmap
 loguru
-orjson
 ipython
 fastapi
 uvicorn[standard]
 python-multipart
 scipy
+requests
+tqdm
 #panphon
 # panphon @ git+https://github.com/quadrismegistus/panphon
 
@@ -25,11 +26,9 @@ scipy
 unicodecsv
 PyYAML
 regex
-editdistance
 munkres
 
 pyarrow
 hashstash
 # stanza
-svgling
 plotnine

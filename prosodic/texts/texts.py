@@ -56,6 +56,11 @@ class TextModel(Entity):
                 "must provide either txt string or filename or token dataframe"
             )
         txt = clean_text(get_txt(txt, fn)).strip()
+        if not txt and not children and tokens_df is None:
+            raise ValueError(
+                "text is empty after cleaning whitespace; "
+                "provide non-whitespace text (or children/tokens_df)"
+            )
         lang = lang if lang else detect_lang(txt)
 
         # syntax options
@@ -157,20 +162,35 @@ class TextModel(Entity):
         lines = LineList.from_wordtokens(self.children, text=self)
 
         # attach any DF-based parse results to the line entities
-        if self._line_parse_results:
-            for meter_key, line_results in self._line_parse_results.items():
-                for line in lines:
-                    line_num = line.num
-                    if line_num in line_results:
-                        pl = line_results[line_num]
-                        # set parent to the line's WordTokenList
-                        wt_list = line.children
-                        if hasattr(wt_list, '_parses'):
-                            pl.parent = wt_list
-                            wt_list._parses = pl
-                        line._parses = pl
+        self._attach_line_parse_results(lines)
 
         return lines
+
+    def _attach_line_parse_results(self, lines=None):
+        """Attach DF-path parse results to (already-built) Line entities.
+
+        Called both from the ``lines`` cached_property (pre-access path) and
+        from ``parse_iter`` (so results still attach when ``.lines`` was built
+        before ``parse()`` ran).
+        """
+        if not self._line_parse_results:
+            return
+        if lines is None:
+            # only attach if lines have actually been built; don't force build
+            lines = self.__dict__.get('lines')
+        if lines is None:
+            return
+        for meter_key, line_results in self._line_parse_results.items():
+            for line in lines:
+                line_num = line.num
+                if line_num in line_results:
+                    pl = line_results[line_num]
+                    # set parent to the line's WordTokenList
+                    wt_list = line.children
+                    if hasattr(wt_list, '_parses'):
+                        pl.parent = wt_list
+                        wt_list._parses = pl
+                    line._parses = pl
 
     @cached_property
     def lineparts(self):
@@ -208,8 +228,10 @@ class TextModel(Entity):
     def to_hash(self) -> str:
         return hashstr(self._txt)
 
-    @property
+    @cached_property
     def hash(self):
+        # _txt and lang are immutable after init, so cache the serialized hash
+        # rather than re-serializing the full text on every access.
         pkg={"txt": self._txt, "lang": self.lang}
         return encode_hash(serialize(pkg))
 
@@ -275,6 +297,8 @@ class TextModel(Entity):
         parse_key = (meter.key, combine_by)
         if parse_key in self._parse_results:
             yield from self._parse_results[parse_key]
+            # T7: re-attach to already-built line entities (no-op if unbuilt)
+            self._attach_line_parse_results()
         else:
             self._parse_results[parse_key] = []
             last_unit = None
@@ -314,6 +338,11 @@ class TextModel(Entity):
                 last_unit._parses = new_parselist
                 self._parse_results[parse_key].append(new_parselist)
                 yield new_parselist
+
+            # T7: attach DF-path results to already-built line entities so
+            # `t.lines; t.parse()` populates line._parses (not just the
+            # pre-access `t.parse(); t.lines` path).
+            self._attach_line_parse_results()
 
     @property
     def parses(self) -> Any:
@@ -373,10 +402,22 @@ class TextModel(Entity):
         chunks = []
         constraint_names = None
 
-        # use only the most recent meter's results — mixing constraint sets
-        # across meters would break the shared violation columns
-        latest_key = next(reversed(self._line_parse_results))
-        line_results = self._line_parse_results[latest_key]
+        # Use the results for the meter implied by **meter_kwargs (the one
+        # parse() just used), NOT simply the most-recently-parsed meter.
+        # Mixing constraint sets across meters would break the shared
+        # violation columns, so resolve the exact key. Fall back to the latest
+        # key only when no meter_kwargs were given (default meter).
+        if meter_kwargs:
+            target_key = self.get_meter(**meter_kwargs).key
+            line_results = self._line_parse_results.get(target_key)
+            if line_results is None:
+                line_results = self._line_parse_results[
+                    next(reversed(self._line_parse_results))
+                ]
+        else:
+            line_results = self._line_parse_results[
+                next(reversed(self._line_parse_results))
+            ]
         for line_num in sorted(line_results.keys()):
             pl = line_results[line_num]
             sylls = getattr(pl, '_sylls', None)
@@ -633,6 +674,11 @@ class TextModel(Entity):
         obj._children_data = obj.children_type(parent=obj) if obj.children_type is not None else []
         obj._parse_results = {}
         obj._line_parse_results = {}
+        # mirror __init__ so `.lineparts` (and syntax-aware paths) work on a
+        # loaded model instead of raising / recursing (T5).
+        obj._linepart_parse_results = {}
+        obj._syntax = DEFAULT_SYNTAX
+        obj._syntax_model = DEFAULT_SYNTAX_MODEL
         obj._parses = None
         obj._attrs = {'lang': meta.get('lang', DEFAULT_LANG)}
         obj._num = None
@@ -759,15 +805,23 @@ def Text(
     children: Optional[list] = [],
     tokens_df: Optional[pd.DataFrame] = None,
     server: Optional[str] = None,
+    syntax: Optional[bool] = None,
+    syntax_model: Optional[str] = None,
+    **kwargs,
 ):
     # Check for remote server (explicit arg or global setting)
     from ..client import get_server, RemoteText
     remote = server or get_server()
     if remote:
-        return RemoteText(txt=txt, fn=fn, server=remote)
+        return RemoteText(
+            txt=txt, fn=fn, server=remote,
+            syntax=syntax, syntax_model=syntax_model, **kwargs,
+        )
 
     return TextModel(
-        txt=txt, fn=fn, lang=lang, parent=parent, children=children, tokens_df=tokens_df
+        txt=txt, fn=fn, lang=lang, parent=parent, children=children,
+        tokens_df=tokens_df, syntax=syntax, syntax_model=syntax_model,
+        **kwargs,
     )
 
 

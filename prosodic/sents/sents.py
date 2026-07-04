@@ -33,18 +33,6 @@ class SentenceList(EntityList):
     @property
     def parts(self):
         return SentPartList([part for sent in self for part in sent.parts], parent=self)
-    
-
-    @property
-    def trees(self):
-        with logmap('parsing syntax in sentences') as lm:
-            return [sent.tree for sent in lm.iter_progress(self.children)]
-
-    @property
-    def trees_df(self):
-        l=[tree.df for tree in self.trees]
-        return pd.concat(l) if l else pd.DataFrame()
-
 
 
 class SentPart(WordTokenList):
@@ -66,44 +54,3 @@ class SentPartList(EntityList):
 
 class Sentence(WordTokenList):
     prefix = 'sent'
-
-    @property
-    def nlp(self):
-        from .syntax import get_nlp_doc
-
-        ll=[[wtok._txt.strip() for wtok in self.children]]
-        doc = get_nlp_doc(ll)
-        sents = doc.sentences
-        assert len(sents) == 1, 'Should be 1 sentence only'
-        return sents[0]
-
-    @property
-    def tree(self):
-        from .trees import SentenceTree
-        return SentenceTree.from_sent(self)
-
-    @property
-    def grid(self):
-        from .grids import SentenceGrid
-        return SentenceGrid.from_wordtokens(self.wordtokens)
-    
-    # def plot_grid(self, prom_type="total_stress", **kwargs):
-    #     import plotnine as p9
-
-    #     p9.options.figure_size = (11, 5)
-    #     figdf = self.tree_df.copy()
-    #     figdf[prom_type]=figdf[prom_type]+abs(figdf[prom_type].min())+1
-    #     figdf[prom_type]=figdf[prom_type].fillna(0)
-    #     return (
-    #         p9.ggplot(
-    #             figdf,
-    #             p9.aes(
-    #                 x="preterm_num",
-    #                 y=prom_type,
-    #                 label="preterm_str",
-    #             ),
-    #         )
-    #         + p9.geom_col(alpha=0.25)
-    #         + p9.geom_text(size=15)
-    #         + p9.theme_void()
-    #     )

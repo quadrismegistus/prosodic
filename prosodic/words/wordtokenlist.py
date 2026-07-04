@@ -44,12 +44,10 @@ class WordTokenList(EntityList):
         return "".join(wt.txt for wt in self)
 
     def __getstate__(self):
-        print(f"Pickling WordTokenList: _key = {getattr(self, '_key', 'Not set')}")
         state = self.__dict__.copy()
         return state
 
     def __setstate__(self, state):
-        print(f"Unpickling WordTokenList: _key in state = {state.get('_key', 'Not set')}")
         self.__dict__.update(state)
 
     @property
@@ -66,16 +64,6 @@ class WordTokenList(EntityList):
         if not l:
             return False
         return all(wt.preterm for wt in l)
-
-    @property
-    def trees(self):
-        return self.sents.trees
-
-    @property
-    def grid(self):
-        from ..sents.grids import SentenceGrid
-
-        return SentenceGrid.from_wordtokens(self, text=self.text)
 
     @property
     def num_with_forms(self):

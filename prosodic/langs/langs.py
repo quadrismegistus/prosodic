@@ -1,3 +1,5 @@
+import glob
+
 from ..imports import *
 
 
@@ -496,28 +498,92 @@ For more information on espeak: http://espeak.sourceforge.net
 """
 
 
+# Unversioned library filenames: the symlink the espeak "-dev" package
+# provides, plus what macOS Homebrew and Windows ship. Preferred over
+# versioned runtime libraries so that on machines where espeak is fully
+# installed the resolved path stays identical to prior behavior.
+ESPEAK_LIB_FNS = {
+    "libespeak.dylib",
+    "libespeak.so",
+    "libespeak-ng.dylib",
+    "libespeak-ng.so",
+    "libespeak-ng.dll",
+}
+
+# Bounded, non-recursive globs for the espeak shared library across common
+# install locations. These replace a full os.walk of /usr/lib (a multi-second
+# import penalty on Linux without the espeak -dev package) with a fixed number
+# of shallow glob lookups. Ordered so the first hit on a working machine
+# reproduces the previously-resolved path.
+ESPEAK_LIB_GLOBS = [
+    # macOS Homebrew (Apple Silicon) — Cellar first to match prior resolution
+    "/opt/homebrew/Cellar/espeak/*/lib/libespeak*.dylib",
+    "/opt/homebrew/Cellar/espeak-ng/*/lib/libespeak-ng*.dylib",
+    "/opt/homebrew/lib/libespeak*.dylib",
+    # macOS Homebrew (Intel) and other /usr/local installs
+    "/usr/local/Cellar/espeak/*/lib/libespeak*.dylib",
+    "/usr/local/Cellar/espeak-ng/*/lib/libespeak-ng*.dylib",
+    "/usr/local/lib/libespeak*.dylib",
+    "/usr/local/lib/libespeak*.so*",
+    # Linux: Debian/Ubuntu multiarch, generic, and espeak subdir
+    "/usr/lib/*/libespeak*.so*",
+    "/usr/lib/libespeak*.so*",
+    "/usr/lib/espeak*/libespeak*.so*",
+    "/lib/*/libespeak*.so*",
+]
+
+
+def _glob_espeak_lib(globs=ESPEAK_LIB_GLOBS, preferred=ESPEAK_LIB_FNS):
+    """Find the espeak shared library via a bounded set of shallow globs.
+
+    Prefers an unversioned filename (stable across machines) but falls back to
+    a versioned runtime library (e.g. libespeak.so.1 / libespeak-ng.so.1) --
+    the only file present on Linux systems without the espeak -dev package.
+    Returns "" if nothing is found; never raises.
+    """
+    for pattern in globs:
+        try:
+            matches = sorted(glob.glob(pattern))
+        except OSError:
+            continue
+        if not matches:
+            continue
+        for m in matches:
+            if os.path.basename(m) in preferred:
+                return m
+        return matches[0]
+    return ""
+
+
 def get_espeak_env(
     path_or_paths=ESPEAK_PATHS,
-    lib_fns={"libespeak.dylib", "libespeak.so", "libespeak-ng.dll"},
+    lib_fns=ESPEAK_LIB_FNS,
 ):
     stored = os.environ.get("PATH_ESPEAK") or os.environ.get(
         "PHONEMIZER_ESPEAK_LIBRARY"
     )
     if stored:
         return stored
-    paths = [path_or_paths] if type(path_or_paths) is str else path_or_paths
+    paths = [path_or_paths] if type(path_or_paths) is str else list(path_or_paths)
+    # 1. Cheap direct checks against the configured paths: an explicit library
+    #    file (e.g. the Windows .dll entries) or the espeak-ng data dir. No
+    #    recursion -- os.listdir is a single syscall.
     for path in paths:
-        if not os.path.exists(path):
+        try:
+            if not os.path.exists(path):
+                continue
+            if os.path.isfile(path) and os.path.basename(path) in lib_fns:
+                return path
+            if os.path.isdir(path) and "espeak-ng" in set(os.listdir(path)):
+                return path
+        except OSError:
             continue
-        if os.path.isfile(path) and os.path.basename(path) in lib_fns:
-            return path
-        if os.path.isdir(path) and "espeak-ng" in set(os.listdir(path)):
-            return path
-        for root, dirs, fns in os.walk(path):
-            fns = set(fns)
-            for lib_fn in lib_fns:
-                if lib_fn in fns:
-                    return os.path.join(root, lib_fn)
+    # 2. Bounded glob of well-known library locations (see ESPEAK_LIB_GLOBS).
+    #    Replaces the old full os.walk of /usr/lib/** and also catches
+    #    libespeak-ng.so, which the previous name set missed.
+    found = _glob_espeak_lib()
+    if found:
+        return found
     log.warning(get_espeak_error_msg(paths))
     return ""
 

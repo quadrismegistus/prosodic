@@ -20,6 +20,9 @@ This is a working document for successive sessions. Each finding has: a checkbox
 
 ## Progress log
 
+**Update — wave 2 landed (2026-07-04):** MaxEnt gradient/alignment/prose C2–C4 (#94), dead-code removal ~2208 lines D1/D2/T19 (#92), small robustness W9/W10/C7 (#93), spaCy phrasal-stress batching T18 (#95). Remaining items mostly touch files in open PRs (imports.py, texts.py, vectorized.py, api.py, .github, pyproject) and are queued behind those merges to avoid conflicts. Note: Agent flagged imports.py:72-73 `PATH_MTREE` still references the deleted metricaltree dir — clean when imports.py is next touched (D3).
+
+
 **2026-07-04, session 2 — fix-today cluster landed (uncommitted, working tree).**
 - ✅ **P1** path traversal — `web/api.py` `serve_frontend` now resolves `realpath` and rejects anything outside the static root (falls through to SPA index). Verified: `%2e%2e%2f` probes no longer leak; legit assets + SPA routes still serve; 11/11 fast web tests pass.
 - ✅ **P2 (high-value subset)** — removed `@cache` from `TextModel.parse` (fixes `parse(constraints=[list])` `TypeError` + TextModel is now GC'd after parse, verified via weakref); made the four pronunciation/vocab caches unbounded via `@cache(maxsize=None)` (`get_word`, `get_sylls_ipa_ll`, `get_sylls_text_l`, `syllabify_ipa`) — fixes the >128-word espeak/syllabify thrash. **Deferred (see P2-remainder below).**
@@ -91,27 +94,27 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   No `limit_req`/`limit_conn`; no `client_max_body_size` (relies on nginx 1 MB default); no CSP / `X-Content-Type-Options`; `proxy_read_timeout 300s` lets one request hold a connection 5 min (amplifies W2/W5). `prosodic.service` is otherwise good (non-root, `NoNewPrivileges`, `ProtectSystem=strict`, `PrivateTmp`). **Fix:** add a rate-limit zone + CSP header.
 - [x] **W8. SSE swallows mid-stream errors.** `api.py:686`; `api.js:35`. LOW.
   If the parse raises after headers are sent, the generator dies with no `{'phase':'error'}` event; client `meta` stays null, UI hangs. **Fix:** wrap generator body in try/except, `yield sse({'phase':'error',...})`.
-- [ ] **W9. client.py mismatches.** LOW.
+- [x] **W9. (PR #93) client.py mismatches.** LOW.
   `client.py:66,75` `raise_for_status()` discards the FastAPI `{"detail":...}` message → opaque remote errors. `client.py:294` `RemoteText.parse()` hardcodes `is_bounded=False` for all `/api/parse` rows, so `line.parses.bounded` is always empty on that path (only `parse_lines()` populates bounded).
-- [ ] **W10. `cli.py:40` `os.system(f'ipython -i -c "{imps}"')`.** LOW (not exploitable — `imps` is constant). Prefer `subprocess.run([...])`.
+- [x] **W10. (PR #93) `cli.py:40` `os.system(f'ipython -i -c "{imps}"')`.** LOW (not exploitable — `imps` is constant). Prefer `subprocess.run([...])`.
 
 ---
 
 ## Parsing core (`prosodic/parsing/`)
 
 - [ ] **C1. Missing 8 constraints in entity path** — see **P3**. `vectorized.py:584`. HIGH.
-- [ ] **C2. MaxEnt gradient wrong for unmatched lines.** `maxent.py:315`. HIGH. ✓ (subagent numeric repro)
+- [x] **C2. (PR #94) MaxEnt gradient wrong for unmatched lines.** `maxent.py:315`. HIGH. ✓ (subagent numeric repro)
   For lines with `observed.sum()==0` (annotation matched no candidate scansion), LL term is 0 but gradient computes `-(0 - probs)@viols ≠ 0`. Analytic `[-0.100,-0.205]` vs finite-diff `[-0.500,-0.300]`. Fitting `wswswswsws` on a sonnet leaves several lines unmatched, each pushing weights → −∞ (checked only by regularization/bounds).
   **Fix:** exclude `obs_sum==0` lines in `_precompute`, or use `diff = observed - obs_sum[:,None]*probs`.
-- [ ] **C3. MaxEnt line/text misalignment when a line is dropped.** `maxent.py:142`. HIGH. ✓
+- [x] **C3. (PR #94) MaxEnt line/text misalignment when a line is dropped.** `maxent.py:142`. HIGH. ✓
   Maps parsed lines to input strings by position over `sorted(results.keys())`, but `parse_batch_from_df` omits <2-syllable lines (`vectorized.py:65`). Repro: a short line shifts every subsequent label → annotations matched to wrong lines. **Fix:** carry `line_num` through; map via the text's own line index.
-- [ ] **C4. `meter.fit()` / MaxEntTrainer crashes on any oversized (prose) line.** `maxent.py:178`. HIGH. ✓
+- [x] **C4. (PR #94) `meter.fit()` / MaxEntTrainer crashes on any oversized (prose) line.** `maxent.py:178`. HIGH. ✓
   Accesses `lpl._all_viols`, but oversized lines get a plain `ParseList([])` (`vectorized.py:122`). `trainer.load_text(text_with_19syll_line, ...)` → `AttributeError: _all_viols`. **Fix:** skip results without `_all_viols`.
 - [ ] **C5. All-punctuation DF parse crash** — see **P5**. `vectorized.py:54`. HIGH. ✓
 - [ ] **C6. Bounding memory blowup near the syllable cap.** `vectorized.py:872`. HIGH/MED. *(traced)*
   Pairwise bounding materializes `(L,S,S,C)`. At nsylls=18, S≈8362 → ~0.98 GB (GPU int16) / ~3.9 GB (numpy int64) *per non-perfect line*, one allocation × L. Perfect-parse shortcut masks this for verse; prose lineparts at 16–18 sylls rarely parse perfectly. Even 10-syll corpora: 10K non-perfect lines ≈ 4.4 GB in one tensor.
   **Fix:** chunk over L with a memory budget; tile S×S for n≥16. (Also unblocks raising `MAX_SYLL_IN_PARSE_UNIT` past 18 — S grows ~1.62×/syllable.)
-- [ ] **C7. `text.parse().best_parses` crashes on any unparseable line.** `parselists.py:674`. MED. ✓
+- [x] **C7. (PR #93) `text.parse().best_parses` crashes on any unparseable line.** `parselists.py:674`. MED. ✓
   `best_parse=None` appended to `ParseList`, whose `append` raises `ValueError: parse must be a Parse object`. **Fix:** filter Nones.
 - [ ] **C8. Single-syllable lines silently vanish from parse results.** `vectorized.py:65`. MED. *(traced)*
   Skipped with no placeholder; `text.parse()` yields fewer entries than lines. Root cause of C3.
@@ -168,8 +171,8 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   `set_espeak_env()` runs at import; on Linux without `-dev` it `os.walk`s all of `/usr/lib/...` before warning — multi-second import penalty on the standard failure path.
 - [ ] **T16. `TextModel.hash` re-serializes full text every call.** `texts.py:211`. MED. Plain property, not cached; O(text size) per `parse()` and per hashed use.
 - [ ] **T17. `Text()` factory can't enable syntax.** `texts.py:689`. API bug. ✓ `prosodic.Text("...", syntax=True)` → `TypeError` — documented entry point can't reach documented feature. No `syntax`/`**kwargs` param.
-- [ ] **T18. `add_phrasal_stress` runs one spaCy call per sentence.** `phrasal_stress.py:122`. PERF. Use `nlp.pipe` over pre-built Docs to batch.
-- [ ] **T19. LOW cluster.**
+- [x] **T18. (PR #95) `add_phrasal_stress` runs one spaCy call per sentence.** `phrasal_stress.py:122`. PERF. Use `nlp.pipe` over pre-built Docs to batch.
+- [x] **T19. (PR #92) LOW cluster.**
   - `WordTokenList.__getstate__/__setstate__` have debug `print()`s (`wordtokenlist.py:47,52`) — pickling spams stdout.
   - `tokenize_agnostic` regex `[\w']+|[.,!?; -—–'\n]` (`utils.py:436`) has an accidental range ` -—` (U+0020–U+2014); chars above U+2014 that aren't `\w` (`…`, CJK punct) are silently dropped → `line.txt` loses characters. Curly-quote `SEPS_PHRASE` entries (`imports.py:78`) are dead for the same reason (ftfy uncurls first).
   - `clean_text` rewrites em-dash → `" -- "` (`utils.py:451`); `line.txt` ≠ user input (cosmetic).
@@ -201,8 +204,8 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 ## Dead code (grep-verified, ~1,900 lines)
 
-- [ ] **D1.** `prosodic/sents/{trees,grids,syntax}.py` + all of `prosodic/lib/metricaltree/` (~1,700 lines) — reachable only via `stanza` (commented out of requirements) → unrunnable in a normal install. Phrasal stress is now spaCy-only (`texts/phrasal_stress.py`). `sents/sents.py` (SentenceList/SentPart) is still live via `TextModel.sents/.sentparts`. `svgling`/`plotnine` in requirements solely for this path.
-- [ ] **D2.** `prosodic/prosodic.py` — one line, imported by nothing.
+- [x] **D1. (PR #92)** `prosodic/sents/{trees,grids,syntax}.py` + all of `prosodic/lib/metricaltree/` (~1,700 lines) — reachable only via `stanza` (commented out of requirements) → unrunnable in a normal install. Phrasal stress is now spaCy-only (`texts/phrasal_stress.py`). `sents/sents.py` (SentenceList/SentPart) is still live via `TextModel.sents/.sentparts`. `svgling`/`plotnine` in requirements solely for this path.
+- [x] **D2. (PR #92)** `prosodic/prosodic.py` — one line, imported by nothing.
 - [ ] **D3.** Dead constants in `imports.py`: `USE_CACHE` (:64), `PATH_MTREE`+append (:72), `DASHES`/`REPLACE_DASHES` (:74), `PSTRESS_THRESH_DEFAULT` (:76), `TOKENIZER` (:77), `DEFAULT_PARSE_MAXSEC`/`DEFAULT_LINE_LIM`/`DEFAULT_PROCESSORS` (:82), `MIN/MAX_WORDS_IN_PHRASE` (:87), `GROUPBY_*` (:263); `NUMBUILT` (`texts.py:6`).
 - [ ] **D4.** `WordType.wtoken` (T12), `prefilter_scansions`/`build_parses`/`Meter.get_pos_types` (C14), large commented blocks in `langs.py:430`, `wordtokenlist.py:148,241`.
 

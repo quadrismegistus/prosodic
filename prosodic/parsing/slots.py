@@ -37,10 +37,6 @@ class ParseSlot(Entity):
         self.unit = unit
         super().__init__(parent=parent, viold={**viold}, **kwargs)
 
-    @property
-    def position(self):
-        return self.parent
-
     # @log.info
     def copy(self):
         """
@@ -101,8 +97,24 @@ class ParseSlot(Entity):
         return self.parent.meter_val
 
     @property
-    def position(self):
-        return self.parent.parent
+    def position(self) -> Any:
+        """
+        The ParsePosition that owns this slot.
+
+        Walks up the parent chain looking for the first ancestor with a
+        `meter_val` attribute (the ParsePosition), since `self.parent` may
+        be the ParsePosition directly or an intermediate ParseSlotList
+        depending on how the parse was constructed.
+
+        Returns:
+            The owning ParsePosition, or None if not found.
+        """
+        obj = self.parent
+        while obj is not None:
+            if hasattr(obj, 'meter_val') and obj.meter_val is not None:
+                return obj
+            obj = getattr(obj, 'parent', None)
+        return None
 
     @property
     def is_prom(self) -> bool:

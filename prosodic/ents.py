@@ -664,7 +664,7 @@ class Entity(UserList):
         if self._key is not None:
             return self._key
         if self.parent is None:
-            raise Exception
+            raise AttributeError(f"{self.nice_type_name} has no parent, so no key")
         key = f"{self.parent.key}.{self.nice_type_name}"
         if self.num is not None:
             key += f"({self.num})"

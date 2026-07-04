@@ -242,10 +242,30 @@ class TextModel(Entity):
         return self._key
 
     def cleanup(self):
+        # Release parse-result caches. _line_parse_results /
+        # _linepart_parse_results hold the large DF-path (S, N, C) numpy
+        # violation arrays; the original cleanup() cleared only
+        # _parse_results and left those pinned (T6).
         self._parse_results.clear()
+        for cache_name in ('_line_parse_results', '_linepart_parse_results'):
+            cache = getattr(self, cache_name, None)
+            if cache is not None:
+                cache.clear()
         self._parses = None
-        for obj in self.iter_all():
-            obj.clear_cached_properties()
+
+        # Clear cached properties — but DON'T build the entity tree just to
+        # free it. On the DF-only batch path (parse() with no entity access)
+        # entities were never constructed; the old code called self.iter_all(),
+        # which accesses the `children` property and triggers _build_children(),
+        # constructing the full word×form×syll×phoneme tree only to clear
+        # caches on it (T6). Guard on _children_built: only walk the tree when
+        # it was actually built. If children were never built there is nothing
+        # below the TextModel to clear, so just clear its own cached properties.
+        if self._children_built:
+            for obj in self.iter_all():
+                obj.clear_cached_properties()
+        else:
+            self.clear_cached_properties()
 
     def __getitem__(self, item):
         if isinstance(item, slice):

@@ -118,6 +118,45 @@ class TestLazyEntities:
         assert t._children_built is True
 
 
+# --- cleanup() ---
+
+class TestCleanup:
+    def test_cleanup_does_not_build_entities(self):
+        # DF-only parse (no entity access), then cleanup — cleanup must NOT
+        # construct the lazy entity tree just to clear caches (T6).
+        t = TextModel(sonnet)
+        t.parse()
+        assert t._children_built is False
+        t.cleanup()
+        assert t._children_built is False
+
+    def test_cleanup_clears_df_result_caches(self):
+        # cleanup must release the large DF-path numpy violation arrays held
+        # in _line_parse_results / _linepart_parse_results, not just
+        # _parse_results (T6).
+        t = TextModel(sonnet)
+        t.parse()
+        assert len(t._line_parse_results) > 0
+        t.cleanup()
+        assert len(t._parse_results) == 0
+        assert len(t._line_parse_results) == 0
+        assert len(t._linepart_parse_results) == 0
+
+    def test_cleanup_after_entity_build_reparse_works(self):
+        # cleanup after entities were built must not raise, and .lines /
+        # re-parse must still work (lazy rebuild).
+        t = TextModel(sonnet)
+        _ = t.lines
+        assert t._children_built is True
+        t.parse()
+        t.cleanup()
+        # lines rebuild lazily and re-parse succeeds
+        assert len(t.lines) == 14
+        pl = t.parse()
+        assert pl is not None
+        assert len(t._line_parse_results) > 0
+
+
 # --- DF-only parse path ---
 
 class TestDfParsePath:

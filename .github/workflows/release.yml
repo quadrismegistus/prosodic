@@ -11,6 +11,7 @@ on:
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+    secrets: inherit
 
   pre-release:
     name: "GitHub Release"
@@ -21,9 +22,11 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "stable"
+          # No automatic_release_tag: omitting it makes the action use the
+          # triggering ref (the pushed vX.Y.Z tag) instead of a rolling tag,
+          # so the GitHub Release matches the version actually pushed.
           prerelease: false
-          title: "Stable Build"
+          title: "Release ${{ github.ref_name }}"
 
   pypi-release:
     name: "PyPI Release"

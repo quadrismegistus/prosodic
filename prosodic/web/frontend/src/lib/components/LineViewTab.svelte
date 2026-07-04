@@ -1,6 +1,6 @@
 <script>
 	import { parseLine } from '$lib/api.js';
-	import { selectedLine, meterConfig, constraintWeights, zoneWeights, maxentConfig } from '$lib/stores.js';
+	import { selectedLine, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
 
 	let lineInput = $state('');
 	let parses = $state([]);
@@ -42,7 +42,8 @@
 				constraints: buildConstraintList(),
 				max_s: $meterConfig.max_s,
 				max_w: $meterConfig.max_w,
-				resolve_optionality: $meterConfig.resolve_optionality
+				resolve_optionality: $meterConfig.resolve_optionality,
+				parse_timeout: $settings.parse_timeout
 			};
 			if ($zoneWeights) {
 				payload.zone_weights = $zoneWeights;

@@ -49,6 +49,7 @@
 			resolve_optionality: $meterConfig.resolve_optionality,
 			syntax: $settings.syntax,
 			syntax_model: $settings.syntax_model,
+			parse_timeout: $settings.parse_timeout,
 		};
 		if ($zoneWeights) {
 			payload.zone_weights = $zoneWeights;

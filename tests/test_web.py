@@ -147,6 +147,162 @@ def test_static_files(client):
     assert 'Prosodic' in resp.text
 
 
+# -- Security headers / output escaping (F8 prerequisites) --
+
+def test_csp_and_security_headers(client):
+    resp = client.get('/api/meter/defaults')
+    csp = resp.headers.get('content-security-policy')
+    assert csp and "default-src 'self'" in csp
+    assert resp.headers.get('x-content-type-options') == 'nosniff'
+    assert resp.headers.get('x-frame-options') == 'DENY'
+
+
+def test_parse_html_escapes_markup(client):
+    # Output escaping must be present before permalinks are safe: injected
+    # markup in the text must be escaped in the {@html} sink fields.
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text='a <script>alert(1)</script> b'))
+    assert resp.status_code == 200
+    for row in resp.json()['rows']:
+        assert '<script>' not in row['parse_html']
+        assert '</script>' not in row['parse_html']
+        assert '&lt;' in row['parse_html']  # angle bracket escaped
+
+
+# -- F6: per-request wall-clock parse timeout --
+
+def _fresh_multiline(prefix):
+    # Unique, uncached, multi-line text so parsing reliably exceeds a 1ms budget.
+    return "\n".join(f"{prefix} probe line number {i} zeta omega delta" for i in range(6))
+
+
+def test_parse_timeout_returns_504(client):
+    import time as _t
+    t0 = _t.time()
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text=_fresh_multiline('parse504'), parse_timeout=0.001))
+    dt = _t.time() - t0
+    assert resp.status_code == 504, (resp.status_code, resp.text)
+    assert 'timed out' in resp.json()['detail'].lower()
+    assert dt < 10, f"timeout was not timely: {dt:.2f}s"  # returned promptly, not a hang
+
+
+def test_parse_normal_still_succeeds(client):
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text='To be or not to be', parse_timeout=60))
+    assert resp.status_code == 200
+    assert len(resp.json()['rows']) >= 1
+
+
+def test_parse_line_timeout_returns_504(client):
+    resp = client.post('/api/parse/line', json=_default_parse_data(
+        text=_fresh_multiline('line504'), parse_timeout=0.001))
+    assert resp.status_code == 504
+    assert 'timed out' in resp.json()['detail'].lower()
+
+
+def test_parse_stream_timeout_emits_error(client):
+    resp = client.post('/api/parse/stream', json=_default_parse_data(
+        text=_fresh_multiline('stream504'), parse_timeout=0.001))
+    assert resp.status_code == 200  # SSE opens 200, error is delivered mid-stream
+    assert 'timed out' in resp.text.lower()
+
+
+# -- F8: shareable parse permalinks --
+
+def _share_payload(text, **over):
+    p = {
+        'v': 1,
+        'text': text,
+        'meter': {
+            'constraints': ['w_stress', 's_unstress', 'w_peak', 'unres_across', 'unres_within', 'foot_size'],
+            'max_s': 2, 'max_w': 2, 'resolve_optionality': True,
+        },
+        'weights': {}, 'zoneWeights': None, 'zones': 3,
+        'syntax': False, 'syntax_model': 'en_core_web_sm',
+    }
+    p.update(over)
+    return p
+
+
+def test_permalink_encode_decode_roundtrip():
+    from prosodic.web.api import _encode_permalink, _decode_permalink
+    for compress in (False, True):
+        enc = _encode_permalink(_share_payload('To be or not to be'), compress=compress)
+        req = _decode_permalink(enc)
+        assert req['text'] == 'To be or not to be'
+        assert 'w_stress' in req['constraints']
+        assert req['max_s'] == 2 and req['max_w'] == 2
+
+
+def test_permalink_endpoint_roundtrip(client):
+    from prosodic.web.api import _encode_permalink
+    for compress in (False, True):
+        enc = _encode_permalink(_share_payload('Shall I compare thee to a summers day'),
+                                compress=compress)
+        resp = client.get('/api/parse/permalink', params={'data': enc})
+        assert resp.status_code == 200, (compress, resp.text)
+        data = resp.json()
+        assert len(data['rows']) >= 1
+        html = data['rows'][0]['parse_html']
+        assert 'mtr_s' in html or 'mtr_w' in html
+
+
+def test_permalink_matches_direct_parse(client):
+    from prosodic.web.api import _encode_permalink
+    text = 'Shall I compare thee to a summers day'
+    enc = _encode_permalink(_share_payload(text), compress=True)
+    plink = client.get('/api/parse/permalink', params={'data': enc}).json()
+    direct = client.post('/api/parse', json=_default_parse_data(text=text)).json()
+    pb = next(r for r in plink['rows'] if r['rank'] == 1)
+    db = next(r for r in direct['rows'] if r['rank'] == 1)
+    assert pb['meter_str'] == db['meter_str']
+
+
+def test_permalink_no_new_xss_sink(client):
+    from prosodic.web.api import _encode_permalink
+    enc = _encode_permalink(_share_payload('a <script>alert(1)</script> b'), compress=False)
+    resp = client.get('/api/parse/permalink', params={'data': enc})
+    assert resp.status_code == 200
+    for row in resp.json()['rows']:
+        assert '<script>' not in row['parse_html']
+        assert '</script>' not in row['parse_html']
+        assert '&lt;' in row['parse_html']
+
+
+def test_permalink_invalid_data(client):
+    resp = client.get('/api/parse/permalink', params={'data': '!!!not-base64!!!'})
+    assert resp.status_code in (400, 413)
+
+
+def test_permalink_too_large_rejected():
+    # Tested at the helper level: httpx (and real HTTP servers) cap URL length
+    # far below this, so an over-long ?data= can't reach the handler via GET.
+    from fastapi import HTTPException
+    from prosodic.web.api import _decode_permalink, _PERMALINK_MAX_ENCODED
+    with pytest.raises(HTTPException) as ei:
+        _decode_permalink('A' * (_PERMALINK_MAX_ENCODED + 1))
+    assert ei.value.status_code == 413
+
+
+def test_permalink_gzip_bomb_rejected():
+    # A tiny gzip that expands past the decoded cap must be refused (413), not
+    # decompressed into memory.
+    import base64
+    import zlib
+    from fastapi import HTTPException
+    from prosodic.web.api import (_decode_permalink, _PERMALINK_MAX_DECODED,
+                                  _PERMALINK_MAX_ENCODED)
+    raw = b'{"text":"' + b'a' * (_PERMALINK_MAX_DECODED + 1000) + b'"}'
+    co = zlib.compressobj(9, zlib.DEFLATED, 16 + zlib.MAX_WBITS)
+    gz = co.compress(raw) + co.flush()
+    data = base64.urlsafe_b64encode(gz).decode('ascii').rstrip('=')
+    assert len(data) < _PERMALINK_MAX_ENCODED  # passes the encoded-length gate
+    with pytest.raises(HTTPException) as ei:
+        _decode_permalink(data)
+    assert ei.value.status_code == 413
+
+
 # -- Selenium browser tests (skip if no browser available) --
 
 NAPTIME = int(os.environ.get('NAPTIME', 5))

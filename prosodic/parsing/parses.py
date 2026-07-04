@@ -210,7 +210,11 @@ class Parse(Entity):
     def key(self):
         if self._key is not None:
             return self._key
-        key = f"""{self.parent.key}.{self.nice_type_name}(scansion="{self.meter_str}",stress="{self.stress_str}").{self.meter_obj.key}"""
+        # DF-path parses have no parent line entity; use an empty prefix rather
+        # than crashing on None.key (previously this AttributeError was silently
+        # masked to None by Entity.__getattr__).
+        parent_key = self.parent.key if self.parent is not None else ""
+        key = f"""{parent_key}.{self.nice_type_name}(scansion="{self.meter_str}",stress="{self.stress_str}").{self.meter_obj.key}"""
         self._key = key
         return key
 

@@ -220,6 +220,15 @@ class Entity(UserList):
             # First, try to get the attribute normally
             return self.__dict__.get(attr, self.__getattribute__(attr))
         except AttributeError:
+            # If `attr` is a property/cached_property defined on the class, the
+            # AttributeError was raised *inside* its getter (e.g. it touched an
+            # unset `_foo`). Propagate it instead of masking it with the
+            # plural/singular fallback below — masking would either return None
+            # (hiding the real bug) or recurse infinitely when the getter's name
+            # is also a magic list attr (e.g. `lineparts`). See AUDIT T13/T5.
+            cls_attr = getattr(type(self), attr, None)
+            if isinstance(cls_attr, (property, cached_property)):
+                raise
             # If AttributeError is raised, implement the custom logic
             from .imports import PLURAL_ATTRS, SINGULAR_ATTRS, get_class
 

@@ -18,6 +18,24 @@ This is a working document for successive sessions. Each finding has: a checkbox
 
 ---
 
+## SESSION COMPLETE — authoritative status (2026-07-04)
+
+Reconciled against merged PRs #89–#115 plus the in-flight final-sweep PRs. Individual checkboxes below may lag; THIS is the source of truth.
+
+**Done (every HIGH/MED, all correctness/perf/security/hygiene, full zone-aware work):** the fix-today cluster; parse-path unification (C1/#90); web hardening W2–W8 (#91); dead code D1–D4 (#92/#98/#116); MaxEnt C2–C4 (#94); spaCy batching (#95); paths/constants (#98); texts.py correctness T3/T5/T7/T10/T16/T17 (#99); Entity.__getattr__ T13 (#100); CI/tag-based releases R5-mechanism/R9/R11 (#101); bounding memory C6/F4 (#102); DF full-product C9/F1 (#103); determinism ×2 (variant order #104, langdetect seed #112); small cleanups C12/C15/T14 (#105); numbers T8/F2 (#106); co-optimal signal (#107); release/docs R10 (#108); espeak T15 (#109); vectorized unres/word_foot C18/C19/F5 (#110); cache/force/meter.fit T4/C10 (#111); zone-aware bounding C11/C13/F9 (#113/#114); cleanup() T6 (#115); to_html T9 + dead funcs (this PR).
+
+**Genuinely remaining:**
+- **C16/C17** — entity constraint *reference* impls (manual-Parse-only). DEFERRED with rationale (see below).
+- **C8** — single-syllable lines skipped with no placeholder. By design; WONT-FIX unless a need arises.
+- **C20 (partial)** — the `_get_parse` cache quirks (rank-on-hit, negative-index dup) left as-is (edge behaviors, change carries risk for near-zero benefit); docstring + to_html "None" fixed; maxent duplicate-annotation fixed (dead-code cleanup PR).
+- **F3** — native DF HTML render. T9 is resolved pragmatically (re-parse via entity path); the pure DF-native renderer is not built (not needed now).
+- **F7** — session-consistent pronunciation cache (unbounded caches done #89; in-memory token2ipa update after TTS + disk dedup not done).
+- **F8** — shareable parse permalinks (new feature; XSS prerequisite done).
+- **F6 remainder** — true per-request wall-clock parse timeout (needs a process pool; size cap+lock+headers done #91).
+- **R5 (user action)** — bump `_version.py` past 3.3.0 and push a `v3.x.y` tag to cut a PyPI release.
+
+---
+
 ## Progress log
 
 **C11/F9 zone-aware bounding — DONE (#113), reversing the earlier deferral.** Bounding now dominates on the (constraint x zone) count vector when zone_weights are active, so best_parse is the true zone-optimum. Empirically: flat bounding mis-selected on 121/400 Shakespeare lines across skewed zone configs; zone bounding: 0. Byte-identical default path. Follow-up (#114): best_parse.score now reports the zone-aware ranking score under zone weights (was flat).
@@ -108,7 +126,7 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 ## Parsing core (`prosodic/parsing/`)
 
-- [ ] **C1. Missing 8 constraints in entity path** — see **P3**. `vectorized.py:584`. HIGH.
+- [x] **C1. Missing 8 constraints in entity path** — see **P3**. `vectorized.py:584`. HIGH.
 - [x] **C2. (PR #94) MaxEnt gradient wrong for unmatched lines.** `maxent.py:315`. HIGH. ✓ (subagent numeric repro)
   For lines with `observed.sum()==0` (annotation matched no candidate scansion), LL term is 0 but gradient computes `-(0 - probs)@viols ≠ 0`. Analytic `[-0.100,-0.205]` vs finite-diff `[-0.500,-0.300]`. Fitting `wswswswsws` on a sonnet leaves several lines unmatched, each pushing weights → −∞ (checked only by regularization/bounds).
   **Fix:** exclude `obs_sum==0` lines in `_precompute`, or use `diff = observed - obs_sum[:,None]*probs`.
@@ -116,27 +134,27 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   Maps parsed lines to input strings by position over `sorted(results.keys())`, but `parse_batch_from_df` omits <2-syllable lines (`vectorized.py:65`). Repro: a short line shifts every subsequent label → annotations matched to wrong lines. **Fix:** carry `line_num` through; map via the text's own line index.
 - [x] **C4. (PR #94) `meter.fit()` / MaxEntTrainer crashes on any oversized (prose) line.** `maxent.py:178`. HIGH. ✓
   Accesses `lpl._all_viols`, but oversized lines get a plain `ParseList([])` (`vectorized.py:122`). `trainer.load_text(text_with_19syll_line, ...)` → `AttributeError: _all_viols`. **Fix:** skip results without `_all_viols`.
-- [ ] **C5. All-punctuation DF parse crash** — see **P5**. `vectorized.py:54`. HIGH. ✓
-- [ ] **C6. Bounding memory blowup near the syllable cap.** `vectorized.py:872`. HIGH/MED. *(traced)*
+- [x] **C5. All-punctuation DF parse crash** — see **P5**. `vectorized.py:54`. HIGH. ✓
+- [x] **C6. Bounding memory blowup near the syllable cap.** `vectorized.py:872`. HIGH/MED. *(traced)*
   Pairwise bounding materializes `(L,S,S,C)`. At nsylls=18, S≈8362 → ~0.98 GB (GPU int16) / ~3.9 GB (numpy int64) *per non-perfect line*, one allocation × L. Perfect-parse shortcut masks this for verse; prose lineparts at 16–18 sylls rarely parse perfectly. Even 10-syll corpora: 10K non-perfect lines ≈ 4.4 GB in one tensor.
   **Fix:** chunk over L with a memory budget; tile S×S for n≥16. (Also unblocks raising `MAX_SYLL_IN_PARSE_UNIT` past 18 — S grows ~1.62×/syllable.)
 - [x] **C7. (PR #93) `text.parse().best_parses` crashes on any unparseable line.** `parselists.py:674`. MED. ✓
   `best_parse=None` appended to `ParseList`, whose `append` raises `ValueError: parse must be a Parse object`. **Fix:** filter Nones.
 - [ ] **C8. Single-syllable lines silently vanish from parse results.** `vectorized.py:65`. MED. *(traced)*
   Skipped with no placeholder; `text.parse()` yields fewer entries than lines. Root cause of C3.
-- [ ] **C9. DF-path ambiguity explores only "diagonal" form combos.** `vectorized.py:90`. MED. *(traced, structural)*
+- [x] **C9. DF-path ambiguity explores only "diagonal" form combos.** `vectorized.py:90`. MED. *(traced, structural)*
   Builds `max_fi+1` variants (each word at form *fi* else form 0) vs the entity path's `itertools.product` (`wordtokenlist.py:84`). A line with two 1-or-2-syllable words never evaluates cross combos (e.g. fire=2syll + heaven=1syll = 10 syllables). Natural-line probes happened to agree, but divergence is structural.
 - [x] **C10. (#111) `meter.fit()` doesn't change `meter.key` → stale cached parses.** `meter.py:122`. MED. ✓
   `zones`/`zone_weights` stored as instance attrs, not in `_attrs`, so the key hash is unchanged; `texts.py:276` caches by `(meter.key, combine_by)` and ignores `force` on hit → parse→fit→re-parse returns pre-fit results.
 - [x] **C11. (PR #113/#114) Zone-weighted scoring inconsistent with unweighted bounding.** `vectorized.py:952`. MED (theoretical). *(traced)*
   `best_parse` picked among unbounded only, but bounding uses per-constraint totals; under zone weights a "bounded" scansion in a low-weight zone can be the true argmin. Trainer scores over ALL scansions (incl. bounded); parse-time excludes them. 0/14 conflicts observed on a fitted sonnet.
   **Fix (paired):** zone-aware bounding — compute dominance on zone-split sums `(S, C·Z)` when `zone_weights` active.
-- [ ] **C12. Regularization docs backwards + inconsistent defaults.** `maxent.py:99` vs `:341`. MED.
+- [x] **C12. Regularization docs backwards + inconsistent defaults.** `maxent.py:99` vs `:341`. MED.
   Implements `w²/(2·reg)` (reg = Gaussian variance: higher = *less* shrinkage); docstring says "higher = more shrinkage". `MaxEntTrainer` defaults 1.0 (strong), `Meter.fit` uses 100.0.
 - [x] **C13. (PR #113/#114) Ambiguous-form selection ignores zone weights.** `vectorized.py:256`. MED. *(traced)*
   Ranks form variants with flat weights even when `zone_weights` active → chosen pronunciation can differ from what the fitted scorer prefers.
 - [ ] **C14. Dead code.** LOW. `prefilter_scansions` (`vectorized.py:522`, never called), `build_parses` (`vectorized.py:1256`), `Meter.get_pos_types` (`meter.py:83`), `is_strong_pos.ndim>0` else-branch (`vectorized.py:760`, ndim always 2), `NUM_GOING` (`meter.py:9`), unused `force` param in `parse_text`.
-- [ ] **C15. `ParseSlot.position` defined twice.** `slots.py:40` & `:103`. LOW. Survivor returns `parent.parent` = the ParsePosition*List*, not the position; sole caller (`lines.py:51`) assigns to an unused var.
+- [x] **C15. `ParseSlot.position` defined twice.** `slots.py:40` & `:103`. LOW. Survivor returns `parent.parent` = the ParsePosition*List*, not the position; sole caller (`lines.py:51`) assigns to an unused var.
 - [ ] **C16. Entity reference impls of clash/lapse/word_foot are no-ops.** `constraints.py:161,182,246` return all-None. `ParsePosition.init` re-run condition (`positions.py:64`) is always true (viold stores only violations), so `Parse.concat`/manual `Parse()` re-runs them and overwrites vectorized clash/lapse with zeros.
 - [ ] **C17. Entity `unres_within/across` use `wf1 is wf2`.** `constraints.py:98,122`. LOW. WordForms are shared across tokens of the same type (cached `get_word`), so adjacent repeated words are misclassified as word-internal. DF path uses `word_num` correctly.
 - [x] **C18 (#110). O(L×T) per-line scans + word_foot loop.** `vectorized.py:86,95`; `constraints.py:231`. LOW. `np_line == ln` per line inside loops → use sorted-group boundaries; `word_foot`'s per-line loop is a broadcastable outer product.
@@ -147,36 +165,36 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 ## Text / word / language layer (`prosodic/texts/`, `words/`, `langs/`, `ents.py`)
 
-- [ ] **T1. `@cache` = `lru_cache(128)`** — see **P2**. `imports.py:28`. HIGH. ✓
+- [x] **T1. `@cache` = `lru_cache(128)`** — see **P2**. `imports.py:28`. HIGH. ✓
   Also: `get_word` (`langs.py:547`) called per token occurrence in `build_syll_df` (`syll_df.py:91`) → thrash + espeak re-runs + dup disk-cache rows; evicted TTS words never update the in-memory `token2ipa` cached_property (`langs.py:92`).
-- [ ] **T2. `@cache` on `TextModel.parse` leaks + breaks semantics** — see **P2**. `texts.py:234`. HIGH. ✓
+- [x] **T2. `@cache` on `TextModel.parse` leaks + breaks semantics** — see **P2**. `texts.py:234`. HIGH. ✓
   Holds up to 128 parsed TextModels (not GC'd); `parse(constraints=[...])` → `TypeError: unhashable`; `force=True` no-op after first parse (`parse_iter` returns cached without consulting `force`, `texts.py:277`; DF path in `meter.py:176` ignores `force`/`lim`).
-- [ ] **T3. `get_parses_df()`/`save()` return the wrong meter's results.** `texts.py:379`. HIGH. ✓
+- [x] **T3. `get_parses_df()`/`save()` return the wrong meter's results.** `texts.py:379`. HIGH. ✓
   `latest_key = next(reversed(self._line_parse_results))` — always the most-recently-parsed meter, not the one implied by `**meter_kwargs`. Repro: default `get_parses_df()`, then `parse(max_s=1,max_w=1)`, then default `get_parses_df()` → returns the strict meter's parses.
 - [x] **T4. (#111) Partially consuming `parse_iter()` permanently truncates results.** `texts.py:280`. HIGH. ✓
   Cache list created up-front, filled as consumed; early stop (SSE disconnect, `next()`) → every later `parse()` for that meter yields only the consumed prefix. Also `lim` not in `parse_key`, so `parse_iter(lim=10)` then `parse_iter()` returns the truncated set.
-- [ ] **T5. `TextModel.load()` → RecursionError.** `texts.py:630`. HIGH. ✓
+- [x] **T5. `TextModel.load()` → RecursionError.** `texts.py:630`. HIGH. ✓
   Never sets `_linepart_parse_results`/`_syntax`/`_syntax_model`. `.lineparts` (`texts.py:181`) hits `AttributeError`, swallowed by `Entity.__getattr__`, re-routed `lineparts → get_list → get_text_list → getattr(text,'lineparts')` → infinite loop. (See T13 root cause.)
-- [ ] **T6. `cleanup()` builds all the entities it's freeing.** `texts.py:222`. HIGH. ✓
+- [x] **T6. `cleanup()` builds all the entities it's freeing.** `texts.py:222`. HIGH. ✓
   `iter_all()` accesses `children` → `_build_children()`. DF-only batch path (`parse_corpus` → `_parse_one` → `t.cleanup()`, `batch.py:62`) constructs the full entity tree per text just to clear caches. Also `cleanup()` clears `_parse_results` but not `_line_parse_results`/`_linepart_parse_results` (the large numpy arrays).
-- [ ] **T7. Parse results attach to Lines only if `parse()` runs before `.lines`.** `texts.py:153`. MED. ✓
+- [x] **T7. Parse results attach to Lines only if `parse()` runs before `.lines`.** `texts.py:153`. MED. ✓
   Attachment happens once inside the `lines` cached_property. `t.lines; t.parse()` → `t.lines[0]._parses is None` → silent fallback to slow per-line entity re-parsing. Attach loop iterates all meter keys → last key wins arbitrarily with two meters.
-- [ ] **T8. Digits silently treated as punctuation.** `tokenizers.py:138`, `wordtype.py:159`. MED. ✓
+- [x] **T8. Digits silently treated as punctuation.** `tokenizers.py:138`, `wordtype.py:159`. MED. ✓
   `is_punc = not any(isalpha)`. "3" / "1867" get `is_punc=1`, 0 syllables, vanish from scansion. Any metrical line with a numeral parses with missing positions. **Fix idea:** route digits through `num2words` per lang before `get_word` (see Features).
-- [ ] **T9. `line.to_html()` crashes after DF-path parse.** `lines.py:48`. MED. ✓
+- [x] **T9. `line.to_html()` crashes after DF-path parse.** `lines.py:48`. MED. ✓
   `parse.wordtoken2slots[...]` on a parse whose `wordtokens` is None. `t.parse(); t.lines[0].to_html()` → `TypeError: NoneType not subscriptable`. Natural user flow; surfaces the two-path seam as an opaque crash.
-- [ ] **T10. No validation for whitespace-only/empty text.** `texts.py:54`. MED. ✓
+- [x] **T10. No validation for whitespace-only/empty text.** `texts.py:54`. MED. ✓
   `not txt` checked before `clean_text(...).strip()`, so `TextModel("   ")` builds a `(0,0)` frame; `.save()` then crashes (`texts.py:582`, `_syll_df['line_num'].max()` on empty). Non-string input fails deep in `WordTokenList` with a confusing message.
 - [x] **T11. Hard-coded dev paths shipped in the package.** `imports.py:2-3`. MED. ✓
   `sys.path.insert(0,'/Users/ryan/github/hashstash')` / `'/Users/rj416/...'`. Shadows pip-installed hashstash on your machines; dead weight for users. `imports.py:72` appends nonexistent `PATH_MTREE`.
 - [ ] **T12. `WordType.wtoken` corrupts its own WordFormList.** `wordtype.py:85`. MED. Buggy *and* dead (zero callers). Passes `children=self.children` into `WordToken`, whose init re-parents the list, stealing it from the WordType.
-- [ ] **T13. `Entity.__getattr__` returns None for typos + swallows property AttributeErrors.** `ents.py:267`. MED.
+- [x] **T13. `Entity.__getattr__` returns None for typos + swallows property AttributeErrors.** `ents.py:267`. MED.
   `line.best_prase` → falsy None, not an error; any AttributeError inside a property getter is masked (root cause of T5). Also caches plural lists in `self.__dict__` (`ents.py:268`) that go stale if children mutate (e.g. `force_unstress()`). **Fix:** only fall through for known plural/list patterns; re-raise otherwise.
-- [ ] **T14. `Entity.key`/`__hash__` raise bare `Exception` for parentless entities.** `ents.py:656`. MED. A standalone `WordToken("word")` in a set/dict raises an anonymous Exception; `__hash__`'s except only catches `TypeError` (`ents.py:580`), so it propagates.
+- [x] **T14. `Entity.key`/`__hash__` raise bare `Exception` for parentless entities.** `ents.py:656`. MED. A standalone `WordToken("word")` in a set/dict raises an anonymous Exception; `__hash__`'s except only catches `TypeError` (`ents.py:580`), so it propagates.
 - [x] **T15. (#109) espeak discovery walks large trees at import + misses `libespeak-ng.so`.** `langs.py:494`. MED.
   `set_espeak_env()` runs at import; on Linux without `-dev` it `os.walk`s all of `/usr/lib/...` before warning — multi-second import penalty on the standard failure path.
-- [ ] **T16. `TextModel.hash` re-serializes full text every call.** `texts.py:211`. MED. Plain property, not cached; O(text size) per `parse()` and per hashed use.
-- [ ] **T17. `Text()` factory can't enable syntax.** `texts.py:689`. API bug. ✓ `prosodic.Text("...", syntax=True)` → `TypeError` — documented entry point can't reach documented feature. No `syntax`/`**kwargs` param.
+- [x] **T16. `TextModel.hash` re-serializes full text every call.** `texts.py:211`. MED. Plain property, not cached; O(text size) per `parse()` and per hashed use.
+- [x] **T17. `Text()` factory can't enable syntax.** `texts.py:689`. API bug. ✓ `prosodic.Text("...", syntax=True)` → `TypeError` — documented entry point can't reach documented feature. No `syntax`/`**kwargs` param.
 - [x] **T18. (PR #95) `add_phrasal_stress` runs one spaCy call per sentence.** `phrasal_stress.py:122`. PERF. Use `nlp.pipe` over pre-built Docs to batch.
 - [x] **T19. (PR #92) LOW cluster.**
   - `WordTokenList.__getstate__/__setstate__` have debug `print()`s (`wordtokenlist.py:47,52`) — pickling spams stdout.
@@ -191,20 +209,20 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 ## Packaging / CI / release (`pyproject.toml`, `requirements.txt`, `MANIFEST.in`, `.github/`)
 
-- [ ] **R1. `wheeel` typosquat in CI** — see **P4**. HIGH. ✓
-- [ ] **R2. Local builds ship `node_modules` to PyPI.** `MANIFEST.in`. HIGH. ✓
+- [x] **R1. `wheeel` typosquat in CI** — see **P4**. HIGH. ✓
+- [x] **R2. Local builds ship `node_modules` to PyPI.** `MANIFEST.in`. HIGH. ✓
   `graft prosodic` + `include-package-data`; `egg-info/SOURCES.txt` has 1,518 node_modules entries. A local `twine upload` publishes ~70 MB. CI builds from clean checkout are safe. **Fix:** `prune prosodic/web/frontend/node_modules` + `prune prosodic/web/frontend/.svelte-kit`. (Also delete 6 grafts of nonexistent dirs: metricaltree, syllabiphon, tagged_samples, meters, dicts, web.)
-- [ ] **R3. Committed codecov token.** `codecov.yml`. HIGH. ✓ Live token `a6cb4510-...` in public repo. Rotate → `CODECOV_TOKEN` secret. (Low blast radius: coverage spoofing.)
-- [ ] **R4. Hardcoded dev paths shipped** — same as **T11**. `imports.py:2-3`. HIGH. ✓
+- [x] **R3. Committed codecov token.** `codecov.yml`. HIGH. ✓ Live token `a6cb4510-...` in public repo. Rotate → `CODECOV_TOKEN` secret. (Low blast radius: coverage spoofing.)
+- [x] **R4. Hardcoded dev paths shipped** — same as **T11**. `imports.py:2-3`. HIGH. ✓
 - [ ] **R5. Version incoherence.** `_version.py` = 3.2.1 on master; PyPI = 3.3.0 (from app3). With `twine --skip-existing`, every master push publishes nothing until you pass 3.3.0. Only git tags: `1.1`, moving `stable` — no 3.x tags. **Fix:** bump past 3.3.0 when merging app3→master; tag `v3.x.y`; gate the pypi job on tag push or fail loudly instead of silent `--skip-existing`. Consider `__version__ = importlib.metadata.version("prosodic")` for runtime introspection.
-- [ ] **R6. Stale PyPI metadata.** `pyproject.toml`. MED. Description "Prosodic 2"; `Development Status :: 2 - Pre-Alpha`; `requires-python >=3.8` (README says 3.9, CI tests only 3.12.0, venv is 3.10 — no actual 3.9+ syntax found via AST, so floor is untested not broken). Homepage → `/tree/develop` + dead `prosodic.stanford.edu`. **Fix:** set floor to `>=3.10`, update description/classifier/URLs.
-- [ ] **R7. requirements.txt hygiene.** MED. Zero pins; `orjson` + `editdistance` listed twice; `svgling` dead; `plotnine` only in dead `sents/grids.py`; `loguru` unused directly. **`requests` (`imports.py:24`) and `tqdm` (`imports.py:14`) imported unconditionally but undeclared** (survive via transitive chains). `torch` used (`vectorized.py`) with no `[gpu]` extra. `panphon` commented out, satisfied by vendored `prosodic/lib/panphon` via `sys.path.append` (appended → a user's real panphon shadows it: silent version drift).
-- [ ] **R8. Three overlapping dev-dep lists.** MED. `pyproject [dev]` lists `pytest-cov` + `pytest>=7.2` twice each; `[all]` duplicates `[dev]` minus selenium; `dev-requirements.txt` is a third list (with `nbformat` twice + `quarto` — the pip package isn't the Quarto CLI). CI installs dev-requirements.txt; pyproject extras are decorative.
+- [x] **R6. Stale PyPI metadata.** `pyproject.toml`. MED. Description "Prosodic 2"; `Development Status :: 2 - Pre-Alpha`; `requires-python >=3.8` (README says 3.9, CI tests only 3.12.0, venv is 3.10 — no actual 3.9+ syntax found via AST, so floor is untested not broken). Homepage → `/tree/develop` + dead `prosodic.stanford.edu`. **Fix:** set floor to `>=3.10`, update description/classifier/URLs.
+- [x] **R7. requirements.txt hygiene.** MED. Zero pins; `orjson` + `editdistance` listed twice; `svgling` dead; `plotnine` only in dead `sents/grids.py`; `loguru` unused directly. **`requests` (`imports.py:24`) and `tqdm` (`imports.py:14`) imported unconditionally but undeclared** (survive via transitive chains). `torch` used (`vectorized.py`) with no `[gpu]` extra. `panphon` commented out, satisfied by vendored `prosodic/lib/panphon` via `sys.path.append` (appended → a user's real panphon shadows it: silent version drift).
+- [x] **R8. Three overlapping dev-dep lists.** MED. `pyproject [dev]` lists `pytest-cov` + `pytest>=7.2` twice each; `[all]` duplicates `[dev]` minus selenium; `dev-requirements.txt` is a third list (with `nbformat` twice + `quarto` — the pip package isn't the Quarto CLI). CI installs dev-requirements.txt; pyproject extras are decorative.
 - [x] **R9. (#101) CI gaps.** MED. No lint (`.style.yapf` never enforced); single exact Python 3.12.0; **no `pull_request` trigger** (fork PRs never tested); actions on @v3; pip cache `restore-keys` duplicates primary key; espeak apt-installed uncached every run. `latest-release.yml` publishes `docs/` to gh-pages with `render: false` (republishes stale prebuilt HTML). **Fix:** add `pull_request` trigger, 3.10/3.12 matrix, `ruff`/yapf-diff step, bump actions @v4/@v5.
 - [x] **R10. (#108) Stale docs.** MED. `docs/` last touched Sep 2024 (v2); `docs/reference/` = 67 tracked pdoc HTML files incl. pages for deleted modules (`lexconvert.html`, metricaltree — 2.5 MB+). `README.ipynb` (60 KB) Feb 2024 v2-era. `README.md` itself is current (v3, valid `prosodic.Text`) but says "Python>=3.9" (contradicts pyproject). **Fix:** regenerate or stop republishing.
 - [x] **R11. (#101) Test coverage holes.** MED. 244 tests collected (CLAUDE.md says 219 — drift). Zero tests for: `cli.py`, **`texts/phrasal_stress.py`** (no `syntax=True` anywhere in tests/ — headline feature), `profiling.py`, desktop scripts. MaxEnt: one direct test + endpoint coverage. No `conftest.py` — every file repeats `sys.path.append` + star-import + `disable_caching()`. `test_web.py:152` spawns real uvicorn on random port 5111–5211 (collision-prone) + hard-sleeps `NAPTIME` (5s local, **30s CI**). **Fix:** add `conftest.py`; poll health endpoint instead of sleeping.
-- [ ] **R12. `deployment/` is dead.** MED. Sep 2024 Flask/supervisor config (runs as root) superseded by `deploy/` (systemd/nginx/certbot). Both tracked — a trap. Delete `deployment/`.
-- [ ] **R13. LOW.** `langs/finnish/finnish.py:76` points at nonexistent `data/dicts/en/english.tsv` (and it's the English dict in the Finnish class). `web/api.py:27` `CORPORA_DIR` resolves to `site-packages/../corpora` when pip-installed → empty corpus dropdown for pip users (deployed server works by accident via `pip install -e .`). Tracked-but-churny: `web/static_build/` (25 hashed bundles — semi-justified so pip users get the UI), `notebooks/.ipynb_checkpoints/`, `.claude/scheduled_tasks.lock`. `imports.py:58` does `os.makedirs(~/prosodic_data/...)` at import time (side effect on `import prosodic`).
+- [x] **R12. `deployment/` is dead.** MED. Sep 2024 Flask/supervisor config (runs as root) superseded by `deploy/` (systemd/nginx/certbot). Both tracked — a trap. Delete `deployment/`.
+- [x] **R13. LOW.** `langs/finnish/finnish.py:76` points at nonexistent `data/dicts/en/english.tsv` (and it's the English dict in the Finnish class). `web/api.py:27` `CORPORA_DIR` resolves to `site-packages/../corpora` when pip-installed → empty corpus dropdown for pip users (deployed server works by accident via `pip install -e .`). Tracked-but-churny: `web/static_build/` (25 hashed bundles — semi-justified so pip users get the UI), `notebooks/.ipynb_checkpoints/`, `.claude/scheduled_tasks.lock`. `imports.py:58` does `os.makedirs(~/prosodic_data/...)` at import time (side effect on `import prosodic`).
 
 ---
 
@@ -212,7 +230,7 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 - [x] **D1. (PR #92)** `prosodic/sents/{trees,grids,syntax}.py` + all of `prosodic/lib/metricaltree/` (~1,700 lines) — reachable only via `stanza` (commented out of requirements) → unrunnable in a normal install. Phrasal stress is now spaCy-only (`texts/phrasal_stress.py`). `sents/sents.py` (SentenceList/SentPart) is still live via `TextModel.sents/.sentparts`. `svgling`/`plotnine` in requirements solely for this path.
 - [x] **D2. (PR #92)** `prosodic/prosodic.py` — one line, imported by nothing.
-- [ ] **D3.** Dead constants in `imports.py`: `USE_CACHE` (:64), `PATH_MTREE`+append (:72), `DASHES`/`REPLACE_DASHES` (:74), `PSTRESS_THRESH_DEFAULT` (:76), `TOKENIZER` (:77), `DEFAULT_PARSE_MAXSEC`/`DEFAULT_LINE_LIM`/`DEFAULT_PROCESSORS` (:82), `MIN/MAX_WORDS_IN_PHRASE` (:87), `GROUPBY_*` (:263); `NUMBUILT` (`texts.py:6`).
+- [x] **D3.** Dead constants in `imports.py`: `USE_CACHE` (:64), `PATH_MTREE`+append (:72), `DASHES`/`REPLACE_DASHES` (:74), `PSTRESS_THRESH_DEFAULT` (:76), `TOKENIZER` (:77), `DEFAULT_PARSE_MAXSEC`/`DEFAULT_LINE_LIM`/`DEFAULT_PROCESSORS` (:82), `MIN/MAX_WORDS_IN_PHRASE` (:87), `GROUPBY_*` (:263); `NUMBUILT` (`texts.py:6`).
 - [ ] **D4.** `WordType.wtoken` (T12), `prefilter_scansions`/`build_parses`/`Meter.get_pos_types` (C14), large commented blocks in `langs.py:430`, `wordtokenlist.py:148,241`.
 
 ---
@@ -220,10 +238,10 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 ## Feature / improvement ideas (worth the effort)
 
 - [ ] **F1. Unify the two parse paths.** Make `parse_batch` extract features then delegate to `evaluate_constraints_batch` + `compute_bounding_batch`. Fixes P3/C1 outright, halves the dispatch surface, gives the entity/web path batched bounding. *Highest-leverage structural fix.*
-- [ ] **F2. Number normalization.** Route digit tokens through `num2words` (per `lang`) before `get_word` instead of dropping them (fixes T8) — makes verse/prose with numerals scannable.
+- [x] **F2. Number normalization.** Route digit tokens through `num2words` (per `lang`) before `get_word` instead of dropping them (fixes T8) — makes verse/prose with numerals scannable.
 - [ ] **F3. DF-native HTML rendering.** Render from `_syll_df` + scansion arrays (word_num boundaries already in the DF) so `t.parse(); to_html()` works without the entity chain (fixes T9, complements T7). Collapses the most user-visible seam.
-- [ ] **F4. Memory-budgeted bounding.** Chunk L + tile S×S at n≥16 (fixes C6); lets `MAX_SYLL_IN_PARSE_UNIT` rise past 18 for better prose.
-- [ ] **F5. Vectorize `unres_within`/`unres_across`** (C19) — last per-line Python loops in the hot path.
+- [x] **F4. Memory-budgeted bounding.** Chunk L + tile S×S at n≥16 (fixes C6); lets `MAX_SYLL_IN_PARSE_UNIT` rise past 18 for better prose.
+- [x] **F5. Vectorize `unres_within`/`unres_across`** (C19) — last per-line Python loops in the hot path.
 - [ ] **F6. Request-hardening middleware** (web): `Semaphore` cap on concurrent parses + body-size limit + wall-clock timeout. Closes W2/W4/W5 together; makes the Settings `parse_timeout` real.
 - [ ] **F7. Session-consistent pronunciation cache.** After a TTS hit, insert into in-memory `token2ipa`; dedupe disk cache on load; replace the accidental 128-LRUs on `get_word`/`get_sylls_ipa_ll` with unbounded dict caches (fixes T1 warm-path overhead).
 - [ ] **F8. Shareable parse permalinks** — high value, but land W3 (output escaping) + a CSP header *first*, or self-XSS becomes stored XSS.

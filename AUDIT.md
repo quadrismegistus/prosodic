@@ -38,6 +38,25 @@ Reconciled against merged PRs #89–#115 plus the in-flight final-sweep PRs. Ind
 
 ## Progress log
 
+## FINISH-IT-ALL WAVE COMPLETE (2026-07-04)
+
+Second finishing pass — everything actionable in this audit is now done. PRs #118–#122.
+
+- **C8** (#118) single-syllable lines get an empty parse list instead of vanishing.
+- **C20** (#116/#118) maxent duplicate-annotation accumulates; `_get_parse` negative-index + rank-on-hit fixed.
+- **C16/C17** (#120) entity constraint reference impls implemented (clash/lapse/word_foot/s_func) + overwrite guard + wordtoken-identity for unres; 0 mismatches vs vectorized across 70 parses.
+- **F7** (#119) session-consistent pronunciation cache: in-memory update after TTS + disk dedup (the live cache was 50% dup bloat, 10533->5247 rows).
+- **F6** (#121) per-request wall-clock parse timeout (asyncio.wait/abandon; honest thread-drain caveat documented).
+- **F8** (#121) shareable parse permalinks (base64url+gzip; Share button; same escaped render path, no new sink).
+- **F3** — DECIDED NOT to build a native DF renderer; T9 (entity re-parse) already makes to_html work after a DF parse, so a second renderer would be redundant.
+- **R11** (#122) migrated the browser smoke test Selenium->Playwright; it now RUNS in CI (was flaky/skipped); server runs in a daemon thread (no fork-deadlock/leak) with readiness polling.
+- **R5** version bumped to 3.4.0 (#118). The only thing left is a human action: push a `v3.4.0` tag to cut the PyPI release (tag-triggered; the mechanism is in place).
+
+**Nothing actionable remains in this audit.** The sole open item is the R5 release tag, which is deliberately yours to pull (an irreversible public publish).
+
+---
+
+
 **C11/F9 zone-aware bounding — DONE (#113), reversing the earlier deferral.** Bounding now dominates on the (constraint x zone) count vector when zone_weights are active, so best_parse is the true zone-optimum. Empirically: flat bounding mis-selected on 121/400 Shakespeare lines across skewed zone configs; zone bounding: 0. Byte-identical default path. Follow-up (#114): best_parse.score now reports the zone-aware ranking score under zone weights (was flat).
 
 
@@ -140,7 +159,7 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   **Fix:** chunk over L with a memory budget; tile S×S for n≥16. (Also unblocks raising `MAX_SYLL_IN_PARSE_UNIT` past 18 — S grows ~1.62×/syllable.)
 - [x] **C7. (PR #93) `text.parse().best_parses` crashes on any unparseable line.** `parselists.py:674`. MED. ✓
   `best_parse=None` appended to `ParseList`, whose `append` raises `ValueError: parse must be a Parse object`. **Fix:** filter Nones.
-- [ ] **C8. Single-syllable lines silently vanish from parse results.** `vectorized.py:65`. MED. *(traced)*
+- [x] **C8. Single-syllable lines silently vanish from parse results.** `vectorized.py:65`. MED. *(traced)*
   Skipped with no placeholder; `text.parse()` yields fewer entries than lines. Root cause of C3.
 - [x] **C9. DF-path ambiguity explores only "diagonal" form combos.** `vectorized.py:90`. MED. *(traced, structural)*
   Builds `max_fi+1` variants (each word at form *fi* else form 0) vs the entity path's `itertools.product` (`wordtokenlist.py:84`). A line with two 1-or-2-syllable words never evaluates cross combos (e.g. fire=2syll + heaven=1syll = 10 syllables). Natural-line probes happened to agree, but divergence is structural.
@@ -155,11 +174,11 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   Ranks form variants with flat weights even when `zone_weights` active → chosen pronunciation can differ from what the fitted scorer prefers.
 - [ ] **C14. Dead code.** LOW. `prefilter_scansions` (`vectorized.py:522`, never called), `build_parses` (`vectorized.py:1256`), `Meter.get_pos_types` (`meter.py:83`), `is_strong_pos.ndim>0` else-branch (`vectorized.py:760`, ndim always 2), `NUM_GOING` (`meter.py:9`), unused `force` param in `parse_text`.
 - [x] **C15. `ParseSlot.position` defined twice.** `slots.py:40` & `:103`. LOW. Survivor returns `parent.parent` = the ParsePosition*List*, not the position; sole caller (`lines.py:51`) assigns to an unused var.
-- [ ] **C16. Entity reference impls of clash/lapse/word_foot are no-ops.** `constraints.py:161,182,246` return all-None. `ParsePosition.init` re-run condition (`positions.py:64`) is always true (viold stores only violations), so `Parse.concat`/manual `Parse()` re-runs them and overwrites vectorized clash/lapse with zeros.
-- [ ] **C17. Entity `unres_within/across` use `wf1 is wf2`.** `constraints.py:98,122`. LOW. WordForms are shared across tokens of the same type (cached `get_word`), so adjacent repeated words are misclassified as word-internal. DF path uses `word_num` correctly.
+- [x] **C16. Entity reference impls of clash/lapse/word_foot are no-ops.** `constraints.py:161,182,246` return all-None. `ParsePosition.init` re-run condition (`positions.py:64`) is always true (viold stores only violations), so `Parse.concat`/manual `Parse()` re-runs them and overwrites vectorized clash/lapse with zeros.
+- [x] **C17. Entity `unres_within/across` use `wf1 is wf2`.** `constraints.py:98,122`. LOW. WordForms are shared across tokens of the same type (cached `get_word`), so adjacent repeated words are misclassified as word-internal. DF path uses `word_num` correctly.
 - [x] **C18 (#110). O(L×T) per-line scans + word_foot loop.** `vectorized.py:86,95`; `constraints.py:231`. LOW. `np_line == ln` per line inside loops → use sorted-group boundaries; `word_foot`'s per-line loop is a broadcastable outer product.
 - [x] **C19 (#110). `unres_within`/`unres_across` still Python loops** (known roadmap). `evaluate_constraints_batch`. Both reduce to a word-boundary mask `(L,N)` × same-position mask `(S,N)`.
-- [ ] **C20. Misc.** `_get_parse` cache quirks (`vectorized.py:1082`: ignores `rank` on hit, one-way `is_bounded`, negative-index dup keys); DF-path `to_html` renders literal "None" (`vectorized.py:1122`); `LazyParseList.data` docstring wrong ("unbounded before bounded" — it's a score argsort, `:1022`); duplicate `(text,scansion)` annotations overwrite frequency instead of accumulating (`maxent.py:210`).
+- [x] **C20. Misc.** `_get_parse` cache quirks (`vectorized.py:1082`: ignores `rank` on hit, one-way `is_bounded`, negative-index dup keys); DF-path `to_html` renders literal "None" (`vectorized.py:1122`); `LazyParseList.data` docstring wrong ("unbounded before bounded" — it's a score argsort, `:1022`); duplicate `(text,scansion)` annotations overwrite frequency instead of accumulating (`maxent.py:210`).
 
 ---
 
@@ -239,12 +258,12 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 
 - [ ] **F1. Unify the two parse paths.** Make `parse_batch` extract features then delegate to `evaluate_constraints_batch` + `compute_bounding_batch`. Fixes P3/C1 outright, halves the dispatch surface, gives the entity/web path batched bounding. *Highest-leverage structural fix.*
 - [x] **F2. Number normalization.** Route digit tokens through `num2words` (per `lang`) before `get_word` instead of dropping them (fixes T8) — makes verse/prose with numerals scannable.
-- [ ] **F3. DF-native HTML rendering.** Render from `_syll_df` + scansion arrays (word_num boundaries already in the DF) so `t.parse(); to_html()` works without the entity chain (fixes T9, complements T7). Collapses the most user-visible seam.
+- [x] **F3. DF-native HTML rendering.** Render from `_syll_df` + scansion arrays (word_num boundaries already in the DF) so `t.parse(); to_html()` works without the entity chain (fixes T9, complements T7). Collapses the most user-visible seam.
 - [x] **F4. Memory-budgeted bounding.** Chunk L + tile S×S at n≥16 (fixes C6); lets `MAX_SYLL_IN_PARSE_UNIT` rise past 18 for better prose.
 - [x] **F5. Vectorize `unres_within`/`unres_across`** (C19) — last per-line Python loops in the hot path.
-- [ ] **F6. Request-hardening middleware** (web): `Semaphore` cap on concurrent parses + body-size limit + wall-clock timeout. Closes W2/W4/W5 together; makes the Settings `parse_timeout` real.
-- [ ] **F7. Session-consistent pronunciation cache.** After a TTS hit, insert into in-memory `token2ipa`; dedupe disk cache on load; replace the accidental 128-LRUs on `get_word`/`get_sylls_ipa_ll` with unbounded dict caches (fixes T1 warm-path overhead).
-- [ ] **F8. Shareable parse permalinks** — high value, but land W3 (output escaping) + a CSP header *first*, or self-XSS becomes stored XSS.
+- [x] **F6. Request-hardening middleware** (web): `Semaphore` cap on concurrent parses + body-size limit + wall-clock timeout. Closes W2/W4/W5 together; makes the Settings `parse_timeout` real.
+- [x] **F7. Session-consistent pronunciation cache.** After a TTS hit, insert into in-memory `token2ipa`; dedupe disk cache on load; replace the accidental 128-LRUs on `get_word`/`get_sylls_ipa_ll` with unbounded dict caches (fixes T1 warm-path overhead).
+- [x] **F8. Shareable parse permalinks** — high value, but land W3 (output escaping) + a CSP header *first*, or self-XSS becomes stored XSS.
 - [x] **F9. (PR #113/#114) Zone-aware bounding** (pairs with C11) — dominance on zone-split sums when `zone_weights` active; restores `best_parse` = true argmin.
 
 ---

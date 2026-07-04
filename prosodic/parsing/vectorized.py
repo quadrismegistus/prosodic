@@ -51,8 +51,13 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     f0_sort = np.argsort(f0_line, kind='stable')
     f0_line_s = f0_line[f0_sort]
     f0_idx_s = f0_idx[f0_sort]
-    f0_breaks = np.where(np.diff(f0_line_s, prepend=f0_line_s[0]-1) != 0)[0]
-    f0_breaks = np.append(f0_breaks, len(f0_line_s))
+    if len(f0_line_s) == 0:
+        # No parseable (non-punctuation) syllables, e.g. all-punctuation input.
+        # Leave line_data empty so the function returns no per-line results.
+        f0_breaks = np.array([0], dtype=int)
+    else:
+        f0_breaks = np.where(np.diff(f0_line_s, prepend=f0_line_s[0]-1) != 0)[0]
+        f0_breaks = np.append(f0_breaks, len(f0_line_s))
 
     # line_data: line_num -> (feats, sylls, has_ambig, form_variants)
     # form_variants: list of row-index arrays for each form combination

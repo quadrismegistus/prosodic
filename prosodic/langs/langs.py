@@ -130,7 +130,7 @@ class LanguageModel:
     def get_sylls_ipa_ll_rule(self, token):
         return [], {}
 
-    @cache
+    @cache(maxsize=None)
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
         token = token.lower()
         meta = {}
@@ -213,7 +213,7 @@ class LanguageModel:
         obj = _normalize_espeak_ipa(obj)
         return obj
 
-    @cache
+    @cache(maxsize=None)
     @profile
     def syllabify_ipa(self, ipa_str_with_spaces_between_phonemes):
         from ..words import Phoneme
@@ -267,7 +267,7 @@ class LanguageModel:
 
         return Syllabify()
 
-    @cache
+    @cache(maxsize=None)
     @profile
     def get_sylls_text_l(self, token, num_sylls=None):
         tokenl = token.lower()
@@ -544,6 +544,6 @@ def Language(lang: str = DEFAULT_LANG):
     return lang_obj
 
 
-@cache
+@cache(maxsize=None)
 def get_word(tokenx, lang=DEFAULT_LANG, force_unstress=None, force_ambig_stress=None):
     return Language(lang).get(tokenx, force_unstress=force_unstress, force_ambig_stress=force_ambig_stress)

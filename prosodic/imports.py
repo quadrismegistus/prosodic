@@ -1,6 +1,4 @@
 import os, sys
-sys.path.insert(0,'/Users/ryan/github/hashstash')
-sys.path.insert(0,'/Users/rj416/github/hashstash')
 from logmap import logmap
 # logmap.enable()
 import itertools

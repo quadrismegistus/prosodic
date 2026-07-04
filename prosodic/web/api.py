@@ -1035,12 +1035,18 @@ def parse_line(req: dict):
 
 # Serve built SvelteKit frontend
 if os.path.isdir(STATIC_BUILD_DIR):
+    _STATIC_ROOT = os.path.realpath(STATIC_BUILD_DIR)
+
     @app.get("/{path:path}")
     async def serve_frontend(path: str = ""):
-        file_path = os.path.join(STATIC_BUILD_DIR, path)
-        if path and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        index = os.path.join(STATIC_BUILD_DIR, "index.html")
+        if path:
+            file_path = os.path.realpath(os.path.join(_STATIC_ROOT, path))
+            # Reject anything resolving outside the static root (path traversal via
+            # percent-encoded '..'); fall through to the SPA index rather than
+            # serving an arbitrary file from disk.
+            if (file_path == _STATIC_ROOT or file_path.startswith(_STATIC_ROOT + os.sep)) and os.path.isfile(file_path):
+                return FileResponse(file_path)
+        index = os.path.join(_STATIC_ROOT, "index.html")
         if os.path.isfile(index):
             return FileResponse(index)
         raise HTTPException(status_code=404, detail="Frontend not built")

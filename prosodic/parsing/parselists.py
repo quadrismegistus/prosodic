@@ -673,7 +673,8 @@ class ParseListList(EntityList):
     
     @cached_property
     def best_parses(self):
-        return ParseList([pl.best_parse for pl in self], parent=self.parent)
+        parses = (pl.best_parse for pl in self)
+        return ParseList([p for p in parses if p is not None], parent=self.parent)
     
     @property
     def best(self):

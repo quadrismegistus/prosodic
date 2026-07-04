@@ -68,12 +68,14 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     # line_data: line_num -> (feats, sylls, has_ambig, form_variants)
     # form_variants: list of row-index arrays for each form combination
     line_data = {}
+    short_lines = []  # <2 syllables: can't form a foot, but must not vanish (C8)
 
     for i in range(len(f0_breaks) - 1):
         ln = int(f0_line_s[f0_breaks[i]])
         rows = f0_idx_s[f0_breaks[i]:f0_breaks[i+1]]
         n = len(rows)
         if n < 2:
+            short_lines.append(ln)
             continue
 
         sylls = [
@@ -150,6 +152,10 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     # --- Group by nsylls and process ---
     nsyll_groups = defaultdict(list)
     results = {}
+    # single-syllable (or empty) units get an empty parse list rather than
+    # silently disappearing from results (AUDIT C8)
+    for ln in short_lines:
+        results[ln] = ParseList([], parse_unit=meter.parse_unit)
     oversized = []
     for ln, (feats, sylls, has_ambig, _) in line_data.items():
         nsylls = len(feats["stressed"])
@@ -1180,10 +1186,15 @@ class LazyParseList:
 
     def _get_parse(self, idx, rank=None, is_bounded=False):
         """Build a Parse object for the given index, caching the result."""
+        # normalize negatives so idx and idx-S don't cache the same parse twice (C20)
+        if idx < 0:
+            idx += len(self._all_scansions)
         if idx in self._built_parses:
             p = self._built_parses[idx]
             if is_bounded:
                 p.is_bounded = True
+            if rank is not None:  # refresh rank on a cache hit (C20)
+                p.parse_rank = rank
             return p
 
         parse = _build_single_parse(

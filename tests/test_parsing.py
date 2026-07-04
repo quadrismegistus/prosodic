@@ -455,3 +455,27 @@ def test_line_to_html_after_df_parse():
     t.parse()
     html = t.lines[0].to_html(as_str=True)
     assert "mtr_" in html and "str_" in html   # rendered with meter/stress styling
+
+
+def test_single_syllable_line_not_dropped():
+    """A <2-syllable line can't form a foot but must not vanish from results;
+    it gets an empty parse list. AUDIT C8."""
+    from prosodic.parsing.meter import Meter
+    from prosodic.parsing.vectorized import parse_batch_from_df
+    t = TextModel("Stay!\nShall I compare thee to a summers day")
+    res = parse_batch_from_df(t._syll_df, Meter())
+    assert set(res.keys()) == {1, 2}           # both lines present (was {2})
+    assert len(res[1]) == 0 and res[1].best_parse is None   # single-syll: empty
+    assert res[2].best_parse is not None                    # normal line parses
+
+
+def test_get_parse_negative_index_no_double_build():
+    """_get_parse normalizes negative indices so idx and idx-S map to one cached
+    parse rather than building it twice. AUDIT C20."""
+    t = TextModel("Shall I compare thee to a summers day")
+    t.parse()
+    pl = t.lines[0].parses
+    p_pos = pl._get_parse(0)
+    p_neg = pl._get_parse(-len(pl._all_scansions))
+    assert p_pos is p_neg
+    assert len(pl._built_parses) == 1

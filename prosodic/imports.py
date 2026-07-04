@@ -59,7 +59,6 @@ import panphon
 import panphon.sonority
 
 
-USE_CACHE = False
 HASHSTR_LEN = None
 DEFAULT_NUM_PROC = None
 SYLL_SEP = "."
@@ -67,23 +66,12 @@ SYLL_SEP = "."
 DEFAULT_USE_REGISTRY = False
 DEFAULT_COMBINE_BY = "line"
 
-PATH_MTREE = os.path.join(PATH_REPO, "metricaltree")
-sys.path.append(PATH_MTREE)
-DASHES = ["--", "–", "—"]
-REPLACE_DASHES = True
-PSTRESS_THRESH_DEFAULT = 2
-TOKENIZER = r"[^\s+]+"
 SEPS_PHRASE = set(',:;–—()[].!?"“”’‘')
 SEP_STANZA = "\n\n"
 SEP_PARA = "\n\n"
 SEP_LINE = "\n"
-DEFAULT_PARSE_MAXSEC = 30
-DEFAULT_LINE_LIM = None
-DEFAULT_PROCESSORS = {"tokenize": "combined"}
 MAX_SYLL_IN_PARSE_UNIT = 18
 MIN_SYLL_IN_PARSE_UNIT = None
-MIN_WORDS_IN_PHRASE = 2
-MAX_WORDS_IN_PHRASE = 15
 DEFAULT_LANG = "en"
 DEFAULT_SYNTAX = False
 DEFAULT_SYNTAX_MODEL = "en_core_web_sm"
@@ -256,13 +244,6 @@ Leese but their show; their substance still lives sweet."""
 
 sonnet2 = """Those hours, that with gentle work did frame
 The lovely gaze where every eye doth dwell,"""
-
-
-GROUPBY_STANZA = ["stanza_num"]
-GROUPBY_LINE = GROUPBY_STANZA + ["line_num", "sent_num", "sentpart_num"]
-GROUPBY_WORD = GROUPBY_LINE + ["wordtoken_num", "wordform_num"]
-GROUPBY_SYLL = GROUPBY_WORD + ["syll_num"]
-
 
 
 DEFAULT_CONSTRAINTS = [

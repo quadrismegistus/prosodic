@@ -73,7 +73,11 @@ ipa2x=dict([("".join(v), k) for (k, v) in orth2phon.items()])
 
 
 class FinnishLanguage(LanguageModel):
-    pronunciation_dictionary_filename = os.path.join(PATH_DICTS,'en','english.tsv')
+    # Finnish is syllabified by rule (get_sylls_ll_rule), not from a
+    # pronunciation-dictionary file. The old value pointed at the English dict
+    # under a nonexistent data/dicts/ path; the attribute is never read anyway
+    # (only *_sep is), so keep it empty to match the LanguageModel default.
+    pronunciation_dictionary_filename = ""
     lang = 'fi'
     cache_fn = 'finnish_wordtypes'
 

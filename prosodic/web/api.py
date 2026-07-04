@@ -51,7 +51,30 @@ MAX_INPUT_CHARS = 500_000  # hard cap on submitted text length (DoS guard)
 _TEXT_CACHE_MAX = 32       # bound the TextModel cache to avoid unbounded growth
 
 STATIC_BUILD_DIR = os.path.join(os.path.dirname(__file__), "static_build")
-CORPORA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "corpora")
+
+
+def _resolve_corpora_dir():
+    """Locate the corpora/ directory across dev and installed layouts.
+
+    Prefers the repo-root corpora/ (present for `pip install -e .` and the
+    deployed server), then a copy shipped inside the prosodic/ package. If none
+    exist, returns the repo-root candidate so the path-containment check has a
+    stable base and list_corpora simply returns an empty list (glob finds no
+    files) rather than erroring for pip users without the corpora dir.
+    """
+    pkg_dir = os.path.dirname(os.path.dirname(__file__))  # prosodic/
+    candidates = [
+        os.path.join(pkg_dir, "..", "corpora"),  # repo root (editable install / repo)
+        os.path.join(pkg_dir, "corpora"),        # packaged inside the prosodic/ package
+    ]
+    for cand in candidates:
+        cand = os.path.normpath(cand)
+        if os.path.isdir(cand):
+            return cand
+    return os.path.normpath(candidates[0])
+
+
+CORPORA_DIR = _resolve_corpora_dir()
 
 _text_cache = OrderedDict()
 _text_cache_guard = threading.Lock()

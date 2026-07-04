@@ -93,28 +93,89 @@ class LanguageModel:
     @cached_property
     def token2ipa(self):
         d = {}
+        # `seen` dedupes exact (token, pronunciation) rows across BOTH the main
+        # dictionary and the user cache, so a repeated append never yields a
+        # duplicate pronunciation variant in memory (first-wins).
+        seen = set()
         # load main pronunciation dictionary
         if self.path_token2ipa:
-            d = self._load_token2ipa_file(self.path_token2ipa, d)
+            d = self._load_token2ipa_file(self.path_token2ipa, d, seen)
         # load user-local TTS cache
         cache_path = self.path_token2ipa_cache
         if cache_path and os.path.exists(cache_path):
-            d = self._load_token2ipa_file(cache_path, d)
+            # collapse any duplicate rows that accumulated on disk across runs
+            # or parallel processes before loading (keeps the file from growing
+            # unbounded).
+            self._dedupe_cache_file()
+            d = self._load_token2ipa_file(cache_path, d, seen)
         return d
 
-    def _load_token2ipa_file(self, path, d=None):
+    def _load_token2ipa_file(self, path, d=None, seen=None):
         if d is None:
             d = {}
+        if seen is None:
+            seen = set()
         sep = self.pronunciation_dictionary_filename_sep
         with open(path, encoding="utf-8") as f:
             for ln in f:
                 ln = ln.strip()
                 if ln and sep in ln:
                     token, ipa = ln.split(sep, 1)
+                    # skip exact-duplicate (token, pronunciation) rows; distinct
+                    # pronunciation variants of the same token are still kept.
+                    key = (token, ipa)
+                    if key in seen:
+                        continue
+                    seen.add(key)
                     if token not in d:
                         d[token] = []
                     d[token].append(ipa.split("."))
         return d
+
+    def _dedupe_cache_file(self):
+        """Collapse exact-duplicate rows in the user-local TTS cache on disk.
+
+        The same word can be appended more than once across runs or across
+        parallel processes (each holds its own in-memory map), so the cache
+        file grows unbounded. This rewrites it (atomically) keeping the first
+        occurrence of each row -- but only when duplicates are actually found,
+        so the common no-dupes case does no writes. Best-effort: dedupe on disk
+        is an optimization, never a correctness requirement.
+        """
+        cache_path = self.path_token2ipa_cache
+        if not cache_path or not os.path.exists(cache_path):
+            return
+        sep = self.pronunciation_dictionary_filename_sep
+        seen = set()
+        unique = []
+        n_rows = 0
+        try:
+            with open(cache_path, encoding="utf-8") as f:
+                for ln in f:
+                    stripped = ln.strip()
+                    if not stripped or sep not in stripped:
+                        continue
+                    n_rows += 1
+                    if stripped in seen:
+                        continue
+                    seen.add(stripped)
+                    unique.append(stripped)
+        except OSError:
+            return
+        if len(unique) == n_rows:
+            return  # no duplicates -- leave the file untouched
+        tmp_path = cache_path + ".tmp"
+        try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                for stripped in unique:
+                    f.write(stripped + "\n")
+            os.replace(tmp_path, cache_path)
+        except OSError:
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except OSError:
+                pass
 
     def _cache_tts_result(self, token, sylls_ipa_l):
         """Append a TTS pronunciation result to the user-local cache file."""
@@ -154,6 +215,13 @@ class LanguageModel:
                 # cache TTS result to disk for next startup
                 for sylls_ipa_l in sylls_ipa_ll:
                     self._cache_tts_result(token, sylls_ipa_l)
+                # ...and into the in-memory map, so a repeat lookup of this
+                # token this session resolves from the dict and never re-hits
+                # espeak -- even for a different force_unstress/force_ambig_stress
+                # argument, which is a distinct get_sylls_ipa_ll cache key. Store
+                # the RAW (pre-format, pre-stress-mod) pronunciation so it matches
+                # exactly what a fresh disk load would produce.
+                self.token2ipa[token] = [list(s) for s in sylls_ipa_ll]
             else:
                 log.error(f'cannot parse syll IPAs in {token}')
                 meta['ipa_origin'] = 'error'

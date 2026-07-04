@@ -232,6 +232,81 @@ def test_every_syllable_has_a_vowel():
             )
 
 
+def test_tts_cache_dedup_on_load(tmp_path):
+    """A user-local TTS cache that accumulated duplicate rows (across runs or
+    parallel processes) collapses to one entry per (token, pronunciation) on
+    load, keeping distinct pronunciation variants -- and the file is rewritten
+    without the dupes so it does not grow unbounded."""
+    from prosodic.langs.langs import LanguageModel
+    cache_file = tmp_path / "en_cache.tsv"
+    cache_file.write_text(
+        "foobarbaz\t'fu.baɹ.baz\n"
+        "foobarbaz\t'fu.baɹ.baz\n"   # exact duplicate -> collapse
+        "foobarbaz\tfu.'baɹ.baz\n"   # distinct variant  -> keep
+        "quuxword\t'kwʌks\n"
+        "quuxword\t'kwʌks\n",        # exact duplicate -> collapse
+        encoding="utf-8",
+    )
+
+    class _CacheLang(LanguageModel):
+        # name=None -> no main dictionary; only the cache below is loaded
+        @property
+        def path_token2ipa_cache(self):
+            return str(cache_file)
+
+    lang = _CacheLang()
+    d = lang.token2ipa
+    # exact-duplicate rows collapsed, distinct variant retained
+    assert d["foobarbaz"] == [["'fu", "baɹ", "baz"], ["fu", "'baɹ", "baz"]]
+    assert d["quuxword"] == [["'kwʌks"]]
+    # the on-disk cache was rewritten without the duplicate rows
+    lines = [l for l in cache_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(lines) == 3
+    assert lines.count("quuxword\t'kwʌks") == 1
+    assert lines.count("foobarbaz\t'fu.baɹ.baz") == 1
+
+
+def test_tts_hit_updates_inmemory_map_single_espeak(tmp_path):
+    """After a TTS (espeak) hit, the pronunciation is inserted into the
+    in-memory map, so a second lookup of the same token this session -- even
+    with a different force arg (a distinct get_sylls_ipa_ll cache key) -- is
+    served from the dict and does NOT re-invoke the TTS/espeak path."""
+    from prosodic.langs.langs import LanguageModel
+    cache_file = tmp_path / "english_cache.tsv"
+
+    class _CountingLang(LanguageModel):
+        def __init__(self, cache_path):
+            self._cache_path = cache_path
+            self.tts_calls = 0
+
+        @property
+        def path_token2ipa_cache(self):
+            return self._cache_path
+
+        # stand in for the espeak/TTS path (get_sylls_ipa_ll_tts is what would
+        # invoke the phonemizer); count invocations, return a canned result.
+        def get_sylls_ipa_ll_tts(self, token):
+            self.tts_calls += 1
+            return [["'hɛ", "loʊ"]]
+
+    lang = _CountingLang(str(cache_file))
+
+    r1 = lang.get_sylls_ipa_ll("helloword")
+    assert r1
+    assert lang.tts_calls == 1
+    # the token is now in the in-memory map...
+    assert "helloword" in lang.token2ipa
+    assert lang.get_sylls_ipa_ll_dict("helloword")
+    # ...and written to disk for the next session
+    assert cache_file.exists()
+
+    # second lookup with a DIFFERENT force arg -> distinct lru_cache key, so the
+    # method body runs again, but it must resolve from the dict, not re-TTS.
+    r2 = lang.get_sylls_ipa_ll("helloword", force_unstress=True)
+    assert r2
+    assert lang.tts_calls == 1
+
+
 def test_stresses():
     # Test sylls_ipa_l_has_stress
     assert sylls_ipa_l_has_stress(["'maɪ"])

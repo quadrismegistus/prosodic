@@ -13,25 +13,81 @@ from prosodic.web.models import (
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse, Response
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
+from collections import OrderedDict
 import json
 import asyncio
 import glob as globmod
+import html
+import threading
 
 app = FastAPI(title="Prosodic", description="Metrical parser for English and Finnish")
 
+
+@app.middleware("http")
+async def _security_headers(request: Request, call_next):
+    """Add conservative security headers to every response.
+
+    The CSP allows 'unsafe-inline' for scripts/styles (the SvelteKit build
+    ships an inline bootstrap script); server-side HTML escaping is the real
+    XSS defense. Tightening script-src to a hash/nonce is a follow-up.
+    """
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+    )
+    return resp
+
+
 linelim = 15000
-_text_cache = {}
+MAX_INPUT_CHARS = 500_000  # hard cap on submitted text length (DoS guard)
+_TEXT_CACHE_MAX = 32       # bound the TextModel cache to avoid unbounded growth
 
 STATIC_BUILD_DIR = os.path.join(os.path.dirname(__file__), "static_build")
 CORPORA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "corpora")
 
+_text_cache = OrderedDict()
+_text_cache_guard = threading.Lock()
+
 
 def get_text(txt, **kwargs):
+    """Return a size-bounded (LRU) cached TextModel for `txt`.
+
+    Each cached model carries a `_parse_lock`. Parsing writes results onto the
+    model's shared line entities, so callers that parse must hold that lock —
+    otherwise two concurrent requests parsing the same text with different
+    meters would clobber each other's results.
+    """
     key = (txt, tuple(sorted(kwargs.items())))
-    if key not in _text_cache:
-        _text_cache[key] = TextModel(txt, **kwargs)
-    return _text_cache[key]
+    with _text_cache_guard:
+        t = _text_cache.get(key)
+        if t is not None:
+            _text_cache.move_to_end(key)
+    if t is None:
+        t = TextModel(txt, **kwargs)
+        t._parse_lock = threading.Lock()
+        with _text_cache_guard:
+            _text_cache[key] = t
+            _text_cache.move_to_end(key)
+            while len(_text_cache) > _TEXT_CACHE_MAX:
+                _text_cache.popitem(last=False)
+    return t
+
+
+def _check_size(text_str):
+    """Reject oversized input before any expensive work (DoS guard)."""
+    if len(text_str) > MAX_INPUT_CHARS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Text too large ({len(text_str)} chars; limit {MAX_INPUT_CHARS}).",
+        )
 
 
 def _render_slot(slot):
@@ -41,10 +97,11 @@ def _render_slot(slot):
     viols = list(slot.violset)
     viol = 'viol_y' if viols else 'viol_n'
     classes = f'{mtr} {strs} {viol}'
+    txt = html.escape(unit.txt)  # user text — escape before embedding in HTML
     if viols:
-        tip = ', '.join(f'*{v}' for v in viols)
-        return f'<span class="{classes}"><span class="tip">{tip}</span>{unit.txt}</span>'
-    return f'<span class="{classes}">{unit.txt}</span>'
+        tip = html.escape(', '.join(f'*{v}' for v in viols))
+        return f'<span class="{classes}"><span class="tip">{tip}</span>{txt}</span>'
+    return f'<span class="{classes}">{txt}</span>'
 
 
 def render_parse_html(parse, line=None):
@@ -87,15 +144,15 @@ def render_parse_html(parse, line=None):
             stripped = txt.lstrip()
             lead = txt[:len(txt) - len(stripped)]
             if lead:
-                parts.append(lead)
+                parts.append(html.escape(lead))
             if getattr(wt, 'is_punc', False):
-                parts.append(stripped)
+                parts.append(html.escape(stripped))
                 continue
             slots = slots_by_wt.get(id(wt))
             if slots:
                 parts.extend(_render_slot(s) for s in slots)
             else:
-                parts.append(stripped)
+                parts.append(html.escape(stripped))
         return ''.join(parts)
 
     # Fallback: just join by word boundary using slot-side parents
@@ -197,7 +254,7 @@ def _raw_linepart_html(unit):
     its wordtokens — used when the linepart is too short/long to parse."""
     parts = []
     for wt in unit:
-        parts.append(wt.txt)
+        parts.append(html.escape(wt.txt))  # user text — escape (rendered via {@html})
     return ''.join(parts)
 
 
@@ -340,7 +397,7 @@ def list_corpora():
 def read_corpus(path: str):
     corpora_dir = os.path.normpath(CORPORA_DIR)
     full_path = os.path.normpath(os.path.join(corpora_dir, path))
-    if not full_path.startswith(corpora_dir):
+    if full_path != corpora_dir and not full_path.startswith(corpora_dir + os.sep):
         raise HTTPException(status_code=400, detail="Invalid path")
     if not os.path.isfile(full_path):
         raise HTTPException(status_code=404, detail="File not found")
@@ -355,6 +412,8 @@ def parse_text(req: dict):
     text_str = req.get('text', '').strip()
     if not text_str:
         raise HTTPException(status_code=400, detail="No text provided")
+
+    _check_size(text_str)
 
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
@@ -377,7 +436,8 @@ def parse_text(req: dict):
         meter.zone_weights = zw
         meter.zones = _normalize_zones(req.get('zones', 3))
 
-    rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
+    with t._parse_lock:
+        rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
     elapsed = time.time() - t0
 
     return {
@@ -511,6 +571,8 @@ def parse_export(req: dict):
     if fmt not in ('csv', 'tsv', 'json'):
         raise HTTPException(status_code=400, detail="format must be csv, tsv, or json")
 
+    _check_size(text_str)
+
     from prosodic.parsing.meter import Meter
 
     input_lines = text_str.split('\n')[:linelim]
@@ -529,7 +591,8 @@ def parse_export(req: dict):
         meter.zones = _normalize_zones(req.get('zones', 3))
 
     # Parse (handles prose fallback)
-    display_rows, _, _ = _parse_and_build_rows(t, meter)
+    with t._parse_lock:
+        display_rows, _, _ = _parse_and_build_rows(t, meter)
 
     # Build export rows: one per line (best-parse only) + unbounded averages.
     # Group display_rows by line_num, take rank=1.
@@ -669,6 +732,8 @@ async def parse_stream(req: dict):
     if not text_str:
         raise HTTPException(status_code=400, detail="No text provided")
 
+    _check_size(text_str)
+
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
 
@@ -684,47 +749,59 @@ async def parse_stream(req: dict):
         return f"data: {json.dumps(data)}\n\n"
 
     async def event_stream():
-        yield sse({'phase': 'progress', 'message': f'Tokenizing {len(input_lines)} lines...'})
-        await asyncio.sleep(0)
-
-        t0 = time.time()
-        t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
-
-        yield sse({'phase': 'progress', 'message': f'Parsing {len(t.lines)} lines...'})
-        await asyncio.sleep(0)
-
-        meter = Meter(**meter_kwargs)
-        zw = req.get('zone_weights')
-        if zw:
-            meter.zone_weights = zw
-            meter.zones = _normalize_zones(req.get('zones', 3))
-
-        long_lnums = _long_line_nums(t)
-        if long_lnums:
-            yield sse({'phase': 'progress',
-                       'message': f'{len(long_lnums)} long line(s) detected — parsing by linepart...'})
+        try:
+            yield sse({'phase': 'progress', 'message': f'Tokenizing {len(input_lines)} lines...'})
             await asyncio.sleep(0)
 
-        rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
+            t0 = time.time()
+            # Offload CPU-bound work to a worker thread so a large parse doesn't
+            # freeze the single event loop (and block every other request). (W2)
+            t = await run_in_threadpool(
+                lambda: get_text(text_str, syntax=syntax, syntax_model=syntax_model))
 
-        parse_elapsed = time.time() - t0
-        yield sse({'phase': 'progress', 'message': f'Parsed in {parse_elapsed:.1f}s. Rendering...'})
-        await asyncio.sleep(0)
+            n_lines = await run_in_threadpool(lambda: len(t.lines))
+            yield sse({'phase': 'progress', 'message': f'Parsing {n_lines} lines...'})
+            await asyncio.sleep(0)
 
-        BATCH_SIZE = 50
-        batch = []
-        for r in rows:
-            batch.append(r)
-            if len(batch) >= BATCH_SIZE:
-                yield sse({'phase': 'rows', 'rows': batch})
-                batch = []
+            meter = Meter(**meter_kwargs)
+            zw = req.get('zone_weights')
+            if zw:
+                meter.zone_weights = zw
+                meter.zones = _normalize_zones(req.get('zones', 3))
+
+            long_lnums = await run_in_threadpool(_long_line_nums, t)
+            if long_lnums:
+                yield sse({'phase': 'progress',
+                           'message': f'{len(long_lnums)} long line(s) detected — parsing by linepart...'})
                 await asyncio.sleep(0)
 
-        if batch:
-            yield sse({'phase': 'rows', 'rows': batch})
+            def _do_parse():
+                with t._parse_lock:
+                    return _parse_and_build_rows(t, meter)
+            rows, num_lines, prose_mode = await run_in_threadpool(_do_parse)
 
-        elapsed = time.time() - t0
-        yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode, 'constraints': list(meter.constraints.keys())})
+            parse_elapsed = time.time() - t0
+            yield sse({'phase': 'progress', 'message': f'Parsed in {parse_elapsed:.1f}s. Rendering...'})
+            await asyncio.sleep(0)
+
+            BATCH_SIZE = 50
+            batch = []
+            for r in rows:
+                batch.append(r)
+                if len(batch) >= BATCH_SIZE:
+                    yield sse({'phase': 'rows', 'rows': batch})
+                    batch = []
+                    await asyncio.sleep(0)
+
+            if batch:
+                yield sse({'phase': 'rows', 'rows': batch})
+
+            elapsed = time.time() - t0
+            yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode, 'constraints': list(meter.constraints.keys())})
+        except Exception as e:
+            # Surface mid-stream failures to the client instead of dying silently. (W8)
+            log.error(f"parse/stream failed: {e}")
+            yield sse({'phase': 'error', 'message': str(e)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -895,6 +972,8 @@ def parse_line(req: dict):
     if not text_str:
         raise HTTPException(status_code=400, detail="No text provided")
 
+    _check_size(text_str)
+
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
 
@@ -976,7 +1055,10 @@ def parse_line(req: dict):
             wt._parses = pl
             text_lines[i]._parses = pl
         line = text_lines[0]
-        parses = _build_parses_for_pl(line._parses, line)
+        # Use the local parse result rather than re-reading line._parses, so a
+        # concurrent request on the same cached text can't swap it out mid-request.
+        first_pl = results[0][1] if results else None
+        parses = _build_parses_for_pl(first_pl, line)
         elapsed = time.time() - t0
         num_unbounded = sum(1 for p in parses if not p['is_bounded'])
         return {
@@ -1000,6 +1082,7 @@ def parse_line(req: dict):
 
         meter.parse_unit = 'linepart'
         units_to_parse = [u for u in expanded if u.num_sylls >= 2]
+        pl_by_unit = {}
         if units_to_parse:
             lp_results = parse_batch(units_to_parse, meter)
             for i, (wt, pl) in enumerate(lp_results):
@@ -1008,10 +1091,11 @@ def parse_line(req: dict):
                 pl.parent = wt
                 wt._parses = pl
                 units_to_parse[i]._parses = pl
+                pl_by_unit[id(units_to_parse[i])] = pl
 
         parts = []
         for lp in expanded:
-            pl = getattr(lp, '_parses', None)
+            pl = pl_by_unit.get(id(lp))
             part_parses = _build_parses_for_pl(pl, lp) if pl else []
             num_unb = sum(1 for p in part_parses if not p['is_bounded'])
             parts.append({

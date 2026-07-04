@@ -1035,13 +1035,35 @@ class LazyParseList:
         return len(self._unbounded_indices)
 
     @property
+    def num_cooptimal(self):
+        """How many unbounded parses tie at the best (minimum) score.
+
+        1 = the best parse is uniquely optimal. >1 = the grammar is indifferent
+        among that many co-optimal parses, and best_parse is an arbitrary (but
+        deterministic) pick among them — surfaced so a tie isn't read as a
+        decisive result.
+
+        Counts co-optimal *scansions of this parse's pronunciation*. When a line
+        has ambiguous pronunciations, a tie between the best parses of two
+        different pronunciations is not counted here (that's pronunciation
+        ambiguity rather than metrical indifference).
+        """
+        if len(self._scores) == 0:
+            return 0
+        return int(np.count_nonzero(np.isclose(self._scores, self._scores.min())))
+
+    @property
     def best_parse(self):
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
             # best among unbounded
             self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
-        return self._get_parse(self._best_idx, rank=1)
+        bp = self._get_parse(self._best_idx, rank=1)
+        if bp is not None:
+            bp.num_cooptimal = self.num_cooptimal
+            bp.is_tied = bp.num_cooptimal > 1
+        return bp
 
     @property
     def best_parses(self):

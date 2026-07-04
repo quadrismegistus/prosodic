@@ -362,3 +362,27 @@ def test_df_path_finds_optimal_on_ambiguous_line():
     # pronunciation combination; the DF path must find it.
     t = TextModel("More than that tongue that more hath more express'd.")
     assert t.parse()[0].best_parse.score == 0
+
+
+def test_best_parse_cooptimal_signal():
+    """best_parse exposes num_cooptimal / is_tied so a co-optimal tie among
+    equally-scoring scansions is visible instead of being silently resolved.
+    The tiebreak itself stays metrically neutral; this only reports how many
+    parses were equally best."""
+    unique_line = "Shall I compare thee to a summers day"
+    tied_line = "Were an all-eating shame and thriftless praise"
+    t = TextModel(unique_line + "\n" + tied_line)
+    res = t.parse()
+    for pl in res:
+        bp = pl.best_parse
+        assert bp is not None
+        assert bp.num_cooptimal >= 1
+        assert bp.is_tied == (bp.num_cooptimal > 1)
+        # num_cooptimal equals the count of unbounded parses at the best score
+        n = sum(1 for p in pl.unbounded if abs(p.score - bp.score) < 1e-9)
+        assert bp.num_cooptimal == n
+
+    assert res[0].best_parse.is_tied is False
+    assert res[0].best_parse.num_cooptimal == 1
+    assert res[1].best_parse.is_tied is True
+    assert res[1].best_parse.num_cooptimal >= 2

@@ -46,6 +46,7 @@ export async function parseStream(data, { onProgress, onRows }) {
 	const decoder = new TextDecoder();
 	let buffer = '';
 	let meta = null;
+	let streamError = null;
 
 	while (true) {
 		const { done, value } = await reader.read();
@@ -62,9 +63,13 @@ export async function parseStream(data, { onProgress, onRows }) {
 				onRows(event.rows);
 			} else if (event.phase === 'done') {
 				meta = { elapsed: event.elapsed, num_lines: event.num_lines, constraints: event.constraints || [] };
+			} else if (event.phase === 'error') {
+				// Mid-stream failure (e.g. parse timeout / server error).
+				streamError = event.message || 'Parse failed';
 			}
 		}
 	}
+	if (streamError) throw new Error(streamError);
 	return meta;
 }
 

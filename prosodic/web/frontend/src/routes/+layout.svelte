@@ -47,8 +47,9 @@
 		const urlTab = tabFromPath(window.location.pathname);
 		$activeTab = urlTab;
 		prevTab = urlTab;
-		// Replace current history entry so back doesn't go to blank
-		history.replaceState({ tab: urlTab }, '', window.location.pathname);
+		// Replace current history entry so back doesn't go to blank. Preserve the
+		// query string so a ?p= permalink survives for ParseTab to consume.
+		history.replaceState({ tab: urlTab }, '', window.location.pathname + window.location.search);
 
 		window.addEventListener('popstate', () => {
 			syncingFromUrl = true;

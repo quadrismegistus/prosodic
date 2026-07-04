@@ -18,6 +18,8 @@ from typing import Optional
 from collections import OrderedDict
 import json
 import asyncio
+import base64
+import zlib
 import glob as globmod
 import html
 import threading
@@ -49,6 +51,19 @@ async def _security_headers(request: Request, call_next):
 linelim = 15000
 MAX_INPUT_CHARS = 500_000  # hard cap on submitted text length (DoS guard)
 _TEXT_CACHE_MAX = 32       # bound the TextModel cache to avoid unbounded growth
+
+# --- Per-request wall-clock parse timeout (F6) ---
+PARSE_TIMEOUT_DEFAULT = 30.0   # seconds; used when the request omits parse_timeout
+PARSE_TIMEOUT_MAX = 120.0      # hard ceiling — a request cannot ask for more
+
+# --- Permalink limits (F8) ---
+# Base64url of a gzipped 500k-char text stays well under this; the ceiling only
+# guards against absurd query strings before we spend work decoding them.
+_PERMALINK_MAX_ENCODED = 800_000
+# Cap on the *decompressed* payload to defend against gzip bombs (a tiny gzip
+# that expands to gigabytes). Sized to comfortably hold MAX_INPUT_CHARS of text
+# plus the JSON config wrapper.
+_PERMALINK_MAX_DECODED = MAX_INPUT_CHARS * 2 + 50_000
 
 STATIC_BUILD_DIR = os.path.join(os.path.dirname(__file__), "static_build")
 
@@ -111,6 +126,162 @@ def _check_size(text_str):
             status_code=413,
             detail=f"Text too large ({len(text_str)} chars; limit {MAX_INPUT_CHARS}).",
         )
+
+
+def _clamp_timeout(req):
+    """Resolve a per-request wall-clock parse timeout (seconds), clamped sane.
+
+    Read from the request's ``parse_timeout`` (surfaced by the Settings tab);
+    falls back to PARSE_TIMEOUT_DEFAULT and is hard-capped at PARSE_TIMEOUT_MAX
+    so a client cannot pin a worker forever by asking for a huge timeout.
+    """
+    try:
+        val = float(req.get('parse_timeout', PARSE_TIMEOUT_DEFAULT))
+    except (TypeError, ValueError):
+        val = PARSE_TIMEOUT_DEFAULT
+    if val <= 0:
+        val = PARSE_TIMEOUT_DEFAULT
+    return min(val, PARSE_TIMEOUT_MAX)
+
+
+async def _await_bounded(fn, timeout, *args):
+    """Run blocking ``fn(*args)`` in the threadpool, bounded by a wall clock.
+
+    Returns the result, or raises ``asyncio.TimeoutError`` if ``fn`` runs longer
+    than ``timeout`` seconds.
+
+    IMPORTANT LIMITATION (documented honestly): a CPU-bound function already
+    executing inside a worker thread CANNOT be force-killed in CPython. On
+    timeout we ABANDON the await (stop waiting) and return; the worker thread
+    keeps running to completion in the background and its result is discarded.
+    This bounds client latency and keeps the async event loop responsive, but it
+    does not instantly reclaim the CPU — a pathological input can still occupy
+    one threadpool thread until it finishes. The per-text ``_parse_lock`` and the
+    MAX_INPUT_CHARS cap remain the backstops against many such requests piling up.
+
+    Why ``asyncio.wait`` (abandon) rather than ``asyncio.wait_for`` (cancel):
+    starlette's ``run_in_threadpool`` calls ``anyio.to_thread.run_sync`` with
+    ``abandon_on_cancel=False``, so cancelling the await would block until the
+    thread finishes anyway — defeating the point. ``asyncio.wait`` lets us return
+    the instant the deadline passes, leaving the thread to drain untouched.
+
+    Why not a ``ProcessPoolExecutor`` (true hard kill): the parse path relies on
+    in-process shared state (the cached TextModel + its ``_parse_lock``, the
+    lazily-built entity graph, and the torch/MPS device) that does not survive
+    process spawn cleanly on macOS — the same reason ``--dev`` mode shells out to
+    a uvicorn subprocess. Correctness and not breaking existing behavior win over
+    a theoretically perfect but fragile hard-kill.
+    """
+    task = asyncio.ensure_future(run_in_threadpool(fn, *args))
+    done, _pending = await asyncio.wait({task}, timeout=timeout)
+    if task in done:
+        return task.result()
+    # Timed out: abandon the task (do NOT await/cancel it). Retrieve its eventual
+    # exception in a callback so the loop doesn't log "exception never retrieved".
+    task.add_done_callback(lambda t: None if t.cancelled() else t.exception())
+    raise asyncio.TimeoutError()
+
+
+async def _run_with_timeout(fn, timeout, *args):
+    """As _await_bounded, but converts a timeout into an HTTP 504 for endpoints."""
+    try:
+        return await _await_bounded(fn, timeout, *args)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail=(
+                f"Parse timed out after {timeout:g}s. Try shorter text or raise "
+                "the parse timeout in Settings."
+            ),
+        )
+
+
+def _permalink_to_req(payload):
+    """Map a decoded share payload → a parse-request dict (mirrors the frontend).
+
+    The share payload carries the raw meter config + per-constraint weights so it
+    can also restore the UI; here we fold weights into the ``name/weight``
+    constraint encoding exactly like the frontend's buildConstraintList, so the
+    server-reproduced parse matches what the browser would have sent.
+    """
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid permalink payload")
+    meter = payload.get('meter') or {}
+    constraints = meter.get('constraints') or None
+    weights = payload.get('weights') or {}
+    zone_weights = payload.get('zoneWeights') or None
+    if constraints and weights and not zone_weights:
+        constraints = [
+            f"{c}/{weights[c]}" if (c in weights and weights[c] != 1.0) else c
+            for c in constraints
+        ]
+    req = {
+        'text': payload.get('text', ''),
+        'constraints': constraints,
+        'max_s': meter.get('max_s', 2),
+        'max_w': meter.get('max_w', 2),
+        'resolve_optionality': meter.get('resolve_optionality', True),
+        'syntax': bool(payload.get('syntax', False)),
+        'syntax_model': payload.get('syntax_model') or DEFAULT_SYNTAX_MODEL,
+    }
+    if 'parse_timeout' in payload:
+        req['parse_timeout'] = payload['parse_timeout']
+    if zone_weights:
+        req['zone_weights'] = zone_weights
+        req['zones'] = payload.get('zones', 3)
+    return req
+
+
+def _decode_permalink(data):
+    """Decode a URL-safe permalink string → a parse-request dict.
+
+    Wire format (interoperable with the frontend permalink.js encoder):
+      base64url( optionally gzip-compressed UTF-8 JSON )
+    Gzip is detected by its magic bytes (0x1f 0x8b), so no separate flag is
+    needed. Decompression is size-bounded to defend against gzip bombs.
+    The decoded text is re-validated against MAX_INPUT_CHARS, and the resulting
+    text flows through the SAME parse/escape path as normal input — there is no
+    new unescaped sink.
+    """
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty permalink")
+    if len(data) > _PERMALINK_MAX_ENCODED:
+        raise HTTPException(status_code=413, detail="Permalink too large")
+    try:
+        raw = base64.urlsafe_b64decode(data + '=' * (-len(data) % 4))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid permalink encoding")
+    if raw[:2] == b'\x1f\x8b':  # gzip magic — bounded decompress
+        try:
+            dobj = zlib.decompressobj(16 + zlib.MAX_WBITS)
+            raw = dobj.decompress(raw, _PERMALINK_MAX_DECODED)
+            if dobj.unconsumed_tail:
+                raise HTTPException(status_code=413, detail="Permalink payload too large")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid permalink compression")
+    if len(raw) > _PERMALINK_MAX_DECODED:
+        raise HTTPException(status_code=413, detail="Permalink payload too large")
+    try:
+        payload = json.loads(raw.decode('utf-8'))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid permalink payload")
+    return _permalink_to_req(payload)
+
+
+def _encode_permalink(payload, compress=True):
+    """Encode a share payload → a URL-safe permalink string.
+
+    Mirror of _decode_permalink; used by tests and available to API clients. The
+    browser normally does its own encoding (permalink.js), but keeping a Python
+    encoder guarantees the two stay wire-compatible.
+    """
+    raw = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+    if compress:
+        co = zlib.compressobj(9, zlib.DEFLATED, 16 + zlib.MAX_WBITS)  # gzip
+        raw = co.compress(raw) + co.flush()
+    return base64.urlsafe_b64encode(raw).decode('ascii').rstrip('=')
 
 
 def _render_slot(slot):
@@ -429,16 +600,20 @@ def read_corpus(path: str):
     return {"text": text, "name": os.path.basename(full_path)}
 
 
-@app.post("/api/parse")
-def parse_text(req: dict):
-    """Parse text and return rows with server-rendered HTML."""
+async def _do_parse_request(req: dict):
+    """Shared core for /api/parse and /api/parse/permalink.
+
+    Runs the (CPU-bound) tokenize + parse + HTML-render pipeline in a worker
+    thread under a wall-clock timeout so a pathological input returns a timely
+    504 instead of pinning the event loop (F6).
+    """
     text_str = req.get('text', '').strip()
     if not text_str:
         raise HTTPException(status_code=400, detail="No text provided")
 
     _check_size(text_str)
+    timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
 
     lines = text_str.split('\n')[:linelim]
@@ -448,19 +623,22 @@ def parse_text(req: dict):
     meter_kwargs = _build_meter_kwargs(
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
+    zw = req.get('zone_weights')
+    zones = _normalize_zones(req.get('zones', 3)) if zw else None
+
+    def _work():
+        t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
+        meter = Meter(**meter_kwargs)
+        # Apply zone weights from MaxEnt if provided
+        if zw:
+            meter.zone_weights = zw
+            meter.zones = zones
+        with t._parse_lock:
+            rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
+        return rows, num_lines, prose_mode, list(meter.constraints.keys())
 
     t0 = time.time()
-    t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
-    meter = Meter(**meter_kwargs)
-
-    # Apply zone weights from MaxEnt if provided
-    zw = req.get('zone_weights')
-    if zw:
-        meter.zone_weights = zw
-        meter.zones = _normalize_zones(req.get('zones', 3))
-
-    with t._parse_lock:
-        rows, num_lines, prose_mode = _parse_and_build_rows(t, meter)
+    rows, num_lines, prose_mode, constraints = await _run_with_timeout(_work, timeout)
     elapsed = time.time() - t0
 
     return {
@@ -468,8 +646,29 @@ def parse_text(req: dict):
         'elapsed': round(elapsed, 3),
         'num_lines': num_lines,
         'prose_mode': prose_mode,
-        'constraints': list(meter.constraints.keys()),
+        'constraints': constraints,
     }
+
+
+@app.post("/api/parse")
+async def parse_text(req: dict):
+    """Parse text and return rows with server-rendered HTML."""
+    return await _do_parse_request(req)
+
+
+@app.get("/api/parse/permalink")
+async def parse_permalink(data: str):
+    """Reproduce a parse from a compact URL-safe permalink (F8).
+
+    ``data`` is base64url( optionally-gzipped JSON ) describing the text + meter
+    config + settings. It is decoded (size-bounded), re-validated, and run
+    through the exact same parse + HTML-escape path as /api/parse, so no new
+    unescaped sink is introduced. The frontend normally decodes permalinks
+    locally and re-runs the stream; this endpoint makes the round-trip
+    reproducible for API clients and tests.
+    """
+    req = _decode_permalink(data)
+    return await _do_parse_request(req)
 
 
 def _parse_viol_stats(p):
@@ -580,7 +779,7 @@ def _parse_and_build_rows(t, meter):
 
 
 @app.post("/api/parse/export")
-def parse_export(req: dict):
+async def parse_export(req: dict):
     """Parse text and export per-line stats as CSV, TSV, or JSON.
 
     Uses the same prose-fallback parsing as /api/parse. Returns one row per
@@ -595,6 +794,7 @@ def parse_export(req: dict):
         raise HTTPException(status_code=400, detail="format must be csv, tsv, or json")
 
     _check_size(text_str)
+    timeout = _clamp_timeout(req)
 
     from prosodic.parsing.meter import Meter
 
@@ -605,17 +805,22 @@ def parse_export(req: dict):
     meter_kwargs = _build_meter_kwargs(
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
-
-    t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
-    meter = Meter(**meter_kwargs)
     zw = req.get('zone_weights')
-    if zw:
-        meter.zone_weights = zw
-        meter.zones = _normalize_zones(req.get('zones', 3))
+    zones = _normalize_zones(req.get('zones', 3)) if zw else None
 
-    # Parse (handles prose fallback)
-    with t._parse_lock:
-        display_rows, _, _ = _parse_and_build_rows(t, meter)
+    # Parse (handles prose fallback) in a worker thread under a wall-clock
+    # timeout, then aggregate on the event loop (reads entity state set above).
+    def _do_parse():
+        t = get_text(text_str, syntax=syntax, syntax_model=syntax_model)
+        meter = Meter(**meter_kwargs)
+        if zw:
+            meter.zone_weights = zw
+            meter.zones = zones
+        with t._parse_lock:
+            display_rows, _, _ = _parse_and_build_rows(t, meter)
+        return t, display_rows
+
+    t, display_rows = await _run_with_timeout(_do_parse, timeout)
 
     # Build export rows: one per line (best-parse only) + unbounded averages.
     # Group display_rows by line_num, take rank=1.
@@ -756,6 +961,7 @@ async def parse_stream(req: dict):
         raise HTTPException(status_code=400, detail="No text provided")
 
     _check_size(text_str)
+    timeout = _clamp_timeout(req)
 
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
@@ -772,6 +978,18 @@ async def parse_stream(req: dict):
         return f"data: {json.dumps(data)}\n\n"
 
     async def event_stream():
+        # Wall-clock budget shared across every threadpool step (F6). See
+        # _run_with_timeout for the honest limitation: wait_for frees the event
+        # loop and yields a timely error event, but the worker thread already
+        # running keeps going to completion in the background.
+        deadline = time.monotonic() + timeout
+
+        async def _bounded(fn, *args):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise asyncio.TimeoutError()
+            return await _await_bounded(fn, remaining, *args)
+
         try:
             yield sse({'phase': 'progress', 'message': f'Tokenizing {len(input_lines)} lines...'})
             await asyncio.sleep(0)
@@ -779,10 +997,10 @@ async def parse_stream(req: dict):
             t0 = time.time()
             # Offload CPU-bound work to a worker thread so a large parse doesn't
             # freeze the single event loop (and block every other request). (W2)
-            t = await run_in_threadpool(
+            t = await _bounded(
                 lambda: get_text(text_str, syntax=syntax, syntax_model=syntax_model))
 
-            n_lines = await run_in_threadpool(lambda: len(t.lines))
+            n_lines = await _bounded(lambda: len(t.lines))
             yield sse({'phase': 'progress', 'message': f'Parsing {n_lines} lines...'})
             await asyncio.sleep(0)
 
@@ -792,7 +1010,7 @@ async def parse_stream(req: dict):
                 meter.zone_weights = zw
                 meter.zones = _normalize_zones(req.get('zones', 3))
 
-            long_lnums = await run_in_threadpool(_long_line_nums, t)
+            long_lnums = await _bounded(_long_line_nums, t)
             if long_lnums:
                 yield sse({'phase': 'progress',
                            'message': f'{len(long_lnums)} long line(s) detected — parsing by linepart...'})
@@ -801,7 +1019,7 @@ async def parse_stream(req: dict):
             def _do_parse():
                 with t._parse_lock:
                     return _parse_and_build_rows(t, meter)
-            rows, num_lines, prose_mode = await run_in_threadpool(_do_parse)
+            rows, num_lines, prose_mode = await _bounded(_do_parse)
 
             parse_elapsed = time.time() - t0
             yield sse({'phase': 'progress', 'message': f'Parsed in {parse_elapsed:.1f}s. Rendering...'})
@@ -821,6 +1039,10 @@ async def parse_stream(req: dict):
 
             elapsed = time.time() - t0
             yield sse({'phase': 'done', 'elapsed': round(elapsed, 3), 'num_lines': num_lines, 'prose_mode': prose_mode, 'constraints': list(meter.constraints.keys())})
+        except asyncio.TimeoutError:
+            yield sse({'phase': 'error',
+                       'message': (f'Parse timed out after {timeout:g}s. Try shorter '
+                                   'text or raise the parse timeout in Settings.')})
         except Exception as e:
             # Surface mid-stream failures to the client instead of dying silently. (W8)
             log.error(f"parse/stream failed: {e}")
@@ -989,13 +1211,14 @@ def maxent_reparse(req: MaxEntReparseRequest):
 
 
 @app.post("/api/parse/line")
-def parse_line(req: dict):
+async def parse_line(req: dict):
     """Parse a single line and return ALL scansions sorted by score."""
     text_str = req.get('text', '').strip()
     if not text_str:
         raise HTTPException(status_code=400, detail="No text provided")
 
     _check_size(text_str)
+    timeout = _clamp_timeout(req)
 
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
@@ -1011,133 +1234,136 @@ def parse_line(req: dict):
         req.get('constraints'), req.get('max_s', 2),
         req.get('max_w', 2), req.get('resolve_optionality', True))
 
-    t0 = time.time()
-    t = get_text(line_text, syntax=syntax)
-    meter = Meter(**meter_kwargs)
+    def _work():
+        t0 = time.time()
+        t = get_text(line_text, syntax=syntax)
+        meter = Meter(**meter_kwargs)
 
-    zw = req.get('zone_weights')
-    if zw:
-        meter.zone_weights = zw
-        meter.zones = _normalize_zones(req.get('zones', 3))
+        zw = req.get('zone_weights')
+        if zw:
+            meter.zone_weights = zw
+            meter.zones = _normalize_zones(req.get('zones', 3))
 
-    text_lines = t.lines
-    if not text_lines:
-        return {'parses': [], 'elapsed': 0, 'line_text': line_text, 'parts': []}
+        text_lines = t.lines
+        if not text_lines:
+            return {'parses': [], 'elapsed': 0, 'line_text': line_text, 'parts': []}
 
-    def _build_parses_for_pl(pl, context_unit):
-        """Build parse detail dicts from a ParseList."""
-        import numpy as np
-        if not pl or not hasattr(pl, '_all_scores') or pl._all_scores is None:
-            return []
-        sorted_indices = np.argsort(pl._all_scores)
-        out = []
-        for pi, idx in enumerate(sorted_indices):
-            p = pl._get_parse(int(idx), is_bounded=not pl._unbounded_mask[idx])
-            score = round(float(pl._all_scores[idx]), 2)
-            is_bounded = not pl._unbounded_mask[idx]
-            positions = []
-            for pos in p.positions:
-                slots = []
-                for slot in pos.children:
-                    unit = slot.unit
-                    slots.append({
-                        'text': unit.txt,
-                        'is_stressed': bool(unit.is_stressed),
-                        'is_prom': bool(slot.is_prom),
-                        'violations': list(slot.violset),
+        def _build_parses_for_pl(pl, context_unit):
+            """Build parse detail dicts from a ParseList."""
+            import numpy as np
+            if not pl or not hasattr(pl, '_all_scores') or pl._all_scores is None:
+                return []
+            sorted_indices = np.argsort(pl._all_scores)
+            out = []
+            for pi, idx in enumerate(sorted_indices):
+                p = pl._get_parse(int(idx), is_bounded=not pl._unbounded_mask[idx])
+                score = round(float(pl._all_scores[idx]), 2)
+                is_bounded = not pl._unbounded_mask[idx]
+                positions = []
+                for pos in p.positions:
+                    slots = []
+                    for slot in pos.children:
+                        unit = slot.unit
+                        slots.append({
+                            'text': unit.txt,
+                            'is_stressed': bool(unit.is_stressed),
+                            'is_prom': bool(slot.is_prom),
+                            'violations': list(slot.violset),
+                        })
+                    positions.append({
+                        'mtr': 's' if pos.is_prom else 'w',
+                        'slots': slots,
                     })
-                positions.append({
-                    'mtr': 's' if pos.is_prom else 'w',
-                    'slots': slots,
+                viol_counts = {}
+                for pos in positions:
+                    for s in pos['slots']:
+                        for v in s['violations']:
+                            viol_counts[v] = viol_counts.get(v, 0) + 1
+                out.append({
+                    'rank': pi + 1,
+                    'parse_html': render_parse_html(p, context_unit),
+                    'meter_str': p.meter_str,
+                    'score': score,
+                    'is_bounded': is_bounded,
+                    'positions': positions,
+                    'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
+                    'viol_summary': viol_counts,
                 })
-            viol_counts = {}
-            for pos in positions:
-                for s in pos['slots']:
-                    for v in s['violations']:
-                        viol_counts[v] = viol_counts.get(v, 0) + 1
-            out.append({
-                'rank': pi + 1,
-                'parse_html': render_parse_html(p, context_unit),
-                'meter_str': p.meter_str,
-                'score': score,
-                'is_bounded': is_bounded,
-                'positions': positions,
-                'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
-                'viol_summary': viol_counts,
-            })
-        return out
+            return out
 
-    long_lnums = _long_line_nums(t)
-    is_long = bool(long_lnums)
+        long_lnums = _long_line_nums(t)
+        is_long = bool(long_lnums)
 
-    if not is_long:
-        # Normal single-line parse
-        results = parse_batch(text_lines, meter)
-        for i, (wt, pl) in enumerate(results):
-            pl.parent = wt
-            wt._parses = pl
-            text_lines[i]._parses = pl
-        line = text_lines[0]
-        # Use the local parse result rather than re-reading line._parses, so a
-        # concurrent request on the same cached text can't swap it out mid-request.
-        first_pl = results[0][1] if results else None
-        parses = _build_parses_for_pl(first_pl, line)
-        elapsed = time.time() - t0
-        num_unbounded = sum(1 for p in parses if not p['is_bounded'])
-        return {
-            'parses': parses,
-            'elapsed': round(elapsed, 3),
-            'line_text': line_text,
-            'num_parses': len(parses),
-            'num_unbounded': num_unbounded,
-            'parts': [],
-        }
-    else:
-        # Multi-part: parse each linepart, return per-part results
-        use_syntax = getattr(t, '_syntax', False)
-        raw_lineparts = list(t.lineparts)
-        expanded = []
-        for lp in raw_lineparts:
-            if lp.num_sylls > MAX_SYLL_IN_PARSE_UNIT and use_syntax:
-                expanded.extend(_syntax_subsplit(lp, t))
-            else:
-                expanded.append(lp)
-
-        meter.parse_unit = 'linepart'
-        units_to_parse = [u for u in expanded if u.num_sylls >= 2]
-        pl_by_unit = {}
-        if units_to_parse:
-            lp_results = parse_batch(units_to_parse, meter)
-            for i, (wt, pl) in enumerate(lp_results):
-                if pl is None:
-                    continue
+        if not is_long:
+            # Normal single-line parse
+            results = parse_batch(text_lines, meter)
+            for i, (wt, pl) in enumerate(results):
                 pl.parent = wt
                 wt._parses = pl
-                units_to_parse[i]._parses = pl
-                pl_by_unit[id(units_to_parse[i])] = pl
+                text_lines[i]._parses = pl
+            line = text_lines[0]
+            # Use the local parse result rather than re-reading line._parses, so a
+            # concurrent request on the same cached text can't swap it out mid-request.
+            first_pl = results[0][1] if results else None
+            parses = _build_parses_for_pl(first_pl, line)
+            elapsed = time.time() - t0
+            num_unbounded = sum(1 for p in parses if not p['is_bounded'])
+            return {
+                'parses': parses,
+                'elapsed': round(elapsed, 3),
+                'line_text': line_text,
+                'num_parses': len(parses),
+                'num_unbounded': num_unbounded,
+                'parts': [],
+            }
+        else:
+            # Multi-part: parse each linepart, return per-part results
+            use_syntax = getattr(t, '_syntax', False)
+            raw_lineparts = list(t.lineparts)
+            expanded = []
+            for lp in raw_lineparts:
+                if lp.num_sylls > MAX_SYLL_IN_PARSE_UNIT and use_syntax:
+                    expanded.extend(_syntax_subsplit(lp, t))
+                else:
+                    expanded.append(lp)
 
-        parts = []
-        for lp in expanded:
-            pl = pl_by_unit.get(id(lp))
-            part_parses = _build_parses_for_pl(pl, lp) if pl else []
-            num_unb = sum(1 for p in part_parses if not p['is_bounded'])
-            parts.append({
-                'part_text': lp.txt.strip(),
-                'num_sylls': lp.num_sylls,
-                'parses': part_parses,
-                'num_parses': len(part_parses),
-                'num_unbounded': num_unb,
-            })
+            meter.parse_unit = 'linepart'
+            units_to_parse = [u for u in expanded if u.num_sylls >= 2]
+            pl_by_unit = {}
+            if units_to_parse:
+                lp_results = parse_batch(units_to_parse, meter)
+                for i, (wt, pl) in enumerate(lp_results):
+                    if pl is None:
+                        continue
+                    pl.parent = wt
+                    wt._parses = pl
+                    units_to_parse[i]._parses = pl
+                    pl_by_unit[id(units_to_parse[i])] = pl
 
-        elapsed = time.time() - t0
-        return {
-            'parses': [],
-            'elapsed': round(elapsed, 3),
-            'line_text': line_text,
-            'num_parses': sum(p['num_parses'] for p in parts),
-            'num_unbounded': sum(p['num_unbounded'] for p in parts),
-            'parts': parts,
-        }
+            parts = []
+            for lp in expanded:
+                pl = pl_by_unit.get(id(lp))
+                part_parses = _build_parses_for_pl(pl, lp) if pl else []
+                num_unb = sum(1 for p in part_parses if not p['is_bounded'])
+                parts.append({
+                    'part_text': lp.txt.strip(),
+                    'num_sylls': lp.num_sylls,
+                    'parses': part_parses,
+                    'num_parses': len(part_parses),
+                    'num_unbounded': num_unb,
+                })
+
+            elapsed = time.time() - t0
+            return {
+                'parses': [],
+                'elapsed': round(elapsed, 3),
+                'line_text': line_text,
+                'num_parses': sum(p['num_parses'] for p in parts),
+                'num_unbounded': sum(p['num_unbounded'] for p in parts),
+                'parts': parts,
+            }
+
+    return await _run_with_timeout(_work, timeout)
 
 
 # Serve built SvelteKit frontend

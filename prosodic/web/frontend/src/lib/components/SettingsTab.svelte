@@ -65,9 +65,9 @@
 		<label class="config-row">
 			<div>
 				<span>Parse timeout (seconds)</span>
-				<span class="desc">Maximum time per line before giving up</span>
+				<span class="desc">Wall-clock limit per parse request. On timeout the server returns a 504 instead of hanging. Capped at 120s.</span>
 			</div>
-			<input type="number" class="num-input" bind:value={$settings.parse_timeout} min="5" max="300" step="5" />
+			<input type="number" class="num-input" bind:value={$settings.parse_timeout} min="5" max="120" step="5" />
 		</label>
 	</section>
 

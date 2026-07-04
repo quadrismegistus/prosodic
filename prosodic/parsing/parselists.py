@@ -163,12 +163,21 @@ class ParseList(EntityList):
     @property
     def best_parse(self) -> Optional["Parse"]:
         """
-        Get the best parse.
+        Get the best parse, annotated with `num_cooptimal` (how many DISTINCT
+        best meter strings tie at the best score) and `is_tied` (num_cooptimal
+        > 1), so a co-optimal tie is visible rather than silently resolved.
 
         Returns:
             The best Parse object, or None if no parses are available.
         """
-        return min(self.data) if self.data else None
+        if not self.data:
+            return None
+        bp = min(self.data)
+        meters = {p.meter_str for p in self.data
+                  if p is not None and not p.is_bounded and abs(p.score - bp.score) < 1e-9}
+        bp.num_cooptimal = len(meters) if meters else 1
+        bp.is_tied = bp.num_cooptimal > 1
+        return bp
 
     @property
     def best_parses(self) -> "ParseList":

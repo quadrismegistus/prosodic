@@ -439,7 +439,7 @@ def parse_batch(parse_units, meter, syll_df=None):
                 wsylls = wfeats["sylls"]
                 wpl = LazyParseList(
                     wtl, meter, wscans, wviols, wci, wunb, wsylls,
-                    parse_unit=meter.parse_unit,
+                    parse_unit=meter.parse_unit, meter_vals=wmv,
                 )
                 if wpl._scores.size > 0:
                     ms = float(wpl._scores.min())
@@ -1035,13 +1035,41 @@ class LazyParseList:
         return len(self._unbounded_indices)
 
     @property
+    def num_cooptimal(self):
+        """How many DISTINCT best scansions (meter strings) tie at the minimum score.
+
+        1 = the reported best scansion is unique. >1 = the grammar is indifferent
+        among that many distinct co-optimal scansions, and best_parse's meter_str
+        is an arbitrary (but deterministic) pick among them — surfaced so a tie
+        isn't read as a decisive result.
+
+        Distinct *meter strings*: two scansions yielding the same +/- pattern
+        (e.g. via resolution) count once. This is metrical indifference *given
+        the pronunciation the parser chose* — it does not fold in ties between
+        different pronunciations (that's a separate, pronunciation-choice axis;
+        the pick there is made deterministic by variant ordering, not here).
+        """
+        if len(self._scores) == 0:
+            return 0
+        coopt_idx = self._unbounded_indices[np.isclose(self._scores, self._scores.min())]
+        if self._meter_vals is not None:
+            meters = {"".join("+" if v else "-" for v in self._meter_vals[i]) for i in coopt_idx}
+        else:
+            meters = {self._get_parse(int(i)).meter_str for i in coopt_idx}
+        return len(meters)
+
+    @property
     def best_parse(self):
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
             # best among unbounded
             self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
-        return self._get_parse(self._best_idx, rank=1)
+        bp = self._get_parse(self._best_idx, rank=1)
+        if bp is not None:
+            bp.num_cooptimal = self.num_cooptimal
+            bp.is_tied = bp.num_cooptimal > 1
+        return bp
 
     @property
     def best_parses(self):

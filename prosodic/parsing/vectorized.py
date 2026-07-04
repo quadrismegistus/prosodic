@@ -367,25 +367,21 @@ def parse_batch(parse_units, meter, syll_df=None):
             else:
                 simple_lines.append(item)
 
-        # batch simple lines: evaluate constraints, then batch bounding on GPU
+        # batch simple lines: evaluate ALL constraints at once (self-describing
+        # vectorized dispatch), then batch bounding on GPU
         if simple_lines:
-            all_viols = []
-            constraint_index = None
-            for idx, wt, feats, sylls in simple_lines:
-                viols, ci = evaluate_constraints(
-                    feats, meter_vals, position_ids, position_sizes, constraint_names
-                )
-                all_viols.append(viols)
-                if constraint_index is None:
-                    constraint_index = ci
+            feats_list = [feats for (_, _, feats, _) in simple_lines]
+            all_viols_4d, constraint_index = evaluate_constraints_batch(
+                feats_list, meter_vals, position_ids, position_sizes, constraint_names
+            )  # (L, S, N, C)
 
             # batch bounding
-            all_viol_sums = np.stack([v.sum(axis=1) for v in all_viols])  # (L, S, C)
+            all_viol_sums = all_viols_4d.sum(axis=2)  # (L, S, C)
             unbounded_masks = compute_bounding_batch(all_viol_sums)  # (L, S)
 
             for i, (idx, wt, feats, sylls) in enumerate(simple_lines):
                 pl = LazyParseList(
-                    wt, meter, scansions, all_viols[i], constraint_index,
+                    wt, meter, scansions, all_viols_4d[i], constraint_index,
                     unbounded_masks[i], sylls, parse_unit=meter.parse_unit,
                 )
                 results[idx] = (wt, pl)
@@ -404,9 +400,10 @@ def parse_batch(parse_units, meter, syll_df=None):
                     wmv, wpi, wps = encode_scansions(wscans, wnsylls)
                 else:
                     wscans, wmv, wpi, wps = scansions, meter_vals, position_ids, position_sizes
-                wviols, wci = evaluate_constraints(
-                    wfeats, wmv, wpi, wps, constraint_names
+                wviols_4d, wci = evaluate_constraints_batch(
+                    [wfeats], wmv, wpi, wps, constraint_names
                 )
+                wviols = wviols_4d[0]  # (S, N, C)
                 wunb = compute_bounding(wviols, wci)
                 wsylls = wfeats["sylls"]
                 wpl = LazyParseList(
@@ -584,57 +581,6 @@ def encode_scansions(scansions, nsylls):
     result = (meter_vals, position_ids, position_sizes)
     _scansion_cache[cache_key] = result
     return result
-
-
-def evaluate_constraints(features, meter_vals, position_ids, position_sizes, constraint_names):
-    """Batch-evaluate all constraints across all scansions for a single line.
-
-    Args:
-        features: dict with arrays of shape (N,)
-        meter_vals: (S, N) bool
-        position_ids: (S, N) int
-        position_sizes: (S, N) int
-        constraint_names: list of constraint name strings
-
-    Returns:
-        viols: (S, N, C) int8 — violation matrix
-        constraint_index: dict mapping constraint name to index in C dimension
-    """
-    S, N = meter_vals.shape
-    C = len(constraint_names)
-    viols = np.zeros((S, N, C), dtype=np.int8)
-    constraint_index = {name: i for i, name in enumerate(constraint_names)}
-
-    stressed = features["stressed"][None, :]   # (1, N)
-    heavy = features["heavy"][None, :]
-    strong = features["strong"][None, :]
-    weak = features["weak"][None, :]
-    word_ids = features["word_ids"][None, :]
-    func_word = features["func_word"][None, :]
-
-    is_strong_pos = meter_vals
-    is_weak_pos = ~meter_vals
-
-    for cname in constraint_names:
-        ci = constraint_index[cname]
-        if cname == "w_stress":
-            viols[:, :, ci] = (stressed & is_weak_pos).astype(np.int8)
-        elif cname == "s_unstress":
-            viols[:, :, ci] = (~stressed & is_strong_pos).astype(np.int8)
-        elif cname == "w_peak":
-            viols[:, :, ci] = (strong.astype(bool) & is_weak_pos).astype(np.int8)
-        elif cname == "s_trough":
-            viols[:, :, ci] = (weak.astype(bool) & is_strong_pos).astype(np.int8)
-        elif cname == "foot_size":
-            viols[:, :, ci] = (position_sizes > 2).astype(np.int8)
-        elif cname == "unres_within":
-            _eval_unres_within(viols, ci, position_ids, position_sizes,
-                               word_ids, heavy, stressed, S, N)
-        elif cname == "unres_across":
-            _eval_unres_across(viols, ci, position_ids, position_sizes,
-                                word_ids, func_word, is_strong_pos, S, N)
-
-    return viols, constraint_index
 
 
 def evaluate_constraints_batch(features_list, meter_vals, position_ids, position_sizes, constraint_names):

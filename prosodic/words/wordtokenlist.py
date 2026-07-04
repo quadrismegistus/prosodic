@@ -133,27 +133,10 @@ class WordTokenList(EntityList):
         """
         from ..texts import TextModel
         return TextModel.parse(self, *args, **kwargs)
-        # from ..parsing.parselists import ParseList
-        # self._parses = ParseList.from_combinations(
-        #     self.parse_iter(
-        #         num_proc=num_proc,
-        #         force=force,
-        #         meter=meter,
-        #         **meter_kwargs,
-        #     ),
-        #     parent=self
-        # )
-        # return self._parses
 
     def parse_iter(self, *args, **kwargs):
         from ..texts import TextModel
         yield from TextModel.parse_iter(self, *args, **kwargs)
-        # meter = self.get_meter(meter=meter, **meter_kwargs)
-        # for parse_list in meter.parse_text_iter(self, num_proc=num_proc, force=force):
-        #     parsed_ent = self.match(parse_list.parent, parse_list.parse_unit)
-        #     parse_list.parent = parsed_ent
-        #     parsed_ent._parses = parse_list
-        #     yield parse_list
 
     def render(
         self, as_str: bool = False, blockquote: bool = False, **meter_kwargs
@@ -225,22 +208,6 @@ class WordTokenList(EntityList):
             Any: The HTML representation of the parsed text.
         """
         return self.parses.to_html(as_str=as_str, blockquote=blockquote)
-
-    # def get_rhyming_lines(self, max_dist: int = RHYME_MAX_DIST) -> Dict[Any, Any]:
-    #     """
-    #     Get rhyming lines from the text.
-
-    #     Args:
-    #         max_dist (int): Maximum distance for rhyme detection. Default is RHYME_MAX_DIST.
-
-    #     Returns:
-    #         Dict[Any, Any]: A dictionary of rhyming lines.
-    #     """
-    #     return dict(
-    #         x
-    #         for st in self.children
-    #         for x in st.get_rhyming_lines(max_dist=max_dist).items()
-    #     )
 
     @property
     def rhyming_lines(self) -> Dict[Any, Any]:

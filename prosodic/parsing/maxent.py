@@ -265,12 +265,18 @@ class MaxEntTrainer:
             unique_texts = df["text"].unique().tolist()
             results, line_texts = self._parse_text(unique_texts, lang=lang)
 
-        # build scansion_map: {text: [(scansion, frequency), ...]}
-        scansion_map = {}
+        # build scansion_map: {text: [(scansion, frequency), ...]}. A repeated
+        # (text, scansion) pair accumulates its frequency instead of adding a
+        # duplicate entry (which would otherwise just overwrite `observed[j]`
+        # in _build_line_data rather than summing).
+        scansion_freqs = {}
         for _, row in df.iterrows():
-            scansion_map.setdefault(row["text"], []).append(
-                (row["scansion"], row["frequency"])
-            )
+            key = (row["text"], row["scansion"])
+            scansion_freqs[key] = scansion_freqs.get(key, 0) + row["frequency"]
+
+        scansion_map = {}
+        for (text_, scansion), freq in scansion_freqs.items():
+            scansion_map.setdefault(text_, []).append((scansion, freq))
 
         self._build_line_data(results, line_texts, scansion_map)
 

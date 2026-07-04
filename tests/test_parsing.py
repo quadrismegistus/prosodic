@@ -424,3 +424,24 @@ def test_zone_aware_bounding_selects_zone_optimal():
     assert pl._all_scores[best_idx] <= pl._all_scores.min() + 1e-9
     # concretely: the zone-optimal here is far below the flat pick's ~1000
     assert pl._all_scores.min() < 1.0
+
+
+def test_best_parse_score_zone_aware():
+    """Under zone weights, best_parse.score reports the zone-aware score it was
+    ranked by (not the flat weighted sum); the default path stays flat.
+    Follow-up to AUDIT C11."""
+    from prosodic.parsing.meter import Meter
+    from prosodic.parsing.vectorized import parse_batch_from_df
+    t = TextModel("Despite of wrinkles this thy golden time.")
+    m = Meter()
+    cn = list(m.constraints.keys())
+    m.zones = 2
+    m.zone_weights = {f"{c}_z1": 0.001 for c in cn}
+    m.zone_weights.update({f"{c}_z2": 1000.0 for c in cn})
+    pl = list(parse_batch_from_df(t._syll_df, m).values())[0]
+    bp = pl.best_parse
+    best_idx = int(pl._unbounded_indices[pl._scores.argmin()])
+    assert abs(bp.score - float(pl._all_scores[best_idx])) < 1e-9  # == zone ranking score
+    # default (no zone weights) stays the flat weighted sum
+    bp2 = TextModel("Shall I compare thee to a summers day").parse()[0].best_parse
+    assert bp2.score == sum(bp2.scores.values())

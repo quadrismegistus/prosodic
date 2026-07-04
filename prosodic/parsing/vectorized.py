@@ -1037,6 +1037,9 @@ class LazyParseList:
         # compute scores for ranking (weighted violation sums)
         zones = getattr(meter, 'zones', None)
         zone_weights = getattr(meter, 'zone_weights', None)
+        # when zone scoring is active, built Parse objects get their .score
+        # overridden with the zone-aware score (see _get_parse)
+        self._is_zone_scored = zones is not None and zone_weights is not None
 
         if zones is not None and zone_weights is not None:
             # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights
@@ -1209,6 +1212,11 @@ class LazyParseList:
         )
         parse.is_bounded = is_bounded
         parse.parent = self
+        # Under zone weights, ranking uses the zone-aware _all_scores; surface
+        # that on the Parse so parse.score matches the score it was ranked by
+        # (a flat parse.score would contradict the zone-aware best_parse).
+        if self._is_zone_scored:
+            parse._score_override = float(self._all_scores[idx])
         self._built_parses[idx] = parse
         return parse
 

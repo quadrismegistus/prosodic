@@ -4,6 +4,12 @@ import numpy as np
 from collections import defaultdict
 from ..imports import *
 
+# Cap on how many pronunciation-variant combinations to enumerate per line in
+# the DF parse path. Real verse lines stay well under this (a line needs ~12
+# binary-ambiguous words to exceed it); beyond it we fall back to a diagonal
+# subset with a warning rather than risk a combinatorial blowup on the batch path.
+MAX_FORM_COMBOS = 4096
+
 
 def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     """Parse all lines from a syllable DataFrame without constructing Entity objects.
@@ -93,6 +99,12 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
         line_data[ln] = (feats, sylls, has_ambig, rows)
 
     # --- Pre-build ambiguous form variants using numpy ---
+    # Enumerate the FULL cartesian product of per-word pronunciation choices,
+    # matching the entity path's iter_wordtoken_matrix. The previous code built
+    # only "diagonal" combos (every word simultaneously at form fi), which
+    # missed most combinations and could make text.parse() return a suboptimal
+    # best parse on lines with several ambiguous words (AUDIT C9/M3). The
+    # (0,0,...,0) combo is enumerated first, so variant 0 stays == f0_rows.
     ambig_form_variants = {}  # line_num -> list of row-index arrays
     for ln, (feats, sylls, has_ambig, f0_rows) in line_data.items():
         if not has_ambig:
@@ -101,20 +113,39 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
         line_rows = non_punc_idx[line_mask]
         line_wn = np_wnum[line_mask]
         line_fi = np_form[line_mask]
-        max_fi = int(line_fi.max())
-        forms = [f0_rows]  # form 0 already computed
-        for fi in range(1, max_fi + 1):
-            selected = []
-            for wn in np.unique(line_wn):
-                wmask = line_wn == wn
-                wrows = line_rows[wmask]
-                wfi = line_fi[wmask]
-                if fi in wfi:
-                    selected.append(wrows[wfi == fi])
-                else:
-                    selected.append(wrows[wfi == 0])
-            forms.append(np.concatenate(selected))
-        ambig_form_variants[ln] = forms
+        # per word (in line order): available form_idx -> that form's syllable rows
+        per_word_forms = []
+        for wn in np.unique(line_wn):
+            wmask = line_wn == wn
+            wrows = line_rows[wmask]
+            wfi = line_fi[wmask]
+            per_word_forms.append({int(f): wrows[wfi == f] for f in np.unique(wfi)})
+        choices = [sorted(fw.keys()) for fw in per_word_forms]
+        n_combos = 1
+        for c in choices:
+            n_combos *= len(c)
+        if n_combos > MAX_FORM_COMBOS:
+            # Pathological ambiguity: fall back to the diagonal set so the batch
+            # path can't blow up. Rare; flagged so it isn't silent.
+            log.warning(
+                f"line {ln}: {n_combos} pronunciation combinations exceed "
+                f"MAX_FORM_COMBOS={MAX_FORM_COMBOS}; using diagonal subset "
+                f"(best parse may be approximate for this line)"
+            )
+            max_fi = int(line_fi.max())
+            variants = [f0_rows]
+            for fi in range(1, max_fi + 1):
+                sel = []
+                for wi, wn in enumerate(np.unique(line_wn)):
+                    fw = per_word_forms[wi]
+                    sel.append(fw[fi] if fi in fw else fw[0])
+                variants.append(np.concatenate(sel))
+        else:
+            variants = [
+                np.concatenate([per_word_forms[wi][c] for wi, c in enumerate(combo)])
+                for combo in itertools.product(*choices)
+            ]
+        ambig_form_variants[ln] = variants
 
     # --- Group by nsylls and process ---
     nsyll_groups = defaultdict(list)

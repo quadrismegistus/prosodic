@@ -326,3 +326,39 @@ def test_bounding_tiled_equals_reference():
     assert Lc * Ti * Tj * 14 * 8 <= V.BOUNDING_MEM_BUDGET
     # small problems are not tiled (single-shot, identical to the old path)
     assert V._bounding_block_sizes(3, 20, 6, bytes_per_elem=8) == (3, 20, 20)
+
+
+def test_df_and_entity_paths_agree_on_ambiguous_lines():
+    """The DF/vector path (text.parse) must explore the full cartesian product
+    of pronunciation variants, like the entity path, so it finds the true best
+    parse on ambiguous lines. Regression for AUDIT C9/M3: the DF path used to
+    build only 'diagonal' form combos and returned worse-than-optimal parses on
+    ~18% of Shakespeare lines (once missing a perfect parse, reporting 3 viols)."""
+    from prosodic.parsing.meter import Meter
+    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
+    lines = [
+        "More than that tongue that more hath more express'd.",
+        "Shall I compare thee to a summers day",
+        "When forty winters shall besiege thy brow",
+        "That thereby beautys rose might never die",
+    ]
+    t = TextModel("\n".join(lines))
+    m = Meter()
+    df = parse_batch_from_df(t._syll_df, m)
+    ent = {(wt[0].line_num if len(wt) else None): pl
+           for wt, pl in parse_batch(t.lines, m)
+           if pl is not None and hasattr(pl, "_all_viols")}
+    for ln, dpl in df.items():
+        epl = ent.get(ln)
+        assert epl is not None, f"line {ln} missing from entity path"
+        assert abs(dpl.best_parse.score - epl.best_parse.score) < 1e-9, (
+            f"line {ln}: DF best score {dpl.best_parse.score} != "
+            f"entity {epl.best_parse.score} — DF under-explored variants"
+        )
+
+
+def test_df_path_finds_optimal_on_ambiguous_line():
+    # A perfect (0-violation) parse of this line exists only in a non-diagonal
+    # pronunciation combination; the DF path must find it.
+    t = TextModel("More than that tongue that more hath more express'd.")
+    assert t.parse()[0].best_parse.score == 0

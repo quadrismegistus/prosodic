@@ -1,37 +1,35 @@
 name: unit tests
 
-on: [workflow_call]
-  # push: # run on every push or PR to any branch
-  # pull_request:   # redundant?
+on:
+  workflow_call:      # invoked by stable-release.yml / release.yml / nonreleases.yml
+  pull_request:        # run directly on PRs (incl. from forks/branches) so they're actually tested
 
 
 jobs:
   python-unit:
-    name: Python unit tests
+    name: Python unit tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # NOTE: Python version to use is stored in the .python-version file, which is the
-      # convention for pyenv: https://github.com/pyenv/pyenv
-      - name: Get Python version
-        run: echo "PYTHON_VERSION=$(cat .python-version)" >> $GITHUB_ENV
-
-      # use python version for current build
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Cache pip
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
           restore-keys: |
-            pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-            pip-${{ env.PYTHON_VERSION }}
+            pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+            pip-${{ matrix.python-version }}
             pip-
 
       - name: Install dependencies
@@ -41,6 +39,12 @@ jobs:
           pip install -r requirements.txt
           pip install -r dev-requirements.txt
 
+      # Lightweight lint: byte-compile the package to catch syntax errors.
+      # Non-blocking (yapf's full diff isn't wired up as a dependency yet).
+      - name: Lint (compile check)
+        run: python -m compileall -q prosodic
+        continue-on-error: true
+
       - name: Prepare Selenium
         uses: nanasess/setup-chromedriver@master
 
@@ -48,7 +52,7 @@ jobs:
         run: env NAPTIME=30 pytest --cov=prosodic --cov-report=xml
 
       - name: Upload test coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: python
           token: ${{ secrets.CODECOV_TOKEN }}

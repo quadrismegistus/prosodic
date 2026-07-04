@@ -112,13 +112,19 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
         return syll_df
 
+    from spacy.tokens import Doc
     nlp = _get_nlp(model)
 
     # get unique words per sentence (form_idx 0 or -1, no duplicates)
     word_df = syll_df[syll_df['form_idx'].isin([0, -1])].drop_duplicates('word_num')
 
-    # group by sentence
     stress_by_word = {}
+
+    # First pass: build one pre-tokenized Doc per sentence, collecting the
+    # word_num bookkeeping in parallel. All-punctuation sentences produce no
+    # Doc; their words get None directly.
+    docs = []
+    doc_meta = []  # parallel to docs: (parse_word_nums, punc_word_nums)
     for sent_num, group in word_df.groupby('sent_num'):
         words = group['word_txt'].values
         word_nums = group['word_num'].values
@@ -134,15 +140,16 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
                 stress_by_word[wn] = None
             continue
 
-        # run spaCy on pre-tokenized words
-        from spacy.tokens import Doc
+        # pre-tokenized Doc; the spaCy pipeline runs on it below via nlp.pipe
         spaces = [True] * len(parse_words)
-        if len(spaces):
-            spaces[-1] = False
-        doc = Doc(nlp.vocab, words=list(parse_words), spaces=spaces)
-        for name, proc in nlp.pipeline:
-            doc = proc(doc)
+        spaces[-1] = False
+        docs.append(Doc(nlp.vocab, words=list(parse_words), spaces=spaces))
+        doc_meta.append((parse_word_nums, word_nums[is_punc]))
 
+    # Second pass: a single batched pipeline call over all sentence Docs
+    # instead of one nlp() call per sentence. nlp.pipe preserves input order,
+    # so zipping with doc_meta keeps each Doc aligned with its word_nums.
+    for doc, (parse_word_nums, punc_word_nums) in zip(nlp.pipe(docs), doc_meta):
         n = len(doc)
         # extract head indices (-1 for root)
         heads = np.array([
@@ -158,7 +165,7 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
             stress_by_word[wn] = int(stress[i])
 
         # punctuation gets None
-        for wn in word_nums[is_punc]:
+        for wn in punc_word_nums:
             stress_by_word[wn] = None
 
     # broadcast to syllable rows

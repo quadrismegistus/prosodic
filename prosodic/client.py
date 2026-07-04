@@ -50,6 +50,26 @@ def get_server():
     return _server
 
 
+def _raise_with_detail(resp):
+    """Raise a RuntimeError including the server's JSON `detail` message, if any.
+
+    Falls back to the transport's own raise_for_status() (requests.HTTPError or
+    httpx.HTTPStatusError) when no JSON `detail` is present, so plain HTTP errors
+    still raise as before.
+    """
+    if resp.status_code >= 400:
+        detail = None
+        try:
+            body = resp.json()
+            if isinstance(body, dict):
+                detail = body.get('detail')
+        except Exception:
+            pass
+        if detail:
+            raise RuntimeError(f"{resp.status_code} error from server: {detail}")
+        resp.raise_for_status()
+
+
 class _HttpTransport:
     """Wraps either requests (URL string) or FastAPI TestClient."""
 
@@ -63,7 +83,7 @@ class _HttpTransport:
             resp = self._server.get(path, **kwargs)
         else:
             resp = requests.get(f"{self._server}{path}", timeout=timeout, **kwargs)
-        resp.raise_for_status()
+        _raise_with_detail(resp)
         return resp.json()
 
     def post(self, path, json=None, **kwargs):
@@ -72,7 +92,7 @@ class _HttpTransport:
             resp = self._server.post(path, json=json, **kwargs)
         else:
             resp = requests.post(f"{self._server}{path}", json=json, timeout=timeout, **kwargs)
-        resp.raise_for_status()
+        _raise_with_detail(resp)
         return resp.json()
 
 

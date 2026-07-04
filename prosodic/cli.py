@@ -1,5 +1,6 @@
 from .imports import *
 import click
+import subprocess
 
 
 @click.group()
@@ -37,5 +38,4 @@ def ipython():
     """
     click.echo('Starting prosodic in ipython')
     imps = 'from prosodic import *\nimport prosodic'
-    cmd = f'ipython -i -c "{imps}"'
-    os.system(cmd)
+    subprocess.run(['ipython', '-i', '-c', imps])

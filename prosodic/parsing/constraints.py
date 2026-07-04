@@ -223,20 +223,16 @@ def _word_boundary_vectorized(f):
     L, S, N = f["L"], f["S"], f["N"]
     if N < 2:
         return np.zeros((L, S, N), dtype=np.int8)
-    result = np.zeros((L, S, N), dtype=np.int8)
     word_ids = f["word_ids_raw"]  # (L, N) — not broadcast
     pos_ids = f["position_ids"]   # (S, N)
-    # word boundary at position i: word_ids[i] != word_ids[i-1]
-    # foot boundary: position_ids changes
-    for li in range(L):
-        wids = word_ids[li]  # (N,)
-        word_boundary = np.zeros(N, dtype=bool)
-        word_boundary[1:] = wids[1:] != wids[:-1]
-        foot_boundary = np.zeros((S, N), dtype=bool)
-        foot_boundary[:, 1:] = pos_ids[:, 1:] != pos_ids[:, :-1]
-        # violation: word boundary without foot boundary
-        result[li] = (word_boundary[None, :] & ~foot_boundary).astype(np.int8)
-    return result
+    # word boundary (per line): word_ids[j] != word_ids[j-1]
+    word_boundary = np.zeros((L, N), dtype=bool)
+    word_boundary[:, 1:] = word_ids[:, 1:] != word_ids[:, :-1]
+    # foot boundary (per scansion): position_ids changes
+    foot_boundary = np.zeros((S, N), dtype=bool)
+    foot_boundary[:, 1:] = pos_ids[:, 1:] != pos_ids[:, :-1]
+    # violation: word boundary without a coincident foot boundary
+    return (word_boundary[:, None, :] & ~foot_boundary[None, :, :]).astype(np.int8)
 
 @constraint(
     desc="Word boundary should align with foot boundary",

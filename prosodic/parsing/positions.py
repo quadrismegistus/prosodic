@@ -54,19 +54,41 @@ class ParsePosition(Entity):
         return len(self.children)
 
     def init(self, force=False) -> None:
-        """Initialize violations for this position."""
+        """Initialize violations for this position.
+
+        Each position constraint is evaluated at most once per position (unless
+        ``force``). We track the set of already-computed constraint names rather
+        than inferring it from ``slot.viold``: viold stores only *nonzero*
+        violations, so the old ``cname not in slot.viold`` guard was true for
+        every non-violating constraint and let ``Parse.concat`` / a manual
+        re-init re-run constraints — overwriting already-correct violations
+        (e.g. the vectorized clash/lapse) with zeros. Positions built directly
+        by the vectorized path arrive with ``_init=True`` and viold already
+        populated; those count as fully computed. (AUDIT C16)
+        """
         assert self.parse
         if any(not slot.unit for slot in self.slots):
             print(self.slots)
             print([slot.__dict__ for slot in self.slots])
             raise Exception
+        computed = getattr(self, "_computed_cnames", None)
+        if computed is None:
+            # A position pre-initialized elsewhere (vectorized builder sets
+            # _init=True after filling viold) counts as fully computed.
+            computed = (
+                set(self.parse.position_constraints)
+                if getattr(self, "_init", False)
+                else set()
+            )
+            self._computed_cnames = computed
         for cname, constraint in self.parse.position_constraints.items():
-            if force or any(cname not in slot.viold for slot in self.slots):
+            if force or cname not in computed:
                 slot_viols = [int(bool(vx)) for vx in constraint(self)]
                 #log.debug(f'applying position constriant {cname}, got {slot_viols}')
                 assert len(slot_viols) == len(self.slots)
                 for viol, slot in zip(slot_viols, self.slots):
                     slot.viold[cname] = viol
+                computed.add(cname)
         self._init = True
 
     @property

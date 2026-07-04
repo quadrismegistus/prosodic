@@ -37,6 +37,19 @@ class Line(WordTokenList):
         if parse is None:
             parse = min(self._parses)
 
+        # DF-path parses use lightweight SyllData units with no wordtoken parent
+        # chain, so wordtoken2slots (below) can't map slots to words. Re-parse
+        # this line via the entity path (real Syllable entities) so rendering
+        # works after text.parse(). (AUDIT T9)
+        if getattr(parse, "wordtokens", None) is None:
+            from ..parsing.vectorized import parse_batch
+            meter = getattr(parse, "meter_obj", None) or self.meter
+            results = parse_batch([self], meter)
+            if results and results[0][1] is not None:
+                entity_best = results[0][1].best_parse
+                if entity_best is not None:
+                    parse = entity_best
+
         output = []
 
         for i, wordtoken in enumerate(self.wordtokens):

@@ -554,25 +554,6 @@ def _extract_features_hybrid(wordtokens, syll_df, line_num):
     }
 
 
-def prefilter_scansions(scansions, num_stressed):
-    """Remove scansions that can't possibly be optimal.
-
-    Filters out scansions where the number of strong positions differs
-    from the number of stressed syllables by more than a threshold.
-    """
-    if not scansions or num_stressed == 0:
-        return scansions
-
-    filtered = []
-    for scan in scansions:
-        num_strong = sum(1 for pos in scan if pos[0] == 's')
-        # allow some mismatch but skip extreme cases
-        if abs(num_strong - num_stressed) <= num_stressed:
-            filtered.append(scan)
-
-    return filtered if filtered else scansions
-
-
 _scansion_cache = {}
 
 def encode_scansions(scansions, nsylls):
@@ -1137,7 +1118,7 @@ class LazyParseList:
 
     @property
     def data(self):
-        """All parses sorted by score (best first), unbounded before bounded."""
+        """All parses sorted by score ascending (best first); bounded and unbounded interleaved by score."""
         sorted_idx = np.argsort(self._all_scores)
         return [self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
                 for i in sorted_idx]
@@ -1242,7 +1223,10 @@ class LazyParseList:
         from ..imports import HTML_CSS, to_html, get_attr_str
         if css is None:
             css = HTML_CSS
-        out = self.wordtokens.to_html(as_str=True, css=css) if self.wordtokens and hasattr(self.wordtokens, 'to_html') else str(self.wordtokens)
+        if self.wordtokens is not None and hasattr(self.wordtokens, 'to_html'):
+            out = self.wordtokens.to_html(as_str=True, css=css)
+        else:
+            out = bp.meter_str  # DF path: no wordtoken entities; show the scansion
         reprstr = get_attr_str(bp.attrs, bad_keys={"txt", "line_txt"})
         out += f'<div class="miniquote">⎿ {reprstr}</div>'
         return to_html(out, as_str=as_str)
@@ -1374,23 +1358,3 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
             parse.parse_viold[cname] = 1
 
     return parse
-
-
-def build_parses(wordtokens, meter, scansions, viols, constraint_index, unbounded_mask):
-    """Build a LazyParseList from vectorized results.
-
-    Returns a lazy wrapper that defers Parse object construction until
-    accessed. Only best_parse triggers construction of a single Parse.
-    """
-    sylls = []
-    for wt in wordtokens:
-        if not wt.has_wordform:
-            continue
-        wf = wt.wordtype.children[0]
-        for syll in wf:
-            sylls.append(syll)
-
-    return LazyParseList(
-        wordtokens, meter, scansions, viols, constraint_index,
-        unbounded_mask, sylls, parse_unit=meter.parse_unit,
-    )

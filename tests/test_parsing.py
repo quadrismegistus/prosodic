@@ -445,3 +445,13 @@ def test_best_parse_score_zone_aware():
     # default (no zone weights) stays the flat weighted sum
     bp2 = TextModel("Shall I compare thee to a summers day").parse()[0].best_parse
     assert bp2.score == sum(bp2.scores.values())
+
+
+def test_line_to_html_after_df_parse():
+    """line.to_html() must work after text.parse() (the DF path, which uses
+    SyllData units with no wordtoken parent chain). It re-parses the line via
+    the entity path to render. AUDIT T9."""
+    t = TextModel("Shall I compare thee to a summers day")
+    t.parse()
+    html = t.lines[0].to_html(as_str=True)
+    assert "mtr_" in html and "str_" in html   # rendered with meter/stress styling

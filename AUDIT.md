@@ -28,8 +28,10 @@ This is a working document for successive sessions. Each finding has: a checkbox
 - ✅ **P5** all-punctuation crash — `vectorized.py` guards empty `f0_line_s`; `TextModel('...').parse()` now returns 0 lines cleanly.
 - Regression check: `test_parsing.py` + `test_v3.py` = 72 passed; fast web tests = 11 passed.
 
+**Update — P3/F1 landed in PR #90** (`fix-parse-path-unification`, off master): `parse_batch` now routes through `evaluate_constraints_batch`, so the entity/web path evaluates all constraints; `evaluate_constraints` deleted; `test_entity_path_evaluates_all_constraints` added. Verified byte-identical to the DF path on variant-stable lines.
+
 **Deferred deliberately (own PRs):**
-- **P3 / F1** unify the two parse paths (fixes the "web path ignores 8 constraints" bug) — the biggest correctness change; wants its own reviewed PR + a DF-vs-entity equivalence test.
+- ~~**P3 / F1** unify the two parse paths~~ — **DONE (PR #90).**
 - **P2-remainder:** (a) the global `@cache = lru_cache(maxsize=128)` alias footgun in `imports.py:28` still stands — bare `@cache` on *entity* methods (`wordform.py:147`, `syllables.py:236`, `wordtokenlist.py:210`, `lines.py:138`) is left at 128 on purpose (bounded = safe; making them unbounded risks per-instance leaks — needs a real audit). (b) `force=True` is still a no-op on cache hit (`parse_iter` / meter-level, C10/T4) — separate fix.
 
 ---
@@ -48,7 +50,7 @@ This is a working document for successive sessions. Each finding has: a checkbox
   - Corpora with >128 distinct words thrash `get_word`, re-run espeak, and append dup rows to `~/prosodic_data/data/en_cache.tsv`.
   **Fix:** decide per-callsite. Use an unbounded plain dict cache for `get_word`/`get_sylls_ipa_ll` (entries are tiny). Remove `@cache` from `TextModel.parse` entirely (it already caches results in `_parse_results`); this also fixes the list-constraints crash and `force`.
 
-- [ ] **P3. Web parse path silently ignores 8 of 15 constraints.** `prosodic/web/api.py` (all endpoints) → `prosodic/parsing/vectorized.py:584` (`evaluate_constraints`). *(traced + subagent-reproduced)*
+- [x] **P3. Web parse path silently ignores 8 of 15 constraints.** (PR #90) `prosodic/web/api.py` (all endpoints) → `prosodic/parsing/vectorized.py:584` (`evaluate_constraints`). *(traced + subagent-reproduced)*
   `parse_batch` (entity path, used by every web endpoint) calls a 7-constraint if/elif evaluator with no dispatch to `cfunc.vectorized`. `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`, `w_prom`, `s_demoted` → all-zero columns. Meter tab exposes exactly these.
   Subagent repro: same line gives `lapse=464, s_func=356` via `parse_batch_from_df` but `0, 0` via `parse_batch`.
   **Fix:** route `parse_batch` through `evaluate_constraints_batch` (with L=1) and delete `evaluate_constraints`. (This is the "unify the two parse paths" improvement — see Features.)

@@ -4,7 +4,6 @@ import json
 import time
 import random
 import threading
-from multiprocessing import Process, Queue
 
 # -- FastAPI test client tests (no browser needed) --
 
@@ -313,16 +312,6 @@ def test_permalink_gzip_bomb_rejected():
 
 NAPTIME = int(os.environ.get('NAPTIME', 30))
 
-def _run_app(port, q):
-    import uvicorn
-    from prosodic.web.api import app
-    def start_server():
-        uvicorn.run(app, port=port, log_level="warning")
-    server_thread = threading.Thread(target=start_server, daemon=True)
-    server_thread.start()
-    q.put("Server started")
-    server_thread.join()
-
 def _wait_for_server(url, timeout=NAPTIME):
     """Poll until the server answers, instead of a fixed sleep (AUDIT R11)."""
     import urllib.request
@@ -337,24 +326,32 @@ def _wait_for_server(url, timeout=NAPTIME):
 
 @pytest.fixture(scope="module")
 def app_server():
+    # Run uvicorn in an in-process DAEMON THREAD, not multiprocessing. On Linux
+    # multiprocessing forks, and forking a process that has already imported
+    # torch/numpy + background threads deadlocks the child, so the server never
+    # binds; a failed setup then leaks the child and pytest hangs at exit. A
+    # daemon thread has neither problem (no fork; dies with the process).
     import socket
-    # Pick a free port and PASS it to the child process. macOS uses spawn, so a
-    # module-level random PORT would be re-randomized on re-import in the child
-    # and never match the URL the test hits (latent bug the skipped selenium
-    # test never exercised).
+    import uvicorn
+    from prosodic.web.api import app
     s = socket.socket()
     s.bind(('127.0.0.1', 0))
     port = s.getsockname()[1]
     s.close()
     base_url = f"http://127.0.0.1:{port}"
-    queue = Queue()
-    p = Process(target=_run_app, args=(port, queue))
-    p.start()
-    assert queue.get(timeout=30) == "Server started"
-    _wait_for_server(base_url)
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    server = uvicorn.Server(config)
+    server.install_signal_handlers = lambda: None  # can't set signals off-main-thread
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    try:
+        _wait_for_server(base_url)
+    except Exception:
+        server.should_exit = True
+        raise
     yield base_url
-    p.terminate()
-    p.join()
+    server.should_exit = True
+    thread.join(timeout=5)
 
 @pytest.fixture(scope="module")
 def page(app_server):

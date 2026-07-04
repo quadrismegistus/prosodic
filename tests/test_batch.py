@@ -120,7 +120,9 @@ def test_on_error_raise(tmp_out):
 # --- multiprocessing ---
 
 # Skipped in CI: spawned workers re-import prosodic (torch + espeak) which
-# can hang on GitHub-hosted runners. Works fine locally.
+# can hang on GitHub-hosted runners. Works fine locally, but slow (spawns
+# real subprocesses) -- marked so `-k "not slow"` can deselect it too.
+@pytest.mark.slow
 @pytest.mark.skipif(
     bool(os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS')),
     reason='multiprocessing spawn can hang in CI',

@@ -62,3 +62,8 @@ all = [
 
 [project.scripts]
 prosodic = "prosodic.cli:cli"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with -k \"not slow\")",
+]

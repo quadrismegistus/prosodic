@@ -688,6 +688,11 @@ class Parse(Entity):
         Returns:
             float: The total score.
         """
+        # When built by a zone-scored LazyParseList, use the zone-aware score it
+        # was ranked by (set as _score_override); otherwise the flat weighted sum.
+        override = getattr(self, "_score_override", None)
+        if override is not None:
+            return float(override)
         return sum(self.scores.values())
     
     @cached_property

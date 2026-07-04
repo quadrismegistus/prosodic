@@ -20,6 +20,9 @@ This is a working document for successive sessions. Each finding has: a checkbox
 
 ## Progress log
 
+**C11/F9 zone-aware bounding — DONE (#113), reversing the earlier deferral.** Bounding now dominates on the (constraint x zone) count vector when zone_weights are active, so best_parse is the true zone-optimum. Empirically: flat bounding mis-selected on 121/400 Shakespeare lines across skewed zone configs; zone bounding: 0. Byte-identical default path. Follow-up (#114): best_parse.score now reports the zone-aware ranking score under zone weights (was flat).
+
+
 **FINAL — wave 4 + wrap-up (2026-07-04):** vectorized the last per-line constraint loops C18/C19 (#110, byte-identical), parse-cache/force/meter.fit correctness T4/C10 (#111), cheap espeak discovery T15 (#109), CI release-tag + secrets + stop stale-docs R9/R10 (#101/#108), langdetect seeded (deterministic, fixes flaky CI). **Consciously deferred (documented, not force-fit):** C11/F9 zone-aware bounding (narrow: MaxEnt zone_weights only, 0/14 measured conflicts, behavior change across 5 bounding call sites); C16/C17 entity constraint reference impls (affect only manually-built Parse objects, not the vectorized parser). Every HIGH/MED finding and all verification-surfaced correctness bugs are done.
 
 
@@ -125,12 +128,12 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
   Builds `max_fi+1` variants (each word at form *fi* else form 0) vs the entity path's `itertools.product` (`wordtokenlist.py:84`). A line with two 1-or-2-syllable words never evaluates cross combos (e.g. fire=2syll + heaven=1syll = 10 syllables). Natural-line probes happened to agree, but divergence is structural.
 - [x] **C10. (#111) `meter.fit()` doesn't change `meter.key` → stale cached parses.** `meter.py:122`. MED. ✓
   `zones`/`zone_weights` stored as instance attrs, not in `_attrs`, so the key hash is unchanged; `texts.py:276` caches by `(meter.key, combine_by)` and ignores `force` on hit → parse→fit→re-parse returns pre-fit results.
-- [ ] **C11. Zone-weighted scoring inconsistent with unweighted bounding.** `vectorized.py:952`. MED (theoretical). *(traced)*
+- [x] **C11. (PR #113/#114) Zone-weighted scoring inconsistent with unweighted bounding.** `vectorized.py:952`. MED (theoretical). *(traced)*
   `best_parse` picked among unbounded only, but bounding uses per-constraint totals; under zone weights a "bounded" scansion in a low-weight zone can be the true argmin. Trainer scores over ALL scansions (incl. bounded); parse-time excludes them. 0/14 conflicts observed on a fitted sonnet.
   **Fix (paired):** zone-aware bounding — compute dominance on zone-split sums `(S, C·Z)` when `zone_weights` active.
 - [ ] **C12. Regularization docs backwards + inconsistent defaults.** `maxent.py:99` vs `:341`. MED.
   Implements `w²/(2·reg)` (reg = Gaussian variance: higher = *less* shrinkage); docstring says "higher = more shrinkage". `MaxEntTrainer` defaults 1.0 (strong), `Meter.fit` uses 100.0.
-- [ ] **C13. Ambiguous-form selection ignores zone weights.** `vectorized.py:256`. MED. *(traced)*
+- [x] **C13. (PR #113/#114) Ambiguous-form selection ignores zone weights.** `vectorized.py:256`. MED. *(traced)*
   Ranks form variants with flat weights even when `zone_weights` active → chosen pronunciation can differ from what the fitted scorer prefers.
 - [ ] **C14. Dead code.** LOW. `prefilter_scansions` (`vectorized.py:522`, never called), `build_parses` (`vectorized.py:1256`), `Meter.get_pos_types` (`meter.py:83`), `is_strong_pos.ndim>0` else-branch (`vectorized.py:760`, ndim always 2), `NUM_GOING` (`meter.py:9`), unused `force` param in `parse_text`.
 - [ ] **C15. `ParseSlot.position` defined twice.** `slots.py:40` & `:103`. LOW. Survivor returns `parent.parent` = the ParsePosition*List*, not the position; sole caller (`lines.py:51`) assigns to an unused var.
@@ -224,7 +227,7 @@ Publicly deployed at https://prosodic.app — security-relevant. No auth (intent
 - [ ] **F6. Request-hardening middleware** (web): `Semaphore` cap on concurrent parses + body-size limit + wall-clock timeout. Closes W2/W4/W5 together; makes the Settings `parse_timeout` real.
 - [ ] **F7. Session-consistent pronunciation cache.** After a TTS hit, insert into in-memory `token2ipa`; dedupe disk cache on load; replace the accidental 128-LRUs on `get_word`/`get_sylls_ipa_ll` with unbounded dict caches (fixes T1 warm-path overhead).
 - [ ] **F8. Shareable parse permalinks** — high value, but land W3 (output escaping) + a CSP header *first*, or self-XSS becomes stored XSS.
-- [ ] **F9. Zone-aware bounding** (pairs with C11) — dominance on zone-split sums when `zone_weights` active; restores `best_parse` = true argmin.
+- [x] **F9. (PR #113/#114) Zone-aware bounding** (pairs with C11) — dominance on zone-split sums when `zone_weights` active; restores `best_parse` = true argmin.
 
 ---
 

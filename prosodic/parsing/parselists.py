@@ -587,7 +587,11 @@ class ParseListList(EntityList):
 
     @property
     def lines(self):
-        return LineList(unique(p.line for pl in self for p in pl), parent=self.text)
+        # DF-path parses have no line entity (p.line is None); filter them so
+        # LineList construction doesn't choke on None. num_lines handles the
+        # resulting empty list for the DF path.
+        return LineList(unique(p.line for pl in self for p in pl if p.line is not None),
+                        parent=self.text)
     
     @property
     def num_lines(self):

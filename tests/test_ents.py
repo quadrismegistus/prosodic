@@ -220,6 +220,27 @@ def test_getattr_underscore_raises():
     assert t.missing_thing is None
 
 
+def test_getattr_property_error_propagates():
+    # A property whose getter raises AttributeError must propagate it, not have
+    # it masked to None by the plural/singular fallback (which caused silent
+    # None returns and a RecursionError in TextModel.load().lineparts). AUDIT T13.
+    class Boom(Entity):
+        prefix = "boom"
+        nice_type_name = "boom"
+
+        @property
+        def kaboom(self):
+            raise AttributeError("real error inside getter: _missing")
+
+    with pytest.raises(AttributeError):
+        _ = Boom().kaboom
+
+    # The dynamic plural/singular magic must still work (not caught by the guard).
+    t = TextModel("Shall I compare thee to a summers day\nRough winds do shake")
+    assert len(t.lines) == 2
+    assert t.lines[0].wordforms[0].syllables[0].lines is not None
+
+
 def test_new_parent_system():
     t = TextModel('hello')
     assert t.parent is None

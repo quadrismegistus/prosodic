@@ -266,6 +266,7 @@ class TextModel(Entity):
 
         if combine_by != self.prefix:
             self._parses = ParseListList(parent=self)
+        single = None
         for i,pl in enumerate(self.parse_iter(
             combine_by=combine_by,
             force=force,
@@ -274,10 +275,17 @@ class TextModel(Entity):
             **meter_kwargs,
         )):
             if combine_by == self.prefix:
-                return pl
+                # Single-unit parse (e.g. Line.parse()): keep the first result
+                # but drain the generator so parse_iter runs to completion and
+                # commits the result to the cache (T4 — an early `return pl`
+                # here would abandon the generator before it caches).
+                if single is None:
+                    single = pl
             else:
                 pl._num = i+1
                 self._parses.append(pl)
+        if combine_by == self.prefix:
+            return single
         return self._parses
 
     def parse_iter(
@@ -295,54 +303,85 @@ class TextModel(Entity):
             combine_by = None
 
         parse_key = (meter.key, combine_by)
+
+        # force=True: drop any cached results for this key so this call
+        # actually re-parses instead of replaying the stale cached list.
+        # (T4 / T2 — force was previously a no-op on a cache hit.)
+        # parse_iter is shared with WordTokenList/Line, which has
+        # _parse_results but not the DF-path result caches, so guard those.
+        if force:
+            self._parse_results.pop(parse_key, None)
+            for cache_name in ('_line_parse_results', '_linepart_parse_results'):
+                cache = getattr(self, cache_name, None)
+                if cache is not None:
+                    cache.pop(meter.key, None)
+
+        # _attach_line_parse_results is TextModel-only; parse_iter is shared
+        # with WordTokenList/Line, so resolve it defensively (None if absent).
+        attach = getattr(self, '_attach_line_parse_results', None)
+
         if parse_key in self._parse_results:
             yield from self._parse_results[parse_key]
             # T7: re-attach to already-built line entities (no-op if unbuilt)
-            self._attach_line_parse_results()
-        else:
-            self._parse_results[parse_key] = []
-            last_unit = None
-            units = []
-            for parse_list in meter.parse_text_iter(
-                self, force=force, lim=lim
-            ):
-                # DF-only path: parse_list.parent may be None
-                if parse_list.parent is not None:
-                    parsed_ent = parse_list.parent
-                    parsed_ent._parses = parse_list
-                else:
-                    # DF path: results stored in _line_parse_results,
-                    # will be attached to entities when lines are accessed
-                    parsed_ent = None
+            if attach is not None:
+                attach()
+            return
 
-                if not combine_by:
-                    self._parse_results[parse_key].append(parse_list)
-                    yield parse_list
-                elif parsed_ent is not None:
-                    this_unit = getattr(parsed_ent, combine_by)
-                    if units and last_unit is not this_unit:
-                        new_parselist = ParseList.from_combinations(units, parent=last_unit)
-                        last_unit._parses = new_parselist
-                        self._parse_results[parse_key].append(new_parselist)
-                        yield new_parselist
-                        units = []
-                    units.append(parse_list)
-                    last_unit = this_unit
-                else:
-                    # DF path without combine: just collect
-                    self._parse_results[parse_key].append(parse_list)
-                    yield parse_list
+        # Accumulate into a LOCAL list; only commit to the cache once the
+        # generator is fully consumed (T4). A partially-consumed iterator
+        # (e.g. next(t.parse_iter())) never reaches the commit below, so it
+        # can't poison later parse() calls with a truncated prefix. Limited
+        # runs (lim set) are never cached, since lim is not part of parse_key
+        # and would otherwise truncate the results stored under the full key.
+        results = []
+        last_unit = None
+        units = []
+        for parse_list in meter.parse_text_iter(
+            self, force=force, lim=lim
+        ):
+            # DF-only path: parse_list.parent may be None
+            if parse_list.parent is not None:
+                parsed_ent = parse_list.parent
+                parsed_ent._parses = parse_list
+            else:
+                # DF path: results stored in _line_parse_results,
+                # will be attached to entities when lines are accessed
+                parsed_ent = None
 
-            if units:
-                new_parselist = ParseList.from_combinations(units, parent=last_unit)
-                last_unit._parses = new_parselist
-                self._parse_results[parse_key].append(new_parselist)
-                yield new_parselist
+            if not combine_by:
+                results.append(parse_list)
+                yield parse_list
+            elif parsed_ent is not None:
+                this_unit = getattr(parsed_ent, combine_by)
+                if units and last_unit is not this_unit:
+                    new_parselist = ParseList.from_combinations(units, parent=last_unit)
+                    last_unit._parses = new_parselist
+                    results.append(new_parselist)
+                    yield new_parselist
+                    units = []
+                units.append(parse_list)
+                last_unit = this_unit
+            else:
+                # DF path without combine: just collect
+                results.append(parse_list)
+                yield parse_list
 
-            # T7: attach DF-path results to already-built line entities so
-            # `t.lines; t.parse()` populates line._parses (not just the
-            # pre-access `t.parse(); t.lines` path).
-            self._attach_line_parse_results()
+        if units:
+            new_parselist = ParseList.from_combinations(units, parent=last_unit)
+            last_unit._parses = new_parselist
+            results.append(new_parselist)
+            yield new_parselist
+
+        # Fully consumed (generator ran to completion): safe to cache — but
+        # not for limited runs, which hold only a prefix of the full result.
+        if lim is None:
+            self._parse_results[parse_key] = results
+
+        # T7: attach DF-path results to already-built line entities so
+        # `t.lines; t.parse()` populates line._parses (not just the
+        # pre-access `t.parse(); t.lines` path).
+        if attach is not None:
+            attach()
 
     @property
     def parses(self) -> Any:

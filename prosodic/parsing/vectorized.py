@@ -169,6 +169,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
 
 
     constraint_names = list(meter.constraints.keys())
+    bound_zones = _bounding_zones(meter)  # zone-aware bounding when zone_weights set
 
     for nsylls, line_nums in nsyll_groups.items():
         scansions = meter.get_possible_scansions(nsylls)
@@ -191,7 +192,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
             )
             constraint_index = ci
             # all_viols_4d is (L, S, N, C) — sum over N for bounding
-            all_viol_sums = all_viols_4d.sum(axis=2)  # (L, S, C)
+            all_viol_sums = _zone_split_batch(all_viols_4d, bound_zones)
             unbounded_masks = compute_bounding_batch(all_viol_sums)
 
             for i, ln in enumerate(simple_lines):
@@ -246,7 +247,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                 if constraint_index is None:
                     constraint_index = ci
                 same_nsylls_viols = [ambig_viols_4d[i] for i in range(len(same_feats_list))]
-                ambig_viol_sums = ambig_viols_4d.sum(axis=2)  # (L, S, C)
+                ambig_viol_sums = _zone_split_batch(ambig_viols_4d, bound_zones)
                 ambig_masks = compute_bounding_batch(ambig_viol_sums)
                 for i in range(len(same_feats_list)):
                     ambig_unbounded[i] = ambig_masks[i]
@@ -267,7 +268,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                 d_viols_4d, ci2 = evaluate_constraints_batch(
                     d_feats, wmv, wpi, wps, constraint_names
                 )
-                d_viol_sums = d_viols_4d.sum(axis=2)
+                d_viol_sums = _zone_split_batch(d_viols_4d, bound_zones)
                 d_masks = compute_bounding_batch(d_viol_sums)
                 for i, item in enumerate(items):
                     diff_results[id(item)] = (d_viols_4d[i], d_masks[i], wscans,
@@ -384,6 +385,7 @@ def parse_batch(parse_units, meter, syll_df=None):
 
         meter_vals, position_ids, position_sizes = encode_scansions(scansions, nsylls)
         constraint_names = list(meter.constraints.keys())
+        bound_zones = _bounding_zones(meter)  # zone-aware bounding when zone_weights set
 
         # split group into simple (no ambiguity) and ambiguous lines
         simple_lines = []
@@ -407,7 +409,7 @@ def parse_batch(parse_units, meter, syll_df=None):
             )  # (L, S, N, C)
 
             # batch bounding
-            all_viol_sums = all_viols_4d.sum(axis=2)  # (L, S, C)
+            all_viol_sums = _zone_split_batch(all_viols_4d, bound_zones)
             unbounded_masks = compute_bounding_batch(all_viol_sums)  # (L, S)
 
             for i, (idx, wt, feats, sylls) in enumerate(simple_lines):
@@ -435,7 +437,7 @@ def parse_batch(parse_units, meter, syll_df=None):
                     [wfeats], wmv, wpi, wps, constraint_names
                 )
                 wviols = wviols_4d[0]  # (S, N, C)
-                wunb = compute_bounding(wviols, wci)
+                wunb = compute_bounding(wviols, wci, zones=bound_zones)
                 wsylls = wfeats["sylls"]
                 wpl = LazyParseList(
                     wtl, meter, wscans, wviols, wci, wunb, wsylls,
@@ -765,8 +767,51 @@ def get_device():
 get_device()
 
 
-def compute_bounding(viols, constraint_index):
-    """Compute harmonic bounding: mark scansions dominated by others."""
+def _bounding_zones(meter):
+    """Zones to use for harmonic bounding, or None for flat bounding.
+
+    Bounding must operate in the SAME feature space as scoring. Zone-aware
+    scoring (LazyParseList) kicks in only when the meter carries learned
+    zone_weights; otherwise scoring is flat, so bounding stays flat too and the
+    default parser path is unchanged/byte-identical.
+    """
+    zones = getattr(meter, 'zones', None)
+    if zones is not None and getattr(meter, 'zone_weights', None):
+        return zones
+    return None
+
+
+def _zone_split_batch(viols_4d, zones):
+    """(L, S, N, C) -> (L, S, C*Z) zone-summed violation COUNTS.
+
+    Harmonic bounding is dominance on the feature-count vector. With zone
+    weights the feature space is (constraint x zone), so bounding must dominate
+    on the zone-split counts, not the flat per-constraint totals — otherwise a
+    parse whose violations sit in low-weight zones can be flat-dominated (and
+    dropped) even though it's the zone-optimal parse. zones=None returns the
+    flat (L, S, C) sum, identical to the previous bounding input.
+    """
+    if zones is None:
+        return viols_4d.sum(axis=2)
+    from .maxent import zone_boundaries
+    L, S, N, C = viols_4d.shape
+    boundaries = zone_boundaries(zones, N)
+    Z = len(boundaries)
+    out = np.zeros((L, S, C * Z), dtype=np.int64)
+    for z, (start, end) in enumerate(boundaries):
+        out[:, :, z * C:(z + 1) * C] = viols_4d[:, :, start:end, :].sum(axis=2)
+    return out
+
+
+def compute_bounding(viols, constraint_index, zones=None):
+    """Compute harmonic bounding: mark scansions dominated by others.
+
+    With `zones` set, dominance is computed on the zone-split (S, C*Z) counts
+    so it matches zone-aware scoring; otherwise on the flat (S, C) sums.
+    """
+    if zones is not None:
+        from .maxent import zone_split
+        return _bound_viol_sums(zone_split(viols, zones))
     v = viols.sum(axis=1)  # (S, C)
     return _bound_viol_sums(v)
 

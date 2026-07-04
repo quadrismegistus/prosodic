@@ -17,6 +17,7 @@ concurrency:
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+    secrets: inherit
 
   # NOTE: the GitHub release + PyPI upload used to live here, gated only on
   # `needs: [tests]` — every push to master published a new PyPI build. That

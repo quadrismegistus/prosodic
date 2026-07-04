@@ -4,6 +4,10 @@ on:
   push:
     branches:
         - "develop"
+  # AUDIT R10 (2026-07-04): manual-only trigger for the docs gh-pages publish
+  # job below, until docs/ is regenerated for v3 (see the comment on
+  # build-deploy). The `tests` job above still runs on every push to develop.
+  workflow_dispatch:
 
 
 # you need these permissions to publish to GitHub pages
@@ -16,10 +20,22 @@ permissions:
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
+    secrets: inherit
 
+  # AUDIT R10 (2026-07-04): this job used to run automatically on every push
+  # to `develop` and republish docs/ to gh-pages with `render: false` — i.e.
+  # it re-published the same stale, pre-built v2-era HTML (docs/ last touched
+  # Sep 2024; docs/reference/ still has pages for modules deleted since, like
+  # lexconvert/metricaltree) on every push, giving a false impression the docs
+  # site is current. Regenerating v3 docs is a separate content task (tracked
+  # in AUDIT.md R10) and out of scope here. Until that regeneration happens,
+  # this job is gated to manual dispatch only so CI stops auto-republishing
+  # stale docs. Re-enable the `push` trigger (or fold this back into the
+  # `on:` block above) once docs/ has been regenerated for v3.
   build-deploy:
     runs-on: ubuntu-latest
     needs: [tests]
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

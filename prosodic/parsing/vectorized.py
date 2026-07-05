@@ -853,6 +853,68 @@ def _bound_viol_sums(v):
     return _compute_bounding_numpy(v)
 
 
+# Elite pre-screen for bounding. Most candidates are dominated by one of the
+# few lowest-total candidates; screening against the top-K first cuts the
+# exact O(S^2) pairwise kernel down to the handful of survivors (mean ~3 of
+# ~180 on the sonnets corpus). EXACT, not approximate: dominance is
+# transitive, so any dominator of a screen survivor would itself have to
+# survive the elite screen — pairwise among the survivors therefore
+# reproduces the full-set result byte-for-byte.
+BOUNDING_ELITE_K = 16
+# Pad value for ragged survivor rows: never dominates a real vector and is
+# always dominated. Must fit int16 (the torch kernel's dtype) incl. diffs.
+_BOUNDING_PAD = 8192
+
+
+def _elite_screen(viol_sums, K=BOUNDING_ELITE_K, block=512):
+    """(L, S) bool: candidate is strictly dominated by one of its line's K
+    best-total candidates. Chunked over lines to bound the (block, K, S, C)
+    difference tensor."""
+    L, S, C = viol_sums.shape
+    totals = viol_sums.sum(axis=2)
+    elite_idx = np.argpartition(totals, K - 1, axis=1)[:, :K]  # (L, K)
+    dominated = np.zeros((L, S), dtype=bool)
+    for l0 in range(0, L, block):
+        l1 = min(l0 + block, L)
+        v = viol_sums[l0:l1]
+        elite = np.take_along_axis(v, elite_idx[l0:l1, :, None], axis=1)
+        diff = elite[:, :, None, :] - v[:, None, :, :]  # (lc, K, S, C)
+        dominated[l0:l1] = ((diff <= 0).all(3) & (diff < 0).any(3)).any(1)
+    return dominated
+
+
+def _bounding_exact(viol_sums):
+    """Dispatch the exact pairwise kernel (GPU if available)."""
+    device = get_device()
+    if device is not None:
+        return _compute_bounding_batch_torch(viol_sums, device)
+    return _compute_bounding_batch_numpy(viol_sums)
+
+
+def _bounding_screened(viol_sums):
+    """Exact bounding via elite screen, then pairwise on the survivors."""
+    L, S, C = viol_sums.shape
+    if S <= 2 * BOUNDING_ELITE_K:
+        return _bounding_exact(viol_sums)
+    dominated = _elite_screen(viol_sums)
+    surv = ~dominated
+    counts = surv.sum(axis=1)
+    s_max = int(counts.max())
+    if s_max >= S:  # screen eliminated nothing; skip the gather
+        return _bounding_exact(viol_sums)
+    # gather survivors into a padded (L, s_max, C) tensor
+    order = np.argsort(~surv, axis=1, kind="stable")[:, :s_max]  # (L, s_max)
+    gathered = np.take_along_axis(
+        viol_sums.astype(np.int16, copy=False), order[:, :, None], axis=1
+    ).copy()
+    pad = np.arange(s_max)[None, :] >= counts[:, None]  # (L, s_max)
+    gathered[pad] = _BOUNDING_PAD
+    unb_small = _bounding_exact(gathered) & ~pad
+    result = np.zeros((L, S), dtype=bool)
+    np.put_along_axis(result, order, unb_small, axis=1)
+    return result
+
+
 def compute_bounding_batch(viol_sums):
     """Batch bounding for multiple lines at once.
 
@@ -875,29 +937,20 @@ def compute_bounding_batch(viol_sums):
         return totals == 0
 
     if not has_perfect.any():
-        # no shortcuts possible, full pairwise
-        device = get_device()
-        if device is not None:
-            return _compute_bounding_batch_torch(viol_sums, device)
-        return _compute_bounding_batch_numpy(viol_sums)
+        # no shortcut: elite screen + exact pairwise on the survivors
+        return _bounding_screened(viol_sums)
 
-    # mixed: shortcut some lines, full pairwise for others
+    # mixed: shortcut some lines, screened pairwise for others
     result = np.zeros((L, S), dtype=bool)
 
     # perfect lines: unbounded = score 0
     perfect_idx = np.where(has_perfect)[0]
     result[perfect_idx] = (totals[perfect_idx] == 0)
 
-    # non-perfect lines: full pairwise bounding
+    # non-perfect lines: screened pairwise bounding
     nonperfect_idx = np.where(~has_perfect)[0]
     if len(nonperfect_idx) > 0:
-        sub = viol_sums[nonperfect_idx]
-        device = get_device()
-        if device is not None:
-            sub_result = _compute_bounding_batch_torch(sub, device)
-        else:
-            sub_result = _compute_bounding_batch_numpy(sub)
-        result[nonperfect_idx] = sub_result
+        result[nonperfect_idx] = _bounding_screened(viol_sums[nonperfect_idx])
 
     return result
 

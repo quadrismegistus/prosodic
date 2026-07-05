@@ -49,13 +49,18 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
 
 ## Parser
 
+- ✅ **Vectorize `unres_within`/`unres_across`** — already done (commit
+  932d3df, audit sprint); the item here was stale.
+- ✅ **Bounding elite pre-screen** — candidates dominated by one of the
+  K=16 best-total candidates are eliminated in O(K·S) before the exact
+  O(S²) kernel runs on the survivors (mean ~3 of ~180 on the sonnets);
+  byte-identical by transitivity of dominance. CPU parse 9.5s → 1.9s,
+  now ≈ GPU. This also moots the former **GPU/CPU dispatch** item: the
+  exact kernel's workload is tiny either way, and the GPU is no longer
+  needed for parsing at all.
 - **Scansion prefiltering** — skip scansions where strong positions wildly
-  mismatch stressed syllables before full constraint evaluation.
-- **Vectorize `unres_within`/`unres_across`** — the last two constraints
-  still run per-line Python loops in `evaluate_constraints_batch`; liftable
-  to numpy with word-boundary masking.
-- **GPU/CPU dispatch optimization** — CPU wins for n<11 single-line, GPU for
-  n≥11 or batched; auto-dispatch by total work per nsylls group.
+  mismatch stressed syllables before full constraint evaluation. (Less
+  urgent post-screen: profile before bothering.)
 - **Lazy phoneme construction** — Syllable creates Phoneme objects eagerly;
   could defer to IPA-on-demand.
 - **Ternary meter identification** — `meter.fit()` works for binary

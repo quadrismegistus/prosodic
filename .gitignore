@@ -88,3 +88,4 @@ prosodic/lib/panphon/doc
 venv*
 profile_output*
 .venv
+.claude/

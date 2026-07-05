@@ -311,6 +311,16 @@ def test_bounding_tiled_equals_reference():
                 assert np.array_equal(ref, got_t), (
                     f"torch tiled != reference (shape={arr.shape}, budget={budget})")
 
+        # elite-screened path (engages when S > 2*BOUNDING_ELITE_K, falls back
+        # below that) must be byte-identical to the reference in both regimes
+        got_s = V._bounding_screened(arr.copy())
+        assert np.array_equal(ref, got_s), (
+            f"screened bounding != reference (shape={arr.shape})")
+        # and the public entry point end-to-end
+        got_e = V.compute_bounding_batch(arr.copy())
+        assert np.array_equal(ref, got_e), (
+            f"compute_bounding_batch != reference (shape={arr.shape})")
+
         # single-line entry points must agree with the batch reference too
         for li in range(arr.shape[0]):
             v_sc = arr[li]

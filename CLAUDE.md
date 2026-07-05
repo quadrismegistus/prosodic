@@ -81,7 +81,7 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 **Parsing flow:** `TextModel.parse()` → `parse_batch_from_df(syll_df, meter)` → groups by line, extracts features from numpy arrays → `evaluate_constraints_batch()` broadcasts features against scansion matrices → `compute_bounding_batch()` on GPU → results stored by line_num, attached to Entity lines lazily.
 
-**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else.
+**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else. Non-perfect lines go through an **elite pre-screen** first: candidates dominated by one of the K=16 lowest-total candidates are eliminated in O(K·S) (mean ~3 survivors of ~180 on the sonnets), and the exact pairwise kernel runs only on the survivors. Exact by transitivity of dominance — byte-identical to full pairwise (tested). CPU parse is now ≈ GPU parse; the GPU is no longer needed for parsing.
 
 ### MaxEnt Weight Learning (`parsing/maxent.py`)
 
@@ -273,13 +273,15 @@ Run `python -m prosodic.profiling` to regenerate.
 
 | Step | v2 | v3 | Speedup |
 |---|---|---|---|
-| Init (tokenize + pronunciations + entities) | 5.29s | 1.80s | 3x |
-| Parse (CPU) | 72.97s | 5.0s | 15x |
-| Parse (GPU) | 72.97s | 1.3s | 57x |
-| **End-to-end (CPU)** | **78.3s** | **6.8s** | **12x** |
-| **End-to-end (GPU)** | **78.3s** | **3.1s** | **26x** |
-| **DF-only (no entities, GPU)** | **78.3s** | **1.8s** | **42x** |
-| Syntax (dep parse) | 160.2s | 2.7s | 58x |
+| Init (tokenize + pronunciations + entities) | 5.29s | 2.1s | 3x |
+| Parse (CPU) | 72.97s | 1.9s | 38x |
+| Parse (GPU) | 72.97s | 2.2s | 33x |
+| **End-to-end (CPU)** | **78.3s** | **4.0s** | **20x** |
+| **End-to-end (GPU)** | **78.3s** | **4.3s** | **18x** |
+| **DF-only (no entities, GPU)** | **78.3s** | **3.1s** | **25x** |
+| Syntax (dep parse) | 160.2s | 2.4s | 67x |
+
+CPU now edges out GPU: the elite bounding pre-screen shrinks the exact kernel's workload below the point where GPU transfer overhead pays off.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

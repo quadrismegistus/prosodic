@@ -50,6 +50,8 @@ sonnet.parse()
 print(sonnet.summary())
 ```
 
+↓
+
       #st    #ln  parse        rhyme      #feet    #syll    #parse
     -----  -----  -----------  -------  -------  -------  --------
         1      1  -+-+-+-+-+   a              5       10         1
@@ -94,34 +96,11 @@ print(f"sonnets: {len(shaksonnets.lines):,} lines, {len(shaksonnets.stanzas):,} 
 print(f"single line: {line}")
 ```
 
+↓
+
     short: 1 line(s)
-
-    [32m[1.79s] Building long text[0m:   0%|          | 0/20307 [00:00<?, ?it/s]
-
-    [32m[1.79s] Building long text[0m:   8%|▊         | 1634/20307 [00:00<00:01, 9792.06it/s]
-
-    [32m[1.79s] Building long text[0m:  19%|█▉        | 3853/20307 [00:00<00:01, 15508.92it/s]
-
-    [32m[1.79s] Building long text[0m:  30%|███       | 6103/20307 [00:00<00:00, 18285.35it/s]
-
-    [32m[1.79s] Building long text[0m:  40%|███▉      | 8059/20307 [00:00<00:00, 14569.55it/s]
-
-    [32m[1.79s] Building long text[0m:  51%|█████     | 10304/20307 [00:00<00:00, 16827.48it/s]
-
-    [32m[1.79s] Building long text[0m:  62%|██████▏   | 12536/20307 [00:00<00:00, 18421.13it/s]
-
-    [32m[1.79s] Building long text[0m:  71%|███████▏  | 14511/20307 [00:00<00:00, 14750.34it/s]
-
-    [32m[1.79s] Building long text[0m:  82%|████████▏ | 16753/20307 [00:01<00:00, 16646.55it/s]
-
-    [32m[1.79s] Building long text[0m:  94%|█████████▍| 19082/20307 [00:01<00:00, 18379.62it/s]
-
-                                                                                        
-
     sonnets: 2,155 lines, 154 stanzas
     single line: Line(num=1, txt="Shall I compare thee to a summer's day?")
-
-    
 
 ## The hierarchy: stanzas → lines → words → syllables → phonemes
 
@@ -134,6 +113,8 @@ print(f"line 1 has {len(sonnet.lines[0].wordtokens)} word tokens")
 print(f"first word: {sonnet.lines[0].wordtokens[0]}")
 ```
 
+↓
+
     sonnet has 1 stanzas, 14 lines
     line 1 has 7 word tokens
     first word: WordToken(num=1, txt='When', lang='en', para_num=1, line_num=1, sent_num=1, sentpart_num=1, linepart_num=1)
@@ -142,6 +123,8 @@ print(f"first word: {sonnet.lines[0].wordtokens[0]}")
 # attribute shortcut: text.line1 == text.lines[0]
 sonnet.line1
 ```
+
+↓
 
 **Line**
 
@@ -155,8 +138,8 @@ sonnet.line1
 |            1 |          1 |              1 |          1 |              1 | ...             | ...             | ...            | ...            | ...                   | ...        | ...        | ...        | ...                 |
 |            1 |          1 |              1 |          1 |              1 | 4               | chronicle       | chronicle      | 1              | dict                  | 3          | cle        | kəl        | 0                   |
 |            1 |          1 |              1 |          1 |              1 | 5               | of              | of             | 1              | dict                  | 1          | of         | ʌv         | 0                   |
-|            1 |          1 |              1 |          1 |              1 | 6               | wasted          | wasted         | 1              | dict                  | 1          | was        | 'weɪ       | 0                   |
-|            1 |          1 |              1 |          1 |              1 | 6               | wasted          | wasted         | 1              | dict                  | 2          | ted        | stəd       | 0                   |
+|            1 |          1 |              1 |          1 |              1 | 6               | wasted          | wasted         | 1              | dict                  | 1          | wa         | 'weɪ       | 0                   |
+|            1 |          1 |              1 |          1 |              1 | 6               | wasted          | wasted         | 1              | dict                  | 2          | sted       | stəd       | 0                   |
 |            1 |          1 |              1 |          1 |              1 | 7               | time            | time           | 1              | dict                  | 1          | time       | 'taɪm      | 0                   |
 *12 rows × 1 columns*
 ```python
@@ -168,6 +151,8 @@ for syll in wordform.syllables:
     for phon in syll.phonemes:
         print(f"    phon: {phon.txt!r}")
 ```
+
+↓
 
     wordform: WordForm(num=1, txt='in', force_ambig_stress=True, ipa_origin='dict')
       syllable: Syllable(num=1, txt='in', ipa='ɪn'), IPA='ɪn', stressed=False, heavy=True
@@ -183,6 +168,8 @@ The whole text is also accessible as a flat per-syllable DataFrame. This is the 
 sonnet.df.head(8)
 ```
 
+↓
+
 |    |   word_num |   line_num |   para_num |   sent_num |   sentpart_num |   linepart_num | word_txt   |   is_punc |   form_idx |   num_forms |   syll_idx | syll_ipa   | syll_text   | is_stressed   | is_heavy   | is_strong   | is_weak   | is_functionword   |
 |---:|-----------:|-----------:|-----------:|-----------:|---------------:|---------------:|:-----------|----------:|-----------:|------------:|-----------:|:-----------|:------------|:--------------|:-----------|:------------|:----------|:------------------|
 |  0 |          1 |          1 |          1 |          1 |              1 |              1 | When       |         0 |          0 |           2 |          0 | wɛn        | When        | False         | True       | False       | False     | True              |
@@ -197,6 +184,8 @@ sonnet.df.head(8)
 # columns
 list(sonnet.df.columns)
 ```
+
+↓
 
     ['word_num',
      'line_num',
@@ -228,6 +217,8 @@ line.parse()
 print(line.best_parse)
 ```
 
+↓
+
     Parse(txt="shall I com PARE thee TO a SUM mer's DAY")
 
 ```python
@@ -240,6 +231,8 @@ print(f"feet:      {bp.feet}")
 print(f"foot_type: {bp.foot_type}    (per-parse classification)")
 print(f"is_rising: {bp.is_rising}")
 ```
+
+↓
 
     meter:     -+-+-+-+-+    (- = weak, + = strong)
     stress:    ---+---+-+    (- = unstressed, + = stressed)
@@ -254,6 +247,8 @@ for p in line.parses.unbounded:
     print(f"{p.meter_str}  score={p.score}")
 ```
 
+↓
+
     -+-+-+-+-+  score=2.0
 
 ```python
@@ -263,6 +258,8 @@ for line in sonnet.lines[:6]:
     bp = line.best_parse
     print(f"L{line.num:2d}  {bp.meter_str}  score={bp.score:.1f}  ambig={len(line.parses.unbounded)}")
 ```
+
+↓
 
     L 1  -+-+-+-+-+  score=1.0  ambig=1
     L 2  -+-+-+-+-+  score=1.0  ambig=1
@@ -279,6 +276,8 @@ Per-syllable parse results across the whole text — useful for analysis, plotti
 sonnet.parsed_df.head(10)
 ```
 
+↓
+
 |    |   line_num |   word_num |   form_idx |   syll_idx |   line_syll_idx |   parse_idx |   parse_rank |   parse_score | is_best   | is_bounded   | ...   |   pos_size | meter_val   | syll_txt   | syll_ipa   | is_stressed   |   *w_peak |   *w_stress |   *s_unstress |   *unres_across |   *unres_within |
 |---:|-----------:|-----------:|-----------:|-----------:|----------------:|------------:|-------------:|--------------:|:----------|:-------------|:------|-----------:|:------------|:-----------|:-----------|:--------------|----------:|------------:|--------------:|----------------:|----------------:|
 |  0 |          1 |          1 |          0 |          0 |               0 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | When       | wɛn        | False         |         0 |           0 |             0 |               0 |               0 |
@@ -288,14 +287,16 @@ sonnet.parsed_df.head(10)
 |  4 |          1 |          4 |          0 |          1 |               4 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | ni         | nɪ         | False         |         0 |           0 |             0 |               0 |               0 |
 |  5 |          1 |          4 |          0 |          2 |               5 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | cle        | kəl        | False         |         0 |           0 |             1 |               0 |               0 |
 |  6 |          1 |          5 |          0 |          0 |               6 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | of         | ʌv         | False         |         0 |           0 |             0 |               0 |               0 |
-|  7 |          1 |          6 |          0 |          0 |               7 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | was        | 'weɪ       | True          |         0 |           0 |             0 |               0 |               0 |
-|  8 |          1 |          6 |          0 |          1 |               8 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | ted        | stəd       | False         |         0 |           0 |             0 |               0 |               0 |
+|  7 |          1 |          6 |          0 |          0 |               7 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | wa         | 'weɪ       | True          |         0 |           0 |             0 |               0 |               0 |
+|  8 |          1 |          6 |          0 |          1 |               8 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | sted       | stəd       | False         |         0 |           0 |             0 |               0 |               0 |
 |  9 |          1 |          7 |          0 |          0 |               9 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | time       | 'taɪm      | True          |         0 |           0 |             0 |               0 |               0 |
 *10 rows × 21 columns*
 ```python
 # every column you might want for analysis
 list(sonnet.parsed_df.columns)
 ```
+
+↓
 
     ['line_num',
      'word_num',
@@ -332,6 +333,8 @@ strict = prosodic.Meter(
 print(strict)
 ```
 
+↓
+
     Meter(constraints={'w_peak': 1.0, 'w_stress': 1.0, 's_unstress': 1.0, 'foot_size': 1.0}, max_s=1, max_w=1, resolve_optionality=True, parse_unit='line')
 
 ```python
@@ -340,7 +343,9 @@ sonnet.parse(meter=strict)
 print(sonnet.line1.best_parse)
 ```
 
-    Parse(txt='when IN the CHRO ni CLE of WAS ted TIME')
+↓
+
+    Parse(txt='when IN the CHRO ni CLE of WA sted TIME')
 
 ## Poem-level analysis
 
@@ -350,6 +355,8 @@ Prosodic 3 includes `prosodic/analysis/` (a port of the standalone [poesy](https
 # meter classification (iambic / trochaic / anapestic / dactylic)
 sonnet.meter_type
 ```
+
+↓
 
     {'foot': 'binary',
      'head': 'final',
@@ -366,6 +373,8 @@ print('feet  scheme:', sonnet.line_scheme)
 print('syll  scheme:', sonnet.syllable_scheme)
 ```
 
+↓
+
     feet  scheme: {'combo': (5,), 'diff': 2}
     syll  scheme: {'combo': (10,), 'diff': 1}
 
@@ -378,6 +387,8 @@ Rhyme is computed via feature-weighted edit distance over IPA segments (panphon)
 sonnet.line1.rime_distance(sonnet.lines[2])  # 'time' vs 'rhyme'
 ```
 
+↓
+
     0.0
 
 ```python
@@ -385,6 +396,8 @@ sonnet.line1.rime_distance(sonnet.lines[2])  # 'time' vs 'rhyme'
 for line, (dist, partner) in list(sonnet.get_rhyming_lines().items())[:6]:
     print(f"L{line.num:2d} ↔ L{partner.num:2d}  dist={dist:.2f}  '{line.txt.strip()[:35]}' / '{partner.txt.strip()[:35]}'")
 ```
+
+↓
 
     L 3 ↔ L 1  dist=0.00  'And beauty making beautiful old rhy' / 'When in the chronicle of wasted tim'
     L 8 ↔ L 6  dist=0.00  'Even such a beauty as you master no' / 'Of hand, of foot, of lip, of eye, o'
@@ -396,6 +409,8 @@ print('IDs:    ', sonnet.rhyme_ids)
 from prosodic.analysis import nums_to_scheme
 print('letters:', ''.join(nums_to_scheme(sonnet.rhyme_ids)))
 ```
+
+↓
 
     IDs:     [1, 2, 1, 2, 0, 3, 0, 3, 0, 4, 5, 4, 5, 5]
     letters: abab-c-c-dedee
@@ -415,6 +430,8 @@ for name, form, score in rs['candidates'][:5]:
     print(f"  {score:.2f}  {name:30s} {form}")
 ```
 
+↓
+
     name:     Sonnet A
     form:     abab cdcd eefeff
     accuracy: 0.70
@@ -432,6 +449,8 @@ print('is_sonnet:               ', sonnet.is_sonnet)
 print('is_shakespearean_sonnet: ', sonnet.is_shakespearean_sonnet)
 ```
 
+↓
+
     is_sonnet:                True
     is_shakespearean_sonnet:  False
 
@@ -442,6 +461,8 @@ print('is_shakespearean_sonnet: ', sonnet.is_shakespearean_sonnet)
 ```python
 print(sonnet.summary())
 ```
+
+↓
 
       #st    #ln  parse        rhyme      #feet    #syll    #parse
     -----  -----  -----------  -------  -------  -------  --------
@@ -485,7 +506,7 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
     print(f"  {w:+.3f}  {name}")
 ```
 
-    [93m[1.44s] prosodic.parsing.maxent.MaxEntTrainer._build_line_data(): 1/14 lines had no matching scansion among parser candidates (syllable count mismatch?)[0m
+↓
 
     top learned weights (zone × constraint):
       +5.069  unres_within_z3
@@ -526,14 +547,13 @@ print(f'\nreloaded: {len(loaded.lines)} lines, parse cached?',
 shutil.rmtree(out)
 ```
 
-    saved files:
+↓
 
-    
+    saved files:
       meta.json
       parsed.parquet
       syll.parquet
       text.txt.gz
-
     
     reloaded: 14 lines, parse cached? True
 

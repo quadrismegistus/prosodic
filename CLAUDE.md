@@ -39,7 +39,7 @@ yapf --style .style.yapf -i <file>
 .venv/bin/python scripts/rime_eval.py               # ROC, AUC, suggested max_dist
 ```
 
-`scripts/build_readme.py` is the single source: it executes the cells, writes `README.ipynb` (canonical, Colab-runnable), then converts to a clean `README.md` in the same run — no separate `nbconvert` step. The conversion drops the Colab-only bootstrap cell (tagged `remove_cell`), strips pandas `<style>` blocks, and round-trips DataFrame `<table>` HTML into GitHub-native markdown tables, so `README.md` stays HTML-free. Edit `build_readme.py`, not `README.ipynb` directly. nbformat regenerates cell UUIDs on every run, so a fresh build always produces a UUID-only `.ipynb` diff — discard it unless content actually changed.
+`scripts/build_readme.py` is the single source: it executes the cells, writes `README.ipynb` (canonical, Colab-runnable), then converts to a clean `README.md` in the same run — no separate `nbconvert` step. Executed outputs are scrubbed of terminal noise (stderr streams dropped, ANSI/tqdm frames stripped — hashstash's progress bars render into notebook outputs because ipykernel pretends to be a TTY) before saving either artifact. The conversion drops the Colab-only bootstrap cell (tagged `remove_cell`), strips pandas `<style>` blocks, round-trips DataFrame `<table>` HTML into GitHub-native markdown tables, and inserts a standalone `↓` between each code block and its output so the boundary is unambiguous. Edit `build_readme.py`, not `README.ipynb` directly. nbformat regenerates cell UUIDs on every run, so a fresh build always produces a UUID-only `.ipynb` diff — discard it unless content actually changed.
 
 ## Architecture
 

@@ -30,7 +30,7 @@ regex
 munkres
 
 pyarrow
-hashstash
+hashstash>=1.0.0,<2
 tabulate
 # stanza
 plotnine

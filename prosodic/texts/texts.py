@@ -824,6 +824,13 @@ class TextModel(Entity):
         combo, diff = detect_line_scheme(feet, beat=True)
         return {"combo": combo, "diff": diff}
 
+    def syntax_trees(self, model=None):
+        """nltk.Tree projections per sentence, preterminals labeled with
+        tstress (see phrasal_stress.syntax_trees). Requires spaCy; with
+        svgling installed, trees render as SVG in notebooks."""
+        from .phrasal_stress import syntax_trees
+        return syntax_trees(self, model=model or self._syntax_model)
+
     @cached_property
     def line_num_sylls(self):
         """Canonical per-line syllable counts: dict of line_num -> int.

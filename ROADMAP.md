@@ -19,10 +19,11 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
   the web app's Line View tab (see "Parse table design polish" below), and
   a phrasal-prominence row once continuous phrasal stress exists (see
   MetricalTree item — the grid API takes extra rows without change).
-- **nltk.Tree / svgling export** — cadence's metrical tree is an `nltk.Tree`
-  subclass, so svgling SVG rendering came free. If v3 exports its
-  phrasal-stress structure as `nltk.Tree` (`to_nltk_tree()`), notebook SVG
-  trees are ~free. Small.
+- ✅ **nltk.Tree / svgling export** — `text.syntax_trees()` returns one
+  `nltk.Tree` per sentence built on the SAME projection topology the
+  pstress/tstress numbers come from, preterminals labeled `TAG/tstress`,
+  constituency-style phrase labels. `import svgling` renders them as SVG
+  in notebooks.
 - **MetricalTree-proper phrasal stress** — ✅ gradient port shipped: Dozat's
   algorithm (lexical stress classes, 3-variant disambiguation ensemble, NSR
   with the noun-compound rule, cumulative total stress, per-sentence min-max

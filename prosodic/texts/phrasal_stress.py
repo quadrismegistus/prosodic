@@ -352,6 +352,96 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
     return norm(pstress), norm(tstress), pstrength
 
 
+# Readable phrase labels for projected nodes (fallback: TAG + "P")
+_PHRASE_LABELS = (
+    ('NN', 'NP'), ('VB', 'VP'), ('JJ', 'ADJP'), ('RB', 'ADVP'),
+    ('IN', 'PP'), ('CD', 'QP'), ('PRP', 'NP'), ('DT', 'NP'),
+    ('W', 'WHP'), ('MD', 'VP'),
+)
+
+
+def _phrase_label(tag):
+    for prefix, label in _PHRASE_LABELS:
+        if tag.startswith(prefix):
+            return label
+    return tag + 'P'
+
+
+def _mt_nltk_trees(heads, words, tags, deps, tstress=None):
+    """One nltk.Tree per dependency root, mirroring the projection topology
+    the stress computation runs on (``_mt_project``) — the rendered tree IS
+    the tree the pstress/tstress numbers came from. Preterminal labels are
+    the PTB tag, suffixed with the word's tstress when provided
+    (``NN/0.75``); phrase labels are constituency-style (NP/VP/...).
+    """
+    from nltk.tree import Tree
+
+    n = len(words)
+    deps_of = [[] for _ in range(n)]
+    roots = []
+    for i in range(n):
+        h = heads[i]
+        (deps_of[h] if h >= 0 else roots).append(i)
+
+    def convert(node):
+        kids = []
+        for kind, c in node.children:
+            if kind == 'pre':
+                label = tags[c]
+                if tstress is not None and not np.isnan(tstress[c]):
+                    label += f"/{tstress[c]:.2f}"
+                kids.append(Tree(label, [words[c]]))
+            else:
+                kids.append(convert(c))
+        return Tree(_phrase_label(node.cat), kids)
+
+    return [convert(_mt_project(r, deps_of, tags, deps)) for r in roots]
+
+
+def syntax_trees(text, model="en_core_web_sm"):
+    """nltk.Tree projections for every sentence of a text.
+
+    Returns a flat list of ``nltk.tree.Tree`` (usually one per sentence),
+    with preterminals labeled ``TAG/tstress``. In a Jupyter notebook,
+    ``pip install svgling`` + ``import svgling`` makes these render as
+    SVG trees automatically; ``print(tree)`` gives the bracketed form.
+    """
+    from spacy.tokens import Doc
+    nlp = _get_nlp(model)
+    syll_df = text._syll_df
+    word_df = syll_df[syll_df['form_idx'].isin([0, -1])].drop_duplicates('word_num')
+    nsyll_by_word = (
+        syll_df[(syll_df['form_idx'] == 0) & (~syll_df['is_punc'])]
+        .groupby('word_num').size().to_dict()
+    )
+
+    docs, doc_meta = [], []
+    for sent_num, group in word_df.groupby('sent_num'):
+        mask = ~group['is_punc'].values.astype(bool)
+        parse_words = [w.strip() for w in group['word_txt'].values[mask]]
+        if not parse_words:
+            continue
+        spaces = [True] * len(parse_words)
+        spaces[-1] = False
+        docs.append(Doc(nlp.vocab, words=parse_words, spaces=spaces))
+        doc_meta.append(group['word_num'].values[mask])
+
+    trees = []
+    for doc, word_nums in zip(nlp.pipe(docs), doc_meta):
+        n = len(doc)
+        heads = np.array([
+            tok.head.i if tok.head.i != tok.i else -1 for tok in doc
+        ], dtype=np.int32)
+        tags = np.array([tok.tag_ for tok in doc])
+        deps = np.array([tok.dep_ for tok in doc])
+        words = np.array([tok.text for tok in doc])
+        nsylls = np.array([nsyll_by_word.get(wn, 1) for wn in word_nums],
+                          dtype=np.int32)
+        _, tstress, _ = _mt_gradient(heads, words, tags, deps, nsylls, n)
+        trees.extend(_mt_nltk_trees(heads, words, tags, deps, tstress))
+    return trees
+
+
 def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     """Add phrasal_stress column to syll_df.
 

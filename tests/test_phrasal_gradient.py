@@ -189,6 +189,38 @@ def test_grid_phrasal_heights():
     assert rows[2]["height"] == 1
 
 
+# ------------------------------------------------- nltk.Tree export
+
+def test_mt_nltk_trees_structure():
+    from prosodic.texts.phrasal_stress import _mt_nltk_trees
+    heads = np.array([1, 2, -1, 4, 2], dtype=np.int32)
+    tags = np.array(['DT', 'NN', 'VBD', 'DT', 'NN'])
+    deps = np.array(['det', 'nsubj', 'ROOT', 'det', 'dobj'])
+    words = np.array(['the', 'dog', 'saw', 'the', 'cat'])
+    ts = np.array([0.0, 2/3, 2/3, 1/3, 1.0])
+    trees = _mt_nltk_trees(heads, words, tags, deps, ts)
+    assert len(trees) == 1
+    tree = trees[0]
+    assert tree.label() == 'VP'
+    assert [str(x) for x in tree.leaves()] == ['the', 'dog', 'saw', 'the', 'cat']
+    # subject NP with tstress-labeled preterminals
+    assert tree[0].label() == 'NP'
+    assert tree[0][1].label() == 'NN/0.67'
+    # nuclear object noun
+    assert tree[2][1].label() == 'NN/1.00'
+
+
+def test_syntax_trees_integration():
+    pytest.importorskip("spacy")
+    try:
+        t = TextModel("The dog saw the cat.")
+        trees = t.syntax_trees()
+    except OSError:
+        pytest.skip("spaCy model not installed")
+    assert len(trees) == 1
+    assert trees[0].leaves()
+
+
 # ------------------------------------------------- gradient constraints
 
 def _fake_features(pstress_row, tstress_row, weak_pos_row):

@@ -296,6 +296,23 @@ def _mt_variant(heads, tags, deps, lstress, n):
     return pre_p, tstress
 
 
+def _mt_pstrength(pstress, n):
+    """Local phrasal peaks/valleys over adjacent words (cadence's
+    set_phrasal_peaks): where a word's pstress exceeds an adjacent
+    neighbor's, the word is a peak (1.0) and the neighbor a valley (0.0).
+    Words that are neither stay NaN. Comparisons on the ensemble-mean
+    pstress; only ordering matters, so normalization is irrelevant."""
+    ps = np.full(n, np.nan)
+    for i in range(n):
+        if np.isnan(pstress[i]):
+            continue
+        for j in (i - 1, i + 1):
+            if 0 <= j < n and not np.isnan(pstress[j]) and pstress[j] < pstress[i]:
+                ps[j] = 0.0
+                ps[i] = 1.0
+    return ps
+
+
 def _mt_gradient(heads, words, tags, deps, nsylls, n):
     """Ensemble-averaged, min-max normalized MetricalTree stress.
 
@@ -303,8 +320,10 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
     stressed; monosyllables unstressed; all unstressed — averages
     pstress/tstress across them, and normalizes each within the sentence.
 
-    Returns (pstress_norm, tstress_norm) in [0, 1]; 1 = most prominent.
-    Sentences with no variation normalize to NaN (as in cadence/mtree).
+    Returns (pstress_norm, tstress_norm, pstrength). The first two are in
+    [0, 1]; 1 = most prominent; sentences with no variation normalize to
+    NaN (as in cadence/mtree). pstrength is 1.0 (local peak), 0.0 (local
+    valley), or NaN (neither).
     """
     base = _mt_lstress_base(words, tags, deps, n)
     amb = base == -0.5
@@ -322,6 +341,7 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
 
     pstress = np.mean([v[0] for v in variants], axis=0)
     tstress = np.mean([v[1] for v in variants], axis=0)
+    pstrength = _mt_pstrength(pstress, n)
 
     def norm(v):
         vmin, vmax = float(v.min()), float(v.max())
@@ -329,7 +349,7 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
             return np.full(n, np.nan)
         return (v - vmin) / (vmax - vmin)
 
-    return norm(pstress), norm(tstress)
+    return norm(pstress), norm(tstress), pstrength
 
 
 def add_phrasal_stress(syll_df, model="en_core_web_sm"):
@@ -349,6 +369,7 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
         syll_df['pstress'] = pd.array([], dtype=pd.Float64Dtype())
         syll_df['tstress'] = pd.array([], dtype=pd.Float64Dtype())
+        syll_df['pstrength'] = pd.array([], dtype=pd.Float64Dtype())
         return syll_df
 
     from spacy.tokens import Doc
@@ -366,6 +387,7 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     stress_by_word = {}
     pstress_by_word = {}
     tstress_by_word = {}
+    pstrength_by_word = {}
 
     # First pass: build one pre-tokenized Doc per sentence, collecting the
     # word_num bookkeeping in parallel. All-punctuation sentences produce no
@@ -387,6 +409,7 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
                 stress_by_word[wn] = None
                 pstress_by_word[wn] = None
                 tstress_by_word[wn] = None
+                pstrength_by_word[wn] = None
             continue
 
         # pre-tokenized Doc; the spaCy pipeline runs on it below via nlp.pipe
@@ -415,21 +438,24 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         nsylls = np.array([
             nsyll_by_word.get(wn, 1) for wn in parse_word_nums
         ], dtype=np.int32)
-        pstress, tstress = _mt_gradient(heads, words, xpos, deprels, nsylls, n)
+        pstress, tstress, pstrength = _mt_gradient(heads, words, xpos, deprels, nsylls, n)
 
         for i, wn in enumerate(parse_word_nums):
             stress_by_word[wn] = int(stress[i])
             pstress_by_word[wn] = None if np.isnan(pstress[i]) else float(pstress[i])
             tstress_by_word[wn] = None if np.isnan(tstress[i]) else float(tstress[i])
+            pstrength_by_word[wn] = None if np.isnan(pstrength[i]) else float(pstrength[i])
 
         # punctuation gets None
         for wn in punc_word_nums:
             stress_by_word[wn] = None
             pstress_by_word[wn] = None
             tstress_by_word[wn] = None
+            pstrength_by_word[wn] = None
 
     # broadcast to syllable rows
     syll_df['phrasal_stress'] = syll_df['word_num'].map(stress_by_word).astype(pd.Int32Dtype())
     syll_df['pstress'] = syll_df['word_num'].map(pstress_by_word).astype(pd.Float64Dtype())
     syll_df['tstress'] = syll_df['word_num'].map(tstress_by_word).astype(pd.Float64Dtype())
+    syll_df['pstrength'] = syll_df['word_num'].map(pstrength_by_word).astype(pd.Float64Dtype())
     return syll_df

@@ -436,6 +436,38 @@ def s_unstress_t(mpos):
     return [getattr(slot.unit, 'tstress', None) == 0 for slot in mpos.slots]
 
 
+def _w_peak_p_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["pstrength"] == 1) & f["is_weak_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No local phrasal peak on weak position",
+    scope="position",
+    vectorized=_w_peak_p_vectorized,
+)
+def w_peak_p(mpos):
+    if mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'pstrength', None) == 1 for slot in mpos.slots]
+
+
+def _s_trough_p_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["pstrength"] == 0) & f["is_strong_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No local phrasal valley on strong position",
+    scope="position",
+    vectorized=_s_trough_p_vectorized,
+)
+def s_trough_p(mpos):
+    if not mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'pstrength', None) == 0 for slot in mpos.slots]
+
+
 # === Line-scope constraints (not used in vectorized parsing) ===
 
 @constraint(desc="Ensure the parse has exactly 5 peaks", scope="line")

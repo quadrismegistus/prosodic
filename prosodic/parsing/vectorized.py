@@ -50,6 +50,10 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     else:
         all_pstress = np.full(len(syll_df), -1.0, dtype=np.float32)
         all_tstress = np.full(len(syll_df), -1.0, dtype=np.float32)
+    if has_gradient and 'pstrength' in syll_df.columns:
+        all_pstrength = syll_df['pstrength'].astype(float).fillna(-1.0).values.astype(np.float32)
+    else:
+        all_pstrength = np.full(len(syll_df), -1.0, dtype=np.float32)
 
     # subset arrays for non-punc rows
     np_line = all_line[non_punc_idx]
@@ -105,6 +109,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
             "phrasal_stress": all_phrasal[rows].astype(np.int32),
             "pstress": all_pstress[rows].astype(np.float32),
             "tstress": all_tstress[rows].astype(np.float32),
+            "pstrength": all_pstrength[rows].astype(np.float32),
         }
 
         # check if any word in this line has multiple forms
@@ -249,6 +254,7 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                         "phrasal_stress": all_phrasal[rows].astype(np.int32),
             "pstress": all_pstress[rows].astype(np.float32),
             "tstress": all_tstress[rows].astype(np.float32),
+            "pstrength": all_pstrength[rows].astype(np.float32),
                     }
                     if wnsylls == nsylls:
                         same_feats_list.append(feats)
@@ -533,6 +539,7 @@ def extract_features(wordtokens):
         "phrasal_stress": np.zeros(n, dtype=np.int32),
         "pstress": np.full(n, -1.0, dtype=np.float32),
         "tstress": np.full(n, -1.0, dtype=np.float32),
+        "pstrength": np.full(n, -1.0, dtype=np.float32),
     }
 
 
@@ -566,9 +573,12 @@ def _extract_features_hybrid(wordtokens, syll_df, line_num):
         phrasal = line_df['phrasal_stress'].fillna(0).values.astype(np.int32)
     pstress = np.full(n, -1.0, dtype=np.float32)
     tstress = np.full(n, -1.0, dtype=np.float32)
+    pstrength = np.full(n, -1.0, dtype=np.float32)
     if 'tstress' in line_df.columns:
         pstress = line_df['pstress'].astype(float).fillna(-1.0).values.astype(np.float32)
         tstress = line_df['tstress'].astype(float).fillna(-1.0).values.astype(np.float32)
+    if 'pstrength' in line_df.columns:
+        pstrength = line_df['pstrength'].astype(float).fillna(-1.0).values.astype(np.float32)
 
     return {
         "sylls": sylls,
@@ -581,6 +591,7 @@ def _extract_features_hybrid(wordtokens, syll_df, line_num):
         "phrasal_stress": phrasal,
         "pstress": pstress,
         "tstress": tstress,
+        "pstrength": pstrength,
     }
 
 
@@ -662,6 +673,7 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
     has_phrasal = bool(np.any(phrasal_stress != 0))
     pstress = np.stack([f.get("pstress", np.full(f["stressed"].shape, -1.0, dtype=np.float32)) for f in features_list])
     tstress = np.stack([f.get("tstress", np.full(f["stressed"].shape, -1.0, dtype=np.float32)) for f in features_list])
+    pstrength = np.stack([f.get("pstrength", np.full(f["stressed"].shape, -1.0, dtype=np.float32)) for f in features_list])
     has_gradient = bool(np.any(tstress >= 0))
 
     all_viols = np.zeros((L, S, N, C), dtype=np.int8)
@@ -678,6 +690,7 @@ def evaluate_constraints_batch(features_list, meter_vals, position_ids, position
         "has_phrasal": has_phrasal,
         "pstress": pstress[:, None, :],       # (L, 1, N) gradient, -1 = absent
         "tstress": tstress[:, None, :],
+        "pstrength": pstrength[:, None, :],   # 1=peak, 0=valley, -1=neither/absent
         "has_gradient": has_gradient,
         "word_ids_raw": word_ids,              # (L, N) for per-line ops
         "is_strong_pos": meter_vals[None, :, :],  # (1, S, N)

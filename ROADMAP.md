@@ -7,87 +7,133 @@ over prosodic ≥3.5); [cadence](https://github.com/quadrismegistus/cadence)
 (prose-rhythm fork, archived 2026-07) was superseded by v3's `syntax=True`
 prose handling — everything it did that prosodic doesn't is preserved below.
 
-## From cadence
+## How to work this list
 
-Capabilities unique to cadence at archive time (verified by full-repo audit +
-live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
+Conventions that produced the 2026-07-05 sprint (PRs #126–#148), kept here
+so any future session can continue cold:
 
-- **Hayes-style metrical grid view** — cadence's `sent.grid()` renders a
-  plotnine stress grid over syllables; small and pedagogically excellent.
-  ✅ API shipped (`analysis/grid.py`: `line.grid_str()` / `grid_df()` /
-  `grid_plot()`, works on both parse paths). Remaining: render the grid in
-  the web app's Line View tab (see "Parse table design polish" below), and
-  a phrasal-prominence row once continuous phrasal stress exists (see
-  MetricalTree item — the grid API takes extra rows without change).
-- ✅ **nltk.Tree / svgling export** — `text.syntax_trees()` returns one
-  `nltk.Tree` per sentence built on the SAME projection topology the
-  pstress/tstress numbers come from, preterminals labeled `TAG/tstress`,
-  constituency-style phrase labels. `import svgling` renders them as SVG
-  in notebooks.
-- **MetricalTree-proper phrasal stress** — ✅ gradient port shipped: Dozat's
-  algorithm (lexical stress classes, 3-variant disambiguation ensemble, NSR
-  with the noun-compound rule, cumulative total stress, per-sentence min-max
-  norm) now runs over spaCy dep-projection trees and emits `pstress`/
-  `tstress` ∈ [0,1] columns with `syntax=True`; the grid consumes `tstress`
-  for phrase-level rows (nuclear stress = tallest column). Remaining
-  refinements: constituency-backed trees (benepar/Stanza as an optional
-  extra) if dep projections prove too coarse; dictionary-derived lexical
-  stress classes (cadence's own refinement). **Caveat** stands: phrasal
-  constraints added zero accuracy for fixed-template verse — this is for
-  prose rhythm and naturalness ranking.
-- **Phrasal variants of stress constraints** (`*_p`, `*_t`) — ✅ shipped:
-  `w_stress_p`/`s_unstress_p` (pstress) and `w_stress_t`/`s_unstress_t`
-  (tstress), cadence-threshold semantics, inert without `syntax=True`.
-  `w_peak_p`/`s_trough_p` shipped too, with cadence's pstrength (local
-  peak/valley) feature as a `pstrength` column — the cadence constraint
-  family is fully ported.
+- **Flow**: branch → PR → CI green (6 legs incl. Windows) → merge. Master
+  pushes auto-deploy prosodic.app (self-healing script) and, for `docs/**`,
+  auto-publish the docs site to BOTH ryanheuser.com/prosodic/ and
+  prosodic.app/docs/. PyPI releases are deliberate tag pushes (`git tag
+  vX.Y.Z && git push origin vX.Y.Z`), published via OIDC trusted publishing.
+- **Verification habit**: derive expected outputs by hand or against a
+  reference implementation BEFORE trusting your own tests (the MetricalTree
+  port's unit tests were self-consistently wrong until a differential vs
+  cadence caught the topology bug). Prefer byte-identity checks for
+  optimizations (see the bounding elite screen, `tests/test_parsing.py`).
+- **Docs are executable**: exploration pages under `docs/explorations/` run
+  real `{python}` cells; re-execute locally (main venv), commit `_freeze/`,
+  and verify a no-execution render before pushing. Never `gh run rerun` the
+  docs workflow — fresh `gh workflow run docs.yml` only.
+- **House rule**: no Claude session links in anything public.
+- New constraints = one decorated function in `parsing/constraints.py` with
+  a `vectorized` lambda; features flow from `_syll_df` columns through
+  `parse_batch_from_df` → `evaluate_constraints_batch` (see the pstress/
+  tstress/pstrength plumbing, PRs #137/#145, for the pattern to copy).
+
+## From cadence — COMPLETE
+
+All unique cadence capabilities are ported (grid API #136, gradient
+MetricalTree #137, `*_p`/`*_t` constraints #138, pstrength + `w_peak_p`/
+`s_trough_p` #145, nltk.Tree export #146), cross-validated against cadence
+as reference implementation (9-sentence differential, exact agreement, one
+documented deliberate divergence on coordination — see
+`docs/methods/phrasal-stress.qmd`). Not ported, deliberately:
+
 - **Multi-engine comparison** — never shipped in cadence (vestigial `ENGINE`
   constant); the idea survives in its `notebooks/engines.ipynb` scratch
-  harness. Low priority unless a second engine (e.g. MetricalTree-proper)
-  actually lands.
+  harness. Low priority unless a second engine actually lands.
 - **Reference notebooks** — before relying on memory of the algorithms, see
   cadence's `notebooks/test-bounding.ipynb` (cleanest statement of the
-  harmonic-bounding algorithm) and `engines.ipynb` (cross-engine harness).
+  harmonic-bounding algorithm) and `engines.ipynb`.
+
+Possible refinements to the MetricalTree port (only if dep projections
+prove too coarse in practice): constituency-backed trees via benepar/Stanza
+as an optional extra; dictionary-derived lexical stress classes (cadence's
+own refinement — replace/augment the tag-list lstress classes in
+`_mt_lstress_base` with prosodic's own per-word stress data, incl. graded
+values for words with stress-ambiguous pronunciation variants).
 
 ## Parser
 
-- ✅ **Vectorize `unres_within`/`unres_across`** — already done (commit
-  932d3df, audit sprint); the item here was stale.
-- ✅ **Bounding elite pre-screen** — candidates dominated by one of the
-  K=16 best-total candidates are eliminated in O(K·S) before the exact
-  O(S²) kernel runs on the survivors (mean ~3 of ~180 on the sonnets);
-  byte-identical by transitivity of dominance. CPU parse 9.5s → 1.9s,
-  now ≈ GPU. This also moots the former **GPU/CPU dispatch** item: the
-  exact kernel's workload is tiny either way, and the GPU is no longer
-  needed for parsing at all.
+- **Ternary meter identification** — the substantive open parser item.
+  Current state: `meter.fit()` (MaxEnt, `parsing/maxent.py`) learns weights
+  for binary iambic/trochaic targets like `"wswswswsws"`;
+  `analysis/meter_type.py` DETECTS ternary verse (fraction of `ww`
+  positions > 17.5%) but `fit()` has no ternary-aware path. Sketch:
+  (a) accept ternary target strings (`"wwswwswws"` — already expressible,
+  positions of size ≤ `max_w=2` mean a `ww` position is one unit, so the
+  target matching in `MaxEntTrainer.load_text` may already align — VERIFY
+  first, the gap may be smaller than assumed); (b) the real work is
+  probably constraint semantics: `w_peak`/`clash`/`lapse` were tuned for
+  binary alternation; test on Browning ("How They Brought the Good News",
+  anapestic) and Byron ("Destruction of Sennacherib"). Add a ternary
+  corpus file under `corpora/corppoetry_en/` first, then write the failing
+  test, then fix.
+- **Lazy phoneme construction** — `Syllable.__init__` eagerly builds
+  Phoneme children (`words/syllables.py`); could defer to IPA-on-demand
+  via cached_property. Only matters on the entity path (DF path never
+  builds them). Profile first: init is 2.1s on the sonnets, most of it
+  espeak/dict, so the win may be small. Watch `rime_distance` (needs
+  phonemes) and `to_dict`/save-load round-trips.
 - **Scansion prefiltering** — skip scansions where strong positions wildly
-  mismatch stressed syllables before full constraint evaluation. (Less
-  urgent post-screen: profile before bothering.)
-- **Lazy phoneme construction** — Syllable creates Phoneme objects eagerly;
-  could defer to IPA-on-demand.
-- **Ternary meter identification** — `meter.fit()` works for binary
-  iambic/trochaic but anapestic/dactylic needs ternary-aware constraints or
-  dynamic template matching.
+  mismatch stressed syllables before constraint evaluation. Deprioritized:
+  after the bounding elite screen, constraint evaluation is a minor cost;
+  profile before bothering. NOTE: unlike the elite screen this would change
+  `parses.bounded` contents (user-visible) unless done as an exact
+  dominance screen — scrutinize before building.
 
 ## Analysis & display
 
-- **Parse table design polish** — grid stress view over syllables in the web
-  app (see the cadence grid item above; these are the same project).
+- **Web app: grid in Line View + parse table polish** (deferred to last by
+  design — Ryan's call, 2026-07-05). The API half is done: `grid_data()` /
+  `phrasal_values()` in `analysis/grid.py` give per-syllable rows incl.
+  phrasal levels. Remaining: render in the web frontend — either
+  server-side HTML from `/api/parse/line` (follow `render_parse_html` in
+  `web/api.py`, which walks `line.wordtokens` for punctuation) or ship
+  grid_data JSON to a Svelte component (`frontend/src/lib/components/
+  LineViewTab.svelte`). `syntax`/`syntax_model` already flow through all
+  parse endpoints via the settings store. Check the AUDIT note that the
+  web path may restrict the constraint list before assuming parity.
 - **Rhyme detection threshold tuning** — `RHYME_MAX_DIST=0` default is
-  binary; gradient `rime_distance` works and `analysis/` uses the calibrated
-  0.35 (Walker 1775, F1-optimal), but there's no calibrated "slant rhyme"
-  band for the user-facing default.
+  binary; `analysis/` uses the calibrated 0.35 (Walker 1775, F1-optimal;
+  see `scripts/rime_eval.py` + `data/walker5.csv`). Open question: a
+  calibrated "slant rhyme" BAND (e.g. perfect < 0.05 < slant < 0.35 < none)
+  for the user-facing default. The eval harness exists; extend it to
+  three-way classification and pick boundaries by F1 per class. Changing
+  the default changes `text.rhyme_ids` everywhere — check the sonnets
+  exploration numbers (137 Shakespearean, sonnet 106 → Sonnet A) still
+  hold or update them deliberately (re-freeze the docs page).
 
 ## Languages
 
-- **German (Blankvers)** — planned validation of the "flexible languages"
-  claim; rule-based path like Finnish.
-- **Esperanto** — community-requested (issue #36); phonemic orthography +
-  fixed paroxytonic stress make it an easy `get_sylls_ll_rule()` language.
+- **German (Blankvers)** — validates the "flexible languages" claim.
+  Path: `langs/langs.py` `LanguageModel` subclass like Finnish
+  (`langs/finnish/` is the template for rule-based `get_sylls_ll_rule()`);
+  espeak has `de` support for the TTS fallback. German needs: syllable
+  weight rules, fixed-ish root-initial stress with prefix exceptions
+  (be-/ge-/ver-/er-/zer-/ent- unstressed), compound handling. Corpus:
+  Schiller/Goethe Blankvers (public domain). The g2p syllable-label
+  aligner (`langs/g2p_align.py`) is English-only — German would need its
+  own spelling table or fall back to NLTK labels (fine).
+- **Esperanto** — community-requested (issue #36, 2021; the asker wanted it
+  for MA research). Easiest possible language: fully phonemic orthography,
+  invariant penultimate stress, elision (final `-o` apostrophe) as the one
+  wrinkle. Pure `get_sylls_ll_rule()` implementation, no dictionary needed.
+  Reply to #36 when shipped.
 
 ## Infrastructure
 
-- **PyPI Trusted Publishing** — migrate `release.yml` off the long-lived
-  `PYPI_API_TOKEN` secret to OIDC (`pypa/gh-action-pypi-publish` +
-  `id-token: write`), as poesy 0.4.0 already does. Needs a one-time trusted
-  publisher added on PyPI for prosodic first.
+- ✅ **PyPI Trusted Publishing** — shipped for both repos (prosodic
+  `release.yml` OIDC via the `pypi` environment; publisher added on PyPI).
+  REMAINING: after the next successful `v*` tag release verifies the OIDC
+  path end-to-end, delete the now-unused `PYPI_API_TOKEN` secret.
+- **Docs freeze refresh** — whenever API output shown in
+  `docs/index.qmd` / `docs/explorations/*.qmd` changes (e.g. new syllable
+  labels, changed scores), re-execute locally and commit `_freeze/`;
+  stale freezes silently publish stale numbers. `grep -rn` the frozen
+  JSONs for old values when in doubt.
+- **README/docs sync** — `scripts/build_readme.py` (GitHub/Colab artifact)
+  and `docs/index.qmd` (docs home) are siblings; when the API tour
+  changes, update both (each file's header comment says so).

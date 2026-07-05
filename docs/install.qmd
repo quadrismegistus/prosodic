@@ -1,87 +1,71 @@
 ---
-title: "Installing"
-format:
-  html:
-    code-fold: false
-jupyter: python3
+title: "Install"
 ---
 
-
-Should work for any version of python following 3.9. 
-
+Prosodic runs on **Python 3.10+**. The only system dependency is
+[espeak](https://github.com/espeak-ng/espeak-ng), a free text-to-speech
+engine used to phonemize words that are not in the CMU pronunciation
+dictionary.
 
 ## 1. Install espeak
 
-Install [espeak](https://espeak.sourceforge.net), free text-to-speak (TTS) software, to ‘sound out’ unknown words.
+- **Mac** (with [Homebrew](https://brew.sh)):
 
-a. Mac
-    * First, install [homebrew](brew.sh) if not already installed.
-    
-    * ```sh
+    ```sh
     brew install espeak
     ```
 
-a. Linux
+- **Linux**:
 
-    * ```sh
+    ```sh
     apt-get install espeak libespeak1 libespeak-dev
     ```
 
-a. Windows
+- **Windows**: download and install from the
+  [espeak-ng releases](https://github.com/espeak-ng/espeak-ng/releases/latest).
 
-    * Download and install from [github](https://github.com/espeak-ng/espeak-ng/releases/latest)
+## 2. Install prosodic
 
-
-
-
-## 2. Install python>=3.9
-
-You will need to install Python version 3.9 or newer. If you don't have one, you can:
-
-a. Use [pyenv](https://github.com/pyenv/pyenv) to manage and install python versions.
-
-    i. To install pyenv: 
-
-        ```sh
-        curl pyenv.run | bash
-        ```
-
-    i. To install and activate a version of python:
-
-        ```sh
-        pyenv install 3.12
-        pyenv shell 3.12
-        ```
-    
-    i. Then (if you want) create a local environment:
-
-        ```sh
-        python -m venv venv
-        . venv/bin/activate
-        ```
-
-a. Or use [conda](https://docs.conda.io/projects/miniconda/en/latest) to do the same.
-
-    i. To install, follow [these instructions](https://docs.conda.io/projects/miniconda/en/latest/#quick-command-line-install) for a command-line install or [these](https://docs.conda.io/projects/miniconda/en/latest/#latest-miniconda-installer-links) for a graphical install.
-
-    i. Then create an environment:
-      
-        ```sh
-        conda create -n "prosodic" python=3.12 -y
-        conda activate prosodic
-        ```
-
-
-## 3. Install prosodic
-
-Install via pip:
+From PyPI:
 
 ```sh
-pip install git+https://github.com/quadrismegistus/prosodic@develop
+pip install prosodic
 ```
 
-Test to see if it works:
+Or the development version straight from GitHub:
 
 ```sh
-prosodic
+pip install git+https://github.com/quadrismegistus/prosodic
 ```
+
+### Optional extras
+
+- **Phrasal stress** (`syntax=True`) needs spaCy and a small English model:
+
+    ```sh
+    pip install "prosodic[syntax]"
+    python -m spacy download en_core_web_sm
+    ```
+
+    See [Phrasal stress](methods/phrasal-stress.qmd) for what this enables.
+
+- **GPU acceleration** is automatic when a working PyTorch install with CUDA
+  or Apple MPS is present; otherwise the parser runs on CPU (numpy). No GPU
+  is required.
+
+## 3. Check it works
+
+```python
+import prosodic
+prosodic.Text("Shall I compare thee to a summer's day?").parse()
+```
+
+Or launch the web app (see [Web app](webapp.qmd)):
+
+```sh
+prosodic web
+```
+
+If you would rather not install anything locally, use the hosted app at
+[prosodic.app](https://prosodic.app) or the remote client (covered on the
+[home page](index.qmd)).

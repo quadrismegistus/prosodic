@@ -156,7 +156,7 @@ list(sonnet.df.columns)""")
 
 md("""## Metrical parsing
 
-`text.parse()` runs an exhaustive vectorized parser: it evaluates every possible scansion against a configurable set of metrical constraints (numpy on CPU, torch on GPU when available), then uses harmonic bounding to identify optimal parses. Constraints include `w_peak` (no peak in weak position), `w_stress` (no stress in weak), `s_unstress` (no unstress in strong), `unres_within`/`unres_across` (no unresolved disyllables), `foot_size`. See `prosodic/parsing/constraints.py` for the full list.""")
+`text.parse()` runs an exhaustive vectorized parser: it evaluates every possible scansion against a configurable set of metrical constraints (numpy on CPU, torch on GPU when available), then uses harmonic bounding to identify optimal parses. Constraints include `w_peak` (no peak in weak position), `w_stress` (no stress in weak), `s_unstress` (no unstress in strong), `unres_within`/`unres_across` (no unresolved disyllables), `foot_size`. Turning on `syntax=True` (below) adds gradient phrasal-stress constraints (`w_stress_p`/`s_unstress_p`/`w_stress_t`/`s_unstress_t`). See `prosodic/parsing/constraints.py` for the full list, or [the write-up on metrical parsing](docs/methods/metrical-parsing.qmd) for the theory.""")
 
 code("""# parse a single line
 line = prosodic.Text("Shall I compare thee to a summer's day?").line1
@@ -181,6 +181,13 @@ sonnet.parse()
 for line in sonnet.lines[:6]:
     bp = line.best_parse
     print(f"L{line.num:2d}  {bp.meter_str}  score={bp.score:.1f}  ambig={len(line.parses.unbounded)}")""")
+
+md("""## The metrical grid
+
+`line.grid_str()` renders the best parse as a **Hayes-style metrical grid** (Liberman & Prince 1977; Hayes 1983): marks stacked over each syllable, where column height encodes prominence — every syllable gets one mark, lexically stressed syllables a second, primary-stressed syllables a third. The `w`/`s` row beneath is the metrical template, so a stress–meter mismatch shows up as a tall column standing over a `w` (a `*` after the meter letter flags a position that incurred a violation). This works on any parsed line — no spaCy required.""")
+
+code("""# Hayes-style metrical grid of the best parse (lexical rows only)
+print(sonnet.line1.grid_str())""")
 
 md("""## The parsed DataFrame
 
@@ -273,13 +280,30 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
 
 md("""## Phrasal stress (optional)
 
-With `syntax=True`, Prosodic uses spaCy's dependency parser to compute phrasal prominence (Liberman & Prince 1977) per word. This adds a `phrasal_stress` column to the syllable DataFrame and enables the `w_prom` and `s_demoted` constraints. Requires `pip install prosodic[syntax]`.
+With `syntax=True`, Prosodic runs spaCy's dependency parser to compute sentence-level prominence per word (Liberman & Prince 1977). It adds two kinds of column to the syllable DataFrame:
 
-```python
-t = prosodic.Text("...", syntax=True)
-t.parse()
-# phrasal_stress: 0 = sentence root, -1 = direct dependent, deeper = more embedded
-```""")
+- **`phrasal_stress`** — a discrete dependency-tree depth (`0` = sentence root, more negative = more deeply embedded), enabling the `w_prom` and `s_demoted` constraints.
+- **`pstress` / `tstress`** — gradient prominence in `[0, 1]`, ported from Dozat's MetricalTree algorithm (`tstress == 1.0` marks the sentence's nuclear stress), enabling the gradient constraints `w_stress_p` / `s_unstress_p` / `w_stress_t` / `s_unstress_t`.
+
+When `syntax=True`, `grid_str()` extends the grid *above* the word level using `tstress`, so the nuclear-stress word becomes the tallest column. Requires `pip install prosodic[syntax]`. See [the write-up on phrasal stress](docs/methods/phrasal-stress.qmd) for the full method and its lineage.""")
+
+code("""# Phrasal stress needs spaCy + a model: pip install "prosodic[syntax]".
+# In Colab we install them on demand; locally this is a no-op.
+import sys, importlib.util
+if importlib.util.find_spec("spacy") is None and "google.colab" in sys.modules:
+    import subprocess
+    subprocess.run(["pip", "install", "-q", "prosodic[syntax]"], check=True)
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"], check=True)""",
+     tags=["remove_cell"])
+
+code("""# nuclear stress ("day") becomes the tallest column
+phrasal = prosodic.Text("Shall I compare thee to a summer's day", syntax=True)
+phrasal.parse()
+print(phrasal.line1.grid_str())""")
+
+code("""# the gradient phrasal columns (one value per word, broadcast onto its syllables)
+cols = ['word_txt', 'syll_text', 'is_stressed', 'pstress', 'tstress']
+phrasal.df[phrasal.df.form_idx == 0][cols]""")
 
 md("""## Save and load
 
@@ -327,6 +351,13 @@ print(result.weights, result.accuracy)
 ```""")
 
 md("""## Further reading
+
+**Methods write-ups** (theory + implementation):
+
+- [Metrical parsing](docs/methods/metrical-parsing.qmd): generative-metrics background, the constraint-based model, harmonic bounding, and the vectorized parser
+- [Phrasal stress](docs/methods/phrasal-stress.qmd): the Nuclear Stress Rule, Dozat's MetricalTree, and our dependency-projection port (`pstress`/`tstress`)
+
+**Source**:
 
 - [`prosodic/parsing/constraints.py`](prosodic/parsing/constraints.py): every metrical constraint, with a vectorized lambda for the parser
 - [`prosodic/parsing/maxent.py`](prosodic/parsing/maxent.py): MaxEnt OT weight learner

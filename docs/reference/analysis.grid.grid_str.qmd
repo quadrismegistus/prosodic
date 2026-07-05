@@ -1,0 +1,13 @@
+# analysis.grid.grid_str { #prosodic.analysis.grid.grid_str }
+
+`analysis.grid.grid_str(parse, mark='*', viols=True, phrasal=None)`
+
+Render the grid as monospace text.
+
+Example::
+
+                            *
+        *       *       *   *        *
+    *   *   *   *   *   *   *   *    *   *
+    when IN  the CHRO ni  CLE  of  WA sted TIME
+    w    s   w   s    w   s   w   s  w    s

@@ -1,0 +1,100 @@
+# parsing.maxent.MaxEntTrainer { #prosodic.parsing.maxent.MaxEntTrainer }
+
+`parsing.maxent.MaxEntTrainer(self, meter, regularization=1.0, zones=None)`
+
+Learns constraint weights from annotated scansion data.
+
+Uses L-BFGS-B optimization of log-likelihood with L2 regularization.
+All heavy computation is vectorized numpy.
+
+Args:
+    meter: Meter object for parsing.
+    regularization: L2 regularization strength, i.e. the Gaussian prior
+        variance on weights (higher = weaker penalty = less shrinkage;
+        lower = stronger penalty = more shrinkage toward 0).
+    zones: positional zone splitting for constraints.
+        - None: no splitting (default). One weight per constraint.
+        - "initial": split into initial (first 2 syllables) vs rest.
+          Doubles the constraint count. Lets the model learn that e.g.
+          trochaic inversion in foot 1 costs less.
+        - "foot": split per metrical foot (every 2 syllable positions).
+          Creates C * max_feet constraints.
+        - int N: split line into N equal zones by syllable index.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [apply_to_meter](#prosodic.parsing.maxent.MaxEntTrainer.apply_to_meter) | Set learned weights on the meter. |
+| [learned_weights](#prosodic.parsing.maxent.MaxEntTrainer.learned_weights) | Return learned weights as a dict {constraint_name: weight}. |
+| [load_annotations](#prosodic.parsing.maxent.MaxEntTrainer.load_annotations) | Load annotated scansion data and parse all lines. |
+| [load_text](#prosodic.parsing.maxent.MaxEntTrainer.load_text) | Load a text and assign a uniform target scansion to all lines. |
+| [predict](#prosodic.parsing.maxent.MaxEntTrainer.predict) | Return a DataFrame with observed vs predicted frequencies per line. |
+| [report](#prosodic.parsing.maxent.MaxEntTrainer.report) | Print a summary of learned weights and predictions. |
+| [train](#prosodic.parsing.maxent.MaxEntTrainer.train) | Train constraint weights via L-BFGS-B optimization. |
+
+### apply_to_meter { #prosodic.parsing.maxent.MaxEntTrainer.apply_to_meter }
+
+`parsing.maxent.MaxEntTrainer.apply_to_meter()`
+
+Set learned weights on the meter.
+
+### learned_weights { #prosodic.parsing.maxent.MaxEntTrainer.learned_weights }
+
+`parsing.maxent.MaxEntTrainer.learned_weights()`
+
+Return learned weights as a dict {constraint_name: weight}.
+
+Weights are returned as positive values (negated from internal
+representation) for compatibility with Meter.constraints.
+
+### load_annotations { #prosodic.parsing.maxent.MaxEntTrainer.load_annotations }
+
+`parsing.maxent.MaxEntTrainer.load_annotations(data, lang=DEFAULT_LANG, text=None)`
+
+Load annotated scansion data and parse all lines.
+
+Args:
+    data: list of (line_text, scansion_str, frequency) tuples,
+          or a DataFrame with columns: text, scansion, frequency.
+    lang: language code for parsing.
+    text: optional pre-built TextModel (e.g. with syntax=True).
+
+### load_text { #prosodic.parsing.maxent.MaxEntTrainer.load_text }
+
+`parsing.maxent.MaxEntTrainer.load_text(text, target_scansion, lang=DEFAULT_LANG)`
+
+Load a text and assign a uniform target scansion to all lines.
+
+Lines whose syllable count doesn't match the target scansion length
+are skipped (with a warning).
+
+Args:
+    text: a string, list of line strings, or TextModel.
+    target_scansion: e.g. "wswswswsws" for iambic pentameter.
+    lang: language code for parsing.
+
+### predict { #prosodic.parsing.maxent.MaxEntTrainer.predict }
+
+`parsing.maxent.MaxEntTrainer.predict()`
+
+Return a DataFrame with observed vs predicted frequencies per line.
+
+### report { #prosodic.parsing.maxent.MaxEntTrainer.report }
+
+`parsing.maxent.MaxEntTrainer.report()`
+
+Print a summary of learned weights and predictions.
+
+### train { #prosodic.parsing.maxent.MaxEntTrainer.train }
+
+`parsing.maxent.MaxEntTrainer.train(only_negative_weights=True, verbose=False, **kwargs)`
+
+Train constraint weights via L-BFGS-B optimization.
+
+Args:
+    only_negative_weights: if True, clamp weights <= 0 (more
+        violations = worse, which is the standard OT/HG convention).
+    verbose: print optimization progress.
+    **kwargs: extra args passed to scipy.optimize.minimize (e.g.
+        maxiter, ftol).

@@ -1,0 +1,38 @@
+# texts.stanzas.Stanza { #prosodic.texts.stanzas.Stanza }
+
+`texts.stanzas.Stanza(self, children=[], parent=None, text=None, num=None, lang=DEFAULT_LANG, **kwargs)`
+
+A class representing a stanza in a poem or text.
+
+This class inherits from Text and represents a group of lines in a poem or text.
+It provides methods for initializing, converting to JSON, and analyzing rhyme patterns.
+
+Attributes:
+    sep (str): Separator string used between lines. Default is an empty string.
+    child_type (str): The type of child entities. Default is "Line".
+    prefix (str): Prefix used for identification. Default is "stanza".
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [is_rhyming](#prosodic.texts.stanzas.Stanza.is_rhyming) | Check if the stanza contains rhyming lines. |
+| [num_rhyming_lines](#prosodic.texts.stanzas.Stanza.num_rhyming_lines) | Get the number of rhyming lines in the stanza. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [get_rhyming_lines](#prosodic.texts.stanzas.Stanza.get_rhyming_lines) | Get the rhyming lines within the stanza. |
+
+### get_rhyming_lines { #prosodic.texts.stanzas.Stanza.get_rhyming_lines }
+
+`texts.stanzas.Stanza.get_rhyming_lines(max_dist=RHYME_MAX_DIST)`
+
+Get the rhyming lines within the stanza.
+
+Args:
+    max_dist (int): Maximum distance between rhyming lines. Default is RHYME_MAX_DIST.
+
+Returns:
+    Dict[Any, Any]: A dictionary of rhyming lines.

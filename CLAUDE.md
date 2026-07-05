@@ -70,7 +70,7 @@ TextModel → Stanza → Line → WordToken → WordType → WordForm → Syllab
 
 ### Metrical Parsing (`parsing/`)
 
-Theory + implementation write-up: [`methods/metrical-parsing.md`](methods/metrical-parsing.md).
+Theory + implementation write-up: [`docs/methods/metrical-parsing.qmd`](docs/methods/metrical-parsing.qmd).
 
 The parser is always vectorized and exhaustive — it evaluates ALL possible scansions via numpy and uses harmonic bounding to identify optimal parses.
 
@@ -103,7 +103,7 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 ### Phrasal Stress (`texts/phrasal_stress.py`)
 
-Theory + lineage write-up (Dozat's MetricalTree, cadence, our dep-projection port): [`methods/phrasal-stress.md`](methods/phrasal-stress.md).
+Theory + lineage write-up (Dozat's MetricalTree, cadence, our dep-projection port): [`docs/methods/phrasal-stress.qmd`](docs/methods/phrasal-stress.qmd).
 
 Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Uses spaCy dep-only parsing — no constituency trees needed.
 

@@ -1,0 +1,13 @@
+# analysis.rhyme_scheme.match_rhyme_scheme { #prosodic.analysis.rhyme_scheme.match_rhyme_scheme }
+
+`analysis.rhyme_scheme.match_rhyme_scheme(rhyme_ids)`
+
+Find the named rhyme scheme that best fits a sequence of rhyme IDs.
+
+Args:
+    rhyme_ids: list of integer rhyme group IDs, one per line. 0 = no rhyme.
+
+Returns:
+    dict with keys ``name``, ``form`` (letter scheme), ``accuracy`` (Jaccard
+    score), and ``candidates`` (top 5 alternatives). Returns ``None`` if
+    ``rhyme_ids`` is empty.

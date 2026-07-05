@@ -1,0 +1,5 @@
+# client.get_server { #prosodic.client.get_server }
+
+`client.get_server()`
+
+Get the current remote server (URL string or TestClient), or None.

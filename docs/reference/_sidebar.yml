@@ -1,0 +1,33 @@
+website:
+  sidebar:
+  - contents:
+    - reference/index.qmd
+    - contents:
+      - reference/texts.texts.Text.qmd
+      - reference/texts.texts.TextModel.qmd
+      - reference/texts.stanzas.Stanza.qmd
+      - reference/texts.lines.Line.qmd
+      - reference/words.wordtoken.WordToken.qmd
+      - reference/words.wordform.WordForm.qmd
+      - reference/words.syllables.Syllable.qmd
+      - reference/words.phonemes.Phoneme.qmd
+      section: Text & hierarchy
+    - contents:
+      - reference/parsing.meter.Meter.qmd
+      - reference/parsing.parses.Parse.qmd
+      - reference/parsing.maxent.MaxEntTrainer.qmd
+      section: Metrical parsing
+    - contents:
+      - reference/analysis.meter_type.classify_meter_type.qmd
+      - reference/analysis.line_scheme.detect_line_scheme.qmd
+      - reference/analysis.rhyme_scheme.match_rhyme_scheme.qmd
+      - reference/analysis.summary.summary.qmd
+      - reference/analysis.grid.grid_str.qmd
+      section: Poem-level analysis
+    - contents:
+      - reference/client.set_server.qmd
+      - reference/client.get_server.qmd
+      - reference/client.RemoteText.qmd
+      section: Remote client
+    id: reference
+  - id: dummy-sidebar

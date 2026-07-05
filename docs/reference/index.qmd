@@ -1,0 +1,52 @@
+# API reference {.doc .doc-index}
+
+## Text & hierarchy
+
+A text is a lazily-built tree of linguistic entities over a syllable-level DataFrame.
+
+
+| | |
+| --- | --- |
+| [texts.texts.Text](texts.texts.Text.qmd#prosodic.texts.texts.Text) |  |
+| [texts.texts.TextModel](texts.texts.TextModel.qmd#prosodic.texts.texts.TextModel) | A class that represents a text structure, comprised of WordTokens. |
+| [texts.stanzas.Stanza](texts.stanzas.Stanza.qmd#prosodic.texts.stanzas.Stanza) | A class representing a stanza in a poem or text. |
+| [texts.lines.Line](texts.lines.Line.qmd#prosodic.texts.lines.Line) |     A class representing a line of text in a poem or prose. |
+| [words.wordtoken.WordToken](words.wordtoken.WordToken.qmd#prosodic.words.wordtoken.WordToken) | Represents a word token in text. |
+| [words.wordform.WordForm](words.wordform.WordForm.qmd#prosodic.words.wordform.WordForm) | Represents a specific form of a word. |
+| [words.syllables.Syllable](words.syllables.Syllable.qmd#prosodic.words.syllables.Syllable) | Represents a syllable in a word. |
+| [words.phonemes.Phoneme](words.phonemes.Phoneme.qmd#prosodic.words.phonemes.Phoneme) | Represents a phoneme with various attributes. |
+
+## Metrical parsing
+
+The exhaustive, vectorized constraint-based parser and its MaxEnt weight learner.
+
+
+| | |
+| --- | --- |
+| [parsing.meter.Meter](parsing.meter.Meter.qmd#prosodic.parsing.meter.Meter) | A metrical parsing system using vectorized numpy constraint evaluation. |
+| [parsing.parses.Parse](parsing.parses.Parse.qmd#prosodic.parsing.parses.Parse) | Represents a metrical parse of a line of text. |
+| [parsing.maxent.MaxEntTrainer](parsing.maxent.MaxEntTrainer.qmd#prosodic.parsing.maxent.MaxEntTrainer) | Learns constraint weights from annotated scansion data. |
+
+## Poem-level analysis
+
+Higher-order form classification over a parsed text (surfaced as TextModel properties).
+
+
+| | |
+| --- | --- |
+| [analysis.meter_type.classify_meter_type](analysis.meter_type.classify_meter_type.qmd#prosodic.analysis.meter_type.classify_meter_type) | Classify the dominant meter of a parsed text. |
+| [analysis.line_scheme.detect_line_scheme](analysis.line_scheme.detect_line_scheme.qmd#prosodic.analysis.line_scheme.detect_line_scheme) | Find the repeating template that best fits a sequence of line lengths. |
+| [analysis.rhyme_scheme.match_rhyme_scheme](analysis.rhyme_scheme.match_rhyme_scheme.qmd#prosodic.analysis.rhyme_scheme.match_rhyme_scheme) | Find the named rhyme scheme that best fits a sequence of rhyme IDs. |
+| [analysis.summary.summary](analysis.summary.summary.qmd#prosodic.analysis.summary.summary) | Render a tabular summary of metrical + rhyme annotations. |
+| [analysis.grid.grid_str](analysis.grid.grid_str.qmd#prosodic.analysis.grid.grid_str) | Render the grid as monospace text. |
+
+## Remote client
+
+Duck-typed client for a Prosodic server (only `requests` required locally).
+
+
+| | |
+| --- | --- |
+| [client.set_server](client.set_server.qmd#prosodic.client.set_server) | Set the remote server for all subsequent Text() calls. |
+| [client.get_server](client.get_server.qmd#prosodic.client.get_server) | Get the current remote server (URL string or TestClient), or None. |
+| [client.RemoteText](client.RemoteText.qmd#prosodic.client.RemoteText) | Duck-types prosodic.texts.texts.TextModel. |

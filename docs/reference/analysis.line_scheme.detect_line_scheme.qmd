@@ -1,0 +1,18 @@
+# analysis.line_scheme.detect_line_scheme { #prosodic.analysis.line_scheme.detect_line_scheme }
+
+`analysis.line_scheme.detect_line_scheme(lengths, beat=True, stanza_length=None, encourage_invariable=True)`
+
+Find the repeating template that best fits a sequence of line lengths.
+
+Args:
+    lengths: per-line metric lengths (number of feet, or syllables).
+    beat: whether ``lengths`` is in beats (feet) or syllables. Affects
+        tolerance — beat schemes are stricter.
+    stanza_length: if known, restrict candidate templates to lengths
+        that divide the stanza evenly.
+    encourage_invariable: penalize variable templates by 1.
+
+Returns:
+    ``(best_combo, best_diff)``. ``best_combo`` is a tuple of integer
+    positions (the repeating template). ``best_diff`` is the total
+    per-position difference of the model vs observed lengths.

@@ -1,0 +1,9 @@
+# client.set_server { #prosodic.client.set_server }
+
+`client.set_server(server)`
+
+Set the remote server for all subsequent Text() calls.
+
+Args:
+    server: Server URL string (e.g. "https://prosodic.app"),
+            a FastAPI TestClient instance, or None to revert to local.

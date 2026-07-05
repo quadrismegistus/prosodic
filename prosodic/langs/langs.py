@@ -299,11 +299,43 @@ class LanguageModel:
         syll = []
         grid = self.syllabiphon._to_grid(phn)
         bounds = self.syllabiphon.find_boundaries(grid)
-        for phon, seg, is_bound in zip(phns, grid, bounds):
+        # Align espeak tokens to panphon segs: one token can span multiple
+        # segs (panphon splits diphthongs like 'aʊ' and affricates like 'dʒ'
+        # into two), so a naive zip(phns, grid, bounds) shifts every boundary
+        # flag after the first such token and mis-syllabifies the rest of the
+        # word. Per-token boundary rules:
+        #   - vocalic token (a nucleus, son >= 8 on any seg): boundary is its
+        #     FIRST seg's flag — a nucleus never splits internally — plus a
+        #     forced boundary after another nucleus (two adjacent vowel tokens
+        #     are two syllables: "gayest" ɡ.eɪ.ə.st, German "gehen" ɡ.eː.ə.n).
+        #   - consonantal token: a boundary flagged on ANY of its segs breaks
+        #     before the whole token (onset attachment): "engine" ɛn|dʒɪn even
+        #     when the flag lands on the ʒ half of dʒ.
+        seg_idx = 0
+        prev_vocalic = False
+        for tok in phns:
+            bare = tok.lstrip("ˈˌ")
+            acc = ""
+            k = 0
+            while seg_idx + k < len(grid) and len(acc) < len(bare):
+                acc += grid[seg_idx + k].ph
+                k += 1
+            if acc != bare:
+                k = 1  # panphon dropped/renamed a char: 1:1 like before
+            span = range(seg_idx, min(seg_idx + max(1, k), len(grid)))
+            vocalic = any(grid[i].son >= 8 for i in span)
+            if vocalic:
+                is_bound = (
+                    (seg_idx < len(bounds) and bounds[seg_idx]) or prev_vocalic
+                )
+            else:
+                is_bound = any(i < len(bounds) and bounds[i] for i in span)
             if is_bound and syll:
                 sylls.append(syll)
                 syll = []
-            syll.append(phon)
+            syll.append(tok)
+            prev_vocalic = vocalic
+            seg_idx += max(1, k)
         if syll:
             sylls.append(syll)
 
@@ -683,6 +715,10 @@ def Language(lang: str = DEFAULT_LANG):
         from .finnish import FinnishLanguage
 
         return FinnishLanguage()
+    if lang == "de":
+        from .german import GermanLanguage
+
+        return GermanLanguage()
 
     lang_obj = LanguageModel()
     lang_obj.lang = lang

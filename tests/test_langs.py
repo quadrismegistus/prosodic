@@ -336,3 +336,22 @@ def test_stresses():
     sylls_text_ll = [["my"], ["nice"]]
     expected_result = [[("'maɪ", "my")], [("naɪs", "nice")]]
     assert get_sylls_ll(sylls_ipa_ll, sylls_text_ll) == expected_result
+
+
+def test_syllabify_ipa_token_seg_alignment():
+    """Diphthongs ('aʊ') and affricates ('dʒ') are ONE espeak token but TWO
+    panphon segs; boundary flags must be consumed per-token. The old naive
+    zip shifted every boundary after the first such token (deterministic:
+    raw IPA in, no espeak needed)."""
+    en = Language('en')
+    # diphthong then later syllables: shift would corrupt the whole tail
+    assert len(en.syllabify_ipa("p ˈaɪ ɹ ə t")) == 2       # pirate
+    assert len(en.syllabify_ipa("d ˈaʊ n w ə ɹ d")) == 2   # downward
+    assert len(en.syllabify_ipa("tʃ ˈɪɹ f ə l")) == 2      # chearful
+    # boundary flagged on the second half of an affricate must still split
+    assert len(en.syllabify_ipa("ˈɛ n dʒ ɪ n")) == 2       # engine
+    # two adjacent vowel tokens are two nuclei -> forced boundary
+    assert len(en.syllabify_ipa("ɡ ˈeɪ ə s t")) == 2       # gayest
+    assert len(en.syllabify_ipa("f ˈaɪ ə ɹ")) == 2         # fire
+    # German-style secondary-stressed hiatus after a diphthong+cluster
+    assert len(en.syllabify_ipa("ˈaʊ f ʃ t ˌeː ə n")) == 3  # aufstehen

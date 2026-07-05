@@ -104,15 +104,17 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Languages
 
-- **German (Blankvers)** — validates the "flexible languages" claim.
-  Path: `langs/langs.py` `LanguageModel` subclass like Finnish
-  (`langs/finnish/` is the template for rule-based `get_sylls_ll_rule()`);
-  espeak has `de` support for the TTS fallback. German needs: syllable
-  weight rules, fixed-ish root-initial stress with prefix exceptions
-  (be-/ge-/ver-/er-/zer-/ent- unstressed), compound handling. Corpus:
-  Schiller/Goethe Blankvers (public domain). The g2p syllable-label
-  aligner (`langs/g2p_align.py`) is English-only — German would need its
-  own spelling table or fall back to NLTK labels (fine).
+- ✅ **German (Blankvers)** — shipped 2026-07-06, and much lighter than
+  sketched: espeak-ng's German lexical stress turned out highly reliable
+  (prefixes, compounds, loanwords hand-verified), so `langs/german/` is a
+  thin `LanguageModel` subclass + word lists + a 6-row `german.tsv`
+  override for -ur loanwords — no rule engine. The enabling work was a
+  latent cross-language TTS syllabifier bug (espeak-token/panphon-seg
+  misalignment on diphthongs & affricates) fixed in `syllabify_ipa` and
+  differentially verified over all 5294 cached English TTS words.
+  Schiller corpus + `tests/test_german.py` (8 tests). Possible follow-ups:
+  German g2p spelling table for aligned syllable labels (now NLTK
+  fallback); a Goethe/other-meter corpus; grow the word lists from usage.
 - **Esperanto** — community-requested (issue #36, 2021; the asker wanted it
   for MA research). Easiest possible language: fully phonemic orthography,
   invariant penultimate stress, elision (final `-o` apostrophe) as the one

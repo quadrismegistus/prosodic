@@ -4,6 +4,11 @@ The README notebook is canonical: this script is its source. Run it whenever
 you change the API or the analysis module so the notebook (and the derived
 README.md) stay in sync.
 
+Sibling: ``docs/index.qmd`` is the docs-site edition of this same API tour
+(a quarto-native executable page with frozen outputs in ``docs/_freeze/``).
+When the tour changes here, update it too — see the comment at the top of
+that file.
+
 Usage::
 
     .venv/bin/python scripts/build_readme.py

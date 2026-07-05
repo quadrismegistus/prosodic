@@ -1,1 +1,335 @@
-{{< include ../README.md >}}
+---
+title: "Prosodic"
+subtitle: "Metrical-phonological analysis of poetry (and prose) in Python"
+jupyter: python3
+---
+
+<!--
+This page is the docs-site sibling of scripts/build_readme.py (which
+generates README.ipynb / README.md for GitHub and Colab). Same API tour,
+different medium: this one is a quarto-native executable page with frozen
+outputs (docs/_freeze/). When the API tour changes, update both. To
+re-execute: `quarto render docs` locally with QUARTO_PYTHON set to the
+project venv, then commit the regenerated docs/_freeze/index/.
+-->
+
+**Prosodic** parses text into a linguistic hierarchy (text → stanza → line
+→ word → syllable → phoneme), runs a constraint-based metrical parser over
+every line, and identifies stress patterns (iambic, trochaic, anapestic,
+dactylic), foot/syllable schemes, and named rhyme schemes. Everything on
+this page is real executed output.
+
+- **Try it without installing**: the hosted web app at
+  [prosodic.app](https://prosodic.app)
+- **Run this tour yourself**: the
+  [README notebook on Colab](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
+- **Source**: [github.com/quadrismegistus/prosodic](https://github.com/quadrismegistus/prosodic)
+
+Built by [Ryan Heuser](https://github.com/quadrismegistus),
+[Josh Falk](https://github.com/jsfalk), and
+[Arto Anttila](http://web.stanford.edu/~anttila/), with contributions from
+[Sam Bowman](https://github.com/sleepinyourhat).
+
+## Install
+
+```sh
+pip install prosodic
+```
+
+Plus [espeak](https://github.com/espeak-ng/espeak-ng) for words not in the
+CMU dictionary (`brew install espeak` / `apt-get install espeak`) — see
+[Install](install.qmd) for details and optional extras.
+
+## Quickstart
+
+```{python}
+#| label: quickstart
+import warnings; warnings.filterwarnings('ignore')
+import prosodic
+
+sonnet = prosodic.Text("""When in the chronicle of wasted time
+I see descriptions of the fairest wights,
+And beauty making beautiful old rhyme
+In praise of ladies dead and lovely knights,
+Then, in the blazon of sweet beauty's best,
+Of hand, of foot, of lip, of eye, of brow,
+I see their antique pen would have express'd
+Even such a beauty as you master now.
+So all their praises are but prophecies
+Of this our time, all you prefiguring;
+And, for they look'd but with divining eyes,
+They had not skill enough your worth to sing:
+For we, which now behold these present days,
+Had eyes to wonder, but lack tongues to praise.""")
+
+sonnet.parse()
+print(sonnet.summary())
+```
+
+One call each way: scansion per line, rhyme letters, and the estimated
+schema (iambic pentameter, a sonnet-variant rhyme scheme — this is
+Sonnet 106, whose slant rhymes push it off the strict Shakespearean
+template; the [sonnets exploration](explorations/sonnets.qmd) reads that
+story closely).
+
+## Reading texts
+
+A `Text` can come from a string, a file or URL, or collapse to a single
+line:
+
+```{python}
+#| label: reading-texts
+from pathlib import Path
+
+# the Shakespeare corpus bundled with the repo (fall back to GitHub)
+_rel = Path('corpora') / 'corppoetry_en' / 'en.shakespeare.txt'
+_root = next((p for p in [Path.cwd(), *Path.cwd().parents]
+              if (p / _rel).exists()), None)
+corpus_fn = (str(_root / _rel) if _root else
+             'https://raw.githubusercontent.com/quadrismegistus/prosodic'
+             '/master/corpora/corppoetry_en/en.shakespeare.txt')
+
+short = prosodic.Text("A horse, a horse, my kingdom for a horse!")
+shaksonnets = prosodic.Text(fn=corpus_fn)
+line = prosodic.Text("Shall I compare thee to a summer's day?").line1
+
+print(f"short:   {len(short.lines)} line(s)")
+print(f"sonnets: {len(shaksonnets.lines):,} lines, "
+      f"{len(shaksonnets.stanzas):,} stanzas")
+print(f"line:    {line}")
+```
+
+## The hierarchy
+
+Text objects form a lazily-built tree: stanzas → lines → word tokens →
+word forms (pronunciations) → syllables → phonemes.
+
+```{python}
+#| label: hierarchy
+print(f"sonnet has {len(sonnet.stanzas)} stanza, {len(sonnet.lines)} lines")
+print(f"line 1 has {len(sonnet.lines[0].wordtokens)} word tokens")
+
+wordform = sonnet.line1.wordtokens[3].wordform   # "chronicle"
+print(f"\n{wordform}")
+for syll in wordform.syllables:
+    print(f"  {syll.txt!r:8} ipa={syll.ipa!r:8} "
+          f"stressed={syll.is_stressed} heavy={syll.is_heavy}")
+```
+
+## DataFrame view
+
+Underneath, the source of truth is a flat per-syllable DataFrame —
+entities above are built from it on demand. Every feature the parser uses
+is a column:
+
+```{python}
+#| label: syll-df
+sonnet.df.head(8)
+```
+
+## Metrical parsing
+
+`parse()` evaluates **every** possible scansion of each line against a set
+of violable constraints (`w_stress`, `s_unstress`, `w_peak`,
+`unres_within`/`unres_across`, `foot_size`, …), scores them by weighted
+violations, and keeps the Pareto frontier under harmonic bounding. With
+`syntax=True` (below), gradient phrasal-stress constraints join in. Theory
+and implementation: [Metrical parsing](methods/metrical-parsing.qmd).
+
+```{python}
+#| label: parse-line
+line = prosodic.Text("Shall I compare thee to a summer's day?").line1
+line.parse()
+
+bp = line.best_parse
+print(bp.txt)
+print(f"meter:     {bp.meter_str}   (- weak, + strong)")
+print(f"stress:    {bp.stress_str}   (- unstressed, + stressed)")
+print(f"score:     {bp.score}   (weighted violations)")
+print(f"foot_type: {bp.foot_type}, rising={bp.is_rising}")
+```
+
+```{python}
+#| label: parse-sonnet
+sonnet.parse()
+for l in sonnet.lines[:6]:
+    bp = l.best_parse
+    print(f"L{l.num:2d}  {bp.meter_str}  score={bp.score:.0f}  "
+          f"ambig={len(l.parses.unbounded)}")
+```
+
+### The metrical grid
+
+`grid_str()` draws the best parse as a Hayes-style grid — column height is
+prominence, and the `w`/`s` template row makes any stress–meter mismatch
+visible at a glance (violating positions are starred):
+
+```{python}
+#| label: grid
+print(sonnet.line1.grid_str())
+```
+
+### The parsed DataFrame
+
+All parse results are also a flat DataFrame — one row per syllable per
+scansion, with per-constraint violation columns — ready for pandas:
+
+```{python}
+#| label: parsed-df
+sonnet.parsed_df.head(8)
+```
+
+## Custom meters
+
+The default meter allows two-syllable positions (resolutions). Constraints,
+weights, and position sizes are all configurable:
+
+```{python}
+#| label: custom-meter
+strict = prosodic.Meter(
+    constraints=['w_peak', 'w_stress', 's_unstress', 'foot_size'],
+    max_s=1, max_w=1,
+)
+sonnet.parse(meter=strict)
+print(sonnet.line1.best_parse)
+```
+
+## Poem-level analysis
+
+Corpus- and poem-scale form detection (ported from the
+[poesy](https://github.com/quadrismegistus/poesy) package): meter
+classification, repeating line/syllable schemes, and rhyme.
+
+```{python}
+#| label: meter-type
+sonnet.parse()  # back to the default meter
+mt = sonnet.meter_type
+print({k: mt[k] for k in ('foot', 'head', 'type')})
+print('feet scheme:', sonnet.line_scheme['combo'],
+      '  syllable scheme:', sonnet.syllable_scheme['combo'])
+```
+
+Rhyme is detected from sound, not spelling — feature-weighted edit
+distance over the IPA of each line's final rime (0 = perfect rhyme):
+
+```{python}
+#| label: rhyme
+from prosodic.analysis import nums_to_scheme
+
+print('time/rhyme distance:',
+      sonnet.line1.rime_distance(sonnet.lines[2]))
+print('rhyme letters:      ', ''.join(nums_to_scheme(sonnet.rhyme_ids)))
+
+rs = sonnet.rhyme_scheme
+print(f"best-fit scheme:     {rs['name']} ({rs['form']}), "
+      f"accuracy {rs['accuracy']:.2f}")
+print('is_sonnet:', sonnet.is_sonnet,
+      ' is_shakespearean_sonnet:', sonnet.is_shakespearean_sonnet)
+```
+
+## Learning constraint weights (MaxEnt)
+
+`Meter.fit()` learns constraint weights from data — a uniform target
+scansion or annotated lines — by Maximum-Entropy optimization, optionally
+split by line **zones** so the model can learn positional leniency:
+
+```{python}
+#| label: maxent
+meter = prosodic.Meter()
+meter.fit(sonnet, 'wswswswsws', zones=3)
+
+for name, w in sorted(meter.zone_weights.items(),
+                      key=lambda x: -abs(x[1]))[:6]:
+    print(f"  {w:+.3f}  {name}")
+```
+
+At corpus scale this recovers textbook metrics — on the full sonnets, the
+model learns on its own that line-initial inversion is free
+(`w_stress` weight 0 in zone 1). See the
+[sonnets exploration](explorations/sonnets.qmd) for that experiment.
+
+## Phrasal stress
+
+With `syntax=True` (requires `pip install "prosodic[syntax]"`), Prosodic
+computes *sentence-level* prominence from a dependency parse — gradient
+`pstress`/`tstress` values per word, where `tstress = 1.0` is the
+sentence's nuclear stress (see
+[Phrasal stress](methods/phrasal-stress.qmd) for the MetricalTree
+lineage). The grid grows phrasal rows: the nuclear-stress word becomes
+the tallest column.
+
+```{python}
+#| label: phrasal
+t = prosodic.Text("Shall I compare thee to a summer's day", syntax=True)
+t.parse()
+print(t.line1.grid_str())
+```
+
+```{python}
+#| label: phrasal-df
+df = t.df
+(df[df.form_idx == 0].drop_duplicates('word_num')
+   [['word_txt', 'pstress', 'tstress']].set_index('word_txt').T)
+```
+
+```{python}
+#| label: fig-grid
+#| fig-cap: "The same grid as a figure: `line.grid_plot()` (plotnine)."
+from plotnine import theme
+t.line1.grid_plot() + theme(figure_size=(8, 3))
+```
+
+Gradient prominence also feeds the parser via the `w_stress_p` /
+`s_unstress_p` / `w_stress_t` / `s_unstress_t` constraints — inert without
+`syntax=True`, most useful for prose rhythm and naturalness ranking.
+
+## Save and load
+
+Parquet-backed persistence keeps the syllable DataFrame and parse results —
+no re-parsing on reload:
+
+```{python}
+#| label: save-load
+import tempfile, os, shutil
+out = tempfile.mkdtemp(prefix='prosodic_demo_')
+sonnet.save(out)
+print('saved: ', sorted(os.listdir(out)))
+
+loaded = prosodic.TextModel.load(out)
+print('loaded:', len(loaded.lines), 'lines; parse cached?',
+      loaded._cached_parsed_df is not None)
+shutil.rmtree(out)
+```
+
+## Web app and remote client
+
+A hosted instance runs at [prosodic.app](https://prosodic.app); locally:
+
+```sh
+prosodic web        # http://127.0.0.1:8181  (see the Web App page)
+```
+
+Any Prosodic server also backs the **remote client** — the same Python
+interface with only `requests` installed locally:
+
+```python
+import prosodic
+prosodic.set_server('https://prosodic.app')
+
+t = prosodic.Text("From fairest creatures we desire increase")
+t.parse()                            # delegates to /api/parse
+print(t.lines[0].best_parse.meter_str)
+```
+
+See [Web app](webapp.qmd) for the five-tab tour.
+
+## Going further
+
+- [Shakespeare's sonnets](explorations/sonnets.qmd) — a whole-corpus
+  executable analysis: form census, ambiguity, learned weights
+- [Metrical parsing](methods/metrical-parsing.qmd) — the theory
+  (Halle/Keyser → Kiparsky → OT/HG/MaxEnt) and the vectorized parser
+- [Phrasal stress](methods/phrasal-stress.qmd) — the Nuclear Stress Rule,
+  Dozat's MetricalTree, and the dependency-projection port
+- [Architecture](architecture.qmd) — how the library is put together
+- [API reference](reference/index.qmd) — classes and functions

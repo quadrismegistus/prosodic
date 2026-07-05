@@ -309,17 +309,15 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ URL routing with back/forward, lucide icons, two-column desktop layout
 - ✅ `--dev` flag for prosodic web (auto-reload backend + frontend)
 - ✅ Punctuation preserved in parse HTML via render_parse_html(parse, line)
-- ✅ Poesy port: meter type / line scheme / rhyme scheme / sonnet detection / summary table now in `prosodic/analysis/` (was a separate `poesy` package, replaced)
+- ✅ Poesy port: meter type / line scheme / rhyme scheme / sonnet detection / summary table now in `prosodic/analysis/` (was a separate `poesy` package; poesy ≥0.4 is now a thin shim over prosodic ≥3.5)
 - ✅ Rime distance threshold calibrated against Walker (1775) rhyming dictionary: `data/walker5.csv`, eval script at `scripts/rime_eval.py`. F1-optimal `max_dist=0.35` for `compute_rhyme_ids`.
+- ✅ Auto-deploy on push (`stable-release.yml`: tests → SSH deploy → health check; self-healing `git reset --hard` + `npm ci`)
+- ✅ Merge app3 → master (master is the deployed branch)
+- ✅ Windows in CI test matrix (espeak-ng MSI; validates the #62/#74 fixes on every push)
+- ✅ G2P-aligned orthographic syllable labels (`langs/g2p_align.py`, fixes #47)
+- ✅ cadence fork superseded and archived (prose rhythm now via `syntax=True`; its unique capabilities catalogued in ROADMAP.md)
 
 ### Remaining
-- **Parse table design polish** (grid stress view — Hayes-style metrical grid over syllables)
-- **Scansion prefiltering** (skip scansions where strong positions wildly mismatch stressed syllables)
-- **Lazy phoneme construction** (Syllable creates Phoneme objects eagerly; could defer to IPA-on-demand)
-- **Ternary meter identification** (MaxEnt meter.fit works for binary iambic/trochaic but ternary anapestic/dactylic needs ternary-aware constraints or dynamic template matching)
-- **Vectorize unres_within/unres_across** (last two constraints still use per-line Python loops in evaluate_constraints_batch; could be lifted to numpy with word boundary masking)
-- **Rhyme detection threshold tuning** (RHYME_MAX_DIST=0 default is binary; gradient rime_distance works but no calibrated threshold for "slant rhyme" vs "not rhyme")
-- **Grid stress view** (Hayes-style metrical grid visualization for Line View tab — asterisks stacked over syllables by stress level)
-- **Auto-deploy on push** (GitHub Actions SSH workflow: `git pull && pip install -e . && npm run build && systemctl restart prosodic`)
-- **GPU/CPU dispatch optimization** (CPU wins for n<11 single-line, GPU wins for n≥11 or batched; auto-dispatch by total work per nsylls group)
-- **Merge app3 → master** (app3 currently ahead; deployment is on app3 branch)
+
+See [ROADMAP.md](ROADMAP.md) — the single source for planned work (parser
+optimizations, grid stress view, cadence ports, languages, infrastructure).

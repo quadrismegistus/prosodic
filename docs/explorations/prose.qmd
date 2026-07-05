@@ -1,0 +1,364 @@
+---
+title: "Prose rhythm"
+subtitle: "Is prose measurably less metrical than verse? The cadence question, answered inside prosodic"
+jupyter: python3
+---
+
+Verse announces its rhythm; prose merely has one. Whether that prose
+rhythm is *measurable* — whether Sir Thomas Browne's cadences or Lincoln's
+periods differ quantifiably from Shakespeare's pentameter — was the
+research question behind
+[cadence](https://github.com/quadrismegistus/cadence), a fork of prosodic
+built to scan prose (archived 2026, its capabilities absorbed into
+prosodic v3). This page asks cadence's question with prosodic's tools:
+the same exhaustive metrical parser, phrase-sized parse units, and the
+phrasal-stress machinery described in the
+[phrasal stress methods page](../methods/phrasal-stress.qmd). Every
+output below is computed by the code shown.
+
+```{python}
+#| label: setup
+import logging, warnings
+from pathlib import Path
+warnings.filterwarnings('ignore')
+logging.disable(logging.CRITICAL)   # silence parse-unit notices; see prose below
+
+import pandas as pd
+import prosodic
+```
+
+```{python}
+#| label: passages
+#| code-fold: true
+#| code-summary: "The prose passages (Melville 1851, Browne 1658, Lincoln 1863)"
+MOBY = ("Call me Ishmael. Some years ago—never mind how long precisely—having "
+"little or no money in my purse, and nothing particular to interest me on shore, "
+"I thought I would sail about a little and see the watery part of the world. It "
+"is a way I have of driving off the spleen, and regulating the circulation. "
+"Whenever I find myself growing grim about the mouth; whenever it is a damp, "
+"drizzly November in my soul; whenever I find myself involuntarily pausing "
+"before coffin warehouses, and bringing up the rear of every funeral I meet; "
+"and especially whenever my hypos get such an upper hand of me, that it requires "
+"a strong moral principle to prevent me from deliberately stepping into the "
+"street, and methodically knocking people's hats off—then, I account it high "
+"time to get to sea as soon as I can. There now is your insular city of the "
+"Manhattoes, belted round by wharves as Indian isles by coral reefs—commerce "
+"surrounds it with her surf. Right and left, the streets take you waterward. "
+"Its extreme downtown is the battery, where that noble mole is washed by waves, "
+"and cooled by breezes, which a few hours previous were out of sight of land. "
+"Look at the crowds of water-gazers there.")
+
+URN = ("What song the Sirens sang, or what name Achilles assumed when he hid "
+"himself among women, though puzzling questions, are not beyond all conjecture. "
+"Life is a pure flame, and we live by an invisible sun within us. The night of "
+"time far surpasseth the day, and who knows when was the equinox? Darkness and "
+"light divide the course of time, and oblivion shares with memory a great part "
+"even of our living beings. But the iniquity of oblivion blindly scattereth her "
+"poppy, and deals with the memory of men without distinction to merit of "
+"perpetuity. Who can but pity the founder of the pyramids? Herostratus lives "
+"that burnt the temple of Diana, he is almost lost that built it. Time hath "
+"spared the epitaph of Adrian's horse, confounded that of himself. The greater "
+"part must be content to be as though they had not been, to be found in the "
+"register of God, not in the record of man.")
+
+GETTYSBURG = ("Four score and seven years ago our fathers brought forth on this "
+"continent, a new nation, conceived in Liberty, and dedicated to the proposition "
+"that all men are created equal. Now we are engaged in a great civil war, "
+"testing whether that nation, or any nation so conceived and so dedicated, can "
+"long endure. We are met on a great battle-field of that war. We have come to "
+"dedicate a portion of that field, as a final resting place for those who here "
+"gave their lives that that nation might live. It is altogether fitting and "
+"proper that we should do this. But, in a larger sense, we can not dedicate—we "
+"can not consecrate—we can not hallow—this ground. The brave men, living and "
+"dead, who struggled here, have consecrated it, far above our poor power to add "
+"or detract. The world will little note, nor long remember what we say here, "
+"but it can never forget what they did here. It is for us the living, rather, "
+"to be dedicated here to the unfinished work which they who fought here have "
+"thus far so nobly advanced. It is rather for us to be here dedicated to the "
+"great task remaining before us—that from these honored dead we take increased "
+"devotion to that cause for which they gave the last full measure of "
+"devotion—that we here highly resolve that these dead shall not have died in "
+"vain—that this nation, under God, shall have a new birth of freedom—and that "
+"government of the people, by the people, for the people, shall not perish "
+"from the earth.")
+```
+
+## Prose parses too
+
+Verse hands the parser its unit: the line. Prose has no lines, so
+prosodic scans it in **lineparts** — the phrase-sized stretches between
+punctuation marks (`Meter(parse_unit='linepart')`). The opening of
+*Moby-Dick*:
+
+```{python}
+#| label: moby-parse
+moby = prosodic.Text(MOBY)
+moby.parse(meter=prosodic.Meter(parse_unit='linepart'))
+
+for lp in moby.lineparts[:6]:
+    try:
+        bp = lp.best_parse
+        print(f"{bp.meter_str:16s} score={bp.score:.0f}  | {bp.txt}")
+    except AssertionError:
+        words = ' '.join(w.txt.strip() for w in lp if not w.is_punc)
+        print(f"{'(not parsed)':16s}           | {words[:52]}…")
+```
+
+*Call me Ishmael* scans as two clean trochees — the most famous opening
+in American prose is perfectly, if invertedly, metrical — and the next
+two phrases are flawless iambic runs. One clause in this batch goes
+unparsed: at 19 syllables it exceeds `MAX_SYLL_IN_PARSE_UNIT` (18), the
+cap that keeps exhaustive candidate generation affordable. (The
+[web app](../webapp.qmd) sub-splits such clauses at dependency-tree
+boundaries when `syntax=True`; here we simply skip them and say so.)
+
+## The grid on prose
+
+Sir Thomas Browne's *Urn Burial* (1658) is the canonical example of
+cadenced English prose. With `syntax=True`, the
+[Hayes-style grid](../methods/metrical-parsing.qmd) stacks phrasal
+prominence above lexical stress — the sentence's nuclear stress becomes
+the tallest column:
+
+```{python}
+#| label: browne-grid
+browne = prosodic.Text(
+    "Life is a pure flame, and we live by an invisible sun within us.",
+    syntax=True)
+browne.parse()
+print(browne.line1.grid_str())
+```
+
+The grid's phrasal rows are computed from three word-level columns —
+gradient phrase strength (`pstress`), cumulative sentence prominence
+(`tstress`, min–max normalized so 1.0 is the nuclear stress), and
+`pstrength`, which marks **local phrasal peaks and valleys** (1 = more
+prominent than both neighbors, 0 = less; the newest member of the
+family, completing the cadence constraint set):
+
+```{python}
+#| label: browne-cols
+df = browne.df
+(df[df.form_idx == 0].drop_duplicates('word_num')
+   [['word_txt', 'pstress', 'tstress', 'pstrength']]
+   .set_index('word_txt').T)
+```
+
+```{python}
+#| label: fig-browne
+#| fig-cap: "`line.grid_plot()`: the same grid as a figure — *sun* carries the sentence."
+from plotnine import theme
+browne.line1.grid_plot() + theme(figure_size=(9, 3))
+```
+
+## The trees behind the numbers
+
+Those prominence values fall out of a metrical-tree computation (Dozat's
+MetricalTree, run over spaCy dependency projections — lineage and
+validation on the [methods page](../methods/phrasal-stress.qmd)).
+`text.syntax_trees()` exports the projection trees themselves as
+`nltk.Tree` objects, one per sentence, with preterminals labeled
+`TAG/tstress` — and with `svgling` installed they render as SVG:
+
+```{python}
+#| label: tree
+jack = prosodic.Text("This is the house that Jack built.", syntax=True)
+tree = jack.syntax_trees()[0]
+
+import svgling
+svgling.draw_tree(tree)
+```
+
+Two things to notice. The object NP has an **inner core**: `the house`
+is wrapped in its own NP inside `NP(NP(the house) VP(that Jack built))`,
+exactly the constituency topology the projection rules reconstruct (the
+relative clause wins the Nuclear Stress Rule, but the demotion lands on
+the inner NP node, so *house* keeps its local strength). And the
+`tstress` labels are the grid's phrasal rows in tree form: *built* at
+`VBD/1.00` is this sentence's nuclear stress — the word a grid would
+draw tallest.
+
+## Verse vs prose, quantitatively
+
+Now cadence's question proper. Parse Shakespeare's sonnets (2,155 lines)
+and our three prose passages with the **same meter and the same
+phrase-sized units**, and compare how well their best parses fit the
+alternating template. The measure: constraint violations per syllable in
+each unit's best parse.
+
+```{python}
+#| label: verse-prose
+_rel = Path('corpora') / 'corppoetry_en' / 'en.shakespeare.txt'
+_root = next((p for p in [Path.cwd(), *Path.cwd().parents]
+              if (p / _rel).exists()), None)
+corpus_fn = (str(_root / _rel) if _root else
+             'https://raw.githubusercontent.com/quadrismegistus/prosodic'
+             '/master/corpora/corppoetry_en/en.shakespeare.txt')
+
+def unit_rates(text):
+    """Per-linepart best-parse stats from the DataFrame parse path."""
+    df = text.get_parsed_df(parse_unit='linepart')
+    best = df[df.is_best & (df.parse_rank == 1)]
+    g = best.groupby('line_num').agg(nsyll=('line_syll_idx', 'size'),
+                                     score=('parse_score', 'first'))
+    g['rate'] = g.score / g.nsyll
+    viols = (best[[c for c in best.columns if c.startswith('*')]].sum()
+             / len(best) * 10)
+    return g, viols
+
+verse, vv = unit_rates(prosodic.Text(fn=corpus_fn))
+sources = {}
+for name, passage in [('Melville', MOBY), ('Browne', URN),
+                      ('Lincoln', GETTYSBURG)]:
+    g, _ = unit_rates(prosodic.Text(passage))
+    sources[name] = g
+_, pv = unit_rates(prosodic.Text('\n\n'.join([MOBY, URN, GETTYSBURG])))
+prose = pd.concat(sources.values())
+
+print(f"verse: {len(verse):,} phrase-units, "
+      f"{verse.rate.mean():.3f} violations/syllable, "
+      f"{(verse.score == 0).mean():.0%} scan perfectly")
+print(f"prose: {len(prose):,} phrase-units, "
+      f"{prose.rate.mean():.3f} violations/syllable, "
+      f"{(prose.score == 0).mean():.0%} scan perfectly")
+```
+
+```{python}
+#| label: fig-verse-prose
+#| fig-cap: "Best-parse violation rates per phrase unit, verse vs prose, same meter. Verse owns the perfect bin; prose spreads right — but the overlap is the finding."
+from plotnine import (aes, after_stat, annotate, geom_histogram, ggplot,
+                      labs, scale_fill_manual, theme, theme_minimal)
+
+d = pd.concat([verse.assign(medium='verse (Shakespeare)'),
+               prose.assign(medium='prose (Melville, Browne, Lincoln)')])
+
+(ggplot(d, aes('rate', fill='medium'))
+ + geom_histogram(aes(y=after_stat('density')), position='identity',
+                  alpha=0.6, binwidth=0.1, boundary=0,
+                  color='white', size=0.3)
+ + scale_fill_manual(values=['#1baf7a', '#2a78d6'])
+ + annotate('text', x=0.02, y=4.6, label='verse', color='#1c5cab',
+            ha='left', size=11)
+ + annotate('text', x=0.16, y=2.5, label='prose', color='#0e7a54',
+            ha='left', size=11)
+ + labs(x='violations per syllable (best parse)', y='density', fill='')
+ + theme_minimal()
+ + theme(figure_size=(7, 3.4), legend_position='bottom'))
+```
+
+The honest headline is how *close* the distributions sit: 0.108 versus
+0.117 violations per syllable. English phrases are already largely
+alternating — that is cadence's founding observation, and why blank
+verse could be invented at all. The verse difference is real but
+specific, visible in **which** constraints do the discriminating:
+
+```{python}
+#| label: constraint-rates
+pd.DataFrame({'verse /10 sylls': vv.round(2),
+              'prose /10 sylls': pv.round(2)})
+```
+
+Three readings of that table. `w_peak` is zero in **both** media: given
+a free choice of template, best parses simply never leave a lexical
+stress maximum in a weak position — Kiparsky's constraint approaches
+inviolability in English phrases as such, not just in verse.
+`s_unstress` is identical in both — filling every second position with
+a genuine stress is equally hard everywhere. Where verse actually
+differs is the **resolution** constraints (`unres_across`,
+`unres_within`): prose must squeeze two syllables into one metrical
+position roughly 70% more often. Verse's discipline, by this measure,
+is less about stress placement than about *syllable counting*.
+
+```{python}
+#| label: per-source
+pd.DataFrame([
+    {'source': name, 'units': len(g),
+     'viols/syll': round(g.rate.mean(), 3),
+     'perfect units': f"{(g.score == 0).mean():.0%}"}
+    for name, g in [('Shakespeare (verse)', verse), *sources.items()]
+]).set_index('source')
+```
+
+And per author: the Gettysburg Address is — per phrase, by this meter —
+as metrical as Shakespeare's sonnets. Lincoln's periods were built for
+the ear; Browne's long suspensions sit close behind; Melville's roomy
+clauses trail. That a funeral oration out-scans Jacobean prose is the
+kind of thing you can only notice by counting.
+
+## What the phrasal constraints hear
+
+All of the above used lexical stress alone. The gradient phrasal
+constraints (`w_stress_t`, `w_peak_p`, `s_trough_p`, and kin — the
+cadence constraint family, now fully ported) let the parser hear
+*sentence* prominence too. On fixed-template verse they add
+[measurably nothing](../methods/phrasal-stress.qmd) — but prose is
+their home turf, because in prose the parser must *choose* a rhythm,
+and lexical stress alone often can't decide. Browne's clause is a
+perfect tie:
+
+```{python}
+#| label: tie-break
+LEX = ['w_peak', 'w_stress', 's_unstress', 'unres_within',
+       'unres_across', 'foot_size']
+PHR = LEX + ['w_stress_t', 'w_peak_p', 's_trough_p']
+
+flame = prosodic.Text("Life is a pure flame", syntax=True)
+
+flame.parse(meter=prosodic.Meter(constraints=LEX))
+print("lexical constraints only — a dead heat:")
+for p in flame.line1.parses.unbounded:
+    viols = {k: v for k, v in p.viold.items() if v}
+    print(f"  {p.meter_str:7s} score={p.score}  {p.txt:22s} {viols}")
+
+flame.parse(meter=prosodic.Meter(constraints=PHR))
+print("\nwith phrasal constraints — the tie breaks:")
+for p in flame.line1.parses.unbounded[:2]:
+    viols = {k: v for k, v in p.viold.items() if v}
+    print(f"  {p.meter_str:7s} score={p.score}  {p.txt:22s} {viols}")
+```
+
+Lexically, demoting *flame* to a weak position costs exactly as much as
+squeezing *pure flame* into one strong position. But *flame* is a local
+phrasal peak with high sentence prominence — demoting it now incurs
+`w_stress_t` and `w_peak_p`, and the reading that keeps both nouns
+strong wins outright. Sometimes the phrasal evidence overturns the
+lexical choice entirely, as in the sentence that closes Melville's
+opening paragraphs:
+
+```{python}
+#| label: flip
+gazers = prosodic.Text("Look at the crowds of water-gazers there",
+                       syntax=True)
+gazers.parse(meter=prosodic.Meter(constraints=LEX))
+print("lexical: ", gazers.line1.best_parse.txt)
+gazers.parse(meter=prosodic.Meter(constraints=PHR))
+print("phrasal: ", gazers.line1.best_parse.txt)
+```
+
+Lexical stress treats final *there* as a demotable function word and
+buries it in a weak position. But *there* is this sentence's nuclear
+stress (`tstress = 1.0` — the crowds are the point, and they are
+*there*), and the phrasal constraints promote it to the final strong.
+That is precisely what a naturalness-ranking constraint set is for:
+not enforcing a template, but choosing among rhythms the way a reader
+would.
+
+## Coda: cadence's question, prosodic's answer
+
+Is prose measurably less metrical than verse? **Yes — but barely, and
+in one specific way.** Phrase for phrase, English prose fits an
+alternating template nearly as well as Shakespeare (0.117 vs 0.108
+violations per syllable); what verse adds is syllabic discipline (half
+the resolution rate) and a much larger stock of perfect phrases (40%
+vs 27%). The rhythm was in the language all along; meter is its
+concentration.
+
+This page is cadence's research program running inside prosodic: the
+linepart parser, the gradient phrasal-stress port, the `pstrength`
+peaks and valleys, the `*_p`/`*_t` constraint family, and the metrical
+grid all came from or through that fork (archived 2026 — superseded,
+which is the best thing that can happen to a fork). Related reading:
+[Phrasal stress](../methods/phrasal-stress.qmd) for the algorithm and
+its validation · [Metrical parsing](../methods/metrical-parsing.qmd)
+for the parser · [Shakespeare's sonnets](sonnets.qmd) for the
+verse-side companion study.

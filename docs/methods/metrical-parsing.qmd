@@ -82,7 +82,15 @@ least one strict inequality. The `unbounded` set is the Pareto frontier —
 these are the linguistically interesting readings of the line; `bounded`
 candidates are retained but flagged (visible in the web app's Line View).
 A parse with zero violations bounds everything else, which licenses a
-shortcut: perfect lines skip the O(S²) pairwise comparison entirely.
+shortcut: perfect lines skip the O(S²) pairwise comparison entirely. For
+non-perfect lines an exact **elite pre-screen** runs first: each candidate
+is tested against only the K = 16 lowest-total candidates in O(K·S), and
+any candidate an elite dominates is eliminated (on the sonnets, ~3
+survivors of ~180 remain); the exact O(S²) pairwise kernel then runs only
+on the survivors. This is exact, not approximate — dominance is
+transitive, so any dominator of a survivor must itself survive the screen.
+It made CPU parsing as fast as GPU, so a GPU is no longer needed for
+parsing.
 
 ## The vectorized implementation
 
@@ -98,9 +106,9 @@ lines at once* in numpy, without constructing entity objects:
 3. **Batched constraint evaluation**: lines are grouped by N; features are
    broadcast against the scansion matrices, and each constraint's
    vectorized lambda returns an `(L, S, N)` int8 violation tensor — L
-   lines × S candidates × N syllables — in one numpy expression. (Two
-   constraints, `unres_within`/`unres_across`, still run a per-line loop;
-   lifting them is on the roadmap.)
+   lines × S candidates × N syllables — in one numpy expression. All
+   constraints, including `unres_within`/`unres_across`, are evaluated in
+   fully batched numpy — no per-line loops remain.
 4. **Bounding in batch**: per-constraint violation sums `(L, S, C)` feed a
    tiled pairwise domination kernel — on GPU via torch when available
    (`(L, Ti, Tj, C)` difference tensors), byte-identical on numpy —
@@ -113,10 +121,11 @@ lines at once* in numpy, without constructing entity objects:
    `MAX_FORM_COMBOS=4096`); each combination is scored and the best
    variant kept.
 
-Performance (Shakespeare's sonnets, 2,155 lines): 1.3 s on GPU, ~5 s CPU,
-vs ~73 s for the v2 branch-and-bound parser — because exhaustive
-evaluation of small dense tensors beats clever pruning in Python.
-`python -m prosodic.profiling` regenerates the numbers.
+Performance (Shakespeare's sonnets, 2,155 lines): the parser evaluates in
+~1.9 s on CPU — 38× faster than the v2 branch-and-bound parser's ~73 s —
+and the full pipeline runs end-to-end in ~4.0 s (20×). With the elite
+pre-screen, CPU parsing is now as fast as GPU. `python -m
+prosodic.profiling` regenerates the numbers.
 
 ## The entity path and the reference implementations
 

@@ -167,6 +167,37 @@ One theoretical note: overlapping constraints **stack** in HG/MaxEnt — a
 sum of both weights. This is how the model makes stress maxima in weak
 position effectively inviolable (Kiparsky) without any infinite weight.
 
+## Ternary meters
+
+Nothing in the parser is binary-specific: with `max_w=2`, an anapestic
+foot is simply a disyllabic weak position followed by a strong one, so
+`wws wws wws wws` is already inside the candidate space of every
+12-syllable line, and `text.meter_type` detects ternary verse from the
+frequency of `ww` positions among best parses. On Byron's "The
+Destruction of Sennacherib" and Browning's "How They Brought the Good
+News from Ghent to Aix" (both anapestic tetrameter; corpus files in
+`corpora/corppoetry_en/`), the **default** weights already scan the
+regular lines as anapests and classify both poems as ternary.
+
+Because ternary verse legitimately varies line length (an iamb-initial
+line drops one slack syllable), `meter.fit()` accepts a **list** of
+target scansions — each line matches the target(s) of its syllable
+count:
+
+```python
+meter.fit(byron, ["wwswwswwswws", "wswwswwswws"])
+```
+
+The learned weights recover Hanson & Kiparsky's (1996) characterization
+of English ternary meter as strong-position-regulated: `s_unstress`
+(every beat must be stressed) and `unres_within` (no disyllabic position
+buried inside a polysyllable) get high weights, while `w_stress` and
+`unres_across` fall to zero — stressed monosyllables sit freely in weak
+positions ("the blue **wave** rolls **night**ly"), and cross-word
+disyllabic weak positions are the norm rather than a violation. The
+mirror image of iambic pentameter, where weak positions carry the
+regulation.
+
 ## References
 
 - Halle, M. & S. J. Keyser (1971). *English Stress: Its Form, Its Growth,

@@ -13,7 +13,7 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from prosodic.imports import *
-from prosodic.texts.phrasal_stress import _mt_gradient, _mt_lstress_base
+from prosodic.texts.phrasal_stress import _mt_gradient, _mt_lstress_base, _mt_pstrength
 
 disable_caching()
 
@@ -31,7 +31,7 @@ def test_nsr_nuclear_stress_rightmost():
     deps = np.array(['det', 'nsubj', 'ROOT', 'det', 'dobj'])
     words = np.array(['the', 'dog', 'saw', 'the', 'cat'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert np.allclose(t, [0.0, 2/3, 2/3, 1/3, 1.0])
     assert p.tolist() == [0.0, 1.0, 0.0, 0.0, 1.0]
 
@@ -43,7 +43,7 @@ def test_compound_stress_rule():
     deps = np.array(['det', 'compound', 'nsubj', 'ROOT'])
     words = np.array(['the', 'time', 'machine', 'broke'])
     nsyll = np.array([1, 1, 2, 1], dtype=np.int32)
-    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 4)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 4)
     assert np.allclose(t, [0.0, 2/3, 1/3, 1.0])
     assert p.tolist() == [0.0, 1.0, 0.0, 1.0]
 
@@ -56,7 +56,7 @@ def test_ambiguous_word_ensemble_is_gradient():
     deps = np.array(['nsubj', 'ROOT', 'acomp'])
     words = np.array(['this', 'is', 'red'])
     nsyll = np.ones(3, dtype=np.int32)
-    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 3)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 3)
     assert abs(p[0] - 1/3) < 1e-9  # ensemble mean, not 0 or 1
     assert t[2] == 1.0             # nuclear on the predicate
     assert 0.0 < t[1] < 1.0        # intermediate value exists
@@ -70,7 +70,7 @@ def test_np_internal_modifiers_demoted():
     deps = np.array(['det', 'amod', 'amod', 'nsubj', 'ROOT'])
     words = np.array(['the', 'quick', 'brown', 'fox', 'jumps'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, _ = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, _, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert p[3] == 1.0 and p[1] == 0.0 and p[2] == 0.0
 
 
@@ -85,7 +85,7 @@ def test_noun_head_shielded_from_right_complement():
     deps = np.array(['det', 'ROOT', 'dobj', 'nsubj', 'relcl'])
     words = np.array(['the', 'house', 'that', 'Jack', 'built'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert p[1] == 1.0  # house shielded (inner core)
     assert p[3] == 1.0  # Jack shielded (argument projection)
     assert t[4] == 1.0  # nuclear on built
@@ -107,7 +107,7 @@ def test_ditransitive_exact():
     tags = np.array(['PRP', 'VBD', 'DT', 'NN', 'DT', 'NN'])
     deps = np.array(['nsubj', 'ROOT', 'det', 'dative', 'det', 'dobj'])
     words = np.array(['She', 'gave', 'the', 'boy', 'a', 'book'])
-    p, t = _mt_gradient(heads, words, tags, deps, np.ones(6, dtype=np.int32), 6)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(6, dtype=np.int32), 6)
     assert np.allclose(p, [1/3, 0, 0, 1, 0, 1])
     assert np.allclose(t, [2/9, 2/3, 0, 2/3, 1/3, 1])
 
@@ -118,7 +118,7 @@ def test_pp_attachment_exact():
     tags = np.array(['NN', 'VBZ', 'IN', 'DT', 'NN'])
     deps = np.array(['nsubj', 'ROOT', 'prep', 'det', 'pobj'])
     words = np.array(['Time', 'flies', 'like', 'an', 'arrow'])
-    p, t = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
     assert np.allclose(p, [1, 0, 0, 0, 1])
     assert np.allclose(t, [0.5, 0.5, 1/6, 0, 1])
 
@@ -130,7 +130,7 @@ def test_possessive_projects_no_compound_hit():
     tags = np.array(['PRP$', 'NN', 'VBD', 'DT', 'NN'])
     deps = np.array(['poss', 'nsubj', 'ROOT', 'det', 'dobj'])
     words = np.array(['His', 'mother', 'called', 'the', 'doctor'])
-    p, t = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
     assert p.tolist() == [0.0, 1.0, 0.0, 0.0, 1.0]
     assert t[4] == 1.0  # nuclear on doctor
 
@@ -143,16 +143,26 @@ def test_coordination_conjuncts_stay_strong():
     tags = np.array(['NNS', 'CC', 'NNS', 'VBP'])
     deps = np.array(['nsubj', 'cc', 'conj', 'ROOT'])
     words = np.array(['Dogs', 'and', 'cats', 'fight'])
-    p, t = _mt_gradient(heads, words, tags, deps, np.ones(4, dtype=np.int32), 4)
+    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(4, dtype=np.int32), 4)
     assert p[0] == 1.0 and p[2] == 1.0   # conjuncts strong (ours)
     assert t[2] > t[0]                   # cats > Dogs (matches cadence)
     assert t[3] == 1.0                   # nuclear on fight
 
 
+def test_pstrength_peaks_and_valleys():
+    # cadence's set_phrasal_peaks: a word above an adjacent neighbor is a
+    # peak (1.0), the neighbor a valley (0.0); isolated plateaus stay NaN
+    ps = np.array([0.0, -1.0, 0.0, -2.0])
+    out = _mt_pstrength(ps, 4)
+    assert out.tolist() == [1.0, 0.0, 1.0, 0.0]
+    flat = _mt_pstrength(np.zeros(3), 3)
+    assert np.isnan(flat).all()
+
+
 def test_flat_sentence_normalizes_nan():
     # single word: no variation -> NaN (as in cadence)
     heads = np.array([-1], dtype=np.int32)
-    p, t = _mt_gradient(
+    p, t, _ps = _mt_gradient(
         heads, np.array(['dog']), np.array(['NN']), np.array(['ROOT']),
         np.ones(1, dtype=np.int32), 1,
     )
@@ -211,6 +221,19 @@ def test_gradient_constraint_lambdas():
     # -1 sentinel (absent/NaN) never violates either polarity
     f_off = dict(f, has_gradient=False)
     assert _w_stress_p_vectorized(f_off).sum() == 0
+
+
+def test_pstrength_constraint_lambdas():
+    from prosodic.parsing.constraints import (
+        _s_trough_p_vectorized, _w_peak_p_vectorized,
+    )
+    # sylls:      A(peak) B(valley) C(neither) D(peak)
+    # position:   weak    strong    weak       strong
+    f = _fake_features([1, 0, 0.5, 1], [1, 0, 0.5, 1], [True, False, True, False])
+    f["pstrength"] = np.array([1.0, 0.0, -1.0, 1.0], dtype=np.float32)[None, None, :]
+    assert _w_peak_p_vectorized(f).ravel().tolist() == [1, 0, 0, 0]
+    assert _s_trough_p_vectorized(f).ravel().tolist() == [0, 1, 0, 0]
+    assert _w_peak_p_vectorized(dict(f, has_gradient=False)).sum() == 0
 
 
 def test_gradient_constraints_inert_without_syntax():

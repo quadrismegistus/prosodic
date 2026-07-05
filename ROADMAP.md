@@ -37,8 +37,9 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
 - **Phrasal variants of stress constraints** (`*_p`, `*_t`) — ✅ shipped:
   `w_stress_p`/`s_unstress_p` (pstress) and `w_stress_t`/`s_unstress_t`
   (tstress), cadence-threshold semantics, inert without `syntax=True`.
-  Remaining: `w_peak_p`/`s_trough_p` need cadence's pstrength (local
-  peak/valley) feature, not yet ported.
+  `w_peak_p`/`s_trough_p` shipped too, with cadence's pstrength (local
+  peak/valley) feature as a `pstrength` column — the cadence constraint
+  family is fully ported.
 - **Multi-engine comparison** — never shipped in cadence (vestigial `ENGINE`
   constant); the idea survives in its `notebooks/engines.ipynb` scratch
   harness. Low priority unless a second engine (e.g. MetricalTree-proper)

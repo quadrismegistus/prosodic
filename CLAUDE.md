@@ -122,6 +122,7 @@ Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Use
 
 - **English** (`langs/english/`): Uses CMU pronunciation dictionary (2700/3206 Shakespeare words) + espeak TTS fallback (506 words, ~1.4s cold). `get_word()` cached via `@functools.cache`.
 - **Finnish** (`langs/finnish/`): Custom stress, weight, and sonority rules.
+- **Syllable text labels** (`langs/g2p_align.py`): orthographic syllable splits come from grapheme-to-phoneme DP alignment against the IPA syllabification ("within" → wi|thin, not NLTK's wit|hin — issue #47). 99.8% of dictionary words align; failures (letter-by-letter initialisms) fall back to the legacy NLTK sonority split. English-only via `EnglishLanguage.use_g2p_alignment = True`.
 - Language detection via `langdetect`. Default language: `"en"`.
 
 ### Centralized Imports (`imports.py`)

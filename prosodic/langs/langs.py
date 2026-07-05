@@ -342,9 +342,20 @@ class LanguageModel:
 
         return Syllabify()
 
+    # Languages whose phone inventory is covered by g2p_align's English
+    # spelling table set this True to get phonology-aligned syllable text
+    # (issue #47). Others keep the orthography-only NLTK split.
+    use_g2p_alignment = False
+
     @cache(maxsize=None)
     @profile
-    def get_sylls_text_l(self, token, num_sylls=None):
+    def get_sylls_text_l(self, token, num_sylls=None, sylls_ipa_l=None):
+        if self.use_g2p_alignment and sylls_ipa_l:
+            from .g2p_align import align_syllable_text
+
+            aligned = align_syllable_text(token, tuple(sylls_ipa_l))
+            if aligned:
+                return aligned
         tokenl = token.lower()
         l = self.syllabifier.tokenize(tokenl)
         l = fix_recasing(l, token)
@@ -377,6 +388,7 @@ class LanguageModel:
             self.get_sylls_text_l(
                 tokenx,
                 num_sylls=len(sylls_ipa_l),
+                sylls_ipa_l=tuple(sylls_ipa_l),
             )
             for sylls_ipa_l in sylls_ipa_ll
         ]

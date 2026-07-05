@@ -17,6 +17,14 @@ Two computations share the parse:
    rule keyed off the ``compound`` dep relation), total stress accumulates
    down the tree, the ensemble is averaged, and each sentence is min-max
    normalized: 1.0 = nuclear stress, 0.0 = least prominent, NaN = punct.
+
+   Cross-validated against cadence's MetricalTree (Stanza constituency) on
+   a 9-sentence differential (2026-07-05): identical nuclear placement and
+   orderings throughout. One deliberate divergence: in coordination
+   ("dogs and cats"), Dozat's flat-NP scan demotes non-final conjuncts to
+   pstress -1; here each conjunct projects and keeps its strength (both
+   conjuncts carry accent in speech), while tstress still orders the final
+   conjunct above the first, matching the reference.
 """
 
 import numpy as np
@@ -155,8 +163,12 @@ class _MTNode:
 # a single-word subject or object — projects its own phrase node, the way
 # constituency wraps arguments (NP(Jack), WHADVP(When)), which shields the
 # preterminal from sibling NSR demotion.
+# NOTE: 'poss' deliberately absent — a possessor is an inner NP in
+# constituency (NP(NP(Beauty 's) rose)), so it must project; bare-joining
+# it as an NN sibling would wrongly trigger the compound rule
+# (BEAUTY'S rose instead of beauty's ROSE).
 MT_BARE_DEPS = frozenset({
-    'det', 'amod', 'compound', 'nummod', 'poss', 'predet',
+    'det', 'amod', 'compound', 'nummod', 'predet',
     'neg', 'aux', 'auxpass',
 })
 

@@ -1,0 +1,49 @@
+name: "docs"
+
+# Render the quarto docs site and deploy it to GitHub Pages
+# (workflow-driven Pages; the legacy gh-pages branch is retired).
+#
+# Cheap by design: docs/_freeze/ holds the committed execution results for
+# the explorations pages, so rendering needs ONLY the quarto CLI — no
+# python, espeak, spaCy, or corpus. Re-executing a page happens locally
+# (see docs/methods + explorations), and the new _freeze/ gets committed.
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: docs-pages
+  cancel-in-progress: true
+
+jobs:
+  render-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Render site (frozen — no execution)
+        run: quarto render docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

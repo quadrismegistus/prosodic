@@ -4,93 +4,13 @@ on:
   push:
     branches:
         - "develop"
-  # AUDIT R10 (2026-07-04): manual-only trigger for the docs gh-pages publish
-  # job below, until docs/ is regenerated for v3 (see the comment on
-  # build-deploy). The `tests` job above still runs on every push to develop.
-  workflow_dispatch:
-
-
-# you need these permissions to publish to GitHub pages
-permissions: 
-    contents: write
-    pages: write
-
-
 
 jobs:
   tests:
     uses: "./.github/workflows/unit-tests.yml"  # use the callable tests job to run tests
     secrets: inherit
 
-  # AUDIT R10 (2026-07-04): this job used to run automatically on every push
-  # to `develop` and republish docs/ to gh-pages with `render: false` — i.e.
-  # it re-published the same stale, pre-built v2-era HTML (docs/ last touched
-  # Sep 2024; docs/reference/ still has pages for modules deleted since, like
-  # lexconvert/metricaltree) on every push, giving a false impression the docs
-  # site is current. Regenerating v3 docs is a separate content task (tracked
-  # in AUDIT.md R10) and out of scope here. Until that regeneration happens,
-  # this job is gated to manual dispatch only so CI stops auto-republishing
-  # stale docs. Re-enable the `push` trigger (or fold this back into the
-  # `on:` block above) once docs/ has been regenerated for v3.
-  build-deploy:
-    runs-on: ubuntu-latest
-    needs: [tests]
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # NOTE: Python version to use is stored in the .python-version file, which is the
-      # convention for pyenv: https://github.com/pyenv/pyenv
-      - name: Get Python version
-        run: echo "PYTHON_VERSION=$(cat .python-version)" >> $GITHUB_ENV
-
-      # use python version for current build
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-            pip-${{ env.PYTHON_VERSION }}
-            pip-
-
-      - name: Install dependencies
-        run: |
-          sudo apt install espeak -y
-          pip install -U pip wheel
-          pip install -r requirements.txt
-          pip install -r dev-requirements.txt
-
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
-
-      - name: Publish to GitHub Pages (and render) 
-        uses: quarto-dev/quarto-actions/publish@v2
-        with:
-          target: gh-pages
-          path: docs
-          render: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # this secret is always available for github actions
-      
-
-
-#   pre-release:
-#     name: "Pre Release"
-#     needs: [tests]
-#     runs-on: "ubuntu-latest"
-#     steps:
-#         - name: "Releasing"
-#           uses: "marvinpinto/action-automatic-releases@latest"
-#           with:
-#             repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#             automatic_release_tag: "latest"
-#             prerelease: true
-#             title: "Development Build"
+  # The gh-pages docs publish job that used to live here (gated to manual
+  # dispatch since AUDIT R10) is retired: docs/ was regenerated for v3 and
+  # is now rendered + deployed by .github/workflows/docs.yml via
+  # workflow-driven GitHub Pages on every master push touching docs/**.

@@ -365,6 +365,77 @@ def s_demoted(mpos):
     return [getattr(slot.unit, 'phrasal_stress', 0) <= -2 for slot in mpos.slots]
 
 
+# --- Gradient phrasal variants (cadence's *_p / *_t constraints) ---
+# Score w/s violations against the MetricalTree gradient values (pstress =
+# within-phrase strength, tstress = cumulative sentence prominence; both
+# min-max normalized per sentence, -1 sentinel where absent). Thresholds
+# follow cadence: prominent = value > 0, unprominent = value == 0.
+# Require syntax=True; inert otherwise.
+
+def _w_stress_p_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["pstress"] > 0) & f["is_weak_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a phrasally strong word (pstress>0) on weak position",
+    scope="position",
+    vectorized=_w_stress_p_vectorized,
+)
+def w_stress_p(mpos):
+    if mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [(getattr(slot.unit, 'pstress', None) or 0) > 0 for slot in mpos.slots]
+
+
+def _s_unstress_p_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["pstress"] == 0) & f["is_strong_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a phrasally weak word (pstress==0) on strong position",
+    scope="position",
+    vectorized=_s_unstress_p_vectorized,
+)
+def s_unstress_p(mpos):
+    if not mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'pstress', None) == 0 for slot in mpos.slots]
+
+
+def _w_stress_t_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["tstress"] > 0) & f["is_weak_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a sentence-prominent word (tstress>0) on weak position",
+    scope="position",
+    vectorized=_w_stress_t_vectorized,
+)
+def w_stress_t(mpos):
+    if mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [(getattr(slot.unit, 'tstress', None) or 0) > 0 for slot in mpos.slots]
+
+
+def _s_unstress_t_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["tstress"] == 0) & f["is_strong_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a sentence-weak word (tstress==0) on strong position",
+    scope="position",
+    vectorized=_s_unstress_t_vectorized,
+)
+def s_unstress_t(mpos):
+    if not mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'tstress', None) == 0 for slot in mpos.slots]
+
+
 # === Line-scope constraints (not used in vectorized parsing) ===
 
 @constraint(desc="Ensure the parse has exactly 5 peaks", scope="line")

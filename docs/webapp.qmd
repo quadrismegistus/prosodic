@@ -1,13 +1,41 @@
 ---
 title: "Web app"
-format:
-  html:
-    code-fold: false
-jupyter: python3
 ---
 
-1. To use as a web app, run in a terminal:
+Prosodic ships a FastAPI backend and a SvelteKit frontend (compiled to
+static files, ~180 KB, PWA-ready and mobile-friendly).
 
-    ```sh
-    prosodic web
-    ```
+## Hosted
+
+A hosted instance is live at **[prosodic.app](https://prosodic.app)** — no
+install required. Paste a poem, see scansions, rhyme schemes, and form
+classification immediately. Results are **shareable via permalink**.
+
+## Run locally
+
+```sh
+prosodic web                     # http://127.0.0.1:8181
+prosodic web --host 0.0.0.0 --port 5111
+prosodic web --dev               # auto-reload backend + frontend on change
+```
+
+## The five tabs
+
+- **Parse** — text input and corpus dropdown; sortable, paginated results.
+  Long/prose lines fall back to phrase-level parsing automatically. Export
+  the table as CSV, TSV, or JSON.
+- **Line** — single-line scansion detail: every candidate scansion shown
+  with per-position violations, bounded parses grayed out.
+- **Meter** — configure constraints, weights, and position widths.
+- **MaxEnt** — upload annotated data (or a target scansion) and learn
+  constraint weights; learned zone weights feed back into the Parse tab.
+- **Settings** — global options: phrasal stress (`syntax`), spaCy model,
+  language, maximum syllables per parse unit, parse timeout.
+
+All configuration is persisted in `localStorage`, and every tab keeps its
+state and scroll position across switches (URL routing with working
+back/forward).
+
+See `prosodic/web/` in the source tree for the implementation, and
+[Deployment](https://github.com/quadrismegistus/prosodic/tree/master/deploy)
+for running your own instance (nginx + systemd + certbot).

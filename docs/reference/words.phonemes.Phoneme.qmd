@@ -1,0 +1,18 @@
+# words.phonemes.Phoneme { #prosodic.words.phonemes.Phoneme }
+
+`words.phonemes.Phoneme(self, *args, **kwargs)`
+
+Represents a phoneme with various attributes.
+
+Attributes:
+    prefix (str): The prefix for the phoneme class.
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [is_coda](#prosodic.words.phonemes.Phoneme.is_coda) | Check if the phoneme is part of the syllable coda. |
+| [is_nucleus](#prosodic.words.phonemes.Phoneme.is_nucleus) | Check if the phoneme is the syllable nucleus. |
+| [is_onset](#prosodic.words.phonemes.Phoneme.is_onset) | Check if the phoneme is part of the syllable onset. |
+| [is_rime](#prosodic.words.phonemes.Phoneme.is_rime) | Check if the phoneme is part of the syllable rime. |
+| [is_vowel](#prosodic.words.phonemes.Phoneme.is_vowel) | Determine if the phoneme is a vowel. |

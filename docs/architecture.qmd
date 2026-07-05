@@ -1,141 +1,99 @@
 ---
 title: "Architecture"
-format:
-  html:
-    code-fold: false
-jupyter: python3
 ---
 
-## Texts
+A high-level tour of how Prosodic 3 is put together. For the linguistic
+theory and the parsing internals, see
+[Metrical parsing](methods/metrical-parsing.qmd) and
+[Phrasal stress](methods/phrasal-stress.qmd); for exhaustive design notes,
+see `CLAUDE.md` in the source tree.
 
-Code contained in `prosodic.texts`.
+## DataFrame-first design
 
-### Reading texts
+The source of truth for a text is a **flat, syllable-level DataFrame**
+(`_syll_df`) — one row per syllable, per pronunciation variant, with
+columns for stress, weight, strong/weak metrical role, function-word
+status, and (with `syntax=True`) phrasal prominence. The vectorized parser
+works entirely from this frame, in numpy, without building any objects.
 
-#### Loading by string
+You can inspect it directly:
 
-You can load any text with a string:
-
-```{python}
-#| label: reading-texts
-
-# import
+```python
 import prosodic
-
-sonnetV = prosodic.Text(
-"""Those hours, that with gentle work did frame
-The lovely gaze where every eye doth dwell,
-Will play the tyrants to the very same
-And that unfair which fairly doth excel;
-For never-resting time leads summer on
-To hideous winter, and confounds him there;
-Sap checked with frost, and lusty leaves quite gone,
-Beauty o’er-snowed and bareness every where:
-Then were not summer’s distillation left,
-A liquid prisoner pent in walls of glass,
-Beauty’s effect with beauty were bereft,
-Nor it, nor no remembrance what it was:
-But flowers distill’d, though they with winter meet,
-Leese but their show; their substance still lives sweet."""
-)
+sonnet = prosodic.Text("Shall I compare thee to a summer's day?")
+sonnet.df            # the syllable-level DataFrame
+sonnet.parse()
+sonnet.parsed_df     # per-syllable parse results across the whole text
 ```
 
+## The entity hierarchy
 
-#### Loading texts by filename
+Linguistic objects form a lazily-constructed tree — nothing below the text
+is built until you access it:
 
-Can also read texts (especially larger ones) by filename:
-
-```{python}
-#| label: reading-texts-filename
-import os
-
-shakespeare_sonnets_filename = os.path.join(
-  prosodic.PATH_REPO, 
-  'corpora','corppoetry_en','en.shakespeare.txt'
-)
-
-# read a text by string
-sonnets = prosodic.Text(fn=shakespeare_sonnets_filename)
+```
+TextModel → Stanza → Line → WordToken → WordType → WordForm → Syllable → Phoneme
 ```
 
-### Displaying texts
+- **TextModel** — the root container, created with `prosodic.Text(...)`.
+- **Line** — the unit of metrical parsing; `line.parse()` and
+  `line.best_parse`.
+- **WordToken** — a token in the text, wrapping a **WordType** (canonical
+  form) whose **WordForm** children are pronunciation variants.
+- **WordForm → Syllable → Phoneme** — a specific pronunciation with IPA,
+  stress, and weight.
 
-In a notebook environmnent, texts objects will display a by-syllable dataframe of the text structure it contains, stored at `text.df`
+Because construction is lazy, batch workflows that only need parse results
+(via `text.parse()` and `text.parsed_df`) never pay for the ~hundreds of
+thousands of entity objects a full tree would allocate.
 
-```{python}
-#| label: showing-texts
+## Two parse paths
 
-# these will display the same, but former actually points to the dataframe
-sonnetV.df          
-sonnetV
-```
+There are two ways parsing happens, and it matters which one you are in:
 
+1. **DataFrame path** (`text.parse()`) — works entirely from `_syll_df`;
+   parse slots hold lightweight `SyllData` stand-ins with no parent chain.
+   Fastest; used for batch processing, `text.parsed_df`, and `text.save()`.
+2. **Entity path** (`parse_batch(text.lines, meter)`) — the same tensors,
+   but parse slots hold real `Syllable` entities with parent chains, so you
+   can walk from a syllable back to its word. Needed for HTML rendering and
+   the web app.
 
-## Stanzas
+Both paths share the same exhaustive vectorized evaluator; see
+[Metrical parsing](methods/metrical-parsing.qmd) for how it works.
 
-### Accessing stanzas
+## Parsing pipeline
 
-Stanza separations are detected by two line breaks in the input text. You can access stanza objects through a text object:
+1. `TextModel.__init__` tokenizes the text, phonemizes each unique word
+   (CMU dictionary, with espeak TTS fallback), and builds `_syll_df`.
+2. `text.parse()` groups syllables by line, evaluates every candidate
+   scansion's constraint violations in numpy, and prunes by harmonic
+   bounding (on GPU via torch when available).
+3. Results are stored by line number and attached to `Line` entities lazily
+   on first access of `text.lines`.
 
-```{python}
-assert len(sonnets.stanzas) == 154    # number of shakespeare sonnets
+## Learning constraint weights
 
-# can iterate over them simply by iterating over text object:
-for stanza in sonnets:
-  pass
+`Meter.fit(text, "wswswswsws")` (or `meter.fit_annotations(data)`) learns
+constraint weights from data with a Maximum-Entropy / Harmonic-Grammar
+model (`prosodic/parsing/maxent.py`). Weights can be split by syllable
+position (**zones**) so positional sensitivity — line-initial inversion,
+say — transfers to parsing unseen text. Details in
+[Metrical parsing](methods/metrical-parsing.qmd#maxent-weight-learning).
 
-# you can also reach stanzas by .stanza###
-sonnets.stanza154.df
-```
+## Poem-level analysis
 
-### Displaying stanzas
+`prosodic/analysis/` (a port of the standalone
+[poesy](https://github.com/quadrismegistus/poesy) package) computes
+higher-order form statistics, surfaced as `TextModel` properties:
+`text.meter_type`, `text.line_scheme`, `text.rhyme_scheme`,
+`text.is_sonnet`, and the tabular `text.summary()`.
 
-By default, sonnets will display parsed:
+## Beyond the library
 
-```{python}
-sonnets.stanza154
-```
-
-The red indicates violations and allows for nice comparison with other poems and parses. You can display the same thing on a text with `text.render()`
-
-```{python}
-sonnetV.render()
-```
-
-
-## Lines
-
-Lines are important objects because (at present) they are the only objects actually considered as the unit of metrical parsing to the parser.
-
-
-
-You can access them in a few ways:
-
-```{python}
-# you can also reach them by line number
-sonnetV.line14
-
-# which are relative to the stanza
-sonnets.stanza5.line14
-```
-
-You can also create them directly:
-
-```{python}
-line = prosodic.Text("A horse, a horse, my kingdom for a horse!").line1
-line
-```
-
-
-## Words
-
-### Tokens
-
-### Types
-
-### Forms
-
-### Syllables
-
-### Phonemes
-
+- **Web app** — FastAPI + SvelteKit; see [Web app](webapp.qmd).
+- **Remote client** — `prosodic.set_server(...)` returns proxy objects that
+  duck-type the local API, so downstream code works unchanged against a
+  Prosodic server. Only `requests` is required locally.
+- **Languages** — English (CMU + espeak) and Finnish (rule-based) ship
+  today; the language layer is designed to be extended.

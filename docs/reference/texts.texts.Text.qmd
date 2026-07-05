@@ -1,0 +1,4 @@
+# texts.texts.Text { #prosodic.texts.texts.Text }
+
+`texts.texts.Text(txt='', fn='', lang=DEFAULT_LANG, parent=None, children=[], tokens_df=None, server=None, syntax=None, syntax_model=None, **kwargs)`
+

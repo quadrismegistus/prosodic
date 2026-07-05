@@ -1,0 +1,17 @@
+# analysis.meter_type.classify_meter_type { #prosodic.analysis.meter_type.classify_meter_type }
+
+`analysis.meter_type.classify_meter_type(text)`
+
+Classify the dominant meter of a parsed text.
+
+Args:
+    text: a parsed ``TextModel`` (call ``.parse()`` first).
+
+Returns:
+    dict with:
+        ``foot`` — ``'binary'`` or ``'ternary'``
+        ``head`` — ``'initial'`` or ``'final'``
+        ``type`` — ``'iambic'`` | ``'trochaic'`` | ``'anapestic'`` | ``'dactylic'``
+        ``mpos_freqs`` — frequency dict of position labels
+        ``perc_lines_starting_s`` etc. — head-position frequencies
+        ``ambiguity`` — geometric mean (per line) of parse counts (NaN-tolerant)

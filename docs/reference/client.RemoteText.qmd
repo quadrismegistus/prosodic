@@ -1,0 +1,80 @@
+# client.RemoteText { #prosodic.client.RemoteText }
+
+`client.RemoteText(self, txt='', fn=None, server=None, **kwargs)`
+
+Duck-types prosodic.texts.texts.TextModel.
+
+Sends text to a remote prosodic server for parsing. The interface is
+identical to the local TextModel: .lines, .parse(), .best_parse, etc.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [corpora](#prosodic.client.RemoteText.corpora) | List available corpora. |
+| [fit](#prosodic.client.RemoteText.fit) | Train MaxEnt weights on this text via the remote server. |
+| [load](#prosodic.client.RemoteText.load) | Load saved remote parse results. |
+| [meter_defaults](#prosodic.client.RemoteText.meter_defaults) | Get available constraints and default meter config. |
+| [parse](#prosodic.client.RemoteText.parse) | Parse all lines via the remote server. |
+| [parse_lines](#prosodic.client.RemoteText.parse_lines) | Parse each line individually (gets all scansions including bounded). |
+| [save](#prosodic.client.RemoteText.save) | Save parse results to a directory. Loads back with RemoteText.load(). |
+
+### corpora { #prosodic.client.RemoteText.corpora }
+
+`client.RemoteText.corpora()`
+
+List available corpora.
+
+### fit { #prosodic.client.RemoteText.fit }
+
+`client.RemoteText.fit(target_scansion='wswswswsws', zones=3, regularization=100, constraints=None, max_s=2, max_w=2, resolve_optionality=True, syntax=False)`
+
+Train MaxEnt weights on this text via the remote server.
+
+Returns RemoteWeights with .weights dict, .accuracy, etc.
+
+### load { #prosodic.client.RemoteText.load }
+
+`client.RemoteText.load(path, server=None)`
+
+Load saved remote parse results.
+
+Args:
+    path: directory containing remote_parse.json
+    server: optional server for further operations (parse_lines, fit)
+
+Returns:
+    RemoteText with parse results pre-loaded (no server call needed)
+
+### meter_defaults { #prosodic.client.RemoteText.meter_defaults }
+
+`client.RemoteText.meter_defaults()`
+
+Get available constraints and default meter config.
+
+### parse { #prosodic.client.RemoteText.parse }
+
+`client.RemoteText.parse(**kwargs)`
+
+Parse all lines via the remote server.
+
+### parse_lines { #prosodic.client.RemoteText.parse_lines }
+
+`client.RemoteText.parse_lines(**kwargs)`
+
+Parse each line individually (gets all scansions including bounded).
+
+### save { #prosodic.client.RemoteText.save }
+
+`client.RemoteText.save(path)`
+
+Save parse results to a directory. Loads back with RemoteText.load().
+
+Saves as JSON (no pandas/pyarrow required). If pandas is available,
+also saves a parsed.parquet compatible with TextModel.load().
+
+Args:
+    path: directory to save into (created if needed)
+
+Returns:
+    str: path to the saved directory

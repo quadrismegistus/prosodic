@@ -1,0 +1,12 @@
+# analysis.summary.summary { #prosodic.analysis.summary.summary }
+
+`analysis.summary.summary(text, header=None)`
+
+Render a tabular summary of metrical + rhyme annotations.
+
+Args:
+    text: a parsed ``TextModel``.
+    header: optional list of column keys from :func:`per_line_rows`.
+
+Returns:
+    A multi-line string: per-line table + estimated schema block.

@@ -1,0 +1,60 @@
+# parsing.meter.Meter { #prosodic.parsing.meter.Meter }
+
+`parsing.meter.Meter(self, constraints=MTRDEFAULT['constraints'], max_s=MTRDEFAULT['max_s'], max_w=MTRDEFAULT['max_w'], resolve_optionality=MTRDEFAULT['resolve_optionality'], parse_unit=MTRDEFAULT['parse_unit'], exhaustive=True, vectorized=True, **kwargs)`
+
+A metrical parsing system using vectorized numpy constraint evaluation.
+
+Evaluates all possible scansions exhaustively and uses harmonic bounding
+to identify optimal parses.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [fit](#prosodic.parsing.meter.Meter.fit) | Learn constraint weights from a text with a target scansion. |
+| [fit_annotations](#prosodic.parsing.meter.Meter.fit_annotations) | Learn constraint weights from annotated scansion data. |
+| [parse_exhaustive](#prosodic.parsing.meter.Meter.parse_exhaustive) | Compatibility alias — the vectorized parser is always exhaustive. |
+
+### fit { #prosodic.parsing.meter.Meter.fit }
+
+`parsing.meter.Meter.fit(text, target_scansion, zones=3, regularization=100.0, lang=DEFAULT_LANG, **train_kwargs)`
+
+Learn constraint weights from a text with a target scansion.
+
+Trains a MaxEnt model on the text and stores the learned zone
+weights on this meter. Subsequent parsing will use the learned
+positional weights for scoring.
+
+Args:
+    text: a string, list of line strings, or TextModel.
+    target_scansion: e.g. "wswswswsws" for iambic pentameter.
+    zones: positional zone splitting (None, "initial", int N).
+    regularization: L2 regularization strength.
+    lang: language code for parsing.
+    **train_kwargs: extra args for MaxEntTrainer.train().
+
+Returns:
+    self (for chaining).
+
+### fit_annotations { #prosodic.parsing.meter.Meter.fit_annotations }
+
+`parsing.meter.Meter.fit_annotations(data, zones=3, regularization=100.0, lang=DEFAULT_LANG, text=None, **train_kwargs)`
+
+Learn constraint weights from annotated scansion data.
+
+Args:
+    data: list of (text, scansion, frequency) tuples or DataFrame.
+    zones: positional zone splitting (None, "initial", int N).
+    regularization: L2 regularization strength.
+    lang: language code for parsing.
+    text: optional pre-built TextModel (e.g. with syntax=True).
+    **train_kwargs: extra args for MaxEntTrainer.train().
+
+Returns:
+    self (for chaining).
+
+### parse_exhaustive { #prosodic.parsing.meter.Meter.parse_exhaustive }
+
+`parsing.meter.Meter.parse_exhaustive(entity, **kwargs)`
+
+Compatibility alias — the vectorized parser is always exhaustive.

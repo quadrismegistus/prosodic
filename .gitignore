@@ -75,6 +75,8 @@ docs/*
 # But allow these specific items
 !docs/*.qmd
 !docs/_quarto.yml
+!docs/methods/
+!docs/methods/**
 !docs/reference/
 !docs/reference/**
 

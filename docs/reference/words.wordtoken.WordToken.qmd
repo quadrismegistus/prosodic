@@ -1,0 +1,20 @@
+# words.wordtoken.WordToken { #prosodic.words.wordtoken.WordToken }
+
+`words.wordtoken.WordToken(self, children=[], txt=None, lang=DEFAULT_LANG, parent=None, text=None, num=None, key=None, **kwargs)`
+
+Represents a word token in text.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [to_dict](#prosodic.words.wordtoken.WordToken.to_dict) | Convert the WordToken to a JSON-serializable dictionary. |
+
+### to_dict { #prosodic.words.wordtoken.WordToken.to_dict }
+
+`words.wordtoken.WordToken.to_dict(incl_num=True, incl_children=False, incl_txt=True, incl_attrs=True, **kwargs)`
+
+Convert the WordToken to a JSON-serializable dictionary.
+
+Returns:
+    dict: A dictionary representation of the WordToken.

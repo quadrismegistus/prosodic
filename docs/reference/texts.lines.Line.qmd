@@ -1,0 +1,111 @@
+# texts.lines.Line { #prosodic.texts.lines.Line }
+
+`texts.lines.Line(self, children=[], parent=None, text=None, num=None, lang=DEFAULT_LANG, **kwargs)`
+
+    A class representing a line of text in a poem or prose.
+
+    This class inherits from Text and represents a single line, typically containing
+    words or tokens. It provides methods for parsing, analyzing, and rendering the line.
+
+    Attributes:
+        line_sep (str): Separator string used between lines. Default is "
+".
+        sep (str): Separator string used between words. Default is "
+".
+        child_type (str): The type of child entities. Default is "WordToken".
+        is_parseable (bool): Whether the line can be parsed. Default is True.
+        prefix (str): Prefix used for identification. Default is "line".
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [linepart_parses](#prosodic.texts.lines.Line.linepart_parses) | LazyParseList per linepart for this line. Populated by the prose |
+| [num_sylls](#prosodic.texts.lines.Line.num_sylls) | Get the number of syllables in the line. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [grid_df](#prosodic.texts.lines.Line.grid_df) | Metrical grid of the best parse as a per-syllable DataFrame. |
+| [grid_plot](#prosodic.texts.lines.Line.grid_plot) | Metrical grid of the best parse as a plotnine figure. |
+| [grid_str](#prosodic.texts.lines.Line.grid_str) | Hayes-style metrical grid of the best parse as monospace text. |
+| [rime_distance](#prosodic.texts.lines.Line.rime_distance) | Calculate the rime distance between this line and another line. |
+| [stats](#prosodic.texts.lines.Line.stats) | Get statistics for the line's parses. |
+| [stats_d](#prosodic.texts.lines.Line.stats_d) | Get statistics for the line's parses as a dictionary. |
+| [to_html](#prosodic.texts.lines.Line.to_html) | Generate an HTML representation of the Line. |
+
+### grid_df { #prosodic.texts.lines.Line.grid_df }
+
+`texts.lines.Line.grid_df(**kwargs)`
+
+Metrical grid of the best parse as a per-syllable DataFrame.
+
+### grid_plot { #prosodic.texts.lines.Line.grid_plot }
+
+`texts.lines.Line.grid_plot(**kwargs)`
+
+Metrical grid of the best parse as a plotnine figure.
+
+### grid_str { #prosodic.texts.lines.Line.grid_str }
+
+`texts.lines.Line.grid_str(**kwargs)`
+
+Hayes-style metrical grid of the best parse as monospace text.
+
+With ``syntax=True`` on the text, phrasal-prominence rows extend
+the grid above the word level (nuclear stress = tallest column).
+
+### rime_distance { #prosodic.texts.lines.Line.rime_distance }
+
+`texts.lines.Line.rime_distance(line, max_dist=RHYME_MAX_DIST)`
+
+Calculate the rime distance between this line and another line.
+
+Args:
+    line (Line): The line to compare with.
+
+Returns:
+    float: The rime distance between the two lines.
+
+### stats { #prosodic.texts.lines.Line.stats }
+
+`texts.lines.Line.stats(by='parse', **kwargs)`
+
+Get statistics for the line's parses.
+
+Args:
+    by (str): The grouping criterion for statistics. Default is "parse".
+    **kwargs: Additional keyword arguments.
+
+Returns:
+    pd.DataFrame: A DataFrame containing parse statistics.
+
+### stats_d { #prosodic.texts.lines.Line.stats_d }
+
+`texts.lines.Line.stats_d(by='parse', **kwargs)`
+
+Get statistics for the line's parses as a dictionary.
+
+Args:
+    by (str): The grouping criterion for statistics. Default is "parse".
+    **kwargs: Additional keyword arguments.
+
+Returns:
+    Dict[str, Any]: A dictionary containing parse statistics.
+
+### to_html { #prosodic.texts.lines.Line.to_html }
+
+`texts.lines.Line.to_html(parse=None, as_str=False, css=HTML_CSS, tooltip=False, **kwargs)`
+
+Generate an HTML representation of the Line.
+
+Args:
+    parse (Optional[Any]): The parse to use for rendering. If None, uses the minimum parse.
+    as_str (bool): If True, return the result as a string. Default is False.
+    css (str): CSS styles to include in the HTML. Default is HTML_CSS.
+    tooltip (bool): Whether to include tooltips. Default is False.
+    **kwargs: Additional keyword arguments.
+
+Returns:
+    Any: HTML representation of the Line.

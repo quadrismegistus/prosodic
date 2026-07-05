@@ -1,0 +1,266 @@
+# parsing.parses.Parse { #prosodic.parsing.parses.Parse }
+
+`parsing.parses.Parse(self, wordtokens, scansion='', meter=None, parent=None, children=None, is_bounded=False, bounded_by=None, rank=None, parse_viold={}, key=None, num=None, scope=None, num_slots_positioned=0, **meter_kwargs)`
+
+Represents a metrical parse of a line of text.
+
+Attributes:
+    prefix (str): The prefix used for naming this entity type.
+    positions (List[ParsePosition]): List of metrical positions in the parse.
+    meter_obj (Meter): The meter object associated with this parse.
+    meter (Meter): Alias for meter_obj.
+    wordforms (WordFormList): List of word forms in the parse.
+    line (Line): The line object this parse is associated with.
+    is_bounded (bool): Whether this parse is bounded.
+    bounded_by (List): List of constraints that bound this parse.
+    unmetrical (bool): Whether this parse is unmetrical.
+    comparison_nums (set): Set of comparison numbers.
+    comparison_parses (List[Parse]): List of comparison parses.
+    parse_num (int): The number of this parse.
+    total_score (Optional[float]): The total score of this parse.
+    pause_comparisons (bool): Whether to pause comparisons.
+    parse_rank (Optional[int]): The rank of this parse.
+    num_slots_positioned (int): Number of slots positioned in this parse.
+    _line_num (Optional[int]): The line number.
+    _stanza_num (Optional[int]): The stanza number.
+    _line_txt (str): The text of the line.
+
+Args:
+    wordforms_or_str (Union[str, List, WordFormList]): The word forms or string to parse.
+    scansion (str): The scansion string.
+    meter (Optional[Meter]): The meter to use for parsing.
+    parent (Optional[Any]): The parent object of this parse.
+    positions (Optional[List[ParsePosition]]): List of parse positions.
+    is_bounded (bool): Whether this parse is bounded.
+    bounded_by (Optional[List]): List of constraints that bound this parse.
+    rank (Optional[int]): The rank of this parse.
+    line_num (Optional[int]): The line number.
+    stanza_num (Optional[int]): The stanza number.
+    line_txt (str): The text of the line.
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [ambig](#prosodic.parsing.parses.Parse.ambig) | Get the ambiguity score of the parse. |
+| [attrs](#prosodic.parsing.parses.Parse.attrs) | Get a dictionary of attributes for the parse. |
+| [average_position_size](#prosodic.parsing.parses.Parse.average_position_size) | Get the average size of metrical positions in the parse. |
+| [feet](#prosodic.parsing.parses.Parse.feet) | Get the list of feet in the parse. |
+| [foot_counts](#prosodic.parsing.parses.Parse.foot_counts) | Get a counter of foot types in the parse. |
+| [foot_sizes](#prosodic.parsing.parses.Parse.foot_sizes) | Get the sizes of feet in the parse. |
+| [foot_type](#prosodic.parsing.parses.Parse.foot_type) | Get the foot type of the parse. |
+| [html](#prosodic.parsing.parses.Parse.html) | Get an HTML representation of the parse. |
+| [is_anapestic](#prosodic.parsing.parses.Parse.is_anapestic) | Check if the parse is anapestic. |
+| [is_complete](#prosodic.parsing.parses.Parse.is_complete) | Check if the parse is complete. |
+| [is_dactylic](#prosodic.parsing.parses.Parse.is_dactylic) | Check if the parse is dactylic. |
+| [is_iambic](#prosodic.parsing.parses.Parse.is_iambic) | Check if the parse is iambic. |
+| [is_rising](#prosodic.parsing.parses.Parse.is_rising) | Check if the parse has a rising rhythm. |
+| [is_trochaic](#prosodic.parsing.parses.Parse.is_trochaic) | Check if the parse is trochaic. |
+| [line_txt](#prosodic.parsing.parses.Parse.line_txt) | Get the text of the line associated with this parse. |
+| [meter_ints](#prosodic.parsing.parses.Parse.meter_ints) | Get the meter as a tuple of integers. |
+| [meter_str](#prosodic.parsing.parses.Parse.meter_str) | Get the meter string representation of the parse. |
+| [nary_feet](#prosodic.parsing.parses.Parse.nary_feet) | Get the n-ary foot type of the parse. |
+| [num_peaks](#prosodic.parsing.parses.Parse.num_peaks) | Get the number of metrical peaks in the parse. |
+| [num_positions](#prosodic.parsing.parses.Parse.num_positions) | Get the number of metrical positions in the parse. |
+| [num_stressed_sylls](#prosodic.parsing.parses.Parse.num_stressed_sylls) | Get the number of stressed syllables in the parse. |
+| [num_sylls](#prosodic.parsing.parses.Parse.num_sylls) | Get the total number of syllables in the parse. |
+| [num_words](#prosodic.parsing.parses.Parse.num_words) | Get the number of words in the parse. |
+| [slots](#prosodic.parsing.parses.Parse.slots) | Get all slots in the parse. |
+| [stress_ints](#prosodic.parsing.parses.Parse.stress_ints) | Get the stress pattern as a tuple of integers. |
+| [stress_str](#prosodic.parsing.parses.Parse.stress_str) | Get the stress string representation of the parse. |
+| [txt](#prosodic.parsing.parses.Parse.txt) | Get the text representation of the parse. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [bounding_relation](#prosodic.parsing.parses.Parse.bounding_relation) | Get the bounding relation between this parse and another parse. |
+| [bounds](#prosodic.parsing.parses.Parse.bounds) | Check if this parse bounds another parse. |
+| [can_compare](#prosodic.parsing.parses.Parse.can_compare) | Check if this parse can be compared to another parse. |
+| [extend](#prosodic.parsing.parses.Parse.extend) | Extend the parse with a new metrical position. |
+| [from_dict](#prosodic.parsing.parses.Parse.from_dict) | Create a Parse object from a JSON dictionary. |
+| [get_df](#prosodic.parsing.parses.Parse.get_df) | Get a DataFrame representation of the parse. |
+| [grid_df](#prosodic.parsing.parses.Parse.grid_df) | Metrical grid as a per-syllable DataFrame (see analysis.grid). |
+| [grid_plot](#prosodic.parsing.parses.Parse.grid_plot) | Metrical grid as a plotnine figure (see analysis.grid). |
+| [grid_str](#prosodic.parsing.parses.Parse.grid_str) | Hayes-style metrical grid as monospace text (see analysis.grid). |
+| [init](#prosodic.parsing.parses.Parse.init) | Initialize the parse positions. |
+| [score](#prosodic.parsing.parses.Parse.score) | Get the total score of the parse. |
+| [sort_key](#prosodic.parsing.parses.Parse.sort_key) | Get the sort key for this parse. |
+| [stats_d](#prosodic.parsing.parses.Parse.stats_d) | Get a dictionary of statistics for the parse. |
+| [to_dict](#prosodic.parsing.parses.Parse.to_dict) | Convert the parse to a JSON-serializable dictionary. |
+| [to_html](#prosodic.parsing.parses.Parse.to_html) | Convert the parse to an HTML representation. |
+| [violset](#prosodic.parsing.parses.Parse.violset) | Get the set of constraint violations for this parse. |
+| [wordtoken2slots](#prosodic.parsing.parses.Parse.wordtoken2slots) | Get a dictionary mapping word tokens to their corresponding parse slots. |
+
+### bounding_relation { #prosodic.parsing.parses.Parse.bounding_relation }
+
+`parsing.parses.Parse.bounding_relation(parse)`
+
+Get the bounding relation between this parse and another parse.
+
+Args:
+    parse (Parse): The other parse to compare to.
+
+Returns:
+    Bounding: The bounding relation.
+
+### bounds { #prosodic.parsing.parses.Parse.bounds }
+
+`parsing.parses.Parse.bounds(parse)`
+
+Check if this parse bounds another parse.
+
+Args:
+    parse (Parse): The other parse to compare to.
+
+Returns:
+    bool: True if this parse bounds the other parse, False otherwise.
+
+### can_compare { #prosodic.parsing.parses.Parse.can_compare }
+
+`parsing.parses.Parse.can_compare(other, min_slots=4)`
+
+Check if this parse can be compared to another parse.
+
+Args:
+    other (Parse): The other parse to compare to.
+    min_slots (int): Minimum number of slots required for comparison.
+
+Returns:
+    bool: True if the parses can be compared, False otherwise.
+
+### extend { #prosodic.parsing.parses.Parse.extend }
+
+`parsing.parses.Parse.extend(mpos_str)`
+
+Extend the parse with a new metrical position.
+
+Args:
+    mpos_str (str): String representation of the metrical position to add.
+
+Returns:
+    Optional[Parse]: The extended parse, or None if extension is not possible.
+
+### from_dict { #prosodic.parsing.parses.Parse.from_dict }
+
+`parsing.parses.Parse.from_dict(json_d, use_registry=DEFAULT_USE_REGISTRY)`
+
+Create a Parse object from a JSON dictionary.
+
+Args:
+    json_d (Dict[str, Any]): JSON dictionary representation of the parse.
+    line (Optional[Union[TextModel, Stanza, Line]]): The line object to associate with the parse.
+
+Returns:
+    Parse: A new Parse object created from the JSON data.
+
+### get_df { #prosodic.parsing.parses.Parse.get_df }
+
+`parsing.parses.Parse.get_df(*args, **kwargs)`
+
+Get a DataFrame representation of the parse.
+
+Args:
+    *args: Additional positional arguments.
+    **kwargs: Additional keyword arguments.
+
+Returns:
+    pd.DataFrame: DataFrame representation of the parse.
+
+### grid_df { #prosodic.parsing.parses.Parse.grid_df }
+
+`parsing.parses.Parse.grid_df(**kwargs)`
+
+Metrical grid as a per-syllable DataFrame (see analysis.grid).
+
+### grid_plot { #prosodic.parsing.parses.Parse.grid_plot }
+
+`parsing.parses.Parse.grid_plot(**kwargs)`
+
+Metrical grid as a plotnine figure (see analysis.grid).
+
+### grid_str { #prosodic.parsing.parses.Parse.grid_str }
+
+`parsing.parses.Parse.grid_str(**kwargs)`
+
+Hayes-style metrical grid as monospace text (see analysis.grid).
+
+### init { #prosodic.parsing.parses.Parse.init }
+
+`parsing.parses.Parse.init(force=False)`
+
+Initialize the parse positions.
+
+### score { #prosodic.parsing.parses.Parse.score }
+
+`parsing.parses.Parse.score()`
+
+Get the total score of the parse.
+
+Returns:
+    float: The total score.
+
+### sort_key { #prosodic.parsing.parses.Parse.sort_key }
+
+`parsing.parses.Parse.sort_key()`
+
+Get the sort key for this parse.
+
+Returns:
+    tuple: A tuple used for sorting parses.
+
+### stats_d { #prosodic.parsing.parses.Parse.stats_d }
+
+`parsing.parses.Parse.stats_d(norm=None)`
+
+Get a dictionary of statistics for the parse.
+
+Args:
+    norm (Optional[bool]): Whether to normalize the statistics.
+
+Returns:
+    Dict[str, Any]: Dictionary of parse statistics.
+
+### to_dict { #prosodic.parsing.parses.Parse.to_dict }
+
+`parsing.parses.Parse.to_dict(**kwargs)`
+
+Convert the parse to a JSON-serializable dictionary.
+
+Args:
+    fn (Optional[str]): Filename to save the JSON to.
+
+Returns:
+    Dict[str, Any]: JSON-serializable dictionary representation of the parse.
+
+### to_html { #prosodic.parsing.parses.Parse.to_html }
+
+`parsing.parses.Parse.to_html(as_str=False, css=HTML_CSS, blockquote=True)`
+
+Convert the parse to an HTML representation.
+
+Args:
+    as_str (bool): Whether to return the HTML as a string.
+    css (str): CSS styles to apply to the HTML.
+    blockquote (bool): Whether to include a blockquote with parse attributes.
+
+Returns:
+    Union[str, HTML]: HTML representation of the parse.
+
+### violset { #prosodic.parsing.parses.Parse.violset }
+
+`parsing.parses.Parse.violset()`
+
+Get the set of constraint violations for this parse.
+
+Returns:
+    Multiset: A multiset of constraint violations.
+
+### wordtoken2slots { #prosodic.parsing.parses.Parse.wordtoken2slots }
+
+`parsing.parses.Parse.wordtoken2slots()`
+
+Get a dictionary mapping word tokens to their corresponding parse slots.
+
+Returns:
+    Dict[str, List[ParseSlot]]: Dictionary mapping word tokens to parse slots.

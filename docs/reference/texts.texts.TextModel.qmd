@@ -1,0 +1,139 @@
+# texts.texts.TextModel { #prosodic.texts.texts.TextModel }
+
+`texts.texts.TextModel(self, children=[], txt=None, fn=None, lang=DEFAULT_LANG, parent=None, tokens_df=None, syntax=None, syntax_model=None, **kwargs)`
+
+A class that represents a text structure, comprised of WordTokens.
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [df](#prosodic.texts.texts.TextModel.df) | The syllable DataFrame — no entity construction needed. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [get_parsed_df](#prosodic.texts.texts.TextModel.get_parsed_df) | Alias for get_parses_df(mode=..., **meter_kwargs). |
+| [get_parses_df](#prosodic.texts.texts.TextModel.get_parses_df) | Parse and return results as a DataFrame. No entity construction. |
+| [line_num_sylls](#prosodic.texts.texts.TextModel.line_num_sylls) | Canonical per-line syllable counts: dict of line_num -> int. |
+| [line_scheme](#prosodic.texts.texts.TextModel.line_scheme) | Repeating beat-length template (e.g. invariable pentameter). |
+| [load](#prosodic.texts.texts.TextModel.load) | Load a saved TextModel from parquet files. |
+| [meter_type](#prosodic.texts.texts.TextModel.meter_type) | Aggregate meter classification. Triggers parsing if not already done. |
+| [parsed_df](#prosodic.texts.texts.TextModel.parsed_df) | Parse with default meter and return results as a DataFrame. |
+| [rhyme_scheme](#prosodic.texts.texts.TextModel.rhyme_scheme) | Best-fit named rhyme scheme. ``None`` if the text doesn't rhyme. |
+| [save](#prosodic.texts.texts.TextModel.save) | Save text + syllable DF + parse results to parquet files. |
+| [summary](#prosodic.texts.texts.TextModel.summary) | Tabular per-line summary + estimated schema. Returns a string. |
+| [syllable_scheme](#prosodic.texts.texts.TextModel.syllable_scheme) | Repeating syllable-length template (canonical sylls, form_idx==0). |
+
+### get_parsed_df { #prosodic.texts.texts.TextModel.get_parsed_df }
+
+`texts.texts.TextModel.get_parsed_df(mode='unbounded', **meter_kwargs)`
+
+Alias for get_parses_df(mode=..., **meter_kwargs).
+
+### get_parses_df { #prosodic.texts.texts.TextModel.get_parses_df }
+
+`texts.texts.TextModel.get_parses_df(mode='unbounded', **meter_kwargs)`
+
+Parse and return results as a DataFrame. No entity construction.
+
+Args:
+    mode: 'best', 'unbounded' (default), or 'all'.
+    **meter_kwargs: custom meter config (max_s, max_w, etc.)
+
+Returns a DataFrame with one row per (line, parse, syllable). Columns:
+    line_num, word_num, form_idx, syll_idx (within-word, joins to _syll_df),
+    line_syll_idx (position within line), parse_idx, parse_rank (1-indexed
+    among unbounded, NA for bounded), parse_score, is_best, is_bounded,
+    pos_idx, pos_size, meter_val, syll_txt, syll_ipa, is_stressed,
+    plus one `*<constraint>` column per violation (int8).
+
+Implementation is vectorized: per-line chunks are built directly
+from the numpy (S, N, C) violation arrays without row-by-row Python loops.
+
+### line_num_sylls { #prosodic.texts.texts.TextModel.line_num_sylls }
+
+`texts.texts.TextModel.line_num_sylls()`
+
+Canonical per-line syllable counts: dict of line_num -> int.
+
+Canonical = the first pronunciation of each word (form_idx==0),
+punctuation excluded. Use this rather than ``line.num_sylls``, which
+counts syllables across ALL pronunciation variants and inflates the
+total for words with multiple wordforms.
+
+### line_scheme { #prosodic.texts.texts.TextModel.line_scheme }
+
+`texts.texts.TextModel.line_scheme()`
+
+Repeating beat-length template (e.g. invariable pentameter).
+
+### load { #prosodic.texts.texts.TextModel.load }
+
+`texts.texts.TextModel.load(path)`
+
+Load a saved TextModel from parquet files.
+
+Rebuilds TextModel with pre-computed _syll_df, skipping tokenization
+and get_word() entirely. If parse results exist, they're available
+via .parsed_df immediately.
+
+Args:
+    path: directory containing syll.parquet and meta.json
+
+Returns:
+    TextModel with _syll_df pre-loaded (entities still lazy)
+
+### meter_type { #prosodic.texts.texts.TextModel.meter_type }
+
+`texts.texts.TextModel.meter_type()`
+
+Aggregate meter classification. Triggers parsing if not already done.
+
+### parsed_df { #prosodic.texts.texts.TextModel.parsed_df }
+
+`texts.texts.TextModel.parsed_df()`
+
+Parse with default meter and return results as a DataFrame.
+
+One row per (line, unbounded parse, syllable). Joins to _syll_df on
+(line_num, word_num, form_idx, syll_idx). No entity construction.
+
+### rhyme_scheme { #prosodic.texts.texts.TextModel.rhyme_scheme }
+
+`texts.texts.TextModel.rhyme_scheme()`
+
+Best-fit named rhyme scheme. ``None`` if the text doesn't rhyme.
+
+### save { #prosodic.texts.texts.TextModel.save }
+
+`texts.texts.TextModel.save(path=None, save_parses='unbounded', compression='gzip', **meter_kwargs)`
+
+Save text + syllable DF + parse results to parquet files.
+
+Writes syll.parquet (full _syll_df), parsed.parquet (parse results
+per mode), meta.json. parsed.parquet joins to syll.parquet on
+(line_num, word_num, form_idx, syll_idx).
+
+Args:
+    path: directory to save into. Defaults to
+        ~/prosodic_data/data/parsed/<hash>/.
+    save_parses: 'best', 'unbounded' (default), or 'all'.
+    compression: parquet codec (default 'gzip'). Pass None for uncompressed.
+    **meter_kwargs: passed to parse() if not already parsed.
+
+Returns:
+    str: path to the saved directory.
+
+### summary { #prosodic.texts.texts.TextModel.summary }
+
+`texts.texts.TextModel.summary(**kwargs)`
+
+Tabular per-line summary + estimated schema. Returns a string.
+
+### syllable_scheme { #prosodic.texts.texts.TextModel.syllable_scheme }
+
+`texts.texts.TextModel.syllable_scheme()`
+
+Repeating syllable-length template (canonical sylls, form_idx==0).

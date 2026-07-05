@@ -38,15 +38,22 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script_stop: true
+          # The server's `npm run build` rewrites tracked files under
+          # prosodic/web/static_build/ (content-hashed chunk names), leaving
+          # the working tree dirty after every deploy — so a plain `git pull`
+          # aborts on the *next* deploy (this silently broke deploys #121–#126).
+          # reset --hard + clean discards those build artifacts (regenerated
+          # below anyway), and `npm ci` keeps package-lock.json pristine.
           script: |
             set -e
             cd /opt/prosodic/repo
-            sudo -u prosodic git fetch origin
+            sudo -u prosodic git fetch origin master
             sudo -u prosodic git checkout master
-            sudo -u prosodic git pull origin master
+            sudo -u prosodic git reset --hard origin/master
+            sudo -u prosodic git clean -fd prosodic/web/static_build
             sudo -u prosodic /opt/prosodic/.venv/bin/pip install -e . --quiet
             cd prosodic/web/frontend
-            sudo -u prosodic npm install --no-audit --no-fund --silent
+            sudo -u prosodic npm ci --no-audit --no-fund --silent
             sudo -u prosodic npm run build
             systemctl restart prosodic
             sleep 3

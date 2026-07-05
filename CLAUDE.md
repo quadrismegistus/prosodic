@@ -210,15 +210,9 @@ Server deployment config for running prosodic.app (and optionally lltk.net) on a
 
 Target: Hetzner CCX33 (~$35/mo), CPU-only (GPU not needed for serving).
 
-### Desktop App (`desktop/`)
+### Desktop App (removed)
 
-Tauri v2 desktop app scaffold. Bundles the Python backend via PyInstaller as a sidecar, including espeak. No Python installation required for end users.
-
-- `build.sh`: Builds frontend → PyInstaller sidecar → Tauri `.app` bundle.
-- `src-tauri/src/main.rs`: Launches sidecar on random port, passes port to webview via `window.__PROSODIC_PORT__`.
-- `scripts/prosodic_server.py`: Server entry point for PyInstaller with port negotiation and bundled espeak path setup.
-- `scripts/prosodic_server.spec`: PyInstaller spec bundling Python + prosodic + espeak (~300MB).
-- GPU (torch) and spaCy excluded from bundle to keep size manageable.
+A Tauri v2 desktop scaffold (Python backend as PyInstaller sidecar with bundled espeak) lived in `desktop/` but was never built into a shipped artifact and was removed 2026-07-05 to retire its maintenance surface. Restore with `git checkout desktop-scaffold -- desktop/` (the tag points at its last, dependency-patched state).
 
 ## Two Parse Paths
 
@@ -304,7 +298,7 @@ Run `python -m prosodic.profiling` to regenerate.
 - ✅ Profiling module (`python -m prosodic.profiling`)
 - ✅ Web app: component-based tabs (state/scroll preserved across switches), Line View tab, Settings tab
 - ✅ Remote client API (`prosodic.client`): same interface as local, delegates to HTTP API, save/load support
-- ✅ Desktop app scaffold (Tauri v2 + PyInstaller sidecar + bundled espeak)
+- ✅ Desktop app scaffold (Tauri v2 + PyInstaller sidecar; removed 2026-07-05, restore via `desktop-scaffold` tag)
 - ✅ Server deployment config (nginx + certbot + systemd + setup script for prosodic.app, co-hosts with lltk.net)
 - ✅ prosodic.app deployed LIVE (2026-04-14, app3 branch, 65.109.29.122)
 - ✅ Prose handling: auto-fallback to linepart parsing for long lines, syntax-based sub-splitting

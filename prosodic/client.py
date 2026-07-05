@@ -1,7 +1,7 @@
 """Prosodic remote client.
 
 Provides the same interface as local prosodic (Text, .lines, .parse(), etc.)
-but delegates parsing to a remote server or local desktop app via HTTP API.
+but delegates parsing to a remote server via HTTP API.
 
 No prosodic dependencies required beyond `requests` — no numpy, espeak, etc.
 

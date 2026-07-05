@@ -14,8 +14,11 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
 
 - **Hayes-style metrical grid view** — cadence's `sent.grid()` renders a
   plotnine stress grid over syllables; small and pedagogically excellent.
-  Natural home: Line View tab in the web app (long on the wishlist) plus a
-  `line.grid()` / `text.grid()` API. Most likely port.
+  ✅ API shipped (`analysis/grid.py`: `line.grid_str()` / `grid_df()` /
+  `grid_plot()`, works on both parse paths). Remaining: render the grid in
+  the web app's Line View tab (see "Parse table design polish" below), and
+  a phrasal-prominence row once continuous phrasal stress exists (see
+  MetricalTree item — the grid API takes extra rows without change).
 - **nltk.Tree / svgling export** — cadence's metrical tree is an `nltk.Tree`
   subclass, so svgling SVG rendering came free. If v3 exports its
   phrasal-stress structure as `nltk.Tree` (`to_nltk_tree()`), notebook SVG

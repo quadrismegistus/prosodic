@@ -148,6 +148,18 @@ class Line(WordTokenList):
         """
         return len(self.syllables)
 
+    def grid_str(self, **kwargs) -> str:
+        """Hayes-style metrical grid of the best parse as monospace text."""
+        return self.best_parse.grid_str(**kwargs)
+
+    def grid_df(self):
+        """Metrical grid of the best parse as a per-syllable DataFrame."""
+        return self.best_parse.grid_df()
+
+    def grid_plot(self, **kwargs):
+        """Metrical grid of the best parse as a plotnine figure."""
+        return self.best_parse.grid_plot(**kwargs)
+
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:
         """

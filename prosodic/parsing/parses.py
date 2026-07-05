@@ -481,6 +481,21 @@ class Parse(Entity):
         """
         return len([mpos for mpos in self.positions if mpos.is_prom])
 
+    def grid_str(self, **kwargs) -> str:
+        """Hayes-style metrical grid as monospace text (see analysis.grid)."""
+        from ..analysis.grid import grid_str
+        return grid_str(self, **kwargs)
+
+    def grid_df(self):
+        """Metrical grid as a per-syllable DataFrame (see analysis.grid)."""
+        from ..analysis.grid import grid_df
+        return grid_df(self)
+
+    def grid_plot(self, **kwargs):
+        """Metrical grid as a plotnine figure (see analysis.grid)."""
+        from ..analysis.grid import grid_plot
+        return grid_plot(self, **kwargs)
+
     @property
     def is_rising(self) -> Optional[bool]:
         """

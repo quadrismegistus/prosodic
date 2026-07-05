@@ -113,7 +113,11 @@ class Meter(Entity):
 
         Args:
             text: a string, list of line strings, or TextModel.
-            target_scansion: e.g. "wswswswsws" for iambic pentameter.
+            target_scansion: e.g. "wswswswsws" for iambic pentameter, or a
+                list of targets for meters whose line length varies (e.g.
+                ["wwswwswwswws", "wswwswwswws"] for anapestic tetrameter
+                with an optional iamb-initial foot) — each line uses the
+                target(s) matching its syllable count.
             zones: positional zone splitting (None, "initial", int N).
             regularization: L2 regularization strength.
             lang: language code for parsing.

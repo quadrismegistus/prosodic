@@ -1120,11 +1120,12 @@ class LazyParseList:
         # compute scores for ranking (weighted violation sums)
         zones = getattr(meter, 'zones', None)
         zone_weights = getattr(meter, 'zone_weights', None)
-        # when zone scoring is active, built Parse objects get their .score
-        # overridden with the zone-aware score (see _get_parse)
-        self._is_zone_scored = zones is not None and zone_weights is not None
+        # when learned weights are active, built Parse objects get their .score
+        # overridden with the learned score (see _get_parse). zones=None with
+        # learned weights = flat weighted scoring (zone_split sums over N).
+        self._is_zone_scored = bool(zone_weights)
 
-        if zones is not None and zone_weights is not None:
+        if zone_weights:
             # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights
             from .maxent import zone_split, make_zone_names
             zone_viols = zone_split(viols, zones)  # (S, C*Z)

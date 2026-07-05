@@ -281,22 +281,39 @@ class MaxEntTrainer:
         self._build_line_data(results, line_texts, scansion_map)
 
     def load_text(self, text, target_scansion, lang=DEFAULT_LANG):
-        """Load a text and assign a uniform target scansion to all lines.
+        """Load a text and assign a target scansion to all lines.
 
-        Lines whose syllable count doesn't match the target scansion length
+        Lines whose syllable count doesn't match any target scansion length
         are skipped (with a warning).
 
         Args:
             text: a string, list of line strings, or TextModel.
-            target_scansion: e.g. "wswswswsws" for iambic pentameter.
+            target_scansion: a scansion string (e.g. "wswswswsws" for iambic
+                pentameter), or a list of them for meters whose line length
+                legitimately varies — e.g. ["wwswwswwswws", "wswwswwswws"]
+                for anapestic tetrameter with an optional iamb-initial foot.
+                Each line is assigned the target(s) whose length matches its
+                syllable count; two same-length targets that both match split
+                the observed frequency between them.
             lang: language code for parsing.
         """
         results, line_texts = self._parse_text(text, lang=lang)
 
-        # every line gets the same target scansion
-        scansion_map = {
-            lt: [(target_scansion, 1.0)] for lt in line_texts
-        }
+        if isinstance(target_scansion, str):
+            targets = [target_scansion]
+        else:
+            targets = [str(t) for t in target_scansion]
+
+        # each line gets the targets whose length matches one of its
+        # candidate scansions (candidates can differ in length when a word
+        # has pronunciation variants with different syllable counts)
+        scansion_map = {}
+        for i, ln in enumerate(sorted(results.keys())):
+            scans = getattr(results[ln], "_all_scansions", None) or []
+            lens = {sum(len(pos) for pos in scan) for scan in scans}
+            scansion_map[line_texts[i]] = [
+                (t, 1.0) for t in targets if len(t) in lens
+            ]
 
         self._build_line_data(results, line_texts, scansion_map)
 

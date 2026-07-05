@@ -57,20 +57,16 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Parser
 
-- **Ternary meter identification** — the substantive open parser item.
-  Current state: `meter.fit()` (MaxEnt, `parsing/maxent.py`) learns weights
-  for binary iambic/trochaic targets like `"wswswswsws"`;
-  `analysis/meter_type.py` DETECTS ternary verse (fraction of `ww`
-  positions > 17.5%) but `fit()` has no ternary-aware path. Sketch:
-  (a) accept ternary target strings (`"wwswwswws"` — already expressible,
-  positions of size ≤ `max_w=2` mean a `ww` position is one unit, so the
-  target matching in `MaxEntTrainer.load_text` may already align — VERIFY
-  first, the gap may be smaller than assumed); (b) the real work is
-  probably constraint semantics: `w_peak`/`clash`/`lapse` were tuned for
-  binary alternation; test on Browning ("How They Brought the Good News",
-  anapestic) and Byron ("Destruction of Sennacherib"). Add a ternary
-  corpus file under `corpora/corppoetry_en/` first, then write the failing
-  test, then fix.
+- ✅ **Ternary meter identification** — shipped 2026-07-06. The gap was
+  indeed smaller than assumed: anapestic scansions were already in the
+  candidate space and default weights already scan Byron/Browning
+  correctly (`meter_type` → anapestic). What shipped: `load_text`/`fit()`
+  accept a LIST of targets (line-length-matched — ternary verse varies
+  line length via iamb-initial feet); fixed a real bug where
+  `fit(zones=None)` learned weights were silently ignored by
+  `LazyParseList` scoring; corpus files `en.byron.sennacherib.txt` +
+  `en.browning.goodnews.txt`; `tests/test_ternary.py` (8 tests,
+  hand-verified scansions); docs § Ternary meters.
 - **Lazy phoneme construction** — `Syllable.__init__` eagerly builds
   Phoneme children (`words/syllables.py`); could defer to IPA-on-demand
   via cached_property. Only matters on the entity path (DF path never

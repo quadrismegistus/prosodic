@@ -89,13 +89,15 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 - **`MaxEntTrainer(meter, regularization=100.0, zones=None)`**: zones splits the violation matrix by syllable position before training. `"initial"` = first 2 syllables vs rest. `3` = three equal zones. `"foot"` = per foot.
 - **`load_annotations(data)`**: accepts `[(text, scansion, frequency), ...]` or DataFrame with those columns. Parses all lines via `parse_batch_from_df`, matches annotations to candidate scansions.
-- **`load_text(text, "wswswswsws")`**: assigns a uniform target scansion to all lines — no annotation file needed.
+- **`load_text(text, "wswswswsws")`**: assigns a target scansion to all lines — no annotation file needed. Also accepts a LIST of targets for meters whose line length varies (ternary verse: `["wwswwswwswws", "wswwswwswws"]` = anapestic tetrameter ± iamb-initial foot); each line matches the target(s) of its syllable count.
 - **`train()`**: L-BFGS-B optimization (scipy). Converges in <1s on 2000+ lines. Vectorized gradient via `einsum` over groups of same-length lines.
 - **`learned_weights()`** / **`apply_to_meter()`**: extract or apply learned weights.
 
 **Key design**: operates on the `(S, N, C)` violation matrices already produced by the parser. Zone splitting is post-hoc feature engineering — partitions the N (syllable) axis into zones before summing, creating `C * n_zones` features. No parser changes needed.
 
-**`meter.fit()` pipeline**: `Meter.fit(text, "wswswswsws", zones=3)` trains MaxEnt weights on a corpus and stores `meter.zone_weights` (dict of zone-expanded constraint names → weights) and `meter.zones` on the meter. `LazyParseList` scoring checks for these and uses zone-aware scoring when available — splits `(S, N, C)` violations by syllable position before weighting. This means learned positional sensitivity transfers to parsing unseen text. Also `meter.fit_annotations(data)` for annotated data (list of tuples or DataFrame).
+**`meter.fit()` pipeline**: `Meter.fit(text, "wswswswsws", zones=3)` trains MaxEnt weights on a corpus and stores `meter.zone_weights` (dict of zone-expanded constraint names → weights) and `meter.zones` on the meter. `LazyParseList` scoring uses learned weights whenever `zone_weights` is set — with `zones=None` this degrades to flat weighted scoring (`zone_split` just sums over N), so `fit(zones=None)` weights are honored too. This means learned positional sensitivity transfers to parsing unseen text. Also `meter.fit_annotations(data)` for annotated data (list of tuples or DataFrame).
+
+**Ternary meters**: nothing parser-side is binary-specific — anapestic feet are `ww` positions + `s` positions, already in the candidate space (`max_w=2`). Default weights scan regular anapestic lines correctly (Byron/Browning corpus files + `tests/test_ternary.py`); `fit()` with a target list learns the ternary signature (strict `s_unstress`/`unres_within`, free `w_stress`/`unres_across` — Hanson & Kiparsky 1996). See `docs/methods/metrical-parsing.qmd` § Ternary meters.
 
 **Shared utilities**: `zone_split(viols_3d, zones)`, `zone_boundaries(zones, N)`, `make_zone_names(base_names, nsylls, zones)` — used by both MaxEntTrainer and LazyParseList.
 

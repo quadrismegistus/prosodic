@@ -20,6 +20,10 @@ disable_caching()
 
 # ------------------------------------------------- algorithm (no spaCy)
 
+# Expected values below are cross-validated against cadence's MetricalTree
+# (Dozat's algorithm over Stanza constituency parses, ambiguity ensemble
+# enabled) — identical output on these sentences, 2026-07-05 differential.
+
 def test_nsr_nuclear_stress_rightmost():
     # "the dog saw the cat": nuclear stress on the rightmost content word
     heads = np.array([1, 2, -1, 4, 2], dtype=np.int32)
@@ -28,7 +32,7 @@ def test_nsr_nuclear_stress_rightmost():
     words = np.array(['the', 'dog', 'saw', 'the', 'cat'])
     nsyll = np.ones(5, dtype=np.int32)
     p, t = _mt_gradient(heads, words, tags, deps, nsyll, 5)
-    assert t.tolist() == [0.0, 0.75, 0.75, 0.25, 1.0]
+    assert np.allclose(t, [0.0, 2/3, 2/3, 1/3, 1.0])
     assert p.tolist() == [0.0, 1.0, 0.0, 0.0, 1.0]
 
 
@@ -39,21 +43,52 @@ def test_compound_stress_rule():
     deps = np.array(['det', 'compound', 'nsubj', 'ROOT'])
     words = np.array(['the', 'time', 'machine', 'broke'])
     nsyll = np.array([1, 1, 2, 1], dtype=np.int32)
-    _, t = _mt_gradient(heads, words, tags, deps, nsyll, 4)
-    time_i, machine_i = 1, 2
-    assert t[time_i] > t[machine_i]
+    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 4)
+    assert np.allclose(t, [0.0, 2/3, 1/3, 1.0])
+    assert p.tolist() == [0.0, 1.0, 0.0, 1.0]
 
 
 def test_ambiguous_word_ensemble_is_gradient():
-    # 'this' is ambiguous: the 3-variant ensemble yields a non-integer mean
-    heads = np.array([1, 2, -1], dtype=np.int32)
-    tags = np.array(['DT', 'NN', 'VBD'])
-    deps = np.array(['det', 'nsubj', 'ROOT'])
-    words = np.array(['this', 'dog', 'barked'])
+    # 'this' as a subject: the argument projection shields its preterminal,
+    # so the 3-variant ensemble shows through as a gradient pstress
+    heads = np.array([1, -1, 1], dtype=np.int32)
+    tags = np.array(['DT', 'VBZ', 'JJ'])
+    deps = np.array(['nsubj', 'ROOT', 'acomp'])
+    words = np.array(['this', 'is', 'red'])
     nsyll = np.ones(3, dtype=np.int32)
-    _, t = _mt_gradient(heads, words, tags, deps, nsyll, 3)
-    assert 0.0 < t[1] < 1.0  # intermediate value exists
-    assert t[2] == 1.0       # nuclear on the verb
+    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 3)
+    assert abs(p[0] - 1/3) < 1e-9  # ensemble mean, not 0 or 1
+    assert t[2] == 1.0             # nuclear on the predicate
+    assert 0.0 < t[1] < 1.0        # intermediate value exists
+
+
+def test_np_internal_modifiers_demoted():
+    # prenominal amods sit bare in the NP: NSR demotion reaches them
+    # ("the quick brown fox jumps": fox strong, adjectives weak)
+    heads = np.array([3, 3, 3, 4, -1], dtype=np.int32)
+    tags = np.array(['DT', 'JJ', 'JJ', 'NN', 'VBZ'])
+    deps = np.array(['det', 'amod', 'amod', 'nsubj', 'ROOT'])
+    words = np.array(['the', 'quick', 'brown', 'fox', 'jumps'])
+    nsyll = np.ones(5, dtype=np.int32)
+    p, _ = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    assert p[3] == 1.0 and p[1] == 0.0 and p[2] == 0.0
+
+
+def test_noun_head_shielded_from_right_complement():
+    # "the house that Jack built": the inner NP core shields the head noun
+    # from the relative clause's NSR win — house keeps pstress 1.0
+    heads = np.array([1, -1, 3, 1, 5, 3], dtype=np.int32)
+    #                the house that jack built(relcl of house)... simplified:
+    # words: the(det->house) house(ROOT) that(dobj->built) Jack(nsubj->built) built(relcl->house)
+    heads = np.array([1, -1, 4, 4, 1], dtype=np.int32)
+    tags = np.array(['DT', 'NN', 'WDT', 'NNP', 'VBD'])
+    deps = np.array(['det', 'ROOT', 'dobj', 'nsubj', 'relcl'])
+    words = np.array(['the', 'house', 'that', 'Jack', 'built'])
+    nsyll = np.ones(5, dtype=np.int32)
+    p, t = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    assert p[1] == 1.0  # house shielded (inner core)
+    assert p[3] == 1.0  # Jack shielded (argument projection)
+    assert t[4] == 1.0  # nuclear on built
 
 
 def test_lstress_classes():

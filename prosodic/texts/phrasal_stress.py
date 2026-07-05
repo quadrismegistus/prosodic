@@ -138,12 +138,63 @@ def _mt_lstress_base(words, tags, deps, n):
     return lstress
 
 
+class _MTNode:
+    """Phrase node in the dep-projection tree. children: ('pre', word_i) or
+    ('node', _MTNode), ordered by linear position."""
+    __slots__ = ('cat', 'children', 'p', 'total')
+
+    def __init__(self, cat, children):
+        self.cat = cat
+        self.children = children
+        self.p = 0.0      # phrasal stress of this node
+        self.total = 0.0  # cumulative stress (set top-down)
+
+
+# Dependents that sit as bare preterminals inside their head's phrase, like
+# the flat Penn NP (NP (DT the) (JJ quick) (NN fox)). Everything else — even
+# a single-word subject or object — projects its own phrase node, the way
+# constituency wraps arguments (NP(Jack), WHADVP(When)), which shields the
+# preterminal from sibling NSR demotion.
+MT_BARE_DEPS = frozenset({
+    'det', 'amod', 'compound', 'nummod', 'poss', 'predet',
+    'neg', 'aux', 'auxpass',
+})
+
+
+def _mt_project(h, deps_of, tags, deps):
+    """Project word h's phrase, constituency-style.
+
+    Topology rules keep Dozat's NSR faithful to what it does on
+    constituency trees (verified differentially against cadence):
+
+    - NP-internal prenominal modifiers (det/amod/compound/...) join as bare
+      preterminals — NSR demotion reaches them directly, as in a flat NP.
+    - All other dependents project a phrase node even when single words
+      (constituency wraps arguments: NP(Jack)), shielding their preterminal.
+    - An NN-headed phrase with right-side dependents wraps its left
+      material + head in an inner core — NP(NP(the house) SBAR) — so the
+      head noun's preterminal is shielded from the complement's NSR win.
+    """
+    left = [d for d in deps_of[h] if d < h]
+    right = [d for d in deps_of[h] if d > h]
+
+    def child_of(d):
+        if not deps_of[d] and deps[d] in MT_BARE_DEPS:
+            return ('pre', d)
+        return ('node', _mt_project(d, deps_of, tags, deps))
+
+    inner = [child_of(d) for d in left] + [('pre', h)]
+    right_children = [child_of(d) for d in right]
+    if right_children and tags[h].startswith('NN'):
+        core = _MTNode(tags[h], inner)
+        return _MTNode(tags[h], [('node', core)] + right_children)
+    return _MTNode(tags[h], inner + right_children)
+
+
 def _mt_variant(heads, tags, deps, lstress, n):
     """One disambiguated MetricalTree pass over the dep-projection tree.
 
-    Each word w projects a phrase node whose ordered children are the
-    projections of w's dependents plus w's own preterminal. ``lstress``
-    must already be resolved to {0, -1}.
+    ``lstress`` must already be resolved to {0, -1}.
 
     Returns (pstress, tstress): per-word preterminal phrasal stress
     ({0, -1}) and cumulative total stress (Dozat's set_stress).
@@ -155,89 +206,81 @@ def _mt_variant(heads, tags, deps, lstress, n):
         (deps_of[h] if h >= 0 else roots).append(i)
 
     pre_p = lstress.astype(float).copy()  # preterminal pstress
-    ph_p = np.zeros(n)                    # pstress of word i's projection
+    trees = [_mt_project(r, deps_of, tags, deps) for r in roots]
 
-    def child_p(kind, i):
-        return pre_p[i] if kind == 'pre' else ph_p[i]
+    def child_p(kind, c):
+        return pre_p[c] if kind == 'pre' else c.p
 
-    def set_child_p(kind, i, v):
+    def set_child_p(kind, c, v):
         if kind == 'pre':
-            pre_p[i] = v
+            pre_p[c] = v
         else:
-            ph_p[i] = v
+            c.p = v
 
-    # iterative post-order over heads
-    stack = [(r, False) for r in reversed(roots)]
-    order = []
-    while stack:
-        h, done = stack.pop()
-        if done:
-            order.append(h)
-        else:
-            stack.append((h, True))
-            for d in deps_of[h]:
-                stack.append((d, False))
-
-    for h in order:
-        # ordered children of phrase(h): dependents' projections + own preterm
-        children = sorted(
-            [(h, 'pre', h)] + [(d, 'ph', d) for d in deps_of[h]]
-        )
+    def set_pstress(node):
+        for kind, c in node.children:
+            if kind == 'node':
+                set_pstress(c)
+        children = node.children
         assigned = False
-        # Dozat's noun-compound rule: within an NN-headed projection,
-        # right-to-left, the rightmost NN is provisionally weak and the next
-        # NN (a `compound` dependent) is strong: TIME machine, not time
-        # MACHINE. A single NN gets its strength back at the first non-NN.
-        if tags[h].startswith('NN'):
+        # Dozat's noun-compound rule: within an NN-headed phrase, scanning
+        # right-to-left, the rightmost NN preterminal is provisionally weak
+        # and the next NN is strong: TIME machine, not time MACHINE. A
+        # single NN gets its strength back at the first non-NN sibling.
+        if node.cat.startswith('NN'):
             skip = None
             broke = False
             for ci in range(len(children) - 1, -1, -1):
-                _, kind, i = children[ci]
-                is_nn = (
-                    tags[i].startswith('NN')
-                    and (kind == 'pre' or deps[i] == 'compound')
-                )
+                kind, c = children[ci]
+                is_nn = kind == 'pre' and tags[c].startswith('NN')
                 if is_nn:
                     if not assigned and skip is None:
                         skip = ci
-                        set_child_p(kind, i, -1)
+                        set_child_p(kind, c, -1)
                     elif not assigned:
-                        set_child_p(kind, i, 0)
+                        set_child_p(kind, c, 0)
                         assigned = True
                     else:
-                        set_child_p(kind, i, -1)
+                        set_child_p(kind, c, -1)
                 elif assigned:
-                    set_child_p(kind, i, -1)
+                    set_child_p(kind, c, -1)
                 else:
                     if skip is not None:
-                        _, sk, si = children[skip]
-                        set_child_p(sk, si, 0)
+                        sk, sc = children[skip]
+                        set_child_p(sk, sc, 0)
                         assigned = True
-                        set_child_p(kind, i, -1)
+                        set_child_p(kind, c, -1)
                     else:
                         broke = True
                         break
             if not assigned and not broke and skip is not None:
-                _, sk, si = children[skip]
-                set_child_p(sk, si, 0)
+                sk, sc = children[skip]
+                set_child_p(sk, sc, 0)
                 assigned = True
         # Standard NSR: rightmost child with pstress 0 is strong; all other
         # children are demoted to -1.
         if not assigned:
             for ci in range(len(children) - 1, -1, -1):
-                _, kind, i = children[ci]
-                if not assigned and child_p(kind, i) == 0:
+                kind, c = children[ci]
+                if not assigned and child_p(kind, c) == 0:
                     assigned = True
                 else:
-                    set_child_p(kind, i, -1)
-        ph_p[h] = 0 if assigned else -1
+                    set_child_p(kind, c, -1)
+        node.p = 0 if assigned else -1
 
-    # Total stress: accumulate phrase pstress down the head chain
-    # (phrases have no lexical stress of their own).
-    acc = np.zeros(n)
-    for h in reversed(order):  # pre-order: heads before dependents
-        acc[h] = ph_p[h] + (acc[heads[h]] if heads[h] >= 0 else 0.0)
-    tstress = lstress + pre_p + acc
+    tstress = np.zeros(n)
+
+    def set_stress(node, acc):
+        node.total = node.p + acc
+        for kind, c in node.children:
+            if kind == 'pre':
+                tstress[c] = lstress[c] + pre_p[c] + node.total
+            else:
+                set_stress(c, node.total)
+
+    for tree in trees:
+        set_pstress(tree)
+        set_stress(tree, 0.0)
     return pre_p, tstress
 
 

@@ -147,6 +147,15 @@ def test_text_summary(sonnet):
     assert "Pentameter" in s
 
 
+def test_line_num_sylls(sonnet):
+    # Public accessor for canonical per-line syllable counts (used by poesy).
+    counts = sonnet.line_num_sylls
+    assert set(counts) == {line.num for line in sonnet.lines}
+    assert all(isinstance(v, int) for v in counts.values())
+    # sonnet 106 is pentameter: canonical counts hover around 10
+    assert 9 <= sorted(counts.values())[len(counts) // 2] <= 11
+
+
 # ----------------------------------------------------------- non-sonnet
 
 

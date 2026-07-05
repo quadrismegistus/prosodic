@@ -825,13 +825,27 @@ class TextModel(Entity):
         return {"combo": combo, "diff": diff}
 
     @cached_property
+    def line_num_sylls(self):
+        """Canonical per-line syllable counts: dict of line_num -> int.
+
+        Canonical = the first pronunciation of each word (form_idx==0),
+        punctuation excluded. Use this rather than ``line.num_sylls``, which
+        counts syllables across ALL pronunciation variants and inflates the
+        total for words with multiple wordforms.
+        """
+        df = self._syll_df
+        canonical = df[(df["form_idx"] == 0) & (~df["is_punc"])]
+        return {
+            int(k): int(v)
+            for k, v in canonical.groupby("line_num").size().items()
+        }
+
+    @cached_property
     def syllable_scheme(self):
         """Repeating syllable-length template (canonical sylls, form_idx==0)."""
         from ..analysis.line_scheme import detect_line_scheme
-        df = self._syll_df
-        canonical = df[(df["form_idx"] == 0) & (~df["is_punc"])]
-        sylls_by_line = canonical.groupby("line_num").size().to_dict()
-        sylls = [int(sylls_by_line.get(line.num, 0)) for line in self.lines]
+        sylls_by_line = self.line_num_sylls
+        sylls = [sylls_by_line.get(line.num, 0) for line in self.lines]
         combo, diff = detect_line_scheme(sylls, beat=False)
         return {"combo": combo, "diff": diff}
 

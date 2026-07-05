@@ -9,15 +9,13 @@ from .rhyme_scheme import compute_rhyme_ids, match_rhyme_scheme, nums_to_scheme
 
 
 def _line_metadata(text):
-    """Per-line stanza number + canonical syll count from _syll_df.
+    """Per-line stanza number + canonical syll count.
 
     Canonical = form_idx==0 (first pronunciation). Avoids over-counting from
     pronunciation variants, which would otherwise inflate ``num_sylls``.
     """
-    df = text._syll_df
-    canonical = df[(df["form_idx"] == 0) & (~df["is_punc"])]
-    syll_counts = canonical.groupby("line_num").size().to_dict()
-    stanza_map = df.groupby("line_num")["para_num"].first().to_dict()
+    syll_counts = text.line_num_sylls
+    stanza_map = text._syll_df.groupby("line_num")["para_num"].first().to_dict()
     return syll_counts, stanza_map
 
 

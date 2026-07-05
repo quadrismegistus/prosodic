@@ -9,9 +9,7 @@ from typing import Dict, Optional
 
 
 def _canonical_sylls(text):
-    df = text._syll_df
-    canonical = df[(df["form_idx"] == 0) & (~df["is_punc"])]
-    return canonical.groupby("line_num").size().to_dict()
+    return text.line_num_sylls
 
 
 def is_sonnet(text, meter_type: Optional[Dict] = None,

@@ -93,6 +93,14 @@ class ParsePosition(Entity):
 
     @property
     def viold(self):
+        """Constraint name -> violation count summed over this position's slots.
+
+        NOTE: on DF-path parses (``text.parse()``), slot viold dicts contain
+        only the NONZERO violations recorded by the vectorized parser — a
+        constraint that isn't violated is simply absent, not present with 0.
+        Iterate ``meter.constraints`` (or tally against position counts) if
+        you need zero-filled rates.
+        """
         viold = Counter()
         for slot in self.slots:
             for cname,cviol in slot.viold.items():

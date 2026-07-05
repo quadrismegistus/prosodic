@@ -34,11 +34,11 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
   stress classes (cadence's own refinement). **Caveat** stands: phrasal
   constraints added zero accuracy for fixed-template verse — this is for
   prose rhythm and naturalness ranking.
-- **Phrasal variants of stress constraints** (`*_p`, `*_t`) — cadence scored
-  w/s violations against *phrasal* stress values as systematic counterparts
-  to every lexical stress constraint. v3 has only two bespoke phrasal
-  constraints (`w_prom`, `s_demoted`) thresholded on dep-tree depth.
-  Depends on the item above for the continuous values to be meaningful.
+- **Phrasal variants of stress constraints** (`*_p`, `*_t`) — ✅ shipped:
+  `w_stress_p`/`s_unstress_p` (pstress) and `w_stress_t`/`s_unstress_t`
+  (tstress), cadence-threshold semantics, inert without `syntax=True`.
+  Remaining: `w_peak_p`/`s_trough_p` need cadence's pstrength (local
+  peak/valley) feature, not yet ported.
 - **Multi-engine comparison** — never shipped in cadence (vestigial `ENGINE`
   constant); the idea survives in its `notebooks/engines.ipynb` scratch
   harness. Low priority unless a second engine (e.g. MetricalTree-proper)

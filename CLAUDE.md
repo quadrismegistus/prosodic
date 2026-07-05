@@ -70,10 +70,12 @@ TextModel → Stanza → Line → WordToken → WordType → WordForm → Syllab
 
 ### Metrical Parsing (`parsing/`)
 
+Theory + implementation write-up: [`methods/metrical-parsing.md`](methods/metrical-parsing.md).
+
 The parser is always vectorized and exhaustive — it evaluates ALL possible scansions via numpy and uses harmonic bounding to identify optimal parses.
 
 - **Meter** (`meter.py`): Configuration object with constraints, max strong/weak positions (`max_s`, `max_w`). The `exhaustive` and `vectorized` params are accepted but ignored (always both).
-- **Constraints** (`constraints.py`): Each constraint has a `@constraint` decorator with `desc`, `scope`, and optional `vectorized` lambda. The vectorized lambda receives broadcast feature arrays and returns `(L, S, N)` int8 violations — this is what runs during parsing. The entity-based function body is a reference implementation used only by manually-constructed Parse objects. Default constraints: `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size`. Additional: `s_trough`, `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`. Phrasal stress constraints (require `syntax=True`): `w_prom`, `s_demoted`. Adding a new constraint = one decorated function in `constraints.py` with a `vectorized` lambda; no changes to `vectorized.py` needed.
+- **Constraints** (`constraints.py`): Each constraint has a `@constraint` decorator with `desc`, `scope`, and optional `vectorized` lambda. The vectorized lambda receives broadcast feature arrays and returns `(L, S, N)` int8 violations — this is what runs during parsing. The entity-based function body is a reference implementation used only by manually-constructed Parse objects. Default constraints: `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size`. Additional: `s_trough`, `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`. Phrasal stress constraints (require `syntax=True`): `w_prom`, `s_demoted` (discrete depth), `w_stress_p`, `s_unstress_p`, `w_stress_t`, `s_unstress_t` (gradient MetricalTree values; cadence's *_p/*_t variants). Adding a new constraint = one decorated function in `constraints.py` with a `vectorized` lambda; no changes to `vectorized.py` needed.
 - **Parse** (`parses.py`): A single candidate parse. Ranked by weighted violation score; `best_parse` = lowest score among unbounded.
 - **LazyParseList** (`vectorized.py`): Stores numpy violation data. Parse objects built only on access. `.unbounded` returns sorted by score. `.best_parse` uses `argmin` — no sorting needed.
 
@@ -101,6 +103,8 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 ### Phrasal Stress (`texts/phrasal_stress.py`)
 
+Theory + lineage write-up (Dozat's MetricalTree, cadence, our dep-projection port): [`methods/phrasal-stress.md`](methods/phrasal-stress.md).
+
 Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Uses spaCy dep-only parsing — no constituency trees needed.
 
 - **`TextModel("...", syntax=True)`**: enables phrasal stress computation. Adds `phrasal_stress` column to `_syll_df`.
@@ -108,7 +112,7 @@ Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Use
 - **Values**: 0 = sentence root (most prominent), -1 = direct dependent, -2 to -6 = deeper embedding. `<NA>` for punctuation.
 - **Gradient values** (`pstress`, `tstress` columns, MetricalTree port): Dozat's metrical-tree algorithm run over dep-projection trees — lexical stress classes (0/-0.5/-1) resolved by a 3-variant ensemble (all/monosyllable/none stressed), NSR with the noun-compound rule (`compound` dep), cumulative total stress, ensemble mean, per-sentence min-max norm. 1.0 = nuclear stress, NaN = punctuation. Pure numpy + iterative post-order; no constituency parser needed.
 - **Grid integration**: `line.grid_str()/grid_df()/grid_plot()` auto-fetch `tstress` when `syntax=True` — phrasal rows extend columns above the word level on each word's primary syllable (height 4 = phrasally prominent ≥0.5, height 5 = nuclear). `SyllData.word_num` bridges DF-path parse slots to the word-level values.
-- **Constraints**: `w_prom` (prominent word on weak position, `phrasal_stress >= -1`), `s_demoted` (deeply embedded word on strong position, `phrasal_stress <= -2`). Both are inert when `syntax=False` (check `has_phrasal` flag).
+- **Constraints**: `w_prom` (prominent word on weak position, `phrasal_stress >= -1`), `s_demoted` (deeply embedded word on strong position, `phrasal_stress <= -2`); gradient variants `w_stress_p`/`s_unstress_p` (pstress) and `w_stress_t`/`s_unstress_t` (tstress), thresholds per cadence (prominent > 0, weak == 0). All inert when `syntax=False` (`has_phrasal`/`has_gradient` flags).
 - **Performance**: ~1s overhead for 2155 lines (spaCy dep parse). Model loads once, cached.
 - **Config**: `DEFAULT_SYNTAX = False`, `DEFAULT_SYNTAX_MODEL = "en_core_web_sm"` in `imports.py`. spaCy is an optional dependency (`pip install prosodic[syntax]`).
 - **MaxEnt integration**: `meter.fit_annotations(data, text=text_with_syntax)` passes a pre-built syntax-enabled TextModel through to the trainer. Without this, the trainer creates its own TextModel without syntax.

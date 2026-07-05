@@ -1,0 +1,330 @@
+---
+title: "Shakespeare's Sonnets"
+subtitle: "A whole-corpus computational reading: meter, rhyme, ambiguity, and learned weights"
+jupyter: python3
+---
+
+The 1609 Quarto — 154 sonnets, 2,155 lines — is small enough to read and
+large enough to count. This page does both: every table and figure below is
+computed by the code shown, on the corpus that ships with Prosodic
+(`corpora/corppoetry_en/en.shakespeare.txt`). To rerun it yourself,
+[install Prosodic](../install.qmd) and execute the cells top to bottom; the
+site itself embeds frozen results (`quarto`'s `freeze`), so what you see is
+one real execution, not a mock-up.
+
+## Load and parse
+
+The parser is exhaustive: for every line it evaluates *every* segmentation
+into weak/strong positions against the constraint set, then discards
+candidates that lose under any possible weighting (harmonic bounding — see
+[Metrical parsing](../methods/metrical-parsing.qmd)). Vectorization makes
+this affordable: the whole corpus parses in about two seconds on a laptop
+CPU.
+
+```{python}
+#| label: setup
+import time, warnings
+from pathlib import Path
+warnings.filterwarnings('ignore')
+
+import pandas as pd
+import prosodic
+
+# resolve the bundled corpus relative to wherever this page is executed;
+# fall back to the GitHub copy if run outside a prosodic checkout
+_rel = Path('corpora') / 'corppoetry_en' / 'en.shakespeare.txt'
+_root = next((p for p in [Path.cwd(), *Path.cwd().parents]
+              if (p / _rel).exists()), None)
+corpus_fn = (str(_root / _rel) if _root else
+             'https://raw.githubusercontent.com/quadrismegistus/prosodic'
+             '/master/corpora/corppoetry_en/en.shakespeare.txt')
+
+t0 = time.perf_counter()
+corpus = prosodic.Text(fn=corpus_fn)
+t1 = time.perf_counter()
+corpus.parse()
+t2 = time.perf_counter()
+
+print(f"{len(corpus.stanzas)} sonnets, {len(corpus.lines):,} lines")
+print(f"init  {t1-t0:.2f}s   parse {t2-t1:.2f}s")
+```
+
+## The shape of the corpus
+
+Prosodic's form detection aggregates over every line's best parse. Asked
+what meter this is, it answers like a metrist would: binary feet,
+final-headed (rising), i.e. **iambic**; five beats and ten syllables per
+line, invariantly.
+
+```{python}
+#| label: meter-type
+mt = corpus.meter_type
+{k: mt[k] for k in ('foot', 'head', 'type')}
+```
+
+```{python}
+#| label: schemes
+print('feet per line:     ', corpus.line_scheme['combo'])
+print('syllables per line:', corpus.syllable_scheme['combo'])
+```
+
+How iambic is iambic? Score each line's best parse (the weighted sum of
+its constraint violations; 0 = a perfectly alternating pentameter with no
+mismatch). Most of the corpus sits at 0–2 violations — the meter is real,
+not a critic's idealization — with a long tail of rougher lines.
+
+```{python}
+#| label: fig-scores
+#| fig-cap: "Distribution of best-parse scores across all 2,155 lines."
+from plotnine import (aes, element_blank, geom_bar, ggplot, labs,
+                      theme, theme_minimal)
+
+lines_df = pd.DataFrame({
+    'line': [l.txt.strip() for l in corpus.lines],
+    'score': [l.best_parse.score for l in corpus.lines],
+    'ambig': [len(l.parses.unbounded) for l in corpus.lines],
+})
+
+(ggplot(lines_df, aes('factor(score)'))
+ + geom_bar(fill='#2a78d6')
+ + labs(x='best-parse score (weighted constraint violations)',
+        y='lines')
+ + theme_minimal()
+ + theme(panel_grid_major_x=element_blank(), figure_size=(7, 3.2)))
+```
+
+## A rhyme census
+
+Rhyme detection works from sound, not spelling: feature-weighted edit
+distance over the IPA of each line's final rime. Classifying each sonnet's
+rhyme-group pattern against a catalog of 39 named schemes:
+
+```{python}
+#| label: rhyme-census
+from collections import Counter
+
+schemes, strict = Counter(), 0
+for st in corpus.stanzas:
+    sonnet = prosodic.Text(st.txt)
+    rs = sonnet.rhyme_scheme
+    schemes[rs['name'] if rs else '(no scheme)'] += 1
+    strict += bool(sonnet.is_shakespearean_sonnet)
+
+pd.DataFrame(schemes.most_common(), columns=['scheme', 'sonnets'])
+```
+
+```{python}
+#| label: strict-count
+print(f"{strict}/154 pass the strict is_shakespearean_sonnet predicate")
+print(f"(14 lines, ~10 syllables, and best-matching scheme = abab cdcd efef gg)")
+```
+
+The 137 that classify as Shakespearean are unsurprising — Shakespeare
+mostly wrote Shakespearean sonnets. The residue is where it gets
+interesting. Sonnet 126 ("O thou, my lovely boy") really *isn't* one — the
+detector reads its twelve lines as `aabbccddeeff` and files it under
+**Couplet**, which is what it is. And Sonnet 106 classifies as **Sonnet A**
+rather than Shakespearean:
+
+```{python}
+#| label: sonnet-106
+from prosodic.analysis import nums_to_scheme
+
+s106 = prosodic.Text(corpus.stanzas[105].txt)
+print('detected:', ''.join(nums_to_scheme(s106.rhyme_ids)),
+      '->', s106.rhyme_scheme['name'], f"({s106.rhyme_scheme['form']})")
+print('line-final words:')
+print('  ', ', '.join(l.txt.strip().split()[-1].strip(',;:.')
+                      for l in s106.lines))
+```
+
+The quatrains open cleanly (*time/rhyme*, *wights/knights*), but the third
+quatrain rhymes *prophecies/eyes* and *prefiguring/sing* — slant rhymes to
+a modern ear and to the phonetic distance measure alike. With those edges
+missing, the nearest named scheme is a sonnet variant with a different
+sestet. This is expected behavior worth keeping: the classifier reports
+what the sounds support, and disagreements with the print tradition mark
+exactly the lines where pronunciation has drifted since 1609.
+
+## Close reading: Sonnet 18
+
+`summary()` gives the per-line scansion, rhyme letter, and ambiguity count,
+plus the estimated schema:
+
+```{python}
+#| label: sonnet-18
+s18 = prosodic.Text(corpus.stanzas[17].txt)
+s18.parse()
+print(s18.summary())
+```
+
+For individual lines, `grid_str()` renders the best parse as a Hayes-style
+metrical grid: column height is linguistic prominence, and the `w`/`s` row
+beneath is the metrical template, so a mismatch reads as a tall column over
+a `w` (positions with violations are starred). The famous opening line is
+metrically docile — every strong position is at least as prominent as its
+neighbors:
+
+```{python}
+#| label: grid-l1
+print(s18.line1.grid_str())
+```
+
+Line 3 is not. *Rough winds do shake the darling buds of May* opens with a
+stressed monosyllable in the first weak position — the `w*` under *rough*:
+
+```{python}
+#| label: grid-l3
+line3 = s18.lines[2]
+print(line3.txt.strip())
+print()
+print(line3.grid_str())
+```
+
+Hold that thought: the tolerance of line-initial stress is exactly what the
+weight-learning experiment below will discover on its own.
+
+## Metrical ambiguity
+
+A line's `parses.unbounded` are its Pareto-optimal scansions — readings
+that survive harmonic bounding. Most lines have one or two; a few
+monosyllable-heavy lines support many more. The most ambiguous lines in
+the corpus:
+
+```{python}
+#| label: most-ambiguous
+lines_df.sort_values('ambig', ascending=False).head(5)[['ambig', 'score', 'line']]
+```
+
+The champion — 18 defensible scansions — is from Sonnet 104, a line made
+almost entirely of stressable monosyllables:
+
+```{python}
+#| label: scansion-table
+champ = max(corpus.lines, key=lambda l: len(l.parses.unbounded))
+print(champ.txt.strip())
+
+def scansion_row(p):
+    row = {'meter': p.meter_str, 'score': p.score, 'bounded': p.is_bounded}
+    row.update({'*' + k: v for k, v in sorted(p.viold.items()) if v})
+    return row
+
+pd.DataFrame(
+    [scansion_row(p) for p in champ.parses.unbounded] +
+    [scansion_row(p) for p in list(champ.parses.bounded)[:3]]
+).fillna(0)
+```
+
+The bounded rows at the bottom show what bounding removes. Compare the
+first bounded scansion with the first unbounded one:
+
+```{python}
+#| label: bounding-demo
+ub, bd = champ.parses.unbounded[0], champ.parses.bounded[0]
+for tag, p in [('unbounded', ub), ('bounded  ', bd)]:
+    viols = {k: v for k, v in p.viold.items() if v}
+    print(f"{tag}  {p.meter_str}  score={p.score}  {viols}")
+```
+
+The bounded parse incurs everything the unbounded one does *plus* an extra
+`w_stress` violation: no weighting of the constraints could ever prefer
+it. That is [harmonic
+bounding](../methods/metrical-parsing.qmd#the-model) — the parser keeps
+these candidates (the web app's Line view shows them grayed out) but they
+can never win.
+
+## Learning the meter's weights
+
+So far every constraint has counted equally. `Meter.fit()` learns weights
+from the corpus itself by Maximum-Entropy optimization: make the observed
+scansion (here, a uniform iambic-pentameter target) as probable as
+possible against each line's full candidate set. With `zones=3` the
+violation tensor is split into line-initial, medial, and final thirds, so
+the model can learn *positional* leniency:
+
+```{python}
+#| label: maxent
+meter = prosodic.Meter()
+meter.fit(corpus, 'wswswswsws', zones=3)
+
+zw = meter.zone_weights
+base_names = sorted({n.rsplit('_z', 1)[0] for n in zw})
+weights = pd.DataFrame(
+    [{'constraint': b,
+      **{f'zone {z}': round(zw.get(f'{b}_z{z}', 0.0), 2) for z in (1, 2, 3)}}
+     for b in base_names]
+).set_index('constraint')
+weights
+```
+
+Two things the model discovers match the metrist's textbook:
+
+- **Resolution is the hard currency.** The `unres_*` constraints (splitting
+  a two-syllable position across a word boundary or inside a strong/heavy
+  disyllable) carry the largest weights everywhere — these are the
+  near-inviolable rules of the iambic pentameter template.
+- **Line-initial inversion is free.** `w_stress` — stress in weak position —
+  costs ~2 in the middle and end of the line but **0 in zone 1**. The model
+  has independently learned the license that put *Rough winds* in line 3
+  above: a stressed syllable in the opening weak position simply isn't
+  penalized in Shakespeare's practice. (Kiparsky's stricter `w_peak`, a
+  lexical stress *maximum* in weak position, stays costly in all zones.)
+
+## Finale: phrasal stress
+
+Everything above used lexical stress. With `syntax=True`, Prosodic also
+computes *sentence-level* prominence from a dependency parse — Dozat's
+MetricalTree algorithm, ported to spaCy projections (see [Phrasal
+stress](../methods/phrasal-stress.qmd); requires
+`pip install "prosodic[syntax]"`). Each word gets gradient `pstress` and
+`tstress` values in [0, 1], where `tstress = 1.0` is the sentence's
+**nuclear stress**:
+
+```{python}
+#| label: phrasal
+s18x = prosodic.Text(corpus.stanzas[17].txt, syntax=True)
+s18x.parse()
+
+df = s18x.df
+(df[(df.line_num == 1) & (df.form_idx == 0)]
+   .drop_duplicates('word_num')[['word_txt', 'pstress', 'tstress']]
+   .set_index('word_txt').T)
+```
+
+The grid consumes these values: phrasal rows extend the columns *above*
+the word level, so the nuclear-stress word — *day*, the point of the
+question — becomes the tallest column:
+
+```{python}
+#| label: grid-phrasal
+print(s18x.line1.grid_str())
+```
+
+```{python}
+#| label: fig-grid-plot
+#| fig-cap: "The same grid as a figure: `line.grid_plot()` (plotnine)."
+from plotnine import theme
+
+s18x.line1.grid_plot() + theme(figure_size=(8, 3))
+```
+
+Gradient prominence also feeds the parser: the constraints `w_stress_p` /
+`s_unstress_p` and `w_stress_t` / `s_unstress_t` penalize phrasally
+prominent syllables in weak positions (and weak ones in strong) — inert
+without `syntax=True`, and most useful for prose rhythm and naturalness
+ranking rather than fixed-template verse.
+
+## Reproducing this page
+
+Everything here runs from a stock install:
+
+```sh
+pip install prosodic          # + espeak (see Install)
+```
+
+Related reading: [Metrical parsing](../methods/metrical-parsing.qmd) for
+the theory and the vectorized implementation ·
+[Phrasal stress](../methods/phrasal-stress.qmd) for the MetricalTree
+lineage · the [README
+notebook](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
+for a runnable API tour.

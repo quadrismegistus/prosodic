@@ -77,8 +77,13 @@ docs/*
 !docs/_quarto.yml
 !docs/methods/
 !docs/methods/**
+!docs/explorations/
+!docs/explorations/**
 !docs/reference/
 !docs/reference/**
+# committed frozen execution results (quarto freeze)
+!docs/_freeze/
+!docs/_freeze/**
 
 # Quarto output directory (if it's inside qdocs)
 docs/_build/

@@ -28,6 +28,12 @@ website:
             file: methods/metrical-parsing.qmd
           - text: "Phrasal stress"
             file: methods/phrasal-stress.qmd
+      # Executable worked analyses; add future pages (prose rhythm, other
+      # corpora) as further menu entries under docs/explorations/.
+      - text: "Explorations"
+        menu:
+          - text: "Shakespeare's sonnets"
+            file: explorations/sonnets.qmd
       - text: "Architecture"
         file: architecture.qmd
       - text: "Reference"

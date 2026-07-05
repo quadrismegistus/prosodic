@@ -9,19 +9,16 @@ jobs:
   python-unit:
     name: Python unit tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    # The Windows leg is experimental (issues #62/#74): it validates espeak-ng
-    # detection and the test suite on Windows, but a failure doesn't block
-    # releases. Drop `experimental` from the include below once it's green.
-    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.10", "3.12"]
         include:
+          # Windows leg validates espeak-ng detection on Windows (issue #62)
+          # and Windows-safe multiprocessing (issue #74).
           - os: windows-latest
             python-version: "3.12"
-            experimental: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

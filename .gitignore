@@ -88,7 +88,3 @@ prosodic/lib/panphon/doc
 venv*
 profile_output*
 .venv
-# Rust/Tauri desktop build artifacts
-desktop/target/
-desktop/src-tauri/sidecar/prosodic-server*
-desktop/src-tauri/gen/

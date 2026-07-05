@@ -486,10 +486,10 @@ class Parse(Entity):
         from ..analysis.grid import grid_str
         return grid_str(self, **kwargs)
 
-    def grid_df(self):
+    def grid_df(self, **kwargs):
         """Metrical grid as a per-syllable DataFrame (see analysis.grid)."""
         from ..analysis.grid import grid_df
-        return grid_df(self)
+        return grid_df(self, **kwargs)
 
     def grid_plot(self, **kwargs):
         """Metrical grid as a plotnine figure (see analysis.grid)."""

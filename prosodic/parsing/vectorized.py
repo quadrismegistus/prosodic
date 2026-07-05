@@ -81,7 +81,8 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
         sylls = [
             SyllData(ipa=all_ipa[r], txt=all_txt[r],
                      is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
-                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]))
+                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]),
+                     word_num=int(all_wnum[r]))
             for r in rows
         ]
         feats = {
@@ -315,7 +316,8 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
                         sylls = [
                             SyllData(ipa=all_ipa[r], txt=all_txt[r],
                                      is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
-                                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]))
+                                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]),
+                                     word_num=int(all_wnum[r]))
                             for r in rows
                         ]
                         ci_use = constraint_index if constraint_index is not None else {c: i for i, c in enumerate(constraint_names)}

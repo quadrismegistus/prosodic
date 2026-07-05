@@ -1,11 +1,30 @@
 """Compute phrasal stress from dependency parse (Liberman & Prince 1977).
 
 Uses spaCy dependency parsing to assign prominence levels per word.
-Vectorized: no tree objects, just numpy arrays over head/deprel/POS.
 
-Values: 0 = sentence root (most prominent), -1 = direct dependent, etc.
-NSR adjustment: rightmost content-word sibling promoted by +1.
-CSR adjustment: leftmost NN sibling in NN compounds promoted by +1.
+Two computations share the parse:
+
+1. ``phrasal_stress`` (discrete, original v3): vectorized depth in the dep
+   tree with NSR/CSR adjustments. 0 = sentence root, negative = embedded.
+
+2. ``pstress``/``tstress`` (gradient, MetricalTree port): Dozat's (2015)
+   metrical-tree algorithm — as used by Anttila et al. and cadence — run
+   over head-projection trees derived from the dependency parse instead of
+   constituency parses. Lexical stress classes (content 0 / ambiguous
+   function word -0.5 / unstressed function word -1) are resolved three
+   ways (all stressed; monosyllables unstressed; all unstressed), the NSR
+   assigns strong/weak within each projection (with Dozat's noun-compound
+   rule keyed off the ``compound`` dep relation), total stress accumulates
+   down the tree, the ensemble is averaged, and each sentence is min-max
+   normalized: 1.0 = nuclear stress, 0.0 = least prominent, NaN = punct.
+
+   Cross-validated against cadence's MetricalTree (Stanza constituency) on
+   a 9-sentence differential (2026-07-05): identical nuclear placement and
+   orderings throughout. One deliberate divergence: in coordination
+   ("dogs and cats"), Dozat's flat-NP scan demotes non-final conjuncts to
+   pstress -1; here each conjunct projects and keeps its strength (both
+   conjuncts carry accent in speech), while tstress still orders the final
+   conjunct above the first, matching the reference.
 """
 
 import numpy as np
@@ -16,6 +35,14 @@ CONTENT_UPOS = frozenset({'NOUN', 'VERB', 'ADJ', 'ADV', 'PROPN', 'INTJ', 'NUM'})
 
 # spaCy xpos tags for noun compounds (CSR)
 NN_XPOS = frozenset({'NN', 'NNS', 'NNP', 'NNPS'})
+
+# ---- MetricalTree lexical stress classes (Dozat 2015, PTB tags) ----
+MT_UNSTRESSED_WORDS = frozenset({'it'})
+MT_UNSTRESSED_TAGS = frozenset({'CC', 'PRP$', 'TO', 'UH', 'DT'})
+MT_UNSTRESSED_DEPS = frozenset({'det', 'expl', 'cc', 'mark'})
+MT_AMBIGUOUS_WORDS = frozenset({'this', 'that', 'these', 'those'})
+MT_AMBIGUOUS_TAGS = frozenset({'MD', 'IN', 'PRP', 'WP$', 'PDT', 'WDT', 'WP', 'WRB'})
+MT_AMBIGUOUS_DEPS = frozenset({'cop', 'neg', 'aux', 'auxpass'})
 
 _NLP_CACHE = {}
 
@@ -95,6 +122,216 @@ def _compute_phrasal_stress(heads, pos, xpos, n):
     return stress
 
 
+def _mt_lstress_base(words, tags, deps, n):
+    """Base lexical stress per word: 0 / -0.5 (ambiguous) / -1 (unstressed).
+
+    Priority follows Dozat's MetricalTree: word lists beat tag lists beat
+    dep lists. (Punctuation never reaches here; it's filtered upstream.)
+    """
+    lstress = np.zeros(n)
+    for i in range(n):
+        w = words[i].lower().strip()
+        if w in MT_UNSTRESSED_WORDS:
+            lstress[i] = -1
+        elif w in MT_AMBIGUOUS_WORDS:
+            lstress[i] = -0.5
+        elif tags[i] in MT_UNSTRESSED_TAGS:
+            lstress[i] = -1
+        elif tags[i] in MT_AMBIGUOUS_TAGS:
+            lstress[i] = -0.5
+        elif deps[i] in MT_UNSTRESSED_DEPS:
+            lstress[i] = -1
+        elif deps[i] in MT_AMBIGUOUS_DEPS:
+            lstress[i] = -0.5
+    return lstress
+
+
+class _MTNode:
+    """Phrase node in the dep-projection tree. children: ('pre', word_i) or
+    ('node', _MTNode), ordered by linear position."""
+    __slots__ = ('cat', 'children', 'p', 'total')
+
+    def __init__(self, cat, children):
+        self.cat = cat
+        self.children = children
+        self.p = 0.0      # phrasal stress of this node
+        self.total = 0.0  # cumulative stress (set top-down)
+
+
+# Dependents that sit as bare preterminals inside their head's phrase, like
+# the flat Penn NP (NP (DT the) (JJ quick) (NN fox)). Everything else — even
+# a single-word subject or object — projects its own phrase node, the way
+# constituency wraps arguments (NP(Jack), WHADVP(When)), which shields the
+# preterminal from sibling NSR demotion.
+# NOTE: 'poss' deliberately absent — a possessor is an inner NP in
+# constituency (NP(NP(Beauty 's) rose)), so it must project; bare-joining
+# it as an NN sibling would wrongly trigger the compound rule
+# (BEAUTY'S rose instead of beauty's ROSE).
+MT_BARE_DEPS = frozenset({
+    'det', 'amod', 'compound', 'nummod', 'predet',
+    'neg', 'aux', 'auxpass',
+})
+
+
+def _mt_project(h, deps_of, tags, deps):
+    """Project word h's phrase, constituency-style.
+
+    Topology rules keep Dozat's NSR faithful to what it does on
+    constituency trees (verified differentially against cadence):
+
+    - NP-internal prenominal modifiers (det/amod/compound/...) join as bare
+      preterminals — NSR demotion reaches them directly, as in a flat NP.
+    - All other dependents project a phrase node even when single words
+      (constituency wraps arguments: NP(Jack)), shielding their preterminal.
+    - An NN-headed phrase with right-side dependents wraps its left
+      material + head in an inner core — NP(NP(the house) SBAR) — so the
+      head noun's preterminal is shielded from the complement's NSR win.
+    """
+    left = [d for d in deps_of[h] if d < h]
+    right = [d for d in deps_of[h] if d > h]
+
+    def child_of(d):
+        if not deps_of[d] and deps[d] in MT_BARE_DEPS:
+            return ('pre', d)
+        return ('node', _mt_project(d, deps_of, tags, deps))
+
+    inner = [child_of(d) for d in left] + [('pre', h)]
+    right_children = [child_of(d) for d in right]
+    if right_children and tags[h].startswith('NN'):
+        core = _MTNode(tags[h], inner)
+        return _MTNode(tags[h], [('node', core)] + right_children)
+    return _MTNode(tags[h], inner + right_children)
+
+
+def _mt_variant(heads, tags, deps, lstress, n):
+    """One disambiguated MetricalTree pass over the dep-projection tree.
+
+    ``lstress`` must already be resolved to {0, -1}.
+
+    Returns (pstress, tstress): per-word preterminal phrasal stress
+    ({0, -1}) and cumulative total stress (Dozat's set_stress).
+    """
+    deps_of = [[] for _ in range(n)]
+    roots = []
+    for i in range(n):
+        h = heads[i]
+        (deps_of[h] if h >= 0 else roots).append(i)
+
+    pre_p = lstress.astype(float).copy()  # preterminal pstress
+    trees = [_mt_project(r, deps_of, tags, deps) for r in roots]
+
+    def child_p(kind, c):
+        return pre_p[c] if kind == 'pre' else c.p
+
+    def set_child_p(kind, c, v):
+        if kind == 'pre':
+            pre_p[c] = v
+        else:
+            c.p = v
+
+    def set_pstress(node):
+        for kind, c in node.children:
+            if kind == 'node':
+                set_pstress(c)
+        children = node.children
+        assigned = False
+        # Dozat's noun-compound rule: within an NN-headed phrase, scanning
+        # right-to-left, the rightmost NN preterminal is provisionally weak
+        # and the next NN is strong: TIME machine, not time MACHINE. A
+        # single NN gets its strength back at the first non-NN sibling.
+        if node.cat.startswith('NN'):
+            skip = None
+            broke = False
+            for ci in range(len(children) - 1, -1, -1):
+                kind, c = children[ci]
+                is_nn = kind == 'pre' and tags[c].startswith('NN')
+                if is_nn:
+                    if not assigned and skip is None:
+                        skip = ci
+                        set_child_p(kind, c, -1)
+                    elif not assigned:
+                        set_child_p(kind, c, 0)
+                        assigned = True
+                    else:
+                        set_child_p(kind, c, -1)
+                elif assigned:
+                    set_child_p(kind, c, -1)
+                else:
+                    if skip is not None:
+                        sk, sc = children[skip]
+                        set_child_p(sk, sc, 0)
+                        assigned = True
+                        set_child_p(kind, c, -1)
+                    else:
+                        broke = True
+                        break
+            if not assigned and not broke and skip is not None:
+                sk, sc = children[skip]
+                set_child_p(sk, sc, 0)
+                assigned = True
+        # Standard NSR: rightmost child with pstress 0 is strong; all other
+        # children are demoted to -1.
+        if not assigned:
+            for ci in range(len(children) - 1, -1, -1):
+                kind, c = children[ci]
+                if not assigned and child_p(kind, c) == 0:
+                    assigned = True
+                else:
+                    set_child_p(kind, c, -1)
+        node.p = 0 if assigned else -1
+
+    tstress = np.zeros(n)
+
+    def set_stress(node, acc):
+        node.total = node.p + acc
+        for kind, c in node.children:
+            if kind == 'pre':
+                tstress[c] = lstress[c] + pre_p[c] + node.total
+            else:
+                set_stress(c, node.total)
+
+    for tree in trees:
+        set_pstress(tree)
+        set_stress(tree, 0.0)
+    return pre_p, tstress
+
+
+def _mt_gradient(heads, words, tags, deps, nsylls, n):
+    """Ensemble-averaged, min-max normalized MetricalTree stress.
+
+    Runs Dozat's three disambiguations of ambiguous (-0.5) words — all
+    stressed; monosyllables unstressed; all unstressed — averages
+    pstress/tstress across them, and normalizes each within the sentence.
+
+    Returns (pstress_norm, tstress_norm) in [0, 1]; 1 = most prominent.
+    Sentences with no variation normalize to NaN (as in cadence/mtree).
+    """
+    base = _mt_lstress_base(words, tags, deps, n)
+    amb = base == -0.5
+    variants = []
+    for resolve in ('max', 'min_syll', 'min'):
+        lstress = base.copy()
+        if resolve == 'max':
+            lstress[amb] = 0
+        elif resolve == 'min_syll':
+            lstress[amb & (nsylls == 1)] = -1
+            lstress[amb & (nsylls != 1)] = 0
+        else:
+            lstress[amb] = -1
+        variants.append(_mt_variant(heads, tags, deps, lstress, n))
+
+    pstress = np.mean([v[0] for v in variants], axis=0)
+    tstress = np.mean([v[1] for v in variants], axis=0)
+
+    def norm(v):
+        vmin, vmax = float(v.min()), float(v.max())
+        if vmax == vmin:
+            return np.full(n, np.nan)
+        return (v - vmin) / (vmax - vmin)
+
+    return norm(pstress), norm(tstress)
+
+
 def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     """Add phrasal_stress column to syll_df.
 
@@ -110,6 +347,8 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     """
     if syll_df.empty:
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
+        syll_df['pstress'] = pd.array([], dtype=pd.Float64Dtype())
+        syll_df['tstress'] = pd.array([], dtype=pd.Float64Dtype())
         return syll_df
 
     from spacy.tokens import Doc
@@ -118,7 +357,15 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     # get unique words per sentence (form_idx 0 or -1, no duplicates)
     word_df = syll_df[syll_df['form_idx'].isin([0, -1])].drop_duplicates('word_num')
 
+    # canonical syllable count per word (for the monosyllable disambiguation)
+    nsyll_by_word = (
+        syll_df[(syll_df['form_idx'] == 0) & (~syll_df['is_punc'])]
+        .groupby('word_num').size().to_dict()
+    )
+
     stress_by_word = {}
+    pstress_by_word = {}
+    tstress_by_word = {}
 
     # First pass: build one pre-tokenized Doc per sentence, collecting the
     # word_num bookkeeping in parallel. All-punctuation sentences produce no
@@ -138,6 +385,8 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         if len(parse_words) == 0:
             for wn in word_nums:
                 stress_by_word[wn] = None
+                pstress_by_word[wn] = None
+                tstress_by_word[wn] = None
             continue
 
         # pre-tokenized Doc; the spaCy pipeline runs on it below via nlp.pipe
@@ -158,16 +407,29 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         ], dtype=np.int32)
         pos = np.array([tok.pos_ for tok in doc])
         xpos = np.array([tok.tag_ for tok in doc])
+        deprels = np.array([tok.dep_ for tok in doc])
+        words = np.array([tok.text for tok in doc])
 
         stress = _compute_phrasal_stress(heads, pos, xpos, n)
 
+        nsylls = np.array([
+            nsyll_by_word.get(wn, 1) for wn in parse_word_nums
+        ], dtype=np.int32)
+        pstress, tstress = _mt_gradient(heads, words, xpos, deprels, nsylls, n)
+
         for i, wn in enumerate(parse_word_nums):
             stress_by_word[wn] = int(stress[i])
+            pstress_by_word[wn] = None if np.isnan(pstress[i]) else float(pstress[i])
+            tstress_by_word[wn] = None if np.isnan(tstress[i]) else float(tstress[i])
 
         # punctuation gets None
         for wn in punc_word_nums:
             stress_by_word[wn] = None
+            pstress_by_word[wn] = None
+            tstress_by_word[wn] = None
 
     # broadcast to syllable rows
     syll_df['phrasal_stress'] = syll_df['word_num'].map(stress_by_word).astype(pd.Int32Dtype())
+    syll_df['pstress'] = syll_df['word_num'].map(pstress_by_word).astype(pd.Float64Dtype())
+    syll_df['tstress'] = syll_df['word_num'].map(tstress_by_word).astype(pd.Float64Dtype())
     return syll_df

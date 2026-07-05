@@ -23,15 +23,17 @@ live smoke test, 2026-07-05). Portable, in rough order of value-per-effort:
   subclass, so svgling SVG rendering came free. If v3 exports its
   phrasal-stress structure as `nltk.Tree` (`to_nltk_tree()`), notebook SVG
   trees are ~free. Small.
-- **MetricalTree-proper phrasal stress** — Dozat's constituency-based
-  algorithm (over Stanza constituency parses) with continuous, min-max
-  normalized `pstress`/`tstress` per word, Anttila-style. v3's spaCy dep-tree
-  `phrasal_stress` is a different lineage: discrete depth values, no
-  constituency. The `libermanprince`/`maxent2` branches in the cadence repo
-  hold an NSR-over-constituency prototype (`parsers/rhythm.py`). Substantive
-  effort. **Caveat**: on Shakespeare sonnets with a fixed `wswswswsws`
-  target, phrasal constraints added zero accuracy over lexical stress — this
-  matters for prose rhythm and naturalness ranking, not fixed-template verse.
+- **MetricalTree-proper phrasal stress** — ✅ gradient port shipped: Dozat's
+  algorithm (lexical stress classes, 3-variant disambiguation ensemble, NSR
+  with the noun-compound rule, cumulative total stress, per-sentence min-max
+  norm) now runs over spaCy dep-projection trees and emits `pstress`/
+  `tstress` ∈ [0,1] columns with `syntax=True`; the grid consumes `tstress`
+  for phrase-level rows (nuclear stress = tallest column). Remaining
+  refinements: constituency-backed trees (benepar/Stanza as an optional
+  extra) if dep projections prove too coarse; dictionary-derived lexical
+  stress classes (cadence's own refinement). **Caveat** stands: phrasal
+  constraints added zero accuracy for fixed-template verse — this is for
+  prose rhythm and naturalness ranking.
 - **Phrasal variants of stress constraints** (`*_p`, `*_t`) — cadence scored
   w/s violations against *phrasal* stress values as systematic counterparts
   to every lexical stress constraint. v3 has only two bespoke phrasal

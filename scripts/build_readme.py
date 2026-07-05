@@ -340,6 +340,55 @@ nb["cells"] = cells
 client = NotebookClient(nb, timeout=300, kernel_name="python3")
 client.execute(cwd=str(REPO_ROOT))
 
+
+def scrub_outputs(nb):
+    """Remove terminal noise from executed cell outputs.
+
+    hashstash's progress_bar passes disable=None to tqdm (auto-off when not a
+    TTY), but ipykernel's stream pretends to be a TTY so the bars render into
+    cell outputs as ANSI-colored carriage-return frames. Drop stderr streams
+    wholesale (progress + log noise, never README content) and strip ANSI
+    escapes / stray tqdm frames from what remains. Cleans both the saved
+    README.ipynb and the markdown derived from it.
+    """
+    import re
+
+    ansi = re.compile(r"\x1b\[[0-9;]*m")
+    tqdm_frame = re.compile(r"^.*\d+%\|.*(\||\])\s*(\[.*it/s\]?)?\s*$")
+
+    for cell in nb["cells"]:
+        if cell.get("cell_type") != "code":
+            continue
+        kept = []
+        for out in cell.get("outputs", []):
+            if out.get("output_type") == "stream":
+                if out.get("name") == "stderr":
+                    continue
+                text = ansi.sub("", "".join(out.get("text", "")))
+                lines = [
+                    ln for ln in text.split("\n")
+                    if not tqdm_frame.match(ln.replace("\r", ""))
+                ]
+                text = "\n".join(lines)
+                if not text.strip():
+                    continue
+                out["text"] = text
+                # coalesce with a preceding stdout chunk (removing the
+                # interleaved stderr leaves stdout split mid-block, which
+                # renders with spurious blank lines)
+                if (
+                    kept
+                    and kept[-1].get("output_type") == "stream"
+                    and kept[-1].get("name") == "stdout"
+                ):
+                    kept[-1]["text"] = kept[-1]["text"].rstrip("\n") + "\n" + text
+                    continue
+            kept.append(out)
+        cell["outputs"] = kept
+
+
+scrub_outputs(nb)
+
 # Save notebook (canonical, Colab-runnable)
 out_path = REPO_ROOT / "README.ipynb"
 with out_path.open("w") as f:
@@ -356,11 +405,25 @@ def write_readme_md(nb):
     round-trip the DataFrame tables back through pandas into GitHub-native
     markdown tables.
     """
+    import copy
     import io
     import re
     import pandas as pd
     from nbconvert import MarkdownExporter
     from traitlets.config import Config
+
+    # Mark code→output boundaries (hashstash-README style): inject a sentinel
+    # stream line as each cell's first output, then rewrite it to a standalone
+    # "↓" after conversion. Without it, indented output blocks are visually
+    # ambiguous with the code fence above them.
+    ARROW = "@@OUTPUT-ARROW@@"
+    nb = copy.deepcopy(nb)
+    for cell in nb["cells"]:
+        if cell.get("cell_type") == "code" and cell.get("outputs"):
+            cell["outputs"].insert(
+                0,
+                nbformat.v4.new_output("stream", name="stdout", text=ARROW + "\n"),
+            )
 
     cfg = Config()
     cfg.TagRemovePreprocessor.remove_cell_tags = ("remove_cell",)
@@ -369,6 +432,9 @@ def write_readme_md(nb):
         "nbconvert.preprocessors.TagRemovePreprocessor"
     ]
     body, _ = MarkdownExporter(config=cfg).from_notebook_node(nb)
+
+    # sentinel (rendered as an indented output line) -> standalone arrow
+    body = re.sub(rf"\n( {{4}}{ARROW}\n+|{ARROW}\n+)", "\n\n↓\n\n", body)
 
     # pandas DataFrame CSS is dead weight (GitHub ignores <style>)
     body = re.sub(r"<style.*?</style>", "", body, flags=re.DOTALL)

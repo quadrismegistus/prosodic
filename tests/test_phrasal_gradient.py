@@ -315,6 +315,32 @@ def test_gradient_constraints_active_with_syntax():
     assert total > 0
 
 
+def test_linepart_grid_and_gradient_constraints():
+    # Regression for two flags from the prose-exploration work:
+    # (1) LinePart must expose the grid methods (GridMethods mixin) rather
+    #     than Entity.__getattr__ silently returning None;
+    # (2) gradient constraints must record violations on the linepart parse
+    #     path (they do — verified here so it can't silently regress).
+    t = _syntax_text(
+        "Whenever I find myself growing grim about the mouth, "
+        "I account it high time to get to sea."
+    )
+    t.parse(parse_unit='linepart',
+            constraints=('w_stress', 's_unstress', 'w_stress_t', 'w_peak_p'))
+    results = t._line_parse_results[list(t._line_parse_results)[-1]]
+    total_t = sum(
+        p.viold.get(c, 0)
+        for pl in results.values() for p in pl.unbounded
+        for c in ('w_stress_t', 'w_peak_p')
+    )
+    assert total_t > 0  # gradient constraints ACTIVE on lineparts
+    # grid methods on LinePart entities
+    t.parse()
+    lp = t.lines[0].lineparts[-1]
+    grid = lp.grid_str()
+    assert isinstance(grid, str) and grid.count("\n") >= 4
+
+
 def test_grid_str_includes_phrasal_rows():
     t = _syntax_text("When in the chronicle of wasted time\nI see descriptions of the fairest wights")
     t.parse()

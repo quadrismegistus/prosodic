@@ -1,7 +1,34 @@
 from ..imports import *
 from ..words.wordtokenlist import WordTokenList
 
-class Line(WordTokenList):
+class GridMethods:
+    """Hayes-grid delegates shared by any parse-bearing unit (Line, LinePart)."""
+
+    def _grid_phrasal(self, kwargs):
+        """Auto-supply gradient phrasal prominence (syntax=True) to the grid."""
+        if 'phrasal' not in kwargs:
+            from ..analysis.grid import phrasal_values
+            kwargs['phrasal'] = phrasal_values(self.best_parse, self.text)
+        return kwargs
+
+    def grid_str(self, **kwargs) -> str:
+        """Hayes-style metrical grid of the best parse as monospace text.
+
+        With ``syntax=True`` on the text, phrasal-prominence rows extend
+        the grid above the word level (nuclear stress = tallest column).
+        """
+        return self.best_parse.grid_str(**self._grid_phrasal(kwargs))
+
+    def grid_df(self, **kwargs):
+        """Metrical grid of the best parse as a per-syllable DataFrame."""
+        return self.best_parse.grid_df(**self._grid_phrasal(kwargs))
+
+    def grid_plot(self, **kwargs):
+        """Metrical grid of the best parse as a plotnine figure."""
+        return self.best_parse.grid_plot(**self._grid_phrasal(kwargs))
+
+
+class Line(GridMethods, WordTokenList):
     """
     A class representing a line of text in a poem or prose.
 
@@ -148,29 +175,6 @@ class Line(WordTokenList):
         """
         return len(self.syllables)
 
-    def _grid_phrasal(self, kwargs):
-        """Auto-supply gradient phrasal prominence (syntax=True) to the grid."""
-        if 'phrasal' not in kwargs:
-            from ..analysis.grid import phrasal_values
-            kwargs['phrasal'] = phrasal_values(self.best_parse, self.text)
-        return kwargs
-
-    def grid_str(self, **kwargs) -> str:
-        """Hayes-style metrical grid of the best parse as monospace text.
-
-        With ``syntax=True`` on the text, phrasal-prominence rows extend
-        the grid above the word level (nuclear stress = tallest column).
-        """
-        return self.best_parse.grid_str(**self._grid_phrasal(kwargs))
-
-    def grid_df(self, **kwargs):
-        """Metrical grid of the best parse as a per-syllable DataFrame."""
-        return self.best_parse.grid_df(**self._grid_phrasal(kwargs))
-
-    def grid_plot(self, **kwargs):
-        """Metrical grid of the best parse as a plotnine figure."""
-        return self.best_parse.grid_plot(**self._grid_phrasal(kwargs))
-
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:
         """
@@ -248,9 +252,8 @@ class LineList(EntityList):
         """
         return self.num_rhyming > 0
 
-class LinePart(WordTokenList): 
+class LinePart(GridMethods, WordTokenList):
     prefix = 'linepart'
-    pass
 
 class LinePartList(EntityList):
     @classmethod

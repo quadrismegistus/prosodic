@@ -47,3 +47,19 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Same artifact, second home: prosodic.app/docs (nginx alias on the
+      # VPS; see deploy/nginx-prosodic.conf). --chmod keeps everything
+      # world-readable regardless of runner umask.
+      - name: Rsync site to prosodic.app/docs
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          rsync -az --delete --chmod=Da+rx,Fa+r -e "ssh -i ~/.ssh/deploy_key" \
+            docs/_build/ "$DEPLOY_USER@$DEPLOY_HOST:/opt/prosodic/docs-site/"

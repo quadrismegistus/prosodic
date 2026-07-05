@@ -148,17 +148,28 @@ class Line(WordTokenList):
         """
         return len(self.syllables)
 
-    def grid_str(self, **kwargs) -> str:
-        """Hayes-style metrical grid of the best parse as monospace text."""
-        return self.best_parse.grid_str(**kwargs)
+    def _grid_phrasal(self, kwargs):
+        """Auto-supply gradient phrasal prominence (syntax=True) to the grid."""
+        if 'phrasal' not in kwargs:
+            from ..analysis.grid import phrasal_values
+            kwargs['phrasal'] = phrasal_values(self.best_parse, self.text)
+        return kwargs
 
-    def grid_df(self):
+    def grid_str(self, **kwargs) -> str:
+        """Hayes-style metrical grid of the best parse as monospace text.
+
+        With ``syntax=True`` on the text, phrasal-prominence rows extend
+        the grid above the word level (nuclear stress = tallest column).
+        """
+        return self.best_parse.grid_str(**self._grid_phrasal(kwargs))
+
+    def grid_df(self, **kwargs):
         """Metrical grid of the best parse as a per-syllable DataFrame."""
-        return self.best_parse.grid_df()
+        return self.best_parse.grid_df(**self._grid_phrasal(kwargs))
 
     def grid_plot(self, **kwargs):
         """Metrical grid of the best parse as a plotnine figure."""
-        return self.best_parse.grid_plot(**kwargs)
+        return self.best_parse.grid_plot(**self._grid_phrasal(kwargs))
 
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:

@@ -191,9 +191,10 @@ class SyllData:
     No Entity overhead, no Phoneme children.
     """
     __slots__ = ('ipa', '_txt', 'is_stressed', 'is_heavy', 'is_strong',
-                 'is_weak', 'parent', '_num', 'stress', 'children')
+                 'is_weak', 'parent', '_num', 'stress', 'children', 'word_num')
 
-    def __init__(self, ipa, txt, is_stressed, is_heavy, is_strong, is_weak):
+    def __init__(self, ipa, txt, is_stressed, is_heavy, is_strong, is_weak,
+                 word_num=None):
         self.ipa = ipa
         self._txt = txt
         self.is_stressed = is_stressed
@@ -204,6 +205,7 @@ class SyllData:
         self._num = None
         self.stress = get_syll_ipa_stress(ipa)
         self.children = []
+        self.word_num = word_num
 
     @property
     def txt(self):

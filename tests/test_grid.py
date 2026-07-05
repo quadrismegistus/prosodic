@@ -51,7 +51,7 @@ def test_grid_str_no_viols_flag(parsed_line):
 
 def test_grid_df(parsed_line):
     df = parsed_line.grid_df()
-    assert list(df.columns) == ["txt", "stress", "meter", "height", "viol"]
+    assert list(df.columns) == ["txt", "stress", "meter", "height", "phrasal", "viol"]
     assert len(df) == 10
     assert df["height"].between(1, 3).all()
 

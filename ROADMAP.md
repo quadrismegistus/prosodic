@@ -166,19 +166,12 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Docs follow-ups (well-specified; any model)
 
-- **Surface German + ternary meter in the user-facing tour.** The
-  methods layer is done (`methods/metrical-parsing.qmd` § Ternary
-  meters; `methods/languages.qmd` incl. the add-a-language recipe), but
-  `docs/index.qmd` and the README (edit `scripts/build_readme.py`, NOT
-  README.ipynb) are still English/iambic-only. Add: a short German cell
-  (`prosodic.Text("Durch diese hohle Gasse muß er kommen", lang="de")`
-  → scansion) and a ternary cell (Byron line + `meter_type` showing
-  anapestic; corpus files exist under `corpora/`). Conventions: update
-  BOTH siblings (index.qmd + build_readme.py — each file's header says
-  so); re-execute index.qmd locally (`QUARTO_PYTHON=<repo>/.venv/bin/
-  python quarto render docs/index.qmd`) and commit `docs/_freeze/`;
-  rebuild README via `.venv/bin/python scripts/build_readme.py`; never
-  `gh run rerun` the docs workflow — fresh `gh workflow run docs.yml`.
+- ✅ **Surface German + ternary meter in the user-facing tour** — shipped
+  2026-07-06. Both siblings (`docs/index.qmd`, `scripts/build_readme.py`)
+  got an "Other languages and meters" section: the Schiller `lang="de"`
+  line scoring as strict alternation, and Byron's anapestic tetrameter
+  with `meter_type` classifying it ternary/anapestic. Freeze re-executed
+  and committed; README rebuilt.
 - **Optional: a German/Blankvers exploration page** under
   `docs/explorations/` (Schiller corpus is in the repo; follow
   sonnets.qmd's structure: executed cells + committed freeze). Add a

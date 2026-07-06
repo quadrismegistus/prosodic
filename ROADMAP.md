@@ -153,7 +153,29 @@ values for words with stress-ambiguous pronunciation variants).
   for MA research). Easiest possible language: fully phonemic orthography,
   invariant penultimate stress, elision (final `-o` apostrophe) as the one
   wrinkle. Pure `get_sylls_ll_rule()` implementation, no dictionary needed.
-  Reply to #36 when shipped.
+  Reply to #36 when shipped. NOTE: consider the German (TTS-first) path
+  too — espeak has an `eo` voice; measure it first per the recipe in
+  `docs/methods/languages.qmd` before writing rules.
+
+## Docs follow-ups (well-specified; any model)
+
+- **Surface German + ternary meter in the user-facing tour.** The
+  methods layer is done (`methods/metrical-parsing.qmd` § Ternary
+  meters; `methods/languages.qmd` incl. the add-a-language recipe), but
+  `docs/index.qmd` and the README (edit `scripts/build_readme.py`, NOT
+  README.ipynb) are still English/iambic-only. Add: a short German cell
+  (`prosodic.Text("Durch diese hohle Gasse muß er kommen", lang="de")`
+  → scansion) and a ternary cell (Byron line + `meter_type` showing
+  anapestic; corpus files exist under `corpora/`). Conventions: update
+  BOTH siblings (index.qmd + build_readme.py — each file's header says
+  so); re-execute index.qmd locally (`QUARTO_PYTHON=<repo>/.venv/bin/
+  python quarto render docs/index.qmd`) and commit `docs/_freeze/`;
+  rebuild README via `.venv/bin/python scripts/build_readme.py`; never
+  `gh run rerun` the docs workflow — fresh `gh workflow run docs.yml`.
+- **Optional: a German/Blankvers exploration page** under
+  `docs/explorations/` (Schiller corpus is in the repo; follow
+  sonnets.qmd's structure: executed cells + committed freeze). Add a
+  navbar menu entry in `docs/_quarto.yml`.
 
 ## Infrastructure
 

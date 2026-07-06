@@ -1,0 +1,185 @@
+---
+title: "Language support — and how to add a language"
+subtitle: "The pronunciation pipeline, three case studies, and a step-by-step guide"
+---
+
+Prosodic's metrical parser is language-agnostic: it consumes syllables
+with stress and weight features, wherever they come from. Everything
+language-specific lives in one place — `prosodic/langs/` — and the work
+of "supporting a language" is exactly the work of turning tokens into
+syllabified, stress-marked IPA. This page documents how that pipeline
+works, how the three shipped languages use it differently, and the
+step-by-step recipe for adding a new one (with the German port,
+added 2026-07, as the worked example).
+
+## The pronunciation pipeline
+
+Every language is a `LanguageModel` subclass (`langs/langs.py`). A token
+flows through three stages, first hit wins:
+
+1. **Rule engine** (`get_sylls_ll_rule`) — if the subclass implements it,
+   pronunciations are computed from orthography directly. Only Finnish
+   does this.
+2. **Dictionary** — a TSV of `token → syll.a.ble` pronunciations
+   (`langs/<name>/<name>.tsv`), plus a user-local disk cache of previous
+   TTS results (`~/prosodic_data/data/<name>_cache.tsv`). English's TSV
+   is the CMU pronouncing dictionary (~134k words); German's is six rows.
+3. **TTS fallback** — [espeak-ng](https://github.com/espeak-ng/espeak-ng)
+   phonemizes anything left over, and prosodic syllabifies the phone
+   stream (sonority-based boundary detection via `syllabiphon`, with
+   per-token alignment between espeak's phones and panphon's segments).
+   Results are cached to disk, so each out-of-vocabulary word costs
+   espeak exactly once, ever.
+
+Two word-list files modulate stress for metrical purposes:
+`unstressed_words.txt` (function words whose pronunciations are stripped
+of stress — this is also what makes `is_functionword` true for
+monosyllables) and `ambig_stress_words.txt` (words that get both a
+stressed and an unstressed variant, letting the parser choose per line).
+
+## Three languages, three strategies
+
+**English** (`langs/english/`): dictionary-first. CMU covers ~95% of
+running text; espeak handles the archaic/rare remainder (~500 words
+across the Shakespeare corpus). Orthographic syllable labels come from a
+grapheme-to-phoneme aligner (`langs/g2p_align.py`) — English-only, since
+its spelling tables are English.
+
+**Finnish** (`langs/finnish/`): rule engine. Finnish orthography is
+phonemic and its stress is fixed (initial), so pronunciations are
+computed, not looked up — no dictionary, no TTS.
+
+**German** (`langs/german/`): TTS-first, and deliberately *thin*. The
+entire module is a subclass declaration, two word-list files, and a
+six-row dictionary. This was an empirical decision, and the methodology
+matters more than the code — see the case study.
+
+## Case study: how German was added
+
+The ROADMAP sketch assumed German would need what Finnish has: syllable
+weight rules, stress rules with prefix exceptions, compound handling.
+None of that was built, because the first step was to **measure espeak
+before writing rules**:
+
+```python
+# hand-derive expected stress for the classic traps FIRST, then check
+cases = [
+    ("verstehen",    1, "ver- inseparable prefix, unstressed"),
+    ("aufstehen",    0, "auf- separable prefix, stressed"),
+    ("Sonnenschein", 0, "compound: head-initial + secondary"),
+    ("Philosophie",  3, "Romance loanword, final stress"),
+    ("lebendig",     1, "famous lexical exception"),
+]
+de = Language("de")
+for word, expected, note in cases:
+    sylls_ll, _ = de.get(word.lower())
+    stresses = [get_syll_ipa_stress(ipa) for ipa, txt in sylls_ll[0]]
+    # compare argmax(stresses) to expected ...
+```
+
+espeak-ng scored 15/16 on a hand-verified battery spanning inseparable
+prefixes (be-/ge-/ver-/er-/zer-/ent-), separable prefixes, compounds,
+and loanwords. The one *systematic* miss — final-stressed **-ur**
+loanwords (Natur, Kultur, Figur) — became the six-row `german.tsv`
+override. That's the whole trick: **let the TTS engine be the rule
+engine, and patch its measured failure modes with dictionary rows.**
+
+The real work turned out to be elsewhere: German's `-ehen` verbs
+(gehen, stehen) exposed a latent bug in the TTS *syllabifier* — espeak
+emits diphthongs and affricates as one token but panphon splits them
+into two segments, misaligning every syllable boundary after the first
+diphthong. The fix (per-token segment alignment in
+`LanguageModel.syllabify_ipa`) improved English too, and was verified
+differentially over all 5,294 cached English TTS pronunciations. The
+lesson generalizes: **a new language is the best stress test your
+existing languages will ever get.**
+
+Validation was against real verse, not word lists: the Tell monologue
+(Schiller, *Wilhelm Tell* IV.3) at default parser weights scans 20/30
+lines as strict iambic pentameter with correct feminine endings, and the
+deviations are genuine metrical events (trochaic inversions on "Meine",
+"Damals", separable-prefix "Anzog"). `meter_type` reports
+binary/iambic. That end-to-end check — *does canonical verse in this
+language scan correctly?* — is the acceptance test that matters.
+
+## Recipe: adding a language
+
+Using ISO code `xx` and name `newlang`. Each step names its file; the
+German PR ([#151](https://github.com/quadrismegistus/prosodic/pull/151))
+touches every one of them and is the reference diff.
+
+1. **Measure espeak first** (`espeak-ng --voices` lists support). Write
+   the stress battery for your language's known hard cases —
+   hand-derived from a grammar or dictionary, *before* looking at
+   espeak's output. If espeak scores well: thin module (German path).
+   If not, or the orthography is phonemic and regular: rule engine
+   (Finnish path — `langs/finnish/` is the template).
+
+2. **Create the module** — `prosodic/langs/newlang/__init__.py` and
+   `newlang.py`:
+
+   ```python
+   from ..langs import LanguageModel, cache
+
+   class NewlangLanguage(LanguageModel):
+       lang = "xx"          # ISO code; also the espeak voice
+       name = "newlang"     # enables the TTS disk cache + file paths
+
+   @cache
+   def Newlang():
+       return NewlangLanguage()
+   ```
+
+   `name` is load-bearing: it activates
+   `~/prosodic_data/data/newlang_cache.tsv` and resolves the word-list
+   and dictionary paths below.
+
+3. **Word lists** — `langs/newlang/unstressed_words.txt` (articles,
+   prepositions, pronouns, clitics; whitespace-separated, lowercase)
+   and `ambig_stress_words.txt` (copulas, modals, negation,
+   demonstratives — anything verse lets swing either way). Mirror the
+   English/German files for the categories.
+
+4. **Seed dictionary** — `langs/newlang/newlang.tsv`, one
+   `token<TAB>syll.a.ble` row per espeak miss found in step 1, stress
+   marked with a leading `'` on the stressed syllable
+   (`natur	nɑ.'tuːɾ`). Start tiny; grow it from real usage.
+
+5. **Dispatch** — add the language to `Language()` in `langs/langs.py`:
+
+   ```python
+   if lang == "xx":
+       from .newlang import NewlangLanguage
+       return NewlangLanguage()
+   ```
+
+6. **Corpus** — `corpora/corppoetry_xx/xx.author.work.txt`, plain text
+   with stanza breaks, from a canonical public-domain source (fetch the
+   authentic text; keep period orthography). **Gotcha:** `.gitignore`
+   excludes `corpora/*` — add a `!corpora/corppoetry_xx/` exception.
+
+7. **Tests** — `tests/test_newlang.py`, following `test_german.py`:
+   the hand-derived stress battery from step 1; syllable-*count* checks
+   for hiatus/diphthong words (counts are what meter feels); dictionary
+   override; function words (`is_functionword` in `_syll_df`); and the
+   end-to-end scan of the corpus (majority of lines match the expected
+   meter, `meter_type` classifies correctly). Assert stress positions
+   and counts, not exact IPA — espeak's phone inventory varies slightly
+   between espeak and espeak-ng, and CI runs both.
+
+8. **Docs** — a paragraph in this page's language list, CLAUDE.md's
+   Language Support section, and (if the language ships a corpus worth
+   reading) an exploration page.
+
+Syllable *text* labels (the orthographic splits shown in grids and
+tables) fall back to an NLTK sonority split for non-English languages —
+serviceable, cosmetic-only. A per-language g2p spelling table
+(`langs/g2p_align.py`) upgrades them if anyone cares.
+
+## Auto-detection
+
+`TextModel(txt)` defaults to English; pass `lang="xx"` explicitly or
+`lang=None` to auto-detect via
+[langdetect](https://pypi.org/project/langdetect/). Detection is
+seeded/deterministic but unreliable on short fragments — for anything
+under a stanza, pass the code.

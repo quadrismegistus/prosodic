@@ -4,7 +4,16 @@ Most users won't import from here directly — these are wired onto ``TextModel`
 as properties (``text.meter_type``, ``text.rhyme_scheme``, ``text.summary()``).
 """
 from .form import is_shakespearean_sonnet, is_sonnet
-from .grid import grid_data, grid_df, grid_plot, grid_str, phrasal_values
+from .grid import (
+    LEVEL_COLORS,
+    LEVEL_NAMES,
+    LEVEL_PALETTE,
+    grid_data,
+    grid_df,
+    grid_plot,
+    grid_str,
+    phrasal_values,
+)
 from .line_scheme import (
     BEAT_NAMES,
     detect_line_scheme,
@@ -23,6 +32,9 @@ from .summary import per_line_rows, summary
 
 __all__ = [
     "BEAT_NAMES",
+    "LEVEL_COLORS",
+    "LEVEL_NAMES",
+    "LEVEL_PALETTE",
     "classify_meter_type",
     "compute_rhyme_ids",
     "detect_line_scheme",

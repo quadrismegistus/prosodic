@@ -1,6 +1,8 @@
 <script>
 	import { parseLine } from '$lib/api.js';
 	import { selectedLine, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
+	import MetricalGrid from './MetricalGrid.svelte';
+	import SyntaxTree from './SyntaxTree.svelte';
 
 	let lineInput = $state('');
 	let parses = $state([]);
@@ -10,6 +12,10 @@
 	let error = $state('');
 	let elapsed = $state(0);
 	let numUnbounded = $state(0);
+	let syntaxTrees = $state([]);
+	let gridPalette = $state([]);
+	let gridLevelNames = $state([]);
+	let selectedParse = $state(null);
 
 	// When selectedLine changes, auto-parse it
 	$effect(() => {
@@ -43,7 +49,9 @@
 				max_s: $meterConfig.max_s,
 				max_w: $meterConfig.max_w,
 				resolve_optionality: $meterConfig.resolve_optionality,
-				parse_timeout: $settings.parse_timeout
+				parse_timeout: $settings.parse_timeout,
+				syntax: $settings.syntax,
+				syntax_model: $settings.syntax_model
 			};
 			if ($zoneWeights) {
 				payload.zone_weights = $zoneWeights;
@@ -55,6 +63,10 @@
 			lineText = res.line_text || t;
 			elapsed = res.elapsed || 0;
 			numUnbounded = res.num_unbounded || 0;
+			syntaxTrees = res.syntax_trees || [];
+			gridPalette = res.grid_palette || [];
+			gridLevelNames = res.grid_level_names || [];
+			selectedParse = parses[0] || parts.find((p) => p.parses.length > 0)?.parses[0] || null;
 		} catch (e) {
 			error = e.message;
 		} finally {
@@ -89,6 +101,23 @@
 
 	{#if error}
 		<div class="error">{error}</div>
+	{/if}
+
+	{#if parses.length > 0 || parts.length > 0}
+		{#if selectedParse}
+			<div class="viz-section">
+				<h3 class="viz-title">Metrical grid <span class="viz-hint">(rank {selectedParse.rank}, click a row below to change)</span></h3>
+				<MetricalGrid rows={selectedParse.grid} palette={gridPalette} levelNames={gridLevelNames} />
+			</div>
+		{/if}
+		{#if syntaxTrees.length > 0}
+			<div class="viz-section">
+				<h3 class="viz-title">Syntax tree</h3>
+				{#each syntaxTrees as tree}
+					<SyntaxTree {tree} palette={gridPalette} />
+				{/each}
+			</div>
+		{/if}
 	{/if}
 
 	{#if parses.length > 0}
@@ -142,7 +171,12 @@
 				</thead>
 				<tbody>
 					{#each items as p, i}
-						<tr class:best={p.rank === 1} class:bounded={p.is_bounded}>
+						<tr
+							class:best={p.rank === 1}
+							class:bounded={p.is_bounded}
+							class:selected={selectedParse === p}
+							onclick={() => (selectedParse = p)}
+						>
 							<td class="rank-col">{p.rank}</td>
 							<td class="parse-text">{@html p.parse_html}</td>
 							<td class="meter-col mono">{p.meter_str}</td>
@@ -210,6 +244,22 @@
 	.parse-btn:disabled {
 		opacity: 0.7;
 	}
+	.viz-section {
+		margin-bottom: 1rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid var(--border-light);
+	}
+	.viz-title {
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		margin-bottom: 0.2rem;
+	}
+	.viz-hint {
+		font-weight: normal;
+		font-size: 0.72rem;
+		color: var(--text-dim);
+	}
 	.line-header {
 		display: flex;
 		flex-wrap: wrap;
@@ -270,6 +320,9 @@
 		font-size: 0.82rem;
 		color: var(--text-dim);
 	}
+	tbody tr {
+		cursor: pointer;
+	}
 	tr.best td {
 		background: #f8fdf8;
 	}
@@ -279,6 +332,10 @@
 	}
 	tr.bounded td {
 		opacity: 0.3;
+	}
+	tr.selected td {
+		background: #eef4ff;
+		box-shadow: inset 2px 0 0 var(--bar);
 	}
 	tr.bounded:hover td {
 		opacity: 0.7;

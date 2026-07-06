@@ -1222,6 +1222,8 @@ async def parse_line(req: dict):
 
     from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
+    from prosodic.analysis import grid_data, phrasal_values, LEVEL_NAMES, LEVEL_PALETTE
+    from prosodic.texts.phrasal_stress import tree_to_dict
 
     # Take first line only
     line_text = text_str.split('\n')[0].strip()
@@ -1236,7 +1238,7 @@ async def parse_line(req: dict):
 
     def _work():
         t0 = time.time()
-        t = get_text(line_text, syntax=syntax)
+        t = get_text(line_text, syntax=syntax, syntax_model=syntax_model)
         meter = Meter(**meter_kwargs)
 
         zw = req.get('zone_weights')
@@ -1247,6 +1249,13 @@ async def parse_line(req: dict):
         text_lines = t.lines
         if not text_lines:
             return {'parses': [], 'elapsed': 0, 'line_text': line_text, 'parts': []}
+
+        syntax_trees_json = []
+        if syntax:
+            try:
+                syntax_trees_json = [tree_to_dict(tr) for tr in t.syntax_trees()]
+            except Exception:
+                syntax_trees_json = []
 
         def _build_parses_for_pl(pl, context_unit):
             """Build parse detail dicts from a ParseList."""
@@ -1279,6 +1288,7 @@ async def parse_line(req: dict):
                     for s in pos['slots']:
                         for v in s['violations']:
                             viol_counts[v] = viol_counts.get(v, 0) + 1
+                ph = phrasal_values(p, t) if syntax else None
                 out.append({
                     'rank': pi + 1,
                     'parse_html': render_parse_html(p, context_unit),
@@ -1288,6 +1298,7 @@ async def parse_line(req: dict):
                     'positions': positions,
                     'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
                     'viol_summary': viol_counts,
+                    'grid': grid_data(p, phrasal=ph),
                 })
             return out
 
@@ -1315,6 +1326,9 @@ async def parse_line(req: dict):
                 'num_parses': len(parses),
                 'num_unbounded': num_unbounded,
                 'parts': [],
+                'syntax_trees': syntax_trees_json,
+                'grid_palette': LEVEL_PALETTE,
+                'grid_level_names': [LEVEL_NAMES[h] for h in sorted(LEVEL_NAMES)],
             }
         else:
             # Multi-part: parse each linepart, return per-part results
@@ -1361,6 +1375,9 @@ async def parse_line(req: dict):
                 'num_parses': sum(p['num_parses'] for p in parts),
                 'num_unbounded': sum(p['num_unbounded'] for p in parts),
                 'parts': parts,
+                'syntax_trees': syntax_trees_json,
+                'grid_palette': LEVEL_PALETTE,
+                'grid_level_names': [LEVEL_NAMES[h] for h in sorted(LEVEL_NAMES)],
             }
 
     return await _run_with_timeout(_work, timeout)

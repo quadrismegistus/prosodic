@@ -210,6 +210,27 @@ def test_mt_nltk_trees_structure():
     assert tree[2][1].label() == 'NN/1.00'
 
 
+def test_tree_to_dict():
+    from prosodic.texts.phrasal_stress import _mt_nltk_trees, tree_to_dict
+    heads = np.array([1, 2, -1, 4, 2], dtype=np.int32)
+    tags = np.array(['DT', 'NN', 'VBD', 'DT', 'NN'])
+    deps = np.array(['det', 'nsubj', 'ROOT', 'det', 'dobj'])
+    words = np.array(['the', 'dog', 'saw', 'the', 'cat'])
+    ts = np.array([0.0, 2/3, 2/3, 1/3, 1.0])
+    tree = _mt_nltk_trees(heads, words, tags, deps, ts)[0]
+    d = tree_to_dict(tree)
+    assert d['tag'] == 'VP' and d['tstress'] is None and d['text'] is None
+    subj_np = d['children'][0]
+    assert subj_np['tag'] == 'NP'
+    det, noun = subj_np['children']
+    assert det == {'tag': 'DT', 'tstress': 0.0, 'text': 'the', 'children': []}
+    assert noun['tag'] == 'NN' and noun['text'] == 'dog'
+    assert round(noun['tstress'], 2) == 0.67
+    # nuclear object noun, nested inside the VP's second NP child
+    obj_np = d['children'][2]
+    assert obj_np['children'][1]['tstress'] == 1.0
+
+
 def test_syntax_trees_integration():
     pytest.importorskip("spacy")
     try:

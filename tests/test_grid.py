@@ -30,6 +30,10 @@ def test_grid_data_rows(parsed_line):
     assert by_txt["when"]["height"] == 1
     # the s_unstress violation on "CLE" is flagged on its position
     assert by_txt["CLE"]["viol"] is True
+    # level/color are derived from height, shared with grid_plot's palette
+    assert by_txt["IN"]["level"] == "primary stress"
+    assert by_txt["when"]["level"] == "syllable"
+    assert by_txt["IN"]["color"] != by_txt["when"]["color"]
 
 
 def test_grid_str_shape(parsed_line):
@@ -51,7 +55,9 @@ def test_grid_str_no_viols_flag(parsed_line):
 
 def test_grid_df(parsed_line):
     df = parsed_line.grid_df()
-    assert list(df.columns) == ["txt", "stress", "meter", "height", "phrasal", "viol"]
+    assert list(df.columns) == [
+        "txt", "stress", "meter", "height", "level", "color", "phrasal", "viol",
+    ]
     assert len(df) == 10
     assert df["height"].between(1, 3).all()
 

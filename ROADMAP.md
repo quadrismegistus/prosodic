@@ -67,12 +67,26 @@ values for words with stress-ambiguous pronunciation variants).
   `LazyParseList` scoring; corpus files `en.byron.sennacherib.txt` +
   `en.browning.goodnews.txt`; `tests/test_ternary.py` (8 tests,
   hand-verified scansions); docs § Ternary meters.
-- **Lazy phoneme construction** — `Syllable.__init__` eagerly builds
-  Phoneme children (`words/syllables.py`); could defer to IPA-on-demand
-  via cached_property. Only matters on the entity path (DF path never
-  builds them). Profile first: init is 2.1s on the sonnets, most of it
-  espeak/dict, so the win may be small. Watch `rime_distance` (needs
-  phonemes) and `to_dict`/save-load round-trips.
+- ✅ **Lazy phoneme construction — PROFILED, REJECTED** (2026-07-06,
+  measured, never built). `cProfile` + a monkeypatched A/B on the full
+  Shakespeare corpus (2155 lines, 24947 syllables, 72280 phonemes) put a
+  hard ceiling on the win: fully deleting phoneme construction AND
+  stubbing `is_heavy` saved only 0.26s of 1.13s entity-build time (~23%
+  of that step, ~10-12% of total init) — and that's unrealistically
+  generous, since it assumes syllable weight is never needed. Worse: the
+  ceiling is unreachable as sketched. `WordForm.__init__`
+  (`words/wordform.py:69-70`) eagerly forces `syll.weight`/`.stress` for
+  every syllable immediately after construction — `weight` → `is_heavy`
+  → `has_consonant_ending` reads the syllable's last *Phoneme* child, so
+  a `cached_property` on `Syllable` alone gets forced open one line
+  later for free, saving nothing. A real win needs deferring
+  `WordForm.weight`/`.stress` too, plus `Syllable.children` (the
+  `Entity`/`UserList` base itself) has no separate `.phonemes` accessor
+  to lazily wrap — laziness would mean the shared `Entity`/`UserList`
+  base populating `children` on first access, not a one-class patch.
+  Not worth a two-layer base-class refactor for a ~0.2s ceiling. Only
+  worth revisiting if `Entity`/`UserList` gets reworked for unrelated
+  reasons.
 - ✅ **Scansion prefiltering — REJECTED** (2026-07-06, rejected on design
   grounds, never built). The idea was to skip scansions where strong
   positions wildly mismatch stressed syllables before constraint

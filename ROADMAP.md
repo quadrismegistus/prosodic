@@ -179,10 +179,10 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Infrastructure
 
-- ✅ **PyPI Trusted Publishing** — shipped for both repos (prosodic
-  `release.yml` OIDC via the `pypi` environment; publisher added on PyPI).
-  REMAINING: after the next successful `v*` tag release verifies the OIDC
-  path end-to-end, delete the now-unused `PYPI_API_TOKEN` secret.
+- ✅ **PyPI Trusted Publishing** — COMPLETE. Shipped for both repos;
+  v3.6.0 (2026-07-06) published via OIDC end-to-end and the obsolete
+  `PYPI_API_TOKEN` secret is deleted. Releases are `git tag vX.Y.Z &&
+  git push origin vX.Y.Z` (bump `_version.py` first); no secrets involved.
 - **Docs freeze refresh** — whenever API output shown in
   `docs/index.qmd` / `docs/explorations/*.qmd` changes (e.g. new syllable
   labels, changed scores), re-execute locally and commit `_freeze/`;

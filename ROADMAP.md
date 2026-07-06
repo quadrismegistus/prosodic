@@ -176,13 +176,20 @@ values for words with stress-ambiguous pronunciation variants).
   Schiller corpus + `tests/test_german.py` (8 tests). Possible follow-ups:
   German g2p spelling table for aligned syllable labels (now NLTK
   fallback); a Goethe/other-meter corpus; grow the word lists from usage.
-- **Esperanto** — community-requested (issue #36, 2021; the asker wanted it
-  for MA research). Easiest possible language: fully phonemic orthography,
-  invariant penultimate stress, elision (final `-o` apostrophe) as the one
-  wrinkle. Pure `get_sylls_ll_rule()` implementation, no dictionary needed.
-  Reply to #36 when shipped. NOTE: consider the German (TTS-first) path
-  too — espeak has an `eo` voice; measure it first per the recipe in
-  `docs/methods/languages.qmd` before writing rules.
+- **Esperanto — DEFERRED** (2026-07-06, deliberately not picked up by
+  Ryan or this session: neither reads Esperanto well enough to hand-verify
+  the stress battery the recipe requires — unlike German, where that
+  verification was doable firsthand). Community-requested (issue #36,
+  2021; the asker wanted it for MA research). Otherwise well-specified
+  and easy: fully phonemic orthography, invariant penultimate stress,
+  elision (final `-o` apostrophe) as the one wrinkle. Pure
+  `get_sylls_ll_rule()` implementation, no dictionary needed. Best suited
+  to a contributor (or future session) who can actually read Esperanto to
+  check the hand-derived test cases before trusting espeak's output — the
+  German port's whole methodology depended on that step. NOTE: consider
+  the German (TTS-first) path too — espeak has an `eo` voice; measure it
+  first per the recipe in `docs/methods/languages.qmd`. Reply to #36 when
+  shipped.
 
 ## Docs follow-ups (well-specified; any model)
 

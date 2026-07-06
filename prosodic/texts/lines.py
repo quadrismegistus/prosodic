@@ -189,7 +189,18 @@ class Line(GridMethods, WordTokenList):
         if not self.wordforms_nopunc or not line.wordforms_nopunc:
             return np.nan
         return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1], max_dist=max_dist)
-    
+
+    def rime_type(self, line: 'Line', **kwargs):
+        """Classify the end-rhyme between this line and another as
+        'perfect', 'slant', 'assonance', or None (2-D Walker-calibrated
+        nucleus/coda regions; see WordForm.rime_type for the taxonomy
+        and threshold kwargs)."""
+        if not self.wordforms_nopunc or not line.wordforms_nopunc:
+            return None
+        return self.wordforms_nopunc[-1].rime_type(
+            line.wordforms_nopunc[-1], **kwargs
+        )
+
     @property
     def parts(self):
         return LinePartList.from_wordtokens(self.wordtokens, parent=self)

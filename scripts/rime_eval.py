@@ -298,6 +298,240 @@ def main():
     report_task("perfect rhyme vs cross-row", d_perfect, d_cross)
     report_task("any rhyme (perfect + near) vs cross-row",
                 d_perfect + d_near, d_cross)
+    report_three_way(d_perfect, d_near, d_cross)
+
+    print("Computing 2-D (nucleus, coda) decompositions ...", file=sys.stderr)
+    nc_perfect = compute_decomposed(perfect, "perfect", args.max_pairs)
+    nc_near = compute_decomposed(near, "near", args.max_pairs)
+    nc_cross = compute_decomposed(cross, "cross", args.max_pairs)
+    report_two_dim(nc_perfect, nc_near, nc_cross)
+
+    report_sonnet_validation()
+
+
+def compute_decomposed(pairs, label, max_pairs=4000):
+    """(nucleus, coda) distance tuples via WordForm.rime_distance_nc."""
+    import math
+    rng = random.Random(7)
+    if len(pairs) > max_pairs:
+        pairs = rng.sample(pairs, max_pairs)
+    out = []
+    skipped = 0
+    for w1, w2 in pairs:
+        wf1, wf2 = get_wordform(w1), get_wordform(w2)
+        if wf1 is None or wf2 is None:
+            skipped += 1
+            continue
+        try:
+            dn, dc = wf1.rime_distance_nc(wf2)
+        except Exception:
+            skipped += 1
+            continue
+        if math.isnan(dn) or math.isnan(dc):
+            skipped += 1
+            continue
+        out.append((float(dn), float(dc)))
+    print(f"  {label:8s} n={len(out):5d}  (skipped {skipped})",
+          file=sys.stderr)
+    return out
+
+
+def report_two_dim(nc_perfect, nc_near, nc_cross):
+    """Grid-search the 2-D (nucleus, coda) region classifier:
+    perfect if dn<=a and dc<=b; slant if dc<=c and dn<=dcap; else none.
+    This is the calibration behind WordForm.rime_type (imports.py
+    RHYME_PERFECT_NUC_MAX etc.)."""
+    import itertools
+    print("=" * 70)
+    print("2-D (nucleus, coda) band calibration")
+    print("=" * 70)
+    data = {"perfect": nc_perfect, "slant": nc_near, "none": nc_cross}
+    all_pts = [(dn, dc, g) for g, ds in data.items() for dn, dc in ds]
+    grid_a = [0.0, 0.05, 0.1, 0.15, 0.2]
+    grid_b = [0.0, 0.05, 0.1, 0.15, 0.2]
+    grid_c = [0.0, 0.05, 0.1, 0.15, 0.2, 0.3]
+    grid_d = [0.4, 0.5, 0.6, 0.7, 0.8, 1.0]
+    best = None
+    for a, b, c, dcap in itertools.product(grid_a, grid_b, grid_c, grid_d):
+        f1s = {}
+        for cls in ("perfect", "slant", "none"):
+            tp = fp = fn = 0
+            for dn, dc, gold in all_pts:
+                if dn <= a and dc <= b:
+                    pred = "perfect"
+                elif dc <= c and dn <= dcap:
+                    pred = "slant"
+                else:
+                    pred = "none"
+                if pred == cls and gold == cls:
+                    tp += 1
+                elif pred == cls:
+                    fp += 1
+                elif gold == cls:
+                    fn += 1
+            p = tp / (tp + fp) if tp + fp else 0.0
+            r = tp / (tp + fn) if tp + fn else 0.0
+            f1s[cls] = 2 * p * r / (p + r) if p + r else 0.0
+        macro = sum(f1s.values()) / 3
+        if best is None or macro > best[0]:
+            best = (macro, (a, b, c, dcap), f1s)
+    macro, (a, b, c, dcap), f1s = best
+    print(f"  best regions: perfect(dn<={a}, dc<={b})  "
+          f"slant(dc<={c}, dn<={dcap})")
+    print(f"  macro-F1: {macro:.3f}")
+    for cls in ("perfect", "slant", "none"):
+        print(f"    F1({cls}): {f1s[cls]:.3f}")
+    print()
+
+    def pred(dn, dc):
+        if dn <= a and dc <= b:
+            return "perfect"
+        if dc <= c and dn <= dcap:
+            return "slant"
+        return "none"
+
+    print("  confusion (rows=gold, cols=pred):")
+    print(f"  {'':10s} {'perfect':>8s} {'slant':>8s} {'none':>8s}")
+    for name, ds in data.items():
+        row = {cl: 0 for cl in ("perfect", "slant", "none")}
+        for dn, dc in ds:
+            row[pred(dn, dc)] += 1
+        print(f"  {name:10s} {row['perfect']:8d} {row['slant']:8d} "
+              f"{row['none']:8d}")
+    print()
+    print(f"  suggested constants: RHYME_PERFECT_NUC_MAX = {a}, "
+          f"RHYME_PERFECT_CODA_MAX = {b}, RHYME_SLANT_CODA_MAX = {c}")
+    print()
+
+
+def report_sonnet_validation():
+    """Independent validation on real verse: Shakespeare's sonnets give
+    scheme-derived ground truth — ABAB CDCD EFEF GG makes (0,2),(1,3),...
+    rhyme pairs and within-quatrain (0,1),(1,2),... TRUE non-rhymes
+    (Walker is positive-only; this supplies the missing negatives).
+
+    Result (2026-07-06): the 2-D bands dominate on real verse — F1 0.912,
+    precision 0.944, FPR 0.041 vs the 1-D scalar's 0.226. A 48-dim
+    per-feature multinomial model won on Walker CV (macro-F1 0.822) but
+    over-recalled here (FPR 0.186): it learns Walker's historical
+    permissiveness, not Shakespeare's practice. Counting assonance as
+    rhyme adds FPR (0.124) for +0.004 TPR — assonance is real but is not
+    end-rhyme practice, so rime_type keeps it a separate label.
+    """
+    import numpy as np
+    path = REPO_ROOT / "corpora" / "corppoetry_en" / "en.shakespeare.txt"
+    print("=" * 70)
+    print("Sonnet-scheme validation (real-verse positives AND negatives)")
+    print("=" * 70)
+    t = prosodic.TextModel(path.read_text())
+    POS_IDX = [(0, 2), (1, 3), (4, 6), (5, 7), (8, 10), (9, 11), (12, 13)]
+    NEG_IDX = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (6, 7),
+               (8, 9), (9, 10), (10, 11)]
+    pos_pairs, neg_pairs = [], []
+    for st in t.stanzas:
+        lines = st.lines
+        if len(lines) != 14:
+            continue
+        def endwf(i):
+            wfs = lines[i].wordforms_nopunc
+            return wfs[-1] if wfs else None
+        for idxs, bucket in ((POS_IDX, pos_pairs), (NEG_IDX, neg_pairs)):
+            for i, j in idxs:
+                a, b = endwf(i), endwf(j)
+                if a is not None and b is not None and a.txt != b.txt:
+                    bucket.append((a, b))
+    print(f"  {len(pos_pairs)} scheme rhyme pairs, "
+          f"{len(neg_pairs)} scheme non-rhyme pairs")
+
+    def report(name, predict):
+        tp = sum(1 for a, b in pos_pairs if predict(a, b))
+        fp = sum(1 for a, b in neg_pairs if predict(a, b))
+        tpr = tp / len(pos_pairs)
+        fpr = fp / len(neg_pairs)
+        prec = tp / (tp + fp) if tp + fp else 0.0
+        f1 = 2 * prec * tpr / (prec + tpr) if prec + tpr else 0.0
+        print(f"  {name:<28} TPR {tpr:.3f}  FPR {fpr:.3f}  "
+              f"prec {prec:.3f}  F1 {f1:.3f}")
+
+    report("1-D scalar <= 0.35",
+           lambda a, b: (lambda d: d is not None and not np.isnan(d)
+                         and d <= 0.35)(a.rime_distance(b, max_dist=None)))
+    report("2-D bands (perfect+slant)",
+           lambda a, b: a.rime_type(b) in ("perfect", "slant"))
+    report("2-D bands (+assonance)",
+           lambda a, b: a.rime_type(b) is not None)
+    print()
+
+
+def three_way_scores(d_perfect, d_near, d_cross, t1, t2):
+    """Score the band classifier: perfect if d<=t1, slant if t1<d<=t2,
+    none if d>t2. Returns per-class F1 dict + macro F1."""
+    classes = {
+        "perfect": (d_perfect, lambda d: d <= t1),
+        "slant": (d_near, lambda d: t1 < d <= t2),
+        "none": (d_cross, lambda d: d > t2),
+    }
+    all_ds = [(d, "perfect") for d in d_perfect] + \
+             [(d, "slant") for d in d_near] + \
+             [(d, "none") for d in d_cross]
+
+    def predict(d):
+        if d <= t1:
+            return "perfect"
+        if d <= t2:
+            return "slant"
+        return "none"
+
+    f1s = {}
+    for cls in ("perfect", "slant", "none"):
+        tp = sum(1 for d, gold in all_ds if gold == cls and predict(d) == cls)
+        fp = sum(1 for d, gold in all_ds if gold != cls and predict(d) == cls)
+        fn = sum(1 for d, gold in all_ds if gold == cls and predict(d) != cls)
+        prec = tp / (tp + fp) if (tp + fp) else 0.0
+        rec = tp / (tp + fn) if (tp + fn) else 0.0
+        f1s[cls] = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+    macro = sum(f1s.values()) / 3
+    return f1s, macro
+
+
+def report_three_way(d_perfect, d_near, d_cross):
+    """Grid-search (t1, t2) band boundaries for the three-way task:
+    perfect / slant (Walker's 'allowable') / none."""
+    print("=" * 70)
+    print("Three-way band calibration: perfect <= t1 < slant <= t2 < none")
+    print("=" * 70)
+    t1_grid = [round(x * 0.01, 2) for x in range(0, 16)]
+    t2_grid = [round(x * 0.025, 3) for x in range(2, 25)]
+    best = None
+    for t1 in t1_grid:
+        for t2 in t2_grid:
+            if t2 <= t1:
+                continue
+            f1s, macro = three_way_scores(d_perfect, d_near, d_cross, t1, t2)
+            if best is None or macro > best[2]:
+                best = (t1, t2, macro, f1s)
+    t1, t2, macro, f1s = best
+    print(f"  best boundaries: t1={t1:.2f}  t2={t2:.3f}")
+    print(f"  macro-F1: {macro:.3f}")
+    for cls in ("perfect", "slant", "none"):
+        print(f"    F1({cls}): {f1s[cls]:.3f}")
+    print()
+    # confusion at the optimum
+    def predict(d):
+        return "perfect" if d <= t1 else ("slant" if d <= t2 else "none")
+    print("  confusion (rows=gold, cols=pred):")
+    print(f"  {'':10s} {'perfect':>8s} {'slant':>8s} {'none':>8s}")
+    for name, ds in (("perfect", d_perfect), ("slant", d_near),
+                     ("none", d_cross)):
+        row = {c: 0 for c in ("perfect", "slant", "none")}
+        for d in ds:
+            row[predict(d)] += 1
+        print(f"  {name:10s} {row['perfect']:8d} {row['slant']:8d} "
+              f"{row['none']:8d}")
+    print()
+    print(f"  suggested constants: RHYME_PERFECT_MAX_DIST = {t1:.2f}, "
+          f"RHYME_SLANT_MAX_DIST = {t2:.3f}")
+    print()
 
 
 if __name__ == "__main__":

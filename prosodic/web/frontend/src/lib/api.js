@@ -98,6 +98,10 @@ export function parseLine(data) {
 	return request('POST', '/api/parse/line', data);
 }
 
+export function parseLP(data) {
+	return request('POST', '/api/parse/lp', data);
+}
+
 export function maxentFit(data) {
 	return request('POST', '/api/maxent/fit', data);
 }

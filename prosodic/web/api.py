@@ -1383,6 +1383,36 @@ async def parse_line(req: dict):
     return await _run_with_timeout(_work, timeout)
 
 
+@app.post("/api/parse/lp")
+async def parse_lp(req: dict):
+    """Faithful Liberman & Prince (1977) grid + binary metrical tree for one
+    line (experimental). Computed on demand — the toggle in Line View calls
+    this only when selected — so the heavy Stanza constituency parse stays
+    out of the default parse path. Returns {available: False} if stanza / the
+    constituency model is not installed on the server.
+    """
+    text_str = req.get('text', '').strip()
+    if not text_str:
+        raise HTTPException(status_code=400, detail="No text provided")
+    _check_size(text_str)
+    timeout = _clamp_timeout(req)
+    line_text = text_str.split('\n')[0].strip()
+
+    def _work():
+        try:
+            from prosodic.analysis.metrical_lp import lp_line_data
+            data = lp_line_data(line_text)
+        except Exception as e:
+            return {"available": False, "reason": str(e)}
+        if data is None:
+            return {"available": False, "reason": "no parse"}
+        data["available"] = True
+        data["line_text"] = line_text
+        return data
+
+    return await _run_with_timeout(_work, timeout)
+
+
 # Serve built SvelteKit frontend
 if os.path.isdir(STATIC_BUILD_DIR):
     _STATIC_ROOT = os.path.realpath(STATIC_BUILD_DIR)

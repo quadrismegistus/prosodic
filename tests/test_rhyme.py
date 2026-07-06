@@ -173,3 +173,23 @@ def test_rime_type_sonnet_scheme_validation():
     fpr = sum(1 for a, b in neg if is_rhyme(a, b)) / len(neg)
     assert tpr > 0.80, f"TPR {tpr:.3f}"
     assert fpr < 0.10, f"FPR {fpr:.3f}"
+
+
+def test_rhyme_ids_band_mode_fixes_sonnet_106():
+    """Sonnet 106's third quatrain rhymes prophecies/eyes and
+    prefiguring/sing — consonance the legacy scalar mode couldn't hear
+    (it classified 106 as 'Sonnet A'). Band mode detects them; the
+    legacy path stays available via an explicit max_dist."""
+    import os
+    from prosodic.analysis.rhyme_scheme import compute_rhyme_ids
+    path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "corpora", "corppoetry_en", "en.shakespeare.txt")
+    with open(path) as f:
+        stanzas = f.read().split("\n\n")
+    t = TextModel(stanzas[105])
+    rs = t.rhyme_scheme
+    assert rs["form"].replace(" ", "") == "ababcdcdefefgg", rs
+    ids_legacy = compute_rhyme_ids(t, max_dist=0.35)
+    ids_bands = compute_rhyme_ids(t)
+    assert ids_bands != ids_legacy

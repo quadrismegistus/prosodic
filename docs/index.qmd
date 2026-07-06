@@ -67,10 +67,11 @@ print(sonnet.summary())
 ```
 
 One call each way: scansion per line, rhyme letters, and the estimated
-schema (iambic pentameter, a sonnet-variant rhyme scheme — this is
-Sonnet 106, whose slant rhymes push it off the strict Shakespearean
-template; the [sonnets exploration](explorations/sonnets.qmd) reads that
-story closely).
+schema. This is Sonnet 106, whose third quatrain rhymes
+*prophecies/eyes* and *prefiguring/sing* — slant rhymes (identical codas,
+drifted vowels) that a plain phonetic distance can't hear but the 2-D
+rhyme classifier can; the
+[sonnets exploration](explorations/sonnets.qmd) reads that story closely.
 
 ## Reading texts
 
@@ -209,19 +210,22 @@ print('feet scheme:', sonnet.line_scheme['combo'],
       '  syllable scheme:', sonnet.syllable_scheme['combo'])
 ```
 
-Rhyme is detected from sound, not spelling — feature-weighted edit
-distance over the IPA of each line's final rime (0 = perfect rhyme):
+Rhyme is detected from sound, not spelling. Each line-final rime splits
+into nucleus (vowel) and coda distances, and pairs classify as
+`'perfect'`, `'slant'` (consonance: identical coda, free vowel),
+`'assonance'`, or `None` — bands calibrated against Walker's 1775
+rhyming dictionary:
 
 ```{python}
 #| label: rhyme
 from prosodic.analysis import nums_to_scheme
 
-print('time/rhyme distance:',
-      sonnet.line1.rime_distance(sonnet.lines[2]))
-print('rhyme letters:      ', ''.join(nums_to_scheme(sonnet.rhyme_ids)))
+print('time/rhyme:        ', sonnet.line1.rime_type(sonnet.lines[2]))
+print('prophecies/eyes:   ', sonnet.lines[8].rime_type(sonnet.lines[10]))
+print('rhyme letters:     ', ''.join(nums_to_scheme(sonnet.rhyme_ids)))
 
 rs = sonnet.rhyme_scheme
-print(f"best-fit scheme:     {rs['name']} ({rs['form']}), "
+print(f"best-fit scheme:    {rs['name']} ({rs['form']}), "
       f"accuracy {rs['accuracy']:.2f}")
 print('is_sonnet:', sonnet.is_sonnet,
       ' is_shakespearean_sonnet:', sonnet.is_shakespearean_sonnet)

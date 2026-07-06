@@ -231,9 +231,13 @@ print('syll  scheme:', sonnet.syllable_scheme)""")
 
 md("""### Rhyme detection
 
-Rhyme is computed via feature-weighted edit distance over IPA segments (panphon). 0 = perfect rhyme; higher = slant rhyme.""")
+Rhyme is detected from sound, not spelling. Each line-final rime splits into nucleus (vowel) and coda feature-edit distances, and pairs classify as `'perfect'`, `'slant'` (consonance: identical coda, free vowel), `'assonance'`, or `None` — bands calibrated against Walker's 1775 rhyming dictionary.""")
 
-code("""# pairwise rime distance
+code("""# classify rhyme pairs ('time'/'rhyme'; 'prophecies'/'eyes')
+print('time/rhyme:     ', sonnet.line1.rime_type(sonnet.lines[2]))
+print('prophecies/eyes:', sonnet.lines[8].rime_type(sonnet.lines[10]))""")
+
+code("""# gradient pairwise rime distance (0 = identical rime)
 sonnet.line1.rime_distance(sonnet.lines[2])  # 'time' vs 'rhyme'""")
 
 code("""# every rhyming line in the text, with its closest partner

@@ -127,34 +127,63 @@ def match_rhyme_scheme(rhyme_ids: List[int]) -> Optional[dict]:
     }
 
 
-def compute_rhyme_ids(text, max_dist: float = 0.35, window: int = 4) -> List[int]:
+def compute_rhyme_ids(text, max_dist: Optional[float] = None,
+                      window: int = 4) -> List[int]:
     """Compute per-line integer rhyme IDs from a TextModel.
 
-    For each line, find the closest other line within ±``window`` (default 4)
-    by feature-edit rime distance. If that closest neighbor is within
-    ``max_dist``, union the two lines into the same rhyme group. Lines whose
-    closest neighbor is too far get ID 0 (no rhyme).
+    For each line, find the closest other line within ±``window`` (default
+    4); union rhyming lines into groups. Lines with no rhyme partner get
+    ID 0.
 
-    Default ``max_dist=0.35`` is the F1-optimal threshold against Walker's
-    1775 rhyming dictionary (perfect-rhyme vs cross-row binary task; AUC 0.91,
-    TPR 0.88, FPR 0.18, precision 0.87). See ``scripts/rime_eval.py`` to
-    regenerate. Tighten toward 0.20 for stricter precision; loosen toward
-    0.50 to catch more slant rhyme at the cost of false positives.
+    By default (``max_dist=None``) candidate pairs are gated by the 2-D
+    band classifier (``WordForm.rime_type`` in perfect/slant — sonnet-
+    scheme-validated FPR 0.041 vs 0.226 for the scalar; see
+    ``scripts/rime_eval.py``) and ranked perfect-first, then by nucleus
+    distance. Perfect pairs union even without mutuality; slant pairs
+    require mutual nearest neighbors (mirroring the legacy "very close"
+    rule, but by rhyme type rather than an arbitrary halved threshold).
+
+    Passing a float ``max_dist`` restores the legacy 1-D behavior:
+    closest neighbor by scalar feature-edit rime distance, union if
+    within ``max_dist`` and mutual (or non-mutual at ``max_dist/2``).
+    The old default 0.35 was the Walker-1775 F1-optimal scalar threshold.
     """
     lines = list(text.lines)
     n = len(lines)
     if n == 0:
         return []
 
-    # Pairwise distances within window (symmetric)
+    use_bands = max_dist is None
+
+    def endwf(line):
+        wfs = line.wordforms_nopunc
+        return wfs[-1] if wfs else None
+
+    # Pairwise sort keys within window (symmetric). Band mode: key =
+    # (0, dn + dc) for perfect, (1, dn) for slant, None otherwise.
+    # Scalar mode: key = (distance,).
     dist = [[None] * n for _ in range(n)]
     for i in range(n):
         for j in range(max(0, i - window), min(n, i + window + 1)):
-            if i == j:
+            if i == j or dist[i][j] is not None:
                 continue
-            if dist[i][j] is None:
+            if use_bands:
+                a, b = endwf(lines[i]), endwf(lines[j])
+                if a is None or b is None:
+                    continue
+                band = a.rime_type(b)
+                if band == "perfect":
+                    dn, dc = a.rime_distance_nc(b)
+                    key = (0, dn + dc)
+                elif band == "slant":
+                    dn, dc = a.rime_distance_nc(b)
+                    key = (1, dn)
+                else:
+                    key = None
+            else:
                 d = lines[i].rime_distance(lines[j], max_dist=None)
-                dist[i][j] = dist[j][i] = d
+                key = None if d is None else (d,)
+            dist[i][j] = dist[j][i] = key
 
     # Union-find: each line joins its closest neighbor if within threshold
     parent = list(range(n))
@@ -181,22 +210,21 @@ def compute_rhyme_ids(text, max_dist: float = 0.35, window: int = 4) -> List[int
                       if i != j and dist[i][j] is not None]
         if candidates:
             candidates.sort()
-            closest[i] = candidates[0]  # (dist, j)
+            closest[i] = candidates[0]  # (key, j)
 
-    # Union mutual nearest neighbors below threshold; this avoids cascading
-    # merges where A's closest is B, but B's closest is C
+    # Union mutual nearest neighbors; this avoids cascading merges where
+    # A's closest is B, but B's closest is C. Non-mutual unions are
+    # allowed only for the strongest pairs (perfect band / half-threshold).
     rhymes = [False] * n
     for i in range(n):
         if closest[i] is None:
             continue
-        d, j = closest[i]
-        if d > max_dist:
+        key, j = closest[i]
+        if not use_bands and key[0] > max_dist:
             continue
-        if closest[j] is not None and closest[j][1] == i:
-            union(i, j)
-            rhymes[i] = True
-            rhymes[j] = True
-        elif d <= max_dist / 2:  # very close: union even if not mutual
+        mutual = closest[j] is not None and closest[j][1] == i
+        strong = (key[0] == 0) if use_bands else (key[0] <= max_dist / 2)
+        if mutual or strong:
             union(i, j)
             rhymes[i] = True
             rhymes[j] = True

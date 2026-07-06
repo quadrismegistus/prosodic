@@ -95,9 +95,12 @@ lines_df = pd.DataFrame({
 
 ## A rhyme census
 
-Rhyme detection works from sound, not spelling: feature-weighted edit
-distance over the IPA of each line's final rime. Classifying each sonnet's
-rhyme-group pattern against a catalog of 39 named schemes:
+Rhyme detection works from sound, not spelling: each line-final rime is
+decomposed into nucleus (vowel) and coda feature-edit distances, and pairs
+are classified as perfect or slant rhyme in that 2-D space (calibrated
+against Walker's 1775 rhyming dictionary — slant rhyme turns out to be
+coda identity with the vowel free, i.e. consonance). Classifying each
+sonnet's rhyme-group pattern against a catalog of 39 named schemes:
 
 ```{python}
 #| label: rhyme-census
@@ -119,32 +122,37 @@ print(f"{strict}/154 pass the strict is_shakespearean_sonnet predicate")
 print(f"(14 lines, ~10 syllables, and best-matching scheme = abab cdcd efef gg)")
 ```
 
-The 137 that classify as Shakespearean are unsurprising — Shakespeare
+The 149 that classify as Shakespearean are unsurprising — Shakespeare
 mostly wrote Shakespearean sonnets. The residue is where it gets
 interesting. Sonnet 126 ("O thou, my lovely boy") really *isn't* one — the
 detector reads its twelve lines as `aabbccddeeff` and files it under
-**Couplet**, which is what it is. And Sonnet 106 classifies as **Sonnet A**
-rather than Shakespearean:
+**Couplet**, which is what it is.
+
+Sonnet 106 is the poster child for why the classifier works in two
+dimensions. Its third quatrain rhymes *prophecies/eyes* and
+*prefiguring/sing* — pairs whose vowels have drifted apart since 1609, so
+a single phonetic distance can't hear them (an earlier version of this
+detector filed 106 under "Sonnet A" for exactly that reason). But their
+codas are identical, and coda identity with a free vowel is precisely
+what slant rhyme (consonance) *is*:
 
 ```{python}
 #| label: sonnet-106
 from prosodic.analysis import nums_to_scheme
 
 s106 = prosodic.Text(corpus.stanzas[105].txt)
+wf = lambda i: s106.lines[i].wordforms_nopunc[-1]
+for i, j in [(8, 10), (9, 11)]:
+    a, b = wf(i), wf(j)
+    print(f"{a.txt.strip()} / {b.txt.strip()}: {a.rime_type(b)}")
 print('detected:', ''.join(nums_to_scheme(s106.rhyme_ids)),
-      '->', s106.rhyme_scheme['name'], f"({s106.rhyme_scheme['form']})")
-print('line-final words:')
-print('  ', ', '.join(l.txt.strip().split()[-1].strip(',;:.')
-                      for l in s106.lines))
+      '->', s106.rhyme_scheme['name'])
 ```
 
-The quatrains open cleanly (*time/rhyme*, *wights/knights*), but the third
-quatrain rhymes *prophecies/eyes* and *prefiguring/sing* — slant rhymes to
-a modern ear and to the phonetic distance measure alike. With those edges
-missing, the nearest named scheme is a sonnet variant with a different
-sestet. This is expected behavior worth keeping: the classifier reports
-what the sounds support, and disagreements with the print tradition mark
-exactly the lines where pronunciation has drifted since 1609.
+The classifier still reports what the sounds support — it just now
+distinguishes *which* sounds have to match. Disagreements with the print
+tradition that remain (five sonnets) mark lines where even the consonants
+have drifted since 1609.
 
 ## Close reading: Sonnet 18
 

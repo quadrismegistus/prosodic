@@ -44,6 +44,7 @@ md("""# Prosodic 3
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/quadrismegistus/prosodic/blob/master/README.ipynb)
 [![Demo](https://img.shields.io/badge/demo-prosodic.app-blue)](https://prosodic.app)
+[![Docs](https://img.shields.io/badge/docs-prosodic.app%2Fdocs-blue)](https://prosodic.app/docs/)
 [![Code coverage](https://codecov.io/gh/quadrismegistus/prosodic/branch/master/graph/badge.svg)](https://codecov.io/gh/quadrismegistus/prosodic)
 
 **Prosodic** is a Python library and web app for metrical-phonological analysis of poetry. It parses text into a linguistic hierarchy (text → stanza → line → word → syllable → phoneme), runs a constraint-satisfaction metrical parser, and identifies stress patterns (iambic, trochaic, anapestic, dactylic), foot/syllable schemes, and named rhyme schemes (sonnet variants, couplet, ballad, etc.).

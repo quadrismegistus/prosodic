@@ -103,16 +103,22 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Analysis & display
 
-- **Web app: grid in Line View + parse table polish** (deferred to last by
-  design — Ryan's call, 2026-07-05). The API half is done: `grid_data()` /
-  `phrasal_values()` in `analysis/grid.py` give per-syllable rows incl.
-  phrasal levels. Remaining: render in the web frontend — either
-  server-side HTML from `/api/parse/line` (follow `render_parse_html` in
-  `web/api.py`, which walks `line.wordtokens` for punctuation) or ship
-  grid_data JSON to a Svelte component (`frontend/src/lib/components/
-  LineViewTab.svelte`). `syntax`/`syntax_model` already flow through all
-  parse endpoints via the settings store. Check the AUDIT note that the
-  web path may restrict the constraint list before assuming parity.
+- ✅ **Web app: grid + syntax tree in Line View** — shipped 2026-07-06
+  (PR #155). `grid_plot()` redesigned first (boxes filled by prominence
+  level, not star marks — `LEVEL_NAMES`/`LEVEL_COLORS`/`LEVEL_PALETTE`
+  in `analysis/grid.py` are now the shared source of truth). Line View
+  got two native components fed by `/api/parse/line`: `MetricalGrid.svelte`
+  (same boxes-by-level look, one per candidate scansion, selectable by
+  clicking a table row) and `SyntaxTree.svelte` (hand-rolled inline SVG —
+  leaves are already in fixed sentence order, so layout is just "internal
+  node x = mean of children x, y = depth"; no new npm dependency).
+  `tree_to_dict()` (`texts/phrasal_stress.py`) converts `syntax_trees()`
+  to JSON for this — `svgling` was never a real dependency and stays
+  that way. Found and fixed along the way: `LineViewTab.svelte` wasn't
+  sending `syntax`/`syntax_model` to the backend at all, and
+  `/api/parse/line` dropped `syntax_model` even when `syntax` was on.
+  Remaining polish (not blocking): parse-table sort/column tweaks if
+  Ryan wants them later.
 - ✅ **Rhyme slant-band calibration** — shipped 2026-07-06, upgraded
   same-day from 1-D to a 2-D (nucleus, coda) decomposition after the 1-D
   scalar proved unable to separate gone/alone (real slant) from

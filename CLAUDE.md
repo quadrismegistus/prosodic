@@ -169,7 +169,7 @@ FastAPI backend + SvelteKit frontend (compiled to static files). PWA-ready, mobi
 - **Component-based tabs with URL routing**: all tabs stay mounted, preserving state and scroll position. `goTab()` uses `pushState` for shallow routing (`/`, `/line`, `/meter`, `/maxent`, `/settings`) — back/forward works. Active tab in `activeTab` persisted store. Lucide icons on both top nav (desktop) and bottom nav (mobile).
 - 5 tabs: **Parse** (text input + corpus dropdown + results), **Line** (single-line detail with all scansions), **Meter** (constraint config + weights), **MaxEnt** (file upload + training), **Settings** (global options)
 - Parse tab: clicking a line navigates to Line View with full scansion detail (unbounded + bounded)
-- Line View: text input for manual line entry, shows all scansions sorted by score with violation badges, bounded parses grayed out
+- Line View: text input for manual line entry, shows all scansions sorted by score with violation badges, bounded parses grayed out. Also renders the metrical grid (`MetricalGrid.svelte` — colored boxes by prominence level, matching `grid_plot()`'s palette; click a table row to switch which candidate's grid is shown) and, when `syntax=True`, the dependency-projection syntax tree (`SyntaxTree.svelte` — hand-rolled inline SVG, leaves tstress-colored, no charting/tree-layout npm dependency). Both are fed by `/api/parse/line`'s `grid`/`syntax_trees`/`grid_palette`/`grid_level_names` fields; `tree_to_dict()` in `texts/phrasal_stress.py` converts `nltk.Tree` to JSON for this.
 - Settings tab: syntax toggle, spaCy model, language, max syllables, parse timeout
 - Parse results: sortable columns (Line, Meter, Score, Ambig), pagination (50/100/250/500 per page), best-only / all-unbounded toggle
 - MaxEnt zone weights saved to Meter config and used for zone-aware scoring in Parse
@@ -333,6 +333,7 @@ CPU now edges out GPU: the elite bounding pre-screen shrinks the exact kernel's 
 - ✅ Windows in CI test matrix (espeak-ng MSI; validates the #62/#74 fixes on every push)
 - ✅ G2P-aligned orthographic syllable labels (`langs/g2p_align.py`, fixes #47)
 - ✅ cadence fork superseded and archived (prose rhythm now via `syntax=True`; its unique capabilities catalogued in ROADMAP.md)
+- ✅ Web app: metrical grid + syntax tree in Line View (`MetricalGrid.svelte`, `SyntaxTree.svelte`); `grid_plot()` redesigned with colored boxes instead of star marks
 
 ### Remaining
 

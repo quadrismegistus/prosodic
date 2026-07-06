@@ -245,6 +245,7 @@ There are two ways parsing happens, and it matters which one you're in:
 - `WordForm.rime_distance(other, max_dist)` computes distance between word rimes.
 - Uses **feature-weighted edit distance** on IPA segments via panphon: aligns phonemes via DP where substitution cost = normalized feature distance. Returns 0-1 (0 = perfect rhyme).
 - `max_dist=0` (default, `RHYME_MAX_DIST`): binary exact match. `max_dist=None`: no limit, returns gradient distance.
+- `WordForm.rime_type(other)` / `Line.rime_type(line2)`: three-way classification — `'perfect'` (dist ≤ `RHYME_PERFECT_MAX_DIST` = 0.05), `'slant'` (≤ `RHYME_SLANT_MAX_DIST` = 0.425), else `None`. Bands are the macro-F1 optimum on Walker's three classes (perfect/allowable/cross; `scripts/rime_eval.py --three-way` section). Perfect boundary is high-precision (0.2% non-rhyme leakage); slant band is deliberately permissive — pass `slant_max=0.35` for the stricter binary-calibrated notion. Distinct from `compute_rhyme_ids`' 0.35, which is unchanged.
 - `PhonemeList.feature_edit_distance(other)`: the core DP alignment. `PhonemeList.feature_distance(other)`: legacy euclidean on averaged features (still available but not used by rime_distance).
 - `Line.rime_distance(line2)`: delegates to final wordform's rime_distance.
 - `Text.get_rhyming_lines()`, `Text.is_rhyming`, `Text.num_rhyming_lines`: aggregate rhyme detection.

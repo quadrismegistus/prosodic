@@ -92,15 +92,18 @@ values for words with stress-ambiguous pronunciation variants).
   LineViewTab.svelte`). `syntax`/`syntax_model` already flow through all
   parse endpoints via the settings store. Check the AUDIT note that the
   web path may restrict the constraint list before assuming parity.
-- **Rhyme detection threshold tuning** — `RHYME_MAX_DIST=0` default is
-  binary; `analysis/` uses the calibrated 0.35 (Walker 1775, F1-optimal;
-  see `scripts/rime_eval.py` + `data/walker5.csv`). Open question: a
-  calibrated "slant rhyme" BAND (e.g. perfect < 0.05 < slant < 0.35 < none)
-  for the user-facing default. The eval harness exists; extend it to
-  three-way classification and pick boundaries by F1 per class. Changing
-  the default changes `text.rhyme_ids` everywhere — check the sonnets
-  exploration numbers (137 Shakespearean, sonnet 106 → Sonnet A) still
-  hold or update them deliberately (re-freeze the docs page).
+- ✅ **Rhyme slant-band calibration** — shipped 2026-07-06. Three-way
+  grid search over Walker's classes (perfect / allowable / cross) in
+  `scripts/rime_eval.py` § three-way: macro-F1 0.68 at perfect ≤ 0.05 <
+  slant ≤ 0.425 < none. New API: `WordForm.rime_type()` /
+  `Line.rime_type()` with those defaults (`RHYME_PERFECT_MAX_DIST` /
+  `RHYME_SLANT_MAX_DIST` in imports.py). Deliberately NOT changed:
+  `compute_rhyme_ids`' binary 0.35 (no churn to `text.rhyme_ids`, docs
+  freezes untouched). Known limits, documented: the 1-D distance can't
+  separate gone/alone (0.389, real slant) from day/night (0.389, not a
+  rhyme); wordform[0]-only comparison makes noun/verb stress variants
+  (IN-crease vs in-CREASE) read as slant — a min-over-forms Line-level
+  distance would fix the latter if it ever matters.
 
 ## Languages
 

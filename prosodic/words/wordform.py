@@ -182,6 +182,34 @@ class WordForm(Entity):
             return np.nan
         return dist
 
+    def rime_type(
+        self,
+        wordform: "WordForm",
+        perfect_max=RHYME_PERFECT_MAX_DIST,
+        slant_max=RHYME_SLANT_MAX_DIST,
+    ):
+        """Classify the rhyme between this word form and another.
+
+        Bands calibrated against Walker's (1775) rhyming dictionary
+        (see scripts/rime_eval.py): 'perfect' for distance <= perfect_max,
+        'slant' up to slant_max, else None. The perfect boundary is
+        high-precision; the slant band is permissive by design — tighten
+        slant_max (e.g. to 0.35, the binary any-rhyme threshold) for a
+        stricter notion of slant rhyme.
+
+        Returns:
+            'perfect' | 'slant' | None (also None for identical words,
+            which do not rhyme with themselves).
+        """
+        d = self.rime_distance(wordform, max_dist=None)
+        if d is None or np.isnan(d):
+            return None
+        if d <= perfect_max:
+            return "perfect"
+        if d <= slant_max:
+            return "slant"
+        return None
+
 
 
 

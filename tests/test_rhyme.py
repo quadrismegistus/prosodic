@@ -85,3 +85,37 @@ def test_text_num_rhyming_lines(sample_text):
 
 def test_stanza_num_rhyming_lines(sample_stanza):
     assert sample_stanza.num_rhyming_lines == 2, "Sample stanza should have 2 rhyming lines"
+
+def _wf(word):
+    return TextModel(word).wordtokens[0].wordform
+
+
+def test_rime_type_bands():
+    """Walker-calibrated bands (scripts/rime_eval.py): perfect <= 0.05,
+    slant <= 0.425. Expected distances hand-verified: day/may 0.0,
+    love/prove 0.167, blood/good 0.125, gone/alone 0.389, cat/dog 0.438."""
+    # perfect
+    assert _wf("day").rime_type(_wf("may")) == "perfect"
+    assert _wf("night").rime_type(_wf("light")) == "perfect"
+    # classic slant rhymes
+    assert _wf("love").rime_type(_wf("prove")) == "slant"
+    assert _wf("blood").rime_type(_wf("good")) == "slant"
+    assert _wf("gone").rime_type(_wf("alone")) == "slant"
+    # non-rhymes
+    assert _wf("cat").rime_type(_wf("dog")) is None
+    assert _wf("table").rime_type(_wf("running")) is None
+    # identical words do not rhyme with themselves
+    assert _wf("day").rime_type(_wf("day")) is None
+    # tighter slant band excludes borderline pairs (gone/alone = 0.389)
+    assert _wf("gone").rime_type(_wf("alone"), slant_max=0.35) is None
+
+
+def test_line_rime_type():
+    t = TextModel(
+        "Shall I compare thee to a summer's day?\n"
+        "Thou art more lovely and more temperate:\n"
+        "Rough winds do shake the darling buds of May,\n"
+    )
+    lines = t.lines
+    assert lines[0].rime_type(lines[2]) == "perfect"   # day / May
+    assert lines[0].rime_type(lines[1]) is None        # day / temperate

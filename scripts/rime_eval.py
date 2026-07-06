@@ -298,6 +298,78 @@ def main():
     report_task("perfect rhyme vs cross-row", d_perfect, d_cross)
     report_task("any rhyme (perfect + near) vs cross-row",
                 d_perfect + d_near, d_cross)
+    report_three_way(d_perfect, d_near, d_cross)
+
+
+def three_way_scores(d_perfect, d_near, d_cross, t1, t2):
+    """Score the band classifier: perfect if d<=t1, slant if t1<d<=t2,
+    none if d>t2. Returns per-class F1 dict + macro F1."""
+    classes = {
+        "perfect": (d_perfect, lambda d: d <= t1),
+        "slant": (d_near, lambda d: t1 < d <= t2),
+        "none": (d_cross, lambda d: d > t2),
+    }
+    all_ds = [(d, "perfect") for d in d_perfect] + \
+             [(d, "slant") for d in d_near] + \
+             [(d, "none") for d in d_cross]
+
+    def predict(d):
+        if d <= t1:
+            return "perfect"
+        if d <= t2:
+            return "slant"
+        return "none"
+
+    f1s = {}
+    for cls in ("perfect", "slant", "none"):
+        tp = sum(1 for d, gold in all_ds if gold == cls and predict(d) == cls)
+        fp = sum(1 for d, gold in all_ds if gold != cls and predict(d) == cls)
+        fn = sum(1 for d, gold in all_ds if gold == cls and predict(d) != cls)
+        prec = tp / (tp + fp) if (tp + fp) else 0.0
+        rec = tp / (tp + fn) if (tp + fn) else 0.0
+        f1s[cls] = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+    macro = sum(f1s.values()) / 3
+    return f1s, macro
+
+
+def report_three_way(d_perfect, d_near, d_cross):
+    """Grid-search (t1, t2) band boundaries for the three-way task:
+    perfect / slant (Walker's 'allowable') / none."""
+    print("=" * 70)
+    print("Three-way band calibration: perfect <= t1 < slant <= t2 < none")
+    print("=" * 70)
+    t1_grid = [round(x * 0.01, 2) for x in range(0, 16)]
+    t2_grid = [round(x * 0.025, 3) for x in range(2, 25)]
+    best = None
+    for t1 in t1_grid:
+        for t2 in t2_grid:
+            if t2 <= t1:
+                continue
+            f1s, macro = three_way_scores(d_perfect, d_near, d_cross, t1, t2)
+            if best is None or macro > best[2]:
+                best = (t1, t2, macro, f1s)
+    t1, t2, macro, f1s = best
+    print(f"  best boundaries: t1={t1:.2f}  t2={t2:.3f}")
+    print(f"  macro-F1: {macro:.3f}")
+    for cls in ("perfect", "slant", "none"):
+        print(f"    F1({cls}): {f1s[cls]:.3f}")
+    print()
+    # confusion at the optimum
+    def predict(d):
+        return "perfect" if d <= t1 else ("slant" if d <= t2 else "none")
+    print("  confusion (rows=gold, cols=pred):")
+    print(f"  {'':10s} {'perfect':>8s} {'slant':>8s} {'none':>8s}")
+    for name, ds in (("perfect", d_perfect), ("slant", d_near),
+                     ("none", d_cross)):
+        row = {c: 0 for c in ("perfect", "slant", "none")}
+        for d in ds:
+            row[predict(d)] += 1
+        print(f"  {name:10s} {row['perfect']:8d} {row['slant']:8d} "
+              f"{row['none']:8d}")
+    print()
+    print(f"  suggested constants: RHYME_PERFECT_MAX_DIST = {t1:.2f}, "
+          f"RHYME_SLANT_MAX_DIST = {t2:.3f}")
+    print()
 
 
 if __name__ == "__main__":

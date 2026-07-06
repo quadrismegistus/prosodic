@@ -1,0 +1,153 @@
+---
+title: "Two backends for phrasal stress: dependency vs constituency"
+subtitle: "A faithful Liberman & Prince implementation, and what validating it taught us about the target"
+---
+
+Prosodic computes phrasal (sentence-level) prominence two ways, from two
+parsers, for two purposes. This page documents the second, experimental
+backend — a maximally faithful realization of Liberman & Prince (1977) over
+real constituency parses — how it was validated, and the sharper
+understanding of *what phrasal stress is for* that the validation produced.
+
+Companion code: `prosodic/analysis/metrical_lp.py`. Background on the
+shipping (dependency) backend: [Phrasal stress](phrasal-stress.qmd).
+
+## Two backends, two purposes
+
+| | **spaCy** (shipping, default) | **Stanza constituency** (experimental) |
+|---|---|---|
+| parse | dependency projection (n-ary) | real constituency (binary metrical tree) |
+| output | gradient `tstress` in [0,1] | categorical grid + binary s/w tree, and a gradient |
+| lineage | Dozat MetricalTree (§ Phrasal stress) | Liberman & Prince (1977), implemented literally |
+| cost | ~0.7 ms/line | ~11 ms/line (16× slower; see below) |
+| best at | a fast prominence *signal* | the theory's *structure* — grid, DTE, s/w |
+
+They are not competing implementations of one thing. The dependency backend
+gives a continuous prominence value cheaply. The constituency backend gives
+the categorical objects of the theory — the binary metrical tree, the
+designated terminal element (DTE), and the metrical grid as the tree's RPPR
+projection — which a dependency projection *cannot* represent (it is n-ary,
+so the strong/weak relation, defined only on pairs of sisters, has no place
+to live).
+
+## The faithful implementation
+
+The constituency backend builds L&P's theory bottom to top:
+
+- **Within-word trees.** Each word's syllables are grouped into L&P feet
+  from dictionary stress; the primary foot is the word's DTE.
+- **Phrasal trees.** A Stanza constituency parse is binarized per the NSR
+  (phrases are right-strong) and CSR (common-noun compounds are
+  left-strong); proper-noun modifiers stay phrasal, so *Montana cowboy* is
+  `[Montana(w) cowboy(s)]`, not a compound.
+- **Lexical tier.** POS **and dependency labels** classify each word as
+  content / ambiguous / unstressed — the dependency labels matter because
+  copulas and auxiliaries (`is`, `has`, `was`) wear content-verb POS tags
+  but are prosodically weak (`cop`, `aux`). L&P's provision (114) then
+  floors content words at grid level 2.
+- **The grid** is the minimal metrical grid satisfying the Relative
+  Prominence Projection Rule (their eq. 104): the DTE of the strong
+  subconstituent outranks the DTE of the weak one.
+
+Token handling: prosodic keeps clitics merged (`summer's`, `won't`), while
+Stanza's model expects Penn tokenization with clitics split. The backend
+lets Stanza tokenize freely, then collapses its tokens back to prosodic
+words by character offset — so `'s`/`n't` never appear as tree or grid
+nodes, and possessive structure is preserved.
+
+## Validation 1 — against L&P's own figures (structure)
+
+L&P print exact trees and grids for their examples. Encoding them as a gold
+set (using their *input* scansions, since the Rhythm Rule is not
+implemented) gives two numbers:
+
+- **Grid engine: 7/7.** Hand-encoded trees for *thirteen men*, *Tennessee
+  air*, *Montana cowboy*, *execute*, *knowledgeable*, *poly vinyl chloride*,
+  *John's three red shirts* reproduce L&P's printed grid heights exactly.
+- **Automatic pipeline: 10/11 nuclear.** From raw text, the full Stanza
+  pipeline recovers L&P's published nuclear placement on every phrase but
+  one — *poly vinyl chloride*, which L&P themselves flag as structurally
+  ambiguous in (119).
+
+A hard-case set (compounds, possessives, proper-noun modifiers, PP
+attachment, relative clauses) scored the two backends head to head on
+nuclear placement against hand-derived gold. On the defensible cases the
+constituency backend was **28/28**, the dependency projection **25/28** —
+the three misses being a possessive-possessor confusion (`John's car`
+→ *John*) and an adjective phrase. On L&P's own figures the split was
+**10/11 vs 7/11** (the dependency projection mis-stresses *Tennessee air*,
+*Montana cowboy*, *law degree requirement changes*). So *for recovering the
+theory's structure*, constituency is measurably better — as expected, since
+it has the structure the NSR/CSR are defined over.
+
+## Validation 2 — against real speech (and why it's the wrong target)
+
+To ask whether the *gradient* is better, we compared both backends against
+human word-level prominence judgments — the Crowdsourced LibriTTS Prominence
+Annotations (Morrison et al. 2024; 977 usable utterances). The result was
+clarifying, and mostly negative:
+
+- **Mean per-utterance Spearman ρ: spaCy 0.440, Stanza 0.386** (Wilcoxon
+  p ≈ 10⁻²¹). The dependency backend is *significantly better* here.
+- But a **lexical-class-only baseline** ("content words are prominent,"
+  no tree at all) scores **0.581** — beating *both* models. The
+  tree-based gradient degrades a trivial baseline.
+- **Among content words only** — where focus and the real prominence
+  variation live — both models score ≈ **0.05** (spaCy 0.055, Stanza
+  0.041): no signal. The *mature* dependency backend has no more than the
+  rough constituency one.
+- Yet content-word prominence *is* moderately predictable from perception:
+  the human inter-annotator ceiling on content words is **0.258**. The text
+  models capture almost none of it.
+
+The reading: neither backend captures *focus*, because focus is
+discourse-driven (given/new, contrast) and lives outside a single
+sentence's syntax. The whole correlation either model achieves is the
+function/content distinction — which a one-line lexical rule does better.
+The spaCy "win" is not more signal; it is *less corruption* of the lexical
+baseline. On this target, the entire syntactic gradient is net-negative.
+
+**But this is not prosodic's target.** Prosodic analyzes written verse and
+prose. For metrical analysis the relevant prominence is the linguistic
+**default** (broad-focus) prominence that L&P and the NSR actually
+describe — not the performed acoustic focus a narrator adds. LibriTTS is
+expressive audiobook narration, the *hardest* case for default prominence
+and the *furthest* from a metrical grid. So the models did not fail to
+predict prominence; they correctly predicted *default* prominence, which
+expressive speech overwrites with focus. For text and meter, default
+prominence is the right object — and there constituency is the more
+faithful computer of it.
+
+## Decision
+
+- **spaCy stays the default** for `syntax=True`: it is fast (16× faster —
+  ~1.5 s vs ~25 s on the sonnets), and its gradient is at the human ceiling
+  for what a sentence model can predict.
+- **The Stanza constituency backend stays as a non-default option**, because
+  for metrical and theoretical work — where accuracy to the linguistic
+  structure is the point — it is measurably more faithful (the grid, the
+  binary tree, the s/w relation, and better nuclear placement on the
+  theory's own examples).
+- The faithful grid + tree already ship as the **Line View toggle**
+  (see the web app), rendering L&P's figure with real s/w edge labels.
+
+## An honest open question
+
+The speech validation raises a question worth stating plainly: does the
+gradient `tstress` earn its place for *any* empirical text task, or is it
+purely a theoretical construct? The evidence is mixed and cautionary — on
+Shakespeare sonnet scansion, phrasal-stress constraints added no accuracy
+over lexical stress (69.2% with or without), and here a lexical baseline
+beats the gradient on real prominence. The *categorical* structure has
+clear value (analysis, teaching, matching the literature); the *gradient's*
+empirical payoff for metrics remains unproven. That is a reason to keep the
+faithful structure and to treat the gradient as a hypothesis, not a
+settled feature.
+
+## References
+
+- Liberman, M. & A. Prince (1977). On stress and linguistic rhythm. *LI* 8.
+- Morrison, M., P. Pawar, N. Pruyne, J. Cole & B. Pardo (2024).
+  Crowdsourced and automatic speech prominence estimation. *ICASSP*.
+  Data: [Zenodo 10402793](https://zenodo.org/records/10402793) (CC BY 4.0).
+- Dozat, T. (2015). MetricalTree. See [Phrasal stress](phrasal-stress.qmd).

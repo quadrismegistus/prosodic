@@ -300,6 +300,107 @@ def main():
                 d_perfect + d_near, d_cross)
     report_three_way(d_perfect, d_near, d_cross)
 
+    print("Computing 2-D (nucleus, coda) decompositions ...", file=sys.stderr)
+    nc_perfect = compute_decomposed(perfect, "perfect", args.max_pairs)
+    nc_near = compute_decomposed(near, "near", args.max_pairs)
+    nc_cross = compute_decomposed(cross, "cross", args.max_pairs)
+    report_two_dim(nc_perfect, nc_near, nc_cross)
+
+
+def compute_decomposed(pairs, label, max_pairs=4000):
+    """(nucleus, coda) distance tuples via WordForm.rime_distance_nc."""
+    import math
+    rng = random.Random(7)
+    if len(pairs) > max_pairs:
+        pairs = rng.sample(pairs, max_pairs)
+    out = []
+    skipped = 0
+    for w1, w2 in pairs:
+        wf1, wf2 = get_wordform(w1), get_wordform(w2)
+        if wf1 is None or wf2 is None:
+            skipped += 1
+            continue
+        try:
+            dn, dc = wf1.rime_distance_nc(wf2)
+        except Exception:
+            skipped += 1
+            continue
+        if math.isnan(dn) or math.isnan(dc):
+            skipped += 1
+            continue
+        out.append((float(dn), float(dc)))
+    print(f"  {label:8s} n={len(out):5d}  (skipped {skipped})",
+          file=sys.stderr)
+    return out
+
+
+def report_two_dim(nc_perfect, nc_near, nc_cross):
+    """Grid-search the 2-D (nucleus, coda) region classifier:
+    perfect if dn<=a and dc<=b; slant if dc<=c and dn<=dcap; else none.
+    This is the calibration behind WordForm.rime_type (imports.py
+    RHYME_PERFECT_NUC_MAX etc.)."""
+    import itertools
+    print("=" * 70)
+    print("2-D (nucleus, coda) band calibration")
+    print("=" * 70)
+    data = {"perfect": nc_perfect, "slant": nc_near, "none": nc_cross}
+    all_pts = [(dn, dc, g) for g, ds in data.items() for dn, dc in ds]
+    grid_a = [0.0, 0.05, 0.1, 0.15, 0.2]
+    grid_b = [0.0, 0.05, 0.1, 0.15, 0.2]
+    grid_c = [0.0, 0.05, 0.1, 0.15, 0.2, 0.3]
+    grid_d = [0.4, 0.5, 0.6, 0.7, 0.8, 1.0]
+    best = None
+    for a, b, c, dcap in itertools.product(grid_a, grid_b, grid_c, grid_d):
+        f1s = {}
+        for cls in ("perfect", "slant", "none"):
+            tp = fp = fn = 0
+            for dn, dc, gold in all_pts:
+                if dn <= a and dc <= b:
+                    pred = "perfect"
+                elif dc <= c and dn <= dcap:
+                    pred = "slant"
+                else:
+                    pred = "none"
+                if pred == cls and gold == cls:
+                    tp += 1
+                elif pred == cls:
+                    fp += 1
+                elif gold == cls:
+                    fn += 1
+            p = tp / (tp + fp) if tp + fp else 0.0
+            r = tp / (tp + fn) if tp + fn else 0.0
+            f1s[cls] = 2 * p * r / (p + r) if p + r else 0.0
+        macro = sum(f1s.values()) / 3
+        if best is None or macro > best[0]:
+            best = (macro, (a, b, c, dcap), f1s)
+    macro, (a, b, c, dcap), f1s = best
+    print(f"  best regions: perfect(dn<={a}, dc<={b})  "
+          f"slant(dc<={c}, dn<={dcap})")
+    print(f"  macro-F1: {macro:.3f}")
+    for cls in ("perfect", "slant", "none"):
+        print(f"    F1({cls}): {f1s[cls]:.3f}")
+    print()
+
+    def pred(dn, dc):
+        if dn <= a and dc <= b:
+            return "perfect"
+        if dc <= c and dn <= dcap:
+            return "slant"
+        return "none"
+
+    print("  confusion (rows=gold, cols=pred):")
+    print(f"  {'':10s} {'perfect':>8s} {'slant':>8s} {'none':>8s}")
+    for name, ds in data.items():
+        row = {cl: 0 for cl in ("perfect", "slant", "none")}
+        for dn, dc in ds:
+            row[pred(dn, dc)] += 1
+        print(f"  {name:10s} {row['perfect']:8d} {row['slant']:8d} "
+              f"{row['none']:8d}")
+    print()
+    print(f"  suggested constants: RHYME_PERFECT_NUC_MAX = {a}, "
+          f"RHYME_PERFECT_CODA_MAX = {b}, RHYME_SLANT_CODA_MAX = {c}")
+    print()
+
 
 def three_way_scores(d_perfect, d_near, d_cross, t1, t2):
     """Score the band classifier: perfect if d<=t1, slant if t1<d<=t2,

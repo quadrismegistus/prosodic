@@ -91,23 +91,40 @@ def _wf(word):
 
 
 def test_rime_type_bands():
-    """Walker-calibrated bands (scripts/rime_eval.py): perfect <= 0.05,
-    slant <= 0.425. Expected distances hand-verified: day/may 0.0,
-    love/prove 0.167, blood/good 0.125, gone/alone 0.389, cat/dog 0.438."""
+    """2-D Walker-calibrated regions (scripts/rime_eval.py): perfect =
+    nucleus match + near-coda; slant = coda identity (consonance);
+    assonance = nucleus identity + coda mismatch. Hand-verified (dn, dc):
+    day/may (0,0), love/prove (.33,0), gone/alone (.58,0),
+    day/night (.08,1.0), day/late (0,1.0), cat/dog (.42,.46)."""
     # perfect
     assert _wf("day").rime_type(_wf("may")) == "perfect"
     assert _wf("night").rime_type(_wf("light")) == "perfect"
-    # classic slant rhymes
+    # classic slant rhymes: coda identical, nucleus free
     assert _wf("love").rime_type(_wf("prove")) == "slant"
     assert _wf("blood").rime_type(_wf("good")) == "slant"
     assert _wf("gone").rime_type(_wf("alone")) == "slant"
+    # the 1-D scalar tied day/night with gone/alone at 0.389; the 2-D
+    # decomposition separates them (coda mismatch vs coda identity)
+    assert _wf("day").rime_type(_wf("night")) is None
+    # assonance: nucleus identical, coda differs (weaker, Walker-unvalidated)
+    assert _wf("day").rime_type(_wf("late")) == "assonance"
+    assert _wf("deep").rime_type(_wf("beat")) == "assonance"
     # non-rhymes
     assert _wf("cat").rime_type(_wf("dog")) is None
     assert _wf("table").rime_type(_wf("running")) is None
     # identical words do not rhyme with themselves
     assert _wf("day").rime_type(_wf("day")) is None
-    # tighter slant band excludes borderline pairs (gone/alone = 0.389)
-    assert _wf("gone").rime_type(_wf("alone"), slant_max=0.35) is None
+    # thresholds overridable per call
+    assert _wf("day").rime_type(_wf("late"), assonance_nuc_max=-1) is None
+
+
+def test_rime_distance_nc():
+    dn, dc = _wf("gone").rime_distance_nc(_wf("alone"))
+    assert dc == 0.0 and dn > 0.3          # consonance signature
+    dn, dc = _wf("day").rime_distance_nc(_wf("night"))
+    assert dc == 1.0 and dn < 0.15         # open-vs-closed coda mismatch
+    dn, dc = _wf("day").rime_distance_nc(_wf("may"))
+    assert (dn, dc) == (0.0, 0.0)
 
 
 def test_line_rime_type():

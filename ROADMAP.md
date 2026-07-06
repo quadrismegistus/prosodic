@@ -92,18 +92,41 @@ values for words with stress-ambiguous pronunciation variants).
   LineViewTab.svelte`). `syntax`/`syntax_model` already flow through all
   parse endpoints via the settings store. Check the AUDIT note that the
   web path may restrict the constraint list before assuming parity.
-- ✅ **Rhyme slant-band calibration** — shipped 2026-07-06. Three-way
-  grid search over Walker's classes (perfect / allowable / cross) in
-  `scripts/rime_eval.py` § three-way: macro-F1 0.68 at perfect ≤ 0.05 <
-  slant ≤ 0.425 < none. New API: `WordForm.rime_type()` /
-  `Line.rime_type()` with those defaults (`RHYME_PERFECT_MAX_DIST` /
-  `RHYME_SLANT_MAX_DIST` in imports.py). Deliberately NOT changed:
-  `compute_rhyme_ids`' binary 0.35 (no churn to `text.rhyme_ids`, docs
-  freezes untouched). Known limits, documented: the 1-D distance can't
-  separate gone/alone (0.389, real slant) from day/night (0.389, not a
-  rhyme); wordform[0]-only comparison makes noun/verb stress variants
-  (IN-crease vs in-CREASE) read as slant — a min-over-forms Line-level
-  distance would fix the latter if it ever matters.
+- ✅ **Rhyme slant-band calibration** — shipped 2026-07-06, upgraded
+  same-day from 1-D to a 2-D (nucleus, coda) decomposition after the 1-D
+  scalar proved unable to separate gone/alone (real slant) from
+  day/night (not a rhyme) — both 0.389. `WordForm.rime_distance_nc()` +
+  `rime_type()` classify in the 2-D space (Walker-calibrated, macro-F1
+  0.758 vs 0.679 1-D; `scripts/rime_eval.py` 2-D section). The
+  calibration independently recovered the classical taxonomy: slant =
+  coda identity (consonance), nucleus free; assonance = the mirror
+  quadrant (shipped as a label, Walker-unvalidated). Deliberately NOT
+  changed: `compute_rhyme_ids`' binary 0.35 (no churn to
+  `text.rhyme_ids`, docs freezes untouched). Remaining known limit:
+  wordform[0]-only comparison makes noun/verb stress variants
+  (IN-crease vs in-CREASE) read as non-rhymes — min-over-forms would
+  fix it if it ever matters.
+- **Learned per-feature rhyme weights** — next step suggested by both
+  our own regression (`scripts/rime_feature_analysis.py`: slant-vs-none
+  is coda-only, CV 0.924; manner features determinative, place ~ignored)
+  and the literature (Yoon et al. 2007; Lakretz et al. 2018 — learned
+  feature weights beat hand-set and are language-specific; Hirjee &
+  Brown 2009 — corpus-mined phoneme-confusion weights for rap rhyme).
+  Sketch: replace the uniform mean-|diff| substitution cost in
+  `feature_edit_distance` with per-feature weights fit per channel
+  (nucleus vs coda) on Walker — but NOTE this changes the metric under
+  `rime_distance` and would churn `rhyme_ids`; either gate behind a
+  flag or re-calibrate the 0.35 in the same PR. Also worth building
+  first: a true-negative eval set mined from non-rhyming sonnet line
+  pairs (Walker is positive-only; German rhyme corpora show ~1/3 of
+  real stanzas don't rhyme). Longer-horizon: per-period weights (Walker
+  1775 vs modern), positional within-coda weighting (edge-proximal
+  consonants matter more — Woods et al.), corpus-mined confusion
+  signal. SOTA survey (Reddy & Knight 2011 unsupervised schemes; Haider
+  & Kuhn 2018 Siamese nets + German gold corpus; 2026 Greek hybrid
+  LLM+phonological-verifier) confirms explicit calibrated phonological
+  modeling remains the reliable core; our continuous calibrated
+  distance is a novelty vs the discrete taxonomies in the literature.
 
 ## Languages
 

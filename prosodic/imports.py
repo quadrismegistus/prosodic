@@ -193,15 +193,19 @@ HTML_CSS = """
 .parselist > li:last-of-type { list-style-type: decimal; }
 """
 RHYME_MAX_DIST = 0
-# Three-way rhyme bands calibrated on Walker (1775): macro-F1-optimal
-# boundaries for perfect / slant ("allowable") / none classification
-# (scripts/rime_eval.py, macro-F1 0.68; the perfect boundary is
-# high-precision — 0.2% of non-rhymes fall under it — while the slant
-# band is deliberately permissive, reflecting how wide historical
-# near-rhyme runs). Distinct from the binary any-rhyme threshold 0.35
+# 2-D rhyme classification bands calibrated on Walker (1775): the rime is
+# decomposed into nucleus (vowel) vs coda(+tail) feature-edit distances,
+# and the macro-F1-optimal regions (scripts/rime_eval.py, 2-D section;
+# macro-F1 0.758 vs 0.679 for the 1-D scalar) recover the classical
+# taxonomy: perfect = nucleus match + near-coda; slant (consonance) =
+# coda identity with the nucleus free; assonance = nucleus identity with
+# coda mismatch (linguistically real but unvalidated — Walker has no
+# assonance class). Distinct from the binary any-rhyme threshold 0.35
 # used by compute_rhyme_ids.
-RHYME_PERFECT_MAX_DIST = 0.05
-RHYME_SLANT_MAX_DIST = 0.425
+RHYME_PERFECT_NUC_MAX = 0.05
+RHYME_PERFECT_CODA_MAX = 0.15
+RHYME_SLANT_CODA_MAX = 0.05
+RHYME_ASSONANCE_NUC_MAX = 0.05
 
 
 # .str_s { text-decoration: underline dotted; text-underline-offset: 3px; }

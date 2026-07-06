@@ -40,13 +40,18 @@ class LPTree:
     labels.
     """
 
-    __slots__ = ("label", "left", "right", "strong")
+    __slots__ = ("label", "left", "right", "strong", "lclass")
 
-    def __init__(self, label=None, left=None, right=None, strong=None):
+    def __init__(self, label=None, left=None, right=None, strong=None,
+                 lclass=None):
         self.label = label
         self.left = left
         self.right = right
         self.strong = strong  # "l" or "r" on internal nodes; None on leaves
+        # lexical stress class on leaves (Dozat/MetricalTree): 0 = content,
+        # -0.5 = ambiguous function word, -1 = unstressed function word,
+        # None = unknown. Drives the L&P (114) grid floor.
+        self.lclass = lclass
 
     @property
     def is_leaf(self) -> bool:
@@ -119,13 +124,20 @@ def _rppr_edges(tree: LPTree) -> List[tuple]:
     return edges
 
 
-def grid_heights(tree: LPTree) -> List[int]:
+def grid_heights(tree: LPTree, floors=None) -> List[int]:
     """Grid column height per terminal, in surface order.
 
     The minimal metrical grid satisfying the RPPR: a terminal's height is
     1 + the longest descending chain of 'stronger-than' relations beneath
     it. The DTE of the whole tree is the unique tallest column (nuclear
     stress); a terminal that is nobody's superior gets height 1.
+
+    ``floors`` optionally maps ``id(leaf) -> minimum height`` — this is how
+    L&P's (114) provision enters (content words guaranteed ≥ 2 levels, even
+    when structurally weak; unstressed function words left at 1). A floor
+    only raises a column, and because superiors are computed as
+    ``1 + max(below)``, a raised weak terminal correctly pushes its strong
+    relatives up too, so the RPPR still holds. See :func:`lexical_floors`.
     """
     edges = _rppr_edges(tree)
     weaker_than = defaultdict(list)  # id(stronger) -> [weaker leaf, ...]
@@ -138,10 +150,31 @@ def grid_heights(tree: LPTree) -> List[int]:
         if id(lf) in memo:
             return memo[id(lf)]
         below = weaker_than.get(id(lf), ())
-        memo[id(lf)] = 1 + max((height(w) for w in below), default=0)
+        base = 1 + max((height(w) for w in below), default=0)
+        floor = floors.get(id(lf), 1) if floors else 1
+        memo[id(lf)] = max(base, floor)
         return memo[id(lf)]
 
     return [height(lf) for lf in tree.leaves()]
+
+
+# L&P (114): a #-level lexical unit (content word) gets ≥ 2 grid levels;
+# unstressed/ambiguous function words are left at the structural floor of 1.
+CONTENT_FLOOR = 2
+FUNCTION_FLOOR = 1
+
+
+def lexical_floors(tree: LPTree) -> Dict[int, int]:
+    """Per-leaf grid floor from lexical class — L&P's (114) provision.
+
+    Content leaves (``lclass == 0``) floor at 2; function words (ambiguous
+    or unstressed) and unknowns floor at 1. Feed the result to
+    :func:`grid_heights` as ``floors``.
+    """
+    return {
+        id(lf): (CONTENT_FLOOR if lf.lclass == 0 else FUNCTION_FLOOR)
+        for lf in tree.leaves()
+    }
 
 
 def stress_numbers(tree: LPTree) -> List[int]:
@@ -227,7 +260,9 @@ def _get_stanza(lang: str = "en"):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _NLP_CACHE[lang] = stanza.Pipeline(
-                lang, processors="tokenize,pos,constituency", verbose=False,
+                lang,
+                processors="tokenize,pos,lemma,constituency,depparse",
+                verbose=False,
             )
     return _NLP_CACHE[lang]
 
@@ -310,13 +345,43 @@ def constituency_to_lptree(stanza_constituency) -> Optional[LPTree]:
     return result[0] if result else None
 
 
-def parse_lptree(text: str, lang: str = "en") -> Optional[LPTree]:
-    """Parse ``text`` with Stanza constituency and return its L&P metrical tree.
+def _attach_lexical_classes(tree: LPTree, sent) -> None:
+    """Tag each word-leaf with its lexical stress class from a Stanza sentence.
 
-    Word-level (phrasal) tree only; requires stanza + the constituency model.
+    Uses ``_mt_lstress_base`` (the shipping MetricalTree port's classifier:
+    word list → POS tag → dep label, giving 0 / -0.5 / -1). Leaves and
+    ``sent.words`` are both in surface order; if they don't align 1:1
+    (rare tokenization mismatch) lexical classes are left as None and the
+    grid falls back to structural heights.
+    """
+    import numpy as np
+    from ..texts.phrasal_stress import _mt_lstress_base
+
+    leaves = tree.leaves()
+    words = list(sent.words)
+    if len(leaves) != len(words):
+        return
+    texts = np.array([w.text for w in words])
+    tags = np.array([w.xpos or "" for w in words])
+    deps = np.array([w.deprel or "" for w in words])
+    lstress = _mt_lstress_base(texts, tags, deps, len(words))
+    for lf, cls in zip(leaves, lstress):
+        lf.lclass = float(cls)
+
+
+def parse_lptree(text: str, lang: str = "en", lexical: bool = True) -> Optional[LPTree]:
+    """Parse ``text`` with Stanza and return its L&P metrical tree.
+
+    Word-level (phrasal) tree; requires stanza + the constituency model.
+    With ``lexical=True`` (default) each leaf is tagged with its lexical
+    stress class (see :func:`lexical_floors` for how that reaches the grid).
     """
     nlp = _get_stanza(lang)
     doc = nlp(text)
     if not doc.sentences:
         return None
-    return constituency_to_lptree(doc.sentences[0].constituency)
+    sent = doc.sentences[0]
+    tree = constituency_to_lptree(sent.constituency)
+    if tree is not None and lexical:
+        _attach_lexical_classes(tree, sent)
+    return tree

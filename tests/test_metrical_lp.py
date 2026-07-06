@@ -110,3 +110,57 @@ def test_constituency_nuclear_placement(text, nuclear):
     labels = [lf.label for lf in tree.leaves()]
     assert h[labels.index(nuclear)] == max(h)
     assert h.count(max(h)) == 1
+
+
+# --------------------------------------- Phase 2a: lexical stress tier (114)
+
+def _grid_map(text):
+    """(labels, structural grid, lexical-floored grid) for a parsed sentence."""
+    from prosodic.analysis.metrical_lp import lexical_floors
+    tree = parse_lptree(text)
+    if tree is None:
+        return None
+    labels = [lf.label for lf in tree.leaves()]
+    struct = dict(zip(labels, grid_heights(tree)))
+    lex = dict(zip(labels, grid_heights(tree, lexical_floors(tree))))
+    classes = {lf.label: lf.lclass for lf in tree.leaves()}
+    return labels, struct, lex, classes
+
+
+def test_lexical_floor_lifts_content_verb():
+    # L&P (114): a content word gets >=2 grid levels even when structurally
+    # weak. Structurally "sat" ties the function words at 1; the floor lifts it.
+    try:
+        got = _grid_map("the cat sat on the mat")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if got is None:
+        pytest.skip("no parse")
+    _, struct, lex, _ = got
+    assert struct["sat"] == 1                 # structurally weak
+    assert struct["sat"] == struct["the"]     # ... tied with function words
+    assert lex["sat"] == 2                     # ... lifted to content minimum
+    assert lex["the"] == 1 and lex["on"] == 1  # function words stay at 1
+    assert lex["mat"] == 3                     # nuclear preserved above them
+
+
+def test_deps_demote_copula_and_aux():
+    # The case that PROVES constituency+deps: copulas/auxiliaries are tagged
+    # as content verbs (VBZ/VBD) by POS, but their dep labels (cop, aux) mark
+    # them reducible. Without deps they'd wrongly floor to 2.
+    try:
+        cop = _grid_map("the cat is happy")
+        aux = _grid_map("she has eaten the fish")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if cop is None or aux is None:
+        pytest.skip("no parse")
+    _, _, cop_lex, cop_cls = cop
+    assert cop_cls["is"] == -0.5     # ambiguous via dep 'cop', not content 0
+    assert cop_lex["is"] == 1        # so NOT lifted to the content floor
+    assert cop_lex["happy"] == max(cop_lex.values())  # predicate nuclear
+
+    _, _, aux_lex, aux_cls = aux
+    assert aux_cls["has"] == -0.5    # ambiguous via dep 'aux'
+    assert aux_lex["has"] == 1
+    assert aux_lex["eaten"] == 2     # the real (content) verb keeps its level

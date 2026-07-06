@@ -10,11 +10,14 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pytest
+
 from prosodic.analysis.metrical_lp import (
     figure_montana_cowboy,
     figure_thirteen_men,
     grid_heights,
     leaf,
+    parse_lptree,
     stress_numbers,
     sw,
     ws,
@@ -72,3 +75,38 @@ def test_dte_and_leaf_order():
     # a is nuclear (tallest); c is strong within its own pair so > b, d
     assert h[0] == max(h)               # a tallest
     assert h[2] > h[1] and h[2] > h[3]  # c above b and d
+
+
+# ------------------------------------------- Phase 1: constituency → LPTree
+# Nuclear-placement checks on real Stanza constituency parses. Skips cleanly
+# if stanza / the constituency model is unavailable.
+
+_NUCLEAR_CASES = [
+    ("thirteen men", "men"),               # NSR: phrasal, rightmost strong
+    ("red cows", "cows"),                  # (6a) phrasal
+    ("John left", "left"),                 # (6b) phrasal
+    ("American history teacher", "history"),  # flat JJ NN NN; NN-run compound
+    ("law degree requirement", "law"),     # (9) nested all-noun compound
+    ("kitchen towel rack", "kitchen"),     # nested all-noun compound
+    ("the cat sat on the mat", "mat"),     # sentence NSR, skip function words
+    ("the boy saw the dog", "dog"),        # ditransitive-ish, object nuclear
+    ("reports of threats of violence", "violence"),  # PP recursion, rightmost
+]
+
+
+@pytest.mark.parametrize("text,nuclear", _NUCLEAR_CASES)
+def test_constituency_nuclear_placement(text, nuclear):
+    try:
+        tree = parse_lptree(text)
+    except Exception as e:  # stanza missing / model not downloaded
+        pytest.skip(f"stanza constituency unavailable: {e}")
+    if tree is None:
+        pytest.skip("no parse")
+    assert tree.dte.label == nuclear, (
+        f"{text!r}: DTE {tree.dte.label!r}, expected {nuclear!r}"
+    )
+    # grid is well-formed: the nuclear word is the unique tallest column
+    h = grid_heights(tree)
+    labels = [lf.label for lf in tree.leaves()]
+    assert h[labels.index(nuclear)] == max(h)
+    assert h.count(max(h)) == 1

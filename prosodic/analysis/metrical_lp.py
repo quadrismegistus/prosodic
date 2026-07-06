@@ -206,3 +206,117 @@ def figure_montana_cowboy() -> LPTree:
     montana = sw(ws("Mon", "tan"), "a")     # [[Mon(w) tan(s)](s) a(w)]
     cowboy = sw("cow", "boy")               # cow(s) boy(w)
     return ws(montana, cowboy)              # Montana(w) cowboy(s)
+
+
+# ---------------------------------------------------- constituency → LPTree
+# Phase 1: derive the phrasal binary metrical tree from a real constituency
+# parse (Stanza), binarizing per L&P's NSR/CSR. Leaves are WORDS; word-internal
+# syllable structure (Phase 2) grafts on separately. Stanza is imported lazily
+# (heavy, optional). Trees from Stanza are n-ary (flat NPs), so the work here
+# is faithful binarization: right-branching + [w s] (NSR) for phrases,
+# left-branching + [s w] (CSR) for maximal adjacent-noun compound runs.
+
+_NLP_CACHE: dict = {}
+
+
+def _get_stanza(lang: str = "en"):
+    """Lazily build/cache a Stanza constituency pipeline."""
+    if lang not in _NLP_CACHE:
+        import warnings
+        import stanza
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _NLP_CACHE[lang] = stanza.Pipeline(
+                lang, processors="tokenize,pos,constituency", verbose=False,
+            )
+    return _NLP_CACHE[lang]
+
+
+def _is_preterminal(node) -> bool:
+    ch = list(node.children)
+    return len(ch) == 1 and ch[0].is_leaf()
+
+
+def _binarize_nsr_csr(subs: List[tuple]) -> LPTree:
+    """Binarize a node's children per L&P's NSR/CSR.
+
+    ``subs`` is a list of ``(LPTree, is_nominal)``. Two regimes, keyed off
+    whether the whole node is nominal (all children nominal — a compound in
+    the L&P sense, whatever Penn label Stanza happened to assign):
+
+    - **Compound** (all children nominal): left-branching, each node ``[s w]``.
+      Leftmost is the DTE — *LAW degree requirement*, *KITCHEN towel rack*
+      (CSR; nested all-noun structures percolate left-strength).
+    - **Phrasal** (otherwise): maximal runs of ≥2 adjacent nominal children
+      collapse into left-strong compounds first (so a flat ``JJ NN NN`` still
+      gets *history teacher* as a unit), then the groups combine
+      right-branching under ``[w s]`` — the rightmost is strong (NSR).
+    """
+    if all(nom for _, nom in subs):
+        node = subs[0][0]
+        for t, _ in subs[1:]:
+            node = sw(node, t)              # left-strong compound
+        return node
+
+    groups: List[LPTree] = []
+    i = 0
+    while i < len(subs):
+        j = i
+        while j < len(subs) and subs[j][1]:
+            j += 1
+        if j - i >= 2:                      # adjacent nominal run → compound
+            comp = subs[i][0]
+            for t, _ in subs[i + 1:j]:
+                comp = sw(comp, t)
+            groups.append(comp)
+            i = j
+        else:
+            groups.append(subs[i][0])
+            i += 1
+    node = groups[-1]
+    for t in reversed(groups[:-1]):
+        node = ws(t, node)                  # [w s], NSR rightmost strong
+    return node
+
+
+def _convert_constituency(node) -> Optional[tuple]:
+    """Recurse a Stanza constituency ``Tree`` → ``(LPTree, is_nominal)``.
+
+    Preterminals become word leaves (nominal iff POS starts ``NN``); unary
+    nodes collapse; branching nodes binarize via :func:`_binarize_nsr_csr`
+    and are nominal iff every child is nominal.
+    """
+    if node.is_leaf():
+        return LPTree(label=node.label), False
+    if _is_preterminal(node):
+        word = list(node.children)[0].label
+        return LPTree(label=word), node.label.startswith("NN")
+    subs = [_convert_constituency(c) for c in node.children if not c.is_leaf()]
+    subs = [s for s in subs if s is not None]
+    if not subs:
+        return None
+    if len(subs) == 1:
+        return subs[0]
+    tree = _binarize_nsr_csr(subs)
+    return tree, all(nom for _, nom in subs)
+
+
+def constituency_to_lptree(stanza_constituency) -> Optional[LPTree]:
+    """Convert one Stanza ``sent.constituency`` tree to a binary ``LPTree``.
+
+    Leaves are words. Returns None on an empty parse.
+    """
+    result = _convert_constituency(stanza_constituency)
+    return result[0] if result else None
+
+
+def parse_lptree(text: str, lang: str = "en") -> Optional[LPTree]:
+    """Parse ``text`` with Stanza constituency and return its L&P metrical tree.
+
+    Word-level (phrasal) tree only; requires stanza + the constituency model.
+    """
+    nlp = _get_stanza(lang)
+    doc = nlp(text)
+    if not doc.sentences:
+        return None
+    return constituency_to_lptree(doc.sentences[0].constituency)

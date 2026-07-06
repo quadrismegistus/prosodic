@@ -73,12 +73,19 @@ values for words with stress-ambiguous pronunciation variants).
   builds them). Profile first: init is 2.1s on the sonnets, most of it
   espeak/dict, so the win may be small. Watch `rime_distance` (needs
   phonemes) and `to_dict`/save-load round-trips.
-- **Scansion prefiltering** — skip scansions where strong positions wildly
-  mismatch stressed syllables before constraint evaluation. Deprioritized:
-  after the bounding elite screen, constraint evaluation is a minor cost;
-  profile before bothering. NOTE: unlike the elite screen this would change
-  `parses.bounded` contents (user-visible) unless done as an exact
-  dominance screen — scrutinize before building.
+- ✅ **Scansion prefiltering — REJECTED** (2026-07-06, rejected on design
+  grounds, never built). The idea was to skip scansions where strong
+  positions wildly mismatch stressed syllables before constraint
+  evaluation. But this prunes the candidate space itself, not just
+  `parses.bounded`'s presentation of it — and MaxEnt training needs the
+  FULL exhaustive scansion set (violation counts over every candidate) to
+  fit weights correctly. Silently dropping candidates pre-evaluation would
+  bias the log-linear model in a way that wouldn't surface until training
+  accuracy quietly degraded. Not worth that risk for a cost center that's
+  likely already minor after the bounding elite screen. Do not revisit
+  unless it can be proven an exact dominance screen (byte-identical
+  candidate set, like the elite screen already is) — if parse speed needs
+  another pass, optimize `evaluate_constraints_batch` itself instead.
 
 ## Analysis & display
 

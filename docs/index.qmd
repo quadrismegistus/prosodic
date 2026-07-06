@@ -231,6 +231,51 @@ print('is_sonnet:', sonnet.is_sonnet,
       ' is_shakespearean_sonnet:', sonnet.is_shakespearean_sonnet)
 ```
 
+## Other languages and meters
+
+Everything above is English iambic pentameter, but neither is required.
+`lang="de"` swaps in German pronunciations (espeak-ng-driven — see
+[Languages](methods/languages.qmd)) and the same constraints score this
+line of Schiller's *Wilhelm Tell* as strict alternating stress:
+
+```{python}
+#| label: german
+de = prosodic.Text("Durch diese hohle Gasse muß er kommen", lang="de")
+de.parse()
+bp = de.line1.best_parse
+print(bp.txt)
+print(f"meter:  {bp.meter_str}   (- weak, + strong)")
+print(f"stress: {bp.stress_str}   (- unstressed, + stressed)")
+```
+
+Ternary meter needs no special mode either — anapestic feet (`ww` + `s`)
+are already in the candidate space, so `meter_type` classifies Byron's
+anapestic tetrameter correctly at default weights:
+
+```{python}
+#| label: ternary
+_rel_byron = Path('corpora') / 'corppoetry_en' / 'en.byron.sennacherib.txt'
+_root_byron = next((p for p in [Path.cwd(), *Path.cwd().parents]
+                     if (p / _rel_byron).exists()), None)
+byron_fn = (str(_root_byron / _rel_byron) if _root_byron else
+            'https://raw.githubusercontent.com/quadrismegistus/prosodic'
+            '/master/corpora/corppoetry_en/en.byron.sennacherib.txt')
+
+byron = prosodic.Text(fn=byron_fn)
+byron.parse()
+mt = byron.meter_type
+
+line = byron.lines[1]
+bp = line.best_parse
+print(bp.txt)
+print(f"meter:  {bp.meter_str}   (- weak, + strong)")
+print({k: mt[k] for k in ('foot', 'head', 'type')})
+```
+
+See [Metrical parsing](methods/metrical-parsing.qmd) § Ternary meters and
+`Meter.fit()` below for training a model that *learns* a ternary
+signature from a corpus rather than relying on default weights.
+
 ## Learning constraint weights (MaxEnt)
 
 `Meter.fit()` learns constraint weights from data — a uniform target

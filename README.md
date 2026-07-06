@@ -517,6 +517,45 @@ print(sonnet.summary())
     syllables: 10
     rhyme: Sonnet, Shakespearean (abab cdcd efefgg)
 
+## Other languages and meters
+
+Everything above is English iambic pentameter, but neither is required. `lang="de"` swaps in German pronunciations (espeak-ng-driven — see [the write-up on languages](docs/methods/languages.qmd)) and the same constraints score this line of Schiller's *Wilhelm Tell* as strict alternating stress:
+
+```python
+de = prosodic.Text("Durch diese hohle Gasse muß er kommen", lang="de")
+de.parse()
+bp = de.line1.best_parse
+print(bp.txt)
+print(f"meter:  {bp.meter_str}   (- weak, + strong)")
+print(f"stress: {bp.stress_str}   (- unstressed, + stressed)")
+```
+
+↓
+
+    durch DIE se HO hle GAS se MUSS er KOM men
+    meter:  -+-+-+-+-+-   (- weak, + strong)
+    stress: -+-+-+-+-+-   (- unstressed, + stressed)
+
+Ternary meter needs no special mode either — anapestic feet (`ww` + `s`) are already in the candidate space, so `meter_type` classifies Byron's anapestic tetrameter correctly at default weights:
+
+```python
+byron = prosodic.Text(fn='https://raw.githubusercontent.com/quadrismegistus/prosodic/refs/heads/master/corpora/corppoetry_en/en.byron.sennacherib.txt')
+byron.parse()
+mt = byron.meter_type
+
+line = byron.lines[1]
+bp = line.best_parse
+print(bp.txt)
+print(f"meter:  {bp.meter_str}   (- weak, + strong)")
+print({k: mt[k] for k in ('foot', 'head', 'type')})
+```
+
+↓
+
+    and.his CO horts.were GLEA ming.in PUR ple.and GOLD
+    meter:  --+--+--+--+   (- weak, + strong)
+    {'foot': 'ternary', 'head': 'final', 'type': 'anapestic'}
+
 ## MaxEnt weight learning
 
 `Meter.fit()` learns constraint weights from a target scansion (or annotated data) using L-BFGS-B Maximum Entropy optimization (Goldwater & Johnson 2003 / Hayes MaxEnt OT). The learned weights can be split by syllable position (`zones`) so positional sensitivity transfers to parsing.

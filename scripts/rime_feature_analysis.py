@@ -20,6 +20,20 @@ Findings (2026-07-06 run, seeds fixed):
     coefficients - a collinearity artifact of the empty-coda padding
     (those features are constant for real English codas).
 
+Negative results (also 2026-07-06, recorded so they are not re-tried):
+  - LEARNED PER-FEATURE WEIGHTS inside the band classifier LOSE to
+    uniform: non-negative logistic weights per channel (fit_channel_
+    weights below; coda top weights lab/lat/nas/cont/voi, nucleus
+    long/lab/round/lo/hi - phonologically sensible) give Walker
+    macro-F1 0.724 vs 0.758 uniform. Bands rely on near-IDENTITY
+    thresholds; zero-weighted features (cor, ant) let different codas
+    score ~0 and leak non-rhymes into the slant region.
+  - A full 48-dim MULTINOMIAL model wins on Walker CV (macro-F1 0.822)
+    but over-recalls on the sonnet-scheme validation in rime_eval.py
+    (FPR 0.186 vs bands 0.041; F1 0.889 vs 0.912): it learns Walker's
+    historical permissiveness, not real end-rhyme practice. Bands stay
+    the default.
+
 Requires scikit-learn (not a prosodic dependency; pip install scikit-learn).
 Usage: python scripts/rime_feature_analysis.py
 """
@@ -92,6 +106,58 @@ def fit_contrast(X, y):
     return coefs, cv
 
 
+def fit_channel_weights(data_parts):
+    """Fit non-negative per-feature weights per channel (substitution-only
+    pairs, so no padding artifacts). Coda: slant-vs-none; nucleus:
+    perfect-vs-slant. Returns (w_nuc, w_coda), mean-1 normalized."""
+    from scipy.optimize import minimize
+
+    def fit(Xp, Xn, l2=1.0):
+        X = np.vstack([Xp, Xn])
+        y = np.concatenate([np.ones(len(Xp)), np.zeros(len(Xn))])
+        d = X.shape[1]
+
+        def nll(params):
+            b0, w = params[0], params[1:]
+            z = b0 - X @ w
+            pr = 1 / (1 + np.exp(-np.clip(z, -30, 30)))
+            eps = 1e-12
+            return -(y * np.log(pr + eps)
+                     + (1 - y) * np.log(1 - pr + eps)).sum() + l2 * (w ** 2).sum()
+
+        def grad(params):
+            b0, w = params[0], params[1:]
+            z = b0 - X @ w
+            pr = 1 / (1 + np.exp(-np.clip(z, -30, 30)))
+            r = pr - y
+            return np.concatenate([[r.sum()], -X.T @ r + 2 * l2 * w])
+
+        bounds = [(None, None)] + [(0, None)] * d
+        res = minimize(nll, np.concatenate([[0.], np.ones(d)]), jac=grad,
+                       method='L-BFGS-B', bounds=bounds)
+        w = res.x[1:]
+        return w / (w.mean() or 1.0)
+
+    def sub_diffs(v1, v2):
+        if not v1 or not v2:
+            return None
+        k = min(len(v1), len(v2))
+        total = np.zeros(len(FEATS))
+        for i in range(1, k + 1):
+            total += np.abs(v1[-i] - v2[-i])
+        return total / k
+
+    def channel_X(pairs, channel):
+        rows_ = [sub_diffs(p1[channel], p2[channel]) for p1, p2 in pairs]
+        return np.array([r for r in rows_ if r is not None])
+
+    w_coda = fit(channel_X(data_parts['slant'], 1),
+                 channel_X(data_parts['none'], 1))
+    w_nuc = fit(channel_X(data_parts['perfect'], 0),
+                channel_X(data_parts['slant'], 0))
+    return w_nuc, w_coda
+
+
 def main():
     rows = load_walker()
     perfect, near, cross = sample_pairs(rows)
@@ -137,6 +203,31 @@ def main():
                       ('coda 24', slice(24, 48))):
         _, cv = fit_contrast(X[:, sl], y)
         print(f'  {label:<12} {cv:.3f}')
+
+    # learned channel weights (see docstring: a NEGATIVE result for the
+    # band classifier - reported here for the record/reuse)
+    parts_data = {}
+    for name, prs in (('perfect', perfect), ('slant', near), ('none', cross)):
+        if len(prs) > MAXP:
+            prs = rng.sample(prs, MAXP)
+        pd_ = []
+        for a, b in prs:
+            wa, wb = get_wordform(a), get_wordform(b)
+            if wa is None or wb is None or wa.txt == wb.txt:
+                continue
+            try:
+                pd_.append((parts(wa), parts(wb)))
+            except Exception:
+                continue
+        parts_data[name] = pd_
+    w_nuc, w_coda = fit_channel_weights(parts_data)
+    print()
+    print('learned channel weights (mean-1; NEGATIVE result for bands - '
+          'see docstring):')
+    print('  coda:   ', {f: round(float(w), 2)
+                         for f, w in zip(FEATS, w_coda) if w > 0.05})
+    print('  nucleus:', {f: round(float(w), 2)
+                         for f, w in zip(FEATS, w_nuc) if w > 0.05})
 
 if __name__ == '__main__':
     main()

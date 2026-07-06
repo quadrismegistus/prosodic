@@ -306,6 +306,8 @@ def main():
     nc_cross = compute_decomposed(cross, "cross", args.max_pairs)
     report_two_dim(nc_perfect, nc_near, nc_cross)
 
+    report_sonnet_validation()
+
 
 def compute_decomposed(pairs, label, max_pairs=4000):
     """(nucleus, coda) distance tuples via WordForm.rime_distance_nc."""
@@ -399,6 +401,65 @@ def report_two_dim(nc_perfect, nc_near, nc_cross):
     print()
     print(f"  suggested constants: RHYME_PERFECT_NUC_MAX = {a}, "
           f"RHYME_PERFECT_CODA_MAX = {b}, RHYME_SLANT_CODA_MAX = {c}")
+    print()
+
+
+def report_sonnet_validation():
+    """Independent validation on real verse: Shakespeare's sonnets give
+    scheme-derived ground truth — ABAB CDCD EFEF GG makes (0,2),(1,3),...
+    rhyme pairs and within-quatrain (0,1),(1,2),... TRUE non-rhymes
+    (Walker is positive-only; this supplies the missing negatives).
+
+    Result (2026-07-06): the 2-D bands dominate on real verse — F1 0.912,
+    precision 0.944, FPR 0.041 vs the 1-D scalar's 0.226. A 48-dim
+    per-feature multinomial model won on Walker CV (macro-F1 0.822) but
+    over-recalled here (FPR 0.186): it learns Walker's historical
+    permissiveness, not Shakespeare's practice. Counting assonance as
+    rhyme adds FPR (0.124) for +0.004 TPR — assonance is real but is not
+    end-rhyme practice, so rime_type keeps it a separate label.
+    """
+    import numpy as np
+    path = REPO_ROOT / "corpora" / "corppoetry_en" / "en.shakespeare.txt"
+    print("=" * 70)
+    print("Sonnet-scheme validation (real-verse positives AND negatives)")
+    print("=" * 70)
+    t = prosodic.TextModel(path.read_text())
+    POS_IDX = [(0, 2), (1, 3), (4, 6), (5, 7), (8, 10), (9, 11), (12, 13)]
+    NEG_IDX = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (6, 7),
+               (8, 9), (9, 10), (10, 11)]
+    pos_pairs, neg_pairs = [], []
+    for st in t.stanzas:
+        lines = st.lines
+        if len(lines) != 14:
+            continue
+        def endwf(i):
+            wfs = lines[i].wordforms_nopunc
+            return wfs[-1] if wfs else None
+        for idxs, bucket in ((POS_IDX, pos_pairs), (NEG_IDX, neg_pairs)):
+            for i, j in idxs:
+                a, b = endwf(i), endwf(j)
+                if a is not None and b is not None and a.txt != b.txt:
+                    bucket.append((a, b))
+    print(f"  {len(pos_pairs)} scheme rhyme pairs, "
+          f"{len(neg_pairs)} scheme non-rhyme pairs")
+
+    def report(name, predict):
+        tp = sum(1 for a, b in pos_pairs if predict(a, b))
+        fp = sum(1 for a, b in neg_pairs if predict(a, b))
+        tpr = tp / len(pos_pairs)
+        fpr = fp / len(neg_pairs)
+        prec = tp / (tp + fp) if tp + fp else 0.0
+        f1 = 2 * prec * tpr / (prec + tpr) if prec + tpr else 0.0
+        print(f"  {name:<28} TPR {tpr:.3f}  FPR {fpr:.3f}  "
+              f"prec {prec:.3f}  F1 {f1:.3f}")
+
+    report("1-D scalar <= 0.35",
+           lambda a, b: (lambda d: d is not None and not np.isnan(d)
+                         and d <= 0.35)(a.rime_distance(b, max_dist=None)))
+    report("2-D bands (perfect+slant)",
+           lambda a, b: a.rime_type(b) in ("perfect", "slant"))
+    report("2-D bands (+assonance)",
+           lambda a, b: a.rime_type(b) is not None)
     print()
 
 

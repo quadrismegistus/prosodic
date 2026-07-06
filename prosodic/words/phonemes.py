@@ -282,13 +282,18 @@ class PhonemeList(EntityList):
         v2 = [d2[k] for k in keys]
         return float(euclidean(v1, v2))
 
-    def feature_edit_distance(self, other: "PhonemeList"):
+    def feature_edit_distance(self, other: "PhonemeList", weights=None):
         """Feature-weighted edit distance between two phoneme sequences.
 
         Aligns phonemes via dynamic programming where substitution cost is
         the normalized feature distance between two segments (from panphon).
         Insertion/deletion costs 1.0. Result is normalized by the longer
         sequence length, giving a value in [0, 1].
+
+        Args:
+            weights: optional per-feature weight tuple (panphon feature
+                order, len 24). Substitution cost becomes the weighted
+                mean |diff|: (w · diff) / w.sum(). None = uniform.
         """
         import numpy as np
 
@@ -308,6 +313,10 @@ class PhonemeList(EntityList):
         if n == 0 or m == 0:
             return 1.0
 
+        if weights is not None:
+            w = np.asarray(weights, dtype=float)
+            wsum = w.sum()
+
         INS_DEL_COST = 1.0
         dp = np.full((n + 1, m + 1), np.inf)
         dp[0, 0] = 0.0
@@ -319,7 +328,10 @@ class PhonemeList(EntityList):
         for i in range(1, n + 1):
             for j in range(1, m + 1):
                 diff = np.abs(vecs1[i - 1] - vecs2[j - 1])
-                sub_cost = diff.sum() / len(diff)
+                if weights is None:
+                    sub_cost = diff.sum() / len(diff)
+                else:
+                    sub_cost = float((w * diff).sum() / wsum)
                 dp[i, j] = min(
                     dp[i - 1, j] + INS_DEL_COST,
                     dp[i, j - 1] + INS_DEL_COST,

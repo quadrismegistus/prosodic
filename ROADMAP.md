@@ -106,27 +106,29 @@ values for words with stress-ambiguous pronunciation variants).
   wordform[0]-only comparison makes noun/verb stress variants
   (IN-crease vs in-CREASE) read as non-rhymes — min-over-forms would
   fix it if it ever matters.
-- **Learned per-feature rhyme weights** — next step suggested by both
-  our own regression (`scripts/rime_feature_analysis.py`: slant-vs-none
-  is coda-only, CV 0.924; manner features determinative, place ~ignored)
-  and the literature (Yoon et al. 2007; Lakretz et al. 2018 — learned
-  feature weights beat hand-set and are language-specific; Hirjee &
-  Brown 2009 — corpus-mined phoneme-confusion weights for rap rhyme).
-  Sketch: replace the uniform mean-|diff| substitution cost in
-  `feature_edit_distance` with per-feature weights fit per channel
-  (nucleus vs coda) on Walker — but NOTE this changes the metric under
-  `rime_distance` and would churn `rhyme_ids`; either gate behind a
-  flag or re-calibrate the 0.35 in the same PR. Also worth building
-  first: a true-negative eval set mined from non-rhyming sonnet line
-  pairs (Walker is positive-only; German rhyme corpora show ~1/3 of
-  real stanzas don't rhyme). Longer-horizon: per-period weights (Walker
-  1775 vs modern), positional within-coda weighting (edge-proximal
-  consonants matter more — Woods et al.), corpus-mined confusion
-  signal. SOTA survey (Reddy & Knight 2011 unsupervised schemes; Haider
-  & Kuhn 2018 Siamese nets + German gold corpus; 2026 Greek hybrid
-  LLM+phonological-verifier) confirms explicit calibrated phonological
-  modeling remains the reliable core; our continuous calibrated
-  distance is a novelty vs the discrete taxonomies in the literature.
+- ✅ **Learned per-feature rhyme weights — INVESTIGATED, REJECTED**
+  (2026-07-06, same PR as the 2-D bands; recorded so it isn't re-tried).
+  Both follow-ups from the regression/SOTA survey were built and
+  measured: (a) non-negative per-channel feature weights (coda fit on
+  slant-vs-none, nucleus on perfect-vs-slant; weights phonologically
+  sensible) LOSE under the band classifier — Walker macro-F1 0.724 vs
+  0.758 uniform, because bands rely on near-identity thresholds and
+  zero-weighted features (cor/ant) let different codas score ~0;
+  (b) a full 48-dim multinomial wins Walker CV (0.822) but over-recalls
+  on the NEW sonnet-scheme validation set (FPR 0.186 vs bands 0.041,
+  F1 0.889 vs 0.912) — it learns Walker's 18th-c. permissiveness, not
+  real end-rhyme practice. What shipped instead: the sonnet-scheme
+  validation itself (`rime_eval.py` — real positives AND true
+  negatives, the eval Walker can't provide), the
+  `feature_edit_distance(weights=...)` hook, and the fitting code in
+  `rime_feature_analysis.py` for future per-language/period weight
+  experiments (Lakretz et al. 2018: optimal weights are
+  language-specific — relevant once German rhyme data exists).
+  Still-open leads if revisited: positional within-coda weighting
+  (Woods et al.), corpus-mined confusion signal (Hirjee & Brown 2009),
+  and upgrading `compute_rhyme_ids`' inner test from the 1-D 0.35
+  (sonnet FPR 0.226) to the 2-D bands (FPR 0.041) — that last one
+  churns `rhyme_ids`/docs freezes, so it needs its own deliberate PR.
 
 ## Languages
 

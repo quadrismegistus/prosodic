@@ -136,3 +136,40 @@ def test_line_rime_type():
     lines = t.lines
     assert lines[0].rime_type(lines[2]) == "perfect"   # day / May
     assert lines[0].rime_type(lines[1]) is None        # day / temperate
+
+
+def test_rime_type_sonnet_scheme_validation():
+    """Real-verse validation: sonnet rhyme scheme (ABAB CDCD EFEF GG)
+    supplies both positives and TRUE negatives. Full-corpus numbers
+    (scripts/rime_eval.py): bands F1 0.912, FPR 0.041. This pins a
+    25-sonnet subset with slack for pronunciation drift."""
+    import os
+    path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "corpora", "corppoetry_en", "en.shakespeare.txt")
+    with open(path) as f:
+        stanzas = f.read().split("\n\n")
+    t = TextModel("\n\n".join(stanzas[:25]))
+    POS = [(0, 2), (1, 3), (4, 6), (5, 7), (8, 10), (9, 11), (12, 13)]
+    NEG = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (6, 7),
+           (8, 9), (9, 10), (10, 11)]
+    pos, neg = [], []
+    for st in t.stanzas:
+        lines = st.lines
+        if len(lines) != 14:
+            continue
+        for idxs, bucket in ((POS, pos), (NEG, neg)):
+            for i, j in idxs:
+                a = lines[i].wordforms_nopunc[-1]
+                b = lines[j].wordforms_nopunc[-1]
+                if a.txt != b.txt:
+                    bucket.append((a, b))
+    assert len(pos) > 100 and len(neg) > 150
+
+    def is_rhyme(a, b):
+        return a.rime_type(b) in ("perfect", "slant")
+
+    tpr = sum(1 for a, b in pos if is_rhyme(a, b)) / len(pos)
+    fpr = sum(1 for a, b in neg if is_rhyme(a, b)) / len(neg)
+    assert tpr > 0.80, f"TPR {tpr:.3f}"
+    assert fpr < 0.10, f"FPR {fpr:.3f}"

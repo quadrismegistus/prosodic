@@ -13,6 +13,9 @@ flask_session
 prosodic/web/frontend/node_modules/
 prosodic/web/frontend/.svelte-kit/
 
+# playwright-cli scratch output (browser test screenshots/snapshots)
+.playwright-cli/
+
 # C extensions
 *.so
 

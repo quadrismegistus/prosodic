@@ -442,6 +442,35 @@ def syntax_trees(text, model="en_core_web_sm"):
     return trees
 
 
+def tree_to_dict(tree):
+    """Convert one ``syntax_trees()`` nltk.Tree into a JSON-serializable dict.
+
+    Preterminals (label ``TAG/tstress``, one word-leaf child) become
+    ``{tag, tstress, text, children: []}``; internal nodes become
+    ``{tag, tstress: None, text: None, children: [...]}``. Used by the web
+    app to render a tree client-side without depending on ``svgling``
+    (notebook-only, not an installed dependency).
+    """
+    from nltk.tree import Tree
+
+    label = tree.label()
+    children = list(tree)
+    if len(children) == 1 and not isinstance(children[0], Tree):
+        tag, _, tstress_str = label.partition("/")
+        return {
+            "tag": tag,
+            "tstress": float(tstress_str) if tstress_str else None,
+            "text": str(children[0]),
+            "children": [],
+        }
+    return {
+        "tag": label,
+        "tstress": None,
+        "text": None,
+        "children": [tree_to_dict(c) for c in children],
+    }
+
+
 def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     """Add phrasal_stress column to syll_df.
 

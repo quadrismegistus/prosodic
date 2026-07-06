@@ -193,6 +193,33 @@ def test_parse_normal_still_succeeds(client):
     assert len(resp.json()['rows']) >= 1
 
 
+def test_parse_line_grid_data(client):
+    resp = client.post('/api/parse/line', json=_default_parse_data(text='To be or not to be'))
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data['syntax_trees'] == []
+    assert len(data['grid_palette']) == 5
+    assert len(data['grid_level_names']) == 5
+    grid = data['parses'][0]['grid']
+    assert len(grid) > 0
+    assert all(set(row) >= {'txt', 'height', 'level', 'color', 'phrasal', 'viol'} for row in grid)
+
+
+def test_parse_line_syntax_tree(client):
+    pytest.importorskip("spacy")
+    try:
+        resp = client.post('/api/parse/line', json=_default_parse_data(
+            text='Shall I compare thee to a summer\'s day', syntax=True))
+    except OSError:
+        pytest.skip("spaCy model not installed")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data['syntax_trees']) == 1
+    tree = data['syntax_trees'][0]
+    assert set(tree) == {'tag', 'tstress', 'text', 'children'}
+    assert any(row['phrasal'] is not None for row in data['parses'][0]['grid'])
+
+
 def test_parse_line_timeout_returns_504(client):
     resp = client.post('/api/parse/line', json=_default_parse_data(
         text=_fresh_multiline('line504'), parse_timeout=0.001))

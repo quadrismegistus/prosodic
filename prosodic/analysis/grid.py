@@ -16,6 +16,27 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+LEVEL_NAMES = {
+    1: "syllable",
+    2: "stressed",
+    3: "primary stress",
+    4: "phrasal",
+    5: "nuclear",
+}
+
+LEVEL_COLORS = {
+    "syllable": "#cbd5e1",       # slate-300 (baseline)
+    "stressed": "#93c5fd",       # blue-300
+    "primary stress": "#3b82f6",  # blue-500
+    "phrasal": "#f59e0b",        # amber-500
+    "nuclear": "#dc2626",        # red-600
+}
+
+# 1-indexed by height (LEVEL_PALETTE[0] = color for height 1, etc.) — lets
+# consumers (grid_plot, the web API) stack boxes 1..height without
+# recomputing the height->name->color lookup per level.
+LEVEL_PALETTE = [LEVEL_COLORS[LEVEL_NAMES[h]] for h in sorted(LEVEL_NAMES)]
+
 
 def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
     """Per-syllable grid rows for a parse.
@@ -33,8 +54,11 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
     Returns a list of dicts, one per syllable in order:
     ``txt``, ``stress`` ('P'/'S'/'U'), ``meter`` ('s'/'w'),
     ``height`` (1=syllable, 2=+stressed, 3=+primary, 4=+phrasal,
-    5=nuclear), ``phrasal`` (float or None), ``viol`` (bool: the
-    containing position has violations).
+    5=nuclear), ``level`` (the name for ``height``, e.g. ``"nuclear"``),
+    ``color`` (hex string for ``height``, from ``LEVEL_COLORS`` — the
+    single source of truth shared with ``grid_plot()``), ``phrasal``
+    (float or None), ``viol`` (bool: the containing position has
+    violations).
     """
     rows = []
     syll_i = 0
@@ -50,12 +74,15 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
                 ph = None if v is None or v != v else float(v)  # NaN-safe
             if ph is not None and stress == "P":
                 height += (ph >= 0.5) + (ph >= 0.999)
+            level = LEVEL_NAMES[height]
             rows.append({
                 # slot.txt renders case by metrical prominence (STRONG/weak)
                 "txt": slot.txt.strip(),
                 "stress": stress,
                 "meter": pos.meter_val,
                 "height": height,
+                "level": level,
+                "color": LEVEL_COLORS[level],
                 "phrasal": ph,
                 "viol": viol,
             })
@@ -143,32 +170,41 @@ def grid_df(parse, phrasal=None):
     return df
 
 
-def grid_plot(parse, mark_size: int = 6, phrasal=None):
-    """Grid as a plotnine figure: mark stacks over syllable labels.
+def grid_plot(parse, box_size: float = 0.9, phrasal=None):
+    """Grid as a plotnine figure: colored boxes stacked over syllable labels.
 
-    Returns a ``plotnine.ggplot``; display it in a notebook or ``.save()`` it.
+    Box fill encodes prominence level — syllable < stressed < primary
+    stress < phrasal < nuclear — so the eye reads prominence as color as
+    well as height. Returns a ``plotnine.ggplot``; display it in a
+    notebook or ``.save()`` it.
     """
     import pandas as pd
     from plotnine import (
-        aes, element_blank, geom_point, geom_text, ggplot, labs,
-        scale_x_continuous, scale_y_continuous, theme, theme_minimal,
+        aes, element_blank, geom_text, geom_tile, ggplot, labs,
+        scale_fill_manual, scale_x_continuous, scale_y_continuous, theme,
+        theme_minimal,
     )
 
     rows = grid_data(parse, phrasal=phrasal)
-    marks = [
-        {"x": i, "y": level, "meter": r["meter"]}
+    marks = pd.DataFrame([
+        {"x": i, "y": level, "level": LEVEL_NAMES[level]}
         for i, r in enumerate(rows)
         for level in range(1, r["height"] + 1)
-    ]
+    ])
+    marks["level"] = pd.Categorical(
+        marks["level"], categories=list(LEVEL_COLORS), ordered=True,
+    )
     labels = [
         {"x": i, "y": 0,
          "label": r["txt"] + ("\n" + r["meter"] + ("*" if r["viol"] else ""))}
         for i, r in enumerate(rows)
     ]
     p = (
-        ggplot(pd.DataFrame(marks), aes("x", "y"))
-        + geom_point(size=mark_size, shape="*")
-        + geom_text(aes("x", "y", label="label"), data=pd.DataFrame(labels), size=8)
+        ggplot(marks, aes("x", "y", fill="level"))
+        + geom_tile(width=box_size, height=box_size)
+        + geom_text(aes("x", "y", label="label"), data=pd.DataFrame(labels),
+                    size=8, inherit_aes=False)
+        + scale_fill_manual(values=LEVEL_COLORS, name="prominence", drop=True)
         + scale_y_continuous(limits=(-0.5, max(r["height"] for r in rows) + 0.5))
         + scale_x_continuous(limits=(-0.5, len(rows) - 0.5))
         + theme_minimal()

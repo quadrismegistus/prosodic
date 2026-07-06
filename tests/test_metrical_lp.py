@@ -164,3 +164,48 @@ def test_deps_demote_copula_and_aux():
     assert aux_cls["has"] == -0.5    # ambiguous via dep 'aux'
     assert aux_lex["has"] == 1
     assert aux_lex["eaten"] == 2     # the real (content) verb keeps its level
+
+
+# ------------------------------------ Phase 2b: within-word syllable trees
+
+def test_word_syllable_tree_grids():
+    from prosodic.analysis.metrical_lp import _word_syllable_tree
+    # hand-fed (text, stress_num): P=1.0, S=0.5, U=0.0 — vs L&P word grids
+    cases = {
+        # execute (116a): primary on first syllable → 2 · 1 · 1
+        "execute": ([("e", 1.0), ("xe", 0.0), ("cute", 0.5)],
+                    {"e": 2, "xe": 1, "cute": 1}, "e"),
+        # Tennessee: secondary Ten sits between unstressed and primary
+        "Tennessee": ([("Ten", 0.5), ("nes", 0.0), ("see", 1.0)],
+                      {"Ten": 2, "nes": 1, "see": 3}, "see"),
+        # Montana: leading unstressed adjoins weak, primary is the DTE
+        "Montana": ([("Mon", 0.0), ("ta", 1.0), ("na", 0.0)],
+                    {"Mon": 1, "ta": 2, "na": 1}, "ta"),
+    }
+    for word, (sylls, exp_grid, exp_dte) in cases.items():
+        tree = _word_syllable_tree(sylls)
+        labels = [lf.label for lf in tree.leaves()]
+        assert dict(zip(labels, grid_heights(tree))) == exp_grid, word
+        assert tree.dte.label == exp_dte, word
+
+
+_SYLL_FIGURES = [
+    # end-to-end: raw text → constituency → binarize → syllable expansion →
+    # grid, checked against L&P's published *syllable* grids
+    ("thirteen men", {"thir": 1, "teen": 2, "men": 3}),        # (105)
+    ("Montana cowboy", {"Mon": 1, "ta": 2, "na": 1, "cow": 3, "boy": 1}),  # (108)
+]
+
+
+@pytest.mark.parametrize("text,expected", _SYLL_FIGURES)
+def test_end_to_end_syllable_grid_matches_LP(text, expected):
+    from prosodic.analysis.metrical_lp import expand_to_syllables
+    try:
+        phrasal = parse_lptree(text)
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if phrasal is None:
+        pytest.skip("no parse")
+    syll_tree = expand_to_syllables(phrasal)
+    labels = [lf.label for lf in syll_tree.leaves()]
+    assert dict(zip(labels, grid_heights(syll_tree))) == expected

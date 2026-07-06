@@ -325,7 +325,11 @@ def _convert_constituency(node) -> Optional[tuple]:
         return LPTree(label=node.label), False
     if _is_preterminal(node):
         word = list(node.children)[0].label
-        return LPTree(label=word), node.label.startswith("NN")
+        # Compound (CSR) nominality = COMMON nouns only. Proper nouns (NNP)
+        # modifying a noun are phrasal, not compounds — "Montana cowboy" is
+        # [Montana(w) cowboy(s)] (NSR, cowboy nuclear), not a left-strong
+        # compound. Common-noun runs (history teacher, law degree) compound.
+        return LPTree(label=word), node.label in ("NN", "NNS")
     subs = [_convert_constituency(c) for c in node.children if not c.is_leaf()]
     subs = [s for s in subs if s is not None]
     if not subs:
@@ -343,6 +347,108 @@ def constituency_to_lptree(stanza_constituency) -> Optional[LPTree]:
     """
     result = _convert_constituency(stanza_constituency)
     return result[0] if result else None
+
+
+_STRESS_NUM = {"P": 1.0, "S": 0.5, "U": 0.0}
+
+
+def _word_syllable_tree(sylls: List[tuple]) -> LPTree:
+    """Within-word binary metrical tree from syllables (Phase 2b).
+
+    ``sylls`` is ``[(text, stress_num)]`` with stress_num 1.0 (P) / 0.5 (S) /
+    0.0 (U). Builds L&P-style feet: each stressed syllable heads a
+    left-branching foot ``[s w w …]`` (head + following unstressed); the
+    primary foot (rightmost max-stress head) is the word's DTE, absorbing
+    the feet to its right as weak (``[s w]``) and to its left as weak
+    (``[w s]``); leading unstressed syllables adjoin weak on the left.
+
+    Reproduces L&P's own word grids: *thirteen* → thir 1 · teen 2;
+    *execute* (116a) → ex 2 · e 1 · cute 1; *Tennessee* → Ten 2 · nes 1 ·
+    see 3 (secondary Ten sits between unstressed and primary).
+    """
+    if len(sylls) == 1:
+        return LPTree(label=sylls[0][0])
+    heads = [i for i, (_, sn) in enumerate(sylls) if sn > 0]
+    if not heads:  # unstressed word (rare); left-branching, first = DTE
+        t = LPTree(label=sylls[0][0])
+        for txt, _ in sylls[1:]:
+            t = sw(t, txt)
+        return t
+    feet, foot_head = [], []
+    for hi, h in enumerate(heads):
+        end = heads[hi + 1] if hi + 1 < len(heads) else len(sylls)
+        foot = LPTree(label=sylls[h][0])
+        for txt, _ in sylls[h + 1:end]:
+            foot = sw(foot, txt)            # head strong, following weak
+        feet.append(foot)
+        foot_head.append(h)
+    maxsn = max(sn for _, sn in sylls)
+    prim = max(i for i, h in enumerate(foot_head) if sylls[h][1] == maxsn)
+    tree = feet[prim]
+    for f in feet[prim + 1:]:
+        tree = sw(tree, f)                  # primary strong-left over right feet
+    for f in reversed(feet[:prim]):
+        tree = ws(f, tree)                  # primary strong-right over left feet
+    for txt, _ in reversed(sylls[:heads[0]]):
+        tree = ws(LPTree(label=txt), tree)  # leading unstressed, weak-left
+    return tree
+
+
+_SYLL_CACHE: dict = {}
+
+
+def _prosodic_sylls(word: str) -> Optional[List[tuple]]:
+    """Syllables + stress numbers for a word, via prosodic's own pronunciation.
+
+    Returns ``[(syll_text, stress_num)]`` or None. Cached per word.
+    """
+    key = word.lower()
+    if key in _SYLL_CACHE:
+        return _SYLL_CACHE[key]
+    result = None
+    try:
+        import prosodic
+        line = prosodic.Text(word).lines[0]
+        if line.wordtokens:
+            form = line.wordtokens[0].wordform
+            result = [
+                (s.txt, _STRESS_NUM.get(getattr(s, "stress", "U"), 0.0))
+                for s in form.syllables
+            ]
+            if not result:
+                result = None
+    except Exception:
+        result = None
+    _SYLL_CACHE[key] = result
+    return result
+
+
+def expand_to_syllables(tree: LPTree, syll_fn=None) -> LPTree:
+    """Graft each word-leaf's within-word syllable tree onto the phrasal tree.
+
+    ``syll_fn(word) -> [(syll, stress_num)]`` supplies pronunciations
+    (defaults to prosodic's). A word-leaf's ``lclass`` is carried onto every
+    syllable leaf of its subtree, so the lexical (114) floor still applies.
+    The result is one binary tree over syllables; feed it to ``grid_heights``.
+    """
+    if syll_fn is None:
+        syll_fn = _prosodic_sylls
+
+    def rec(node):
+        if node.is_leaf:
+            sylls = syll_fn(node.label)
+            if not sylls:
+                return node
+            sub = _word_syllable_tree(sylls)
+            # L&P (114) is a per-word provision: the content-word minimum
+            # attaches to the word's DTE (its primary syllable), not to every
+            # syllable. Other syllables stay lexically unmarked (floor 1).
+            sub.dte.lclass = node.lclass
+            return sub
+        return LPTree(left=rec(node.left), right=rec(node.right),
+                      strong=node.strong)
+
+    return rec(tree)
 
 
 def _attach_lexical_classes(tree: LPTree, sent) -> None:

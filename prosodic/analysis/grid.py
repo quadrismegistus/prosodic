@@ -38,6 +38,22 @@ LEVEL_COLORS = {
 LEVEL_PALETTE = [LEVEL_COLORS[LEVEL_NAMES[h]] for h in sorted(LEVEL_NAMES)]
 
 
+def _find_word_num(unit):
+    """Resolve a parse unit's word_num: direct attr (DF path's SyllData) or
+    walk the parent chain to the containing WordToken (entity path)."""
+    wn = getattr(unit, "word_num", None)
+    if wn is not None:
+        return int(wn)
+    ent = unit
+    for _ in range(8):
+        ent = getattr(ent, "parent", None)
+        if ent is None:
+            return None
+        if ent.__class__.__name__ == "WordToken":
+            return int(ent.num)
+    return None
+
+
 def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
     """Per-syllable grid rows for a parse.
 
@@ -58,7 +74,9 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
     ``color`` (hex string for ``height``, from ``LEVEL_COLORS`` — the
     single source of truth shared with ``grid_plot()``), ``phrasal``
     (float or None), ``viol`` (bool: the containing position has
-    violations).
+    violations), ``word_num`` (int or None: which word this syllable
+    belongs to — lets a caller group syllable columns by word, e.g. to
+    align a phrasal/syntax tree's leaves to their word's column span).
     """
     rows = []
     syll_i = 0
@@ -85,6 +103,7 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
                 "color": LEVEL_COLORS[level],
                 "phrasal": ph,
                 "viol": viol,
+                "word_num": _find_word_num(unit),
             })
             syll_i += 1
     return rows
@@ -106,22 +125,9 @@ def phrasal_values(parse, text) -> Optional[List]:
         .set_index("word_num")["tstress"].to_dict()
     )
 
-    def find_word_num(unit):
-        wn = getattr(unit, "word_num", None)
-        if wn is not None:
-            return wn
-        ent = unit
-        for _ in range(8):
-            ent = getattr(ent, "parent", None)
-            if ent is None:
-                return None
-            if ent.__class__.__name__ == "WordToken":
-                return ent.num
-        return None
-
     vals = []
     for slot in parse.slots:
-        v = tmap.get(find_word_num(slot.unit))
+        v = tmap.get(_find_word_num(slot.unit))
         vals.append(None if v is None or v != v else float(v))
     return vals
 

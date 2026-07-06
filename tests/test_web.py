@@ -216,8 +216,18 @@ def test_parse_line_syntax_tree(client):
     data = resp.json()
     assert len(data['syntax_trees']) == 1
     tree = data['syntax_trees'][0]
-    assert set(tree) == {'tag', 'tstress', 'text', 'children'}
+    assert set(tree) == {'tag', 'tstress', 'text', 'word_num', 'children'}
     assert any(row['phrasal'] is not None for row in data['parses'][0]['grid'])
+    # tree leaves and grid rows share the same word_num space, so a frontend
+    # can align a tree leaf's x-position to its word's grid column span
+    def leaves(node):
+        if not node['children']:
+            yield node
+        for c in node['children']:
+            yield from leaves(c)
+    leaf_word_nums = {n['word_num'] for n in leaves(tree)}
+    grid_word_nums = {row['word_num'] for row in data['parses'][0]['grid']}
+    assert leaf_word_nums and leaf_word_nums <= grid_word_nums
 
 
 def test_parse_line_timeout_returns_504(client):

@@ -33,6 +33,10 @@ def test_grid_data_rows(parsed_line):
     # level/color are derived from height, shared with grid_plot's palette
     assert by_txt["IN"]["level"] == "primary stress"
     assert by_txt["when"]["level"] == "syllable"
+    # word_num groups a multi-syllable word's columns; distinct words differ
+    chro, ni, cle = by_txt["CHRO"], by_txt["ni"], by_txt["CLE"]
+    assert chro["word_num"] == ni["word_num"] == cle["word_num"]
+    assert by_txt["when"]["word_num"] != by_txt["IN"]["word_num"]
     assert by_txt["IN"]["color"] != by_txt["when"]["color"]
 
 
@@ -57,6 +61,7 @@ def test_grid_df(parsed_line):
     df = parsed_line.grid_df()
     assert list(df.columns) == [
         "txt", "stress", "meter", "height", "level", "color", "phrasal", "viol",
+        "word_num",
     ]
     assert len(df) == 10
     assert df["height"].between(1, 3).all()

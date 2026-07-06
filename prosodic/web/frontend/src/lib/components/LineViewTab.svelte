@@ -1,8 +1,7 @@
 <script>
 	import { parseLine } from '$lib/api.js';
 	import { selectedLine, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
-	import MetricalGrid from './MetricalGrid.svelte';
-	import SyntaxTree from './SyntaxTree.svelte';
+	import MetricalGridTree from './MetricalGridTree.svelte';
 
 	let lineInput = $state('');
 	let parses = $state([]);
@@ -106,16 +105,16 @@
 	{#if parses.length > 0 || parts.length > 0}
 		{#if selectedParse}
 			<div class="viz-section">
-				<h3 class="viz-title">Metrical grid <span class="viz-hint">(rank {selectedParse.rank}, click a row below to change)</span></h3>
-				<MetricalGrid rows={selectedParse.grid} palette={gridPalette} levelNames={gridLevelNames} />
-			</div>
-		{/if}
-		{#if syntaxTrees.length > 0}
-			<div class="viz-section">
-				<h3 class="viz-title">Syntax tree</h3>
-				{#each syntaxTrees as tree}
-					<SyntaxTree {tree} palette={gridPalette} />
-				{/each}
+				<h3 class="viz-title">
+					Metrical grid{syntaxTrees.length > 0 ? ' + syntax tree' : ''}
+					<span class="viz-hint">(rank {selectedParse.rank}, click a row below to change)</span>
+				</h3>
+				<MetricalGridTree
+					rows={selectedParse.grid}
+					palette={gridPalette}
+					levelNames={gridLevelNames}
+					tree={syntaxTrees[0] ?? null}
+				/>
 			</div>
 		{/if}
 	{/if}

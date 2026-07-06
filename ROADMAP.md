@@ -103,22 +103,28 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Analysis & display
 
-- ✅ **Web app: grid + syntax tree in Line View** — shipped 2026-07-06
-  (PR #155). `grid_plot()` redesigned first (boxes filled by prominence
-  level, not star marks — `LEVEL_NAMES`/`LEVEL_COLORS`/`LEVEL_PALETTE`
-  in `analysis/grid.py` are now the shared source of truth). Line View
-  got two native components fed by `/api/parse/line`: `MetricalGrid.svelte`
-  (same boxes-by-level look, one per candidate scansion, selectable by
-  clicking a table row) and `SyntaxTree.svelte` (hand-rolled inline SVG —
-  leaves are already in fixed sentence order, so layout is just "internal
-  node x = mean of children x, y = depth"; no new npm dependency).
-  `tree_to_dict()` (`texts/phrasal_stress.py`) converts `syntax_trees()`
-  to JSON for this — `svgling` was never a real dependency and stays
-  that way. Found and fixed along the way: `LineViewTab.svelte` wasn't
-  sending `syntax`/`syntax_model` to the backend at all, and
-  `/api/parse/line` dropped `syntax_model` even when `syntax` was on.
-  Remaining polish (not blocking): parse-table sort/column tweaks if
-  Ryan wants them later.
+- ✅ **Web app: combined grid + syntax tree in Line View** — shipped
+  2026-07-06 (PR #155, then combined same day). `grid_plot()` redesigned
+  first (boxes filled by prominence level, not star marks —
+  `LEVEL_NAMES`/`LEVEL_COLORS`/`LEVEL_PALETTE` in `analysis/grid.py` are
+  now the shared source of truth). Line View first got the grid and tree
+  as two separate components, then combined into one Liberman & Prince
+  (1977)-style figure (`MetricalGridTree.svelte`, single SVG, shared
+  x-axis): grid boxes stacked above the syllables, dependency-projection
+  tree hanging below with root at the bottom and leaves pinned to the
+  word row — matching L&P's own convention, and apt beyond style, since
+  the grid's "phrasal"/"nuclear" levels are literally projected from the
+  tree's tstress values already. Grid columns are per-syllable, tree
+  leaves are per-word, so `word_num` was threaded through both
+  (`grid_data()` rows, `tree_to_dict()` leaves — `_find_word_num()` in
+  `analysis/grid.py`, `tree._word_nums` set by `syntax_trees()`) to
+  center a multi-syllable word's leaf over its own syllable-column span.
+  No new npm dependency — hand-rolled inline SVG throughout; `svgling`
+  was never a real dependency and stays that way. Found and fixed along
+  the way: `LineViewTab.svelte` wasn't sending `syntax`/`syntax_model` to
+  the backend at all, and `/api/parse/line` dropped `syntax_model` even
+  when `syntax` was on. Remaining polish (not blocking): parse-table
+  sort/column tweaks if Ryan wants them later.
 - ✅ **Rhyme slant-band calibration** — shipped 2026-07-06, upgraded
   same-day from 1-D to a 2-D (nucleus, coda) decomposition after the 1-D
   scalar proved unable to separate gone/alone (real slant) from

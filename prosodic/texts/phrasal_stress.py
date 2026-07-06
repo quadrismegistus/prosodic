@@ -438,7 +438,12 @@ def syntax_trees(text, model="en_core_web_sm"):
         nsylls = np.array([nsyll_by_word.get(wn, 1) for wn in word_nums],
                           dtype=np.int32)
         _, tstress, _ = _mt_gradient(heads, words, tags, deps, nsylls, n)
-        trees.extend(_mt_nltk_trees(heads, words, tags, deps, tstress))
+        new_trees = _mt_nltk_trees(heads, words, tags, deps, tstress)
+        for tr in new_trees:
+            # internal: lets tree_to_dict() attach word_num per leaf, so the
+            # web app can align tree leaves to a word's grid column span
+            tr._word_nums = [int(w) for w in word_nums]
+        trees.extend(new_trees)
     return trees
 
 
@@ -446,29 +451,44 @@ def tree_to_dict(tree):
     """Convert one ``syntax_trees()`` nltk.Tree into a JSON-serializable dict.
 
     Preterminals (label ``TAG/tstress``, one word-leaf child) become
-    ``{tag, tstress, text, children: []}``; internal nodes become
-    ``{tag, tstress: None, text: None, children: [...]}``. Used by the web
-    app to render a tree client-side without depending on ``svgling``
-    (notebook-only, not an installed dependency).
+    ``{tag, tstress, text, word_num, children: []}``; internal nodes become
+    ``{tag, tstress: None, text: None, word_num: None, children: [...]}``.
+    ``word_num`` is populated from the private ``_word_nums`` list
+    ``syntax_trees()`` attaches to each returned tree (None if absent, e.g.
+    for hand-built trees in tests). Used by the web app to render a tree
+    client-side without depending on ``svgling`` (notebook-only, not an
+    installed dependency).
     """
-    from nltk.tree import Tree
+    word_nums = getattr(tree, "_word_nums", None)
+    leaf_i = [0]
 
-    label = tree.label()
-    children = list(tree)
-    if len(children) == 1 and not isinstance(children[0], Tree):
-        tag, _, tstress_str = label.partition("/")
+    def convert(node):
+        from nltk.tree import Tree
+
+        label = node.label()
+        children = list(node)
+        if len(children) == 1 and not isinstance(children[0], Tree):
+            tag, _, tstress_str = label.partition("/")
+            wn = None
+            if word_nums is not None and leaf_i[0] < len(word_nums):
+                wn = word_nums[leaf_i[0]]
+            leaf_i[0] += 1
+            return {
+                "tag": tag,
+                "tstress": float(tstress_str) if tstress_str else None,
+                "text": str(children[0]),
+                "word_num": wn,
+                "children": [],
+            }
         return {
-            "tag": tag,
-            "tstress": float(tstress_str) if tstress_str else None,
-            "text": str(children[0]),
-            "children": [],
+            "tag": label,
+            "tstress": None,
+            "text": None,
+            "word_num": None,
+            "children": [convert(c) for c in children],
         }
-    return {
-        "tag": label,
-        "tstress": None,
-        "text": None,
-        "children": [tree_to_dict(c) for c in children],
-    }
+
+    return convert(tree)
 
 
 def add_phrasal_stress(syll_df, model="en_core_web_sm"):

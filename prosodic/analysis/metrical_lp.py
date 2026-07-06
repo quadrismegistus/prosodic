@@ -314,38 +314,90 @@ def _binarize_nsr_csr(subs: List[tuple]) -> LPTree:
     return node
 
 
-def _convert_constituency(node) -> Optional[tuple]:
-    """Recurse a Stanza constituency ``Tree`` → ``(LPTree, is_nominal)``.
+# Penn/Stanza punctuation preterminal tags — dropped, never metrical terminals
+_PUNCT_TAGS = frozenset({
+    ",", ".", ":", ";", "``", "''", "\"", "'", "-LRB-", "-RRB-", "-LSB-",
+    "-RSB-", "-LCB-", "-RCB-", "HYPH", "NFP", "SYM", "$", "#",
+})
 
-    Preterminals become word leaves (nominal iff POS starts ``NN``); unary
-    nodes collapse; branching nodes binarize via :func:`_binarize_nsr_csr`
-    and are nominal iff every child is nominal.
+
+def _is_punct_tag(tag: str) -> bool:
+    return tag in _PUNCT_TAGS or not any(c.isalnum() for c in tag)
+
+
+def _convert_constituency(node, ctx) -> Optional[tuple]:
+    """Recurse a Stanza constituency ``Tree`` → ``(LPTree, is_nominal, kind)``.
+
+    ``ctx`` = ``{'i': int, 'lclass': [...]}`` consumes one token per
+    preterminal in surface order (constituency leaves == ``sent.words``),
+    so each word leaf gets its lexical class without a fragile post-hoc
+    alignment. ``kind`` ∈ {'word','punct','clitic'}:
+
+    - punctuation preterminals are dropped (never metrical terminals — fixes
+      commas being handed nuclear stress);
+    - the possessive clitic ``'s`` (POS tag ``POS``) is merged onto its host
+      word's last syllable rather than standing as its own NSR-strong
+      terminal (fixes *summer 's* with stress landing on *'s*).
     """
     if node.is_leaf():
-        return LPTree(label=node.label), False
+        return LPTree(label=node.label), False, "word"
     if _is_preterminal(node):
+        tag = node.label
         word = list(node.children)[0].label
+        i = ctx["i"]
+        ctx["i"] += 1
+        if _is_punct_tag(tag):
+            return None, False, "punct"
+        if tag == "POS":
+            return LPTree(label=word), False, "clitic"
+        cls = ctx["lclass"][i] if i < len(ctx["lclass"]) else 0.0
         # Compound (CSR) nominality = COMMON nouns only. Proper nouns (NNP)
         # modifying a noun are phrasal, not compounds — "Montana cowboy" is
-        # [Montana(w) cowboy(s)] (NSR, cowboy nuclear), not a left-strong
-        # compound. Common-noun runs (history teacher, law degree) compound.
-        return LPTree(label=word), node.label in ("NN", "NNS")
-    subs = [_convert_constituency(c) for c in node.children if not c.is_leaf()]
-    subs = [s for s in subs if s is not None]
-    if not subs:
-        return None
-    if len(subs) == 1:
-        return subs[0]
-    tree = _binarize_nsr_csr(subs)
-    return tree, all(nom for _, nom in subs)
+        # [Montana(w) cowboy(s)] (NSR), not a left-strong compound.
+        return LPTree(label=word, lclass=cls), tag in ("NN", "NNS"), "word"
+
+    raw = [_convert_constituency(c, ctx) for c in node.children if not c.is_leaf()]
+    cleaned: List[list] = []
+    for tree, nom, kind in raw:
+        if kind == "punct" or tree is None:
+            continue
+        if kind == "clitic":
+            if cleaned:  # attach 's to the host's last syllable
+                host = cleaned[-1][0]
+                host.leaves()[-1].label += tree.label
+            continue
+        cleaned.append([tree, nom, kind])
+    if not cleaned:
+        return None, False, "punct"
+    if len(cleaned) == 1:
+        return cleaned[0][0], cleaned[0][1], "word"
+    subs = [(t, n) for t, n, _ in cleaned]
+    return _binarize_nsr_csr(subs), all(n for _, n in subs), "word"
 
 
-def constituency_to_lptree(stanza_constituency) -> Optional[LPTree]:
+def _lclass_for_sentence(sent) -> list:
+    """Per-token lexical stress class (0 / -0.5 / -1) in surface order."""
+    import numpy as np
+    from ..texts.phrasal_stress import _mt_lstress_base
+
+    words = list(sent.words)
+    return list(_mt_lstress_base(
+        np.array([w.text for w in words]),
+        np.array([w.xpos or "" for w in words]),
+        np.array([w.deprel or "" for w in words]),
+        len(words),
+    ))
+
+
+def constituency_to_lptree(stanza_constituency, lclass=None) -> Optional[LPTree]:
     """Convert one Stanza ``sent.constituency`` tree to a binary ``LPTree``.
 
-    Leaves are words. Returns None on an empty parse.
+    Leaves are words (punctuation dropped, possessive ``'s`` merged).
+    ``lclass`` is an optional per-token lexical-class list. Returns None on
+    an empty parse.
     """
-    result = _convert_constituency(stanza_constituency)
+    ctx = {"i": 0, "lclass": lclass or []}
+    result = _convert_constituency(stanza_constituency, ctx)
     return result[0] if result else None
 
 
@@ -451,46 +503,21 @@ def expand_to_syllables(tree: LPTree, syll_fn=None) -> LPTree:
     return rec(tree)
 
 
-def _attach_lexical_classes(tree: LPTree, sent) -> None:
-    """Tag each word-leaf with its lexical stress class from a Stanza sentence.
-
-    Uses ``_mt_lstress_base`` (the shipping MetricalTree port's classifier:
-    word list → POS tag → dep label, giving 0 / -0.5 / -1). Leaves and
-    ``sent.words`` are both in surface order; if they don't align 1:1
-    (rare tokenization mismatch) lexical classes are left as None and the
-    grid falls back to structural heights.
-    """
-    import numpy as np
-    from ..texts.phrasal_stress import _mt_lstress_base
-
-    leaves = tree.leaves()
-    words = list(sent.words)
-    if len(leaves) != len(words):
-        return
-    texts = np.array([w.text for w in words])
-    tags = np.array([w.xpos or "" for w in words])
-    deps = np.array([w.deprel or "" for w in words])
-    lstress = _mt_lstress_base(texts, tags, deps, len(words))
-    for lf, cls in zip(leaves, lstress):
-        lf.lclass = float(cls)
-
-
 def parse_lptree(text: str, lang: str = "en", lexical: bool = True) -> Optional[LPTree]:
     """Parse ``text`` with Stanza and return its L&P metrical tree.
 
     Word-level (phrasal) tree; requires stanza + the constituency model.
-    With ``lexical=True`` (default) each leaf is tagged with its lexical
-    stress class (see :func:`lexical_floors` for how that reaches the grid).
+    With ``lexical=True`` (default) each word leaf is tagged with its lexical
+    stress class during conversion (see :func:`lexical_floors`). Punctuation
+    is dropped and the possessive ``'s`` merged into its host.
     """
     nlp = _get_stanza(lang)
     doc = nlp(text)
     if not doc.sentences:
         return None
     sent = doc.sentences[0]
-    tree = constituency_to_lptree(sent.constituency)
-    if tree is not None and lexical:
-        _attach_lexical_classes(tree, sent)
-    return tree
+    lclass = _lclass_for_sentence(sent) if lexical else None
+    return constituency_to_lptree(sent.constituency, lclass=lclass)
 
 
 # ------------------------------------------------- web serialization (Phase 3)

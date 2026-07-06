@@ -209,3 +209,33 @@ def test_end_to_end_syllable_grid_matches_LP(text, expected):
     syll_tree = expand_to_syllables(phrasal)
     labels = [lf.label for lf in syll_tree.leaves()]
     assert dict(zip(labels, grid_heights(syll_tree))) == expected
+
+
+# ------------------------------------------ punctuation + possessive clitics
+
+def test_punctuation_is_not_a_metrical_terminal():
+    # a comma must never become a grid column / receive stress
+    try:
+        tree = parse_lptree("From fairest creatures we desire increase,")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if tree is None:
+        pytest.skip("no parse")
+    labels = [lf.label for lf in tree.leaves()]
+    assert "," not in labels
+    assert all(any(c.isalnum() for c in w) for w in labels)
+    assert tree.dte.label == "increase"
+
+
+def test_possessive_clitic_merged_not_stressed():
+    # "summer's" must be one host word, not a separate NSR-strong 's terminal
+    try:
+        tree = parse_lptree("a summer's day")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if tree is None:
+        pytest.skip("no parse")
+    labels = [lf.label for lf in tree.leaves()]
+    assert "'s" not in labels
+    assert any(w.endswith("'s") for w in labels)   # merged onto its host
+    assert tree.dte.label == "day"                 # head noun nuclear, not 's

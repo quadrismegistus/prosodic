@@ -11,7 +11,7 @@
 	import SettingsTab from '$lib/components/SettingsTab.svelte';
 	import { getMeterDefaults } from '$lib/api.js';
 	import { meterConfig, allConstraints, constraintDescriptions, defaultConstraints, constraintWeights, activeTab, goTab } from '$lib/stores.js';
-	import { AlignLeft, FileText, Music, Sigma, Settings as SettingsIcon } from 'lucide-svelte';
+	import { AlignLeft, BookOpen, FileText, Music, Sigma, Settings as SettingsIcon } from 'lucide-svelte';
 
 	const tabs = [
 		{ id: 'parse', label: 'Parse', icon: FileText },
@@ -97,6 +97,10 @@
 			</button>
 		{/each}
 		<span class="spacer"></span>
+		<a href="https://prosodic.app/docs/" target="_blank" rel="noopener">
+			<BookOpen size={16} strokeWidth={1.75} />
+			<span>Docs</span>
+		</a>
 		<button class:active={$activeTab === settingsTab.id} onclick={() => goTab(settingsTab.id)}>
 			<settingsTab.icon size={16} strokeWidth={1.75} />
 			<span>{settingsTab.label}</span>
@@ -135,7 +139,8 @@
 		background: #fff;
 		padding: 0 1.5rem;
 	}
-	.top-nav button {
+	.top-nav button,
+	.top-nav a {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
@@ -150,7 +155,8 @@
 		cursor: pointer;
 		font-family: var(--font);
 	}
-	.top-nav button:hover {
+	.top-nav button:hover,
+	.top-nav a:hover {
 		color: var(--text);
 	}
 	.top-nav button.active {

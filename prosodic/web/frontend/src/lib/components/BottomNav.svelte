@@ -1,6 +1,6 @@
 <script>
 	import { activeTab } from '$lib/stores.js';
-	import { AlignLeft, FileText, Music, Sigma, Settings as SettingsIcon } from 'lucide-svelte';
+	import { AlignLeft, BookOpen, FileText, Music, Sigma, Settings as SettingsIcon } from 'lucide-svelte';
 
 	const tabs = [
 		{ id: 'parse', label: 'Parse', icon: FileText },
@@ -18,6 +18,10 @@
 			<span class="label">{t.label}</span>
 		</button>
 	{/each}
+	<a href="https://prosodic.app/docs/" target="_blank" rel="noopener">
+		<BookOpen size={20} strokeWidth={1.75} />
+		<span class="label">Docs</span>
+	</a>
 </nav>
 
 <style>
@@ -32,7 +36,8 @@
 		z-index: 100;
 		height: var(--bottom-nav-height);
 	}
-	button {
+	button,
+	nav a {
 		flex: 1;
 		display: flex;
 		flex-direction: column;

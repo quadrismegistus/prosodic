@@ -64,7 +64,7 @@ print(sonnet.summary())
         1      8  +-+-+-+-+-+  c              6       11         2
         1      9  -+-+-+-+--   -              4       10         3
         1     10  -+-+-+-+--   d              4       10         6
-        1     11  -+-+-+-+-+   e              5       10         2
+        1     11  -+-+-+-+-+   -              5       10         2
         1     12  -+-+-+-+-+   d              5       10         1
         1     13  -+-+-+-+-+   e              5       10         2
         1     14  -+-+-+-+-+   e              5       10         3
@@ -75,7 +75,7 @@ print(sonnet.summary())
     meter: Iambic
     feet: Pentameter
     syllables: 10
-    rhyme: Sonnet A (abab cdcd eefeff)
+    rhyme: Sonnet, Shakespearean (abab cdcd efefgg)
 
 ## Reading texts
 
@@ -397,10 +397,21 @@ print('syll  scheme:', sonnet.syllable_scheme)
 
 ### Rhyme detection
 
-Rhyme is computed via feature-weighted edit distance over IPA segments (panphon). 0 = perfect rhyme; higher = slant rhyme.
+Rhyme is detected from sound, not spelling. Each line-final rime splits into nucleus (vowel) and coda feature-edit distances, and pairs classify as `'perfect'`, `'slant'` (consonance: identical coda, free vowel), `'assonance'`, or `None` — bands calibrated against Walker's 1775 rhyming dictionary.
 
 ```python
-# pairwise rime distance
+# classify rhyme pairs ('time'/'rhyme'; 'prophecies'/'eyes')
+print('time/rhyme:     ', sonnet.line1.rime_type(sonnet.lines[2]))
+print('prophecies/eyes:', sonnet.lines[8].rime_type(sonnet.lines[10]))
+```
+
+↓
+
+    time/rhyme:      perfect
+    prophecies/eyes: slant
+
+```python
+# gradient pairwise rime distance (0 = identical rime)
 sonnet.line1.rime_distance(sonnet.lines[2])  # 'time' vs 'rhyme'
 ```
 
@@ -429,8 +440,8 @@ print('letters:', ''.join(nums_to_scheme(sonnet.rhyme_ids)))
 
 ↓
 
-    IDs:     [1, 2, 1, 2, 0, 3, 0, 3, 0, 4, 5, 4, 5, 5]
-    letters: abab-c-c-dedee
+    IDs:     [1, 2, 1, 2, 0, 3, 0, 3, 0, 4, 0, 4, 5, 5]
+    letters: abab-c-c-d-dee
 
 ### Named rhyme scheme matching
 
@@ -449,16 +460,16 @@ for name, form, score in rs['candidates'][:5]:
 
 ↓
 
-    name:     Sonnet A
-    form:     abab cdcd eefeff
-    accuracy: 0.70
+    name:     Sonnet, Shakespearean
+    form:     abab cdcd efefgg
+    accuracy: 0.71
     
     top candidates:
-      0.70  Sonnet A                       abab cdcd eefeff
-      0.56  Sonnet, Shakespearean          abab cdcd efefgg
-      0.43  Sonnet E                       abab cbcd cdedee
-      0.40  Sonnet B                       abab cdcd effegg
-      0.36  Sonnet D                       ababbcdc ceceff
+      0.71  Sonnet, Shakespearean          abab cdcd efefgg
+      0.50  Sonnet A                       abab cdcd eefeff
+      0.50  Sonnet B                       abab cdcd effegg
+      0.42  Sonnet D                       ababbcdc ceceff
+      0.33  Sonnet, Spenserian             abab bcbc cdcdee
 
 ```python
 # form predicates
@@ -469,7 +480,7 @@ print('is_shakespearean_sonnet: ', sonnet.is_shakespearean_sonnet)
 ↓
 
     is_sonnet:                True
-    is_shakespearean_sonnet:  False
+    is_shakespearean_sonnet:  True
 
 ### Tabular summary
 
@@ -493,7 +504,7 @@ print(sonnet.summary())
         1      8  +-+-+-+-+-+  c              6       11         1
         1      9  -+-+-+-+-+   -              5       10         1
         1     10  -+-+-+-+-+   d              5       10         1
-        1     11  -+-+-+-+-+   e              5       10         1
+        1     11  -+-+-+-+-+   -              5       10         1
         1     12  -+-+-+-+-+   d              5       10         1
         1     13  -+-+-+-+-+   e              5       10         1
         1     14  -+-+-+-+-+   e              5       10         1
@@ -504,7 +515,7 @@ print(sonnet.summary())
     meter: Iambic
     feet: Pentameter
     syllables: 10
-    rhyme: Sonnet A (abab cdcd eefeff)
+    rhyme: Sonnet, Shakespearean (abab cdcd efefgg)
 
 ## MaxEnt weight learning
 

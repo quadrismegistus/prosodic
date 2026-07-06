@@ -125,10 +125,16 @@ values for words with stress-ambiguous pronunciation variants).
   experiments (Lakretz et al. 2018: optimal weights are
   language-specific — relevant once German rhyme data exists).
   Still-open leads if revisited: positional within-coda weighting
-  (Woods et al.), corpus-mined confusion signal (Hirjee & Brown 2009),
-  and upgrading `compute_rhyme_ids`' inner test from the 1-D 0.35
-  (sonnet FPR 0.226) to the 2-D bands (FPR 0.041) — that last one
-  churns `rhyme_ids`/docs freezes, so it needs its own deliberate PR.
+  (Woods et al.), corpus-mined confusion signal (Hirjee & Brown 2009).
+- ✅ **Band-gated `compute_rhyme_ids`** — shipped 2026-07-06 (follow-up
+  PR to the bands). Candidates gated by `rime_type` (perfect/slant),
+  ranked perfect-first then nucleus distance; perfect unions without
+  mutuality, slant requires MNN. Sonnet scheme detection 137→149/154
+  (sonnet 106 fixed — its slant quatrain is consonance the bands hear);
+  all churn surfaces updated in the same PR (tests, docs freezes for
+  index + sonnets exploration, README rebuild). Legacy scalar mode kept
+  via `max_dist=0.35`. poesy consumes `text.rhyme_ids` — notify
+  poesy-claude on merge (behavioral improvement, no API change).
 
 ## Languages
 

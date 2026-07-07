@@ -289,8 +289,13 @@ def _get_stanza_stash():
         import os
         from hashstash import HashStash
         from ..imports import PATH_HOME_DATA_CACHE
+        # compress='zlib' (stdlib) rather than the default lz4, which is an
+        # optional dep (hashstash[rec]); base installs would silently fall back
+        # to zlib anyway, so pin it explicitly for deterministic, dep-free
+        # behavior. Default engine (pairtree) is likewise dependency-free.
         _STANZA_STASH = HashStash(
-            os.path.join(PATH_HOME_DATA_CACHE, "stanza_constituency"))
+            os.path.join(PATH_HOME_DATA_CACHE, "stanza_constituency"),
+            compress="zlib")
     return _STANZA_STASH
 
 

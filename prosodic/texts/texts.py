@@ -427,29 +427,39 @@ class TextModel(Entity):
             return self._cached_parsed_df
         return self.get_parses_df()
 
-    def get_parsed_df(self, mode='unbounded', **meter_kwargs):
-        """Alias for get_parses_df(mode=..., **meter_kwargs)."""
-        return self.get_parses_df(mode=mode, **meter_kwargs)
+    def get_parsed_df(self, mode='unbounded', by='syll', **meter_kwargs):
+        """Alias for get_parses_df(mode=..., by=..., **meter_kwargs)."""
+        return self.get_parses_df(mode=mode, by=by, **meter_kwargs)
 
-    def get_parses_df(self, mode='unbounded', **meter_kwargs):
+    def get_parses_df(self, mode='unbounded', by='syll', **meter_kwargs):
         """Parse and return results as a DataFrame. No entity construction.
 
         Args:
             mode: 'best', 'unbounded' (default), or 'all'.
+            by: 'syll' (default) — one row per (line, parse, syllable); or
+                'line' — one row per parse (the syllable axis collapsed), like
+                `line.parses.scansions.df`.
             **meter_kwargs: custom meter config (max_s, max_w, etc.)
 
-        Returns a DataFrame with one row per (line, parse, syllable). Columns:
+        With `by='syll'`, one row per (line, parse, syllable). Columns:
             line_num, word_num, form_idx, syll_idx (within-word, joins to _syll_df),
             line_syll_idx (position within line), parse_idx, parse_rank (1-indexed
             among unbounded, NA for bounded), parse_score, is_best, is_bounded,
             pos_idx, pos_size, meter_val, syll_txt, syll_ipa, is_stressed,
             plus one `*<constraint>` column per violation (int8).
 
+        With `by='line'`, one row per parse. Columns:
+            line_num, parse_idx, parse_rank, parse_score, is_best, is_bounded,
+            num_sylls, num_viols, meter (the '+'/'-' scansion string), plus one
+            `*<constraint>` column per constraint, summed over the line's syllables.
+
         Implementation is vectorized: per-line chunks are built directly
         from the numpy (S, N, C) violation arrays without row-by-row Python loops.
         """
         if mode not in ('best', 'unbounded', 'all'):
             raise ValueError(f"mode must be 'best', 'unbounded', or 'all'; got {mode!r}")
+        if by not in ('syll', 'line'):
+            raise ValueError(f"by must be 'syll' or 'line'; got {by!r}")
 
         self.parse(**meter_kwargs)
         if not self._line_parse_results:
@@ -533,6 +543,30 @@ class TextModel(Entity):
             sel_pi = pi_arr[parse_indices]       # (P, N) int
             sel_ps = ps_arr[parse_indices]       # (P, N) int
 
+            if by == 'line':
+                # one row per parse: collapse the N syllable axis. meter string
+                # uses '+' for strong positions, '-' for weak (matching
+                # Parse.meter_str); violations are summed over syllables (total
+                # per constraint per parse).
+                meter_strs = np.array(
+                    [''.join('+' if v else '-' for v in row) for row in sel_mv],
+                    dtype=object,
+                )
+                pp_viols = viols[parse_indices].sum(axis=1).astype(np.int32)  # (P, C)
+                chunks.append({
+                    'line_num': np.full(P, int(line_num), dtype=np.int32),
+                    'parse_idx': parse_indices.astype(np.int32),
+                    'parse_rank': rank_of[parse_indices],
+                    'parse_score': all_scores[parse_indices].astype(np.float64),
+                    'is_best': parse_indices == best_idx,
+                    'is_bounded': ~unbounded_mask[parse_indices],
+                    'num_sylls': np.full(P, N, dtype=np.int32),
+                    'meter': meter_strs,
+                    '_viols': pp_viols,
+                    '_c_names': pl._constraint_names,
+                })
+                continue
+
             PN = P * N
 
             # Parse-level columns broadcast over N syllables
@@ -600,6 +634,29 @@ class TextModel(Entity):
 
         if not chunks:
             return pd.DataFrame()
+
+        if by == 'line':
+            def _cat(k):
+                return np.concatenate([c[k] for c in chunks])
+            viols_all = np.concatenate([c['_viols'] for c in chunks], axis=0)  # (P_total, C)
+            c_names = chunks[0]['_c_names']
+            df = pd.DataFrame({
+                'line_num': _cat('line_num'),
+                'parse_idx': _cat('parse_idx'),
+                'parse_rank': pd.array(_cat('parse_rank'), dtype='Int32'),
+                'parse_score': _cat('parse_score'),
+                'is_best': _cat('is_best'),
+                'is_bounded': _cat('is_bounded'),
+                'num_sylls': _cat('num_sylls'),
+                'num_viols': viols_all.sum(axis=1).astype(np.int32),
+                'meter': _cat('meter'),
+            })
+            df.loc[df['parse_rank'] < 0, 'parse_rank'] = pd.NA
+            for ci, cname in enumerate(c_names):
+                col = viols_all[:, ci]
+                if col.any():
+                    df[f'*{cname}'] = col.astype(np.int32)
+            return df
 
         # Concatenate all chunks into DataFrame
         base_cols = [

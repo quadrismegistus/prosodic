@@ -276,6 +276,29 @@ class TestParsedDf:
         assert not unb['is_bounded'].any()
         assert allp['is_bounded'].any()
 
+    def test_get_parses_df_by_line(self):
+        # by='line' collapses the syllable axis: one row per parse, with the
+        # scansion string and per-constraint violation totals (like
+        # line.parses.scansions.df).
+        t = TextModel(sonnet)
+        syll = t.get_parses_df(mode='all')            # per (line, parse, syll)
+        line = t.get_parses_df(mode='all', by='line')  # per parse
+        # one row per parse
+        assert len(line) == syll.groupby(['line_num', 'parse_idx']).ngroups
+        for col in ('line_num', 'parse_idx', 'parse_score', 'is_bounded',
+                    'num_sylls', 'num_viols', 'meter'):
+            assert col in line.columns
+        # meter is a +/- string of length num_sylls
+        assert (line['meter'].str.len() == line['num_sylls']).all()
+        assert line['meter'].str.fullmatch(r'[+-]+').all()
+        # violation totals match by='syll' summed over syllables (exactly).
+        # key on (line_num, parse_idx) — parse_idx alone collides across lines.
+        star = sorted(c for c in line.columns if c.startswith('*'))
+        summed = syll.groupby(['line_num', 'parse_idx'])[star].sum().astype('int32')
+        got = line.set_index(['line_num', 'parse_idx'])[star].reindex(summed.index)
+        assert got.equals(summed)
+        assert (line['num_viols'] == line[star].sum(axis=1)).all()
+
     def test_parsed_df_no_entities(self):
         t = TextModel("From fairest creatures we desire increase")
         _ = t.parsed_df

@@ -1230,7 +1230,7 @@ class LazyParseList:
         sorted_idx = bounded_indices[np.argsort(bounded_scores)]
         return ParseList(
             [self._get_parse(int(i), is_bounded=True) for i in sorted_idx],
-            parse_unit=self.parse_unit, parent=self.parent,
+            parse_unit=self.parse_unit, parent=self.parent, show_bounded=True,
         )
 
     @property
@@ -1364,7 +1364,14 @@ class LazyParseList:
 
     @property
     def scansions(self):
-        return self
+        # A ParseList of ALL candidate scansions (show_bounded=True), so
+        # .scansions.get_df()/.df/.stats() surface every parse — matching
+        # ParseList.scansions. Returning `self` (a LazyParseList) made
+        # .scansions.get_df() route through get_df's show_bounded=False path
+        # and silently collapse to the unbounded parses only.
+        from .parselists import ParseList
+        return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent,
+                         is_scansions=True, show_bounded=True)
 
     def get_df(self, **kwargs):
         from .parselists import ParseList

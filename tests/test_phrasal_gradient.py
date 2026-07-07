@@ -446,7 +446,7 @@ def _content(t):
             .drop_duplicates("word_num").sort_values("word_num"))
 
 def test_tree_and_grid_stress_spacy():
-    t = TextModel("the cat sat on the mat", syntax=True)
+    t = _syntax_text("the cat sat on the mat")   # skips if spaCy unavailable
     df = t._syll_df
     assert "tstress" in df.columns and "gstress" in df.columns
     s = _content(t)

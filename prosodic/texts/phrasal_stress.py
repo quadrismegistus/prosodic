@@ -405,7 +405,15 @@ def syntax_trees(text, model="en_core_web_sm"):
     with preterminals labeled ``TAG/tstress``. In a Jupyter notebook,
     ``pip install svgling`` + ``import svgling`` makes these render as
     SVG trees automatically; ``print(tree)`` gives the bracketed form.
+
+    ``model="stanza"`` returns the faithful L&P binary s/w trees instead (see
+    ``analysis.metrical_lp.lp_nltk_trees``) — the engine choice made at
+    ``TextModel(syntax=True, syntax_model=...)`` flows through here.
     """
+    if model == "stanza":
+        from ..analysis.metrical_lp import lp_nltk_trees
+        return lp_nltk_trees(text._syll_df)
+
     from spacy.tokens import Doc
     nlp = _get_nlp(model)
     syll_df = text._syll_df

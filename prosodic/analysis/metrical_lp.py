@@ -265,6 +265,10 @@ def _get_stanza(lang: str = "en"):
             _NLP_CACHE[lang] = stanza.Pipeline(
                 lang,
                 processors="tokenize,pos,lemma,constituency,depparse",
+                # prosodic owns sentence segmentation — feed it pre-split units
+                # (one prosodic sentence, or one line) and don't re-split, so
+                # 1 prosodic sentence = 1 tree, matching the spaCy path exactly.
+                tokenize_no_ssplit=True,
                 verbose=False,
             )
     return _NLP_CACHE[lang]
@@ -739,13 +743,52 @@ def lp_word_stress(tree: LPTree) -> dict:
     return out
 
 
+def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
+    """Build faithful ``LPTree``(s) per PROSODIC sentence, keyed by ``sent_num``.
+
+    Grouping by prosodic ``sent_num`` (rather than Stanza's own segmentation)
+    matches the spaCy path's scoping, so tstress normalizes over the same
+    sentence units and the two engines differ only in the parser. Each prosodic
+    sentence is reconstructed from its unstripped tokens (``"".join`` is
+    byte-identical to what prosodic tokenized), its newlines flattened to
+    spaces (harmless for Stanza, uniform with spaCy), and all sentences are
+    batch-parsed in one Stanza call. Returns ``{sent_num: [LPTree, ...]}`` —
+    usually one tree per sentence, more only if Stanza splits it further."""
+    import stanza
+
+    wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
+           .drop_duplicates("word_num").sort_values("word_num"))
+    texts, metas = [], []
+    for sent_num, g in wdf.groupby("sent_num"):
+        g = g.sort_values("word_num")
+        raw = [str(w) for w in g["word_txt"]]
+        rtext, spans = _ref_text_spans(raw)
+        rtext = rtext.replace("\n", " ").replace("\r", " ")
+        texts.append(rtext)
+        metas.append((int(sent_num), spans, [r.strip() for r in raw],
+                      [bool(p) for p in g["is_punc"]],
+                      [int(x) for x in g["word_num"]]))
+    if not texts:
+        return {}
+    nlp = _get_stanza(lang)
+    docs = nlp([stanza.Document([], text=t) for t in texts])
+    out = {}
+    for doc, (sent_num, spans, labels, isp, wns) in zip(docs, metas):
+        trees = []
+        for sent in doc.sentences:
+            tok = _build_tok(sent, labels, isp, wns, spans, True)
+            r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
+            if r and r.get("kind") == "word":
+                trees.append(r["tree"])
+        out[sent_num] = trees
+    return out
+
+
 def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
     """Stanza-constituency backend for ``syntax=True``: write the four
-    phrasal-stress columns from the faithful L&P tree. The parse text and
-    exact token spans are reconstructed from ``syll_df``'s own (unstripped)
-    tokens — byte-identical to prosodic's normalized text — so ``text`` is
-    unused (kept for signature compatibility). Modifies ``syll_df`` in place
-    and returns it."""
+    phrasal-stress columns from the faithful L&P tree, grouped by prosodic
+    ``sent_num`` (same sentence units as the spaCy path). ``text`` is unused
+    (reconstructed from ``syll_df``). Modifies ``syll_df`` in place."""
     import pandas as pd
 
     cols_f = ("pstress", "tstress", "pstrength")
@@ -755,24 +798,13 @@ def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
             syll_df[c] = pd.array([], dtype=pd.Float64Dtype())
         return syll_df
 
-    wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
-           .drop_duplicates("word_num").sort_values("word_num"))
-    # reconstruct prosodic's normalized text + exact spans from the UNstripped
-    # tokens (whitespace is prepended), so no offset search and no text= needed
-    raw = [str(w) for w in wdf["word_txt"]]
-    rtext, spans = _ref_text_spans(raw)
-    ref_labels = [r.strip() for r in raw]
-    ref_ispunc = [bool(p) for p in wdf["is_punc"]]
-    ref_wordnums = [int(x) for x in wdf["word_num"]]
-
-    nlp = _get_stanza(lang)
-    doc = nlp(rtext)
+    ref_wordnums = [int(x) for x in
+                    syll_df[syll_df["form_idx"].isin([0, -1])]
+                    .drop_duplicates("word_num")["word_num"]]
     values = {}
-    for sent in doc.sentences:
-        tok = _build_tok(sent, ref_labels, ref_ispunc, ref_wordnums, spans, True)
-        r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
-        if r and r.get("kind") == "word":
-            values.update(lp_word_stress(r["tree"]))
+    for trees in _lp_trees_by_sentence(syll_df, lang).values():
+        for tree in trees:
+            values.update(lp_word_stress(tree))
 
     def col(key):
         return {wn: (values[wn][key] if wn in values else None)
@@ -783,3 +815,42 @@ def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
     for c in cols_f:
         syll_df[c] = syll_df["word_num"].map(col(c)).astype(pd.Float64Dtype())
     return syll_df
+
+
+def _lptree_to_nltk(tree: LPTree):
+    """Convert an ``LPTree`` to an ``nltk.Tree`` — the L&P binary s/w tree.
+    Each node is labelled with its metrical role relative to its parent: ``R``
+    (root), ``s`` (strong), ``w`` (weak). Word preterminals are labelled
+    ``role/tstress`` with tstress the normalized RPPR grid height, so
+    ``tree_to_dict`` reads them just like the dependency trees."""
+    from nltk.tree import Tree
+
+    heights = grid_heights(tree, lexical_floors(tree))
+    maxh, minh = max(heights), min(heights)
+    span = (maxh - minh) or 1
+    hmap = {id(lf): heights[i] for i, lf in enumerate(tree.leaves())}
+
+    def rec(node, role):
+        if node.is_leaf:
+            ts = (hmap[id(node)] - minh) / span
+            return Tree(f"{role}/{ts}", [node.label])
+        lrole = "s" if node.strong == "l" else "w"
+        rrole = "s" if node.strong == "r" else "w"
+        return Tree(role, [rec(node.left, lrole), rec(node.right, rrole)])
+
+    return rec(tree, "R")
+
+
+def lp_nltk_trees(syll_df, lang: str = "en"):
+    """Faithful L&P binary trees as ``nltk.Tree`` objects — one per sentence,
+    grouped by prosodic ``sent_num`` — backing ``text.syntax_trees()`` under
+    the stanza engine. ``import svgling`` renders them as SVG s/w trees in a
+    notebook. Each tree carries ``_word_nums`` (leaf order) for tree_to_dict."""
+    out = []
+    by_sent = _lp_trees_by_sentence(syll_df, lang)
+    for sent_num in sorted(by_sent):
+        for tree in by_sent[sent_num]:
+            nt = _lptree_to_nltk(tree)
+            nt._word_nums = [lf.word_num for lf in tree.leaves()]
+            out.append(nt)
+    return out

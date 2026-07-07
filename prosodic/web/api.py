@@ -1288,7 +1288,8 @@ async def parse_line(req: dict):
                     for s in pos['slots']:
                         for v in s['violations']:
                             viol_counts[v] = viol_counts.get(v, 0) + 1
-                ph = phrasal_values(p, t) if syntax else None
+                ph_g = phrasal_values(p, t, col="gstress") if syntax else None
+                ph_t = phrasal_values(p, t, col="tstress") if syntax else None
                 out.append({
                     'rank': pi + 1,
                     'parse_html': render_parse_html(p, context_unit),
@@ -1298,7 +1299,10 @@ async def parse_line(req: dict):
                     'positions': positions,
                     'num_viols': sum(len(s['violations']) for pos in positions for s in pos['slots']),
                     'viol_summary': viol_counts,
-                    'grid': grid_data(p, phrasal=ph),
+                    # 'grid' = grid stress (default view); 'grid_tree' = tree
+                    # (cumulative) stress — the Line View toggles between them
+                    'grid': grid_data(p, phrasal=ph_g),
+                    'grid_tree': grid_data(p, phrasal=ph_t) if ph_t is not None else None,
                 })
             return out
 

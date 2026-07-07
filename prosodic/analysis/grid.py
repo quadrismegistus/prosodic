@@ -109,21 +109,25 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
     return rows
 
 
-def phrasal_values(parse, text) -> Optional[List]:
+def phrasal_values(parse, text, col=None) -> Optional[List]:
     """Per-syllable phrasal prominence for a parse, for the grid display.
 
-    Prefers ``gstress`` (the RPPR **grid** — what this display actually is)
-    and falls back to ``tstress`` (cumulative tree stress) for data saved
-    before the grid column existed. Reads the column computed by
-    ``syntax=True`` from the text's syllable DataFrame and maps it onto the
-    parse's syllables via word identity (SyllData.word_num on the DF path;
-    the wordtoken parent chain on the entity path). None if no gradient.
+    ``col`` selects the representation: ``"gstress"`` (RPPR **grid** — what
+    this display renders by default) or ``"tstress"`` (cumulative **tree**
+    stress). ``None`` auto-picks: gstress, else tstress (for data saved before
+    the grid column existed). Reads the column computed by ``syntax=True`` from
+    the text's syllable DataFrame and maps it onto the parse's syllables via
+    word identity (SyllData.word_num on the DF path; the wordtoken parent chain
+    on the entity path). None if the requested column is absent.
     """
     df = getattr(text, "_syll_df", None)
     if df is None:
         return None
-    col = ("gstress" if "gstress" in df.columns
-           else "tstress" if "tstress" in df.columns else None)
+    if col is not None:
+        col = col if col in df.columns else None
+    else:
+        col = ("gstress" if "gstress" in df.columns
+               else "tstress" if "tstress" in df.columns else None)
     if col is None:
         return None
     tmap = (

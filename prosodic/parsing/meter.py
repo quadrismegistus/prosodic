@@ -11,6 +11,7 @@ DEFAULT_METER_KWARGS = dict(
     max_s=METER_MAX_S,
     max_w=METER_MAX_W,
     resolve_optionality=METER_RESOLVE_OPTIONALITY,
+    pool_forms=METER_POOL_FORMS,
     parse_unit="line",
 )
 MTRDEFAULT = DEFAULT_METER_KWARGS
@@ -33,6 +34,7 @@ class Meter(Entity):
         max_s: int = MTRDEFAULT["max_s"],
         max_w: int = MTRDEFAULT["max_w"],
         resolve_optionality: bool = MTRDEFAULT["resolve_optionality"],
+        pool_forms: bool = MTRDEFAULT["pool_forms"],
         parse_unit: Literal["line", "sentpart", "linepart"] = MTRDEFAULT["parse_unit"],
         exhaustive: bool = True,  # ignored, always exhaustive
         vectorized: bool = True,  # ignored, always vectorized
@@ -47,6 +49,7 @@ class Meter(Entity):
             max_s=max_s,
             max_w=max_w,
             resolve_optionality=resolve_optionality,
+            pool_forms=pool_forms,
             parse_unit=parse_unit,
         )
 

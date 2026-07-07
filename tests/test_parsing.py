@@ -405,16 +405,51 @@ def test_df_path_finds_optimal_on_ambiguous_line():
     assert t.parse()[0].best_parse.score == 0
 
 
+def test_pool_forms_pools_pronunciation_variants():
+    """pool_forms=True (default) reports scansions optimal under ANY pronunciation
+    of an ambiguous word — Prosodic's in-situ variant resolution — not just the
+    single best-scoring pronunciation combo. Pooling never worsens the best score,
+    dedups the unbounded set by meter string, and is part of the meter key."""
+    from prosodic.parsing.meter import Meter
+
+    assert getattr(Meter(), 'pool_forms') is True                    # default on
+    assert Meter(pool_forms=True).key != Meter(pool_forms=False).key  # distinct cache key
+
+    # sonnet lines: pooling raises the mean unbounded count (it adds cross-
+    # pronunciation optima) while never worsening any line's best score, and
+    # num_parses stays a distinct-meter-string count.
+    son = open("corpora/corppoetry_en/en.shakespeare.txt").read().split("\n\n")[1]
+    pooled = Meter(pool_forms=True).parse_text(TextModel(son))
+    best = Meter(pool_forms=False).parse_text(TextModel(son))
+    n_pooled = n_best = added = 0
+    for pl, bl in zip(pooled, best):
+        bp, bb = pl.best_parse, bl.best_parse
+        if bp is None or bb is None:
+            continue
+        assert bp.score <= bb.score + 1e-9              # pooling never worse
+        assert pl.num_parses == len({p.meter_str for p in pl.unbounded})  # deduped
+        n_pooled += pl.num_parses
+        n_best += bl.num_parses
+        if pl.num_parses > bl.num_parses:
+            added += 1
+    assert n_pooled > n_best        # strictly more unbounded parses overall
+    assert added > 0                # pooling adds parses on at least one line
+
+
 def test_best_parse_cooptimal_signal():
     """best_parse exposes num_cooptimal / is_tied so a co-optimal tie among
     equally-scoring scansions is visible instead of being silently resolved.
     The tiebreak itself stays metrically neutral; this only reports how many
-    DISTINCT best meter strings were equally optimal (given the chosen
-    pronunciation)."""
+    DISTINCT best meter strings were equally optimal.
+
+    With pool_forms=False the count is within the single chosen pronunciation;
+    with default pooling it also folds in scansions co-optimal under a different
+    pronunciation (so a line unique under one pronunciation can show a tie)."""
     unique_line = "Shall I compare thee to a summers day"
     tied_line = "Were an all-eating shame and thriftless praise"
+    # Single-pronunciation view: unique_line has a unique best, tied_line ties.
     t = TextModel(unique_line + "\n" + tied_line)
-    res = t.parse()
+    res = t.parse(pool_forms=False)
     for pl in res:
         bp = pl.best_parse
         assert bp is not None
@@ -429,6 +464,14 @@ def test_best_parse_cooptimal_signal():
     assert res[0].best_parse.num_cooptimal == 1
     assert res[1].best_parse.is_tied is True
     assert res[1].best_parse.num_cooptimal >= 2
+
+    # The num_cooptimal == distinct-co-optimal-count invariant also holds under
+    # default pooling, where a cross-pronunciation tie can surface.
+    for pl in TextModel(unique_line + "\n" + tied_line).parse(pool_forms=True):
+        bp = pl.best_parse
+        assert bp.is_tied == (bp.num_cooptimal > 1)
+        n = len({p.meter_str for p in pl.unbounded if abs(p.score - bp.score) < 1e-9})
+        assert bp.num_cooptimal == n
 
 
 def test_zone_aware_bounding_mechanism():

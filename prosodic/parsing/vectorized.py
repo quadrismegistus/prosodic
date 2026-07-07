@@ -11,6 +11,258 @@ from ..imports import *
 MAX_FORM_COMBOS = 4096
 
 
+def _pool_meter_str(lpl, i):
+    """+/- meter string for scansion i of a LazyParseList (matches Parse.meter_str)."""
+    if lpl._meter_vals is not None:
+        return "".join("+" if v else "-" for v in lpl._meter_vals[i])
+    return "".join("+" if x == "s" else "-" for x in lpl._all_scansions[i])
+
+
+def _pool_combo_parses(combo_lpls, meter, parse_unit, bound_zones, parent=None,
+                       syll_builder=None):
+    """Pool unbounded parses across pronunciation-variant combos (Prosodic v1/v2
+    semantics: the unbounded set = scansions optimal under ANY pronunciation).
+
+    Unions each combo's unbounded parses, cross-bounds them on the (zone-aware)
+    violation-count vector, dedups by meter string keeping the min-score
+    representative, and returns a LazyParseList carrying the pooled survivors so
+    the numpy-backed consumers (``get_parses_df`` etc.) keep working. Each
+    survivor keeps its OWN combo's syllables (``sylls_by_scansion``) so a parse
+    realized under a stressed pronunciation reports that pronunciation's
+    form_idx / stress, not the primary combo's.
+
+    Only each combo's *unbounded* parses need pooling: a parse bounded within its
+    own combo is dominated by a combo-mate, which is itself either kept or
+    dominated by a cross-combo parse — so by transitivity it stays bounded.
+    Domination matches ``compute_bounding``: ``vk <= vj`` on all constraints and
+    ``vk < vj`` on at least one.
+
+    ``syll_builder(row_idx) -> [SyllData,...]`` (optional) defers SyllData
+    construction: combos pass ``sylls=None`` and only the combos that actually
+    surface a surviving parse get their syllables built, so lines with many
+    pronunciation combos don't pay to materialize syllables for all of them.
+    """
+    from .parselists import ParseList
+    combo_lpls = [l for l in combo_lpls if l is not None]
+    if not combo_lpls:
+        return ParseList([], parse_unit=parse_unit, parent=parent)
+
+    def ensure_sylls(lpl):
+        # build (and memoize on the combo) SyllData only when a combo is returned
+        # or contributes a surviving parse
+        if lpl._sylls is None and syll_builder is not None:
+            lpl._sylls = syll_builder(lpl._syll_row_idx)
+        return lpl._sylls
+
+    # Mixed syllable counts across pronunciations can't share one (S, N, C)
+    # array; pooling is rare there, so fall back to the best single combo (a
+    # valid LazyParseList) for that line.
+    if len({l._all_viols.shape[1] for l in combo_lpls}) != 1:
+        best = min(combo_lpls,
+                   key=lambda l: float(l._scores.min()) if l._scores.size else float('inf'))
+        ensure_sylls(best)
+        best.parent = parent
+        return best
+
+    ci = combo_lpls[0]._constraint_index
+    S = len(combo_lpls[0]._all_scansions)
+
+    # Meter strings depend only on the scansion, which is shared across same-N
+    # combos — compute the S strings ONCE (not per combo x scansion).
+    mv0 = combo_lpls[0]._meter_vals
+    if mv0 is not None:
+        ms_arr = ["".join("+" if v else "-" for v in mv0[i]) for i in range(S)]
+    else:
+        ms_arr = ["".join("+" if x == "s" else "-" for x in combo_lpls[0]._all_scansions[i])
+                  for i in range(S)]
+
+    # Cross-bound ONLY the combos' unbounded parses (pure numpy, tiny): a parse
+    # bounded within its combo stays bounded by transitivity, so the full
+    # per-line compute_bounding is unnecessary. A (combo, scansion) is pooled-
+    # unbounded iff within-combo unbounded AND not dominated by another combo's
+    # unbounded parse.
+    urank, uidx, uvecs = [], [], []
+    for rank, lpl in enumerate(combo_lpls):
+        for i in lpl._unbounded_indices:
+            i = int(i)
+            urank.append(rank); uidx.append(i)
+            uvecs.append(_zone_split_batch(lpl._all_viols[None, i:i + 1], bound_zones)[0, 0])
+    pool_unb = set()  # {(rank, scan_idx)} surviving cross-bounding
+    if uvecs:
+        vecs = np.array(uvecs)
+        le = (vecs[:, None, :] <= vecs[None, :, :]).all(axis=2)
+        lt = (vecs[:, None, :] < vecs[None, :, :]).any(axis=2)
+        dom = le & lt
+        np.fill_diagonal(dom, False)
+        alive = ~dom.any(axis=0)
+        pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
+
+    # Fast path: if the canonical combo (rank 0) already accounts for the entire
+    # pooled unbounded set — no alternate pronunciation adds or bounds anything —
+    # pooling is a no-op; return combo 0 directly and skip the rebuild. This is
+    # the common case (natural pronunciations usually dominate) and keeps the
+    # ambiguous-line cost near the non-pooled path.
+    if pool_unb == {(0, int(i)) for i in combo_lpls[0]._unbounded_indices}:
+        ensure_sylls(combo_lpls[0])
+        combo_lpls[0].parent = parent
+        return combo_lpls[0]
+
+    # Dedup by meter string, combo-0-base + overlay (identical rule to
+    # _pool_candidates so the DF and entity paths agree): every meter string is
+    # represented by the CANONICAL combo (rank 0); a meter string that is
+    # pool-unbounded via another pronunciation is upgraded to that combo's
+    # (better) parse. Ties thus keep the canonical pronunciation rather than
+    # flipping function words to strong-first.
+    l0 = combo_lpls[0]
+    best_rep = {}  # meter_str -> (sortkey, lpl, scan_idx)
+    for i in range(l0._all_viols.shape[0]):
+        ms = ms_arr[i]
+        sortkey = ((0, i) not in pool_unb, float(l0._all_scores[i]), 0, i)
+        cur = best_rep.get(ms)
+        if cur is None or sortkey < cur[0]:
+            best_rep[ms] = (sortkey, l0, i)
+    for rank, lpl in enumerate(combo_lpls):
+        if rank == 0:
+            continue
+        for i in lpl._unbounded_indices:
+            i = int(i)
+            if (rank, i) not in pool_unb:
+                continue
+            ms = ms_arr[i]
+            sortkey = (False, float(lpl._all_scores[i]), rank, i)
+            cur = best_rep.get(ms)
+            if cur is None or sortkey < cur[0]:
+                best_rep[ms] = (sortkey, lpl, i)
+    reps = sorted(best_rep.values(), key=lambda r: r[0])  # unbounded first, then score, canonical
+
+    scans = [lpl._all_scansions[i] for _, lpl, i in reps]
+    viols = np.stack([lpl._all_viols[i] for _, lpl, i in reps])          # (P, N, C)
+    unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)    # sk[0] = is_bounded
+    sylls_by = [ensure_sylls(lpl) for _, lpl, i in reps]                 # SyllData built here only
+    rowidx_by = [lpl._syll_row_idx for _, lpl, i in reps]
+    have = lambda a: all(getattr(lpl, a) is not None for _, lpl, _ in reps)
+    mv = np.stack([lpl._meter_vals[i] for _, lpl, i in reps]) if have('_meter_vals') else None
+    pi = np.stack([lpl._position_ids[i] for _, lpl, i in reps]) if have('_position_ids') else None
+    ps = np.stack([lpl._position_sizes[i] for _, lpl, i in reps]) if have('_position_sizes') else None
+    # carry the canonical combo's wordtokens (entity path) so pooled parses can
+    # walk to WordTokens for rendering / Parse.concat; None on the DF path.
+    pooled = LazyParseList(
+        combo_lpls[0].wordtokens, meter, scans, viols, ci, unb_mask, sylls_by[0], parse_unit=parse_unit,
+        syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
+        sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
+    )
+    pooled.parent = parent
+    return pooled
+
+
+def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_unit):
+    """DF-path pooling from RAW candidate tuples (viols, mask, scansions, rows,
+    meter_vals, position_ids, position_sizes) — one per pronunciation combo.
+
+    Same semantics as ``_pool_combo_parses`` but avoids constructing a
+    LazyParseList (and its per-combo score/scansion setup) for every combo: the
+    cross-bound is computed straight from the raw viol arrays, and a combo's
+    LazyParseList is materialized only when it is actually returned or overlays a
+    surviving parse. Lines with many pronunciation combos (a cartesian blow-up)
+    thus stay close to the non-pooled cost. Combo 0 is the canonical (all
+    form_idx 0) pronunciation.
+    """
+    from .parselists import ParseList
+    candidates = [c for c in candidates if c is not None]
+    if not candidates:
+        return ParseList([], parse_unit=parse_unit)
+
+    lpl_cache = {}
+    def get_lpl(rank):
+        lpl = lpl_cache.get(rank)
+        if lpl is None:
+            v, m, scans, rows, mv, pi, ps = candidates[rank]
+            lpl = LazyParseList(None, meter, scans, v, ci_use, m, None,
+                                parse_unit=parse_unit, syll_row_idx=rows,
+                                meter_vals=mv, position_ids=pi, position_sizes=ps)
+            lpl_cache[rank] = lpl
+        if lpl._sylls is None:
+            lpl._sylls = build_sylls(lpl._syll_row_idx)
+        return lpl
+
+    # Mixed syllable counts can't share one (S, N, C) array — rare; fall back to
+    # the best single combo.
+    if len({c[0].shape[1] for c in candidates}) != 1:
+        best, bs = 0, float('inf')
+        for rank, c in enumerate(candidates):
+            ui = np.where(c[1])[0]
+            if not len(ui):
+                continue
+            s = float(get_lpl(rank)._scores.min())
+            if s < bs:
+                bs, best = s, rank
+        return get_lpl(best)
+
+    # Cross-bound the combos' unbounded parses straight from raw viols.
+    urank, uidx, uvecs = [], [], []
+    for rank, c in enumerate(candidates):
+        ui = np.where(c[1])[0]
+        if not len(ui):
+            continue
+        sums = _zone_split_batch(c[0][ui][None], bound_zones)[0]  # (len(ui), C[*Z])
+        for j, i in enumerate(ui):
+            urank.append(rank); uidx.append(int(i)); uvecs.append(sums[j])
+    pool_unb = set()
+    if uvecs:
+        vecs = np.array(uvecs)
+        le = (vecs[:, None, :] <= vecs[None, :, :]).all(axis=2)
+        lt = (vecs[:, None, :] < vecs[None, :, :]).any(axis=2)
+        dom = le & lt
+        np.fill_diagonal(dom, False)
+        alive = ~dom.any(axis=0)
+        pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
+
+    # Fast path: canonical combo already accounts for the whole pooled unbounded
+    # set — build ONLY combo 0.
+    if pool_unb == {(0, int(i)) for i in np.where(candidates[0][1])[0]}:
+        return get_lpl(0)
+
+    # Full rebuild. Base = combo 0's scansions (a valid rep for every meter
+    # string); overlay the pool-unbounded parses contributed by other combos.
+    l0 = get_lpl(0)
+    best_rep = {}  # meter_str -> (sortkey, rank, scan_idx)
+    for i in range(l0._all_viols.shape[0]):
+        ms = _pool_meter_str(l0, i)
+        sk = ((0, i) not in pool_unb, float(l0._all_scores[i]), 0, i)
+        cur = best_rep.get(ms)
+        if cur is None or sk < cur[0]:
+            best_rep[ms] = (sk, 0, i)
+    for rank, c in enumerate(candidates):
+        if rank == 0:
+            continue
+        for i in np.where(c[1])[0]:
+            i = int(i)
+            if (rank, i) not in pool_unb:
+                continue
+            lr = get_lpl(rank)
+            ms = _pool_meter_str(lr, i)
+            sk = (False, float(lr._all_scores[i]), rank, i)
+            cur = best_rep.get(ms)
+            if cur is None or sk < cur[0]:
+                best_rep[ms] = (sk, rank, i)
+    reps = sorted(best_rep.values(), key=lambda r: r[0])
+
+    L = lambda rank: get_lpl(rank)
+    scans = [L(rank)._all_scansions[i] for _, rank, i in reps]
+    viols = np.stack([L(rank)._all_viols[i] for _, rank, i in reps])
+    unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)
+    sylls_by = [L(rank)._sylls for _, rank, i in reps]
+    rowidx_by = [L(rank)._syll_row_idx for _, rank, i in reps]
+    mv = np.stack([L(rank)._meter_vals[i] for _, rank, i in reps])
+    pi = np.stack([L(rank)._position_ids[i] for _, rank, i in reps])
+    ps = np.stack([L(rank)._position_sizes[i] for _, rank, i in reps])
+    return LazyParseList(
+        None, meter, scans, viols, ci_use, unb_mask, sylls_by[0], parse_unit=parse_unit,
+        syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
+        sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
+    )
+
+
 def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     """Parse all lines from a syllable DataFrame without constructing Entity objects.
 
@@ -326,34 +578,49 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
             constraint_weights = meter.constraints
             weight_arr = np.array([constraint_weights.get(c, 1) for c in constraint_names])
 
+            pool_forms = getattr(meter, 'pool_forms', True)
+            ci_use = constraint_index if constraint_index is not None else {c: i for i, c in enumerate(constraint_names)}
+
+            def _build_sylls(rows):
+                return [
+                    SyllData(ipa=all_ipa[r], txt=all_txt[r],
+                             is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
+                             is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]),
+                             word_num=int(all_wnum[r]))
+                    for r in rows
+                ]
+
+            def _combo_lpl(viols, unbounded_mask, cand_scansions, rows, mv, pi_, ps, sylls=None):
+                return LazyParseList(
+                    None, meter, cand_scansions, viols, ci_use,
+                    unbounded_mask, sylls, parse_unit=meter.parse_unit,
+                    syll_row_idx=rows, meter_vals=mv, position_ids=pi_, position_sizes=ps,
+                )
+
             for ln in ambig_lines:
                 candidates = line_candidates.get(ln, [])
-                best_result = None
-                best_score = float('inf')
-                for viols, unbounded_mask, cand_scansions, rows, mv, pi_, ps in candidates:
-                    unb_idx = np.where(unbounded_mask)[0]
-                    if len(unb_idx) == 0:
-                        continue
-                    scores = (viols.sum(axis=1) * weight_arr[None, :]).sum(axis=1)
-                    unb_scores = scores[unb_idx]
-                    ms = float(unb_scores.min())
-                    if ms < best_score:
-                        best_score = ms
-                        sylls = [
-                            SyllData(ipa=all_ipa[r], txt=all_txt[r],
-                                     is_stressed=bool(all_stressed[r]), is_heavy=bool(all_heavy[r]),
-                                     is_strong=bool(all_strong[r]), is_weak=bool(all_weak[r]),
-                                     word_num=int(all_wnum[r]))
-                            for r in rows
-                        ]
-                        ci_use = constraint_index if constraint_index is not None else {c: i for i, c in enumerate(constraint_names)}
-                        best_result = LazyParseList(
-                            None, meter, cand_scansions, viols, ci_use,
-                            unbounded_mask, sylls, parse_unit=meter.parse_unit,
-                            syll_row_idx=rows,
-                            meter_vals=mv, position_ids=pi_, position_sizes=ps,
-                        )
-                pl = best_result if best_result else ParseList([], parse_unit=meter.parse_unit)
+                if pool_forms:
+                    # v1/v2 semantics: pool + cross-bound all pronunciation combos
+                    # straight from the raw candidate arrays. LazyParseLists (and
+                    # their syllables) are built lazily — only combo 0 in the
+                    # common "canonical pronunciation dominates" case.
+                    pl = _pool_candidates(candidates, meter, ci_use, bound_zones,
+                                          _build_sylls, meter.parse_unit)
+                else:
+                    # legacy: report only the single best-scoring combination
+                    best_result = None
+                    best_score = float('inf')
+                    for viols, unbounded_mask, cand_scansions, rows, mv, pi_, ps in candidates:
+                        unb_idx = np.where(unbounded_mask)[0]
+                        if len(unb_idx) == 0:
+                            continue
+                        scores = (viols.sum(axis=1) * weight_arr[None, :]).sum(axis=1)
+                        ms = float(scores[unb_idx].min())
+                        if ms < best_score:
+                            best_score = ms
+                            best_result = _combo_lpl(viols, unbounded_mask, cand_scansions,
+                                                     rows, mv, pi_, ps, sylls=_build_sylls(rows))
+                    pl = best_result if best_result else ParseList([], parse_unit=meter.parse_unit)
                 pl._unit_num = int(ln)
                 results[ln] = pl
 
@@ -454,7 +721,9 @@ def parse_batch(parse_units, meter, syll_df=None):
                 results[idx] = (wt, pl)
 
         # handle ambiguous lines individually
+        pool_forms = getattr(meter, 'pool_forms', True)
         for idx, wt, feats, sylls in ambig_lines:
+            combo_lpls = []
             best_result = None
             best_score = float('inf')
             for wtl in wt.iter_wordtoken_matrix():
@@ -477,6 +746,7 @@ def parse_batch(parse_units, meter, syll_df=None):
                     wtl, meter, wscans, wviols, wci, wunb, wsylls,
                     parse_unit=meter.parse_unit, meter_vals=wmv,
                 )
+                combo_lpls.append(wpl)
                 if wpl._scores.size > 0:
                     ms = float(wpl._scores.min())
                     if ms < best_score:
@@ -484,7 +754,10 @@ def parse_batch(parse_units, meter, syll_df=None):
                         best_result = wpl
                 if not meter.resolve_optionality:
                     break
-            if best_result:
+            if pool_forms and combo_lpls:
+                # v1/v2 semantics: pool + cross-bound all pronunciation combos
+                pl = _pool_combo_parses(combo_lpls, meter, meter.parse_unit, bound_zones, parent=wt)
+            elif best_result:
                 best_result.parent = wt  # ensure parent is original line, not copy
                 pl = best_result
             else:
@@ -1104,7 +1377,8 @@ class LazyParseList:
 
     def __init__(self, wordtokens, meter, scansions, viols, constraint_index,
                  unbounded_mask, sylls, parse_unit="line", syll_row_idx=None,
-                 meter_vals=None, position_ids=None, position_sizes=None):
+                 meter_vals=None, position_ids=None, position_sizes=None,
+                 sylls_by_scansion=None, syll_row_idx_by_scansion=None):
         self.wordtokens = wordtokens
         self.meter = meter
         self.parse_unit = parse_unit
@@ -1119,6 +1393,13 @@ class LazyParseList:
         self._sylls = sylls
         # row indices into the source syll_df for each syll in _sylls (DF path)
         self._syll_row_idx = syll_row_idx
+        # Pooled results (pool_forms): survivors come from different pronunciation
+        # combos, so each scansion carries its OWN syllables / DF row indices.
+        # When set, these override _sylls / _syll_row_idx per scansion index so a
+        # parse realized under a stressed variant reports that variant's
+        # form_idx / stress. Stays numpy — no Entity construction.
+        self._sylls_by_scansion = sylls_by_scansion
+        self._syll_row_idx_by_scansion = syll_row_idx_by_scansion
         # scansion encoding, shape (S, N) each — lazily recomputed if missing
         self._meter_vals = meter_vals
         self._position_ids = position_ids
@@ -1308,9 +1589,11 @@ class LazyParseList:
                 p.parse_rank = rank
             return p
 
+        sylls = (self._sylls_by_scansion[idx]
+                 if self._sylls_by_scansion is not None else self._sylls)
         parse = _build_single_parse(
             idx, self._all_scansions[idx], self._all_viols, self._constraint_index,
-            self._constraint_names, self._sylls, self.wordtokens, self.meter,
+            self._constraint_names, sylls, self.wordtokens, self.meter,
             rank=rank,
         )
         parse.is_bounded = is_bounded

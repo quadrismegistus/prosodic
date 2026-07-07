@@ -579,29 +579,49 @@ class TextModel(Entity):
 
             # Syll-level columns tiled across P parses
             line_syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
-            row_idx = getattr(pl, '_syll_row_idx', None)
-            if row_idx is not None:
-                r_arr = np.asarray(row_idx)
-                word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
-                form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
-                syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
+            # Pooled (pool_forms) results carry per-scansion sylls/rows, since
+            # each surviving parse may come from a different pronunciation combo;
+            # non-pooled results share one syll sequence and tile it. Both read
+            # lightweight SyllData — no Entity construction.
+            sbs = getattr(pl, '_sylls_by_scansion', None)
+            ribs = getattr(pl, '_syll_row_idx_by_scansion', None)
+            if sbs is not None:
+                sel_sylls = [sbs[int(k)] for k in parse_indices]
+                syll_txt_col = np.array(
+                    [getattr(s, 'txt', '') or '' for row in sel_sylls for s in row], dtype=object)
+                syll_ipa_col = np.array(
+                    [getattr(s, 'ipa', '') or '' for row in sel_sylls for s in row], dtype=object)
+                is_stressed_col = np.array(
+                    [bool(s.is_stressed) for row in sel_sylls for s in row], dtype=bool)
+                if ribs is not None:
+                    rflat = np.array([int(r) for k in parse_indices for r in ribs[int(k)]], dtype=np.int64)
+                    word_num_col = all_word_nums[rflat].astype(np.int32)
+                    form_idx_col = all_form_idxs[rflat].astype(np.int32)
+                    syll_idx_col = all_syll_idxs[rflat].astype(np.int32)
+                else:
+                    word_num_col = np.full(PN, -1, dtype=np.int32)
+                    form_idx_col = np.zeros(PN, dtype=np.int32)
+                    syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
             else:
-                word_num_col = np.full(PN, -1, dtype=np.int32)
-                form_idx_col = np.zeros(PN, dtype=np.int32)
-                syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
-
-            syll_txt_arr = np.array(
-                [getattr(s, 'txt', '') or '' for s in sylls], dtype=object,
-            )
-            syll_ipa_arr = np.array(
-                [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object,
-            )
-            is_stressed_arr = np.array(
-                [bool(s.is_stressed) for s in sylls], dtype=bool,
-            )
-            syll_txt_col = np.tile(syll_txt_arr, P)
-            syll_ipa_col = np.tile(syll_ipa_arr, P)
-            is_stressed_col = np.tile(is_stressed_arr, P)
+                row_idx = getattr(pl, '_syll_row_idx', None)
+                if row_idx is not None:
+                    r_arr = np.asarray(row_idx)
+                    word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
+                    form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
+                    syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
+                else:
+                    word_num_col = np.full(PN, -1, dtype=np.int32)
+                    form_idx_col = np.zeros(PN, dtype=np.int32)
+                    syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
+                syll_txt_arr = np.array(
+                    [getattr(s, 'txt', '') or '' for s in sylls], dtype=object)
+                syll_ipa_arr = np.array(
+                    [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object)
+                is_stressed_arr = np.array(
+                    [bool(s.is_stressed) for s in sylls], dtype=bool)
+                syll_txt_col = np.tile(syll_txt_arr, P)
+                syll_ipa_col = np.tile(syll_ipa_arr, P)
+                is_stressed_col = np.tile(is_stressed_arr, P)
 
             # Flatten (P, N) -> (P*N,)
             meter_val_col = np.where(sel_mv.ravel(), 's', 'w')

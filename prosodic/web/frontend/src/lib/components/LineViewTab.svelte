@@ -20,6 +20,9 @@
 	// grid/tree view mode: 'mt' = MetricalTree (dep projection, shipping),
 	// 'lp' = faithful Liberman & Prince (constituency, experimental).
 	let vizMode = $state('mt');
+	// which phrasal prominence drives the grid: 'grid' = RPPR grid stress
+	// (coarse, L&P's preferred), 'tree' = cumulative tree stress (fine).
+	let stressMode = $state('grid');
 	let lpData = $state(null);
 	let lpLoading = $state(false);
 	let lpError = $state('');
@@ -144,15 +147,23 @@
 							Metrical grid + tree <span class="viz-hint">(faithful Liberman &amp; Prince)</span>
 						{/if}
 					</h3>
-					<div class="viz-toggle" role="group" aria-label="Grid model">
-						<button class:on={vizMode === 'mt'} onclick={() => setViz('mt')}>MetricalTree</button>
-						<button class:on={vizMode === 'lp'} onclick={() => setViz('lp')}>L&amp;P faithful</button>
+					<div class="viz-toggle-group">
+						{#if vizMode === 'mt' && selectedParse.grid_tree}
+							<div class="viz-toggle" role="group" aria-label="Prominence">
+								<button class:on={stressMode === 'grid'} onclick={() => (stressMode = 'grid')} title="RPPR grid height (L&amp;P's preferred, coarse)">Grid stress</button>
+								<button class:on={stressMode === 'tree'} onclick={() => (stressMode = 'tree')} title="Cumulative tree stress (fine-grained)">Tree stress</button>
+							</div>
+						{/if}
+						<div class="viz-toggle" role="group" aria-label="Grid model">
+							<button class:on={vizMode === 'mt'} onclick={() => setViz('mt')}>MetricalTree</button>
+							<button class:on={vizMode === 'lp'} onclick={() => setViz('lp')}>L&amp;P faithful</button>
+						</div>
 					</div>
 				</div>
 
 				{#if vizMode === 'mt'}
 					<MetricalGridTree
-						rows={selectedParse.grid}
+						rows={stressMode === 'tree' && selectedParse.grid_tree ? selectedParse.grid_tree : selectedParse.grid}
 						palette={gridPalette}
 						levelNames={gridLevelNames}
 						tree={syntaxTrees[0] ?? null}
@@ -303,6 +314,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
+	}
+	.viz-toggle-group {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 	.viz-toggle {
 		display: inline-flex;

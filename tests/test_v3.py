@@ -240,6 +240,29 @@ class TestParsedDf:
         assert 'is_best' in pdf.columns
         assert 'is_bounded' in pdf.columns
 
+    def test_syllable_weight_long_and_complex_nuclei(self):
+        # Heavy = coda OR long/complex nucleus (diphthong OR long monophthong).
+        # Regression: long monophthongs (siː, tuː, ...) were scored light
+        # because only coda + diphthong were counted (#is-heavy-long-vowel).
+        from prosodic.texts.syll_df import _syll_is_heavy_from_ipa
+        heavy = ["siː", "tuː", "sɔː", "biː",      # long monophthongs
+                 "greɪ", "goʊ", "maɪ", "naʊ",       # diphthongs
+                 "kæt", "sɪt"]                       # codas
+        light = ["ðə", "mɑ"]                         # short open
+        for ipa in heavy:
+            assert _syll_is_heavy_from_ipa(ipa), f"{ipa} should be heavy"
+        for ipa in light:
+            assert not _syll_is_heavy_from_ipa(ipa), f"{ipa} should be light"
+        # DF path and Entity path must agree on real words
+        for w in ("see", "too", "gray", "cat", "the", "greater"):
+            t = TextModel(w)
+            df_heavy = [bool(x) for x in t._syll_df[t._syll_df.form_idx == 0].is_heavy]
+            wt = t.wordtokens[0]
+            ent_heavy = [s.is_heavy for s in wt.children[0].children[0].children]
+            assert df_heavy == ent_heavy, (w, df_heavy, ent_heavy)
+        # "see" is a single long-vowel syllable -> heavy in both paths
+        assert TextModel("see")._syll_df.iloc[0].is_heavy
+
     def test_parsed_df_join_keys(self):
         t = TextModel("From fairest creatures we desire increase")
         pdf = t.parsed_df

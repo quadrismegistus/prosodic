@@ -165,8 +165,62 @@ artifact on a shared signal — not a meaningful preference.
    meter is enforced by structure and lexical stress; phrasal stress nudges the
    ambiguous cases.
 
+## Against Hayes' grammar
+
+The strongest test is Bruce Hayes' MaxEnt metrical grammar for the sonnets
+([ShakespeareTableaux](https://brucehayes.org/ShakespeareAndMilton/ShakespeareTableaux.txt))
+— 2141 lines, **88 constraints**, learned weights, and a per-line
+antimetricality (harmony) score. His gold scansion is uniformly iambic
+pentameter (1979 masculine, 162 feminine), so the metrical action lives
+entirely in the *violations*, confirming the strict-template target above.
+
+**Validation.** Prosodic's iambic-template violations correlate with Hayes'
+per-line score at **ρ = 0.448** (CV R² ≈ 0.20) — modest but real agreement
+between prosodic's ~6 constraints and his 88, with `w_stress` ("stress in a
+weak position") the dominant shared predictor, exactly as in Hayes' grammar.
+
+**Does the gradient beat the categorical baseline? No.** Regressing Hayes'
+score on prosodic's per-constraint violations:
+
+```
+  lexical only        CV R² = 0.198
+  lexical + phrasal   CV R² = 0.205   (+0.007 — negligible)
+  phrasal only        CV R² = 0.035
+```
+
+Gradient phrasal stress adds essentially nothing over lexical for *predicting
+antimetricality*. This does not contradict Result 2 — there phrasal stress
+helped a parser *choose* the canonical scansion (+8); here it fails to *grade
+the tension* once the scansion is fixed. **Phrasal stress disambiguates the
+reading but doesn't grade the tension.** Hayes' gold is what separates the two.
+
+**Constraint mapping.** Prosodic's core constraints *are* Hayes' core
+constraints:
+
+| prosodic | Hayes | ρ(per-line viols) | corpus totals |
+|---|---|---|---|
+| `w_stress` | `*Stress in W` (`*[-Strong,+Accent]`) | 0.710 | 1395 ≈ 1233 |
+| `s_unstress` | `*Stressless in S` (`*[+Strong,-Accent]`) | 0.557 | 2410 ≈ 2673 |
+
+They fire on the same lines with near-identical totals. Categorizing his 88:
+**54** are stress-position (refinements of these, at various hierarchy levels —
+prosodic coarsens them into ~3), **24** are hierarchy/alignment (`Align(Foot,
+IP)`, the `J1–5` junctures — **no prosodic equivalent**), 6 extrametricality,
+3 lapse/clash.
+
+**The payoff.** Hayes' power *beyond* raw stress is the **prosodic hierarchy —
+boundaries**, not prominence. Our gradient `tstress`/`gstress` adds a *third,
+orthogonal* axis (prominence), which is why it added nothing to Hayes'
+antimetricality: the signal he captures beyond stress is boundary-driven. **To
+push prosodic toward Hayes, the evidence points to prosodic-hierarchy (boundary)
+constraints — not more prominence.**
+
+Reproduce: `scripts/phrasal_scansion_eval.py`; Hayes analysis in this section
+was run ad hoc against the tableaux file.
+
 ## References
 
+- Hayes, B. *Shakespeare and Milton metrical tableaux.* brucehayes.org.
 - Liberman, M. & A. Prince (1977). On stress and linguistic rhythm. *LI* 8.
 - Hayes, B. & C. Wilson (2008). A maximum entropy model of phonotactics.
 - Litlab tagged sample: `data/tagged_samples/tagged-sample-litlab-2016.txt`.

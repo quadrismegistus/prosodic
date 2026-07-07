@@ -492,29 +492,33 @@ def tree_to_dict(tree):
 
 
 def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
-    """Per-word phrasal-stress dicts from spaCy, one sentence at a time.
+    """Per-word phrasal-stress dicts from spaCy, one prosodic sentence at a time.
 
-    Both modes build one pre-tokenized Doc per sentence with punctuation
-    excluded (stable — punctuation in a bare line fragment destabilizes the
-    parse and ties the grid). They differ only in tokenization of the content
-    words:
+    ``free=True`` (default): reconstruct the sentence text from the unstripped
+    tokens (``"".join`` is byte-identical to what prosodic tokenized) and let
+    spaCy tokenize it, so clitics split (``beauty's`` → ``beauty`` + ``'s`` →
+    ``poss``, not ``compound``) and punctuation is present for correct clause
+    attachment. Verse **line breaks are flattened to spaces** first — they, not
+    punctuation, are what a dependency parser mishandles (newline tokens);
+    replacing ``\\n`` with a space keeps char offsets intact. spaCy tokens are
+    mapped back to prosodic ``word_num`` by char-offset overlap, each word
+    taking its HOST piece (first; the trailing clitic is dropped). Because the
+    parse includes punctuation, pstress/tstress are re-normalized over content
+    tokens so the nuclear word is 1.0.
 
-    - ``free=True`` (default): each content word is split through spaCy's own
-      tokenizer, so ``beauty's`` → ``beauty`` + ``'s`` and parses as ``poss``,
-      not ``compound`` — fixing the possessive/contraction bug. Each word's
-      value is taken from its HOST piece (the first; the clitic is dropped).
-    - ``free=False`` (legacy): each content word is one Doc token
-      (``beauty's`` stays merged → mis-tagged ``compound``).
+    ``free=False`` (legacy): one pre-tokenized merged Doc per sentence,
+    punctuation excluded (``beauty's`` stays merged → mis-tagged ``compound``).
 
     Returns ``(stress, pstress, tstress, pstrength)`` dicts keyed by word_num.
     """
     from spacy.tokens import Doc
+    from ..analysis.metrical_lp import _ref_text_spans
 
     S, P, T, PS = {}, {}, {}, {}
     docs, metas = [], []
     for _, group in word_df.groupby('sent_num'):
         group = group.sort_values('word_num')
-        raw = [str(w).strip() for w in group['word_txt']]
+        raw = [str(w) for w in group['word_txt']]           # UNstripped
         wns = [int(x) for x in group['word_num']]
         isp = group['is_punc'].values.astype(bool)
         content = [i for i in range(len(raw)) if not isp[i]]
@@ -524,29 +528,24 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
                 S[wn] = P[wn] = T[wn] = PS[wn] = None
             continue
 
-        content_wns = [wns[i] for i in content]
-        # pieces = Doc tokens; owner[k] = index into content_wns
         if free:
-            pieces, owner = [], []
-            for ci, i in enumerate(content):
-                for p in nlp.tokenizer(raw[i]):
-                    if p.text.strip():
-                        pieces.append(p.text)
-                        owner.append(ci)
+            text, spans = _ref_text_spans(raw)
+            # newlines (verse line breaks) confuse the parser; punctuation does
+            # not. Flatten \n/\r to spaces — same length, so spans stay valid.
+            text = text.replace("\n", " ").replace("\r", " ")
+            docs.append(text)
+            metas.append(('free', wns, isp, spans))
         else:
-            pieces = [raw[i] for i in content]
-            owner = list(range(len(content)))
-        if not pieces:
-            for wn in wns:
-                S[wn] = P[wn] = T[wn] = PS[wn] = None
-            continue
+            parse_words = [raw[i].strip() for i in content]
+            spaces = [True] * len(parse_words)
+            spaces[-1] = False
+            docs.append(Doc(nlp.vocab, words=parse_words, spaces=spaces))
+            metas.append(('merged', [wns[i] for i in content], punc_wns))
 
-        spaces = [True] * len(pieces)
-        spaces[-1] = False
-        docs.append(Doc(nlp.vocab, words=pieces, spaces=spaces))
-        metas.append((content_wns, owner, punc_wns))
+    def _f(x):
+        return None if np.isnan(x) else float(x)
 
-    for doc, (content_wns, owner, punc_wns) in zip(nlp.pipe(docs), metas):
+    for doc, meta in zip(nlp.pipe(docs), metas):
         n = len(doc)
         heads = np.array([t.head.i if t.head.i != t.i else -1 for t in doc],
                          dtype=np.int32)
@@ -554,28 +553,57 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
         xpos = np.array([t.tag_ for t in doc])
         deps = np.array([t.dep_ for t in doc])
         words = np.array([t.text for t in doc])
-        stress = _compute_phrasal_stress(heads, pos, xpos, n)
-        # host piece of each word carries that word's syllable count
-        nsylls = np.ones(n, dtype=np.int32)
-        first = set()
-        for i, ci in enumerate(owner):
-            if ci not in first:
-                first.add(ci)
-                nsylls[i] = nsyll_by_word.get(content_wns[ci], 1)
-        ps, ts, pstr = _mt_gradient(heads, words, xpos, deps, nsylls, n)
 
+        if meta[0] == 'merged':
+            _, parse_wns, punc_wns = meta
+            stress = _compute_phrasal_stress(heads, pos, xpos, n)
+            nsylls = np.array([nsyll_by_word.get(wn, 1) for wn in parse_wns],
+                              dtype=np.int32)
+            ps, ts, pstr = _mt_gradient(heads, words, xpos, deps, nsylls, n)
+            for i, wn in enumerate(parse_wns):
+                S[wn] = int(stress[i])
+                P[wn], T[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(pstr[i])
+            for wn in punc_wns:
+                S[wn] = P[wn] = T[wn] = PS[wn] = None
+            continue
+
+        # free: punctuation was included for correct attachment, but now DROP
+        # it before the gradient — a sentence-final period attaches to the root
+        # and would inflate its cumulative stress (Call me Ishmael. → Call ties
+        # Ishmael). Punct tokens are leaves, so every content head is content;
+        # reindexing over the kept tokens is exact.
+        _, wns, isp, spans = meta
+        punct_wns = {wns[i] for i in range(len(wns)) if isp[i]}
+        keep = [i for i in range(n) if not doc[i].is_punct]
+        newidx = {old: k for k, old in enumerate(keep)}
+        kheads = np.array([newidx.get(heads[i], -1) for i in keep], dtype=np.int32)
+        kn = len(keep)
+        kpos, kxpos = pos[keep], xpos[keep]
+        kdeps, kwords = deps[keep], words[keep]
+        tok_wn = []
+        for i in keep:
+            t = doc[i]
+            a, b = t.idx, t.idx + len(t.text)
+            best, bo = -1, 0
+            for j, (rs, re) in enumerate(spans):
+                ov = min(b, re) - max(a, rs)
+                if ov > bo:
+                    bo, best = ov, j
+            tok_wn.append(wns[best] if best >= 0 else None)
+        nsylls = np.array([nsyll_by_word.get(w, 1) if w else 1 for w in tok_wn],
+                          dtype=np.int32)
+        stress = _compute_phrasal_stress(kheads, kpos, kxpos, kn)
+        ps, ts, pstr = _mt_gradient(kheads, kwords, kxpos, kdeps, nsylls, kn)
         seen = set()
-        for i, ci in enumerate(owner):
-            wn = content_wns[ci]
-            if wn in seen:                       # keep the host (first) piece
+        for i, wn in enumerate(tok_wn):        # each word = its HOST (first) piece
+            if wn is None or wn in seen or wn in punct_wns:
                 continue
             seen.add(wn)
             S[wn] = int(stress[i])
-            P[wn] = None if np.isnan(ps[i]) else float(ps[i])
-            T[wn] = None if np.isnan(ts[i]) else float(ts[i])
-            PS[wn] = None if np.isnan(pstr[i]) else float(pstr[i])
-        for wn in punc_wns:
-            S[wn] = P[wn] = T[wn] = PS[wn] = None
+            P[wn], T[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(pstr[i])
+        for wn in wns:
+            if wn not in seen:
+                S[wn] = P[wn] = T[wn] = PS[wn] = None
     return S, P, T, PS
 
 

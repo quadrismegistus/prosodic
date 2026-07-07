@@ -325,54 +325,119 @@ def _is_punct_tag(tag: str) -> bool:
     return tag in _PUNCT_TAGS or not any(c.isalnum() for c in tag)
 
 
-def _convert_constituency(node, ctx) -> Optional[tuple]:
-    """Recurse a Stanza constituency ``Tree`` → ``(LPTree, is_nominal, kind)``.
+def _locate_tokens(text: str, tokens: List[str]):
+    """Locate each reference token's ``[start, end)`` span in the ORIGINAL
+    text, in order — so Stanza can be handed the *original* text (faithful to
+    its real spacing and punctuation attachment) and its char offsets aligned
+    back to these tokens. Robust to attached punctuation (``creatures,``);
+    falls back to case-insensitive, then to an in-place approximation on the
+    rare normalization mismatch (e.g. ``--`` vs an em-dash)."""
+    spans = []
+    pos = 0
+    low = text.lower()
+    for t in tokens:
+        if not t:
+            spans.append((pos, pos))
+            continue
+        j = text.find(t, pos)
+        if j < 0:
+            j = low.find(t.lower(), pos)
+        if j < 0:
+            spans.append((pos, pos + len(t)))
+            pos += len(t)
+            continue
+        spans.append((j, j + len(t)))
+        pos = j + len(t)
+    return spans
 
-    ``ctx`` = ``{'i': int, 'lclass': [...]}`` consumes one token per
-    preterminal in surface order (constituency leaves == ``sent.words``),
-    so each word leaf gets its lexical class without a fragile post-hoc
-    alignment. ``kind`` ∈ {'word','punct','clitic'}:
 
-    - punctuation preterminals are dropped (never metrical terminals — fixes
-      commas being handed nuclear stress);
-    - the possessive clitic ``'s`` (POS tag ``POS``) is merged onto its host
-      word's last syllable rather than standing as its own NSR-strong
-      terminal (fixes *summer 's* with stress landing on *'s*).
+def _align_stanza(sent, spans) -> List[int]:
+    """Map each Stanza word → reference-token index by max char-span overlap.
+
+    Sub-word Stanza tokens both land in one reference span: ``summer``[2,8]
+    and ``'s``[8,10] both map to ``summer's``[2,10]; ``wo``+``n't`` both to
+    ``won't``. Returns -1 for a Stanza token overlapping no reference token.
+    """
+    out = []
+    for w in sent.words:
+        ws, we = w.start_char, w.end_char
+        best, best_ov = -1, 0
+        for i, (rs, re) in enumerate(spans):
+            ov = min(we, re) - max(ws, rs)
+            if ov > best_ov:
+                best_ov, best = ov, i
+        out.append(best)
+    return out
+
+
+def _build_tok(sent, ref_tokens, ref_ispunc, ref_wordnums, spans, lexical):
+    """Per-Stanza-token descriptor: which reference word it belongs to, plus
+    that word's text/punct/word_num and this token's lexical class + nominal
+    tag. The collapse in :func:`_convert_constituency` keeps the FIRST token
+    of each reference word, so its class/nominal (the content-bearing host,
+    e.g. ``summer`` in ``summer's``) wins."""
+    idx = _align_stanza(sent, spans)
+    lcls = _lclass_for_sentence(sent) if lexical else [0.0] * len(sent.words)
+    tok = []
+    for si, w in enumerate(sent.words):
+        ri = idx[si]
+        if ri < 0:
+            tok.append({"wn": None, "text": w.text, "punct": True,
+                        "lclass": 0.0, "nominal": False})
+            continue
+        tok.append({
+            "wn": ref_wordnums[ri],
+            "text": ref_tokens[ri],
+            "punct": bool(ref_ispunc[ri]),
+            "lclass": float(lcls[si]) if si < len(lcls) else 0.0,
+            # Compound (CSR) nominality = COMMON nouns only (NN/NNS). Proper
+            # nouns modifying a noun are phrasal, not compounds — "Montana
+            # cowboy" is [Montana(w) cowboy(s)] (NSR), not left-strong.
+            "nominal": (w.xpos or "") in ("NN", "NNS"),
+        })
+    return tok
+
+
+def _convert_constituency(node, ctx):
+    """Recurse a Stanza constituency ``Tree`` → a node dict, consuming one
+    ``ctx['tok']`` descriptor per preterminal in surface order.
+
+    Leaf identity is the *reference* word: contiguous preterminals sharing a
+    ``word_num`` (the sub-word pieces of one reference token, e.g. ``summer``
+    + ``'s``) collapse to a single leaf labelled with the reference word, so
+    ``'s`` / ``n't`` never appear as tree/grid nodes. Punctuation is dropped.
     """
     if node.is_leaf():
-        return LPTree(label=node.label), False, "word"
+        return None
     if _is_preterminal(node):
-        tag = node.label
-        word = list(node.children)[0].label
         i = ctx["i"]
         ctx["i"] += 1
-        if _is_punct_tag(tag):
-            return None, False, "punct"
-        if tag == "POS":
-            return LPTree(label=word), False, "clitic"
-        cls = ctx["lclass"][i] if i < len(ctx["lclass"]) else 0.0
-        # Compound (CSR) nominality = COMMON nouns only. Proper nouns (NNP)
-        # modifying a noun are phrasal, not compounds — "Montana cowboy" is
-        # [Montana(w) cowboy(s)] (NSR), not a left-strong compound.
-        return LPTree(label=word, lclass=cls), tag in ("NN", "NNS"), "word"
+        t = ctx["tok"][i] if i < len(ctx["tok"]) else None
+        if t is None or t["punct"]:
+            return {"kind": "punct"}
+        return {"kind": "word",
+                "tree": LPTree(label=t["text"], lclass=t["lclass"]),
+                "nominal": t["nominal"], "wn": t["wn"]}
 
-    raw = [_convert_constituency(c, ctx) for c in node.children if not c.is_leaf()]
-    cleaned: List[list] = []
-    for tree, nom, kind in raw:
-        if kind == "punct" or tree is None:
+    kept = []
+    for c in node.children:
+        if c.is_leaf():
             continue
-        if kind == "clitic":
-            if cleaned:  # attach 's to the host's last syllable
-                host = cleaned[-1][0]
-                host.leaves()[-1].label += tree.label
+        r = _convert_constituency(c, ctx)
+        if r is None or r["kind"] == "punct":
             continue
-        cleaned.append([tree, nom, kind])
-    if not cleaned:
-        return None, False, "punct"
-    if len(cleaned) == 1:
-        return cleaned[0][0], cleaned[0][1], "word"
-    subs = [(t, n) for t, n, _ in cleaned]
-    return _binarize_nsr_csr(subs), all(n for _, n in subs), "word"
+        # collapse a sub-word piece sharing the previous kept leaf's word_num
+        if (r["kind"] == "word" and r["wn"] is not None and kept
+                and kept[-1].get("wn") == r["wn"]):
+            continue
+        kept.append(r)
+    if not kept:
+        return {"kind": "punct"}
+    if len(kept) == 1:
+        return kept[0]
+    subs = [(k["tree"], k["nominal"]) for k in kept]
+    return {"kind": "word", "tree": _binarize_nsr_csr(subs),
+            "nominal": all(k["nominal"] for k in kept), "wn": None}
 
 
 def _lclass_for_sentence(sent) -> list:
@@ -389,16 +454,30 @@ def _lclass_for_sentence(sent) -> list:
     ))
 
 
-def constituency_to_lptree(stanza_constituency, lclass=None) -> Optional[LPTree]:
-    """Convert one Stanza ``sent.constituency`` tree to a binary ``LPTree``.
+def build_lptree(sent, orig_text, ref_tokens, ref_ispunc, ref_wordnums,
+                 lexical=True) -> Optional[LPTree]:
+    """Build a binary ``LPTree`` from a parsed Stanza sentence aligned to a
+    reference tokenization. ``sent`` must be a Stanza parse of ``orig_text``
+    itself (faithful to its spacing/punctuation); ``ref_tokens`` /
+    ``ref_ispunc`` / ``ref_wordnums`` are prosodic's tokens, located in
+    ``orig_text`` and matched to Stanza tokens by char-offset overlap. Returns
+    None on an empty parse."""
+    spans = _locate_tokens(orig_text, ref_tokens)
+    tok = _build_tok(sent, ref_tokens, ref_ispunc, ref_wordnums, spans, lexical)
+    r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
+    return r["tree"] if r and r.get("kind") == "word" else None
 
-    Leaves are words (punctuation dropped, possessive ``'s`` merged).
-    ``lclass`` is an optional per-token lexical-class list. Returns None on
-    an empty parse.
-    """
-    ctx = {"i": 0, "lclass": lclass or []}
-    result = _convert_constituency(stanza_constituency, ctx)
-    return result[0] if result else None
+
+def _prosodic_tokens(text: str):
+    """Prosodic's own tokenization of ``text`` → (tokens, is_punc), in order.
+    Used as the reference tokenization the L&P tree is built over."""
+    import prosodic
+    df = prosodic.Text(text)._syll_df
+    if df is None or df.empty:
+        return [], []
+    sub = (df[df.form_idx.isin([0, -1])]
+           .drop_duplicates("word_num").sort_values("word_num"))
+    return [str(w).strip() for w in sub.word_txt], [bool(p) for p in sub.is_punc]
 
 
 _STRESS_NUM = {"P": 1.0, "S": 0.5, "U": 0.0}
@@ -506,18 +585,22 @@ def expand_to_syllables(tree: LPTree, syll_fn=None) -> LPTree:
 def parse_lptree(text: str, lang: str = "en", lexical: bool = True) -> Optional[LPTree]:
     """Parse ``text`` with Stanza and return its L&P metrical tree.
 
-    Word-level (phrasal) tree; requires stanza + the constituency model.
-    With ``lexical=True`` (default) each word leaf is tagged with its lexical
-    stress class during conversion (see :func:`lexical_floors`). Punctuation
-    is dropped and the possessive ``'s`` merged into its host.
+    Word-level (phrasal) tree; requires stanza + the constituency model. The
+    *original* text is handed to Stanza (faithful to its spacing/punctuation);
+    prosodic's own tokenization is the reference the tree is built over, so
+    clitics (``'s``, ``n't``) collapse into their host word and punctuation is
+    dropped. Multi-sentence input uses the first sentence only.
     """
+    ref_tokens, ref_ispunc = _prosodic_tokens(text)
+    if not ref_tokens:
+        return None
     nlp = _get_stanza(lang)
     doc = nlp(text)
     if not doc.sentences:
         return None
     sent = doc.sentences[0]
-    lclass = _lclass_for_sentence(sent) if lexical else None
-    return constituency_to_lptree(sent.constituency, lclass=lclass)
+    ref_wordnums = list(range(len(ref_tokens)))
+    return build_lptree(sent, text, ref_tokens, ref_ispunc, ref_wordnums, lexical)
 
 
 # ------------------------------------------------- web serialization (Phase 3)

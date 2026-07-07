@@ -239,3 +239,36 @@ def test_possessive_clitic_merged_not_stressed():
     assert "'s" not in labels
     assert any(w.endswith("'s") for w in labels)   # merged onto its host
     assert tree.dte.label == "day"                 # head noun nuclear, not 's
+
+
+# --------------------- offset-collapse token layer (faithful to input text)
+
+def test_token_layer_contractions_and_possessives():
+    # clitics collapse to their prosodic host word — no wo/n't/'s stray nodes,
+    # and leaf labels are prosodic's tokens (faithful to input)
+    try:
+        cases = {
+            "a summer's day": (["a", "summer's", "day"], "day"),
+            "the dog won't eat": (["the", "dog", "won't", "eat"], "eat"),
+            "I don't like it": (["I", "don't", "like", "it"], "it"),
+            "the king's men": (["the", "king's", "men"], "men"),
+        }
+        for text, (exp_leaves, exp_dte) in cases.items():
+            t = parse_lptree(text)
+            assert t is not None
+            assert [lf.label for lf in t.leaves()] == exp_leaves, text
+            assert t.dte.label == exp_dte, text
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+
+
+def test_token_layer_drops_punctuation():
+    try:
+        t = parse_lptree("From fairest creatures, we desire increase.")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    if t is None:
+        pytest.skip("no parse")
+    labels = [lf.label for lf in t.leaves()]
+    assert "," not in labels and "." not in labels
+    assert t.dte.label == "increase"

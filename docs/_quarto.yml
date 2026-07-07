@@ -30,6 +30,8 @@ website:
             file: methods/phrasal-stress.qmd
           - text: "Constituency backend (experimental)"
             file: methods/constituency-backend.qmd
+          - text: "Phrasal stress & scansion (study)"
+            file: methods/phrasal-stress-scansion.qmd
           - text: "Languages"
             file: methods/languages.qmd
       # Executable worked analyses; add future pages (prose rhythm, other

@@ -191,18 +191,19 @@ logic never invalidates the cache — only a pipeline-config change does.
 - The faithful grid + tree already ship as the **Line View toggle**
   (see the web app), rendering L&P's figure with real s/w edge labels.
 
-## An honest open question
+## Does the gradient earn its place? (answered)
 
-The speech validation raises a question worth stating plainly: does the
-gradient `tstress` earn its place for *any* empirical text task, or is it
-purely a theoretical construct? The evidence is mixed and cautionary — on
-Shakespeare sonnet scansion, phrasal-stress constraints added no accuracy
-over lexical stress (69.2% with or without), and here a lexical baseline
-beats the gradient on real prominence. The *categorical* structure has
-clear value (analysis, teaching, matching the literature); the *gradient's*
-empirical payoff for metrics remains unproven. That is a reason to keep the
-faithful structure and to treat the gradient as a hypothesis, not a
-settled feature.
+An earlier version of this page left open whether the gradient `tstress`
+earns its place for *any* empirical text task, or is purely theoretical. A
+follow-up MaxEnt study — [Phrasal stress & scansion](phrasal-stress-scansion.qmd)
+— answers it: **yes, tree stress does, for recovering *canonical* meter.**
+Scored against strict iambic pentameter on Shakespeare it lifts accuracy +8
+points (both engines, real learned weights), and it aids trochaic scansion
++14; it only fails to help when matching human-marked *deviations* or on
+unparseable archaic verse (Milton). That study also settles the tree-vs-grid
+question — the grid does **not** scan better than the tree (grid helps only
+in spaCy, tree in both), so keep `tstress` as the primary gradient; the
+*grid's* value stays categorical (the figure, teaching, matching L&P).
 
 ## References
 

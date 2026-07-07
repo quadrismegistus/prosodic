@@ -274,6 +274,57 @@ def _get_stanza(lang: str = "en"):
     return _NLP_CACHE[lang]
 
 
+# Bump when the pipeline config above changes materially (processors,
+# no_ssplit, model) — the cache stores the raw Stanza parse, so changing the
+# L&P tree/grid logic on top of it does NOT require a bump.
+_STANZA_CACHE_VERSION = "constituency+no_ssplit+depparse-v1"
+_STANZA_STASH = None
+
+
+def _get_stanza_stash():
+    """Lazily open a HashStash for serialized Stanza parses, under prosodic's
+    cache dir."""
+    global _STANZA_STASH
+    if _STANZA_STASH is None:
+        import os
+        from hashstash import HashStash
+        from ..imports import PATH_HOME_DATA_CACHE
+        _STANZA_STASH = HashStash(
+            os.path.join(PATH_HOME_DATA_CACHE, "stanza_constituency"))
+    return _STANZA_STASH
+
+
+def _stanza_parse(texts, lang: str = "en"):
+    """Parse a list of texts with the Stanza constituency pipeline, caching
+    serialized ``stanza.Document`` objects in a HashStash keyed by
+    ``(lang, config-version, text)``. Cache hits reconstruct via
+    ``Document.from_serialized`` (~0.5 ms); only misses hit the pipeline, and
+    those are batched in one call. Returns one ``Document`` per input text.
+
+    Caching the raw parse (not our L&P trees) means Stanza's expensive
+    constituency parse is paid once per unique text ever, while all the
+    prosodic-side tree/grid/stress logic still runs fresh on top."""
+    import stanza
+    stash = _get_stanza_stash()
+    out = [None] * len(texts)
+    todo = []
+    for i, t in enumerate(texts):
+        key = (lang, _STANZA_CACHE_VERSION, t)
+        if key in stash:
+            out[i] = stanza.Document.from_serialized(stash[key])
+        else:
+            todo.append(i)
+    if todo:
+        nlp = _get_stanza(lang)
+        parsed = nlp([stanza.Document([], text=texts[i]) for i in todo])
+        if not isinstance(parsed, list):
+            parsed = [parsed]
+        for j, i in enumerate(todo):
+            out[i] = parsed[j]
+            stash[(lang, _STANZA_CACHE_VERSION, texts[i])] = parsed[j].to_serialized()
+    return out
+
+
 def _is_preterminal(node) -> bool:
     ch = list(node.children)
     return len(ch) == 1 and ch[0].is_leaf()
@@ -610,8 +661,7 @@ def parse_lptree(text: str, lang: str = "en", lexical: bool = True) -> Optional[
         return None
     rtext, spans = _ref_text_spans(raw)
     ref_labels = [r.strip() for r in raw]
-    nlp = _get_stanza(lang)
-    doc = nlp(rtext)
+    doc = _stanza_parse([rtext], lang)[0]
     if not doc.sentences:
         return None
     return build_lptree(doc.sentences[0], spans, ref_labels, ref_ispunc,
@@ -758,10 +808,9 @@ def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
     sentence is reconstructed from its unstripped tokens (``"".join`` is
     byte-identical to what prosodic tokenized), its newlines flattened to
     spaces (harmless for Stanza, uniform with spaCy), and all sentences are
-    batch-parsed in one Stanza call. Returns ``{sent_num: [LPTree, ...]}`` —
-    usually one tree per sentence, more only if Stanza splits it further."""
-    import stanza
-
+    batch-parsed (and cached) in one Stanza call. Returns
+    ``{sent_num: [LPTree, ...]}`` — usually one tree per sentence, more only
+    if Stanza splits it further."""
     wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
            .drop_duplicates("word_num").sort_values("word_num"))
     texts, metas = [], []
@@ -776,8 +825,7 @@ def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
                       [int(x) for x in g["word_num"]]))
     if not texts:
         return {}
-    nlp = _get_stanza(lang)
-    docs = nlp([stanza.Document([], text=t) for t in texts])
+    docs = _stanza_parse(texts, lang)
     out = {}
     for doc, (sent_num, spans, labels, isp, wns) in zip(docs, metas):
         trees = []

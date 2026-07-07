@@ -27,6 +27,14 @@ import threading
 app = FastAPI(title="Prosodic", description="Metrical parser for English and Finnish")
 
 
+@app.exception_handler(ImportError)
+async def _missing_backend_handler(request, exc):
+    """An optional backend (e.g. Stanza for syntax_model='stanza') isn't
+    installed — return a clean, actionable 400 instead of an opaque 500."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
 @app.middleware("http")
 async def _security_headers(request: Request, call_next):
     """Add conservative security headers to every response.

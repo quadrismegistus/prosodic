@@ -52,6 +52,13 @@ jobs:
             sudo -u prosodic git reset --hard origin/master
             sudo -u prosodic git clean -fd prosodic/web/static_build
             sudo -u prosodic /opt/prosodic/.venv/bin/pip install -e . --quiet
+            # Faithful L&P / Stanza backend — best-effort so a failure here
+            # (torch build, model download, disk) never breaks the deploy:
+            # spaCy stays the default and syntax_model=stanza degrades to a
+            # clean 400. Model download is idempotent (skips if already present).
+            sudo -u prosodic /opt/prosodic/.venv/bin/pip install 'stanza>=1.5' 'hashstash[best]' --quiet || echo "WARN: Stanza deps install failed — faithful backend will be unavailable"
+            sudo -u prosodic /opt/prosodic/.venv/bin/python -c "import stanza; stanza.download('en')" || echo "WARN: Stanza model download failed"
+            sudo -u prosodic /opt/prosodic/.venv/bin/python -c "from prosodic.analysis.metrical_lp import _get_stanza; _get_stanza()" || echo "WARN: Stanza pipeline warmup failed"
             cd prosodic/web/frontend
             sudo -u prosodic npm ci --no-audit --no-fund --silent
             sudo -u prosodic npm run build

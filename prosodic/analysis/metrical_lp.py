@@ -255,11 +255,28 @@ def figure_montana_cowboy() -> LPTree:
 _NLP_CACHE: dict = {}
 
 
+def _require_stanza():
+    """Import Stanza, or raise a clear, actionable error. The faithful L&P
+    backend is opt-in (Stanza is a heavy dependency), so a plain
+    ModuleNotFoundError would surface as an opaque 500 in the web app."""
+    try:
+        import stanza
+        return stanza
+    except ImportError as e:
+        raise ImportError(
+            "The faithful L&P constituency backend (syntax_model='stanza', "
+            "parse_lptree, /api/parse/lp) requires Stanza, which is not "
+            "installed. Install with: pip install 'prosodic[constituency]' "
+            "— this pulls stanza; the constituency model downloads "
+            "automatically on first use."
+        ) from e
+
+
 def _get_stanza(lang: str = "en"):
     """Lazily build/cache a Stanza constituency pipeline."""
     if lang not in _NLP_CACHE:
         import warnings
-        import stanza
+        stanza = _require_stanza()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _NLP_CACHE[lang] = stanza.Pipeline(
@@ -316,7 +333,7 @@ def _stanza_parse(texts, lang: str = "en"):
     Caching the raw parse (not our L&P trees) means Stanza's expensive
     constituency parse is paid once per unique text ever, while all the
     prosodic-side tree/grid/stress logic still runs fresh on top."""
-    import stanza
+    stanza = _require_stanza()
     stash = _get_stanza_stash()
     out = [None] * len(texts)
     todo = []

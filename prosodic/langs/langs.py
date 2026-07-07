@@ -198,10 +198,19 @@ class LanguageModel:
         token = token.lower()
         meta = {}
 
-        if force_unstress is None and token in self.unstressed_words:
-            force_unstress = True
-        elif force_ambig_stress is None and token in self.ambig_stressed_words:
+        # Ambiguous-stress wins over unstressed when a word is in BOTH lists.
+        # Every personal pronoun (she, we, they, them, he, it, you, his, ...)
+        # is listed in ambig_stress_words.txt AND unstressed_words.txt: the
+        # ambig entry means "can bear a metrical beat," the unstressed entry
+        # means "reduces phrasally." Checking unstressed first collapsed those
+        # pronouns to a single unstressed form, so they could never fill a
+        # strong metrical position without an s_unstress violation — inflating
+        # metrical tension (esp. in prose). Prosodic v1 (lib/Dictionary.py
+        # maybeUnstress) checked maybe-stressed FIRST; this restores that.
+        if force_ambig_stress is None and token in self.ambig_stressed_words:
             force_ambig_stress = True
+        elif force_unstress is None and token in self.unstressed_words:
+            force_unstress = True
 
         ## try dictionary (includes user cache)
         sylls_ipa_ll = self.get_sylls_ipa_ll_dict(token)

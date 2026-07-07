@@ -7,6 +7,27 @@ from pandas.testing import assert_frame_equal
 
 disable_caching()
 
+def test_pronoun_stress_promotion():
+    # Personal pronouns are listed in BOTH ambig_stress_words.txt and
+    # unstressed_words.txt. ambiguous-stress must win, so they keep a stressed
+    # variant and can fill a strong metrical position without an s_unstress
+    # violation. Regression: v3 once checked unstressed first, collapsing them
+    # to a single unstressed form and inflating metrical tension (esp. in prose;
+    # -0.21 mean best-parse viols on the Shakespeare sonnets when fixed).
+    from prosodic.langs.english import EnglishLanguage
+    lang = EnglishLanguage()
+    for w in ("she", "we", "they", "them", "he", "you", "his", "her"):
+        forms, _ = lang.get_sylls_ipa_ll(w)
+        assert len(forms) == 2, f"{w!r} should have stressed+unstressed forms, got {forms}"
+    # words only in unstressed_words must NOT over-promote (stay 1 form)
+    for w in ("the", "a", "of"):
+        forms, _ = lang.get_sylls_ipa_ll(w)
+        assert len(forms) == 1, f"{w!r} should stay a single unstressed form, got {forms}"
+    # end-to-end: pronouns in strong slots promote instead of all violating
+    bp = TextModel("as we discovered them when we escaped").line1.best_parse
+    assert bp.num_viols <= 1, (bp.meter_str, bp.num_viols)
+
+
 def test_feet():
     # iambic test
     tstr = "embrace " * 5

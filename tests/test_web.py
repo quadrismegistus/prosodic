@@ -438,3 +438,23 @@ def test_browser_homepage(page, app_server):
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+def test_stanza_missing_returns_clean_400(client, monkeypatch):
+    # syntax_model='stanza' without Stanza installed must degrade to a clean
+    # 400 (actionable message), not an opaque 500. The stanza path needs no
+    # spaCy, so this runs even where spaCy is absent.
+    import prosodic.analysis.metrical_lp as M
+
+    def _boom():
+        raise ImportError("Stanza not installed. Install with: "
+                          "pip install 'prosodic[constituency]'")
+
+    monkeypatch.setattr(M, "_require_stanza", _boom)
+    monkeypatch.setattr(M, "_NLP_CACHE", {})
+    monkeypatch.setattr(M, "_STANZA_STASH", None)
+    resp = client.post('/api/parse', json=_default_parse_data(
+        text='an uncached distinctive phrase for the stanza guard test',
+        syntax=True, syntax_model='stanza'))
+    assert resp.status_code == 400
+    assert 'stanza' in resp.json()['detail'].lower()

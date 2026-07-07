@@ -328,30 +328,31 @@ def _is_punct_tag(tag: str) -> bool:
     return tag in _PUNCT_TAGS or not any(c.isalnum() for c in tag)
 
 
-def _locate_tokens(text: str, tokens: List[str]):
-    """Locate each reference token's ``[start, end)`` span in the ORIGINAL
-    text, in order — so Stanza can be handed the *original* text (faithful to
-    its real spacing and punctuation attachment) and its char offsets aligned
-    back to these tokens. Robust to attached punctuation (``creatures,``);
-    falls back to case-insensitive, then to an in-place approximation on the
-    rare normalization mismatch (e.g. ``--`` vs an em-dash)."""
+def _ref_text_spans(raw_tokens: List[str]):
+    """Reconstruct prosodic's normalized text and each token's exact span from
+    the *unstripped* ``word_txt`` values. prosodic prepends inter-token
+    whitespace to each token, so ``"".join(raw_tokens)`` is byte-identical to
+    the normalized text it tokenized (``['From',' fairest',',', ...]``), and
+    the spans are just cumulative lengths. Exact and deterministic — no
+    greedy search, no stored offsets, faithful to real spacing/punctuation."""
+    text = ""
     spans = []
-    pos = 0
-    low = text.lower()
-    for t in tokens:
-        if not t:
-            spans.append((pos, pos))
-            continue
-        j = text.find(t, pos)
-        if j < 0:
-            j = low.find(t.lower(), pos)
-        if j < 0:
-            spans.append((pos, pos + len(t)))
-            pos += len(t)
-            continue
-        spans.append((j, j + len(t)))
-        pos = j + len(t)
-    return spans
+    for r in raw_tokens:
+        start = len(text)
+        text += r
+        spans.append((start, len(text)))
+    return text, spans
+
+
+def _word_span(w):
+    """Character span of a Stanza word; falls back to its parent token's span
+    (multi-word-token expansions — do/n't from don't — have None offsets)."""
+    s, e = w.start_char, w.end_char
+    if s is None or e is None:
+        p = getattr(w, "parent", None)
+        if p is not None:
+            s, e = p.start_char, p.end_char
+    return s, e
 
 
 def _align_stanza(sent, spans) -> List[int]:
@@ -363,7 +364,10 @@ def _align_stanza(sent, spans) -> List[int]:
     """
     out = []
     for w in sent.words:
-        ws, we = w.start_char, w.end_char
+        ws, we = _word_span(w)
+        if ws is None or we is None:
+            out.append(-1)
+            continue
         best, best_ov = -1, 0
         for i, (rs, re) in enumerate(spans):
             ov = min(we, re) - max(ws, rs)
@@ -458,30 +462,32 @@ def _lclass_for_sentence(sent) -> list:
     ))
 
 
-def build_lptree(sent, orig_text, ref_tokens, ref_ispunc, ref_wordnums,
+def build_lptree(sent, spans, ref_labels, ref_ispunc, ref_wordnums,
                  lexical=True) -> Optional[LPTree]:
     """Build a binary ``LPTree`` from a parsed Stanza sentence aligned to a
-    reference tokenization. ``sent`` must be a Stanza parse of ``orig_text``
-    itself (faithful to its spacing/punctuation); ``ref_tokens`` /
-    ``ref_ispunc`` / ``ref_wordnums`` are prosodic's tokens, located in
-    ``orig_text`` and matched to Stanza tokens by char-offset overlap. Returns
-    None on an empty parse."""
-    spans = _locate_tokens(orig_text, ref_tokens)
-    tok = _build_tok(sent, ref_tokens, ref_ispunc, ref_wordnums, spans, lexical)
+    reference tokenization. ``sent`` must be a Stanza parse of the
+    reconstructed normalized text (see :func:`_ref_text_spans`); ``spans`` are
+    that text's exact per-token spans; ``ref_labels`` are the stripped token
+    strings; Stanza tokens map to reference tokens by char-offset overlap.
+    Returns None on an empty parse."""
+    tok = _build_tok(sent, ref_labels, ref_ispunc, ref_wordnums, spans, lexical)
     r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
     return r["tree"] if r and r.get("kind") == "word" else None
 
 
-def _prosodic_tokens(text: str):
-    """Prosodic's own tokenization of ``text`` → (tokens, is_punc), in order.
-    Used as the reference tokenization the L&P tree is built over."""
+def _prosodic_raw_tokens(text: str):
+    """Prosodic's own tokenization of ``text`` → (raw_tokens, is_punc,
+    word_nums), in order. ``raw_tokens`` are UNstripped (whitespace-prefixed)
+    so :func:`_ref_text_spans` reconstructs the normalized text exactly."""
     import prosodic
     df = prosodic.Text(text)._syll_df
     if df is None or df.empty:
-        return [], []
+        return [], [], []
     sub = (df[df.form_idx.isin([0, -1])]
            .drop_duplicates("word_num").sort_values("word_num"))
-    return [str(w).strip() for w in sub.word_txt], [bool(p) for p in sub.is_punc]
+    return ([str(w) for w in sub.word_txt],
+            [bool(p) for p in sub.is_punc],
+            [int(x) for x in sub.word_num])
 
 
 _STRESS_NUM = {"P": 1.0, "S": 0.5, "U": 0.0}
@@ -595,16 +601,17 @@ def parse_lptree(text: str, lang: str = "en", lexical: bool = True) -> Optional[
     clitics (``'s``, ``n't``) collapse into their host word and punctuation is
     dropped. Multi-sentence input uses the first sentence only.
     """
-    ref_tokens, ref_ispunc = _prosodic_tokens(text)
-    if not ref_tokens:
+    raw, ref_ispunc, ref_wordnums = _prosodic_raw_tokens(text)
+    if not raw:
         return None
+    rtext, spans = _ref_text_spans(raw)
+    ref_labels = [r.strip() for r in raw]
     nlp = _get_stanza(lang)
-    doc = nlp(text)
+    doc = nlp(rtext)
     if not doc.sentences:
         return None
-    sent = doc.sentences[0]
-    ref_wordnums = list(range(len(ref_tokens)))
-    return build_lptree(sent, text, ref_tokens, ref_ispunc, ref_wordnums, lexical)
+    return build_lptree(doc.sentences[0], spans, ref_labels, ref_ispunc,
+                        ref_wordnums, lexical)
 
 
 # ------------------------------------------------- web serialization (Phase 3)
@@ -732,12 +739,13 @@ def lp_word_stress(tree: LPTree) -> dict:
     return out
 
 
-def add_phrasal_stress_stanza(syll_df, text: str, lang: str = "en"):
+def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
     """Stanza-constituency backend for ``syntax=True``: write the four
-    phrasal-stress columns from the faithful L&P tree. ``text`` is the
-    ORIGINAL text (faithful spacing/punctuation); prosodic's tokenization
-    (from ``syll_df``) is the reference the tree is built over. Modifies
-    ``syll_df`` in place and returns it."""
+    phrasal-stress columns from the faithful L&P tree. The parse text and
+    exact token spans are reconstructed from ``syll_df``'s own (unstripped)
+    tokens — byte-identical to prosodic's normalized text — so ``text`` is
+    unused (kept for signature compatibility). Modifies ``syll_df`` in place
+    and returns it."""
     import pandas as pd
 
     cols_f = ("pstress", "tstress", "pstrength")
@@ -749,16 +757,19 @@ def add_phrasal_stress_stanza(syll_df, text: str, lang: str = "en"):
 
     wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
            .drop_duplicates("word_num").sort_values("word_num"))
-    ref_tokens = [str(w).strip() for w in wdf["word_txt"]]
+    # reconstruct prosodic's normalized text + exact spans from the UNstripped
+    # tokens (whitespace is prepended), so no offset search and no text= needed
+    raw = [str(w) for w in wdf["word_txt"]]
+    rtext, spans = _ref_text_spans(raw)
+    ref_labels = [r.strip() for r in raw]
     ref_ispunc = [bool(p) for p in wdf["is_punc"]]
     ref_wordnums = [int(x) for x in wdf["word_num"]]
-    spans = _locate_tokens(text or " ".join(ref_tokens), ref_tokens)
 
     nlp = _get_stanza(lang)
-    doc = nlp(text or " ".join(ref_tokens))
+    doc = nlp(rtext)
     values = {}
     for sent in doc.sentences:
-        tok = _build_tok(sent, ref_tokens, ref_ispunc, ref_wordnums, spans, True)
+        tok = _build_tok(sent, ref_labels, ref_ispunc, ref_wordnums, spans, True)
         r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
         if r and r.get("kind") == "word":
             values.update(lp_word_stress(r["tree"]))

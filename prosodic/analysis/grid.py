@@ -110,19 +110,25 @@ def grid_data(parse, phrasal: Optional[List] = None) -> List[dict]:
 
 
 def phrasal_values(parse, text) -> Optional[List]:
-    """Per-syllable gradient phrasal prominence (tstress) for a parse.
+    """Per-syllable phrasal prominence for a parse, for the grid display.
 
-    Reads the ``tstress`` column computed by ``syntax=True`` from the
-    text's syllable DataFrame and maps it onto the parse's syllables via
-    word identity (SyllData.word_num on the DF path; the wordtoken parent
-    chain on the entity path). Returns None when no gradient data exists.
+    Prefers ``gstress`` (the RPPR **grid** — what this display actually is)
+    and falls back to ``tstress`` (cumulative tree stress) for data saved
+    before the grid column existed. Reads the column computed by
+    ``syntax=True`` from the text's syllable DataFrame and maps it onto the
+    parse's syllables via word identity (SyllData.word_num on the DF path;
+    the wordtoken parent chain on the entity path). None if no gradient.
     """
     df = getattr(text, "_syll_df", None)
-    if df is None or "tstress" not in df.columns:
+    if df is None:
+        return None
+    col = ("gstress" if "gstress" in df.columns
+           else "tstress" if "tstress" in df.columns else None)
+    if col is None:
         return None
     tmap = (
         df.drop_duplicates("word_num")
-        .set_index("word_num")["tstress"].to_dict()
+        .set_index("word_num")[col].to_dict()
     )
 
     vals = []

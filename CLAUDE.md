@@ -52,7 +52,7 @@ TextModel stores a flat syllable-level DataFrame (`_syll_df`) as the source of t
 2. `text.parse()` → `parse_batch_from_df()` reads features from `_syll_df`, evaluates constraints in numpy, bounds on GPU
 3. `text.lines` (first access) triggers lazy Entity construction + attaches parse results
 
-**`_syll_df` columns:** `word_num`, `line_num`, `para_num`, `sent_num`, `sentpart_num`, `linepart_num`, `word_txt`, `is_punc`, `form_idx`, `num_forms`, `syll_idx`, `syll_ipa`, `syll_text`, `is_stressed`, `is_heavy`, `is_strong`, `is_weak`, `is_functionword`, `phrasal_stress` (optional, only with `syntax=True`)
+**`_syll_df` columns:** `word_num`, `line_num`, `para_num`, `sent_num`, `sentpart_num`, `linepart_num`, `word_txt`, `is_punc`, `form_idx`, `num_forms`, `syll_idx`, `syll_ipa`, `syll_text`, `is_stressed`, `is_heavy`, `is_strong`, `is_weak`, `is_functionword`; with `syntax=True` also `phrasal_stress` (discrete), `pstress`, `tstress` (tree/cumulative), `gstress` (grid/RPPR), `pstrength`
 
 ### Entity Hierarchy
 
@@ -75,7 +75,7 @@ Theory + implementation write-up: [`docs/methods/metrical-parsing.qmd`](docs/met
 The parser is always vectorized and exhaustive — it evaluates ALL possible scansions via numpy and uses harmonic bounding to identify optimal parses.
 
 - **Meter** (`meter.py`): Configuration object with constraints, max strong/weak positions (`max_s`, `max_w`). The `exhaustive` and `vectorized` params are accepted but ignored (always both).
-- **Constraints** (`constraints.py`): Each constraint has a `@constraint` decorator with `desc`, `scope`, and optional `vectorized` lambda. The vectorized lambda receives broadcast feature arrays and returns `(L, S, N)` int8 violations — this is what runs during parsing. The entity-based function body is a reference implementation used only by manually-constructed Parse objects. Default constraints: `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size`. Additional: `s_trough`, `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`. Phrasal stress constraints (require `syntax=True`): `w_prom`, `s_demoted` (discrete depth), `w_stress_p`, `s_unstress_p`, `w_stress_t`, `s_unstress_t`, `w_peak_p`, `s_trough_p` (gradient MetricalTree values incl. local peak/valley `pstrength`; cadence's *_p/*_t family, fully ported). Adding a new constraint = one decorated function in `constraints.py` with a `vectorized` lambda; no changes to `vectorized.py` needed.
+- **Constraints** (`constraints.py`): Each constraint has a `@constraint` decorator with `desc`, `scope`, and optional `vectorized` lambda. The vectorized lambda receives broadcast feature arrays and returns `(L, S, N)` int8 violations — this is what runs during parsing. The entity-based function body is a reference implementation used only by manually-constructed Parse objects. Default constraints: `w_stress`, `s_unstress`, `unres_within`, `unres_across`, `w_peak`, `foot_size`. Additional: `s_trough`, `clash`, `lapse`, `w_heavy`, `s_light`, `s_func`, `word_foot`. Phrasal stress constraints (require `syntax=True`): `w_prom`, `s_demoted` (discrete depth), `w_stress_p`/`s_unstress_p` (local phrasal `pstress`), `w_stress_t`/`s_unstress_t` (tree/cumulative `tstress`), `w_stress_g`/`s_unstress_g` (grid/RPPR `gstress`), `w_peak_p`/`s_trough_p` (local peak/valley `pstrength`). Adding a new constraint = one decorated function in `constraints.py` with a `vectorized` lambda; no changes to `vectorized.py` needed.
 - **Parse** (`parses.py`): A single candidate parse. Ranked by weighted violation score; `best_parse` = lowest score among unbounded.
 - **LazyParseList** (`vectorized.py`): Stores numpy violation data. Parse objects built only on access. `.unbounded` returns sorted by score. `.best_parse` uses `argmin` — no sorting needed.
 
@@ -103,23 +103,36 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 **Constraint entailment**: w_peak entails w_stress (100% co-occurrence). In MaxEnt/HG, overlapping constraints stack: w_peak violation costs w_peak + w_stress. This is how the model makes w_peak effectively inviolable (Kiparsky) without infinite weight.
 
-### Phrasal Stress (`texts/phrasal_stress.py`)
+### Phrasal Stress (`texts/phrasal_stress.py`, `analysis/metrical_lp.py`)
 
-Theory + lineage write-up (Dozat's MetricalTree, cadence, our dep-projection port): [`docs/methods/phrasal-stress.qmd`](docs/methods/phrasal-stress.qmd).
+Theory + lineage: [`docs/methods/phrasal-stress.qmd`](docs/methods/phrasal-stress.qmd) (MetricalTree), [`docs/methods/constituency-backend.qmd`](docs/methods/constituency-backend.qmd) (faithful L&P + the two-backend validation).
 
-Optional dependency-parse-based phrasal prominence (Liberman & Prince 1977). Uses spaCy dep-only parsing — no constituency trees needed.
+Optional phrasal prominence (Liberman & Prince 1977) from `TextModel("...", syntax=True)`. **Two interchangeable engines**, a one-parameter swap producing the same `_syll_df` columns — they differ only in the parse:
 
-- **`TextModel("...", syntax=True)`**: enables phrasal stress computation. Adds `phrasal_stress` column to `_syll_df`.
-- **Algorithm**: vectorized depth in dependency tree + NSR/CSR adjustments. No tree objects — just numpy arrays over head/deprel/POS. Converges in O(max_depth) iterations.
-- **Values**: 0 = sentence root (most prominent), -1 = direct dependent, -2 to -6 = deeper embedding. `<NA>` for punctuation.
-- **Gradient values** (`pstress`, `tstress` columns, MetricalTree port): Dozat's metrical-tree algorithm run over dep-projection trees — lexical stress classes (0/-0.5/-1) resolved by a 3-variant ensemble (all/monosyllable/none stressed), NSR with the noun-compound rule (`compound` dep), cumulative total stress, ensemble mean, per-sentence min-max norm. 1.0 = nuclear stress, NaN = punctuation. Pure numpy + iterative post-order; no constituency parser needed.
-- **Tree export**: `text.syntax_trees()` → one `nltk.Tree` per sentence on the same projection topology, preterminals labeled `TAG/tstress`; `import svgling` for SVG rendering in notebooks.
-- **Grid integration**: `line.grid_str()/grid_df()/grid_plot()` auto-fetch `tstress` when `syntax=True` — phrasal rows extend columns above the word level on each word's primary syllable (height 4 = phrasally prominent ≥0.5, height 5 = nuclear). `SyllData.word_num` bridges DF-path parse slots to the word-level values.
-- **Constraints**: `w_prom` (prominent word on weak position, `phrasal_stress >= -1`), `s_demoted` (deeply embedded word on strong position, `phrasal_stress <= -2`); gradient variants `w_stress_p`/`s_unstress_p` (pstress) and `w_stress_t`/`s_unstress_t` (tstress), thresholds per cadence (prominent > 0, weak == 0). All inert when `syntax=False` (`has_phrasal`/`has_gradient` flags).
-- **Performance**: ~1s overhead for 2155 lines (spaCy dep parse). Model loads once, cached.
-- **Config**: `DEFAULT_SYNTAX = False`, `DEFAULT_SYNTAX_MODEL = "en_core_web_sm"` in `imports.py`. spaCy is an optional dependency (`pip install prosodic[syntax]`).
-- **MaxEnt integration**: `meter.fit_annotations(data, text=text_with_syntax)` passes a pre-built syntax-enabled TextModel through to the trainer. Without this, the trainer creates its own TextModel without syntax.
-- **Empirical note**: on Shakespeare sonnets with `wswswswsws` target, phrasal constraints are redundant with lexical stress features (69.2% accuracy with or without). They add no signal for fixed-template scansion but may help for prose rhythm or naturalness ranking.
+- **spaCy** (default, `syntax_model="en_core_web_sm"`): Dozat's MetricalTree over a dependency projection. Fast.
+- **Stanza** (opt-in, `syntax_model="stanza"`): faithful L&P over a real constituency parse (`metrical_lp.py`) — the binary metrical tree, DTE, and RPPR grid the dep projection can't represent.
+
+**Columns** (all [0,1], 1.0 = nuclear, NaN = punct; both engines):
+- **`phrasal_stress`**: discrete depth (0 = root/most prominent, negative = embedded).
+- **`tstress`** = **tree stress** (cumulative, L&P eq-12 / Dozat total) — fine-grained. spaCy: Dozat native; Stanza: `stress_numbers()` over the LP tree.
+- **`gstress`** = **grid stress** (RPPR grid height, L&P's preferred, coarse). Stanza: `grid_heights()` native; spaCy: `_mt_grid` binarizes the projection (NSR/CSR) and runs the *same* `grid_heights`. Grids agree closely across engines; tree stresses differ more.
+- **`pstress`** = local phrasal peak (1.0 if strong child of parent), **`pstrength`** = local peaks/valleys.
+
+**spaCy tokenization (default `spacy_free=True`)**: parse the full sentence text WITH punctuation (so clitics split — `beauty's`→`beauty`+`'s`→`poss` not `compound`, fixing a real possessive bug — and clauses attach), but flatten newlines to spaces first (verse line breaks, not punctuation, confuse a dep parser) and DROP punctuation before the gradient (a sentence-final period attaches to the root and would inflate its cumulative stress). `spacy_free=False` = legacy pre-tokenized path.
+
+**Sentence scoping**: both engines group by prosodic `sent_num`; Stanza runs `tokenize_no_ssplit=True` so 1 prosodic sentence = 1 tree, same normalization unit as spaCy.
+
+**Tree export**: `text.syntax_trees()` is engine-aware — dep-projection `nltk.Tree` (preterminals `TAG/tstress`) under spaCy, faithful L&P binary s/w tree (`R`/`s`/`w` nodes, `role/tstress` leaves, via `lp_nltk_trees`) under stanza. `import svgling` renders either.
+
+**Grid integration**: `line.grid_str()/grid_df()/grid_plot()` render `gstress` (the actual RPPR grid; falls back to `tstress` for old data) — height 4 = phrasally prominent, 5 = nuclear. `SyllData.word_num` bridges DF-path slots to word-level values.
+
+**Constraints** (all inert when `syntax=False` via `has_phrasal`/`has_gradient`): `w_prom`/`s_demoted` (discrete `phrasal_stress`); gradient `w_stress_p`/`s_unstress_p` (pstress), `w_stress_t`/`s_unstress_t` (**tree** stress), `w_stress_g`/`s_unstress_g` (**grid** stress), `w_peak_p`/`s_trough_p` (pstrength). Adding one = a decorated function reading `f["gstress"]` etc.; the feature is plumbed in `vectorized.py` (−1 sentinel = absent).
+
+**Stanza caching**: `_stanza_parse()` caches serialized `stanza.Document` objects (`to_serialized()`/`from_serialized()`) in a HashStash under `~/prosodic_data/data/cache/stanza_constituency`, keyed by `(lang, config-version, text)`. Cold ~3.5s/sonnet → warm ~0.01s (267×). Caches the RAW parse, so improving the L&P tree/grid logic never invalidates it; bump `_STANZA_CACHE_VERSION` only on a pipeline-config change. Stanza is an extra dependency (`pip install prosodic[syntax]` covers spaCy; Stanza installed separately).
+
+- **Config**: `DEFAULT_SYNTAX = False`, `DEFAULT_SYNTAX_MODEL = "en_core_web_sm"` in `imports.py`.
+- **MaxEnt integration**: `meter.fit_annotations(data, text=text_with_syntax)` passes a pre-built syntax-enabled TextModel through to the trainer.
+- **Empirical notes**: (a) on Shakespeare sonnets with `wswswswsws`, phrasal constraints are redundant with lexical stress (69.2% with or without) — no signal for fixed-template scansion. (b) The possessive advantage once attributed to constituency was a *tokenization artifact*; once both engines split clitics they agree ~91% on sonnet nuclear placement. Constituency retains only a marginal structural edge (see `constituency-backend.qmd`).
 
 ### Syllable DataFrame (`texts/syll_df.py`)
 

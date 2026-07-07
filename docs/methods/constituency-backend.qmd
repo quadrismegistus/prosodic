@@ -152,13 +152,42 @@ faithful computer of it.
   TextModel(text, syntax=True, syntax_model="stanza")
   ```
 
-  writes the same four `_syll_df` columns as the default spaCy path
-  (`phrasal_stress`, `pstress`, `tstress`, `pstrength`), but `tstress` is
-  the **normalized RPPR grid** (min–max, weakest = 0, nuclear = 1) — the
-  0–1 grid the constraints weight against, computed over real constituency.
-  The original text is handed to Stanza faithfully; prosodic's own
-  tokenization is the reference, so clitics (`summer's`, `won't`) collapse
-  to their host and punctuation is dropped.
+  is a one-parameter swap producing the *same* `_syll_df` columns as the
+  default spaCy path — `phrasal_stress`, `pstress`, `tstress`, `gstress`,
+  `pstrength` — grouped by the same prosodic sentences. The two engines
+  differ only in the parse. Prosodic's own tokenization is the reference,
+  so clitics (`summer's`, `won't`) collapse to their host and punctuation
+  is dropped.
+
+## Two prominence columns: tree stress and grid stress
+
+L&P describe prominence two ways, and both are exposed, for both engines,
+each in [0,1] with nuclear = 1:
+
+- **`tstress` — tree stress**: cumulative domination (their eq-12 "stress
+  numbers" / Dozat's total). Fine-grained. spaCy computes it natively;
+  Stanza reads `stress_numbers()` off the LP tree.
+- **`gstress` — grid stress**: the RPPR grid height — L&P's *preferred*,
+  coarser representation. Stanza reads `grid_heights()` off the LP tree;
+  spaCy binarizes its n-ary dependency projection (NSR/CSR) into an L&P
+  binary tree and runs the *same* `grid_heights`.
+
+So the grid is computed identically across engines — only the tree differs.
+On the sonnets the two engines' **grids agree closely** (coarse, structural)
+while the tree stresses diverge more (fine, cumulative), which is exactly
+L&P's tree-vs-grid distinction made visible. The grid display
+(`grid_str()`/`grid_plot()`) renders `gstress`; the constraint families
+`w_stress_t`/`s_unstress_t` weight against the tree, `w_stress_g`/
+`s_unstress_g` against the grid.
+
+## Performance: caching
+
+Stanza constituency parsing is the cost (~3.5 s/sonnet, ~16× spaCy).
+`_stanza_parse()` caches serialized `stanza.Document` objects in a HashStash
+(`~/prosodic_data/data/cache/stanza_constituency`) keyed by
+`(lang, config-version, text)`: cold ~3.5 s → warm ~0.01 s (**267×**),
+byte-identical. It caches the *raw* parse, so improving the L&P tree/grid
+logic never invalidates the cache — only a pipeline-config change does.
 - The faithful grid + tree already ship as the **Line View toggle**
   (see the web app), rendering L&P's figure with real s/w edge labels.
 

@@ -118,10 +118,20 @@ def test_standalone_parsing():
 
 def test_parselist():
     parses = TextModel("a horse " * 5).line1.parse()
-    # assert parses.bounded # @todo fix this
+    assert parses.bounded
     assert parses.unbounded
     assert len(parses) == len(parses.all)
-    # assert len(parses.bounded) < len(parses) # @todo fix this
+    assert len(parses.bounded) < len(parses)
+    # .bounded carries show_bounded=True, so its df/render actually show the
+    # bounded parses (regression: LazyParseList.bounded once dropped the flag,
+    # making .bounded.get_df()/_repr_html_ silently empty).
+    assert len(parses.bounded.get_df()) > 0
+    assert all(p.is_bounded for p in parses.bounded)
+    # .scansions is a real ParseList of ALL candidates (show_bounded=True), so
+    # .scansions.df is one row per parse (regression: LazyParseList.scansions
+    # returned self, collapsing .scansions.get_df() to the unbounded parses only).
+    assert len(parses.scansions.df) == len(parses)
+    assert len(parses.scansions.get_df()) > len(parses.unbounded.get_df())
 
     ps1 = parses.stats_d(norm=False, incl_bounded=True)
     ps2 = parses.stats_d(norm=True, incl_bounded=True)

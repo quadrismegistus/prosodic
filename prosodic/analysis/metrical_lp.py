@@ -40,10 +40,10 @@ class LPTree:
     labels.
     """
 
-    __slots__ = ("label", "left", "right", "strong", "lclass")
+    __slots__ = ("label", "left", "right", "strong", "lclass", "word_num")
 
     def __init__(self, label=None, left=None, right=None, strong=None,
-                 lclass=None):
+                 lclass=None, word_num=None):
         self.label = label
         self.left = left
         self.right = right
@@ -52,6 +52,9 @@ class LPTree:
         # -0.5 = ambiguous function word, -1 = unstressed function word,
         # None = unknown. Drives the L&P (114) grid floor.
         self.lclass = lclass
+        # reference word_num on leaves (set by the syntax=True backend so
+        # per-word grid values map back to the syllable DataFrame); None else.
+        self.word_num = word_num
 
     @property
     def is_leaf(self) -> bool:
@@ -416,7 +419,8 @@ def _convert_constituency(node, ctx):
         if t is None or t["punct"]:
             return {"kind": "punct"}
         return {"kind": "word",
-                "tree": LPTree(label=t["text"], lclass=t["lclass"]),
+                "tree": LPTree(label=t["text"], lclass=t["lclass"],
+                               word_num=t["wn"]),
                 "nominal": t["nominal"], "wn": t["wn"]}
 
     kept = []
@@ -669,3 +673,102 @@ def lp_line_data(text: str, lang: str = "en") -> Optional[dict]:
         "nuclear": dte.label,
         "max_height": max(heights_list),
     }
+
+
+# ------------------------------------------- syntax=True backend (Phase 4)
+# Produce the same four _syll_df columns as the shipping spaCy path
+# (phrasal_stress, pstress, tstress, pstrength), but from the faithful L&P
+# constituency tree — with tstress defined as the normalized RPPR grid (the
+# theoretically-correct gradient for weighting metrical constraints). Opt-in
+# via syntax_model="stanza"; spaCy stays the default.
+
+def lp_word_stress(tree: LPTree) -> dict:
+    """Per-word phrasal-stress values from a word-level LPTree.
+
+    - ``tstress``: normalized RPPR grid (1.0 = nuclear) — the faithful
+      gradient, i.e. a 0–1 version of the grid for constraint weighting.
+    - ``pstress``: 1.0 if the word is the strong child of its immediate
+      parent (a local phrasal peak), else 0.0.
+    - ``phrasal_stress``: grid height − max (int; 0 = nuclear, negative =
+      demoted), matching the discrete column's "0 = most prominent" sense.
+    - ``pstrength``: local peaks/valleys over adjacent words (reuses the
+      shipping ``_mt_pstrength``).
+
+    Returns ``{word_num: {phrasal_stress, pstress, tstress, pstrength}}``.
+    """
+    import numpy as np
+    from ..texts.phrasal_stress import _mt_pstrength
+
+    leaves = tree.leaves()
+    if not leaves:
+        return {}
+    heights = grid_heights(tree, lexical_floors(tree))
+    maxh = max(heights)
+    minh = min(heights)
+    span = (maxh - minh) or 1  # min-max so weakest = 0, nuclear = 1
+    strong = set()
+
+    def walk(node):
+        if node.is_leaf:
+            return
+        if node.strong_child.is_leaf:
+            strong.add(id(node.strong_child))
+        walk(node.left)
+        walk(node.right)
+
+    walk(tree)
+    ps = np.array([1.0 if id(lf) in strong else 0.0 for lf in leaves])
+    pstr = _mt_pstrength(ps, len(leaves))
+    out = {}
+    for i, lf in enumerate(leaves):
+        if lf.word_num is None:
+            continue
+        out[lf.word_num] = {
+            "phrasal_stress": int(heights[i] - maxh),
+            "pstress": float(ps[i]),
+            "tstress": (heights[i] - minh) / span,
+            "pstrength": None if np.isnan(pstr[i]) else float(pstr[i]),
+        }
+    return out
+
+
+def add_phrasal_stress_stanza(syll_df, text: str, lang: str = "en"):
+    """Stanza-constituency backend for ``syntax=True``: write the four
+    phrasal-stress columns from the faithful L&P tree. ``text`` is the
+    ORIGINAL text (faithful spacing/punctuation); prosodic's tokenization
+    (from ``syll_df``) is the reference the tree is built over. Modifies
+    ``syll_df`` in place and returns it."""
+    import pandas as pd
+
+    cols_f = ("pstress", "tstress", "pstrength")
+    if syll_df.empty:
+        syll_df["phrasal_stress"] = pd.array([], dtype=pd.Int32Dtype())
+        for c in cols_f:
+            syll_df[c] = pd.array([], dtype=pd.Float64Dtype())
+        return syll_df
+
+    wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
+           .drop_duplicates("word_num").sort_values("word_num"))
+    ref_tokens = [str(w).strip() for w in wdf["word_txt"]]
+    ref_ispunc = [bool(p) for p in wdf["is_punc"]]
+    ref_wordnums = [int(x) for x in wdf["word_num"]]
+    spans = _locate_tokens(text or " ".join(ref_tokens), ref_tokens)
+
+    nlp = _get_stanza(lang)
+    doc = nlp(text or " ".join(ref_tokens))
+    values = {}
+    for sent in doc.sentences:
+        tok = _build_tok(sent, ref_tokens, ref_ispunc, ref_wordnums, spans, True)
+        r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
+        if r and r.get("kind") == "word":
+            values.update(lp_word_stress(r["tree"]))
+
+    def col(key):
+        return {wn: (values[wn][key] if wn in values else None)
+                for wn in ref_wordnums}
+
+    syll_df["phrasal_stress"] = syll_df["word_num"].map(
+        col("phrasal_stress")).astype(pd.Int32Dtype())
+    for c in cols_f:
+        syll_df[c] = syll_df["word_num"].map(col(c)).astype(pd.Float64Dtype())
+    return syll_df

@@ -491,11 +491,17 @@ def tree_to_dict(tree):
     return convert(tree)
 
 
-def add_phrasal_stress(syll_df, model="en_core_web_sm"):
+def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None):
     """Add phrasal_stress column to syll_df.
 
     Groups words by sentence, runs spaCy dep parsing, computes L&P
     phrasal stress, and broadcasts word-level values to syllable rows.
+
+    ``model="stanza"`` selects the experimental faithful constituency backend
+    (`analysis.metrical_lp`) instead of the default spaCy dependency backend:
+    same four columns, but `tstress` is the normalized RPPR grid computed over
+    a real constituency parse. ``text`` (the original text) is passed through
+    for faithful tokenization; falls back to rejoining `syll_df` tokens.
 
     Args:
         syll_df: DataFrame with word_num, sent_num, word_txt, is_punc columns
@@ -504,6 +510,10 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     Returns:
         syll_df with phrasal_stress column added (modified in place)
     """
+    if model == "stanza":
+        from ..analysis.metrical_lp import add_phrasal_stress_stanza
+        return add_phrasal_stress_stanza(syll_df, text)
+
     if syll_df.empty:
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
         syll_df['pstress'] = pd.array([], dtype=pd.Float64Dtype())

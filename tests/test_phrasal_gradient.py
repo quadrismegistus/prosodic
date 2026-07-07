@@ -402,3 +402,37 @@ def test_grid_str_includes_phrasal_rows():
     # explicit opt-out returns to lexical-only heights
     s0_plain = t.lines[0].grid_str(phrasal=None)
     assert len(s0_plain.split("\n")) == 5
+
+
+# ------------------------------------ Stanza constituency backend (opt-in)
+
+def test_stanza_backend_produces_columns():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("the cat sat on the mat", syntax=True, syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    df = t._syll_df
+    for c in ("phrasal_stress", "pstress", "tstress", "pstrength"):
+        assert c in df.columns
+    sub = (df[(df.form_idx == 0) & (~df.is_punc.astype(bool))]
+           .drop_duplicates("word_num"))
+    tmap = {r.word_txt.strip(): float(r.tstress) for _, r in sub.iterrows()}
+    # tstress = normalized RPPR grid: nuclear = 1, weakest = 0
+    assert tmap["mat"] == 1.0
+    assert min(tmap.values()) == 0.0
+    assert tmap["cat"] > tmap["the"]
+
+
+def test_stanza_backend_possessive_faithful():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("a summer's day", syntax=True, syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    sub = (t._syll_df[(t._syll_df.form_idx == 0) & (~t._syll_df.is_punc.astype(bool))]
+           .drop_duplicates("word_num"))
+    words = [r.word_txt.strip() for _, r in sub.iterrows()]
+    assert "summer's" in words and "'s" not in words   # clitic not a token
+    tmap = {r.word_txt.strip(): float(r.tstress) for _, r in sub.iterrows()}
+    assert tmap["day"] == 1.0    # head noun nuclear, not the possessor

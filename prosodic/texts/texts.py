@@ -94,9 +94,11 @@ class TextModel(Entity):
             # build syllable DataFrame from raw get_word() output (fast)
             self._syll_df = build_syll_df(token_dicts, lang=lang)
 
-            # optionally add phrasal stress from dependency parse
+            # optionally add phrasal stress from dependency parse (spaCy) or,
+            # with syntax_model="stanza", the faithful constituency backend
             if self._syntax:
-                add_phrasal_stress(self._syll_df, model=self._syntax_model)
+                add_phrasal_stress(self._syll_df, model=self._syntax_model,
+                                   text=self._txt)
 
             # DON'T build Entity children yet — defer to first access
 

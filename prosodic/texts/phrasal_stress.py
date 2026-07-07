@@ -491,7 +491,96 @@ def tree_to_dict(tree):
     return convert(tree)
 
 
-def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None):
+def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
+    """Per-word phrasal-stress dicts from spaCy, one sentence at a time.
+
+    Both modes build one pre-tokenized Doc per sentence with punctuation
+    excluded (stable — punctuation in a bare line fragment destabilizes the
+    parse and ties the grid). They differ only in tokenization of the content
+    words:
+
+    - ``free=True`` (default): each content word is split through spaCy's own
+      tokenizer, so ``beauty's`` → ``beauty`` + ``'s`` and parses as ``poss``,
+      not ``compound`` — fixing the possessive/contraction bug. Each word's
+      value is taken from its HOST piece (the first; the clitic is dropped).
+    - ``free=False`` (legacy): each content word is one Doc token
+      (``beauty's`` stays merged → mis-tagged ``compound``).
+
+    Returns ``(stress, pstress, tstress, pstrength)`` dicts keyed by word_num.
+    """
+    from spacy.tokens import Doc
+
+    S, P, T, PS = {}, {}, {}, {}
+    docs, metas = [], []
+    for _, group in word_df.groupby('sent_num'):
+        group = group.sort_values('word_num')
+        raw = [str(w).strip() for w in group['word_txt']]
+        wns = [int(x) for x in group['word_num']]
+        isp = group['is_punc'].values.astype(bool)
+        content = [i for i in range(len(raw)) if not isp[i]]
+        punc_wns = [wns[i] for i in range(len(wns)) if isp[i]]
+        if not content:
+            for wn in wns:
+                S[wn] = P[wn] = T[wn] = PS[wn] = None
+            continue
+
+        content_wns = [wns[i] for i in content]
+        # pieces = Doc tokens; owner[k] = index into content_wns
+        if free:
+            pieces, owner = [], []
+            for ci, i in enumerate(content):
+                for p in nlp.tokenizer(raw[i]):
+                    if p.text.strip():
+                        pieces.append(p.text)
+                        owner.append(ci)
+        else:
+            pieces = [raw[i] for i in content]
+            owner = list(range(len(content)))
+        if not pieces:
+            for wn in wns:
+                S[wn] = P[wn] = T[wn] = PS[wn] = None
+            continue
+
+        spaces = [True] * len(pieces)
+        spaces[-1] = False
+        docs.append(Doc(nlp.vocab, words=pieces, spaces=spaces))
+        metas.append((content_wns, owner, punc_wns))
+
+    for doc, (content_wns, owner, punc_wns) in zip(nlp.pipe(docs), metas):
+        n = len(doc)
+        heads = np.array([t.head.i if t.head.i != t.i else -1 for t in doc],
+                         dtype=np.int32)
+        pos = np.array([t.pos_ for t in doc])
+        xpos = np.array([t.tag_ for t in doc])
+        deps = np.array([t.dep_ for t in doc])
+        words = np.array([t.text for t in doc])
+        stress = _compute_phrasal_stress(heads, pos, xpos, n)
+        # host piece of each word carries that word's syllable count
+        nsylls = np.ones(n, dtype=np.int32)
+        first = set()
+        for i, ci in enumerate(owner):
+            if ci not in first:
+                first.add(ci)
+                nsylls[i] = nsyll_by_word.get(content_wns[ci], 1)
+        ps, ts, pstr = _mt_gradient(heads, words, xpos, deps, nsylls, n)
+
+        seen = set()
+        for i, ci in enumerate(owner):
+            wn = content_wns[ci]
+            if wn in seen:                       # keep the host (first) piece
+                continue
+            seen.add(wn)
+            S[wn] = int(stress[i])
+            P[wn] = None if np.isnan(ps[i]) else float(ps[i])
+            T[wn] = None if np.isnan(ts[i]) else float(ts[i])
+            PS[wn] = None if np.isnan(pstr[i]) else float(pstr[i])
+        for wn in punc_wns:
+            S[wn] = P[wn] = T[wn] = PS[wn] = None
+    return S, P, T, PS
+
+
+def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
+                       spacy_free=True):
     """Add phrasal_stress column to syll_df.
 
     Groups words by sentence, runs spaCy dep parsing, computes L&P
@@ -502,6 +591,12 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None):
     same four columns, but `tstress` is the normalized RPPR grid computed over
     a real constituency parse. ``text`` (the original text) is passed through
     for faithful tokenization; falls back to rejoining `syll_df` tokens.
+
+    ``spacy_free=True`` (default) lets spaCy tokenize the reconstructed text
+    itself — splitting clitics (``beauty's`` → ``beauty`` + ``'s``) so
+    possessives parse as ``poss`` not ``compound`` — then aligns spaCy tokens
+    back to prosodic ``word_num`` by char offset. ``spacy_free=False`` is the
+    legacy path (pre-tokenized merged Docs), kept for comparison.
 
     Args:
         syll_df: DataFrame with word_num, sent_num, word_txt, is_punc columns
@@ -521,7 +616,6 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None):
         syll_df['pstrength'] = pd.array([], dtype=pd.Float64Dtype())
         return syll_df
 
-    from spacy.tokens import Doc
     nlp = _get_nlp(model)
 
     # get unique words per sentence (form_idx 0 or -1, no duplicates)
@@ -533,74 +627,9 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None):
         .groupby('word_num').size().to_dict()
     )
 
-    stress_by_word = {}
-    pstress_by_word = {}
-    tstress_by_word = {}
-    pstrength_by_word = {}
-
-    # First pass: build one pre-tokenized Doc per sentence, collecting the
-    # word_num bookkeeping in parallel. All-punctuation sentences produce no
-    # Doc; their words get None directly.
-    docs = []
-    doc_meta = []  # parallel to docs: (parse_word_nums, punc_word_nums)
-    for sent_num, group in word_df.groupby('sent_num'):
-        words = group['word_txt'].values
-        word_nums = group['word_num'].values
-        is_punc = group['is_punc'].values.astype(bool)
-
-        # filter to non-punctuation for parsing, strip whitespace
-        parse_mask = ~is_punc
-        parse_words = [w.strip() for w in words[parse_mask]]
-        parse_word_nums = word_nums[parse_mask]
-
-        if len(parse_words) == 0:
-            for wn in word_nums:
-                stress_by_word[wn] = None
-                pstress_by_word[wn] = None
-                tstress_by_word[wn] = None
-                pstrength_by_word[wn] = None
-            continue
-
-        # pre-tokenized Doc; the spaCy pipeline runs on it below via nlp.pipe
-        spaces = [True] * len(parse_words)
-        spaces[-1] = False
-        docs.append(Doc(nlp.vocab, words=list(parse_words), spaces=spaces))
-        doc_meta.append((parse_word_nums, word_nums[is_punc]))
-
-    # Second pass: a single batched pipeline call over all sentence Docs
-    # instead of one nlp() call per sentence. nlp.pipe preserves input order,
-    # so zipping with doc_meta keeps each Doc aligned with its word_nums.
-    for doc, (parse_word_nums, punc_word_nums) in zip(nlp.pipe(docs), doc_meta):
-        n = len(doc)
-        # extract head indices (-1 for root)
-        heads = np.array([
-            tok.head.i if tok.head.i != tok.i else -1
-            for tok in doc
-        ], dtype=np.int32)
-        pos = np.array([tok.pos_ for tok in doc])
-        xpos = np.array([tok.tag_ for tok in doc])
-        deprels = np.array([tok.dep_ for tok in doc])
-        words = np.array([tok.text for tok in doc])
-
-        stress = _compute_phrasal_stress(heads, pos, xpos, n)
-
-        nsylls = np.array([
-            nsyll_by_word.get(wn, 1) for wn in parse_word_nums
-        ], dtype=np.int32)
-        pstress, tstress, pstrength = _mt_gradient(heads, words, xpos, deprels, nsylls, n)
-
-        for i, wn in enumerate(parse_word_nums):
-            stress_by_word[wn] = int(stress[i])
-            pstress_by_word[wn] = None if np.isnan(pstress[i]) else float(pstress[i])
-            tstress_by_word[wn] = None if np.isnan(tstress[i]) else float(tstress[i])
-            pstrength_by_word[wn] = None if np.isnan(pstrength[i]) else float(pstrength[i])
-
-        # punctuation gets None
-        for wn in punc_word_nums:
-            stress_by_word[wn] = None
-            pstress_by_word[wn] = None
-            tstress_by_word[wn] = None
-            pstrength_by_word[wn] = None
+    (stress_by_word, pstress_by_word, tstress_by_word,
+     pstrength_by_word) = _spacy_gradient_by_word(
+        word_df, nsyll_by_word, nlp, free=spacy_free)
 
     # broadcast to syllable rows
     syll_df['phrasal_stress'] = syll_df['word_num'].map(stress_by_word).astype(pd.Int32Dtype())

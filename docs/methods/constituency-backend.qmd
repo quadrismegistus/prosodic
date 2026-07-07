@@ -123,11 +123,23 @@ faithful computer of it.
 - **spaCy stays the default** for `syntax=True`: it is fast (16× faster —
   ~1.5 s vs ~25 s on the sonnets), and its gradient is at the human ceiling
   for what a sentence model can predict.
-- **The Stanza constituency backend stays as a non-default option**, because
-  for metrical and theoretical work — where accuracy to the linguistic
-  structure is the point — it is measurably more faithful (the grid, the
-  binary tree, the s/w relation, and better nuclear placement on the
-  theory's own examples).
+- **The Stanza constituency backend is available as a non-default option**,
+  because for metrical and theoretical work — where accuracy to the
+  linguistic structure is the point — it is measurably more faithful (the
+  grid, the binary tree, the s/w relation, and better nuclear placement on
+  the theory's own examples). It is opt-in:
+
+  ```python
+  TextModel(text, syntax=True, syntax_model="stanza")
+  ```
+
+  writes the same four `_syll_df` columns as the default spaCy path
+  (`phrasal_stress`, `pstress`, `tstress`, `pstrength`), but `tstress` is
+  the **normalized RPPR grid** (min–max, weakest = 0, nuclear = 1) — the
+  0–1 grid the constraints weight against, computed over real constituency.
+  The original text is handed to Stanza faithfully; prosodic's own
+  tokenization is the reference, so clitics (`summer's`, `won't`) collapse
+  to their host and punctuation is dropped.
 - The faithful grid + tree already ship as the **Line View toggle**
   (see the web app), rendering L&P's figure with real s/w edge labels.
 

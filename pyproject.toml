@@ -35,8 +35,15 @@ packages = {find = {}}
 include-package-data = true
 
 [project.optional-dependencies]
+# Default phrasal-stress engine: spaCy dependency parse (light).
 syntax = [
     "spacy>=3.0",
+]
+# Faithful L&P engine: Stanza constituency parse (heavy — pulls in torch and
+# a large constituency model). Opt-in on top of [syntax]:
+#   pip install prosodic[syntax,constituency]
+constituency = [
+    "stanza>=1.5",
 ]
 dev = [
     "black>=22.10.0",

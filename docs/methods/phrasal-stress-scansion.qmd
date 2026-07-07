@@ -1,0 +1,172 @@
+---
+title: "Does phrasal stress help scansion? (and is the grid better than the tree?)"
+subtitle: "A MaxEnt study of tree stress vs grid stress as metrical constraints"
+---
+
+Prosodic exposes two L&P prominence representations — **tree stress**
+(`tstress`, cumulative eq-12) and **grid stress** (`gstress`, the RPPR grid) —
+for two engines (spaCy dependency, Stanza constituency), and offers metrical
+constraints weighting against each (`w_stress_t`/`s_unstress_t`,
+`w_stress_g`/`s_unstress_g`). Two questions follow:
+
+1. Does phrasal stress help a metrical parser choose the right scansion?
+2. If so, is L&P's *preferred* representation — the grid — actually better than
+   the cumulative tree stress?
+
+This page reports a MaxEnt study answering both. Background on the two
+representations: [Constituency backend](constituency-backend.qmd). Reproduce
+with `scripts/phrasal_scansion_eval.py`.
+
+## Method
+
+For each constraint set — **lexical** (the default constraints), **+tree**
+(`w_stress_t`, `s_unstress_t`), **+grid** (`w_stress_g`, `s_unstress_g`) — fit
+MaxEnt weights ([MaxEnt](../reference/parsing.maxent.MaxEntTrainer.qmd)) and
+measure **held-out** scansion accuracy: on a 50/50 line split, fit on one half,
+and on the other half score the model's argmax scansion against the gold.
+
+Two golds:
+
+- **Human** — the Litlab-2016 tagged sample (1736 lines, two annotators, four
+  meters: iambic 358, trochaic 368, anapestic 499, dactylic 511). Both
+  annotators enter as observed frequencies.
+- **Template** — Shakespeare's sonnets scored against *strict* iambic
+  pentameter (masculine `wswswswsws` / feminine `wswswswswsw`).
+
+::: {.callout-note title="Four confounds, handled"}
+- **Milton is excluded.** Both parsers fail on 17th-c. syntax: spaCy roots
+  *"Of Man's first disobedience… Sing…"* at the preposition **Of**; Stanza
+  labels it a **FRAG** and tags **Sing** as a proper noun. Archaic spelling
+  (`Hurld`→`NNP`) + inversion defeat both, so the phrasal stress is noise. Its
+  apparent null is uninterpretable.
+- **Sentence segmentation is correct** — prosodic splits on `.!?`, so
+  comma-ended verse lines correctly continue; the phrasal stress is computed
+  over real sentences.
+- **Positional zones don't help** — `zones=3` / `zones="initial"` slightly
+  *lower* held-out accuracy (overfit), for both engines.
+- **~3% noise floor.** `w_peak` entails `w_stress` (they co-occur), a
+  collinearity that leaves a flat ridge in the MaxEnt likelihood; L-BFGS lands
+  at slightly different lexical weights when the constraint set changes, so
+  differences below ~3 points are not meaningful.
+:::
+
+## Result 1 — the grid does not beat the tree
+
+Held-out accuracy on the human gold (overall / trochaic):
+
+```
+                spaCy                    Stanza
+              overall  trochaic       overall  trochaic
+  lexical      55.5%    39.7%          55.5%    39.7%
+  +tree        55.6%    53.6%   ✓      55.5%    53.0%   ✓
+  +grid        54.6%    51.0%          56.1%    38.4%   ✗
+```
+
+- **Tree stress robustly helps trochaic** — +14 points, both engines, above the
+  noise floor.
+- **Grid stress is engine-dependent**: it helps trochaic with spaCy (+11) but
+  not with Stanza (38.4% ≈ baseline).
+- **Overall, everything is within noise** — no representation wins on aggregate.
+
+So the grid — L&P's theoretically preferred representation — is *not* the better
+metrical signal. If anything the cumulative **tree** stress is the reliable one,
+because the grid coarsens away the content-word gradations that disambiguate a
+scansion (see [Constituency backend](constituency-backend.qmd) for the tree-vs-
+grid mechanism).
+
+## Result 2 — phrasal stress recovers *canonical* meter
+
+The trochaic effect is not a fluke of one meter. Scored against strict iambic
+pentameter on Shakespeare, phrasal **tree** stress helps substantially, with
+genuine non-zero learned weights:
+
+```
+Shakespeare sonnets, iambic pentameter (masc/fem), held-out:
+              spaCy              Stanza
+  lexical     65.0%              65.0%
+  +tree       72.5%  (+7.5)      73.1%  (+8.1)     w_stress_t 0.16 / 0.39
+  +grid       70.9%  (+5.9)      64.5%  (−0.5)     grid: engine-dependent again
+```
+
+The contrast that makes sense of everything:
+
+- **Milton** (assumed pentameter, *broken* parse): phrasal → 0 weight (noise).
+- **Tagged iambic** (*human* gold): phrasal slightly *hurts* — humans mark
+  inversions that default prominence doesn't predict.
+- **Shakespeare** (*strict template*, decent parse): phrasal *helps* (+8).
+
+Phrasal stress encodes **broad-focus default prominence**, so it helps a parser
+recover the *expected* metrical reading — but not an annotator's performed
+*deviations*, and only when the parse is good enough to compute it. That is
+exactly the "does the gradient earn its place" question from
+[Constituency backend](constituency-backend.qmd): **yes — tree stress does, for
+recovering canonical meter.**
+
+## Result 3 — per-meter weights recover the typology
+
+Fitting per meter (all phrasal constraints competing) is the most revealing cut.
+The structural weights are near-identical across engines (they don't depend on
+the parser); the phrasal weights show a clean pattern:
+
+```
+                    iambic        trochaic       anapestic      dactylic
+constraint       spaCy stanza   spaCy stanza   spaCy stanza   spaCy stanza
+─── structural (engine-independent) ────────────────────────────────────
+w_peak            1.10  0.96    1.35  1.42     0.00  0.00     0.00  0.00
+w_stress          0.61  0.84    1.18  1.33     0.00  0.00     0.00  0.00
+s_unstress        1.43  1.48    0.42  0.15     4.29  4.11     3.52  3.36
+unres_across      2.68  2.70    3.91  3.95     0.07  0.19     0.14  0.17
+unres_within      3.22  3.33    3.42  3.61     0.00  0.18     0.55  0.53
+─── phrasal ────────────────────────────────────────────────────────────
+w_stress_t        0.00  0.12    0.43  0.57     0.00  0.00     0.00  0.00
+s_unstress_t      0.00  0.74    0.00  0.04     0.36  0.81     0.24  0.92
+w_stress_g        0.02  0.00    0.00  0.00     0.00  0.00     0.00  0.00
+s_unstress_g      0.84  0.25    0.00  0.00     1.34  1.92     0.82  0.42
+```
+
+**The MaxEnt fit rediscovers binary vs ternary.** Binary meters (iambic,
+trochaic) load `w_peak`/`w_stress` (~1) *and* `unres` (~3–4) — lexical stress
+matters and resolution is forbidden. Ternary meters (anapestic, dactylic)
+collapse `w_peak`/`w_stress`/`unres` to ~0 and hang everything on `s_unstress`
+≈ 4 — weak syllables resolve freely (the `ww` runs), and the one rule is *the
+strong beats must be stressed*. This typology is identical across both engines.
+
+**The phrasal *direction* is engine-stable and meter-determined:**
+
+- **Trochaic → `w_stress`** (demote a phrasally-prominent word on a weak
+  position).
+- **Iambic, anapestic, dactylic → `s_unstress`** (a phrasally-weak word mustn't
+  sit on a strong position).
+
+It tracks the meter's head: the strong-first trochee guards the weak beat; the
+others guard the strong beats.
+
+**The phrasal *representation* (tree vs grid) is engine-dependent** — trochaic
+uses tree in both, anapestic uses grid in both, but iambic and dactylic flip
+(grid in spaCy, tree in Stanza). That is what you expect if tree and grid share
+variance (the grid is a coarsening of the tree): the fit loads whichever column
+*its own engine* computes more cleanly. So the tree-vs-grid split is engine
+artifact on a shared signal — not a meaningful preference.
+
+## Conclusions
+
+1. **Use tree stress, not the grid.** Tree stress helps in both engines; grid
+   stress helps only in spaCy. The grid — L&P's preferred representation — is
+   not empirically better for scansion.
+2. **Phrasal stress earns its place for recovering canonical meter** (strict
+   iambic +8, default trochaic +14), when the parse is decent — but not for
+   matching human-marked deviations, nor on unparseable archaic verse.
+3. **The useful signal is the phrasal *direction*** (`w_stress` vs
+   `s_unstress`), which is meter-determined and engine-stable. A principled
+   model picks one representation (tree) and lets the direction constraint do
+   the meter-specific work.
+4. **It is a refinement, not a driver.** Phrasal weights (~0.2–1.3) sit well
+   below the structural constraints (`unres` ~3, ternary `s_unstress` ~4). The
+   meter is enforced by structure and lexical stress; phrasal stress nudges the
+   ambiguous cases.
+
+## References
+
+- Liberman, M. & A. Prince (1977). On stress and linguistic rhythm. *LI* 8.
+- Hayes, B. & C. Wilson (2008). A maximum entropy model of phonotactics.
+- Litlab tagged sample: `data/tagged_samples/tagged-sample-litlab-2016.txt`.

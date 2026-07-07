@@ -72,13 +72,32 @@ implemented) gives two numbers:
 A hard-case set (compounds, possessives, proper-noun modifiers, PP
 attachment, relative clauses) scored the two backends head to head on
 nuclear placement against hand-derived gold. On the defensible cases the
-constituency backend was **28/28**, the dependency projection **25/28** —
-the three misses being a possessive-possessor confusion (`John's car`
-→ *John*) and an adjective phrase. On L&P's own figures the split was
-**10/11 vs 7/11** (the dependency projection mis-stresses *Tennessee air*,
-*Montana cowboy*, *law degree requirement changes*). So *for recovering the
-theory's structure*, constituency is measurably better — as expected, since
-it has the structure the NSR/CSR are defined over.
+constituency backend was **28/28**, the dependency projection **27/28** —
+its one miss an adjective phrase.
+
+::: {.callout-important title="Correction: the possessive gap was a tokenization artifact"}
+An earlier version of this comparison had the dependency projection at
+**25/28**, missing all three possessives (`John's car` → *John*), and
+concluded constituency was "measurably better on possessives." That was
+wrong — and instructively so. The spaCy backend had been fed prosodic's
+*merged* tokens (`beauty's` as one token), which spaCy mis-tags
+`NNP`/`compound`, handing prominence to the possessor. Splitting the clitic
+through spaCy's own tokenizer (`beauty's` → `beauty` + `'s` → `poss`) fixes
+it: spaCy then scores **3/3** on possessives and the gap closes to a single
+adjective phrase. On 118 sonnet lines the two backends, both properly
+tokenized, agree on nuclear placement **91%** of the time (per-word `tstress`
+Spearman ≈ 0.70) — and spaCy even gets *thy beauty's legacy* → *legacy*
+right where the constituency pipeline picks the possessor. **Lesson:
+tokenization, not the dependency-vs-constituency choice, drove the
+possessive difference.** The fix now ships in the default spaCy backend
+(`spacy_free=True`).
+:::
+
+On L&P's own figures the split was **10/11 vs 7/11** (the dependency
+projection mis-stresses *Tennessee air*, *Montana cowboy*, *law degree
+requirement changes*). So constituency retains a *marginal* structural edge
+— it has the sisterhood the NSR/CSR are defined over — but, tokenization
+held equal, it is much smaller than the confounded comparison implied.
 
 ## Validation 2 — against real speech (and why it's the wrong target)
 

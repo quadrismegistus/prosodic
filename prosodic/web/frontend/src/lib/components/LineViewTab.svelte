@@ -1,7 +1,8 @@
 <script>
-	import { parseLine } from '$lib/api.js';
+	import { parseLine, parseLP } from '$lib/api.js';
 	import { selectedLine, meterConfig, constraintWeights, zoneWeights, maxentConfig, settings } from '$lib/stores.js';
 	import MetricalGridTree from './MetricalGridTree.svelte';
+	import LPGridTree from './LPGridTree.svelte';
 
 	let lineInput = $state('');
 	let parses = $state([]);
@@ -15,6 +16,33 @@
 	let gridPalette = $state([]);
 	let gridLevelNames = $state([]);
 	let selectedParse = $state(null);
+
+	// grid/tree view mode: 'mt' = MetricalTree (dep projection, shipping),
+	// 'lp' = faithful Liberman & Prince (constituency, experimental).
+	let vizMode = $state('mt');
+	let lpData = $state(null);
+	let lpLoading = $state(false);
+	let lpError = $state('');
+
+	async function loadLP() {
+		if (lpData || lpLoading || !lineText) return;
+		lpLoading = true;
+		lpError = '';
+		try {
+			const res = await parseLP({ text: lineText, parse_timeout: $settings.parse_timeout });
+			if (res.available) lpData = res;
+			else lpError = res.reason || 'unavailable';
+		} catch (e) {
+			lpError = e.message;
+		} finally {
+			lpLoading = false;
+		}
+	}
+
+	function setViz(mode) {
+		vizMode = mode;
+		if (mode === 'lp') loadLP();
+	}
 
 	// When selectedLine changes, auto-parse it
 	$effect(() => {
@@ -66,6 +94,8 @@
 			gridPalette = res.grid_palette || [];
 			gridLevelNames = res.grid_level_names || [];
 			selectedParse = parses[0] || parts.find((p) => p.parses.length > 0)?.parses[0] || null;
+			lpData = null;                 // invalidate L&P view for the new line
+			if (vizMode === 'lp') loadLP();
 		} catch (e) {
 			error = e.message;
 		} finally {
@@ -105,16 +135,35 @@
 	{#if parses.length > 0 || parts.length > 0}
 		{#if selectedParse}
 			<div class="viz-section">
-				<h3 class="viz-title">
-					Metrical grid{syntaxTrees.length > 0 ? ' + syntax tree' : ''}
-					<span class="viz-hint">(rank {selectedParse.rank}, click a row below to change)</span>
-				</h3>
-				<MetricalGridTree
-					rows={selectedParse.grid}
-					palette={gridPalette}
-					levelNames={gridLevelNames}
-					tree={syntaxTrees[0] ?? null}
-				/>
+				<div class="viz-head">
+					<h3 class="viz-title">
+						{#if vizMode === 'mt'}
+							Metrical grid{syntaxTrees.length > 0 ? ' + syntax tree' : ''}
+							<span class="viz-hint">(rank {selectedParse.rank}, click a row below to change)</span>
+						{:else}
+							Metrical grid + tree <span class="viz-hint">(faithful Liberman &amp; Prince)</span>
+						{/if}
+					</h3>
+					<div class="viz-toggle" role="group" aria-label="Grid model">
+						<button class:on={vizMode === 'mt'} onclick={() => setViz('mt')}>MetricalTree</button>
+						<button class:on={vizMode === 'lp'} onclick={() => setViz('lp')}>L&amp;P faithful</button>
+					</div>
+				</div>
+
+				{#if vizMode === 'mt'}
+					<MetricalGridTree
+						rows={selectedParse.grid}
+						palette={gridPalette}
+						levelNames={gridLevelNames}
+						tree={syntaxTrees[0] ?? null}
+					/>
+				{:else if lpLoading}
+					<div class="viz-note">Computing constituency parse…</div>
+				{:else if lpError}
+					<div class="viz-note">Faithful L&amp;P view unavailable ({lpError}). Needs Stanza + the constituency model on the server.</div>
+				{:else if lpData}
+					<LPGridTree data={lpData} />
+				{/if}
 			</div>
 		{/if}
 	{/if}
@@ -247,6 +296,37 @@
 		margin-bottom: 1rem;
 		padding-bottom: 0.5rem;
 		border-bottom: 1px solid var(--border-light);
+	}
+	.viz-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.viz-toggle {
+		display: inline-flex;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+	.viz-toggle button {
+		padding: 0.25rem 0.6rem;
+		font-size: 0.75rem;
+		background: none;
+		border: none;
+		color: var(--text-dim);
+		font-family: var(--font);
+	}
+	.viz-toggle button.on {
+		background: var(--accent);
+		color: #fff;
+	}
+	.viz-note {
+		font-size: 0.8rem;
+		color: var(--text-dim);
+		font-style: italic;
+		padding: 0.75rem 0;
 	}
 	.viz-title {
 		font-size: 0.8rem;

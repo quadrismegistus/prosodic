@@ -313,6 +313,54 @@ def _mt_pstrength(pstress, n):
     return ps
 
 
+def _mt_grid(heads, tags, deps, lstress_variants, n):
+    """Grid stress from the dependency-projection tree.
+
+    MetricalTree's ``tstress`` is *cumulative* (L&P eq-12). The **grid** is
+    L&P's other representation — so binarize each projected phrase (NSR, with
+    the common-noun compound rule) into an L&P binary tree and read off the
+    RPPR grid height, exactly as the Stanza engine does over constituency.
+    Topology is fixed across the disambiguation variants; only the lexical
+    (114) floor changes, so the tree is built once and re-floored per variant,
+    ensembled, then min-max normalized (NaN if no variation)."""
+    from ..analysis.metrical_lp import (LPTree, _binarize_nsr_csr,
+                                         grid_heights, lexical_floors)
+    deps_of = [[] for _ in range(n)]
+    roots = []
+    for i in range(n):
+        h = heads[i]
+        (deps_of[h] if h >= 0 else roots).append(i)
+
+    def to_lp(kind, x):
+        if kind == 'pre':
+            return LPTree(label=str(x), word_num=int(x)), tags[x] in ('NN', 'NNS')
+        subs = [to_lp(k, c) for k, c in x.children]
+        if len(subs) == 1:
+            return subs[0]
+        return _binarize_nsr_csr(subs), all(nom for _, nom in subs)
+
+    trees = [to_lp('node', _mt_project(r, deps_of, tags, deps))[0] for r in roots]
+    if not trees:
+        return np.full(n, np.nan)
+
+    raws = []
+    for lstress in lstress_variants:
+        raw = np.full(n, np.nan)
+        for tree in trees:
+            leaves = tree.leaves()
+            for lf in leaves:
+                lf.lclass = 0.0 if lstress[lf.word_num] == 0 else -1.0
+            heights = grid_heights(tree, lexical_floors(tree))
+            for i, lf in enumerate(leaves):
+                raw[lf.word_num] = heights[i]
+        raws.append(raw)
+    raw = np.nanmean(raws, axis=0)
+    good = raw[~np.isnan(raw)]
+    if good.size == 0 or good.max() == good.min():
+        return np.full(n, np.nan)
+    return (raw - good.min()) / (good.max() - good.min())
+
+
 def _mt_gradient(heads, words, tags, deps, nsylls, n):
     """Ensemble-averaged, min-max normalized MetricalTree stress.
 
@@ -320,14 +368,14 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
     stressed; monosyllables unstressed; all unstressed — averages
     pstress/tstress across them, and normalizes each within the sentence.
 
-    Returns (pstress_norm, tstress_norm, pstrength). The first two are in
-    [0, 1]; 1 = most prominent; sentences with no variation normalize to
-    NaN (as in cadence/mtree). pstrength is 1.0 (local peak), 0.0 (local
-    valley), or NaN (neither).
+    Returns ``(pstress, tstress, gstress, pstrength)``. tstress is **tree
+    stress** (cumulative); gstress is **grid stress** (RPPR grid over the
+    binarized projection). All three normalized values are in [0, 1] (1 = most
+    prominent; no variation → NaN). pstrength is 1.0/0.0/NaN (peak/valley/none).
     """
     base = _mt_lstress_base(words, tags, deps, n)
     amb = base == -0.5
-    variants = []
+    variants, lstress_variants = [], []
     for resolve in ('max', 'min_syll', 'min'):
         lstress = base.copy()
         if resolve == 'max':
@@ -337,11 +385,13 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
             lstress[amb & (nsylls != 1)] = 0
         else:
             lstress[amb] = -1
+        lstress_variants.append(lstress)
         variants.append(_mt_variant(heads, tags, deps, lstress, n))
 
     pstress = np.mean([v[0] for v in variants], axis=0)
     tstress = np.mean([v[1] for v in variants], axis=0)
     pstrength = _mt_pstrength(pstress, n)
+    gstress = _mt_grid(heads, tags, deps, lstress_variants, n)
 
     def norm(v):
         vmin, vmax = float(v.min()), float(v.max())
@@ -349,7 +399,7 @@ def _mt_gradient(heads, words, tags, deps, nsylls, n):
             return np.full(n, np.nan)
         return (v - vmin) / (vmax - vmin)
 
-    return norm(pstress), norm(tstress), pstrength
+    return norm(pstress), norm(tstress), gstress, pstrength
 
 
 # Readable phrase labels for projected nodes (fallback: TAG + "P")
@@ -405,7 +455,15 @@ def syntax_trees(text, model="en_core_web_sm"):
     with preterminals labeled ``TAG/tstress``. In a Jupyter notebook,
     ``pip install svgling`` + ``import svgling`` makes these render as
     SVG trees automatically; ``print(tree)`` gives the bracketed form.
+
+    ``model="stanza"`` returns the faithful L&P binary s/w trees instead (see
+    ``analysis.metrical_lp.lp_nltk_trees``) — the engine choice made at
+    ``TextModel(syntax=True, syntax_model=...)`` flows through here.
     """
+    if model == "stanza":
+        from ..analysis.metrical_lp import lp_nltk_trees
+        return lp_nltk_trees(text._syll_df)
+
     from spacy.tokens import Doc
     nlp = _get_nlp(model)
     syll_df = text._syll_df
@@ -437,7 +495,7 @@ def syntax_trees(text, model="en_core_web_sm"):
         words = np.array([tok.text for tok in doc])
         nsylls = np.array([nsyll_by_word.get(wn, 1) for wn in word_nums],
                           dtype=np.int32)
-        _, tstress, _ = _mt_gradient(heads, words, tags, deps, nsylls, n)
+        _, tstress, _, _ = _mt_gradient(heads, words, tags, deps, nsylls, n)
         new_trees = _mt_nltk_trees(heads, words, tags, deps, tstress)
         for tr in new_trees:
             # internal: lets tree_to_dict() attach word_num per leaf, so the
@@ -491,11 +549,140 @@ def tree_to_dict(tree):
     return convert(tree)
 
 
-def add_phrasal_stress(syll_df, model="en_core_web_sm"):
+def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
+    """Per-word phrasal-stress dicts from spaCy, one prosodic sentence at a time.
+
+    ``free=True`` (default): reconstruct the sentence text from the unstripped
+    tokens (``"".join`` is byte-identical to what prosodic tokenized) and let
+    spaCy tokenize it, so clitics split (``beauty's`` → ``beauty`` + ``'s`` →
+    ``poss``, not ``compound``) and punctuation is present for correct clause
+    attachment. Verse **line breaks are flattened to spaces** first — they, not
+    punctuation, are what a dependency parser mishandles (newline tokens);
+    replacing ``\\n`` with a space keeps char offsets intact. spaCy tokens are
+    mapped back to prosodic ``word_num`` by char-offset overlap, each word
+    taking its HOST piece (first; the trailing clitic is dropped). Because the
+    parse includes punctuation, pstress/tstress are re-normalized over content
+    tokens so the nuclear word is 1.0.
+
+    ``free=False`` (legacy): one pre-tokenized merged Doc per sentence,
+    punctuation excluded (``beauty's`` stays merged → mis-tagged ``compound``).
+
+    Returns ``(stress, pstress, tstress, pstrength)`` dicts keyed by word_num.
+    """
+    from spacy.tokens import Doc
+    from ..analysis.metrical_lp import _ref_text_spans
+
+    S, P, T, G, PS = {}, {}, {}, {}, {}
+    docs, metas = [], []
+    for _, group in word_df.groupby('sent_num'):
+        group = group.sort_values('word_num')
+        raw = [str(w) for w in group['word_txt']]           # UNstripped
+        wns = [int(x) for x in group['word_num']]
+        isp = group['is_punc'].values.astype(bool)
+        content = [i for i in range(len(raw)) if not isp[i]]
+        punc_wns = [wns[i] for i in range(len(wns)) if isp[i]]
+        if not content:
+            for wn in wns:
+                S[wn] = P[wn] = T[wn] = G[wn] = PS[wn] = None
+            continue
+
+        if free:
+            text, spans = _ref_text_spans(raw)
+            # newlines (verse line breaks) confuse the parser; punctuation does
+            # not. Flatten \n/\r to spaces — same length, so spans stay valid.
+            text = text.replace("\n", " ").replace("\r", " ")
+            docs.append(text)
+            metas.append(('free', wns, isp, spans))
+        else:
+            parse_words = [raw[i].strip() for i in content]
+            spaces = [True] * len(parse_words)
+            spaces[-1] = False
+            docs.append(Doc(nlp.vocab, words=parse_words, spaces=spaces))
+            metas.append(('merged', [wns[i] for i in content], punc_wns))
+
+    def _f(x):
+        return None if np.isnan(x) else float(x)
+
+    for doc, meta in zip(nlp.pipe(docs), metas):
+        n = len(doc)
+        heads = np.array([t.head.i if t.head.i != t.i else -1 for t in doc],
+                         dtype=np.int32)
+        pos = np.array([t.pos_ for t in doc])
+        xpos = np.array([t.tag_ for t in doc])
+        deps = np.array([t.dep_ for t in doc])
+        words = np.array([t.text for t in doc])
+
+        if meta[0] == 'merged':
+            _, parse_wns, punc_wns = meta
+            stress = _compute_phrasal_stress(heads, pos, xpos, n)
+            nsylls = np.array([nsyll_by_word.get(wn, 1) for wn in parse_wns],
+                              dtype=np.int32)
+            ps, ts, gs, pstr = _mt_gradient(heads, words, xpos, deps, nsylls, n)
+            for i, wn in enumerate(parse_wns):
+                S[wn] = int(stress[i])
+                P[wn], T[wn], G[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(gs[i]), _f(pstr[i])
+            for wn in punc_wns:
+                S[wn] = P[wn] = T[wn] = G[wn] = PS[wn] = None
+            continue
+
+        # free: punctuation was included for correct attachment, but now DROP
+        # it before the gradient — a sentence-final period attaches to the root
+        # and would inflate its cumulative stress (Call me Ishmael. → Call ties
+        # Ishmael). Punct tokens are leaves, so every content head is content;
+        # reindexing over the kept tokens is exact.
+        _, wns, isp, spans = meta
+        punct_wns = {wns[i] for i in range(len(wns)) if isp[i]}
+        keep = [i for i in range(n) if not doc[i].is_punct]
+        newidx = {old: k for k, old in enumerate(keep)}
+        kheads = np.array([newidx.get(heads[i], -1) for i in keep], dtype=np.int32)
+        kn = len(keep)
+        kpos, kxpos = pos[keep], xpos[keep]
+        kdeps, kwords = deps[keep], words[keep]
+        tok_wn = []
+        for i in keep:
+            t = doc[i]
+            a, b = t.idx, t.idx + len(t.text)
+            best, bo = -1, 0
+            for j, (rs, re) in enumerate(spans):
+                ov = min(b, re) - max(a, rs)
+                if ov > bo:
+                    bo, best = ov, j
+            tok_wn.append(wns[best] if best >= 0 else None)
+        nsylls = np.array([nsyll_by_word.get(w, 1) if w else 1 for w in tok_wn],
+                          dtype=np.int32)
+        stress = _compute_phrasal_stress(kheads, kpos, kxpos, kn)
+        ps, ts, gs, pstr = _mt_gradient(kheads, kwords, kxpos, kdeps, nsylls, kn)
+        seen = set()
+        for i, wn in enumerate(tok_wn):        # each word = its HOST (first) piece
+            if wn is None or wn in seen or wn in punct_wns:
+                continue
+            seen.add(wn)
+            S[wn] = int(stress[i])
+            P[wn], T[wn], G[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(gs[i]), _f(pstr[i])
+        for wn in wns:
+            if wn not in seen:
+                S[wn] = P[wn] = T[wn] = G[wn] = PS[wn] = None
+    return S, P, T, G, PS
+
+
+def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
+                       spacy_free=True):
     """Add phrasal_stress column to syll_df.
 
     Groups words by sentence, runs spaCy dep parsing, computes L&P
     phrasal stress, and broadcasts word-level values to syllable rows.
+
+    ``model="stanza"`` selects the experimental faithful constituency backend
+    (`analysis.metrical_lp`) instead of the default spaCy dependency backend:
+    same four columns, but `tstress` is the normalized RPPR grid computed over
+    a real constituency parse. ``text`` (the original text) is passed through
+    for faithful tokenization; falls back to rejoining `syll_df` tokens.
+
+    ``spacy_free=True`` (default) lets spaCy tokenize the reconstructed text
+    itself — splitting clitics (``beauty's`` → ``beauty`` + ``'s``) so
+    possessives parse as ``poss`` not ``compound`` — then aligns spaCy tokens
+    back to prosodic ``word_num`` by char offset. ``spacy_free=False`` is the
+    legacy path (pre-tokenized merged Docs), kept for comparison.
 
     Args:
         syll_df: DataFrame with word_num, sent_num, word_txt, is_punc columns
@@ -504,14 +691,18 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
     Returns:
         syll_df with phrasal_stress column added (modified in place)
     """
+    if model == "stanza":
+        from ..analysis.metrical_lp import add_phrasal_stress_stanza
+        return add_phrasal_stress_stanza(syll_df, text)
+
     if syll_df.empty:
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
         syll_df['pstress'] = pd.array([], dtype=pd.Float64Dtype())
         syll_df['tstress'] = pd.array([], dtype=pd.Float64Dtype())
+        syll_df['gstress'] = pd.array([], dtype=pd.Float64Dtype())
         syll_df['pstrength'] = pd.array([], dtype=pd.Float64Dtype())
         return syll_df
 
-    from spacy.tokens import Doc
     nlp = _get_nlp(model)
 
     # get unique words per sentence (form_idx 0 or -1, no duplicates)
@@ -523,78 +714,14 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm"):
         .groupby('word_num').size().to_dict()
     )
 
-    stress_by_word = {}
-    pstress_by_word = {}
-    tstress_by_word = {}
-    pstrength_by_word = {}
-
-    # First pass: build one pre-tokenized Doc per sentence, collecting the
-    # word_num bookkeeping in parallel. All-punctuation sentences produce no
-    # Doc; their words get None directly.
-    docs = []
-    doc_meta = []  # parallel to docs: (parse_word_nums, punc_word_nums)
-    for sent_num, group in word_df.groupby('sent_num'):
-        words = group['word_txt'].values
-        word_nums = group['word_num'].values
-        is_punc = group['is_punc'].values.astype(bool)
-
-        # filter to non-punctuation for parsing, strip whitespace
-        parse_mask = ~is_punc
-        parse_words = [w.strip() for w in words[parse_mask]]
-        parse_word_nums = word_nums[parse_mask]
-
-        if len(parse_words) == 0:
-            for wn in word_nums:
-                stress_by_word[wn] = None
-                pstress_by_word[wn] = None
-                tstress_by_word[wn] = None
-                pstrength_by_word[wn] = None
-            continue
-
-        # pre-tokenized Doc; the spaCy pipeline runs on it below via nlp.pipe
-        spaces = [True] * len(parse_words)
-        spaces[-1] = False
-        docs.append(Doc(nlp.vocab, words=list(parse_words), spaces=spaces))
-        doc_meta.append((parse_word_nums, word_nums[is_punc]))
-
-    # Second pass: a single batched pipeline call over all sentence Docs
-    # instead of one nlp() call per sentence. nlp.pipe preserves input order,
-    # so zipping with doc_meta keeps each Doc aligned with its word_nums.
-    for doc, (parse_word_nums, punc_word_nums) in zip(nlp.pipe(docs), doc_meta):
-        n = len(doc)
-        # extract head indices (-1 for root)
-        heads = np.array([
-            tok.head.i if tok.head.i != tok.i else -1
-            for tok in doc
-        ], dtype=np.int32)
-        pos = np.array([tok.pos_ for tok in doc])
-        xpos = np.array([tok.tag_ for tok in doc])
-        deprels = np.array([tok.dep_ for tok in doc])
-        words = np.array([tok.text for tok in doc])
-
-        stress = _compute_phrasal_stress(heads, pos, xpos, n)
-
-        nsylls = np.array([
-            nsyll_by_word.get(wn, 1) for wn in parse_word_nums
-        ], dtype=np.int32)
-        pstress, tstress, pstrength = _mt_gradient(heads, words, xpos, deprels, nsylls, n)
-
-        for i, wn in enumerate(parse_word_nums):
-            stress_by_word[wn] = int(stress[i])
-            pstress_by_word[wn] = None if np.isnan(pstress[i]) else float(pstress[i])
-            tstress_by_word[wn] = None if np.isnan(tstress[i]) else float(tstress[i])
-            pstrength_by_word[wn] = None if np.isnan(pstrength[i]) else float(pstrength[i])
-
-        # punctuation gets None
-        for wn in punc_word_nums:
-            stress_by_word[wn] = None
-            pstress_by_word[wn] = None
-            tstress_by_word[wn] = None
-            pstrength_by_word[wn] = None
+    (stress_by_word, pstress_by_word, tstress_by_word, gstress_by_word,
+     pstrength_by_word) = _spacy_gradient_by_word(
+        word_df, nsyll_by_word, nlp, free=spacy_free)
 
     # broadcast to syllable rows
     syll_df['phrasal_stress'] = syll_df['word_num'].map(stress_by_word).astype(pd.Int32Dtype())
     syll_df['pstress'] = syll_df['word_num'].map(pstress_by_word).astype(pd.Float64Dtype())
     syll_df['tstress'] = syll_df['word_num'].map(tstress_by_word).astype(pd.Float64Dtype())
+    syll_df['gstress'] = syll_df['word_num'].map(gstress_by_word).astype(pd.Float64Dtype())
     syll_df['pstrength'] = syll_df['word_num'].map(pstrength_by_word).astype(pd.Float64Dtype())
     return syll_df

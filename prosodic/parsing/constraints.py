@@ -436,6 +436,41 @@ def s_unstress_t(mpos):
     return [getattr(slot.unit, 'tstress', None) == 0 for slot in mpos.slots]
 
 
+# Grid stress (gstress = RPPR grid height, L&P's preferred representation;
+# the coarse coarsening of tstress). Same shape as w_stress_t/s_unstress_t but
+# weighted against the grid instead of the cumulative tree stress.
+def _w_stress_g_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["gstress"] > 0) & f["is_weak_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a grid-prominent word (gstress>0) on weak position",
+    scope="position",
+    vectorized=_w_stress_g_vectorized,
+)
+def w_stress_g(mpos):
+    if mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [(getattr(slot.unit, 'gstress', None) or 0) > 0 for slot in mpos.slots]
+
+
+def _s_unstress_g_vectorized(f):
+    if not f.get("has_gradient"):
+        return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)
+    return ((f["gstress"] == 0) & f["is_strong_pos"]).astype(np.int8)
+
+@constraint(
+    desc="No syllable of a grid-weak word (gstress==0) on strong position",
+    scope="position",
+    vectorized=_s_unstress_g_vectorized,
+)
+def s_unstress_g(mpos):
+    if not mpos.is_prom:
+        return [None] * len(mpos.slots)
+    return [getattr(slot.unit, 'gstress', None) == 0 for slot in mpos.slots]
+
+
 def _w_peak_p_vectorized(f):
     if not f.get("has_gradient"):
         return np.zeros((f["L"], f["S"], f["N"]), dtype=np.int8)

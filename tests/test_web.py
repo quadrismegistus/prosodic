@@ -230,6 +230,28 @@ def test_parse_line_syntax_tree(client):
     assert leaf_word_nums and leaf_word_nums <= grid_word_nums
 
 
+def test_parse_lp_endpoint(client):
+    # Faithful L&P view endpoint (experimental). Skips if stanza / the
+    # constituency model isn't installed on the server.
+    pytest.importorskip("stanza")
+    resp = client.post('/api/parse/lp', json={'text': 'thirteen men'})
+    assert resp.status_code == 200
+    data = resp.json()
+    if not data.get('available'):
+        pytest.skip(f"stanza constituency unavailable: {data.get('reason')}")
+    assert data['nuclear'] == 'men'
+    assert [(g['txt'], g['height']) for g in data['grid']] == [
+        ('thir', 1), ('teen', 2), ('men', 3)
+    ]
+    # binary tree: every non-root node carries an s/w role
+    def walk(node):
+        for c in node['children']:
+            assert c['role'] in ('s', 'w')
+            walk(c)
+    assert data['tree']['role'] is None  # root R
+    walk(data['tree'])
+
+
 def test_parse_line_timeout_returns_504(client):
     resp = client.post('/api/parse/line', json=_default_parse_data(
         text=_fresh_multiline('line504'), parse_timeout=0.001))

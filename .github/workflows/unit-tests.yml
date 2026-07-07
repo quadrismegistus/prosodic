@@ -59,6 +59,27 @@ jobs:
           pip install -r requirements.txt
           pip install -r dev-requirements.txt
 
+      # Cache the large Stanza constituency model (~500MB) so it downloads
+      # once, not every run. Keyed on a version we bump when the model changes.
+      - name: Cache Stanza models (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/stanza_resources
+          key: stanza-models-en-v1
+
+      # Both phrasal-stress engines, so syntax=True is actually exercised in CI
+      # rather than skipped: spaCy (default) + Stanza (faithful L&P). Linux only
+      # — the Windows leg targets espeak detection, and torch/Stanza there is
+      # heavy and flaky; syntax tests skip gracefully without these installed.
+      - name: Install syntax engines + models (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          pip install 'spacy>=3.0' 'stanza>=1.5' 'hashstash[best]'
+          python -m spacy download en_core_web_sm
+          python -c "import stanza; stanza.download('en')"
+          python -c "import stanza; stanza.Pipeline('en', processors='tokenize,pos,lemma,constituency,depparse', tokenize_no_ssplit=True, verbose=False)"
+
       # Lightweight lint: byte-compile the package to catch syntax errors.
       # Non-blocking (yapf's full diff isn't wired up as a dependency yet).
       - name: Lint (compile check)

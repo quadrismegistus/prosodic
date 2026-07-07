@@ -31,7 +31,7 @@ def test_nsr_nuclear_stress_rightmost():
     deps = np.array(['det', 'nsubj', 'ROOT', 'det', 'dobj'])
     words = np.array(['the', 'dog', 'saw', 'the', 'cat'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert np.allclose(t, [0.0, 2/3, 2/3, 1/3, 1.0])
     assert p.tolist() == [0.0, 1.0, 0.0, 0.0, 1.0]
 
@@ -43,7 +43,7 @@ def test_compound_stress_rule():
     deps = np.array(['det', 'compound', 'nsubj', 'ROOT'])
     words = np.array(['the', 'time', 'machine', 'broke'])
     nsyll = np.array([1, 1, 2, 1], dtype=np.int32)
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 4)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 4)
     assert np.allclose(t, [0.0, 2/3, 1/3, 1.0])
     assert p.tolist() == [0.0, 1.0, 0.0, 1.0]
 
@@ -56,7 +56,7 @@ def test_ambiguous_word_ensemble_is_gradient():
     deps = np.array(['nsubj', 'ROOT', 'acomp'])
     words = np.array(['this', 'is', 'red'])
     nsyll = np.ones(3, dtype=np.int32)
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 3)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 3)
     assert abs(p[0] - 1/3) < 1e-9  # ensemble mean, not 0 or 1
     assert t[2] == 1.0             # nuclear on the predicate
     assert 0.0 < t[1] < 1.0        # intermediate value exists
@@ -70,7 +70,7 @@ def test_np_internal_modifiers_demoted():
     deps = np.array(['det', 'amod', 'amod', 'nsubj', 'ROOT'])
     words = np.array(['the', 'quick', 'brown', 'fox', 'jumps'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, _, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, _, _g, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert p[3] == 1.0 and p[1] == 0.0 and p[2] == 0.0
 
 
@@ -85,7 +85,7 @@ def test_noun_head_shielded_from_right_complement():
     deps = np.array(['det', 'ROOT', 'dobj', 'nsubj', 'relcl'])
     words = np.array(['the', 'house', 'that', 'Jack', 'built'])
     nsyll = np.ones(5, dtype=np.int32)
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, nsyll, 5)
     assert p[1] == 1.0  # house shielded (inner core)
     assert p[3] == 1.0  # Jack shielded (argument projection)
     assert t[4] == 1.0  # nuclear on built
@@ -107,7 +107,7 @@ def test_ditransitive_exact():
     tags = np.array(['PRP', 'VBD', 'DT', 'NN', 'DT', 'NN'])
     deps = np.array(['nsubj', 'ROOT', 'det', 'dative', 'det', 'dobj'])
     words = np.array(['She', 'gave', 'the', 'boy', 'a', 'book'])
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(6, dtype=np.int32), 6)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, np.ones(6, dtype=np.int32), 6)
     assert np.allclose(p, [1/3, 0, 0, 1, 0, 1])
     assert np.allclose(t, [2/9, 2/3, 0, 2/3, 1/3, 1])
 
@@ -118,7 +118,7 @@ def test_pp_attachment_exact():
     tags = np.array(['NN', 'VBZ', 'IN', 'DT', 'NN'])
     deps = np.array(['nsubj', 'ROOT', 'prep', 'det', 'pobj'])
     words = np.array(['Time', 'flies', 'like', 'an', 'arrow'])
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
     assert np.allclose(p, [1, 0, 0, 0, 1])
     assert np.allclose(t, [0.5, 0.5, 1/6, 0, 1])
 
@@ -130,7 +130,7 @@ def test_possessive_projects_no_compound_hit():
     tags = np.array(['PRP$', 'NN', 'VBD', 'DT', 'NN'])
     deps = np.array(['poss', 'nsubj', 'ROOT', 'det', 'dobj'])
     words = np.array(['His', 'mother', 'called', 'the', 'doctor'])
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, np.ones(5, dtype=np.int32), 5)
     assert p.tolist() == [0.0, 1.0, 0.0, 0.0, 1.0]
     assert t[4] == 1.0  # nuclear on doctor
 
@@ -143,7 +143,7 @@ def test_coordination_conjuncts_stay_strong():
     tags = np.array(['NNS', 'CC', 'NNS', 'VBP'])
     deps = np.array(['nsubj', 'cc', 'conj', 'ROOT'])
     words = np.array(['Dogs', 'and', 'cats', 'fight'])
-    p, t, _ps = _mt_gradient(heads, words, tags, deps, np.ones(4, dtype=np.int32), 4)
+    p, t, _g, _ps = _mt_gradient(heads, words, tags, deps, np.ones(4, dtype=np.int32), 4)
     assert p[0] == 1.0 and p[2] == 1.0   # conjuncts strong (ours)
     assert t[2] > t[0]                   # cats > Dogs (matches cadence)
     assert t[3] == 1.0                   # nuclear on fight
@@ -162,7 +162,7 @@ def test_pstrength_peaks_and_valleys():
 def test_flat_sentence_normalizes_nan():
     # single word: no variation -> NaN (as in cadence)
     heads = np.array([-1], dtype=np.int32)
-    p, t, _ps = _mt_gradient(
+    p, t, _g, _ps = _mt_gradient(
         heads, np.array(['dog']), np.array(['NN']), np.array(['ROOT']),
         np.ones(1, dtype=np.int32), 1,
     )
@@ -402,3 +402,68 @@ def test_grid_str_includes_phrasal_rows():
     # explicit opt-out returns to lexical-only heights
     s0_plain = t.lines[0].grid_str(phrasal=None)
     assert len(s0_plain.split("\n")) == 5
+
+
+# ------------------------------------ Stanza constituency backend (opt-in)
+
+def test_stanza_backend_produces_columns():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("the cat sat on the mat", syntax=True, syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    df = t._syll_df
+    for c in ("phrasal_stress", "pstress", "tstress", "pstrength"):
+        assert c in df.columns
+    sub = (df[(df.form_idx == 0) & (~df.is_punc.astype(bool))]
+           .drop_duplicates("word_num"))
+    tmap = {r.word_txt.strip(): float(r.tstress) for _, r in sub.iterrows()}
+    # tstress = normalized RPPR grid: nuclear = 1, weakest = 0
+    assert tmap["mat"] == 1.0
+    assert min(tmap.values()) == 0.0
+    assert tmap["cat"] > tmap["the"]
+
+
+def test_stanza_backend_possessive_faithful():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("a summer's day", syntax=True, syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    sub = (t._syll_df[(t._syll_df.form_idx == 0) & (~t._syll_df.is_punc.astype(bool))]
+           .drop_duplicates("word_num"))
+    words = [r.word_txt.strip() for _, r in sub.iterrows()]
+    assert "summer's" in words and "'s" not in words   # clitic not a token
+    tmap = {r.word_txt.strip(): float(r.tstress) for _, r in sub.iterrows()}
+    assert tmap["day"] == 1.0    # head noun nuclear, not the possessor
+
+
+# ------------------------------ tree stress + grid stress (both engines)
+
+def _content(t):
+    df = t._syll_df
+    return (df[(df.form_idx == 0) & (~df.is_punc.astype(bool))]
+            .drop_duplicates("word_num").sort_values("word_num"))
+
+def test_tree_and_grid_stress_spacy():
+    t = _syntax_text("the cat sat on the mat")   # skips if spaCy unavailable
+    df = t._syll_df
+    assert "tstress" in df.columns and "gstress" in df.columns
+    s = _content(t)
+    tt = {r.word_txt.strip(): float(r.tstress) for _, r in s.iterrows()}
+    gg = {r.word_txt.strip(): float(r.gstress) for _, r in s.iterrows()}
+    assert tt["mat"] == 1.0 and gg["mat"] == 1.0          # nuclear in both
+    # grid is a COARSENING of tree stress → no more distinct levels than tree
+    assert len(set(gg.values())) <= len(set(tt.values()))
+
+def test_tree_and_grid_stress_stanza():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("the cat sat on the mat", syntax=True, syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    s = _content(t)
+    gg = {r.word_txt.strip(): float(r.gstress) for _, r in s.iterrows()}
+    assert gg["mat"] == 1.0 and min(gg.values()) == 0.0
+    # function words tie low in the grid (coarse), content words above them
+    assert gg["the"] < gg["cat"]

@@ -696,16 +696,19 @@ def lp_line_data(text: str, lang: str = "en") -> Optional[dict]:
 def lp_word_stress(tree: LPTree) -> dict:
     """Per-word phrasal-stress values from a word-level LPTree.
 
-    - ``tstress``: normalized RPPR grid (1.0 = nuclear) — the faithful
-      gradient, i.e. a 0–1 version of the grid for constraint weighting.
-    - ``pstress``: 1.0 if the word is the strong child of its immediate
-      parent (a local phrasal peak), else 0.0.
-    - ``phrasal_stress``: grid height − max (int; 0 = nuclear, negative =
-      demoted), matching the discrete column's "0 = most prominent" sense.
-    - ``pstrength``: local peaks/valleys over adjacent words (reuses the
-      shipping ``_mt_pstrength``).
+    L&P's two representations, both normalized to [0,1] with 1.0 = nuclear:
 
-    Returns ``{word_num: {phrasal_stress, pstress, tstress, pstrength}}``.
+    - ``tstress`` (**tree stress**): normalized cumulative stress numbers
+      (their eq-12) — fine-grained.
+    - ``gstress`` (**grid stress**): normalized RPPR grid height — coarse, the
+      representation L&P prefer.
+
+    Plus ``pstress`` (1.0 if the word is the strong child of its parent, a
+    local phrasal peak), ``phrasal_stress`` (grid height − max; 0 = nuclear),
+    and ``pstrength`` (local peaks/valleys, reuses ``_mt_pstrength``).
+
+    Returns ``{word_num: {phrasal_stress, pstress, tstress, gstress,
+    pstrength}}``.
     """
     import numpy as np
     from ..texts.phrasal_stress import _mt_pstrength
@@ -714,9 +717,11 @@ def lp_word_stress(tree: LPTree) -> dict:
     if not leaves:
         return {}
     heights = grid_heights(tree, lexical_floors(tree))
-    maxh = max(heights)
-    minh = min(heights)
-    span = (maxh - minh) or 1  # min-max so weakest = 0, nuclear = 1
+    maxh, minh = max(heights), min(heights)
+    gspan = (maxh - minh) or 1                      # grid stress: min-max
+    snums = stress_numbers(tree)                     # 1 = strongest (nuclear)
+    smax, smin = max(snums), min(snums)
+    sspan = (smax - smin) or 1                        # tree stress: inverted
     strong = set()
 
     def walk(node):
@@ -737,7 +742,8 @@ def lp_word_stress(tree: LPTree) -> dict:
         out[lf.word_num] = {
             "phrasal_stress": int(heights[i] - maxh),
             "pstress": float(ps[i]),
-            "tstress": (heights[i] - minh) / span,
+            "tstress": (smax - snums[i]) / sspan,     # tree stress (cumulative)
+            "gstress": (heights[i] - minh) / gspan,   # grid stress (RPPR)
             "pstrength": None if np.isnan(pstr[i]) else float(pstr[i]),
         }
     return out
@@ -791,7 +797,7 @@ def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
     (reconstructed from ``syll_df``). Modifies ``syll_df`` in place."""
     import pandas as pd
 
-    cols_f = ("pstress", "tstress", "pstrength")
+    cols_f = ("pstress", "tstress", "gstress", "pstrength")
     if syll_df.empty:
         syll_df["phrasal_stress"] = pd.array([], dtype=pd.Int32Dtype())
         for c in cols_f:

@@ -42,8 +42,11 @@ syntax = [
 # Faithful L&P engine: Stanza constituency parse (heavy — pulls in torch and
 # a large constituency model). Opt-in on top of [syntax]:
 #   pip install prosodic[syntax,constituency]
+# hashstash[best] adds lmdb + lz4 for the Stanza parse cache (single-file,
+# fast); the cache degrades to dep-free pairtree+zlib without them.
 constituency = [
     "stanza>=1.5",
+    "hashstash[best]",
 ]
 dev = [
     "black>=22.10.0",

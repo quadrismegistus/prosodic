@@ -75,7 +75,7 @@ jobs:
       - name: Install syntax engines + models (Linux)
         if: runner.os == 'Linux'
         run: |
-          pip install 'spacy>=3.0' 'stanza>=1.5'
+          pip install 'spacy>=3.0' 'stanza>=1.5' 'hashstash[best]'
           python -m spacy download en_core_web_sm
           python -c "import stanza; stanza.download('en')"
           python -c "import stanza; stanza.Pipeline('en', processors='tokenize,pos,lemma,constituency,depparse', tokenize_no_ssplit=True, verbose=False)"

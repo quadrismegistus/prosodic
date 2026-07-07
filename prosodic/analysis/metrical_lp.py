@@ -289,13 +289,20 @@ def _get_stanza_stash():
         import os
         from hashstash import HashStash
         from ..imports import PATH_HOME_DATA_CACHE
-        # compress='zlib' (stdlib) rather than the default lz4, which is an
-        # optional dep (hashstash[rec]); base installs would silently fall back
-        # to zlib anyway, so pin it explicitly for deterministic, dep-free
-        # behavior. Default engine (pairtree) is likewise dependency-free.
-        _STANZA_STASH = HashStash(
-            os.path.join(PATH_HOME_DATA_CACHE, "stanza_constituency"),
-            compress="zlib")
+        path = os.path.join(PATH_HOME_DATA_CACHE, "stanza_constituency")
+        # Pin engine + compress explicitly so behavior is stable regardless of
+        # hashstash's evolving defaults. Prefer lmdb (single-file, scales) +
+        # lz4, installed by the `constituency` extra (hashstash[best]); if those
+        # C-ext engines aren't present fall back to the dependency-free pairtree
+        # + zlib (stdlib). Needed because `engine`, unlike `compress`, does NOT
+        # degrade gracefully on its own — a missing lmdb would otherwise crash
+        # the Stanza backend.
+        try:
+            stash = HashStash(path, engine="lmdb", compress="lz4")
+            _ = "__probe__" in stash   # force lmdb init; raises if unavailable
+            _STANZA_STASH = stash
+        except Exception:
+            _STANZA_STASH = HashStash(path, engine="pairtree", compress="zlib")
     return _STANZA_STASH
 
 

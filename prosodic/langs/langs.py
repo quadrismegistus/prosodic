@@ -202,7 +202,16 @@ class LanguageModel:
 
     @cache(maxsize=None)
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
-        token = token.lower()
+        # Strip a BARE trailing apostrophe from the lookup key. The tokenizer
+        # regex ([\w']+) glues the ASCII apostrophe onto a word, so a dangling
+        # possessive/quote mark survives ("that'", "augustus'") and misses the
+        # CMU dict + function-word lists, forcing an often-mis-stressed espeak
+        # fallback (augustus' -> AU-gus-tus, not a-GUS-tus; that' -> only the
+        # stressed form). A trailing apostrophe is never "apostrophe+letter", so
+        # dropping it is safe: don't/'twas (no trailing ') are untouched, and
+        # boys' -> boys yields the same pronunciation. This is the single choke
+        # point for all three lookups below and both parse paths.
+        token = token.lower().rstrip("'’")
         meta = {}
 
         # Ambiguous-stress wins over unstressed when a word is in BOTH lists.

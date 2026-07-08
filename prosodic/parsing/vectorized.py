@@ -1742,6 +1742,75 @@ class LazyParseList:
         from .parselists import ParseList
         return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).get_df(**kwargs)
 
+    def to_df(self, mode='all', by='line'):
+        """Entity-free per-parse DataFrame, built straight from the numpy arrays —
+        constructs NO Parse objects (unlike ``.get_df``/``.scansions``, which
+        materialize one Parse per scansion). ``by='line'``: one row per parse
+        (meter, score, per-constraint violation totals), with an ``is_bounded``
+        column. Default ``mode='all'`` returns EVERY parse (matching ``.parses``);
+        ``mode='unbounded'`` gives just the Pareto frontier (the rows
+        ``TextModel.get_parses_df(by='line')`` produces), ``mode='best'`` the top
+        one. Use ``TextModel.get_parses_df(by='syll')`` for the syllable frame (it
+        needs the text's syllable DataFrame)."""
+        import pandas as pd
+        if by != 'line':
+            raise NotImplementedError(
+                "LazyParseList.to_df supports by='line'; use "
+                "TextModel.get_parses_df(by='syll') for the syllable-level frame.")
+        unbounded_mask = self._unbounded_mask
+        all_scores = self._all_scores
+        unb_idx = self._unbounded_indices
+        rank_of = np.full(len(unbounded_mask), -1, dtype=np.int32)
+        if len(unb_idx) > 0:
+            ub_sorted = unb_idx[np.argsort(self._scores)]
+            rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
+            best_idx = int(ub_sorted[0])
+        else:
+            best_idx = -1
+        if mode == 'best':
+            parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
+        elif mode == 'unbounded':
+            parse_indices = unb_idx[np.argsort(self._scores)]
+        else:
+            parse_indices = np.argsort(all_scores)
+        P = len(parse_indices)
+        if P == 0:
+            return pd.DataFrame()
+        line_num = int(getattr(self.parent, 'num', 0) or 0)
+        if self._ragged:
+            meter_strs = [_pool_meter_str(self, int(i)) for i in parse_indices]
+            pp_viols = np.stack([self._all_viols[int(i)].sum(axis=0) for i in parse_indices]).astype(np.int32)
+            num_sylls = np.array([self._all_viols[int(i)].shape[0] for i in parse_indices], dtype=np.int32)
+        else:
+            mv_arr = self._meter_vals
+            if mv_arr is None:
+                mv_arr, _, _ = encode_scansions(self._all_scansions, self._all_viols.shape[1])
+            meter_strs = [''.join('+' if v else '-' for v in mv_arr[i]) for i in parse_indices]
+            pp_viols = self._all_viols[parse_indices].sum(axis=1).astype(np.int32)
+            num_sylls = np.full(P, self._all_viols.shape[1], dtype=np.int32)
+        df = pd.DataFrame({
+            'line_num': np.full(P, line_num, dtype=np.int32),
+            'parse_idx': parse_indices.astype(np.int32),
+            'parse_rank': pd.array(rank_of[parse_indices], dtype='Int32'),
+            'parse_score': all_scores[parse_indices].astype(np.float64),
+            'is_best': parse_indices == best_idx,
+            'is_bounded': ~unbounded_mask[parse_indices],
+            'num_sylls': num_sylls,
+            'num_viols': pp_viols.sum(axis=1).astype(np.int32),
+            'meter': meter_strs,
+        })
+        df.loc[df['parse_rank'] < 0, 'parse_rank'] = pd.NA
+        for ci, cname in enumerate(self._constraint_names):
+            col = pp_viols[:, ci]
+            if col.any():
+                df[f'*{cname}'] = col.astype(np.int32)
+        return df
+
+    @property
+    def df(self):
+        """Entity-free per-parse DataFrame (see ``to_df``); builds no Parse objects."""
+        return self.to_df()
+
     def get_ld(self, **kwargs):
         from .parselists import ParseList
         return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).get_ld(**kwargs)

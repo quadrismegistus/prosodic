@@ -36,6 +36,7 @@ class LanguageModel:
     name = None
     filename_ambig_stress = "ambig_stress_words.txt"
     filename_unstressed = "unstressed_words.txt"
+    use_elision = False  # language-specific verse elision (English overrides)
     filename_token2ipa = None
     filename_token2ipa_sep = "\t"
 
@@ -193,6 +194,12 @@ class LanguageModel:
     def get_sylls_ipa_ll_rule(self, token):
         return [], {}
 
+    def get_elided_pronunciations(self, sylls_ipa_l):
+        """Verse-elision variants of one pronunciation (a list of syllable-IPA
+        strings). Base language elides nothing; English overrides. Returns a
+        list of new syllable lists (typically one fewer syllable)."""
+        return []
+
     @cache(maxsize=None)
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
         token = token.lower()
@@ -240,6 +247,18 @@ class LanguageModel:
             [format_syll_ipa_str(syll) for syll in sylls_ipa_l]
             for sylls_ipa_l in sylls_ipa_ll
         ]
+
+        ## verse elision: add reduced-syllable variants (flower->flour,
+        ## heaven->heav'n). An option, not a forcing — pool_forms uses it only
+        ## where it scans better. Language-specific (English overrides).
+        if self.use_elision:
+            elided = [
+                [format_syll_ipa_str(s) for s in e]
+                for sylls_ipa_l in sylls_ipa_ll
+                for e in self.get_elided_pronunciations(sylls_ipa_l)
+            ]
+            if elided:
+                sylls_ipa_ll = sylls_ipa_ll + elided
 
         ## modify stresses
         if force_unstress and sylls_ipa_ll_has_stress(sylls_ipa_ll):

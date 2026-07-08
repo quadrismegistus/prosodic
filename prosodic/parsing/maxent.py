@@ -179,8 +179,10 @@ class MaxEntTrainer:
 
             # Oversized/empty lines come back as a bare ParseList([]) with no
             # violation matrix — skip them instead of crashing on _all_viols.
+            # Ragged (mixed-syllable-count pool_forms) lines have a per-scansion
+            # viols LIST, not a fixed-width array — skip them too (rare).
             viols = getattr(lpl, "_all_viols", None)
-            if viols is None or viols.shape[0] == 0:
+            if viols is None or getattr(lpl, "_ragged", False) or viols.shape[0] == 0:
                 continue
 
             if self._base_constraint_names is None:

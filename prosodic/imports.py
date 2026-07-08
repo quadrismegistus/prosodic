@@ -83,6 +83,13 @@ DEFAULT_METER = "default_english"
 METER_MAX_S = 2
 METER_MAX_W = 2
 METER_RESOLVE_OPTIONALITY = True
+# When a word has multiple pronunciations, pool the parses of ALL wordform
+# combinations and cross-bound them (the unbounded set = scansions optimal under
+# ANY pronunciation), rather than reporting only the single best-scoring
+# combination. This is how Prosodic v1/v2 always behaved (parsing decides between
+# word-forms in situ); best-combo-only was an unintended v3 regression. Deduped
+# by meter string, keeping the min-score representative.
+METER_POOL_FORMS = True
 DEFAULT_CATEGORICAL_CONSTRAINTS = []
 ESPEAK_PATHS = [
     "/opt/homebrew/Cellar/espeak/",

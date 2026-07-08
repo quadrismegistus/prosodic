@@ -7,6 +7,69 @@ NUMBUILT = 0
 PARSED_CACHE_DIR = os.path.join(PATH_HOME_DATA, "parsed")
 
 
+def _ragged_chunk(pl, line_num, by, parse_indices, rank_of, best_idx, awn, afi, asi):
+    """get_parses_df chunk for a RAGGED (mixed-syllable-count) LazyParseList —
+    each parse/scansion may have a different N (e.g. "fire" 1~2). Built per-parse
+    from the per-scansion numpy arrays; still no Entity walk. Returns one chunk
+    dict matching the rectangular path's format."""
+    import numpy as np
+    c_names = pl._constraint_names
+    idxs = [int(i) for i in parse_indices]
+
+    if by == "line":
+        n = len(idxs)
+        return {
+            "line_num": np.full(n, line_num, dtype=np.int32),
+            "parse_idx": np.array(idxs, dtype=np.int32),
+            "parse_rank": np.array([int(rank_of[i]) for i in idxs], dtype=np.int32),
+            "parse_score": np.array([float(pl._all_scores[i]) for i in idxs], dtype=np.float64),
+            "is_best": np.array([i == best_idx for i in idxs]),
+            "is_bounded": np.array([not bool(pl._unbounded_mask[i]) for i in idxs]),
+            "num_sylls": np.array([pl._all_viols[i].shape[0] for i in idxs], dtype=np.int32),
+            "meter": np.array(["".join("+" if v else "-" for v in pl._meter_vals[i]) for i in idxs], dtype=object),
+            "_viols": np.stack([pl._all_viols[i].sum(0) for i in idxs]).astype(np.int32),
+            "_c_names": c_names,
+        }
+
+    col = {k: [] for k in ("line_num", "word_num", "form_idx", "syll_idx",
+                           "line_syll_idx", "parse_idx", "parse_rank", "parse_score",
+                           "is_best", "is_bounded", "pos_idx", "pos_size", "meter_val",
+                           "syll_txt", "syll_ipa", "is_stressed")}
+    vrows = []
+    for i in idxs:
+        vrow = pl._all_viols[i]
+        N = vrow.shape[0]
+        sylls = pl._sylls_by_scansion[i] if pl._sylls_by_scansion is not None else pl._sylls
+        ridx = pl._syll_row_idx_by_scansion[i] if pl._syll_row_idx_by_scansion is not None else pl._syll_row_idx
+        mv, pi, ps_ = pl._meter_vals[i], pl._position_ids[i], pl._position_sizes[i]
+        rank, sc = int(rank_of[i]), float(pl._all_scores[i])
+        isb, isbest = not bool(pl._unbounded_mask[i]), (i == best_idx)
+        for k in range(N):
+            col["line_num"].append(line_num); col["parse_idx"].append(i)
+            col["parse_rank"].append(rank); col["parse_score"].append(sc)
+            col["is_best"].append(isbest); col["is_bounded"].append(isb)
+            col["line_syll_idx"].append(k)
+            r = int(ridx[k]) if ridx is not None else -1
+            col["word_num"].append(int(awn[r]) if r >= 0 else -1)
+            col["form_idx"].append(int(afi[r]) if r >= 0 else 0)
+            col["syll_idx"].append(int(asi[r]) if r >= 0 else k)
+            col["pos_idx"].append(int(pi[k])); col["pos_size"].append(int(ps_[k]))
+            col["meter_val"].append("s" if mv[k] else "w")
+            s = sylls[k]
+            col["syll_txt"].append(getattr(s, "txt", "") or "")
+            col["syll_ipa"].append(getattr(s, "ipa", "") or "")
+            col["is_stressed"].append(bool(s.is_stressed))
+            vrows.append(vrow[k])
+    obj = ("meter_val", "syll_txt", "syll_ipa")
+    boolc = ("is_best", "is_bounded")
+    out = {k: np.array(v, dtype=(object if k in obj else bool if k in boolc
+                                 else np.float64 if k == "parse_score" else np.int32))
+           for k, v in col.items()}
+    out["_viols"] = np.stack(vrows).astype(np.int8)
+    out["_c_names"] = c_names
+    return out
+
+
 def _meter_to_dict(meter):
     """Serialize a Meter's configuration (constraints, weights, zones) to JSON-safe dict."""
     if meter is None:
@@ -530,6 +593,14 @@ class TextModel(Entity):
             if constraint_names is None:
                 constraint_names = list(pl._constraint_names)
 
+            # Ragged (mixed-syllable-count) pooled result: parses have different
+            # N, so build the chunk per-parse rather than with (P, N) arrays.
+            if getattr(pl, '_ragged', False):
+                chunks.append(_ragged_chunk(
+                    pl, int(line_num), by, parse_indices, rank_of, best_idx,
+                    all_word_nums, all_form_idxs, all_syll_idxs))
+                continue
+
             # Scansion-derived features: (S, N) arrays.
             # meter_val is 's'/'w' from meter_vals bool; fall back to scansion list.
             mv_arr = getattr(pl, '_meter_vals', None)
@@ -579,29 +650,49 @@ class TextModel(Entity):
 
             # Syll-level columns tiled across P parses
             line_syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
-            row_idx = getattr(pl, '_syll_row_idx', None)
-            if row_idx is not None:
-                r_arr = np.asarray(row_idx)
-                word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
-                form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
-                syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
+            # Pooled (pool_forms) results carry per-scansion sylls/rows, since
+            # each surviving parse may come from a different pronunciation combo;
+            # non-pooled results share one syll sequence and tile it. Both read
+            # lightweight SyllData — no Entity construction.
+            sbs = getattr(pl, '_sylls_by_scansion', None)
+            ribs = getattr(pl, '_syll_row_idx_by_scansion', None)
+            if sbs is not None:
+                sel_sylls = [sbs[int(k)] for k in parse_indices]
+                syll_txt_col = np.array(
+                    [getattr(s, 'txt', '') or '' for row in sel_sylls for s in row], dtype=object)
+                syll_ipa_col = np.array(
+                    [getattr(s, 'ipa', '') or '' for row in sel_sylls for s in row], dtype=object)
+                is_stressed_col = np.array(
+                    [bool(s.is_stressed) for row in sel_sylls for s in row], dtype=bool)
+                if ribs is not None:
+                    rflat = np.array([int(r) for k in parse_indices for r in ribs[int(k)]], dtype=np.int64)
+                    word_num_col = all_word_nums[rflat].astype(np.int32)
+                    form_idx_col = all_form_idxs[rflat].astype(np.int32)
+                    syll_idx_col = all_syll_idxs[rflat].astype(np.int32)
+                else:
+                    word_num_col = np.full(PN, -1, dtype=np.int32)
+                    form_idx_col = np.zeros(PN, dtype=np.int32)
+                    syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
             else:
-                word_num_col = np.full(PN, -1, dtype=np.int32)
-                form_idx_col = np.zeros(PN, dtype=np.int32)
-                syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
-
-            syll_txt_arr = np.array(
-                [getattr(s, 'txt', '') or '' for s in sylls], dtype=object,
-            )
-            syll_ipa_arr = np.array(
-                [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object,
-            )
-            is_stressed_arr = np.array(
-                [bool(s.is_stressed) for s in sylls], dtype=bool,
-            )
-            syll_txt_col = np.tile(syll_txt_arr, P)
-            syll_ipa_col = np.tile(syll_ipa_arr, P)
-            is_stressed_col = np.tile(is_stressed_arr, P)
+                row_idx = getattr(pl, '_syll_row_idx', None)
+                if row_idx is not None:
+                    r_arr = np.asarray(row_idx)
+                    word_num_col = np.tile(all_word_nums[r_arr].astype(np.int32), P)
+                    form_idx_col = np.tile(all_form_idxs[r_arr].astype(np.int32), P)
+                    syll_idx_col = np.tile(all_syll_idxs[r_arr].astype(np.int32), P)
+                else:
+                    word_num_col = np.full(PN, -1, dtype=np.int32)
+                    form_idx_col = np.zeros(PN, dtype=np.int32)
+                    syll_idx_col = np.tile(np.arange(N, dtype=np.int32), P)
+                syll_txt_arr = np.array(
+                    [getattr(s, 'txt', '') or '' for s in sylls], dtype=object)
+                syll_ipa_arr = np.array(
+                    [getattr(s, 'ipa', '') or '' for s in sylls], dtype=object)
+                is_stressed_arr = np.array(
+                    [bool(s.is_stressed) for s in sylls], dtype=bool)
+                syll_txt_col = np.tile(syll_txt_arr, P)
+                syll_ipa_col = np.tile(syll_ipa_arr, P)
+                is_stressed_col = np.tile(is_stressed_arr, P)
 
             # Flatten (P, N) -> (P*N,)
             meter_val_col = np.where(sel_mv.ravel(), 's', 'w')

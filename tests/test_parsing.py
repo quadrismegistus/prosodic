@@ -634,6 +634,16 @@ def test_ragged_pool_zone_scored():
     assert np.isfinite(rag.best_parse.score)                # no crash building parse
 
 
+def test_num_words_df_path():
+    """num_words works on the DF path (no wordform entities): it counts distinct
+    word_num on the parse's SyllData slots. Regression — it used to return 0 when
+    self.wordforms is None."""
+    t = TextModel("the cat sat on the mat and ran")
+    bp = t.parse()[0].best_parse
+    assert bp.wordforms is None      # DF path -> no wordform entities
+    assert bp.num_words == 8         # the, cat, sat, on, the, mat, and, ran
+
+
 def test_functionword_light_flag():
     """FUNCTIONWORD_LIGHT (default OFF) forces is_heavy=False on function-word
     syllables — Prosodic v1's convention (weight anchors only content words) vs

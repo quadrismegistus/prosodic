@@ -469,7 +469,12 @@ class Parse(Entity):
         Returns:
             int: Number of words.
         """
-        return len(self.wordforms) if self.wordforms is not None else 0
+        if self.wordforms is not None:
+            return len(self.wordforms)
+        # DF path (no wordform entities): SyllData carries word_num, so the word
+        # count is the number of distinct word_num across the parse's slots — same
+        # set as one wordform per non-punc wordtoken, no entity needed.
+        return len({s.word_num for s in self.slot_units}) if self.slot_units else 0
 
     @property
     def num_peaks(self) -> int:

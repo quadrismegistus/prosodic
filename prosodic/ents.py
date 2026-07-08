@@ -523,10 +523,6 @@ class Entity(UserList):
                 o.append(wforms)
         return [WordFormList(ox, parent=self) for ox in o]
 
-    @cached_property
-    def wordform_matrix(self):
-        return self.wordtokens.wordform_matrix
-
     def to_hash(self):
         """
         Generate a hash representation of the entity.
@@ -604,15 +600,6 @@ class Entity(UserList):
             bool: True if the objects are the same instance, False otherwise.
         """
         return self is other
-
-    @property
-    def meter(self):
-        text = self.text
-        if text._mtr is None:
-            from .parsing.meter import Meter
-
-            text._mtr = Meter()
-        return text._mtr
 
     def __bool__(self):
         """

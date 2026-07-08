@@ -9,6 +9,14 @@ from ..imports import *
 from ..words.syllables import _parse_ipa_cached
 from ..words.phonemes import get_phoneme_feats
 
+# Experiment flag (default off = phonological weight for all syllables). When
+# True, function-word syllables are forced is_heavy=False, matching Prosodic v1's
+# convention that weight anchors only content words. Toggle at runtime via
+# `prosodic.texts.syll_df.FUNCTIONWORD_LIGHT = True` (read dynamically in
+# build_syll_df); affects the weight-based constraints (unres_within/across,
+# w_heavy/s_light) and the is_heavy/prosodic_weight columns.
+FUNCTIONWORD_LIGHT = False
+
 
 def _phone_is_vowel(phone_txt):
     """Check if a phone is a vowel using cached panphon features."""
@@ -186,6 +194,14 @@ def build_syll_df(token_dicts, lang=DEFAULT_LANG):
             for syll_idx, (syll_ipa, syll_text) in enumerate(sylls_l):
                 is_stressed = stress_list[syll_idx]
                 is_heavy = _syll_is_heavy_from_ipa(syll_ipa)
+                # Optional (FUNCTIONWORD_LIGHT, default off): treat function-word
+                # syllables as metrically light regardless of their phonological
+                # weight (coda/diphthong). This is what Prosodic v1 did — weight
+                # anchors only content words — vs v3's phonological default. Read
+                # dynamically so it can be toggled at runtime (e.g. a reparse
+                # experiment) without re-importing.
+                if FUNCTIONWORD_LIGHT and is_func:
+                    is_heavy = False
 
                 # is_strong / is_weak: relative prominence within a polysyllable
                 # (primary > secondary > unstressed). strong = a local prominence

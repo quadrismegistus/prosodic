@@ -326,11 +326,21 @@ def render_parse_html(parse, line=None):
                 return ent
         return None
 
+    # DF-path slots hold lightweight SyllData with no parent chain, so the walk
+    # above returns None. Fall back to the syllable's word_num -> WordToken map
+    # (SyllData.word_num and WordToken.num share the tokenizer's counter), so
+    # rendering works without building entities.
+    wt_by_num = {}
+    if line is not None and hasattr(line, 'wordtokens'):
+        wt_by_num = {wt.num: wt for wt in line.wordtokens}
+
     slots_by_wt = {}
     ordered_wt_ids = []
     for pos in parse.positions:
         for slot in pos.children:
             wt = _find_wordtoken(slot.unit)
+            if wt is None:
+                wt = wt_by_num.get(getattr(slot.unit, 'word_num', None))
             key = id(wt) if wt is not None else None
             if key not in slots_by_wt:
                 slots_by_wt[key] = []
@@ -701,22 +711,27 @@ def _parse_and_build_rows(t, meter):
     """Parse lines + (for any long line) its lineparts. Return combined rows,
     sorted by line_num, rank. Returns (rows, num_lines, prose_mode_flag).
     """
-    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
 
     long_lnums = _long_line_nums(t)
     prose_mode = len(long_lnums) > 0
 
-    # Pass 1: parse short lines normally
+    # Pass 1: short lines via the entity-free DF path (parse_batch_from_df) — no
+    # eager Syllable/Phoneme trees. render_parse_html and the render loop below
+    # work on the resulting SyllData parses (grouped by word_num). Long lines are
+    # handled by their lineparts in Pass 2 (entity path — they aren't line-keyed
+    # in the syllable frame and would blow up the DF-path candidate space).
     short_lines = [ln for ln in t.lines if ln.num not in long_lnums]
     if short_lines:
         meter.parse_unit = 'line'
-        results = parse_batch(short_lines, meter)
-        for i, (wt, pl) in enumerate(results):
-            if pl is None:
-                continue
-            pl.parent = wt
-            wt._parses = pl
-            short_lines[i]._parses = pl
+        short_nums = {ln.num for ln in short_lines}
+        short_sdf = t._syll_df[t._syll_df['line_num'].isin(short_nums)]
+        results = parse_batch_from_df(short_sdf, meter)  # {line_num: LazyParseList}
+        for ln in short_lines:
+            pl = results.get(ln.num)
+            if pl is not None:
+                pl.parent = ln
+                ln._parses = pl
 
     # Pass 2: for long lines, parse their lineparts (with optional syntax sub-split)
     from collections import OrderedDict
@@ -1120,16 +1135,18 @@ async def maxent_fit_annotations(
     df = pd.read_csv(io.BytesIO(content), sep='\t')
 
     if 'text' not in df.columns:
+        # Map source columns -> canonical names. rename() takes {old: new}, so
+        # key by the actual column and value by the canonical name.
         col_map = {}
         for col in df.columns:
             cl = col.lower()
             if 'line' in cl or 'text' in cl:
-                col_map['text'] = col
+                col_map[col] = 'text'
             elif 'parse' in cl or 'scan' in cl:
-                col_map['scansion'] = col
+                col_map[col] = 'scansion'
             elif 'freq' in cl or 'count' in cl:
-                col_map['frequency'] = col
-        if 'text' not in col_map:
+                col_map[col] = 'frequency'
+        if 'text' not in col_map.values():
             raise HTTPException(status_code=400, detail=f"Cannot find text column. Columns: {list(df.columns)}")
         df = df.rename(columns=col_map)
     if 'frequency' not in df.columns:

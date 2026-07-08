@@ -64,19 +64,10 @@ class Line(GridMethods, WordTokenList):
         if parse is None:
             parse = min(self._parses)
 
-        # DF-path parses use lightweight SyllData units with no wordtoken parent
-        # chain, so wordtoken2slots (below) can't map slots to words. Re-parse
-        # this line via the entity path (real Syllable entities) so rendering
-        # works after text.parse(). (AUDIT T9)
-        if getattr(parse, "wordtokens", None) is None:
-            from ..parsing.vectorized import parse_batch
-            meter = getattr(parse, "meter_obj", None) or self.meter
-            results = parse_batch([self], meter)
-            if results and results[0][1] is not None:
-                entity_best = results[0][1].best_parse
-                if entity_best is not None:
-                    parse = entity_best
-
+        # Both entity- and DF-path parses render directly: wordtoken2slots keys by
+        # the tokenizer word number (WordToken.num == SyllData.word_num), so a
+        # DF-path parse no longer needs an entity-path re-parse to map slots to
+        # words. (Was AUDIT T9's eager re-parse; now entity-free.)
         output = []
 
         for i, wordtoken in enumerate(self.wordtokens):
@@ -85,7 +76,7 @@ class Line(GridMethods, WordTokenList):
                 odx = {"txt": prefstr}
                 output.append(odx)
 
-            wordtoken_slots = parse.wordtoken2slots[wordtoken.key]
+            wordtoken_slots = parse.wordtoken2slots[wordtoken.num]
             if wordtoken_slots:
                 for slot in wordtoken_slots:
                     pos = slot.position

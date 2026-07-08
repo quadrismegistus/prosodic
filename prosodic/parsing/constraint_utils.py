@@ -9,7 +9,7 @@ def get_all_constraints():
     }
 
 def get_default_constraint_names():
-    return DEFAULT_CONSTRAINT_NAMES
+    return DEFAULT_CONSTRAINTS
 
 def get_default_constraints():
     all_constraints = get_all_constraints()

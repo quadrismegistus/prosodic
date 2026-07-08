@@ -632,3 +632,61 @@ def test_ragged_pool_zone_scored():
     assert rag._is_zone_scored                              # zone weights honored
     assert not np.allclose(flat_scores, rag._all_scores)    # scoring actually changed
     assert np.isfinite(rag.best_parse.score)                # no crash building parse
+
+
+def test_lazyparselist_df_entity_free():
+    """line.parses.df / .to_df build the parse DataFrame straight from numpy —
+    zero Parse objects — and to_df(mode='unbounded') matches get_parses_df(by=
+    'line'). Default mode='all' returns every parse (with is_bounded), no meter
+    dedup needed (scansions are already distinct meter strings)."""
+    t = TextModel("Shall I compare thee to a summers day")
+    t.parse()
+    pl = t.lines[0].parses
+    built_before = len(pl._built_parses)
+    df_all = pl.df                                   # mode='all'
+    assert len(pl._built_parses) == built_before     # built NO Parse objects
+    assert len(df_all) == len(pl._all_scansions)      # every scansion, one row
+    assert df_all.meter.nunique() == len(df_all)      # distinct meter strings
+    assert {'meter', 'parse_score', 'is_bounded', 'num_viols'} <= set(df_all.columns)
+    # unbounded slice matches the text-level entity-free frame for this line
+    dfu = pl.to_df(mode='unbounded')
+    assert len(pl._built_parses) == built_before      # still no Parse objects
+    g = t.get_parses_df(by='line')
+    assert sorted(dfu.meter.tolist()) == sorted(g.meter.tolist())
+    assert (~df_all.is_bounded).sum() == len(dfu)      # unbounded count consistent
+
+
+def test_num_words_df_path():
+    """num_words works on the DF path (no wordform entities): it counts distinct
+    word_num on the parse's SyllData slots. Regression — it used to return 0 when
+    self.wordforms is None."""
+    t = TextModel("the cat sat on the mat and ran")
+    bp = t.parse()[0].best_parse
+    assert bp.wordforms is None      # DF path -> no wordform entities
+    assert bp.num_words == 8         # the, cat, sat, on, the, mat, and, ran
+
+
+def test_functionword_light_flag():
+    """FUNCTIONWORD_LIGHT (default OFF) forces is_heavy=False on function-word
+    syllables — Prosodic v1's convention (weight anchors only content words) vs
+    v3's phonological default. Off by default; toggling changes function-word
+    weight but is inert for the default constraints (they exempt function words by
+    the function-word flag / polysyllable scope, not weight — see COMPARISON.md)."""
+    from prosodic.texts import syll_df as sd
+    assert sd.FUNCTIONWORD_LIGHT is False   # phonological weight is the default
+
+    def fw_heavy(line):
+        df = TextModel(line)._syll_df
+        df = df[(df.form_idx == 0) & (~df.is_punc.astype(bool))
+                & df.is_functionword.astype(bool)]
+        return [bool(h) for h in df.is_heavy]
+
+    line = "and if the cat ran and hid"   # and/if have codas -> heavy phonologically
+    try:
+        phon = fw_heavy(line)
+        sd.FUNCTIONWORD_LIGHT = True
+        light = fw_heavy(line)
+    finally:
+        sd.FUNCTIONWORD_LIGHT = False       # never leak the global to other tests
+    assert any(phon), "some function words are phonologically heavy (coda)"
+    assert light and not any(light), "flag forces every function-word syllable light"

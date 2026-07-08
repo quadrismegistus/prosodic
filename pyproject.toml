@@ -77,3 +77,7 @@ prosodic = "prosodic.cli:cli"
 markers = [
     "slow: marks tests as slow (deselect with -k \"not slow\")",
 ]
+[tool.coverage.run]
+# prosodic/lib/ is vendored third-party (panphon, metricaltree, syllabiphon) —
+# not our code, so exclude it from prosodic's coverage figures.
+omit = ["prosodic/lib/*", "*/prosodic/lib/*"]

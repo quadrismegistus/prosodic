@@ -494,6 +494,28 @@ class TextModel(Entity):
         """Alias for get_parses_df(mode=..., by=..., **meter_kwargs)."""
         return self.get_parses_df(mode=mode, by=by, **meter_kwargs)
 
+    @cached_property
+    def _poem_meter(self):
+        """(head, foot_size): the poem's dominant meter, by majority over the
+        lines' best-parse footings. Meter is a POEM-level property — a single
+        line's co-optimal parse set is often genuinely ambiguous; the poem
+        disambiguates. Used by Line.metrical_parse to select the most regular
+        co-optimal parse per line."""
+        from collections import Counter
+        from ..analysis.feet import line_head
+        heads, sizes = Counter(), Counter()
+        for line in self.lines:
+            bp = line.best_parse
+            if not bp or not getattr(bp, "slots", None):
+                continue
+            feet = bp.metrical_feet
+            heads[line_head([ft.pattern for ft in feet]).direction] += 1
+            for ft in feet:
+                if len(ft.pattern) in (2, 3):
+                    sizes[len(ft.pattern)] += 1
+        return (heads.most_common(1)[0][0] if heads else "rising",
+                sizes.most_common(1)[0][0] if sizes else 2)
+
     def get_parses_df(self, mode='unbounded', by='syll', **meter_kwargs):
         """Parse and return results as a DataFrame. No entity construction.
 

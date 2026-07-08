@@ -63,7 +63,7 @@ t.parse()
 
 line_data = []
 for line in t.lines:
-    bp = line.best_parse
+    bp = line.metrical_parse   # regularity-selected co-optimal parse (poem-level)
     if not bp or not bp.slots:
         continue
     feet = bp.metrical_feet

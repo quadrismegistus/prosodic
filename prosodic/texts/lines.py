@@ -166,6 +166,31 @@ class Line(GridMethods, WordTokenList):
         """
         return len(self.syllables)
 
+    @property
+    def metrical_parse(self):
+        """Among the co-optimal (min-score, unbounded) parses, the one whose
+        footing is most regular given the poem's dominant meter — fewest feet that
+        deviate from the poem head/size. best_parse merely tie-breaks arbitrarily
+        among co-optimal parses (so it can return a ragged reading when a clean
+        one is equally optimal); this selects the metrically regular one. Needs the
+        whole text parsed (poem meter comes from all lines)."""
+        pl = self.parses
+        unb = list(pl.unbounded) if pl is not None else []
+        if not unb:
+            return self.best_parse
+        ms = min(p.score for p in unb)
+        ties = [p for p in unb if p.score == ms]
+        if len(ties) == 1:
+            return ties[0]
+        from ..analysis.feet import foot_head
+        head, size = self.text._poem_meter
+        def cost(p):
+            feet = p.metrical_feet
+            sub = sum(1 for ft in feet if foot_head(ft.pattern) not in (head, "none", "ambiguous"))
+            szdev = sum(1 for ft in feet if len(ft.pattern) != size)
+            return (sub, szdev)
+        return min(ties, key=cost)
+
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:
         """

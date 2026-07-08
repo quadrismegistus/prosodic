@@ -634,6 +634,28 @@ def test_ragged_pool_zone_scored():
     assert np.isfinite(rag.best_parse.score)                # no crash building parse
 
 
+def test_lazyparselist_df_entity_free():
+    """line.parses.df / .to_df build the parse DataFrame straight from numpy —
+    zero Parse objects — and to_df(mode='unbounded') matches get_parses_df(by=
+    'line'). Default mode='all' returns every parse (with is_bounded), no meter
+    dedup needed (scansions are already distinct meter strings)."""
+    t = TextModel("Shall I compare thee to a summers day")
+    t.parse()
+    pl = t.lines[0].parses
+    built_before = len(pl._built_parses)
+    df_all = pl.df                                   # mode='all'
+    assert len(pl._built_parses) == built_before     # built NO Parse objects
+    assert len(df_all) == len(pl._all_scansions)      # every scansion, one row
+    assert df_all.meter.nunique() == len(df_all)      # distinct meter strings
+    assert {'meter', 'parse_score', 'is_bounded', 'num_viols'} <= set(df_all.columns)
+    # unbounded slice matches the text-level entity-free frame for this line
+    dfu = pl.to_df(mode='unbounded')
+    assert len(pl._built_parses) == built_before      # still no Parse objects
+    g = t.get_parses_df(by='line')
+    assert sorted(dfu.meter.tolist()) == sorted(g.meter.tolist())
+    assert (~df_all.is_bounded).sum() == len(dfu)      # unbounded count consistent
+
+
 def test_num_words_df_path():
     """num_words works on the DF path (no wordform entities): it counts distinct
     word_num on the parse's SyllData slots. Regression — it used to return 0 when

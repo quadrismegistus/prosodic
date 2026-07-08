@@ -12,11 +12,15 @@ optimizer converges in well under a second on inputs this size.
 """
 import warnings
 
-# Import torch before prosodic so that, under `pytest --cov`, torch's C
-# docstrings are registered exactly once. Importing prosodic (hence torch)
-# while coverage's tracer is active otherwise re-triggers torch.overrides and
-# raises "function '_has_torch_function' already has a docstring" at collection.
-import torch  # noqa: F401
+# Pre-import torch (if installed) before prosodic so that, under `pytest --cov`,
+# torch's C docstrings register exactly once (importing prosodic while coverage's
+# tracer is active otherwise raises "function '_has_torch_function' already has a
+# docstring" at collection). torch is optional (GPU-only) and absent on e.g.
+# Windows CI, so guard it — the tests themselves don't require torch.
+try:
+    import torch  # noqa: F401
+except ModuleNotFoundError:
+    pass
 
 import numpy as np
 import pandas as pd

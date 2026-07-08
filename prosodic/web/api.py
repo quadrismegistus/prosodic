@@ -1135,16 +1135,18 @@ async def maxent_fit_annotations(
     df = pd.read_csv(io.BytesIO(content), sep='\t')
 
     if 'text' not in df.columns:
+        # Map source columns -> canonical names. rename() takes {old: new}, so
+        # key by the actual column and value by the canonical name.
         col_map = {}
         for col in df.columns:
             cl = col.lower()
             if 'line' in cl or 'text' in cl:
-                col_map['text'] = col
+                col_map[col] = 'text'
             elif 'parse' in cl or 'scan' in cl:
-                col_map['scansion'] = col
+                col_map[col] = 'scansion'
             elif 'freq' in cl or 'count' in cl:
-                col_map['frequency'] = col
-        if 'text' not in col_map:
+                col_map[col] = 'frequency'
+        if 'text' not in col_map.values():
             raise HTTPException(status_code=400, detail=f"Cannot find text column. Columns: {list(df.columns)}")
         df = df.rename(columns=col_map)
     if 'frequency' not in df.columns:

@@ -355,3 +355,281 @@ def test_syllabify_ipa_token_seg_alignment():
     assert len(en.syllabify_ipa("f ˈaɪ ə ɹ")) == 2         # fire
     # German-style secondary-stressed hiatus after a diphthong+cluster
     assert len(en.syllabify_ipa("ˈaʊ f ʃ t ˌeː ə n")) == 3  # aufstehen
+
+
+# ---------------------------------------------------------------------------
+# LanguageModel pronunciation-layer internals (langs.py coverage)
+# ---------------------------------------------------------------------------
+from prosodic.langs import langs as _lm
+from prosodic.langs.langs import (
+    LanguageModel,
+    Language,
+    get_word,
+    fix_num_sylls,
+    unstress,
+    stress,
+    stress_sylls_ipa_l,
+    syll_ipa_str_is_unstressed,
+    sylls_ipa_l_has_unstress,
+    get_espeak_error_msg,
+    get_espeak_env,
+)
+
+
+def test_getitem_delegates_to_get():
+    """LanguageModel.__getitem__ is sugar for .get() (line 44)."""
+    lang = EnglishLanguage()
+    got = lang["with"]
+    assert got == lang.get("with")
+    # get_sylls_ll payload: one pronunciation, one (ipa, text) syllable pair
+    assert got[0] == [[("wɪð", "with")]]
+
+
+def test_ipa_origin_dict_vs_tts(tmp_path):
+    """A CMU-dictionary word reports ipa_origin='dict'; a nonce word falls back
+    to espeak/TTS (ipa_origin='tts', line 333), the raw pronunciation is written
+    to the user-local cache (lines 258-269), and the in-memory map is updated so
+    a repeat lookup this session resolves from the dict."""
+
+    class _TmpCacheEnglish(EnglishLanguage):
+        @property
+        def path_token2ipa_cache(self):
+            return str(tmp_path / "english_cache.tsv")
+
+    lang = _TmpCacheEnglish()
+    # dictionary hit
+    _, meta = lang.get_sylls_ipa_ll("with")
+    assert meta["ipa_origin"] == "dict"
+    # espeak fallback for a word absent from CMU
+    ll, meta = lang.get_sylls_ipa_ll("zzblorptx")
+    assert meta["ipa_origin"] == "tts"
+    assert ll and ll[0]
+    cache = tmp_path / "english_cache.tsv"
+    assert cache.exists()
+    assert "zzblorptx" in cache.read_text(encoding="utf-8")
+    # second lookup (different force arg -> distinct cache key) resolves 'dict',
+    # not a re-run of espeak, because the in-memory map was updated
+    _, meta2 = lang.get_sylls_ipa_ll("zzblorptx", force_unstress=True)
+    assert meta2["ipa_origin"] == "dict"
+
+
+def test_ipa_origin_error_when_tts_empty(tmp_path):
+    """If neither the dictionary nor TTS yields a pronunciation, ipa_origin is
+    'error' and an empty parse is returned (lines 270-272)."""
+
+    class _NoTTS(EnglishLanguage):
+        @property
+        def path_token2ipa_cache(self):
+            return str(tmp_path / "c.tsv")
+
+        def get_sylls_ipa_ll_tts(self, token):
+            return []
+
+    ll, meta = _NoTTS().get_sylls_ipa_ll("zznovowelq")
+    assert meta["ipa_origin"] == "error"
+    assert ll == []
+
+
+def test_trailing_apostrophe_strip_on_miss():
+    """A bare trailing apostrophe survives tokenization; the lookup tries the
+    original token first, then strips the apostrophe ONLY on a dict miss
+    (line 251) -- while genuine apostrophe-final CMU keys hit directly."""
+    lang = EnglishLanguage()
+    # that' -> misses "that'", falls back to "that" (an ambig-stress entry:
+    # unstressed + stressed = 2 forms), origin still 'dict'
+    ll, meta = lang.get_sylls_ipa_ll("that'")
+    assert meta["ipa_origin"] == "dict"
+    assert len(ll) == 2
+    assert ll == lang.get_sylls_ipa_ll("that")[0]
+    # augustus' -> strips to "augustus"; CMU stress is a-GUS-tus (2nd syllable)
+    ll, meta = lang.get_sylls_ipa_ll("augustus'")
+    assert meta["ipa_origin"] == "dict"
+    assert len(ll) == 1
+    stressed = [i for i, s in enumerate(ll[0]) if s[:1] in ("'", "`")]
+    assert stressed == [1], f"augustus' should stress syll 1, got {ll[0]}"
+    # runnin' -> a genuine CMU key ending in apostrophe: hit directly, NOT stripped
+    ll, meta = lang.get_sylls_ipa_ll("runnin'")
+    assert meta["ipa_origin"] == "dict"
+    assert len(ll[0]) == 2  # run-nin
+
+
+def test_elision_wiring_flower_fire_heaven():
+    """With EnglishLanguage.use_elision on, get_sylls_ipa_ll adds a reduced-
+    syllable variant alongside the full pronunciation (lines 283-290); the base
+    LanguageModel elides nothing (line 201)."""
+    lang = EnglishLanguage()
+    assert lang.use_elision is True
+    for w in ("flower", "fire", "heaven"):
+        ll, _ = lang.get_sylls_ipa_ll(w)
+        lens = sorted(len(x) for x in ll)
+        assert lens == [1, 2], f"{w}: expected 1-syll elision + 2-syll base, got {ll}"
+    # get_elided_pronunciations directly: fire ('faɪ.ɛː -> 'faɪr)
+    assert lang.get_elided_pronunciations(["'faɪ", "ɛː"]) == [["'faɪr"]]
+    # base language elides nothing
+    assert LanguageModel().get_elided_pronunciations(["'faɪ", "ɛː"]) == []
+
+
+def test_force_ambig_stress_synthesizes_missing_polarity():
+    """force_ambig_stress adds whichever stress polarity is missing: a stressed
+    variant when the pronunciation is unstressed-only (line 299) and an
+    unstressed variant when it is stressed-only (line 301)."""
+
+    class _UnstrOnly(LanguageModel):
+        def get_sylls_ipa_ll_dict(self, token):
+            return [["bə"]]
+
+    ll, _ = _UnstrOnly().get_sylls_ipa_ll("x", force_ambig_stress=True)
+    assert sorted(ll) == [["'bə"], ["bə"]]
+
+    class _StrOnly(LanguageModel):
+        def get_sylls_ipa_ll_dict(self, token):
+            return [["'bə"]]
+
+    ll, _ = _StrOnly().get_sylls_ipa_ll("x", force_ambig_stress=True)
+    assert sorted(ll) == [["'bə"], ["bə"]]
+
+
+def test_ambig_and_unstress_membership():
+    """Membership drives forcing: 'the' is unstressed-only; 'she' is in BOTH
+    lists, so ambiguous-stress wins (2 forms, can bear a beat)."""
+    lang = EnglishLanguage()
+    assert "the" in lang.unstressed_words
+    assert "she" in lang.ambig_stressed_words and "she" in lang.unstressed_words
+    _, meta = lang.get_sylls_ipa_ll("the")
+    assert meta["force_unstress"] is True and meta["force_ambig_stress"] is None
+    ll, meta = lang.get_sylls_ipa_ll("she")
+    assert meta["force_ambig_stress"] is True
+    assert len(ll) == 2  # stressed + unstressed
+
+
+def test_base_language_defaults():
+    """The base LanguageModel (no name) has empty membership sets, a null TTS
+    cache path (line 90), and inert rule/cache hooks (lines 148, 185, 195)."""
+    b = LanguageModel()
+    assert b.name is None
+    assert b.path_token2ipa_cache is None
+    assert b.unstressed_words == set()
+    assert b.ambig_stressed_words == set()
+    assert b.get_sylls_ipa_ll_rule("x") == ([], {})
+    assert b.get_sylls_ll_rule("x") == ([], {})
+    # best-effort disk hooks no-op when there is no cache path
+    b._dedupe_cache_file()
+    b._cache_tts_result("foo", ["'fu"])
+
+
+def test_load_token2ipa_file_direct(tmp_path):
+    """_load_token2ipa_file defaults its accumulators (lines 116, 118) and skips
+    exact-duplicate (token, pronunciation) rows while keeping distinct
+    pronunciation variants (line 129)."""
+    p = tmp_path / "dict.tsv"
+    p.write_text(
+        "cat\t'kæt\n"
+        "cat\t'kæt\n"   # exact duplicate -> skipped
+        "cat\tk.'æt\n"  # distinct variant -> kept
+        "dog\t'dɔɡ\n"
+        "notabhere\n"   # no separator -> ignored
+        "\n",           # blank -> ignored
+        encoding="utf-8",
+    )
+    d = LanguageModel()._load_token2ipa_file(str(p))
+    assert d["cat"] == [["'kæt"], ["k", "'æt"]]
+    assert d["dog"] == [["'dɔɡ"]]
+    assert "notabhere" not in d
+
+
+def test_stress_helper_functions():
+    """Small IPA stress utilities (lines 518, 525-529, 533, 549, 553)."""
+    assert unstress("") == ""
+    assert unstress("'maɪ") == "maɪ"
+    assert stress("") == ""
+    assert stress("maɪ") == "'maɪ"
+    assert stress("maɪ", primary=False) == "`maɪ"
+    assert stress("'maɪ") == "'maɪ"  # already stressed -> normalized, re-marked
+    assert stress_sylls_ipa_l(["maɪ", "naɪs"]) == ["'maɪ", "`naɪs"]
+    assert syll_ipa_str_is_unstressed("maɪ") is True
+    assert syll_ipa_str_is_unstressed("'maɪ") is False
+    assert sylls_ipa_l_has_unstress(["'maɪ", "naɪs"]) is True
+    assert sylls_ipa_l_has_unstress(["'maɪ"]) is False
+
+
+def test_fix_num_sylls_shrink_and_grow():
+    """fix_num_sylls merges when there are too many syllables (lines 508-509)
+    and splits when there are too few; empty pieces become '?'."""
+    assert fix_num_sylls(["a", "b", "c"], 2) == ["a", "bc"]
+    assert fix_num_sylls(["abcd"], 2) == ["ab", "cd"]
+    assert fix_num_sylls([""], 1) == ["?"]
+
+
+def test_get_espeak_error_msg_lists_paths():
+    """The espeak-not-found message names espeak and echoes the searched
+    paths (lines 593-594)."""
+    msg = get_espeak_error_msg(["/opt/none", "/usr/none"])
+    assert "espeak" in msg.lower()
+    assert "/opt/none" in msg and "/usr/none" in msg
+
+
+def test_glob_espeak_lib(tmp_path):
+    """_glob_espeak_lib prefers an unversioned filename, else falls back to the
+    first sorted match, and returns '' when nothing matches (lines 675-686)."""
+    (tmp_path / "libespeak.dylib").write_text("")
+    (tmp_path / "libespeak.so.1").write_text("")
+    pat = str(tmp_path / "libespeak*")
+    # preferred (unversioned) name wins even though .so.1 also matches
+    assert _lm._glob_espeak_lib(globs=[pat], preferred={"libespeak.dylib"}) == str(
+        tmp_path / "libespeak.dylib"
+    )
+    # no preferred match -> first in sorted order (libespeak.dylib < libespeak.so.1)
+    assert _lm._glob_espeak_lib(globs=[pat], preferred={"nope"}) == str(
+        tmp_path / "libespeak.dylib"
+    )
+    # nothing matches -> ''
+    assert _lm._glob_espeak_lib(globs=[str(tmp_path / "zzz*")], preferred=set()) == ""
+
+
+def test_find_espeak_lib_recursive_skips(tmp_path):
+    """_find_espeak_lib_recursive skips non-directories (700) and broad system
+    dirs (702), returns '' when nothing is found (712), and returns a real
+    nested hit."""
+    nondir = str(tmp_path / "does_not_exist")
+    # non-dir path + a NO_RECURSE system dir -> ''
+    assert _lm._find_espeak_lib_recursive([nondir, "/usr/lib"], {"libespeak.so"}) == ""
+    # a real nested library is found
+    nested = tmp_path / "a" / "b"
+    nested.mkdir(parents=True)
+    lib = nested / "libespeak.so"
+    lib.write_text("")
+    assert _lm._find_espeak_lib_recursive([str(tmp_path)], {"libespeak.so"}) == str(lib)
+
+
+def test_get_espeak_env_direct_file(tmp_path, monkeypatch):
+    """A configured path that IS an espeak library file is returned directly
+    (lines 730, 732-733)."""
+    monkeypatch.delenv("PATH_ESPEAK", raising=False)
+    monkeypatch.delenv("PHONEMIZER_ESPEAK_LIBRARY", raising=False)
+    libfile = tmp_path / "libespeak.dylib"
+    libfile.write_text("")
+    assert get_espeak_env([str(libfile)]) == str(libfile)
+
+
+def test_get_espeak_env_glob_fallback_and_warning(monkeypatch):
+    """With no usable configured path, get_espeak_env falls back to the system
+    glob (lines 747-749); if even that fails it warns and returns '' (750-751)."""
+    monkeypatch.delenv("PATH_ESPEAK", raising=False)
+    monkeypatch.delenv("PHONEMIZER_ESPEAK_LIBRARY", raising=False)
+    # on this machine / CI espeak is installed, so the system glob resolves it
+    found = _lm._glob_espeak_lib()
+    if found:
+        assert get_espeak_env([]) == found
+    # force the glob to fail -> warning path, returns ''
+    monkeypatch.setattr(_lm, "_glob_espeak_lib", lambda *a, **k: "")
+    assert get_espeak_env([]) == ""
+
+
+def test_language_factory_de_generic_and_get_word():
+    """Language() dispatches to the German subclass and to a bare LanguageModel
+    for an unknown code (lines 775-782); get_word routes through Language().get()."""
+    assert type(Language("de")).__name__ == "GermanLanguage"
+    generic = Language("zz")
+    assert type(generic) is LanguageModel
+    assert generic.lang == "zz"
+    assert get_word("with", lang="en")[0] == Language("en").get("with")[0]

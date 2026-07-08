@@ -30,12 +30,18 @@ FOOT_LABELS = {
 }
 
 Head = namedtuple("Head", ["direction", "confidence"])
-Foot = namedtuple("Foot", ["pattern", "label", "head", "is_substituted", "positions", "sylls"])
+Foot = namedtuple("Foot", ["pattern", "label", "head", "is_substituted", "slots", "sylls"])
 
 
-def position_proms(positions):
-    """Per-POSITION prominence: True where the position is a head (strong)."""
-    return [bool(p.is_prom) for p in positions]
+def slot_proms(slots):
+    """Per-SYLLABLE prominence: True where the syllable sits in a strong position.
+
+    Feet are read over SYLLABLES, not positions: traditional scansion pairs
+    syllables, so "Pi-ty | the-world" = (S w)(w S) shows the trochaic first-foot
+    inversion. Prosodic can't store that (two weak *positions* can't be adjacent),
+    so it resolves the ty·the juncture into one weak position — but the per-slot
+    prominence still carries the syllable-level pattern the feet need."""
+    return [bool(s.is_prom) for s in slots]
 
 
 def head_of(proms, foot_size=2):
@@ -76,22 +82,23 @@ def foot_head(pattern):
     return "ambiguous"
 
 
-def parse_feet(positions, foot_size=2, head=None):
-    """Chunk POSITIONS into feet of size `foot_size` from position 0, keeping any
-    short final foot (fixes the old bug that dropped an odd line's last position).
-    Each foot inherits its syllables from its positions, so a resolved (2-syllable)
-    position stays wholly inside one foot. A foot is `is_substituted` when its
-    intrinsic head is directional and disagrees with the line `head`.
+def parse_feet(slots, foot_size=2, head=None):
+    """Chunk SYLLABLE SLOTS into feet of `foot_size` from slot 0, keeping any short
+    final foot (fixes the old bug that dropped an odd line's last position). Footing
+    over slots (not positions) is what recovers traditional scansion: a resolution
+    that prosodic stores as one weak position gets split across a foot boundary when
+    that's where the pairing falls (ty·the -> …ty)(the…). A foot is `is_substituted`
+    when its intrinsic head is directional and disagrees with the line `head`.
     """
-    proms = position_proms(positions)
+    proms = slot_proms(slots)
     if head is None:
         head = head_of(proms, foot_size).direction
     feet = []
-    for i in range(0, len(positions), foot_size):
-        chunk = positions[i : i + foot_size]
-        pattern = "".join("s" if p.is_prom else "w" for p in chunk)
+    for i in range(0, len(slots), foot_size):
+        chunk = slots[i : i + foot_size]
+        pattern = "".join("s" if s.is_prom else "w" for s in chunk)
         fh = foot_head(pattern)
-        sylls = [sl.unit for p in chunk for sl in p.slots]
+        sylls = [s.unit for s in chunk]
         substituted = fh not in (head, "none", "ambiguous")
         feet.append(Foot(pattern, FOOT_LABELS.get(pattern, pattern), fh, substituted, chunk, sylls))
     return feet

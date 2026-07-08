@@ -561,19 +561,21 @@ class Parse(Entity):
     @property
     def head(self):
         """Headedness of this line by the PHASE of the strong-beat pattern over
-        ALL positions (rising = iamb/anapest, falling = trochee/dactyl). Robust
-        to a lone inversion, unlike `is_rising` (which reads position[0] only).
-        Returns Head(direction, confidence); see analysis.feet.head_of."""
-        from ..analysis.feet import head_of, position_proms
-        return head_of(position_proms(self.positions), self._foot_size())
+        all SYLLABLES (rising = iamb/anapest, falling = trochee/dactyl). Read over
+        syllables, not positions, so a resolved juncture doesn't hide an inversion;
+        robust to a lone inversion, unlike `is_rising`. Returns
+        Head(direction, confidence); see analysis.feet.head_of."""
+        from ..analysis.feet import head_of, slot_proms
+        return head_of(slot_proms(self.slots), self._foot_size())
 
     @property
     def metrical_feet(self):
-        """Positions grouped into feet by (foot_size, head), each labelled
+        """Syllables paired into feet by (foot_size, head), each labelled
         (iamb/trochee/anapest/…) and flagged `is_substituted` when it inverts the
-        line head. Principled companion to `feet`; see analysis.feet.parse_feet."""
+        line head. Traditional-scansion companion to `feet`; see
+        analysis.feet.parse_feet."""
         from ..analysis.feet import parse_feet
-        return parse_feet(self.positions, self._foot_size(), self.head.direction)
+        return parse_feet(self.slots, self._foot_size(), self.head.direction)
 
     @property
     def feet_str(self) -> str:

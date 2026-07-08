@@ -51,9 +51,8 @@ t = prosodic.Text("Pity the world, or else this glutton be"); t.parse()
 bp = t.lines[0].best_parse
 print(f"    {'syll':<10}{'foot':<6}{'beat? (is_head)'}")
 for i, ft in enumerate(bp.metrical_feet, 1):
-    for pos in ft.positions:
-        for slot in pos.slots:
-            print(f"    {slot.unit.txt:<10}{i:<6}{'yes' if pos.is_prom else 'no'}")
+    for slot in ft.slots:
+        print(f"    {slot.unit.txt:<10}{i:<6}{'yes' if slot.is_prom else 'no'}")
 
 print("\n" + "=" * 70)
 print("PART 2 — aggregate over the Shakespeare corpus (is it principled in practice?)")
@@ -107,6 +106,6 @@ for i in range(1, 6):
     n = sub_by_foot[i]
     print(f"   foot {i}: {n:>4} ({n/n_penta:>4.0%})  {'#' * round(40 * n / n_penta)}")
 print(f"\n   whole-line flips (ALL 5 feet substituted): {fully_flipped} ({fully_flipped/n_penta:.0%})")
-print(f"   partial (some feet, a true within-line mix): {partial} ({partial/n_penta:.0%})")
-print(f"   -> substitution is ~flat across positions & mostly whole-line: prosodic encodes")
-print(f"      inversion as a line-level phase flip (or a violation), not a per-foot event.")
+print(f"   within-line substitutions (a genuine inversion): {partial} ({partial/n_penta:.0%})")
+print(f"   -> footing over SYLLABLES recovers real per-foot inversions; position-footing")
+print(f"      hid them as whole-line flips (the ty.the resolution shifts the phase).")

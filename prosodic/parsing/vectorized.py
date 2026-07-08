@@ -81,18 +81,25 @@ def _pool_combo_parses(combo_lpls, meter, parse_unit, bound_zones, parent=None,
     # per-line compute_bounding is unnecessary. A (combo, scansion) is pooled-
     # unbounded iff within-combo unbounded AND not dominated by another combo's
     # unbounded parse.
-    urank, uidx, uvecs = [], [], []
+    # Domination: ZONE-aware within the same syllable count (fitted meters bound
+    # on the feature space they score on), FLAT (C,) across different N (zone
+    # boundaries shift with N). Identical rule to _pool_candidates. Unfitted
+    # meter (bound_zones=None): zone == flat.
+    urank, uidx, fvecs, zvecs, uN = [], [], [], [], []
     for rank, lpl in enumerate(combo_lpls):
         for i in lpl._unbounded_indices:
             i = int(i)
             urank.append(rank); uidx.append(i)
-            uvecs.append(_zone_split_batch(lpl._all_viols[None, i:i + 1], bound_zones)[0, 0])
+            fvecs.append(lpl._all_viols[i].sum(axis=0))
+            zvecs.append(_zone_split_batch(lpl._all_viols[None, i:i + 1], bound_zones)[0, 0])
+            uN.append(lpl._all_viols.shape[1])
     pool_unb = set()  # {(rank, scan_idx)} surviving cross-bounding
-    if uvecs:
-        vecs = np.array(uvecs)
-        le = (vecs[:, None, :] <= vecs[None, :, :]).all(axis=2)
-        lt = (vecs[:, None, :] < vecs[None, :, :]).any(axis=2)
-        dom = le & lt
+    if fvecs:
+        fv = np.array(fvecs); zv = np.array(zvecs); nn = np.array(uN)
+        same_n = nn[:, None] == nn[None, :]
+        zdom = (zv[:, None, :] <= zv[None, :, :]).all(axis=2) & (zv[:, None, :] < zv[None, :, :]).any(axis=2)
+        fdom = (fv[:, None, :] <= fv[None, :, :]).all(axis=2) & (fv[:, None, :] < fv[None, :, :]).any(axis=2)
+        dom = np.where(same_n, zdom, fdom)
         np.fill_diagonal(dom, False)
         alive = ~dom.any(axis=0)
         pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
@@ -140,6 +147,15 @@ def _pool_combo_parses(combo_lpls, meter, parse_unit, bound_zones, parent=None,
     unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)    # sk[0] = is_bounded
     sylls_by = [ensure_sylls(lpl) for _, lpl, i in reps]                 # SyllData built here only
     rowidx_by = [lpl._syll_row_idx for _, lpl, i in reps]
+    # entity combos have no DF row indices (_syll_row_idx is None), which yields a
+    # list of Nones. Collapse it to a single None so get_parses_df's
+    # `_syll_row_idx_by_scansion is not None` branch isn't tripped into iterating a
+    # None element (TypeError). Same for sylls_by if a combo yielded none.
+    rowidx0 = rowidx_by[0]
+    if all(r is None for r in rowidx_by):
+        rowidx_by = None
+    if all(s is None for s in sylls_by):
+        sylls_by = None
     have = lambda a: all(getattr(lpl, a) is not None for _, lpl, _ in reps)
     mv = np.stack([lpl._meter_vals[i] for _, lpl, i in reps]) if have('_meter_vals') else None
     pi = np.stack([lpl._position_ids[i] for _, lpl, i in reps]) if have('_position_ids') else None
@@ -147,8 +163,10 @@ def _pool_combo_parses(combo_lpls, meter, parse_unit, bound_zones, parent=None,
     # carry the canonical combo's wordtokens (entity path) so pooled parses can
     # walk to WordTokens for rendering / Parse.concat; None on the DF path.
     pooled = LazyParseList(
-        combo_lpls[0].wordtokens, meter, scans, viols, ci, unb_mask, sylls_by[0], parse_unit=parse_unit,
-        syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
+        combo_lpls[0].wordtokens, meter, scans, viols, ci, unb_mask,
+        sylls_by[0] if sylls_by is not None else ensure_sylls(reps[0][1]),
+        parse_unit=parse_unit,
+        syll_row_idx=rowidx0, meter_vals=mv, position_ids=pi, position_sizes=ps,
         sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
     )
     pooled.parent = parent
@@ -187,38 +205,51 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
 
     N_of = {r: candidates[r][0].shape[1] for r in range(len(candidates))}
 
-    # Cross-bound the combos' unbounded parses straight from raw viols. The
-    # bounding vector is (C,) — syllable-count-independent — so this works ACROSS
-    # combos of different N (a 1-syllable "fire" parse can dominate a 2-syllable
-    # one, and vice versa), exactly as v1's boundParses does.
-    urank, uidx, uvecs = [], [], []
+    # Cross-bound the combos' unbounded parses straight from raw viols.
+    # Domination uses the ZONE-aware vector between parses of the SAME syllable
+    # count (a fitted/zoned meter must bound on the same (constraint x zone)
+    # feature space it scores on — see test_zone_aware_bounding_mechanism), and
+    # the FLAT (C,) vector between parses of DIFFERENT N (zone boundaries shift
+    # with N, so zone vectors are not comparable across lengths; flat counts are
+    # N-independent, so a 1-syllable "fire" parse can still dominate a 2-syllable
+    # one, exactly as v1). For an unfitted meter (bound_zones=None) zone==flat.
+    urank, uidx, fvecs, zvecs, uN = [], [], [], [], []
     for rank, c in enumerate(candidates):
         ui = np.where(c[1])[0]
         if not len(ui):
             continue
-        sums = _zone_split_batch(c[0][ui][None], bound_zones)[0]  # (len(ui), C[*Z])
+        fsum = c[0][ui].sum(axis=1)                               # (len(ui), C) flat
+        zsum = _zone_split_batch(c[0][ui][None], bound_zones)[0]  # (len(ui), C[*Z]) zone
+        N = c[0].shape[1]
         for j, i in enumerate(ui):
-            urank.append(rank); uidx.append(int(i)); uvecs.append(sums[j])
+            urank.append(rank); uidx.append(int(i))
+            fvecs.append(fsum[j]); zvecs.append(zsum[j]); uN.append(N)
     pool_unb = set()
-    if uvecs:
-        vecs = np.array(uvecs)
-        le = (vecs[:, None, :] <= vecs[None, :, :]).all(axis=2)
-        lt = (vecs[:, None, :] < vecs[None, :, :]).any(axis=2)
-        dom = le & lt
+    if fvecs:
+        fv = np.array(fvecs); zv = np.array(zvecs); nn = np.array(uN)
+        same_n = nn[:, None] == nn[None, :]
+        zdom = (zv[:, None, :] <= zv[None, :, :]).all(axis=2) & (zv[:, None, :] < zv[None, :, :]).any(axis=2)
+        fdom = (fv[:, None, :] <= fv[None, :, :]).all(axis=2) & (fv[:, None, :] < fv[None, :, :]).any(axis=2)
+        dom = np.where(same_n, zdom, fdom)
         np.fill_diagonal(dom, False)
         alive = ~dom.any(axis=0)
         pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
     if not pool_unb:
         return get_lpl(0)
 
-    def build_for_N(N):
+    def build_for_N(N, full_ok=True):
         """Pooled LazyParseList over the combos whose scansions have N syllables
         (they share a scansion space): combo-base + overlay, exactly as the
-        single-N path. `pool_unb` already reflects cross-N domination."""
+        single-N path. `pool_unb` already reflects cross-N domination. `full_ok`
+        permits the fast-path shortcut (return the base combo's full scansion
+        set); the mixed-N caller passes full_ok=False so every length goes through
+        the same dedup-by-meter-string overlay, keeping the ragged list's
+        per-length representation symmetric (bounded reporting / sylls_by_scansion
+        set on every length, not just the overlaid ones)."""
         group = sorted(r for r in range(len(candidates)) if N_of[r] == N)
         base = group[0]
         pool_unb_N = {(r, i) for (r, i) in pool_unb if N_of[r] == N}
-        if pool_unb_N == {(base, int(i)) for i in np.where(candidates[base][1])[0]}:
+        if full_ok and pool_unb_N == {(base, int(i)) for i in np.where(candidates[base][1])[0]}:
             return get_lpl(base)                       # base combo accounts for all of N
         l0 = get_lpl(base)
         best_rep = {}  # meter_str -> (sortkey, rank, scan_idx)
@@ -269,7 +300,7 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # each sub-list's mask is correct.
     scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
     for N in surv_Ns:
-        sub = build_for_N(N)
+        sub = build_for_N(N, full_ok=False)
         sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
         for i in range(len(sub._all_scansions)):
             scans.append(sub._all_scansions[i])
@@ -1449,15 +1480,28 @@ class LazyParseList:
         # when learned weights are active, built Parse objects get their .score
         # overridden with the learned score (see _get_parse). zones=None with
         # learned weights = flat weighted scoring (zone_split sums over N).
-        # ragged results use flat scoring (zone-weighted scoring on a mixed-N
-        # line — fit() + a syllable-count-ambiguous word — is a non-case)
-        self._is_zone_scored = bool(zone_weights) and not self._ragged
+        self._is_zone_scored = bool(zone_weights)
 
         if self._ragged:
-            constraint_weights = meter.constraints
-            weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
-            all_viols_sum = np.array([v.sum(axis=0) for v in viols]) if viols else np.zeros((0, len(weights)))
-            self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
+            if zone_weights and viols:
+                # Each ragged parse has its OWN N_k, so zone-split it individually.
+                # make_zone_names' C*Z names are N-independent (only the zone
+                # boundaries shift with N), so the learned zone weights apply
+                # per parse — a mixed-N line is ranked by the same objective as
+                # its rectangular neighbours, not silently dropped to flat.
+                from .maxent import zone_split, make_zone_names
+                scores = []
+                for v in viols:  # v is (N_k, C)
+                    zv = zone_split(v[None], zones)[0]  # (C*Z,)
+                    znames = make_zone_names(self._constraint_names, v.shape[0], zones)
+                    zw = np.array([zone_weights.get(c, 1) for c in znames])
+                    scores.append(float((zv * zw).sum()))
+                self._all_scores = np.array(scores)
+            else:
+                constraint_weights = meter.constraints
+                weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
+                all_viols_sum = np.array([v.sum(axis=0) for v in viols]) if viols else np.zeros((0, len(weights)))
+                self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
         elif zone_weights:
             # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights
             from .maxent import zone_split, make_zone_names

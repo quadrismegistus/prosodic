@@ -582,3 +582,53 @@ def test_get_parse_negative_index_no_double_build():
     p_neg = pl._get_parse(-len(pl._all_scansions))
     assert p_pos is p_neg
     assert len(pl._built_parses) == 1
+
+
+def test_trailing_apostrophe_lookup():
+    """Strip-on-miss for trailing apostrophes (PR #169 + review fix): a bare
+    trailing ' is dropped from the lookup key ONLY when the apostrophe-form
+    misses, so possessive/quote artifacts (that', augustus') resolve via the
+    stripped base, while curated apostrophe-final dict entries (runnin', comin')
+    and function-word list entries (tho') keep their own form and don't fall to
+    an often-mis-stressed espeak fallback."""
+    from prosodic.langs.english import EnglishLanguage
+    L = EnglishLanguage()
+    forms = lambda w: L.get_sylls_ipa_ll(w)[0]
+    # strip fallback: apostrophe-form absent -> stripped base, == the bare word
+    assert forms("that'") == forms("that")
+    assert forms("augustus'") == forms("augustus")
+    assert forms("boys'") == forms("boys")
+    # apostrophe-form PRESENT in dict -> preferred, not stripped to an espeak miss
+    for w in ("runnin'", "comin'", "ol'"):
+        f, meta = L.get_sylls_ipa_ll(w)
+        assert f and meta.get("ipa_origin") == "dict", f"{w} must use its dict entry"
+    # tho' keeps unstressed-list membership (bare 'tho' is not in the list)
+    assert "tho'" in L.unstressed_words
+    # leading / internal apostrophes have no TRAILING ' -> lookup key unchanged
+    assert forms("don't") and forms("'twas")
+
+
+def test_ragged_pool_zone_scored():
+    """A mixed-syllable-count (ragged) pooled line honors learned zone weights
+    rather than silently falling back to flat scoring (review fix #3), and
+    zone-scoring each ragged parse by its OWN N doesn't crash. Also guards the
+    conditional cross-bound (review fix #4): zone-aware within a syllable count,
+    flat across different N."""
+    import numpy as np
+    from prosodic.parsing.meter import Meter
+    from prosodic.parsing.vectorized import parse_batch_from_df
+    t = TextModel("the hour of fire")   # hour & fire are 1~2 -> mixed-N ragged
+    m = Meter()
+    unf = [p for p in parse_batch_from_df(t._syll_df, m).values()
+           if getattr(p, "_ragged", False)]
+    assert unf, "expected a ragged (mixed-N) pooled line"
+    assert not unf[0]._is_zone_scored                       # unfitted -> flat
+    flat_scores = np.array(unf[0]._all_scores)
+    m2 = Meter(); cn = list(m2.constraints.keys()); m2.zones = 2
+    m2.zone_weights = {f"{c}_z1": 0.001 for c in cn}
+    m2.zone_weights.update({f"{c}_z2": 1000.0 for c in cn})
+    rag = [p for p in parse_batch_from_df(t._syll_df, m2).values()
+           if getattr(p, "_ragged", False)][0]
+    assert rag._is_zone_scored                              # zone weights honored
+    assert not np.allclose(flat_scores, rag._all_scores)    # scoring actually changed
+    assert np.isfinite(rag.best_parse.score)                # no crash building parse

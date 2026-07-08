@@ -202,16 +202,23 @@ class LanguageModel:
 
     @cache(maxsize=None)
     def get_sylls_ipa_ll(self, token, force_unstress=None, force_ambig_stress=None):
-        # Strip a BARE trailing apostrophe from the lookup key. The tokenizer
-        # regex ([\w']+) glues the ASCII apostrophe onto a word, so a dangling
-        # possessive/quote mark survives ("that'", "augustus'") and misses the
-        # CMU dict + function-word lists, forcing an often-mis-stressed espeak
-        # fallback (augustus' -> AU-gus-tus, not a-GUS-tus; that' -> only the
-        # stressed form). A trailing apostrophe is never "apostrophe+letter", so
-        # dropping it is safe: don't/'twas (no trailing ') are untouched, and
-        # boys' -> boys yields the same pronunciation. This is the single choke
-        # point for all three lookups below and both parse paths.
-        token = token.lower().rstrip("'’")
+        # A BARE trailing apostrophe survives tokenization: the regex ([\w']+)
+        # glues the ASCII apostrophe onto a word, so a dangling possessive/quote
+        # mark rides along ("that'", "augustus'") and misses the CMU dict +
+        # function-word lists, forcing an often-mis-stressed espeak fallback
+        # (augustus' -> AU-gus-tus, not a-GUS-tus; that' -> only the stressed
+        # form). But STRIP ONLY AS A FALLBACK: try the original token first and
+        # drop the trailing apostrophe only on a miss. Stripping unconditionally
+        # regressed the CMU keys that legitimately END in an apostrophe (runnin',
+        # comin', ol', doin', singin', ...) and the function-word entries tho'/t'
+        # — those have an apostrophe-final entry but no bare form, so an eager
+        # strip sent them to espeak / dropped their force-unstress membership. A
+        # trailing apostrophe is never "apostrophe+letter", so the fallback strip
+        # is safe: that'/augustus' fall back to that/augustus, while don't/'twas
+        # (no trailing ') are untouched. Single choke point for all lookups below
+        # and both parse paths.
+        token = token.lower()
+        stripped = token.rstrip("'’")
         meta = {}
 
         # Ambiguous-stress wins over unstressed when a word is in BOTH lists.
@@ -223,32 +230,45 @@ class LanguageModel:
         # strong metrical position without an s_unstress violation — inflating
         # metrical tension (esp. in prose). Prosodic v1 (lib/Dictionary.py
         # maybeUnstress) checked maybe-stressed FIRST; this restores that.
-        if force_ambig_stress is None and token in self.ambig_stressed_words:
+        # Membership matches the original token OR the apostrophe-stripped form
+        # (so tho'/t' stay hits via the original, and a bare-form-only entry
+        # still matches via `stripped`).
+        if force_ambig_stress is None and (
+            token in self.ambig_stressed_words
+            or stripped in self.ambig_stressed_words
+        ):
             force_ambig_stress = True
-        elif force_unstress is None and token in self.unstressed_words:
+        elif force_unstress is None and (
+            token in self.unstressed_words or stripped in self.unstressed_words
+        ):
             force_unstress = True
 
-        ## try dictionary (includes user cache)
+        ## try dictionary (includes user cache): original token first, then the
+        ## apostrophe-stripped fallback for possessive/quote survivors (that',
+        ## augustus'). runnin'/comin'/ol' hit directly on the original token.
         sylls_ipa_ll = self.get_sylls_ipa_ll_dict(token)
+        if not sylls_ipa_ll and stripped != token:
+            sylls_ipa_ll = self.get_sylls_ipa_ll_dict(stripped)
         if sylls_ipa_ll:
             meta['ipa_origin']='dict'
         else:
-            ## use tts
-            sylls_ipa_ll = self.get_sylls_ipa_ll_tts(token)
+            ## use tts on the apostrophe-stripped token (so "that'" -> espeak
+            ## sees "that", not the trailing apostrophe)
+            sylls_ipa_ll = self.get_sylls_ipa_ll_tts(stripped)
             if sylls_ipa_ll:
                 meta["ipa_origin"] = "tts"
                 # cache TTS result to disk for next startup
                 for sylls_ipa_l in sylls_ipa_ll:
-                    self._cache_tts_result(token, sylls_ipa_l)
+                    self._cache_tts_result(stripped, sylls_ipa_l)
                 # ...and into the in-memory map, so a repeat lookup of this
                 # token this session resolves from the dict and never re-hits
                 # espeak -- even for a different force_unstress/force_ambig_stress
                 # argument, which is a distinct get_sylls_ipa_ll cache key. Store
                 # the RAW (pre-format, pre-stress-mod) pronunciation so it matches
                 # exactly what a fresh disk load would produce.
-                self.token2ipa[token] = [list(s) for s in sylls_ipa_ll]
+                self.token2ipa[stripped] = [list(s) for s in sylls_ipa_ll]
             else:
-                log.error(f'cannot parse syll IPAs in {token}')
+                log.error(f'cannot parse syll IPAs in {stripped}')
                 meta['ipa_origin'] = 'error'
         
         ## format

@@ -45,6 +45,41 @@ def _syll_is_heavy_from_ipa(ipa):
     return any(_phone_is_long(p) for p in vowels)
 
 
+def strong_weak_from_levels(levels, idx):
+    """Local-max / local-min "strong / weak" rule over a prominence-level list.
+
+    The single source of the rise/fall rule, called by BOTH parse paths so they
+    can never drift: the DF builder (``build_syll_df`` below) and the entity
+    properties (``words/syllables.py`` ``Syllable.is_strong`` / ``is_weak``).
+
+    Given relative prominence ``levels`` (higher = more prominent) and the index
+    of one syllable, decide whether that syllable is a local prominence MAXIMUM
+    (strong) or MINIMUM (weak) versus its immediate neighbours:
+
+        strong = higher than a neighbour, lower than none   (rises and not falls)
+        weak   = lower  than a neighbour, higher than none   (falls and not rises)
+
+    A "shoulder" on a monotonic slope (both rises and falls) or a flat plateau
+    (neither) is NEITHER; strong and weak are mutually exclusive.
+
+    Only the ORDERING of levels matters, not the scale: the DF path passes
+    {P:2, S:1, U:0}, the entity path passes ``stress_num`` {P:1.0, S:0.5, U:0.0}
+    — both preserve P > S > U, so the rises/falls comparisons agree.
+
+    Returns:
+        (is_strong, is_weak) tuple of bools.
+    """
+    lvl = levels[idx]
+    neigh = []
+    if idx > 0:
+        neigh.append(levels[idx - 1])
+    if idx < len(levels) - 1:
+        neigh.append(levels[idx + 1])
+    rises = any(lvl > n for n in neigh)   # more prominent than a neighbour
+    falls = any(lvl < n for n in neigh)   # less prominent than a neighbour
+    return (rises and not falls), (falls and not rises)
+
+
 def build_syll_df(token_dicts, lang=DEFAULT_LANG):
     """Build a syllable-level DataFrame from tokenized word dicts.
 
@@ -173,18 +208,8 @@ def build_syll_df(token_dicts, lang=DEFAULT_LANG):
                 is_strong = False
                 is_weak = False
                 if num_sylls > 1:
-                    lvl = level_list[syll_idx]
-                    neigh = []
-                    if syll_idx > 0:
-                        neigh.append(level_list[syll_idx - 1])
-                    if syll_idx < num_sylls - 1:
-                        neigh.append(level_list[syll_idx + 1])
-                    rises = any(lvl > n for n in neigh)   # more prominent than a neighbour
-                    falls = any(lvl < n for n in neigh)   # less prominent than a neighbour
-                    if rises and not falls:
-                        is_strong = True
-                    elif falls and not rises:
-                        is_weak = True
+                    is_strong, is_weak = strong_weak_from_levels(
+                        level_list, syll_idx)
 
                 rows.append({
                     'word_num': word_num,

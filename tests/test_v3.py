@@ -263,6 +263,30 @@ class TestParsedDf:
         # "see" is a single long-vowel syllable -> heavy in both paths
         assert TextModel("see")._syll_df.iloc[0].is_heavy
 
+    def test_syllable_strength_df_entity_agree(self):
+        # is_strong / is_weak must agree between the DF path (_syll_df) and the
+        # entity path (Syllable.is_strong/.is_weak). Both now call the single
+        # shared rule strong_weak_from_levels (texts/syll_df.py); this guards
+        # the two copies against drifting, mirroring test_syllable_weight_* for
+        # is_heavy.
+        seen_strong = seen_weak = False
+        for w in ("poetry", "almost", "employee", "engineer",
+                  "beautiful", "understand"):
+            t = TextModel(w)
+            df0 = t._syll_df[t._syll_df.form_idx == 0]
+            df_strong = [bool(x) for x in df0.is_strong]
+            df_weak = [bool(x) for x in df0.is_weak]
+            # entity path: wordtoken -> wordtype -> wordform[0] -> syllables
+            sylls = t.wordtokens[0].children[0].children[0].children
+            ent_strong = [s.is_strong for s in sylls]
+            ent_weak = [s.is_weak for s in sylls]
+            assert df_strong == ent_strong, (w, "strong", df_strong, ent_strong)
+            assert df_weak == ent_weak, (w, "weak", df_weak, ent_weak)
+            seen_strong = seen_strong or any(ent_strong)
+            seen_weak = seen_weak or any(ent_weak)
+        # the words above exercise both peaks and troughs (non-trivial test)
+        assert seen_strong and seen_weak
+
     def test_parsed_df_join_keys(self):
         t = TextModel("From fairest creatures we desire increase")
         pdf = t.parsed_df

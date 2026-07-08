@@ -178,9 +178,11 @@ class Syllable(Entity):
         """Within-word neighbours' prominence levels (stress_num: primary 1.0 >
         secondary 0.5 > unstressed 0.0), for is_strong / is_weak."""
         sibs = self.parent.children
-        try:
-            i = sibs.index(self)
-        except ValueError:
+        # EntityList.index (ents.py) returns None on not-found — it does NOT
+        # raise ValueError — so guard explicitly. (A bare `if i > 0` on None
+        # would TypeError; the old try/except never fired.)
+        i = sibs.index(self)
+        if i is None:
             return []
         neigh = []
         if i > 0:
@@ -189,23 +191,40 @@ class Syllable(Entity):
             neigh.append(sibs[i + 1].stress_num)
         return neigh
 
+    def _strong_weak(self) -> Optional[tuple]:
+        """(is_strong, is_weak) from the single shared rule
+        (texts/syll_df.py:strong_weak_from_levels) — the SAME function the DF
+        parse path calls, so the two paths cannot disagree. None for a
+        monosyllable, where strength is undefined.
+        """
+        from ..texts.syll_df import strong_weak_from_levels
+        if not len(self.parent.children) > 1:
+            return None
+        # a level list of this syllable + its within-word neighbours (siblings'
+        # stress_num). Centre self so BOTH neighbours are the positional
+        # neighbours of levels[idx]; neighbour order is irrelevant to the rule.
+        neigh = self._prominence_neighbours()
+        if len(neigh) == 2:
+            levels, idx = [neigh[0], self.stress_num, neigh[1]], 1
+        else:
+            levels, idx = [self.stress_num, *neigh], 0
+        return strong_weak_from_levels(levels, idx)
+
     @property
     def is_strong(self) -> Optional[bool]:
         """
         Strong = a local prominence MAXIMUM within the word: more prominent than
-        a neighbour (primary > secondary > unstressed), lower than none. Matches
-        the DF path (texts/syll_df.py); a "shoulder" in a monotonic run (a mid
-        secondary) or a plateau is neither — is_strong and is_weak never both.
+        a neighbour (primary > secondary > unstressed), lower than none. Shares
+        the DF path's rule (texts/syll_df.py:strong_weak_from_levels); a
+        "shoulder" in a monotonic run (a mid secondary) or a plateau is neither
+        — is_strong and is_weak never both.
 
         Returns:
             True if the syllable is a prominence peak, else False (None for a
             monosyllable, where strength is undefined).
         """
-        if not len(self.parent.children) > 1:
-            return None
-        lvl = self.stress_num
-        neigh = self._prominence_neighbours()
-        return any(lvl > n for n in neigh) and not any(lvl < n for n in neigh)
+        sw = self._strong_weak()
+        return None if sw is None else sw[0]
 
     @property
     def is_weak(self) -> Optional[bool]:
@@ -217,11 +236,8 @@ class Syllable(Entity):
             True if the syllable is a prominence trough, else False (None for a
             monosyllable).
         """
-        if not len(self.parent.children) > 1:
-            return None
-        lvl = self.stress_num
-        neigh = self._prominence_neighbours()
-        return any(lvl < n for n in neigh) and not any(lvl > n for n in neigh)
+        sw = self._strong_weak()
+        return None if sw is None else sw[1]
 
     @property
     def onset(self) -> PhonemeList:

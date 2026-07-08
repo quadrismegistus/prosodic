@@ -19,21 +19,30 @@ def _phone_is_vowel(phone_txt):
     return cons < 1
 
 
+def _phone_is_long(phone_txt):
+    """A long vowel (iː, uː, ɔː, ...) per panphon's `long` feature."""
+    return get_phoneme_feats(phone_txt).get('long', -1) == 1
+
+
 def _syll_is_heavy_from_ipa(ipa):
     """Compute is_heavy from IPA string without constructing Entity objects.
 
-    Heavy = has consonant ending OR has diphthong (>1 vowel).
+    Heavy = a branching rime: a coda (consonant ending) OR a long/complex
+    nucleus. A long/complex nucleus is a diphthong (>1 vowel) OR a long
+    monophthong (iː/uː/...). Long monophthongs were previously missed (only
+    coda + diphthong counted), so e.g. "see"/"too" were scored light.
     """
     phones = _parse_ipa_cached(ipa)
     if not phones:
         return False
-    # consonant ending
-    last_is_cons = not _phone_is_vowel(phones[-1])
-    if last_is_cons:
+    # coda (consonant ending)
+    if not _phone_is_vowel(phones[-1]):
         return True
-    # diphthong
-    num_vowels = sum(1 for p in phones if _phone_is_vowel(p))
-    return num_vowels > 1
+    # long/complex nucleus: diphthong (>1 vowel) or a long monophthong
+    vowels = [p for p in phones if _phone_is_vowel(p)]
+    if len(vowels) > 1:
+        return True
+    return any(_phone_is_long(p) for p in vowels)
 
 
 def build_syll_df(token_dicts, lang=DEFAULT_LANG):

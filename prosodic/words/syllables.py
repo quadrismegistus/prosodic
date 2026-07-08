@@ -139,6 +139,17 @@ class Syllable(Entity):
         return self.num_vowels > 1
 
     @property
+    def has_long_vowel(self) -> bool:
+        """
+        Check if the syllable contains a long monophthong (iː, uː, ...).
+
+        Returns:
+            True if any vowel phoneme carries panphon's `long` feature.
+        """
+        return any(p.is_vowel and p.feats.get("long", -1) == 1
+                   for p in self.children)
+
+    @property
     def is_stressed(self) -> bool:
         """
         Check if the syllable is stressed.
@@ -153,10 +164,15 @@ class Syllable(Entity):
         """
         Check if the syllable is heavy.
 
+        Heavy = branching rime: a coda, OR a long/complex nucleus (diphthong
+        or long monophthong). Long monophthongs (iː/uː/...) were previously
+        missed, mis-scoring e.g. "see"/"too" as light.
+
         Returns:
             True if the syllable is heavy, False otherwise.
         """
-        return bool(self.has_consonant_ending or self.has_dipthong)
+        return bool(self.has_consonant_ending or self.has_dipthong
+                    or self.has_long_vowel)
 
     @property
     def is_strong(self) -> Optional[bool]:

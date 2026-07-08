@@ -632,3 +632,29 @@ def test_ragged_pool_zone_scored():
     assert rag._is_zone_scored                              # zone weights honored
     assert not np.allclose(flat_scores, rag._all_scores)    # scoring actually changed
     assert np.isfinite(rag.best_parse.score)                # no crash building parse
+
+
+def test_functionword_light_flag():
+    """FUNCTIONWORD_LIGHT (default OFF) forces is_heavy=False on function-word
+    syllables — Prosodic v1's convention (weight anchors only content words) vs
+    v3's phonological default. Off by default; toggling changes function-word
+    weight but is inert for the default constraints (they exempt function words by
+    the function-word flag / polysyllable scope, not weight — see COMPARISON.md)."""
+    from prosodic.texts import syll_df as sd
+    assert sd.FUNCTIONWORD_LIGHT is False   # phonological weight is the default
+
+    def fw_heavy(line):
+        df = TextModel(line)._syll_df
+        df = df[(df.form_idx == 0) & (~df.is_punc.astype(bool))
+                & df.is_functionword.astype(bool)]
+        return [bool(h) for h in df.is_heavy]
+
+    line = "and if the cat ran and hid"   # and/if have codas -> heavy phonologically
+    try:
+        phon = fw_heavy(line)
+        sd.FUNCTIONWORD_LIGHT = True
+        light = fw_heavy(line)
+    finally:
+        sd.FUNCTIONWORD_LIGHT = False       # never leak the global to other tests
+    assert any(phon), "some function words are phonologically heavy (coda)"
+    assert light and not any(light), "flag forces every function-word syllable light"

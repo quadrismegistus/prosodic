@@ -185,7 +185,10 @@ class Line(GridMethods, WordTokenList):
         ties = [p for p in unb if p.score == ms]
         if len(ties) == 1:
             return ties[0]
-        return min(ties, key=lambda p: (len({ft.label for ft in p.metrical_feet}),
+        # count DISTINCT full feet — a trailing bare foot (catalectic/extrametrical
+        # stub, e.g. 'sw sw sw s' = 3 trochees + a stub) shouldn't inflate the
+        # distinctness of an otherwise-uniform line.
+        return min(ties, key=lambda p: (len({ft.label for ft in p.metrical_feet if ft.label != "bare"}),
                                         len(p.metrical_feet)))
 
     @cache

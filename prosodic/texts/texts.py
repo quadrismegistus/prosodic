@@ -494,37 +494,6 @@ class TextModel(Entity):
         """Alias for get_parses_df(mode=..., by=..., **meter_kwargs)."""
         return self.get_parses_df(mode=mode, by=by, **meter_kwargs)
 
-    @cached_property
-    def _poem_meter(self):
-        """(head, foot_size): the poem's dominant meter — the (head, size) template
-        the lines' CO-OPTIMAL sets support best (minimum total deviating feet if
-        each line picked its most template-regular co-optimal parse). Robust to
-        best_parse's arbitrary tie-break: it asks what the lines *can* be read as,
-        not what best_parse happened to foot. Meter is a POEM-level property — a
-        single line's co-optimal set is often genuinely ambiguous; the poem
-        disambiguates. Used by Line.metrical_parse."""
-        from ..analysis.feet import foot_head
-        # foot-parse each co-optimal parse once; keep its foot patterns
-        line_ties = []
-        for line in self.lines:
-            pl = line.parses
-            unb = list(pl.unbounded) if pl is not None else []
-            if not unb:
-                continue
-            ms = min(p.score for p in unb)
-            line_ties.append([[ft.pattern for ft in p.metrical_feet]
-                              for p in unb if p.score == ms])
-        best = None
-        for head in ("rising", "falling"):
-            for size in (2, 3):
-                total = sum(
-                    min(sum(foot_head(p) not in (head, "none", "ambiguous") for p in pats)
-                        + sum(len(p) != size for p in pats) for pats in ties)
-                    for ties in line_ties)
-                if best is None or total < best[0]:
-                    best = (total, head, size)
-        return (best[1], best[2]) if best else ("rising", 2)
-
     def get_parses_df(self, mode='unbounded', by='syll', **meter_kwargs):
         """Parse and return results as a DataFrame. No entity construction.
 

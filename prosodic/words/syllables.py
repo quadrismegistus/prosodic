@@ -139,6 +139,17 @@ class Syllable(Entity):
         return self.num_vowels > 1
 
     @property
+    def has_long_vowel(self) -> bool:
+        """
+        Check if the syllable contains a long monophthong (iː, uː, ...).
+
+        Returns:
+            True if any vowel phoneme carries panphon's `long` feature.
+        """
+        return any(p.is_vowel and p.feats.get("long", -1) == 1
+                   for p in self.children)
+
+    @property
     def is_stressed(self) -> bool:
         """
         Check if the syllable is stressed.
@@ -153,44 +164,80 @@ class Syllable(Entity):
         """
         Check if the syllable is heavy.
 
+        Heavy = branching rime: a coda, OR a long/complex nucleus (diphthong
+        or long monophthong). Long monophthongs (iː/uː/...) were previously
+        missed, mis-scoring e.g. "see"/"too" as light.
+
         Returns:
             True if the syllable is heavy, False otherwise.
         """
-        return bool(self.has_consonant_ending or self.has_dipthong)
+        return bool(self.has_consonant_ending or self.has_dipthong
+                    or self.has_long_vowel)
+
+    def _prominence_neighbours(self):
+        """Within-word neighbours' prominence levels (stress_num: primary 1.0 >
+        secondary 0.5 > unstressed 0.0), for is_strong / is_weak."""
+        sibs = self.parent.children
+        # EntityList.index (ents.py) returns None on not-found — it does NOT
+        # raise ValueError — so guard explicitly. (A bare `if i > 0` on None
+        # would TypeError; the old try/except never fired.)
+        i = sibs.index(self)
+        if i is None:
+            return []
+        neigh = []
+        if i > 0:
+            neigh.append(sibs[i - 1].stress_num)
+        if i < len(sibs) - 1:
+            neigh.append(sibs[i + 1].stress_num)
+        return neigh
+
+    def _strong_weak(self) -> Optional[tuple]:
+        """(is_strong, is_weak) from the single shared rule
+        (texts/syll_df.py:strong_weak_from_levels) — the SAME function the DF
+        parse path calls, so the two paths cannot disagree. None for a
+        monosyllable, where strength is undefined.
+        """
+        from ..texts.syll_df import strong_weak_from_levels
+        if not len(self.parent.children) > 1:
+            return None
+        # a level list of this syllable + its within-word neighbours (siblings'
+        # stress_num). Centre self so BOTH neighbours are the positional
+        # neighbours of levels[idx]; neighbour order is irrelevant to the rule.
+        neigh = self._prominence_neighbours()
+        if len(neigh) == 2:
+            levels, idx = [neigh[0], self.stress_num, neigh[1]], 1
+        else:
+            levels, idx = [self.stress_num, *neigh], 0
+        return strong_weak_from_levels(levels, idx)
 
     @property
     def is_strong(self) -> Optional[bool]:
         """
-        Check if the syllable is strong.
+        Strong = a local prominence MAXIMUM within the word: more prominent than
+        a neighbour (primary > secondary > unstressed), lower than none. Shares
+        the DF path's rule (texts/syll_df.py:strong_weak_from_levels); a
+        "shoulder" in a monotonic run (a mid secondary) or a plateau is neither
+        — is_strong and is_weak never both.
 
         Returns:
-            True if the syllable is strong, False if weak, None if undetermined.
+            True if the syllable is a prominence peak, else False (None for a
+            monosyllable, where strength is undefined).
         """
-        if not len(self.parent.children) > 1:
-            return None
-        if not self.is_stressed:
-            return False
-        if self.prev and not self.prev.is_stressed:
-            return True
-        if self.next and not self.next.is_stressed:
-            return True
+        sw = self._strong_weak()
+        return None if sw is None else sw[0]
 
     @property
     def is_weak(self) -> Optional[bool]:
         """
-        Check if the syllable is weak.
+        Weak = a local prominence MINIMUM within the word: less prominent than a
+        neighbour, more prominent than none. See is_strong.
 
         Returns:
-            True if the syllable is weak, False if strong, None if undetermined.
+            True if the syllable is a prominence trough, else False (None for a
+            monosyllable).
         """
-        if not len(self.parent.children) > 1:
-            return None
-        if self.is_stressed:
-            return False
-        if self.prev and self.prev.is_stressed:
-            return True
-        if self.next and self.next.is_stressed:
-            return True
+        sw = self._strong_weak()
+        return None if sw is None else sw[1]
 
     @property
     def onset(self) -> PhonemeList:

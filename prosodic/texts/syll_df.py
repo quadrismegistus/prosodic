@@ -19,21 +19,65 @@ def _phone_is_vowel(phone_txt):
     return cons < 1
 
 
+def _phone_is_long(phone_txt):
+    """A long vowel (iː, uː, ɔː, ...) per panphon's `long` feature."""
+    return get_phoneme_feats(phone_txt).get('long', -1) == 1
+
+
 def _syll_is_heavy_from_ipa(ipa):
     """Compute is_heavy from IPA string without constructing Entity objects.
 
-    Heavy = has consonant ending OR has diphthong (>1 vowel).
+    Heavy = a branching rime: a coda (consonant ending) OR a long/complex
+    nucleus. A long/complex nucleus is a diphthong (>1 vowel) OR a long
+    monophthong (iː/uː/...). Long monophthongs were previously missed (only
+    coda + diphthong counted), so e.g. "see"/"too" were scored light.
     """
     phones = _parse_ipa_cached(ipa)
     if not phones:
         return False
-    # consonant ending
-    last_is_cons = not _phone_is_vowel(phones[-1])
-    if last_is_cons:
+    # coda (consonant ending)
+    if not _phone_is_vowel(phones[-1]):
         return True
-    # diphthong
-    num_vowels = sum(1 for p in phones if _phone_is_vowel(p))
-    return num_vowels > 1
+    # long/complex nucleus: diphthong (>1 vowel) or a long monophthong
+    vowels = [p for p in phones if _phone_is_vowel(p)]
+    if len(vowels) > 1:
+        return True
+    return any(_phone_is_long(p) for p in vowels)
+
+
+def strong_weak_from_levels(levels, idx):
+    """Local-max / local-min "strong / weak" rule over a prominence-level list.
+
+    The single source of the rise/fall rule, called by BOTH parse paths so they
+    can never drift: the DF builder (``build_syll_df`` below) and the entity
+    properties (``words/syllables.py`` ``Syllable.is_strong`` / ``is_weak``).
+
+    Given relative prominence ``levels`` (higher = more prominent) and the index
+    of one syllable, decide whether that syllable is a local prominence MAXIMUM
+    (strong) or MINIMUM (weak) versus its immediate neighbours:
+
+        strong = higher than a neighbour, lower than none   (rises and not falls)
+        weak   = lower  than a neighbour, higher than none   (falls and not rises)
+
+    A "shoulder" on a monotonic slope (both rises and falls) or a flat plateau
+    (neither) is NEITHER; strong and weak are mutually exclusive.
+
+    Only the ORDERING of levels matters, not the scale: the DF path passes
+    {P:2, S:1, U:0}, the entity path passes ``stress_num`` {P:1.0, S:0.5, U:0.0}
+    — both preserve P > S > U, so the rises/falls comparisons agree.
+
+    Returns:
+        (is_strong, is_weak) tuple of bools.
+    """
+    lvl = levels[idx]
+    neigh = []
+    if idx > 0:
+        neigh.append(levels[idx - 1])
+    if idx < len(levels) - 1:
+        neigh.append(levels[idx + 1])
+    rises = any(lvl > n for n in neigh)   # more prominent than a neighbour
+    falls = any(lvl < n for n in neigh)   # less prominent than a neighbour
+    return (rises and not falls), (falls and not rises)
 
 
 def build_syll_df(token_dicts, lang=DEFAULT_LANG):
@@ -128,28 +172,44 @@ def build_syll_df(token_dicts, lang=DEFAULT_LANG):
                 get_syll_ipa_stress(syll_ipa) in ("P", "S")
                 for syll_ipa, _ in sylls_l
             ]
+            # relative prominence level: primary > secondary > unstressed. Using
+            # levels (not binary stressed) means a primary-secondary word — AL-most
+            # ('ɔːl `moʊst) — has a strength peak on its primary, instead of reading
+            # as "both stressed / no peak" and leaving w_peak inert. (v3 bug: the
+            # old binary test collapsed P and S, so P-S words had no strong/weak.)
+            level_list = [
+                {"P": 2, "S": 1}.get(get_syll_ipa_stress(syll_ipa), 0)
+                for syll_ipa, _ in sylls_l
+            ]
             is_func = (num_sylls == 1 and not stress_list[0])
 
             for syll_idx, (syll_ipa, syll_text) in enumerate(sylls_l):
                 is_stressed = stress_list[syll_idx]
                 is_heavy = _syll_is_heavy_from_ipa(syll_ipa)
 
-                # is_strong/is_weak: polysyllabic context
+                # is_strong / is_weak: relative prominence within a polysyllable
+                # (primary > secondary > unstressed). strong = a local prominence
+                # MAXIMUM (higher than a neighbour, lower than none); weak = a local
+                # MINIMUM (lower than a neighbour, higher than none). The two are
+                # mutually exclusive — a syllable is never both.
+                #   POetry (P-U-U)  -> strong, weak, neither  ("e" falls from PO,
+                #                       equal to "try", so a trough not a shoulder)
+                #   AL-most (P-S)   -> strong, weak
+                #   a "shoulder" on a monotonic slope (the secondary of U-S-P /
+                #     P-S-U, which BOTH rises above one neighbour and falls below
+                #     the other) -> NEITHER, and a flat plateau -> neither.
+                #
+                # NOTE (possible v1 discrepancy): v1's getStrengthStress instead
+                # resolves a shoulder by its NEXT neighbour (so it labels the
+                # secondary strong or weak, never neither). Agrees with v1 on the
+                # common cases; differs only on 3+ syllable words with a mid
+                # secondary — a minor possible source of w_peak/s_trough drift vs
+                # the 2020 v1 data. See cmp_prosodics COMPARISON.md §8.
                 is_strong = False
                 is_weak = False
                 if num_sylls > 1:
-                    if is_stressed:
-                        # strong if neighbor is unstressed
-                        if syll_idx > 0 and not stress_list[syll_idx - 1]:
-                            is_strong = True
-                        elif syll_idx < num_sylls - 1 and not stress_list[syll_idx + 1]:
-                            is_strong = True
-                    else:
-                        # weak if neighbor is stressed
-                        if syll_idx > 0 and stress_list[syll_idx - 1]:
-                            is_weak = True
-                        elif syll_idx < num_sylls - 1 and stress_list[syll_idx + 1]:
-                            is_weak = True
+                    is_strong, is_weak = strong_weak_from_levels(
+                        level_list, syll_idx)
 
                 rows.append({
                     'word_num': word_num,

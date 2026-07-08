@@ -118,6 +118,8 @@ class MaxEntTrainer:
         self._constraint_names = None  # expanded names (with zone suffixes)
         self._base_constraint_names = None  # original constraint names
         self._weights = None
+        self._n_skipped_ragged = 0  # ragged (mixed-N) lines dropped from training
+        self._n_skipped_empty = 0   # oversized/empty lines with no viols matrix
 
     def _parse_text(self, text_input, lang=DEFAULT_LANG):
         """Parse text and return (results_dict, original_line_strings).
@@ -168,6 +170,8 @@ class MaxEntTrainer:
         self._line_data = []
         self._base_constraint_names = None
         n_unmatched = 0
+        self._n_skipped_ragged = 0
+        self._n_skipped_empty = 0
 
         # first pass: collect raw data and find max syllable count for zone naming
         raw_entries = []
@@ -179,8 +183,17 @@ class MaxEntTrainer:
 
             # Oversized/empty lines come back as a bare ParseList([]) with no
             # violation matrix — skip them instead of crashing on _all_viols.
+            # Ragged (mixed-syllable-count pool_forms) lines have a per-scansion
+            # viols LIST, not a fixed-width array — skip them too (rare). Count
+            # each skip reason so the drop is surfaced in the warning below
+            # rather than vanishing silently. Check _ragged first: a ragged
+            # line's _all_viols is a list with no .shape.
             viols = getattr(lpl, "_all_viols", None)
+            if getattr(lpl, "_ragged", False):
+                self._n_skipped_ragged += 1
+                continue
             if viols is None or viols.shape[0] == 0:
+                self._n_skipped_empty += 1
                 continue
 
             if self._base_constraint_names is None:
@@ -236,11 +249,19 @@ class MaxEntTrainer:
 
         n_matched = sum(1 for ld in self._line_data if ld["observed"].sum() > 0)
         n_total = len(self._line_data)
+        warn_parts = []
         if n_unmatched or n_matched < n_total:
-            log.warning(
+            warn_parts.append(
                 f"{n_total - n_matched}/{n_total} lines had no matching "
                 f"scansion among parser candidates (syllable count mismatch?)"
             )
+        if self._n_skipped_ragged:
+            warn_parts.append(
+                f"{self._n_skipped_ragged} line(s) skipped as "
+                f"ragged/mixed-syllable-count and not trained"
+            )
+        if warn_parts:
+            log.warning("; ".join(warn_parts))
 
         self._weights = np.zeros(n_features, dtype=np.float64)
 

@@ -118,8 +118,13 @@ lines at once* in numpy, without constructing entity objects:
    (`best_parse` builds exactly one, via argmin — no sorting).
 6. **Pronunciation ambiguity**: words with multiple wordforms produce the
    full cartesian product of per-word choices (capped at
-   `MAX_FORM_COMBOS=4096`); each combination is scored and the best
-   variant kept.
+   `MAX_FORM_COMBOS=4096`). With `pool_forms` (default on), the parses of
+   *all* combinations are pooled and cross-bounded, so the unbounded set is
+   the scansions optimal under *any* pronunciation — deduped by meter string,
+   the v1/v2 "resolve word-forms in situ" semantics. `pool_forms=False` keeps
+   only the single best-scoring combination (the interim v3 behavior). Pooling
+   is numpy-only: each combo's unbounded parses are cross-bounded from the raw
+   violation arrays, so no `Parse`/`Entity` objects are built.
 
 Performance (Shakespeare's sonnets, 2,155 lines): the parser evaluates in
 ~1.9 s on CPU — 38× faster than the v2 branch-and-bound parser's ~73 s —

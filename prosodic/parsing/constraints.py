@@ -346,7 +346,11 @@ def _w_prom_vectorized(f):
 def w_prom(mpos):
     if mpos.is_prom:
         return [None] * len(mpos.slots)
-    return [getattr(slot.unit, 'phrasal_stress', -99) >= -1 for slot in mpos.slots]
+    # Entity.__getattr__ returns None (never raises) for an absent attribute, so
+    # the getattr default is shadowed — guard None explicitly (else None >= -1
+    # raises). None = no phrasal data -> inert, matching the vectorized guard.
+    return [((x := getattr(slot.unit, 'phrasal_stress', None)) is not None and x >= -1)
+            for slot in mpos.slots]
 
 
 def _s_demoted_vectorized(f):
@@ -362,7 +366,9 @@ def _s_demoted_vectorized(f):
 def s_demoted(mpos):
     if not mpos.is_prom:
         return [None] * len(mpos.slots)
-    return [getattr(slot.unit, 'phrasal_stress', 0) <= -2 for slot in mpos.slots]
+    # guard None (see w_prom): absent phrasal data -> inert, not a TypeError.
+    return [((x := getattr(slot.unit, 'phrasal_stress', None)) is not None and x <= -2)
+            for slot in mpos.slots]
 
 
 # --- Gradient phrasal variants (cadence's *_p / *_t constraints) ---

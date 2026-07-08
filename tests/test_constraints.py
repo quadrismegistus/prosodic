@@ -398,32 +398,19 @@ def test_phrasal_vectorized_active():
         assert np.array_equal(fn(f), np.array([[[0, 1]]], dtype=np.int8)), fn.__name__
 
 
-@pytest.mark.xfail(
-    reason="BUG: w_prom/s_demoted entity bodies crash (TypeError) on units "
-    "lacking phrasal_stress -- Entity.__getattr__ returns None, shadowing the "
-    "getattr(..., default) fallback. They should be inert like the "
-    "has_phrasal-guarded vectorized path.",
-    strict=False,
-    raises=TypeError,
-)
 def test_phrasal_w_prom_inert_without_phrasal_data():
-    # Manually parsing plain (non-syntax) text with w_prom SHOULD produce no
-    # violations (inert), mirroring the vectorized path. It currently raises
-    # TypeError instead; xfail documents the bug until it is fixed.
-    p = Parse("the cat", "+-", constraints=['w_prom'])
-    assert p.viold.get("w_prom", 0) == 0
+    # Parsing plain (non-syntax) text with w_prom produces no violations (inert),
+    # mirroring the vectorized has_phrasal-guarded path. Regression: the entity
+    # body used to raise TypeError because Entity.__getattr__ returns None,
+    # shadowing the getattr default (now guarded explicitly). Same for s_demoted.
+    assert Parse("the cat", "+-", constraints=['w_prom']).viold.get("w_prom", 0) == 0
+    assert Parse("the cat", "+-", constraints=['s_demoted']).viold.get("s_demoted", 0) == 0
 
 
-def test_default_constraint_helpers_logic(monkeypatch):
-    # BUG: get_default_constraint_names()/get_default_constraints() reference a
-    # module global DEFAULT_CONSTRAINT_NAMES that is never defined (the real
-    # constant is DEFAULT_CONSTRAINTS). As shipped both raise NameError and are
-    # unreachable. Inject the missing name to exercise the selection logic.
-    assert not hasattr(_cu, "DEFAULT_CONSTRAINT_NAMES")  # confirm it is missing
-    with pytest.raises(NameError):
-        _cu.get_default_constraint_names()
-
-    monkeypatch.setattr(_cu, "DEFAULT_CONSTRAINT_NAMES", _cu.DEFAULT_CONSTRAINTS, raising=False)
+def test_default_constraint_helpers_logic():
+    # get_default_constraint_names()/get_default_constraints() resolve the default
+    # constraint set. Regression: they used to reference an undefined
+    # DEFAULT_CONSTRAINT_NAMES and raise NameError (fixed to use DEFAULT_CONSTRAINTS).
     names = _cu.get_default_constraint_names()
     assert names == _cu.DEFAULT_CONSTRAINTS
     assert "w_stress" in names

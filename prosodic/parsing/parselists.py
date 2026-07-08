@@ -612,31 +612,34 @@ class ParseListList(EntityList):
 
     @property
     def sents(self):
-        return SentenceList(unique(p.sent for pl in self for p in pl), parent=self.text)
-    
+        # DF-path parses carry no sent/linepart/sentpart/stanza entity (they are
+        # None); filter them so the *List construction doesn't choke on None (as
+        # .lines already does). On the DF path these degrade to an empty list.
+        return SentenceList(unique(p.sent for pl in self for p in pl if p.sent is not None), parent=self.text)
+
     @property
     def num_sents(self):
         return len(self.sents)
 
     @property
     def lineparts(self):
-        return LinePartList(unique(p.linepart for pl in self for p in pl), parent=self.text)
-    
+        return LinePartList(unique(p.linepart for pl in self for p in pl if p.linepart is not None), parent=self.text)
+
     @property
     def num_lineparts(self):
         return len(self.lineparts)
 
     @property
     def sentparts(self):
-        return SentPartList(unique(p.sentpart for pl in self for p in pl), parent=self.text)
-    
+        return SentPartList(unique(p.sentpart for pl in self for p in pl if p.sentpart is not None), parent=self.text)
+
     @property
     def num_sentparts(self):
         return len(self.sentparts)
 
     @property
     def stanzas(self):
-        return StanzaList(unique(p.stanza for pl in self for p in pl), parent=self.text)
+        return StanzaList(unique(p.stanza for pl in self for p in pl if p.stanza is not None), parent=self.text)
     
     @property
     def num_stanzas(self):

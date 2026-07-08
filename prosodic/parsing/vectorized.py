@@ -262,14 +262,30 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         return build_for_N(surv_Ns[0])
 
     # Survivors span multiple syllable counts (e.g. "fire" 1~2). A single
-    # (P, N, C) array can't hold both lengths, so return the pooled set of the
-    # BEST length — the one holding the global-min-score parse. Cross-length
-    # domination was already applied (pool_unb spans all N), so the best parse is
-    # chosen across lengths; only co-optimal parses of a *different* length are
-    # dropped (rare). Full multi-length pooling is a follow-up (needs a ragged
-    # result type the DataFrame path can consume).
-    gr, gi = min(pool_unb, key=lambda ri: float(get_lpl(ri[0])._all_scores[ri[1]]))
-    return build_for_N(N_of[gr])
+    # (P, N, C) array can't hold both lengths, so concatenate each length's
+    # pooled scansions into a RAGGED LazyParseList (per-scansion viols/meter_vals
+    # of different N). The unbounded set thus keeps co-optimal parses of BOTH
+    # lengths — matching v1. Cross-length domination is already in pool_unb, so
+    # each sub-list's mask is correct.
+    scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
+    for N in surv_Ns:
+        sub = build_for_N(N)
+        sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
+        for i in range(len(sub._all_scansions)):
+            scans.append(sub._all_scansions[i])
+            viols.append(sub._all_viols[i])              # (N, C)
+            mv.append(sub._meter_vals[i])
+            pi.append(sub._position_ids[i])
+            ps.append(sub._position_sizes[i])
+            sylls_by.append(sbs[i] if sbs is not None else sub._sylls)
+            rowidx_by.append(rbs[i] if rbs is not None else sub._syll_row_idx)
+            unb.append(bool(sub._unbounded_mask[i]))
+    return LazyParseList(
+        None, meter, scans, viols, ci_use, np.array(unb, dtype=bool), sylls_by[0],
+        parse_unit=parse_unit, syll_row_idx=rowidx_by[0], meter_vals=mv,
+        position_ids=pi, position_sizes=ps,
+        sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
+    )
 
 
 def parse_batch_from_df(syll_df, meter, line_col='line_num'):
@@ -1393,9 +1409,15 @@ class LazyParseList:
         self.parse_unit = parse_unit
         self.parent = wordtokens
 
-        # store ALL scansions with their bounded status
+        # store ALL scansions with their bounded status.
+        # RAGGED results (mixed-syllable-count pool_forms): `viols` is a LIST of
+        # per-scansion (N_k, C) arrays (scansions differ in length), and
+        # meter_vals/position_ids/position_sizes are parallel lists. The fast
+        # rectangular path (one (S, N, C) array) is untouched for normal lines;
+        # only per-scansion consumers (_get_parse, get_parses_df) special-case it.
+        self._ragged = isinstance(viols, list)
         self._all_scansions = list(scansions)
-        self._all_viols = viols  # (S, N, C)
+        self._all_viols = viols  # (S, N, C), or a list of (N_k, C) when ragged
         self._unbounded_mask = unbounded_mask  # (S,) bool
         self._constraint_index = constraint_index
         self._constraint_names = list(constraint_index.keys())
@@ -1427,9 +1449,16 @@ class LazyParseList:
         # when learned weights are active, built Parse objects get their .score
         # overridden with the learned score (see _get_parse). zones=None with
         # learned weights = flat weighted scoring (zone_split sums over N).
-        self._is_zone_scored = bool(zone_weights)
+        # ragged results use flat scoring (zone-weighted scoring on a mixed-N
+        # line — fit() + a syllable-count-ambiguous word — is a non-case)
+        self._is_zone_scored = bool(zone_weights) and not self._ragged
 
-        if zone_weights:
+        if self._ragged:
+            constraint_weights = meter.constraints
+            weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
+            all_viols_sum = np.array([v.sum(axis=0) for v in viols]) if viols else np.zeros((0, len(weights)))
+            self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
+        elif zone_weights:
             # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights
             from .maxent import zone_split, make_zone_names
             zone_viols = zone_split(viols, zones)  # (S, C*Z)
@@ -1601,7 +1630,7 @@ class LazyParseList:
         sylls = (self._sylls_by_scansion[idx]
                  if self._sylls_by_scansion is not None else self._sylls)
         parse = _build_single_parse(
-            idx, self._all_scansions[idx], self._all_viols, self._constraint_index,
+            idx, self._all_scansions[idx], self._all_viols[idx], self._constraint_index,
             self._constraint_names, sylls, self.wordtokens, self.meter,
             rank=rank,
         )
@@ -1676,7 +1705,9 @@ class LazyParseList:
 
 def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names,
                           sylls, wordtokens, meter, rank=None):
-    """Build a single Parse object from numpy data."""
+    """Build a single Parse object from numpy data. `viols` is the per-parse
+    (N, C) slice (works for both a rectangular-array slice and a ragged list
+    element)."""
     from .parses import Parse
     from .positions import ParsePosition, ParsePositionList
     from .slots import ParseSlot
@@ -1718,7 +1749,7 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
             slot.children = []
             slot_viold = {}
             for cname in constraint_names:
-                v = int(viols[idx, syll_idx, constraint_index[cname]])
+                v = int(viols[syll_idx, constraint_index[cname]])
                 if v:
                     slot_viold[cname] = v
             slot.viold = slot_viold

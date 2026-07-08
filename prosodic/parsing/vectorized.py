@@ -1556,13 +1556,54 @@ class LazyParseList:
             meters = {self._get_parse(int(i)).meter_str for i in coopt_idx}
         return len(meters)
 
+    def _regularity_key(self):
+        """Per-scansion IRREGULARITY (lower = more regular): 1 minus the best
+        period-k (k in {2,3}) self-similarity of the s/w string. A pure iamb
+        (period 2) OR a pure anapest (period 3) -> ~0; a ragged line -> higher. A
+        cheap, vectorized, meter-AGNOSTIC proxy for foot regularity — unlike a raw
+        bigram count it does NOT favour binary over ternary (which would break
+        anapestic/dactylic detection). Cached; no DP, no Parse objects."""
+        bc = getattr(self, "_reg_cache", None)
+        if bc is not None:
+            return bc
+        def _one(a):
+            a = np.asarray(a, dtype=np.int8).ravel()
+            best = 0.0
+            for k in (2, 3):
+                if a.size > k:
+                    best = max(best, float((a[k:] == a[:-k]).mean()))
+            return 1.0 - best
+        if getattr(self, "_ragged", False):
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float32)
+        else:
+            mv = self._meter_vals
+            if mv is None or getattr(mv, "ndim", 0) < 2 or mv.shape[1] < 3:
+                bc = np.zeros(len(self._all_scores), dtype=np.float32)
+            else:
+                a = mv.astype(np.int8)
+                best = np.zeros(a.shape[0], dtype=np.float32)
+                for k in (2, 3):
+                    if a.shape[1] > k:
+                        best = np.maximum(best, (a[:, k:] == a[:, :-k]).mean(axis=1))
+                bc = (1.0 - best).astype(np.float32)
+        self._reg_cache = bc
+        return bc
+
+    def _order(self, idxs, scores):
+        """The shared parse comparator: sort scansion indices by score ascending,
+        then by metrical regularity (period-2/3 self-similarity, meter-agnostic).
+        Applied everywhere parses are ranked so best_parse / unbounded / parse_rank
+        / get_parses_df all break co-optimal ties the same way (toward the regular
+        reading)."""
+        key = self._regularity_key()[idxs]
+        return idxs[np.lexsort((np.arange(len(idxs)), key, np.asarray(scores)))]
+
     @property
     def best_parse(self):
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
-            # best among unbounded
-            self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
+            self._best_idx = int(self._order(self._unbounded_indices, self._scores)[0])
         bp = self._get_parse(self._best_idx, rank=1)
         if bp is not None:
             bp.num_cooptimal = self.num_cooptimal
@@ -1579,7 +1620,7 @@ class LazyParseList:
     def unbounded(self):
         """Unbounded parses sorted by score (best first)."""
         from .parselists import ParseList
-        sorted_idx = self._unbounded_indices[np.argsort(self._scores)]
+        sorted_idx = self._order(self._unbounded_indices, self._scores)
         return ParseList(
             [self._get_parse(int(i)) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent,
@@ -1590,7 +1631,7 @@ class LazyParseList:
         from .parselists import ParseList
         bounded_indices = np.where(~self._unbounded_mask)[0]
         bounded_scores = self._all_scores[bounded_indices]
-        sorted_idx = bounded_indices[np.argsort(bounded_scores)]
+        sorted_idx = self._order(bounded_indices, bounded_scores)
         return ParseList(
             [self._get_parse(int(i), is_bounded=True) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent, show_bounded=True,
@@ -1599,13 +1640,13 @@ class LazyParseList:
     @property
     def data(self):
         """All parses sorted by score ascending (best first); bounded and unbounded interleaved by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         return [self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
                 for i in sorted_idx]
 
     def __iter__(self):
         """Iterate all parses sorted by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         for i in sorted_idx:
             yield self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
 
@@ -1762,7 +1803,7 @@ class LazyParseList:
         unb_idx = self._unbounded_indices
         rank_of = np.full(len(unbounded_mask), -1, dtype=np.int32)
         if len(unb_idx) > 0:
-            ub_sorted = unb_idx[np.argsort(self._scores)]
+            ub_sorted = self._order(unb_idx, self._scores)
             rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
             best_idx = int(ub_sorted[0])
         else:
@@ -1770,9 +1811,9 @@ class LazyParseList:
         if mode == 'best':
             parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
         elif mode == 'unbounded':
-            parse_indices = unb_idx[np.argsort(self._scores)]
+            parse_indices = self._order(unb_idx, self._scores)
         else:
-            parse_indices = np.argsort(all_scores)
+            parse_indices = self._order(np.arange(len(all_scores)), all_scores)
         P = len(parse_indices)
         if P == 0:
             return pd.DataFrame()

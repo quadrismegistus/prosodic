@@ -537,10 +537,6 @@ def count_stresses_in_sylls_ipa_l(sylls_ipa_l):
     return sum(bool(get_syll_ipa_stress(syllipa) != "U") for syllipa in sylls_ipa_l)
 
 
-def sylls_ipa_l_has_stress(sylls_ipa_l):
-    return count_stresses_in_sylls_ipa_l(sylls_ipa_l) != 0
-
-
 def syll_ipa_str_is_stressed(syll_ipa_str):
     return get_syll_ipa_stress(syll_ipa_str) != "U"
 

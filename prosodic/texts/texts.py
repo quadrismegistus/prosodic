@@ -496,25 +496,34 @@ class TextModel(Entity):
 
     @cached_property
     def _poem_meter(self):
-        """(head, foot_size): the poem's dominant meter, by majority over the
-        lines' best-parse footings. Meter is a POEM-level property — a single
-        line's co-optimal parse set is often genuinely ambiguous; the poem
-        disambiguates. Used by Line.metrical_parse to select the most regular
-        co-optimal parse per line."""
-        from collections import Counter
-        from ..analysis.feet import line_head
-        heads, sizes = Counter(), Counter()
+        """(head, foot_size): the poem's dominant meter — the (head, size) template
+        the lines' CO-OPTIMAL sets support best (minimum total deviating feet if
+        each line picked its most template-regular co-optimal parse). Robust to
+        best_parse's arbitrary tie-break: it asks what the lines *can* be read as,
+        not what best_parse happened to foot. Meter is a POEM-level property — a
+        single line's co-optimal set is often genuinely ambiguous; the poem
+        disambiguates. Used by Line.metrical_parse."""
+        from ..analysis.feet import foot_head
+        # foot-parse each co-optimal parse once; keep its foot patterns
+        line_ties = []
         for line in self.lines:
-            bp = line.best_parse
-            if not bp or not getattr(bp, "slots", None):
+            pl = line.parses
+            unb = list(pl.unbounded) if pl is not None else []
+            if not unb:
                 continue
-            feet = bp.metrical_feet
-            heads[line_head([ft.pattern for ft in feet]).direction] += 1
-            for ft in feet:
-                if len(ft.pattern) in (2, 3):
-                    sizes[len(ft.pattern)] += 1
-        return (heads.most_common(1)[0][0] if heads else "rising",
-                sizes.most_common(1)[0][0] if sizes else 2)
+            ms = min(p.score for p in unb)
+            line_ties.append([[ft.pattern for ft in p.metrical_feet]
+                              for p in unb if p.score == ms])
+        best = None
+        for head in ("rising", "falling"):
+            for size in (2, 3):
+                total = sum(
+                    min(sum(foot_head(p) not in (head, "none", "ambiguous") for p in pats)
+                        + sum(len(p) != size for p in pats) for pats in ties)
+                    for ties in line_ties)
+                if best is None or total < best[0]:
+                    best = (total, head, size)
+        return (best[1], best[2]) if best else ("rising", 2)
 
     def get_parses_df(self, mode='unbounded', by='syll', **meter_kwargs):
         """Parse and return results as a DataFrame. No entity construction.

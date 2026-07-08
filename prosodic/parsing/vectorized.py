@@ -1742,7 +1742,7 @@ class LazyParseList:
         from .parselists import ParseList
         return ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).get_df(**kwargs)
 
-    def to_df(self, mode='all', by='line'):
+    def to_df(self, mode='all', by='line', line_num=None):
         """Entity-free per-parse DataFrame, built straight from the numpy arrays —
         constructs NO Parse objects (unlike ``.get_df``/``.scansions``, which
         materialize one Parse per scansion). ``by='line'``: one row per parse
@@ -1776,7 +1776,8 @@ class LazyParseList:
         P = len(parse_indices)
         if P == 0:
             return pd.DataFrame()
-        line_num = int(getattr(self.parent, 'num', 0) or 0)
+        line_num = int(line_num if line_num is not None
+                       else (getattr(self.parent, 'num', 0) or 0))
         if self._ragged:
             meter_strs = [_pool_meter_str(self, int(i)) for i in parse_indices]
             pp_viols = np.stack([self._all_viols[int(i)].sum(axis=0) for i in parse_indices]).astype(np.int32)

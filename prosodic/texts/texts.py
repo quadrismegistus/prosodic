@@ -552,6 +552,27 @@ class TextModel(Entity):
             line_results = self._line_parse_results[
                 next(reversed(self._line_parse_results))
             ]
+
+        # by='line' is the entity-free per-parse frame: delegate to the single
+        # source of truth (LazyParseList.to_df) per line, then union the per-line
+        # `*<constraint>` columns (a constraint absent from a line -> 0). by='syll'
+        # needs the syllable-level frame and is built by the loop below.
+        if by == 'line':
+            dfs = []
+            for ln in sorted(line_results.keys()):
+                pl = line_results[ln]
+                if pl is None or getattr(pl, '_all_viols', None) is None:
+                    continue
+                d = pl.to_df(mode=mode, by='line', line_num=ln)
+                if len(d):
+                    dfs.append(d)
+            if not dfs:
+                return pd.DataFrame()
+            df = pd.concat(dfs, ignore_index=True)
+            for c in [c for c in df.columns if c.startswith('*')]:
+                df[c] = df[c].fillna(0).astype('int32')
+            return df
+
         for line_num in sorted(line_results.keys()):
             pl = line_results[line_num]
             sylls = getattr(pl, '_sylls', None)
@@ -613,30 +634,6 @@ class TextModel(Entity):
             sel_mv = mv_arr[parse_indices]       # (P, N) bool
             sel_pi = pi_arr[parse_indices]       # (P, N) int
             sel_ps = ps_arr[parse_indices]       # (P, N) int
-
-            if by == 'line':
-                # one row per parse: collapse the N syllable axis. meter string
-                # uses '+' for strong positions, '-' for weak (matching
-                # Parse.meter_str); violations are summed over syllables (total
-                # per constraint per parse).
-                meter_strs = np.array(
-                    [''.join('+' if v else '-' for v in row) for row in sel_mv],
-                    dtype=object,
-                )
-                pp_viols = viols[parse_indices].sum(axis=1).astype(np.int32)  # (P, C)
-                chunks.append({
-                    'line_num': np.full(P, int(line_num), dtype=np.int32),
-                    'parse_idx': parse_indices.astype(np.int32),
-                    'parse_rank': rank_of[parse_indices],
-                    'parse_score': all_scores[parse_indices].astype(np.float64),
-                    'is_best': parse_indices == best_idx,
-                    'is_bounded': ~unbounded_mask[parse_indices],
-                    'num_sylls': np.full(P, N, dtype=np.int32),
-                    'meter': meter_strs,
-                    '_viols': pp_viols,
-                    '_c_names': pl._constraint_names,
-                })
-                continue
 
             PN = P * N
 
@@ -726,30 +723,8 @@ class TextModel(Entity):
         if not chunks:
             return pd.DataFrame()
 
-        if by == 'line':
-            def _cat(k):
-                return np.concatenate([c[k] for c in chunks])
-            viols_all = np.concatenate([c['_viols'] for c in chunks], axis=0)  # (P_total, C)
-            c_names = chunks[0]['_c_names']
-            df = pd.DataFrame({
-                'line_num': _cat('line_num'),
-                'parse_idx': _cat('parse_idx'),
-                'parse_rank': pd.array(_cat('parse_rank'), dtype='Int32'),
-                'parse_score': _cat('parse_score'),
-                'is_best': _cat('is_best'),
-                'is_bounded': _cat('is_bounded'),
-                'num_sylls': _cat('num_sylls'),
-                'num_viols': viols_all.sum(axis=1).astype(np.int32),
-                'meter': _cat('meter'),
-            })
-            df.loc[df['parse_rank'] < 0, 'parse_rank'] = pd.NA
-            for ci, cname in enumerate(c_names):
-                col = viols_all[:, ci]
-                if col.any():
-                    df[f'*{cname}'] = col.astype(np.int32)
-            return df
-
-        # Concatenate all chunks into DataFrame
+        # Concatenate all chunks into DataFrame (by='syll'; by='line' returned
+        # above via LazyParseList.to_df).
         base_cols = [
             'line_num', 'word_num', 'form_idx', 'syll_idx', 'line_syll_idx',
             'parse_idx', 'parse_rank', 'parse_score', 'is_best', 'is_bounded',

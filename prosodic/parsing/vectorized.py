@@ -185,20 +185,12 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
             lpl._sylls = build_sylls(lpl._syll_row_idx)
         return lpl
 
-    # Mixed syllable counts can't share one (S, N, C) array — rare; fall back to
-    # the best single combo.
-    if len({c[0].shape[1] for c in candidates}) != 1:
-        best, bs = 0, float('inf')
-        for rank, c in enumerate(candidates):
-            ui = np.where(c[1])[0]
-            if not len(ui):
-                continue
-            s = float(get_lpl(rank)._scores.min())
-            if s < bs:
-                bs, best = s, rank
-        return get_lpl(best)
+    N_of = {r: candidates[r][0].shape[1] for r in range(len(candidates))}
 
-    # Cross-bound the combos' unbounded parses straight from raw viols.
+    # Cross-bound the combos' unbounded parses straight from raw viols. The
+    # bounding vector is (C,) — syllable-count-independent — so this works ACROSS
+    # combos of different N (a 1-syllable "fire" parse can dominate a 2-syllable
+    # one, and vice versa), exactly as v1's boundParses does.
     urank, uidx, uvecs = [], [], []
     for rank, c in enumerate(candidates):
         ui = np.where(c[1])[0]
@@ -216,51 +208,68 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         np.fill_diagonal(dom, False)
         alive = ~dom.any(axis=0)
         pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
-
-    # Fast path: canonical combo already accounts for the whole pooled unbounded
-    # set — build ONLY combo 0.
-    if pool_unb == {(0, int(i)) for i in np.where(candidates[0][1])[0]}:
+    if not pool_unb:
         return get_lpl(0)
 
-    # Full rebuild. Base = combo 0's scansions (a valid rep for every meter
-    # string); overlay the pool-unbounded parses contributed by other combos.
-    l0 = get_lpl(0)
-    best_rep = {}  # meter_str -> (sortkey, rank, scan_idx)
-    for i in range(l0._all_viols.shape[0]):
-        ms = _pool_meter_str(l0, i)
-        sk = ((0, i) not in pool_unb, float(l0._all_scores[i]), 0, i)
-        cur = best_rep.get(ms)
-        if cur is None or sk < cur[0]:
-            best_rep[ms] = (sk, 0, i)
-    for rank, c in enumerate(candidates):
-        if rank == 0:
-            continue
-        for i in np.where(c[1])[0]:
-            i = int(i)
-            if (rank, i) not in pool_unb:
-                continue
-            lr = get_lpl(rank)
-            ms = _pool_meter_str(lr, i)
-            sk = (False, float(lr._all_scores[i]), rank, i)
+    def build_for_N(N):
+        """Pooled LazyParseList over the combos whose scansions have N syllables
+        (they share a scansion space): combo-base + overlay, exactly as the
+        single-N path. `pool_unb` already reflects cross-N domination."""
+        group = sorted(r for r in range(len(candidates)) if N_of[r] == N)
+        base = group[0]
+        pool_unb_N = {(r, i) for (r, i) in pool_unb if N_of[r] == N}
+        if pool_unb_N == {(base, int(i)) for i in np.where(candidates[base][1])[0]}:
+            return get_lpl(base)                       # base combo accounts for all of N
+        l0 = get_lpl(base)
+        best_rep = {}  # meter_str -> (sortkey, rank, scan_idx)
+        for i in range(l0._all_viols.shape[0]):
+            ms = _pool_meter_str(l0, i)
+            sk = ((base, i) not in pool_unb, float(l0._all_scores[i]), base, i)
             cur = best_rep.get(ms)
             if cur is None or sk < cur[0]:
-                best_rep[ms] = (sk, rank, i)
-    reps = sorted(best_rep.values(), key=lambda r: r[0])
+                best_rep[ms] = (sk, base, i)
+        for rank in group[1:]:
+            for i in np.where(candidates[rank][1])[0]:
+                i = int(i)
+                if (rank, i) not in pool_unb:
+                    continue
+                lr = get_lpl(rank)
+                ms = _pool_meter_str(lr, i)
+                sk = (False, float(lr._all_scores[i]), rank, i)
+                cur = best_rep.get(ms)
+                if cur is None or sk < cur[0]:
+                    best_rep[ms] = (sk, rank, i)
+        reps = sorted(best_rep.values(), key=lambda r: r[0])
+        scans = [get_lpl(rank)._all_scansions[i] for _, rank, i in reps]
+        viols = np.stack([get_lpl(rank)._all_viols[i] for _, rank, i in reps])
+        unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)
+        sylls_by = [get_lpl(rank)._sylls for _, rank, i in reps]
+        rowidx_by = [get_lpl(rank)._syll_row_idx for _, rank, i in reps]
+        mv = np.stack([get_lpl(rank)._meter_vals[i] for _, rank, i in reps])
+        pi = np.stack([get_lpl(rank)._position_ids[i] for _, rank, i in reps])
+        ps = np.stack([get_lpl(rank)._position_sizes[i] for _, rank, i in reps])
+        return LazyParseList(
+            None, meter, scans, viols, ci_use, unb_mask, sylls_by[0], parse_unit=parse_unit,
+            syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
+            sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
+        )
 
-    L = lambda rank: get_lpl(rank)
-    scans = [L(rank)._all_scansions[i] for _, rank, i in reps]
-    viols = np.stack([L(rank)._all_viols[i] for _, rank, i in reps])
-    unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)
-    sylls_by = [L(rank)._sylls for _, rank, i in reps]
-    rowidx_by = [L(rank)._syll_row_idx for _, rank, i in reps]
-    mv = np.stack([L(rank)._meter_vals[i] for _, rank, i in reps])
-    pi = np.stack([L(rank)._position_ids[i] for _, rank, i in reps])
-    ps = np.stack([L(rank)._position_sizes[i] for _, rank, i in reps])
-    return LazyParseList(
-        None, meter, scans, viols, ci_use, unb_mask, sylls_by[0], parse_unit=parse_unit,
-        syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
-        sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
-    )
+    # Survivors may span multiple syllable counts (e.g. "fire" 1~2). Build one
+    # pooled LazyParseList per length; a single length is the common case.
+    surv_Ns = sorted({N_of[rank] for (rank, i) in pool_unb},
+                     key=lambda N: (N != N_of[0], N))   # canonical combo's N first
+    if len(surv_Ns) == 1:
+        return build_for_N(surv_Ns[0])
+
+    # Survivors span multiple syllable counts (e.g. "fire" 1~2). A single
+    # (P, N, C) array can't hold both lengths, so return the pooled set of the
+    # BEST length — the one holding the global-min-score parse. Cross-length
+    # domination was already applied (pool_unb spans all N), so the best parse is
+    # chosen across lengths; only co-optimal parses of a *different* length are
+    # dropped (rare). Full multi-length pooling is a follow-up (needs a ragged
+    # result type the DataFrame path can consume).
+    gr, gi = min(pool_unb, key=lambda ri: float(get_lpl(ri[0])._all_scores[ri[1]]))
+    return build_for_N(N_of[gr])
 
 
 def parse_batch_from_df(syll_df, meter, line_col='line_num'):

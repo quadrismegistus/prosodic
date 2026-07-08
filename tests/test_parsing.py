@@ -28,6 +28,25 @@ def test_pronoun_stress_promotion():
     assert bp.num_viols <= 1, (bp.meter_str, bp.num_viols)
 
 
+def test_elision():
+    # Verse elision (ported from v1 add_elisions): each word gains a
+    # reduced-syllable variant (flower->flour, heaven->heav'n). On by default.
+    from prosodic.langs.english import EnglishLanguage
+    lang = EnglishLanguage()
+    for w, reduced in [("flower", 1), ("hour", 1), ("heaven", 1), ("seven", 1),
+                       ("jewel", 1), ("opening", 2), ("tottering", 2), ("gardener", 2)]:
+        forms, _ = lang.get_sylls_ipa_ll(w)
+        counts = {len(f) for f in forms}
+        assert reduced in counts and reduced + 1 in counts, f"{w!r}: {counts} {forms}"
+    # a word matching no elision rule keeps a single syllable count
+    forms, _ = lang.get_sylls_ipa_ll("table")
+    assert len({len(f) for f in forms}) == 1
+    # in situ (v1's canonical example): "bower" elides to one syllable so the
+    # pentameter line scans clean — "sweet as love, which overflows her bow'r"
+    bp = TextModel("sweet as love which overflows her bower").line1.best_parse
+    assert bp.score == 0
+
+
 def test_feet():
     # iambic test
     tstr = "embrace " * 5
@@ -53,7 +72,7 @@ def test_feet():
     assert l.best_parse.foot_type == "anapestic"
 
     # dactylic test
-    tstr = "dangerous " * 4
+    tstr = "wonderful " * 4
     l = TextModel(tstr).line1.parse()
     assert l.best_parse.is_rising == False
     assert l.best_parse.nary_feet == 3
@@ -208,7 +227,7 @@ def test_vectorized_parser():
         ("embrace " * 5, "iambic"),
         ("dungeon " * 5, "trochaic"),
         ("disembark " * 4, "anapestic"),
-        ("dangerous " * 4, "dactylic"),
+        ("wonderful " * 4, "dactylic"),
         ("a horse a horse my kingdom for a horse", "iambic"),
         ("Shall I compare thee to a summers day", None),
         ("To be or not to be that is the question", None),

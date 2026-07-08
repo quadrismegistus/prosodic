@@ -1,80 +1,69 @@
 """Principled foot delineation + headedness — a DERIVED VIEW over a Parse's
-metrical positions (an addition to the hierarchy, not a replacement).
+syllables (an addition to the hierarchy, not a replacement).
 
-Two ideas, both computed post-hoc from the scansion (no re-parsing):
+Footing is a SEGMENTATION problem: cut the per-syllable s/w string into feet,
+minimizing a small cost. Foot size AND headedness both fall out of the cut — no
+per-line k or head is assumed. Solved exactly by DP over syllable positions, so a
+foot may have one head (iamb/trochee/anapest/dactyl), two (spondee), or zero
+(pyrrhic) — the latter two as costed substitutions. A mild tiebreak prefers foot
+boundaries that fall on word boundaries.
 
-1. HEADEDNESS is a *phase* parameter — do beats fall on the rise (iamb/anapest,
-   "rising") or the fall (trochee/dactyl, "falling")? The per-position scansion
-   is head-agnostic (the exhaustive parser doesn't prefer either), so headedness
-   is *inferred* by the phase of the strong-beat pattern. Aggregating over more
-   positions gives a more robust estimate — hence the same estimator works at
-   poem / line / foot scale, differing only in support:
-     - line:  head_of(one line's positions)  -> (direction, confidence)
-     - poem:  mean of the line estimates
-   This is robust to a lone inversion, unlike reading position[0] alone.
-
-2. FEET are the positions chunked by (foot_size, head). For an in-phase line the
-   *boundaries* are just every-k-from-0 regardless of head — headedness tells you
-   which slot in each foot is the beat, and thus whether a foot is *substituted*
-   (its intrinsic head disagrees with the line's). Syllables inherit their foot
-   from their position, so resolution/elision never shift a boundary.
+Headedness is then read OUT: a foot is rising/falling by where its head sits; the
+line head is the majority direction of its feet; the meter's foot size is the
+majority foot length.
 """
 
-from collections import namedtuple
+from collections import namedtuple, Counter
 
-# position-level pattern (one char per POSITION, s=strong/head w=weak) -> label
 FOOT_LABELS = {
-    "ws": "iamb", "sw": "trochee", "ww": "pyrrhic", "ss": "spondee",
-    "wws": "anapest", "sww": "dactyl", "wsw": "amphibrach", "sws": "cretic",
-    "www": "tribrach", "sss": "molossus",
+    "ws": "iamb", "sw": "trochee", "wws": "anapest", "sww": "dactyl",
+    "wsw": "amphibrach", "sws": "cretic", "s": "bare",
+    # disyllabic head (a strong RESOLUTION, still one beat):
+    "ss": "spondee", "wss": "iamb-r", "ssw": "trochee-r", "wwss": "anapest-r",
+    "ssww": "dactyl-r", "wssw": "amphibrach-r",
 }
+MIDWORD = 0.1  # tiebreak only: a foot boundary that splits a word costs this much
+
+
+def _foot_cost(lead, head_len, trail):
+    """Cost of a foot = `lead` weaks + a strong-run head (`head_len` syllables,
+    one beat) + `trail` weaks. One head per foot always; a disyllabic head is a
+    strong resolution, not two beats."""
+    size = lead + head_len + trail
+    c = {1: 10.0, 2: 0.0, 3: 1.0}.get(size, 4.0 + size)  # degenerate awful, binary best
+    if lead > 0 and trail > 0:                            # head is medial (amphibrach/cretic)
+        c += 2.0
+    return c
 
 Head = namedtuple("Head", ["direction", "confidence"])
 Foot = namedtuple("Foot", ["pattern", "label", "head", "is_substituted", "slots", "sylls"])
 
 
 def slot_proms(slots):
-    """Per-SYLLABLE prominence: True where the syllable sits in a strong position.
-
-    Feet are read over SYLLABLES, not positions: traditional scansion pairs
-    syllables, so "Pi-ty | the-world" = (S w)(w S) shows the trochaic first-foot
-    inversion. Prosodic can't store that (two weak *positions* can't be adjacent),
-    so it resolves the ty·the juncture into one weak position — but the per-slot
-    prominence still carries the syllable-level pattern the feet need."""
+    """Per-SYLLABLE prominence (True where the syllable sits in a strong position).
+    Feet are read over syllables, not positions, so a resolved juncture doesn't
+    hide an inversion (see the ty·the case in the write-up)."""
     return [bool(s.is_prom) for s in slots]
 
 
-def head_of(proms, foot_size=2):
-    """Headedness by the phase of the strong-beat pattern.
-
-    A foot of size k has its head on the last slot when rising (…w s) and the
-    first slot when falling (s w…). So count strong positions whose index mod k
-    lands on each candidate head slot:
-
-        rising  beats: index % k == k-1     falling beats: index % k == 0
-
-    Returns Head(direction, confidence) with confidence =
-    |rising - falling| / (rising + falling) in [0, 1]. A clean iambic line ->
-    ('rising', 1.0); one initial trochee in pentameter -> ('rising', ~0.6);
-    a 50/50 line -> confidence 0.0.
-    """
-    k = foot_size
-    rising = sum(1 for i, s in enumerate(proms) if s and i % k == k - 1)
-    falling = sum(1 for i, s in enumerate(proms) if s and i % k == 0)
-    total = rising + falling
-    if total == 0:
-        return Head("rising", 0.0)
-    direction = "rising" if rising >= falling else "falling"
-    return Head(direction, abs(rising - falling) / total)
+def slot_word_starts(slots):
+    """Indices of slots that begin a word (for the boundary tiebreak)."""
+    out = set()
+    prev = object()
+    for i, s in enumerate(slots):
+        wn = getattr(s.unit, "word_num", i)
+        if i == 0 or wn != prev:
+            out.add(i)
+        prev = wn
+    return out
 
 
 def foot_head(pattern):
-    """Intrinsic head of a foot from where its strong position sits: strong-last
-    -> 'rising', strong-first -> 'falling', all-weak/all-strong -> 'none',
-    otherwise 'ambiguous'."""
+    """Direction of a foot from where its strong(s) sit: strong-last -> 'rising',
+    strong-first -> 'falling', all-weak/all-strong -> 'none', else 'ambiguous'."""
     ns = pattern.count("s")
     if ns == 0 or ns == len(pattern):
-        return "none"  # pyrrhic / spondee — no directional head
+        return "none"
     if pattern[-1] == "s" and pattern[0] != "s":
         return "rising"
     if pattern[0] == "s" and pattern[-1] != "s":
@@ -82,28 +71,94 @@ def foot_head(pattern):
     return "ambiguous"
 
 
-def parse_feet(slots, foot_size=2, head=None):
-    """Chunk SYLLABLE SLOTS into feet of `foot_size` from slot 0, keeping any short
-    final foot (fixes the old bug that dropped an odd line's last position). Footing
-    over slots (not positions) is what recovers traditional scansion: a resolution
-    that prosodic stores as one weak position gets split across a foot boundary when
-    that's where the pairing falls (ty·the -> …ty)(the…). A foot is `is_substituted`
-    when its intrinsic head is directional and disagrees with the line `head`.
-    """
-    proms = slot_proms(slots)
+def foot_parse(proms, word_starts=None):
+    """Foot-parse by DP. Heads are strong RUNS (each maximal run of strongs = one
+    beat = one position, 1-2 syllables); the weak runs between/around them are
+    distributed to the neighbouring feet. So #feet = #strong-runs, exactly one
+    head per foot — no pyrrhic (0 heads), no two-head spondee. word_starts gives a
+    mild boundary tiebreak. Returns (start, end) foot spans covering [0, len)."""
+    proms = [bool(p) for p in proms]
+    n = len(proms)
+    ws = word_starts or set()
+    runs, i = [], 0                                  # maximal strong runs = heads
+    while i < n:
+        if proms[i]:
+            j = i
+            while j < n and proms[j]:
+                j += 1
+            runs.append((i, j))
+            i = j
+        else:
+            i += 1
+    if not runs:
+        return [(0, n)] if n else []
+    m = len(runs)
+    hlen = [e - s for s, e in runs]
+    # weak-run lengths: g[0] before run 0, g[k] between run k-1/k, g[m] after last
+    g = [runs[0][0]] + [runs[k][0] - runs[k - 1][1] for k in range(1, m)] + [n - runs[-1][1]]
+
+    def cost(lead, k, trail):
+        c = _foot_cost(lead, hlen[k], trail)
+        start = runs[k][0] - lead
+        if start > 0 and start not in ws:            # foot begins mid-word
+            c += MIDWORD
+        return c
+
+    INF = float("inf")
+    dp = {g[0]: (0.0, None)}                          # foot 0's leading weaks are fixed = g[0]
+    back = []
+    for k in range(m - 1):
+        g1, ndp, ch = g[k + 1], {}, {}
+        for lead_next in range(g1 + 1):
+            trail_k, best, bp = g1 - lead_next, INF, None
+            for lead_k, (c0, _) in dp.items():
+                c = c0 + cost(lead_k, k, trail_k)
+                if c < best:
+                    best, bp = c, lead_k
+            ndp[lead_next], ch[lead_next] = (best, bp), bp
+        dp, _ = ndp, back.append(ch)
+    best, best_lead = INF, None
+    for lead_k, (c0, _) in dp.items():
+        c = c0 + cost(lead_k, m - 1, g[m])
+        if c < best:
+            best, best_lead = c, lead_k
+    leads = [0] * m
+    leads[m - 1] = best_lead
+    for k in range(m - 2, -1, -1):
+        leads[k] = back[k][leads[k + 1]]
+    trails = [(g[k + 1] - leads[k + 1]) if k < m - 1 else g[m] for k in range(m)]
+    return [(runs[k][0] - leads[k], runs[k][1] + trails[k]) for k in range(m)]
+
+
+def line_head(patterns):
+    """Line headedness = majority direction of the directional feet, with a
+    confidence in [0,1]."""
+    d = Counter(foot_head(p) for p in patterns)
+    r, f = d.get("rising", 0), d.get("falling", 0)
+    if r + f == 0:
+        return Head("rising", 0.0)
+    return Head("rising" if r >= f else "falling", abs(r - f) / (r + f))
+
+
+def parse_feet(slots, word_starts=None, head=None):
+    """Foot-parse `slots` (variable size + headedness) into labelled Foot objects.
+    A foot is `is_substituted` when its direction disagrees with the line head."""
+    if word_starts is None:
+        word_starts = slot_word_starts(slots)
+    spans = foot_parse(slot_proms(slots), word_starts)
+    patterns = ["".join("s" if slots[k].is_prom else "w" for k in range(a, b)) for a, b in spans]
     if head is None:
-        head = head_of(proms, foot_size).direction
+        head = line_head(patterns).direction
     feet = []
-    for i in range(0, len(slots), foot_size):
-        chunk = slots[i : i + foot_size]
-        pattern = "".join("s" if s.is_prom else "w" for s in chunk)
-        fh = foot_head(pattern)
-        sylls = [s.unit for s in chunk]
-        substituted = fh not in (head, "none", "ambiguous")
-        feet.append(Foot(pattern, FOOT_LABELS.get(pattern, pattern), fh, substituted, chunk, sylls))
+    for (a, b), pat in zip(spans, patterns):
+        fh = foot_head(pat)
+        chunk = slots[a:b]
+        feet.append(Foot(pat, FOOT_LABELS.get(pat, pat), fh,
+                         fh not in (head, "none", "ambiguous"),
+                         chunk, [c.unit for c in chunk]))
     return feet
 
 
 def foot_str(feet):
-    """Compact rendering: '(w s)(w s)(s w*)...' — '*' marks a substituted foot."""
+    """'(w s)(w w s)(s w*)…' — '*' marks a foot that inverts the line head."""
     return "".join(f"({' '.join(ft.pattern)}{'*' if ft.is_substituted else ''})" for ft in feet)

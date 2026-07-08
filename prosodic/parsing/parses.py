@@ -554,32 +554,26 @@ class Parse(Entity):
                 feet.append(pos1.meter_str + pos2.meter_str)
         return feet
 
-    def _foot_size(self) -> int:
-        k = self.nary_feet
-        return k if k in (2, 3) else 2
+    @property
+    def metrical_feet(self):
+        """Syllables foot-parsed by DP (variable size AND headedness — no per-line
+        k or head assumed), each labelled (iamb/trochee/anapest/spondee/…) and
+        flagged `is_substituted` when it inverts the line head. Traditional-scansion
+        companion to `feet`; see analysis.feet.parse_feet."""
+        from ..analysis.feet import parse_feet
+        return parse_feet(self.slots)
 
     @property
     def head(self):
-        """Headedness of this line by the PHASE of the strong-beat pattern over
-        all SYLLABLES (rising = iamb/anapest, falling = trochee/dactyl). Read over
-        syllables, not positions, so a resolved juncture doesn't hide an inversion;
-        robust to a lone inversion, unlike `is_rising`. Returns
-        Head(direction, confidence); see analysis.feet.head_of."""
-        from ..analysis.feet import head_of, slot_proms
-        return head_of(slot_proms(self.slots), self._foot_size())
-
-    @property
-    def metrical_feet(self):
-        """Syllables paired into feet by (foot_size, head), each labelled
-        (iamb/trochee/anapest/…) and flagged `is_substituted` when it inverts the
-        line head. Traditional-scansion companion to `feet`; see
-        analysis.feet.parse_feet."""
-        from ..analysis.feet import parse_feet
-        return parse_feet(self.slots, self._foot_size(), self.head.direction)
+        """Headedness of this line = majority direction of its feet (rising =
+        iamb/anapest, falling = trochee/dactyl), read OUT of the foot-parse rather
+        than assumed. Returns Head(direction, confidence); see analysis.feet."""
+        from ..analysis.feet import line_head
+        return line_head([ft.pattern for ft in self.metrical_feet])
 
     @property
     def feet_str(self) -> str:
-        """'(w s)(w s)(s w*)…' — '*' marks a foot that inverts the line head."""
+        """'(w s)(w w s)(s w*)…' — '*' marks a foot that inverts the line head."""
         from ..analysis.feet import foot_str
         return foot_str(self.metrical_feet)
 

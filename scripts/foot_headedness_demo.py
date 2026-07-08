@@ -11,7 +11,7 @@ import prosodic
 
 
 def scansion(bp):
-    return " ".join(p.meter_val for p in bp.positions)
+    return " ".join("s" if sl.is_prom else "w" for sl in bp.slots)
 
 
 def show_line(text):
@@ -23,7 +23,7 @@ def show_line(text):
     new = bp.head                                          # phase-count over all beats
     flag = "  <-- DISAGREE" if old != new.direction else ""
     print(f'\n"{text}"')
-    print(f"  positions:  {scansion(bp)}   ({len(bp.positions)} positions)")
+    print(f"  syllables:  {scansion(bp)}   ({len(bp.slots)} syllables, {len(feet)} feet)")
     print(f"  OLD is_rising (position[0] only): {old}{flag}")
     print(f"  NEW head (phase of all beats):    {new.direction}  (confidence {new.confidence:.2f})")
     print(f"  feet_str:   {bp.feet_str}      (* = inverts the line head)")
@@ -61,51 +61,31 @@ corpus = open("corpora/corppoetry_en/en.shakespeare.txt").read()
 t = prosodic.Text(corpus)
 t.parse()
 
-from prosodic.analysis.feet import foot_head
 line_data = []
 for line in t.lines:
     bp = line.best_parse
-    if not bp or not bp.positions:
+    if not bp or not bp.slots:
         continue
-    line_data.append((len(bp.positions), bp.head,
-                      "rising" if bp.is_rising else "falling",
-                      [ft.pattern for ft in bp.metrical_feet]))
+    feet = bp.metrical_feet
+    line_data.append((bp.head, "rising" if bp.is_rising else "falling",
+                      [(ft.label, len(ft.pattern), ft.is_substituted) for ft in feet]))
 
 total = len(line_data)
-heads = Counter(d[1].direction for d in line_data)
-confs = [d[1].confidence for d in line_data]
-disagree = sum(1 for d in line_data if d[2] != d[1].direction)
-poem_head = heads.most_common(1)[0][0]   # the poem-level prior = majority of lines
+heads = Counter(d[0].direction for d in line_data)
+disagree = sum(1 for d in line_data if d[1] != d[0].direction)
+foot_types = Counter(lbl for _, _, feet in line_data for lbl, _, _ in feet)
+n_feet = sum(foot_types.values())
+mixed = sum(1 for _, _, feet in line_data if len({sz for _, sz, _ in feet if sz in (2, 3)}) > 1)
+spondee_lines = sum(1 for _, _, feet in line_data if any(l == "spondee" for l, _, _ in feet))
+sub_lines = sum(1 for _, _, feet in line_data if any(sub for _, _, sub in feet))
 
-print(f"\nlines analyzed: {total}")
-print(f"\nLINE headedness (each line's own phase):  "
+print(f"\nlines analyzed: {total}   (all foot-parsed by DP — size + head derived, not assumed)")
+print(f"\nLINE headedness (majority direction of each line's feet):  "
       + "   ".join(f"{k}={v} ({v/total:.0%})" for k, v in heads.most_common()))
-print(f"POEM head (majority of lines = the prior): {poem_head}")
-print(f"mean line-head confidence: {sum(confs)/len(confs):.2f}   "
-      f"(fully-regular, conf=1.0: {sum(1 for c in confs if c==1.0)/total:.0%})")
-print(f"\nOLD is_rising vs NEW phase-count head DISAGREE on: "
-      f"{disagree}/{total} lines ({disagree/total:.0%})  <- fragility of the position-based test")
-
-# substitution = deviation from the POEM head (the coarse level is the prior)
-sub_by_foot, n_penta, fully_flipped, partial = Counter(), 0, 0, 0
-for npos, head, old, patterns in line_data:
-    if npos != 10:
-        continue
-    n_penta += 1
-    subs = [foot_head(p) not in (poem_head, "none", "ambiguous") for p in patterns]
-    for i, s in enumerate(subs, 1):
-        if s:
-            sub_by_foot[i] += 1
-    if all(subs):
-        fully_flipped += 1
-    elif any(subs):
-        partial += 1
-
-print(f"\nfeet SUBSTITUTED vs the POEM head ({poem_head}), pentameter lines (n={n_penta}):")
-for i in range(1, 6):
-    n = sub_by_foot[i]
-    print(f"   foot {i}: {n:>4} ({n/n_penta:>4.0%})  {'#' * round(40 * n / n_penta)}")
-print(f"\n   whole-line flips (ALL 5 feet substituted): {fully_flipped} ({fully_flipped/n_penta:.0%})")
-print(f"   within-line substitutions (a genuine inversion): {partial} ({partial/n_penta:.0%})")
-print(f"   -> footing over SYLLABLES recovers real per-foot inversions; position-footing")
-print(f"      hid them as whole-line flips (the ty.the resolution shifts the phase).")
+print(f"OLD is_rising vs DP head DISAGREE on: {disagree}/{total} ({disagree/total:.0%})")
+print(f"\nFOOT inventory ({n_feet} feet):")
+for lbl, c in foot_types.most_common():
+    print(f"   {lbl:<11} {c:>6} ({c/n_feet:>4.0%})  {'#' * round(60 * c / n_feet)}")
+print(f"\nmixed-size lines (binary AND ternary feet): {mixed} ({mixed/total:.0%})")
+print(f"lines with a spondee:                       {spondee_lines} ({spondee_lines/total:.0%})  <- rare, as expected")
+print(f"lines with >=1 substituted foot (inversion): {sub_lines} ({sub_lines/total:.0%})")

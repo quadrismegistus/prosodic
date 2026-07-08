@@ -554,6 +554,33 @@ class Parse(Entity):
                 feet.append(pos1.meter_str + pos2.meter_str)
         return feet
 
+    def _foot_size(self) -> int:
+        k = self.nary_feet
+        return k if k in (2, 3) else 2
+
+    @property
+    def head(self):
+        """Headedness of this line by the PHASE of the strong-beat pattern over
+        ALL positions (rising = iamb/anapest, falling = trochee/dactyl). Robust
+        to a lone inversion, unlike `is_rising` (which reads position[0] only).
+        Returns Head(direction, confidence); see analysis.feet.head_of."""
+        from ..analysis.feet import head_of, position_proms
+        return head_of(position_proms(self.positions), self._foot_size())
+
+    @property
+    def metrical_feet(self):
+        """Positions grouped into feet by (foot_size, head), each labelled
+        (iamb/trochee/anapest/…) and flagged `is_substituted` when it inverts the
+        line head. Principled companion to `feet`; see analysis.feet.parse_feet."""
+        from ..analysis.feet import parse_feet
+        return parse_feet(self.positions, self._foot_size(), self.head.direction)
+
+    @property
+    def feet_str(self) -> str:
+        """'(w s)(w s)(s w*)…' — '*' marks a foot that inverts the line head."""
+        from ..analysis.feet import foot_str
+        return foot_str(self.metrical_feet)
+
     @property
     def foot_counts(self) -> Counter:
         """

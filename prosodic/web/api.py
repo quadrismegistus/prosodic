@@ -326,11 +326,21 @@ def render_parse_html(parse, line=None):
                 return ent
         return None
 
+    # DF-path slots hold lightweight SyllData with no parent chain, so the walk
+    # above returns None. Fall back to the syllable's word_num -> WordToken map
+    # (SyllData.word_num and WordToken.num share the tokenizer's counter), so
+    # rendering works without building entities.
+    wt_by_num = {}
+    if line is not None and hasattr(line, 'wordtokens'):
+        wt_by_num = {wt.num: wt for wt in line.wordtokens}
+
     slots_by_wt = {}
     ordered_wt_ids = []
     for pos in parse.positions:
         for slot in pos.children:
             wt = _find_wordtoken(slot.unit)
+            if wt is None:
+                wt = wt_by_num.get(getattr(slot.unit, 'word_num', None))
             key = id(wt) if wt is not None else None
             if key not in slots_by_wt:
                 slots_by_wt[key] = []

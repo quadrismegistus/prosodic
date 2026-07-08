@@ -864,9 +864,15 @@ class Parse(Entity):
         Returns:
             Dict[str, List[ParseSlot]]: Dictionary mapping word tokens to parse slots.
         """
+        # Key by the tokenizer's word number, which BOTH paths carry: the entity
+        # path via slot.unit.wordtoken.num, the DF path via SyllData.word_num (no
+        # parent chain). So this works on a DF-path parse without building
+        # entities — callers look up by WordToken.num (same counter).
         wordtokend = defaultdict(list)
         for slot in self.slots:
-            wordtokend[slot.unit.wordtoken.key].append(slot)
+            wt = getattr(slot.unit, 'wordtoken', None)
+            key = wt.num if wt is not None else getattr(slot.unit, 'word_num', None)
+            wordtokend[key].append(slot)
         return wordtokend
 
     def stats_d(self, norm: Optional[bool] = None) -> Dict[str, Any]:

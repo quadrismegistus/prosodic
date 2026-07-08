@@ -137,28 +137,54 @@ def build_syll_df(token_dicts, lang=DEFAULT_LANG):
                 get_syll_ipa_stress(syll_ipa) in ("P", "S")
                 for syll_ipa, _ in sylls_l
             ]
+            # relative prominence level: primary > secondary > unstressed. Using
+            # levels (not binary stressed) means a primary-secondary word — AL-most
+            # ('ɔːl `moʊst) — has a strength peak on its primary, instead of reading
+            # as "both stressed / no peak" and leaving w_peak inert. (v3 bug: the
+            # old binary test collapsed P and S, so P-S words had no strong/weak.)
+            level_list = [
+                {"P": 2, "S": 1}.get(get_syll_ipa_stress(syll_ipa), 0)
+                for syll_ipa, _ in sylls_l
+            ]
             is_func = (num_sylls == 1 and not stress_list[0])
 
             for syll_idx, (syll_ipa, syll_text) in enumerate(sylls_l):
                 is_stressed = stress_list[syll_idx]
                 is_heavy = _syll_is_heavy_from_ipa(syll_ipa)
 
-                # is_strong/is_weak: polysyllabic context
+                # is_strong / is_weak: relative prominence within a polysyllable
+                # (primary > secondary > unstressed). strong = a local prominence
+                # MAXIMUM (higher than a neighbour, lower than none); weak = a local
+                # MINIMUM (lower than a neighbour, higher than none). The two are
+                # mutually exclusive — a syllable is never both.
+                #   POetry (P-U-U)  -> strong, weak, neither  ("e" falls from PO,
+                #                       equal to "try", so a trough not a shoulder)
+                #   AL-most (P-S)   -> strong, weak
+                #   a "shoulder" on a monotonic slope (the secondary of U-S-P /
+                #     P-S-U, which BOTH rises above one neighbour and falls below
+                #     the other) -> NEITHER, and a flat plateau -> neither.
+                #
+                # NOTE (possible v1 discrepancy): v1's getStrengthStress instead
+                # resolves a shoulder by its NEXT neighbour (so it labels the
+                # secondary strong or weak, never neither). Agrees with v1 on the
+                # common cases; differs only on 3+ syllable words with a mid
+                # secondary — a minor possible source of w_peak/s_trough drift vs
+                # the 2020 v1 data. See cmp_prosodics COMPARISON.md §8.
                 is_strong = False
                 is_weak = False
                 if num_sylls > 1:
-                    if is_stressed:
-                        # strong if neighbor is unstressed
-                        if syll_idx > 0 and not stress_list[syll_idx - 1]:
-                            is_strong = True
-                        elif syll_idx < num_sylls - 1 and not stress_list[syll_idx + 1]:
-                            is_strong = True
-                    else:
-                        # weak if neighbor is stressed
-                        if syll_idx > 0 and stress_list[syll_idx - 1]:
-                            is_weak = True
-                        elif syll_idx < num_sylls - 1 and stress_list[syll_idx + 1]:
-                            is_weak = True
+                    lvl = level_list[syll_idx]
+                    neigh = []
+                    if syll_idx > 0:
+                        neigh.append(level_list[syll_idx - 1])
+                    if syll_idx < num_sylls - 1:
+                        neigh.append(level_list[syll_idx + 1])
+                    rises = any(lvl > n for n in neigh)   # more prominent than a neighbour
+                    falls = any(lvl < n for n in neigh)   # less prominent than a neighbour
+                    if rises and not falls:
+                        is_strong = True
+                    elif falls and not rises:
+                        is_weak = True
 
                 rows.append({
                     'word_num': word_num,

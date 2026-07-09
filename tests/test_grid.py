@@ -67,15 +67,6 @@ def test_grid_df(parsed_line):
     assert df["height"].between(1, 3).all()
 
 
-def test_grid_entity_path_matches_df_path(parsed_line):
-    from prosodic.parsing.meter import Meter
-    from prosodic.parsing.vectorized import parse_batch
-
-    t2 = TextModel(LINE)
-    parse_batch(t2.lines, Meter())
-    assert t2.lines[0].best_parse.grid_str() == parsed_line.grid_str()
-
-
 def test_grid_plot(parsed_line):
     plotnine = pytest.importorskip("plotnine")
     p = parsed_line.grid_plot()

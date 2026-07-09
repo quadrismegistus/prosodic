@@ -134,13 +134,11 @@ class ParseSlot(Entity):
 
     @property
     def wordform(self) -> Any:
-        """
-        The wordform associated with this slot.
-
-        Returns:
-            The wordform associated with this slot.
-        """
-        return self.unit.parent.parent
+        """The wordform this slot's syllable belongs to — entity-path only. `None` on
+        the DF path, whose `SyllData` slots have no parent chain (bridge to a WordToken
+        via `self.unit.word_num` if needed)."""
+        parent = getattr(self.unit, 'parent', None)
+        return getattr(parent, 'parent', None) if parent is not None else None
 
     @property
     def syll(self) -> "Syllable":

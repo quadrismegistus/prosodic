@@ -84,13 +84,21 @@ class Parse(Entity):
         self.position_constraints = meter.position_constraint_funcs
         self.constraint_weights = meter.constraints
 
-        # wordforms
+        # wordforms / slot_units
         if isinstance(wordtokens, str):
             wordtokens = next(TextModel(wordtokens).wordtokens.iter_wordtoken_matrix())
-        assert wordtokens.num_with_forms == wordtokens.num_wordforms
-        self.wordtokens = wordtokens
-        self.wordforms = wordtokens.wordforms
-        self.slot_units = [syll for wf in self.wordforms for syll in wf]
+        if children:
+            # Slots are already positioned (a DF-built parse or Parse.concat): take
+            # slot_units straight from the positions and do NOT require resolved entity
+            # wordtokens — a DF parse carries none. (retire-entity-parser)
+            self.wordtokens = wordtokens
+            self.wordforms = getattr(wordtokens, 'wordforms', None) if wordtokens is not None else None
+            self.slot_units = [slot.unit for mpos in children for slot in mpos.children]
+        else:
+            assert wordtokens.num_with_forms == wordtokens.num_wordforms
+            self.wordtokens = wordtokens
+            self.wordforms = wordtokens.wordforms
+            self.slot_units = [syll for wf in self.wordforms for syll in wf]
 
         # self.parent = parent if parent is not None else wordtokens
         self.parent = None # wait for parselist
@@ -103,7 +111,7 @@ class Parse(Entity):
             scansion = get_iambic_parse(len(self.slot_units))
         if type(scansion) == str:
             scansion = split_scansion(scansion)
-        self.scansion = copy(scansion)
+        self.scansion_positions = copy(scansion)
 
         self.is_bounded = is_bounded
         self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
@@ -119,7 +127,7 @@ class Parse(Entity):
         self.children = ParsePositionList() if not children else children
         self.children.parent = self
         if not self.children:
-            for mpos_str in self.scansion:
+            for mpos_str in self.scansion_positions:
                 self.extend(mpos_str)
         self.init()
 
@@ -258,17 +266,20 @@ class Parse(Entity):
             [mpos for parse in parses for mpos in parse.positions],
             parent=parses[0].parent,
         )
-        wordtokens_limited = [wt for parse in parses for wt in parse.wordtokens]
-        if wordtokens is not None:
-            wordtokens = wordtokens.copy()
+        # Aggregate wordtokens. If every constituent carries them (entity parses),
+        # reconstruct by concatenation as before. Otherwise (a DF parse's SyllData
+        # slots carry no resolved WordTokenList) use the explicit context — the parent
+        # line, itself a WordTokenList — or None; downstream (render/scope/key)
+        # tolerates None via the slots' word_num. (retire-entity-parser)
+        if all(getattr(p, 'wordtokens', None) is not None for p in parses):
+            wordtokens_limited = [wt for parse in parses for wt in parse.wordtokens]
+            base = wordtokens if wordtokens is not None else parses[0].wordtokens
+            wordtokens = base.copy()
             wordtokens.children = wordtokens_limited
-        else:
-            wordtokens_cls = type(wordtokens) if wordtokens is not None else WordTokenList
-            wordtokens = wordtokens_cls(
-                children=wordtokens_limited,
-                parent=parses[0].wordtokens.parent,
-            )
-        scansion = [x for parse in parses for x in parse.scansion]
+        elif wordtokens is not None:
+            wordtokens = wordtokens.copy()
+        # else: wordtokens stays None
+        scansion = [x for parse in parses for x in parse.scansion_positions]
 
         parse = Parse(
             wordtokens=wordtokens,
@@ -469,12 +480,19 @@ class Parse(Entity):
         Returns:
             int: Number of words.
         """
+        # Prefer counting distinct word_num across the slots. On the DF/line parse
+        # path `self.wordforms` is the RAW WordTokenList, whose length is the
+        # pronunciation-VARIANT count (e.g. "summers" contributes >1 form), not the
+        # word count — trusting it over-counts (line.best_parse reported 11 for an
+        # 8-word line). SyllData slots carry word_num, so the distinct-word_num set is
+        # exactly one-per-non-punc-wordtoken. Entity-path parses (Syllable slots, no
+        # word_num) fall back to wordforms, which there is resolved 1-per-word.
+        units = self.slot_units
+        if units and hasattr(units[0], "word_num"):
+            return len({s.word_num for s in units})
         if self.wordforms is not None:
             return len(self.wordforms)
-        # DF path (no wordform entities): SyllData carries word_num, so the word
-        # count is the number of distinct word_num across the parse's slots — same
-        # set as one wordform per non-punc wordtoken, no entity needed.
-        return len({s.word_num for s in self.slot_units}) if self.slot_units else 0
+        return 0
 
     @property
     def num_peaks(self) -> int:
@@ -503,66 +521,63 @@ class Parse(Entity):
 
     @property
     def is_rising(self) -> Optional[bool]:
-        """
-        Check if the parse has a rising rhythm.
-
-        Returns:
-            Optional[bool]: True if rising, False if falling, None if undetermined.
-        """
-        if not self.positions:
-            return
-        # return not self.positions[0].is_prom
-        try:
-            if self.nary_feet == 3:
-                if self.slots[3].is_prom:
-                    return False  # swws
-                else:
-                    return True  # wssw
-            elif self.nary_feet == 2:
-                if self.slots[3].is_prom:
-                    return True  # wsws
-                else:
-                    return False  # swsw
-        except (IndexError, AttributeError):
-            pass
-        return not self.positions[0].is_prom
+        """Rising (iamb/anapest) vs falling (trochee/dactyl) rhythm, read from the DP
+        foot delineation's head direction (`metrical_feet`/`head`), not the old
+        4th-syllable heuristic. `None` when the line has no directional feet (all
+        spondaic/pyrrhic) — an honest 'unknown' rather than a false 'rising'."""
+        if not self.slots:
+            return None
+        d = self.head.direction
+        return (d == "rising") if d in ("rising", "falling") else None
 
     @property
     def nary_feet(self) -> int:
-        """
-        Get the n-ary foot type of the parse.
-
-        Returns:
-            int: The n-ary foot type (2 for binary, 3 for ternary, etc.).
-        """
-        return int(np.median(self.foot_sizes))
+        """Dominant foot size (2 = binary, 3 = ternary): the median over the REAL
+        (disyllabic+) feet from the DP delineation — lone-syllable edge feet (bare
+        `s`, extrametrical `w`) are excluded so an anacrusis/feminine edge doesn't
+        drag it toward 1."""
+        sizes = [n for n in self.foot_sizes if n > 1]
+        return int(np.median(sizes)) if sizes else 2
 
     @property
     def feet(self) -> List[str]:
-        """
-        Get the list of feet in the parse.
+        """Foot patterns (`'ws'`, `'wws'`, `'sw'`, …) from the DP delineation
+        (`metrical_feet`). Was a naive position-pairing (2 positions = 1 foot) that
+        could not express inversions, ternary feet, or anacrusis; now the validated
+        syllable-based system (see analysis.feet)."""
+        return [ft.pattern for ft in self.metrical_feet]
 
-        Returns:
-            List[str]: List of feet as strings.
-        """
-        if self.num_positions == 1:
-            feet = [self.positions[0].meter_str]
-        else:
-            feet = []
-            for i in range(1, self.num_positions, 2):
-                pos1, pos2 = self.positions[i - 1], self.positions[i]
-                feet.append(pos1.meter_str + pos2.meter_str)
-        return feet
+    @cached_property
+    def metrical_feet(self):
+        """The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable
+        size AND headedness, one head per foot + extrametrical edges). Each `Foot` is a
+        VIEW over its syllables — iterate it to get them (duck-typed, no entity forced)
+        — with `.label`/`.pattern`/`.head`/`.is_substituted`/`.to_html()`. See
+        analysis.feet.parse_feet. Cached: `feet`/`head`/`feet_str`/`foot_counts`/
+        `foot_sizes`/`nary_feet`/`is_rising`/`footed_scansion`/`foot_type` all funnel
+        through it (foot_type twice), so one DP per parse, not 4-6."""
+        from ..analysis.feet import parse_feet
+        return parse_feet(self.slots)
+
+    @property
+    def head(self):
+        """Headedness of this line = majority direction of its feet (rising =
+        iamb/anapest, falling = trochee/dactyl), read OUT of the foot-parse rather
+        than assumed. Returns Head(direction, confidence); see analysis.feet."""
+        from ..analysis.feet import line_head
+        return line_head([ft.pattern for ft in self.metrical_feet])
+
+    @property
+    def feet_str(self) -> str:
+        """'(w s)(w w s)(s w*)…' — '*' marks a foot that inverts the line head."""
+        from ..analysis.feet import foot_str
+        return foot_str(self.metrical_feet)
 
     @property
     def foot_counts(self) -> Counter:
-        """
-        Get a counter of foot types in the parse.
-
-        Returns:
-            Counter: Counter of foot types.
-        """
-        return Counter(self.feet)
+        """Counter of foot LABELS (iamb/trochee/anapest/dactyl/…) from the DP
+        delineation."""
+        return Counter(ft.label for ft in self.metrical_feet)
 
     @property
     def foot_sizes(self) -> List[int]:
@@ -586,17 +601,18 @@ class Parse(Entity):
 
     @property
     def foot_type(self) -> str:
-        """
-        Get the foot type of the parse.
-
-        Returns:
-            str: The foot type (e.g., "iambic", "trochaic", etc.).
-        """
+        """The metrical foot type ("iambic"/"trochaic"/"anapestic"/"dactylic"), or ""
+        when the line has no clear rising/falling direction, or its dominant real-foot
+        size isn't binary/ternary (e.g. a resolution-heavy line with median size 4).
+        Those are defined 'no standard type' cases — returned as "" WITHOUT an error
+        log, which previously fired as spurious noise on legitimate input."""
+        ir = self.is_rising
+        if ir is None:
+            return ""
         if self.nary_feet == 2:
-            return "iambic" if self.is_rising else "trochaic"
-        elif self.nary_feet == 3:
-            return "anapestic" if self.is_rising else "dactylic"
-        log.error(f"foot type? {self.nary_feet}")
+            return "iambic" if ir else "trochaic"
+        if self.nary_feet == 3:
+            return "anapestic" if ir else "dactylic"
         return ""
 
     @property
@@ -735,6 +751,21 @@ class Parse(Entity):
             for mpos in self.positions
             for slot in mpos.slots
         )
+
+    @property
+    def scansion(self) -> str:
+        """Per-syllable metrical scansion in **w/s** (weak/strong POSITION), e.g.
+        `'wswswswsws'` — the same information as `meter_str` (`+`→`s`, `-`→`w`).
+        Cheap: does NOT run the foot parser. (`scansion_positions` is the
+        per-POSITION list form `['s','ww','s',…]`, disyllabic positions grouped.)"""
+        return "".join(self.scansion_positions)
+
+    @property
+    def footed_scansion(self) -> str:
+        """`scansion` cut into feet by the DP, `|`-delimited — e.g. `'wws|wws|wws|w'`
+        (the foot-gold format). Runs the foot parser (see `metrical_feet`); `feet_str`
+        is the annotated `(w s)…` form with `*` substitution marks."""
+        return self.metrical_feet.footed_scansion
 
     @property
     def meter_ints(self, word_sep: str = "") -> tuple:

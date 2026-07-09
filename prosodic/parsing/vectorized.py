@@ -18,167 +18,12 @@ def _pool_meter_str(lpl, i):
     return "".join("+" if x == "s" else "-" for x in lpl._all_scansions[i])
 
 
-def _pool_combo_parses(combo_lpls, meter, parse_unit, bound_zones, parent=None,
-                       syll_builder=None):
-    """Pool unbounded parses across pronunciation-variant combos (Prosodic v1/v2
-    semantics: the unbounded set = scansions optimal under ANY pronunciation).
-
-    Unions each combo's unbounded parses, cross-bounds them on the (zone-aware)
-    violation-count vector, dedups by meter string keeping the min-score
-    representative, and returns a LazyParseList carrying the pooled survivors so
-    the numpy-backed consumers (``get_parses_df`` etc.) keep working. Each
-    survivor keeps its OWN combo's syllables (``sylls_by_scansion``) so a parse
-    realized under a stressed pronunciation reports that pronunciation's
-    form_idx / stress, not the primary combo's.
-
-    Only each combo's *unbounded* parses need pooling: a parse bounded within its
-    own combo is dominated by a combo-mate, which is itself either kept or
-    dominated by a cross-combo parse — so by transitivity it stays bounded.
-    Domination matches ``compute_bounding``: ``vk <= vj`` on all constraints and
-    ``vk < vj`` on at least one.
-
-    ``syll_builder(row_idx) -> [SyllData,...]`` (optional) defers SyllData
-    construction: combos pass ``sylls=None`` and only the combos that actually
-    surface a surviving parse get their syllables built, so lines with many
-    pronunciation combos don't pay to materialize syllables for all of them.
-    """
-    from .parselists import ParseList
-    combo_lpls = [l for l in combo_lpls if l is not None]
-    if not combo_lpls:
-        return ParseList([], parse_unit=parse_unit, parent=parent)
-
-    def ensure_sylls(lpl):
-        # build (and memoize on the combo) SyllData only when a combo is returned
-        # or contributes a surviving parse
-        if lpl._sylls is None and syll_builder is not None:
-            lpl._sylls = syll_builder(lpl._syll_row_idx)
-        return lpl._sylls
-
-    # Mixed syllable counts across pronunciations can't share one (S, N, C)
-    # array; pooling is rare there, so fall back to the best single combo (a
-    # valid LazyParseList) for that line.
-    if len({l._all_viols.shape[1] for l in combo_lpls}) != 1:
-        best = min(combo_lpls,
-                   key=lambda l: float(l._scores.min()) if l._scores.size else float('inf'))
-        ensure_sylls(best)
-        best.parent = parent
-        return best
-
-    ci = combo_lpls[0]._constraint_index
-    S = len(combo_lpls[0]._all_scansions)
-
-    # Meter strings depend only on the scansion, which is shared across same-N
-    # combos — compute the S strings ONCE (not per combo x scansion).
-    mv0 = combo_lpls[0]._meter_vals
-    if mv0 is not None:
-        ms_arr = ["".join("+" if v else "-" for v in mv0[i]) for i in range(S)]
-    else:
-        ms_arr = ["".join("+" if x == "s" else "-" for x in combo_lpls[0]._all_scansions[i])
-                  for i in range(S)]
-
-    # Cross-bound ONLY the combos' unbounded parses (pure numpy, tiny): a parse
-    # bounded within its combo stays bounded by transitivity, so the full
-    # per-line compute_bounding is unnecessary. A (combo, scansion) is pooled-
-    # unbounded iff within-combo unbounded AND not dominated by another combo's
-    # unbounded parse.
-    # Domination: ZONE-aware within the same syllable count (fitted meters bound
-    # on the feature space they score on), FLAT (C,) across different N (zone
-    # boundaries shift with N). Identical rule to _pool_candidates. Unfitted
-    # meter (bound_zones=None): zone == flat.
-    urank, uidx, fvecs, zvecs, uN = [], [], [], [], []
-    for rank, lpl in enumerate(combo_lpls):
-        for i in lpl._unbounded_indices:
-            i = int(i)
-            urank.append(rank); uidx.append(i)
-            fvecs.append(lpl._all_viols[i].sum(axis=0))
-            zvecs.append(_zone_split_batch(lpl._all_viols[None, i:i + 1], bound_zones)[0, 0])
-            uN.append(lpl._all_viols.shape[1])
-    pool_unb = set()  # {(rank, scan_idx)} surviving cross-bounding
-    if fvecs:
-        fv = np.array(fvecs); zv = np.array(zvecs); nn = np.array(uN)
-        same_n = nn[:, None] == nn[None, :]
-        zdom = (zv[:, None, :] <= zv[None, :, :]).all(axis=2) & (zv[:, None, :] < zv[None, :, :]).any(axis=2)
-        fdom = (fv[:, None, :] <= fv[None, :, :]).all(axis=2) & (fv[:, None, :] < fv[None, :, :]).any(axis=2)
-        dom = np.where(same_n, zdom, fdom)
-        np.fill_diagonal(dom, False)
-        alive = ~dom.any(axis=0)
-        pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
-
-    # Fast path: if the canonical combo (rank 0) already accounts for the entire
-    # pooled unbounded set — no alternate pronunciation adds or bounds anything —
-    # pooling is a no-op; return combo 0 directly and skip the rebuild. This is
-    # the common case (natural pronunciations usually dominate) and keeps the
-    # ambiguous-line cost near the non-pooled path.
-    if pool_unb == {(0, int(i)) for i in combo_lpls[0]._unbounded_indices}:
-        ensure_sylls(combo_lpls[0])
-        combo_lpls[0].parent = parent
-        return combo_lpls[0]
-
-    # Dedup by meter string, combo-0-base + overlay (identical rule to
-    # _pool_candidates so the DF and entity paths agree): every meter string is
-    # represented by the CANONICAL combo (rank 0); a meter string that is
-    # pool-unbounded via another pronunciation is upgraded to that combo's
-    # (better) parse. Ties thus keep the canonical pronunciation rather than
-    # flipping function words to strong-first.
-    l0 = combo_lpls[0]
-    best_rep = {}  # meter_str -> (sortkey, lpl, scan_idx)
-    for i in range(l0._all_viols.shape[0]):
-        ms = ms_arr[i]
-        sortkey = ((0, i) not in pool_unb, float(l0._all_scores[i]), 0, i)
-        cur = best_rep.get(ms)
-        if cur is None or sortkey < cur[0]:
-            best_rep[ms] = (sortkey, l0, i)
-    for rank, lpl in enumerate(combo_lpls):
-        if rank == 0:
-            continue
-        for i in lpl._unbounded_indices:
-            i = int(i)
-            if (rank, i) not in pool_unb:
-                continue
-            ms = ms_arr[i]
-            sortkey = (False, float(lpl._all_scores[i]), rank, i)
-            cur = best_rep.get(ms)
-            if cur is None or sortkey < cur[0]:
-                best_rep[ms] = (sortkey, lpl, i)
-    reps = sorted(best_rep.values(), key=lambda r: r[0])  # unbounded first, then score, canonical
-
-    scans = [lpl._all_scansions[i] for _, lpl, i in reps]
-    viols = np.stack([lpl._all_viols[i] for _, lpl, i in reps])          # (P, N, C)
-    unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)    # sk[0] = is_bounded
-    sylls_by = [ensure_sylls(lpl) for _, lpl, i in reps]                 # SyllData built here only
-    rowidx_by = [lpl._syll_row_idx for _, lpl, i in reps]
-    # entity combos have no DF row indices (_syll_row_idx is None), which yields a
-    # list of Nones. Collapse it to a single None so get_parses_df's
-    # `_syll_row_idx_by_scansion is not None` branch isn't tripped into iterating a
-    # None element (TypeError). Same for sylls_by if a combo yielded none.
-    rowidx0 = rowidx_by[0]
-    if all(r is None for r in rowidx_by):
-        rowidx_by = None
-    if all(s is None for s in sylls_by):
-        sylls_by = None
-    have = lambda a: all(getattr(lpl, a) is not None for _, lpl, _ in reps)
-    mv = np.stack([lpl._meter_vals[i] for _, lpl, i in reps]) if have('_meter_vals') else None
-    pi = np.stack([lpl._position_ids[i] for _, lpl, i in reps]) if have('_position_ids') else None
-    ps = np.stack([lpl._position_sizes[i] for _, lpl, i in reps]) if have('_position_sizes') else None
-    # carry the canonical combo's wordtokens (entity path) so pooled parses can
-    # walk to WordTokens for rendering / Parse.concat; None on the DF path.
-    pooled = LazyParseList(
-        combo_lpls[0].wordtokens, meter, scans, viols, ci, unb_mask,
-        sylls_by[0] if sylls_by is not None else ensure_sylls(reps[0][1]),
-        parse_unit=parse_unit,
-        syll_row_idx=rowidx0, meter_vals=mv, position_ids=pi, position_sizes=ps,
-        sylls_by_scansion=sylls_by, syll_row_idx_by_scansion=rowidx_by,
-    )
-    pooled.parent = parent
-    return pooled
-
-
 def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_unit):
-    """DF-path pooling from RAW candidate tuples (viols, mask, scansions, rows,
-    meter_vals, position_ids, position_sizes) — one per pronunciation combo.
+    """Pronunciation-variant pooling from RAW candidate tuples (viols, mask,
+    scansions, rows, meter_vals, position_ids, position_sizes) — one per combo.
 
-    Same semantics as ``_pool_combo_parses`` but avoids constructing a
-    LazyParseList (and its per-combo score/scansion setup) for every combo: the
+    The pooler for the (only) parse path. Avoids constructing a LazyParseList
+    (and its per-combo score/scansion setup) for every combo: the
     cross-bound is computed straight from the raw viol arrays, and a combo's
     LazyParseList is materialized only when it is actually returned or overlays a
     surviving parse. Lines with many pronunciation combos (a cartesian blow-up)
@@ -289,17 +134,26 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # pooled LazyParseList per length; a single length is the common case.
     surv_Ns = sorted({N_of[rank] for (rank, i) in pool_unb},
                      key=lambda N: (N != N_of[0], N))   # canonical combo's N first
-    if len(surv_Ns) == 1:
+    # A length whose every parse was cross-bounded by a shorter/other length has no
+    # unbounded survivor and would otherwise vanish entirely. Keep such lengths as
+    # BOUNDED — e.g. the 3-syllable "temperate" that scans a syllable longer and loses
+    # — so the dominated alt-pronunciation reading still appears (Line View can then
+    # show WHY it isn't on top). They're bounded, so num_parses (an unbounded count)
+    # is untouched; best_parse and the unbounded set are unchanged.
+    all_Ns = {N_of[rank] for rank in range(len(candidates))}
+    # (No canonical-first key here, unlike surv_Ns above: N_of[0] is always an unbounded
+    # survivor, so it's never in extra_Ns — the key would be a no-op. Plain ascending.)
+    extra_Ns = sorted(all_Ns - set(surv_Ns))
+    if len(surv_Ns) == 1 and not extra_Ns:
         return build_for_N(surv_Ns[0])
 
-    # Survivors span multiple syllable counts (e.g. "fire" 1~2). A single
-    # (P, N, C) array can't hold both lengths, so concatenate each length's
-    # pooled scansions into a RAGGED LazyParseList (per-scansion viols/meter_vals
-    # of different N). The unbounded set thus keeps co-optimal parses of BOTH
-    # lengths — matching v1. Cross-length domination is already in pool_unb, so
-    # each sub-list's mask is correct.
+    # Multiple lengths: a single (P, N, C) array can't hold them, so concatenate each
+    # length's pooled scansions into a RAGGED LazyParseList. Surviving lengths keep
+    # their co-optimal parses unbounded (matching v1); dominated `extra_Ns` come back
+    # all-bounded (build_for_N marks them so, since none are in pool_unb). Cross-length
+    # domination is already in pool_unb, so each sub-list's mask is correct.
     scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
-    for N in surv_Ns:
+    for N in list(surv_Ns) + extra_Ns:
         sub = build_for_N(N, full_ok=False)
         sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
         for i in range(len(sub._all_scansions)):
@@ -683,260 +537,40 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     return results
 
 
-def parse_batch(parse_units, meter, syll_df=None):
-    """Parse all units in a single batched operation.
-
-    Groups lines by syllable count to share scansion encodings,
-    then evaluates constraints and bounding for each group.
-
-    Args:
-        parse_units: list of WordTokenList objects (lines/lineparts)
-        meter: Meter object
-        syll_df: optional syllable DataFrame from TextModel._syll_df.
-            When provided, features are read from the DF instead of
-            walking Entity objects (faster).
-
-    Returns:
-        list of (wordtokens, LazyParseList) pairs in original order
-    """
-    from .parselists import ParseList
-
-    # choose feature extraction strategy
-    use_df = syll_df is not None and len(syll_df) > 0
-
-    # extract features for all lines and group by nsylls
-    groups = defaultdict(list)  # nsylls -> [(idx, wordtokens, features, sylls)]
-    all_features = []
-    for idx, wt in enumerate(parse_units):
-        if wt.num_sylls < 2:
-            all_features.append(None)
+def parse_units_from_df(units, syll_df, meter):
+    """Parse arbitrary parse units (WordTokenLists — lineparts, syntax sub-splits) via
+    the DF path, without the entity `parse_batch`. Each unit's syllables are scoped out
+    of `syll_df` by its wordtokens' `word_num` (== SyllData.word_num) and tagged with a
+    synthetic group id, so sub-units that share a `linepart_num` still parse
+    separately. Returns [(unit, LazyParseList|None)] parallel to `units`.
+    (retire-entity-parser)"""
+    import pandas as pd
+    frames, kept = [], []
+    for i, unit in enumerate(units):
+        wnums = {getattr(wt, 'num', None) for wt in unit if not getattr(wt, 'is_punc', False)}
+        wnums.discard(None)
+        sub = syll_df[syll_df['word_num'].isin(wnums)]
+        if len(sub) == 0:
             continue
-
-        if use_df:
-            # read numpy arrays from the DF (fast), but keep real Syllable objects
-            line_num = wt[0].line_num if hasattr(wt[0], 'line_num') else None
-            if line_num is not None:
-                feats = _extract_features_hybrid(wt, syll_df, line_num)
-            else:
-                feats = extract_features(wt)
-        else:
-            feats = extract_features(wt)
-
-        nsylls = len(feats["stressed"])
-        if nsylls > MAX_SYLL_IN_PARSE_UNIT:
-            all_features.append(None)
-            continue
-        sylls = feats["sylls"]
-        groups[nsylls].append((idx, wt, feats, sylls))
-        all_features.append(feats)
-
-    # process each syllable-count group
-    results = [None] * len(parse_units)
-
-    for nsylls, group in groups.items():
-        scansions = meter.get_possible_scansions(nsylls)
-        if not scansions:
-            for idx, wt, _, _ in group:
-                results[idx] = (wt, ParseList([], parse_unit=meter.parse_unit, parent=wt))
-            continue
-
-        meter_vals, position_ids, position_sizes = encode_scansions(scansions, nsylls)
-        constraint_names = list(meter.constraints.keys())
-        bound_zones = _bounding_zones(meter)  # zone-aware bounding when zone_weights set
-
-        # split group into simple (no ambiguity) and ambiguous lines
-        simple_lines = []
-        ambig_lines = []
-        for item in group:
-            idx, wt, feats, sylls = item
-            needs_matrix = meter.resolve_optionality and any(
-                w.wordtype.num_forms > 1 for w in wt if w.has_wordform
-            )
-            if needs_matrix:
-                ambig_lines.append(item)
-            else:
-                simple_lines.append(item)
-
-        # batch simple lines: evaluate ALL constraints at once (self-describing
-        # vectorized dispatch), then batch bounding on GPU
-        if simple_lines:
-            feats_list = [feats for (_, _, feats, _) in simple_lines]
-            all_viols_4d, constraint_index = evaluate_constraints_batch(
-                feats_list, meter_vals, position_ids, position_sizes, constraint_names
-            )  # (L, S, N, C)
-
-            # batch bounding
-            all_viol_sums = _zone_split_batch(all_viols_4d, bound_zones)
-            unbounded_masks = compute_bounding_batch(all_viol_sums)  # (L, S)
-
-            for i, (idx, wt, feats, sylls) in enumerate(simple_lines):
-                pl = LazyParseList(
-                    wt, meter, scansions, all_viols_4d[i], constraint_index,
-                    unbounded_masks[i], sylls, parse_unit=meter.parse_unit,
-                )
-                results[idx] = (wt, pl)
-
-        # handle ambiguous lines individually
-        pool_forms = getattr(meter, 'pool_forms', True)
-        for idx, wt, feats, sylls in ambig_lines:
-            combo_lpls = []
-            best_result = None
-            best_score = float('inf')
-            for wtl in wt.iter_wordtoken_matrix():
-                wfeats = extract_features(wtl)
-                wnsylls = len(wfeats["stressed"])
-                if wnsylls != nsylls:
-                    wscans = meter.get_possible_scansions(wnsylls)
-                    if not wscans:
-                        continue
-                    wmv, wpi, wps = encode_scansions(wscans, wnsylls)
-                else:
-                    wscans, wmv, wpi, wps = scansions, meter_vals, position_ids, position_sizes
-                wviols_4d, wci = evaluate_constraints_batch(
-                    [wfeats], wmv, wpi, wps, constraint_names
-                )
-                wviols = wviols_4d[0]  # (S, N, C)
-                wunb = compute_bounding(wviols, wci, zones=bound_zones)
-                wsylls = wfeats["sylls"]
-                wpl = LazyParseList(
-                    wtl, meter, wscans, wviols, wci, wunb, wsylls,
-                    parse_unit=meter.parse_unit, meter_vals=wmv,
-                )
-                combo_lpls.append(wpl)
-                if wpl._scores.size > 0:
-                    ms = float(wpl._scores.min())
-                    if ms < best_score:
-                        best_score = ms
-                        best_result = wpl
-                if not meter.resolve_optionality:
-                    break
-            if pool_forms and combo_lpls:
-                # v1/v2 semantics: pool + cross-bound all pronunciation combos
-                pl = _pool_combo_parses(combo_lpls, meter, meter.parse_unit, bound_zones, parent=wt)
-            elif best_result:
-                best_result.parent = wt  # ensure parent is original line, not copy
-                pl = best_result
-            else:
-                pl = ParseList([], parse_unit=meter.parse_unit, parent=wt)
-            results[idx] = (wt, pl)
-
-    # fill in empty results for lines with < 2 syllables
-    for idx in range(len(parse_units)):
-        if results[idx] is None:
-            wt = parse_units[idx]
-            results[idx] = (wt, ParseList([], parse_unit=meter.parse_unit, parent=wt))
-
-    return results
-
-
-def extract_features(wordtokens):
-    """Extract syllable features as numpy arrays from a WordTokenList.
-
-    Returns dict of arrays, all shape (N,) where N = number of syllables.
-    """
-    sylls = []
-    word_ids = []
-    func_word = []
-
-    for wt in wordtokens:
-        if not wt.has_wordform:
-            continue
-        wf = wt.wordtype.children[0]  # first wordform
-        is_func = wf.is_functionword
-        for syll in wf:
-            sylls.append(syll)
-            word_ids.append(wt.num)
-            func_word.append(is_func)
-
-    n = len(sylls)
-    stressed = np.array([s.is_stressed for s in sylls], dtype=bool)
-    heavy = np.array([s.is_heavy for s in sylls], dtype=bool)
-
-    # is_strong/is_weak: polysyllabic stress context (within-word neighbors)
-    # None for monosyllabic words, True/False otherwise
-    strong = np.zeros(n, dtype=np.int8)  # 0=False/None, 1=True
-    weak = np.zeros(n, dtype=np.int8)
-    for i, s in enumerate(sylls):
-        v = s.is_strong
-        if v is True:
-            strong[i] = 1
-        v = s.is_weak
-        if v is True:
-            weak[i] = 1
-
-    return {
-        "sylls": sylls,
-        "stressed": stressed,
-        "heavy": heavy,
-        "strong": strong,
-        "weak": weak,
-        "word_ids": np.array(word_ids, dtype=np.int32),
-        "func_word": np.array(func_word, dtype=bool),
-        "phrasal_stress": np.zeros(n, dtype=np.int32),
-        "pstress": np.full(n, -1.0, dtype=np.float32),
-        "tstress": np.full(n, -1.0, dtype=np.float32),
-        "gstress": np.full(n, -1.0, dtype=np.float32),
-        "pstrength": np.full(n, -1.0, dtype=np.float32),
-    }
-
-
-def _extract_features_hybrid(wordtokens, syll_df, line_num):
-    """Extract features using DF for arrays but Entity objects for sylls.
-
-    Reads pre-computed numpy arrays from the syllable DataFrame (fast),
-    but keeps real Syllable objects for Parse construction (compatibility).
-    """
-    # get real Syllable objects from Entity tree
-    sylls = []
-    for wt in wordtokens:
-        if not wt.has_wordform:
-            continue
-        wf = wt.wordtype.children[0]
-        for syll in wf:
-            sylls.append(syll)
-
-    # read arrays from DF (form_idx=0 only, non-punc)
-    line_df = syll_df[(syll_df['line_num'] == line_num) &
-                      (syll_df['form_idx'] == 0) &
-                      (syll_df['is_punc'] == 0)]
-
-    n = len(line_df)
-    if n != len(sylls):
-        # mismatch — fall back to Entity-based extraction
-        return extract_features(wordtokens)
-
-    phrasal = np.zeros(n, dtype=np.int32)
-    if 'phrasal_stress' in line_df.columns:
-        phrasal = line_df['phrasal_stress'].fillna(0).values.astype(np.int32)
-    pstress = np.full(n, -1.0, dtype=np.float32)
-    tstress = np.full(n, -1.0, dtype=np.float32)
-    gstress = np.full(n, -1.0, dtype=np.float32)
-    pstrength = np.full(n, -1.0, dtype=np.float32)
-    if 'tstress' in line_df.columns:
-        pstress = line_df['pstress'].astype(float).fillna(-1.0).values.astype(np.float32)
-        tstress = line_df['tstress'].astype(float).fillna(-1.0).values.astype(np.float32)
-    if 'gstress' in line_df.columns:
-        gstress = line_df['gstress'].astype(float).fillna(-1.0).values.astype(np.float32)
-    if 'pstrength' in line_df.columns:
-        pstrength = line_df['pstrength'].astype(float).fillna(-1.0).values.astype(np.float32)
-
-    return {
-        "sylls": sylls,
-        "stressed": line_df['is_stressed'].values.astype(bool),
-        "heavy": line_df['is_heavy'].values.astype(bool),
-        "strong": line_df['is_strong'].values.astype(np.int8),
-        "weak": line_df['is_weak'].values.astype(np.int8),
-        "word_ids": line_df['word_num'].values.astype(np.int32),
-        "func_word": line_df['is_functionword'].values.astype(bool),
-        "phrasal_stress": phrasal,
-        "pstress": pstress,
-        "tstress": tstress,
-        "gstress": gstress,
-        "pstrength": pstrength,
-    }
+        sub = sub.copy()
+        sub['_unit_idx'] = i
+        frames.append(sub)
+        kept.append(i)
+    out = [(u, None) for u in units]
+    if not frames:
+        return out
+    results = parse_batch_from_df(pd.concat(frames, ignore_index=True), meter, line_col='_unit_idx')
+    for i in kept:
+        pl = results.get(i)
+        if pl is not None:
+            pl.wordtokens = units[i]      # unit context for render / scope / key
+            pl.parent = units[i]
+            out[i] = (units[i], pl)
+    return out
 
 
 _scansion_cache = {}
+
 
 def encode_scansions(scansions, nsylls):
     """Convert list of scansion lists to numpy arrays.
@@ -1462,10 +1096,20 @@ class LazyParseList:
         # form_idx / stress. Stays numpy — no Entity construction.
         self._sylls_by_scansion = sylls_by_scansion
         self._syll_row_idx_by_scansion = syll_row_idx_by_scansion
-        # scansion encoding, shape (S, N) each — lazily recomputed if missing
+        # scansion encoding, shape (S, N) each
         self._meter_vals = meter_vals
         self._position_ids = position_ids
         self._position_sizes = position_sizes
+        # Parity: some construction paths (pooling; the entity path) don't pass the
+        # encoding. Compute it once here from the scansion strings so the regularity
+        # tie-break — and get_parses_df — work on every LazyParseList (DF and entity
+        # alike), not just where it happened to be supplied. Cached in
+        # encode_scansions; a position like 'ss' spans two syllables, so N is the
+        # sum of position lengths.
+        if self._meter_vals is None and not self._ragged and self._all_scansions:
+            nsylls = sum(len(p) for p in self._all_scansions[0])
+            self._meter_vals, self._position_ids, self._position_sizes = \
+                encode_scansions(self._all_scansions, nsylls)
         self._built_parses = {}  # cache: scansion index -> Parse
         self._best_idx = None
         self._bound_init = True
@@ -1556,13 +1200,192 @@ class LazyParseList:
             meters = {self._get_parse(int(i)).meter_str for i in coopt_idx}
         return len(meters)
 
+    def _regularity_key(self):
+        """Per-scansion IRREGULARITY (lower = more regular): 1 minus the best
+        period-k (k in {2,3}) self-similarity of the s/w string. A pure iamb
+        (period 2) OR a pure anapest (period 3) -> ~0; a ragged line -> higher. A
+        cheap, vectorized, meter-AGNOSTIC proxy for foot regularity — unlike a raw
+        bigram count it does NOT favour binary over ternary (which would break
+        anapestic/dactylic detection). Cached; no DP, no Parse objects."""
+        bc = getattr(self, "_reg_cache", None)
+        if bc is not None:
+            return bc
+        def _one(a):
+            a = np.asarray(a, dtype=np.int8).ravel()
+            best = 0.0
+            for k in (2, 3):
+                if a.size > k:
+                    best = max(best, float((a[k:] == a[:-k]).mean()))
+            return 1.0 - best
+        if getattr(self, "_ragged", False):
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float32)
+        else:
+            mv = self._meter_vals
+            if mv is None or getattr(mv, "ndim", 0) < 2 or mv.shape[1] < 3:
+                bc = np.zeros(len(self._all_scores), dtype=np.float32)
+            else:
+                a = mv.astype(np.int8)
+                best = np.zeros(a.shape[0], dtype=np.float32)
+                for k in (2, 3):
+                    if a.shape[1] > k:
+                        best = np.maximum(best, (a[:, k:] == a[:, :-k]).mean(axis=1))
+                bc = (1.0 - best).astype(np.float32)
+        self._reg_cache = bc
+        return bc
+
+    def _pseudo_foot_key(self):
+        """Per-scansion count of distinct 'pseudo-feet' — segments cut after each
+        strong-run (rising pseudo-feet), e.g. 'wswwswwsw' -> ws|wws|wws|w -> 3
+        distinct. A cheap, deterministic, foot-FLAVORED regularity signal (a regular
+        line has few distinct pseudo-feet) computed straight from the scansion — no
+        DP, no foot-parser — so, unlike the real foot key, it does NOT couple
+        best_parse to the evolving foot layer. Cached; used as the tertiary sort key
+        to break residual (same score + same period-k) ties deterministically."""
+        bc = getattr(self, "_pf_cache", None)
+        if bc is not None:
+            return bc
+        # Kept as a pure-Python per-row string scan on purpose: the scansions are ~10
+        # elements, and numpy per-row segmentation (flatnonzero/concatenate/tobytes) is
+        # ~2x SLOWER here — per-call dispatch overhead dominates on tiny arrays.
+        def _one(mv):
+            s = "".join("s" if v else "w" for v in np.asarray(mv, dtype=bool))
+            feet, start, i, n = [], 0, 0, len(s)
+            while i < n:
+                if s[i] == "s":
+                    j = i
+                    while j < n and s[j] == "s":
+                        j += 1
+                    feet.append(s[start:j]); start = i = j
+                else:
+                    i += 1
+            if start < n:
+                feet.append(s[start:])
+            return len(set(feet))
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.int16)
+        else:
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.int16)
+        self._pf_cache = bc
+        return bc
+
+    def _doubled_keys(self):
+        """Per-scansion counts of doubled positions, `(#ss, #ww)` — resolutions
+        (two strong syllables in one beat) and dips (two weaks in one position).
+        Parses tied on (score, period-k, pseudo-feet) — which on the sonnets differ
+        ONLY in WHERE a resolution or a dip sits — are then ranked fewest-ss, then
+        fewest-ww: a resolution crams two stresses into one beat, so it's the more
+        marked departure from pure `wsws…` alternation than a dip is. Pure scansion
+        statistics (no foot-parser), yet the resulting pick matches the DP foot
+        reading ~90% of the time — best_parse tracks the foot layer without coupling
+        to it. On the sonnets fewest-ss breaks 59 of 90 residual ties; fewest-ww is
+        a redundant-but-principled tiebreak after it. Cached; quaternary/quinary
+        sort keys."""
+        bc = getattr(self, "_dbl_cache", None)
+        if bc is not None:
+            return bc
+        if self._meter_vals is None:
+            n = len(self._all_scores)
+            bc = (np.zeros(n, dtype=np.int16), np.zeros(n, dtype=np.int16))
+        elif getattr(self, "_ragged", False):
+            def _one(mv):
+                a = np.asarray(mv, dtype=bool)
+                if a.size < 2:
+                    return (0, 0)
+                return (int((a[1:] & a[:-1]).sum()), int((~a[1:] & ~a[:-1]).sum()))
+            pairs = [_one(mv) for mv in self._meter_vals]
+            bc = (np.asarray([p[0] for p in pairs], dtype=np.int16),
+                  np.asarray([p[1] for p in pairs], dtype=np.int16))
+        else:
+            # rectangular (S, N): one vectorized pass, not S Python iterations
+            a = np.asarray(self._meter_vals, dtype=bool)
+            if a.ndim < 2 or a.shape[1] < 2:
+                n = a.shape[0] if a.ndim >= 1 else len(self._all_scores)
+                bc = (np.zeros(n, dtype=np.int16), np.zeros(n, dtype=np.int16))
+            else:
+                ss = (a[:, 1:] & a[:, :-1]).sum(axis=1).astype(np.int16)
+                ww = (~a[:, 1:] & ~a[:, :-1]).sum(axis=1).astype(np.int16)
+                bc = (ss, ww)
+        self._dbl_cache = bc
+        return bc
+
+    def _content_key(self):
+        """Final tie-break: a canonical value read from the SCANSION ITSELF, so among
+        parses that tie on every meaningful key the winner is a fixed function of the
+        scansions — refactor-proof — rather than an accident of enumeration order (the
+        old `np.arange` position fallback). Encoded as a binary fraction with the
+        FIRST syllable most significant and `w`=0 / `s`=1, so ascending order (a) puts
+        a `w`-initial parse (leading 0, < 0.5) before an `s`-initial one — preferring
+        the unmarked weak onset over an initial inversion among genuine ties — and (b)
+        more generally breaks toward `w` at the earliest position the tied scansions
+        diverge. Ragged-safe (any N); distinct same-N scansions get distinct (dyadic,
+        exact) keys, so it fully determines the order except for the vanishingly rare
+        ragged prefix-collision, which still falls through to the stable `arange`.
+        Cached."""
+        bc = getattr(self, "_content_cache", None)
+        if bc is not None:
+            return bc
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.float64)
+        elif getattr(self, "_ragged", False):
+            def _one(mv):
+                a = np.asarray(mv, dtype=bool)
+                if a.size == 0:
+                    return 0.0
+                return float(np.dot(a.astype(np.float64), 0.5 ** (1 + np.arange(a.size))))
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float64)
+        else:
+            # rectangular (S, N): one matmul with the dyadic weight vector
+            a = np.asarray(self._meter_vals, dtype=np.float64)
+            if a.ndim < 2 or a.shape[1] == 0:
+                bc = np.zeros(a.shape[0] if a.ndim >= 1 else len(self._all_scores),
+                              dtype=np.float64)
+            else:
+                w = 0.5 ** (1 + np.arange(a.shape[1], dtype=np.float64))
+                bc = a @ w
+        self._content_cache = bc
+        return bc
+
+    def _order(self, idxs, scores):
+        """The shared parse comparator: sort scansion indices by (score, then
+        fewest resolutions `ss`, period-k regularity, distinct pseudo-feet, fewest
+        dips `ww`, then the scansion-content key — canonical, `w`-onset-preferring),
+        with `arange` only as a vanishing deep safety, for a fully deterministic order.
+        `ss` is the PRIMARY tie-break (after score): among co-optimal parses a
+        resolution — two stresses crammed into one beat — is the most marked
+        departure from `wsws…`, so minimising resolutions first best matches human
+        scansion (57.1% vs 56.3% for a regularity-first order on the litlab tagged
+        sample; +1% on iambic/trochaic/dactylic, tied on anapestic). It also fixes
+        forced initial inversions like 'Pity the world' — reg-first preferred the
+        resolution `(ss)(ws)…` (stressing 'ty') for its cleaner tail; ss-first takes
+        the truer dip `(sw*)(ws)…`. `ww` stays LAST (putting it early costs ~7pts).
+        Every key is cheap and computed from the scansion — NOT the DP foot-parser —
+        so best_parse stays decoupled from the churning foot layer (web, parsed_df,
+        meter_type, save/load, cmp_prosodics read it). Applied everywhere parses are
+        ranked so best_parse / unbounded / parse_rank / get_parses_df agree."""
+        reg = self._regularity_key()[idxs]
+        pf = self._pseudo_foot_key()[idxs]
+        ss, ww = self._doubled_keys()
+        ss, ww = ss[idxs], ww[idxs]
+        content = self._content_key()[idxs]
+        return idxs[np.lexsort((np.arange(len(idxs)), content, ww, pf, reg, ss, np.asarray(scores)))]
+
     @property
     def best_parse(self):
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
-            # best among unbounded
-            self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
+            scores = self._scores
+            # Fast path: a strictly-unique minimum score needs NO tie-break — the
+            # comparator's primary (exact-score) key already decides it, so
+            # best_parse == argmin. This restores the O(S) argmin that the tie-break
+            # cascade otherwise replaced with a full eager key-materialization +
+            # lexsort on EVERY best_parse (~half of lines have a unique min; the
+            # comparator was ~3600x slower than argmin here). Identical result: when
+            # the min is unique, _order(...)[0] IS that argmin parse.
+            if int(np.isclose(scores, scores.min()).sum()) == 1:
+                self._best_idx = int(self._unbounded_indices[int(scores.argmin())])
+            else:
+                self._best_idx = int(self._order(self._unbounded_indices, scores)[0])
         bp = self._get_parse(self._best_idx, rank=1)
         if bp is not None:
             bp.num_cooptimal = self.num_cooptimal
@@ -1579,7 +1402,7 @@ class LazyParseList:
     def unbounded(self):
         """Unbounded parses sorted by score (best first)."""
         from .parselists import ParseList
-        sorted_idx = self._unbounded_indices[np.argsort(self._scores)]
+        sorted_idx = self._order(self._unbounded_indices, self._scores)
         return ParseList(
             [self._get_parse(int(i)) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent,
@@ -1590,7 +1413,7 @@ class LazyParseList:
         from .parselists import ParseList
         bounded_indices = np.where(~self._unbounded_mask)[0]
         bounded_scores = self._all_scores[bounded_indices]
-        sorted_idx = bounded_indices[np.argsort(bounded_scores)]
+        sorted_idx = self._order(bounded_indices, bounded_scores)
         return ParseList(
             [self._get_parse(int(i), is_bounded=True) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent, show_bounded=True,
@@ -1599,13 +1422,13 @@ class LazyParseList:
     @property
     def data(self):
         """All parses sorted by score ascending (best first); bounded and unbounded interleaved by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         return [self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
                 for i in sorted_idx]
 
     def __iter__(self):
         """Iterate all parses sorted by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         for i in sorted_idx:
             yield self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
 
@@ -1696,10 +1519,13 @@ class LazyParseList:
     def stats(self, **kwargs):
         from .parselists import ParseList
         df = ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
-        # inject unit num (e.g. line_num) for DF-path results
+        # inject unit num (e.g. line_num) for DF-path results — but not if it's
+        # already present as a column OR in the index (ParseList.stats sets it as the
+        # index via setindex; a double would break a downstream reset_index).
         unit_num = getattr(self, '_unit_num', None)
-        if unit_num is not None and self.parse_unit + '_num' not in df.columns:
-            df.insert(0, self.parse_unit + '_num', unit_num)
+        col = self.parse_unit + '_num'
+        if unit_num is not None and col not in df.columns and col not in (df.index.names or []):
+            df.insert(0, col, unit_num)
         return df
 
     def to_html(self, as_str=False, css=None, **kwargs):
@@ -1762,7 +1588,7 @@ class LazyParseList:
         unb_idx = self._unbounded_indices
         rank_of = np.full(len(unbounded_mask), -1, dtype=np.int32)
         if len(unb_idx) > 0:
-            ub_sorted = unb_idx[np.argsort(self._scores)]
+            ub_sorted = self._order(unb_idx, self._scores)
             rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
             best_idx = int(ub_sorted[0])
         else:
@@ -1770,9 +1596,9 @@ class LazyParseList:
         if mode == 'best':
             parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
         elif mode == 'unbounded':
-            parse_indices = unb_idx[np.argsort(self._scores)]
+            parse_indices = self._order(unb_idx, self._scores)
         else:
-            parse_indices = np.argsort(all_scores)
+            parse_indices = self._order(np.arange(len(all_scores)), all_scores)
         P = len(parse_indices)
         if P == 0:
             return pd.DataFrame()
@@ -1891,7 +1717,7 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
     parse.wordtokens = wordtokens
     parse.wordforms = wordforms
     parse.slot_units = sylls
-    parse.scansion = list(scansion)
+    parse.scansion_positions = list(scansion)
     parse.is_bounded = False
     parse.bounded_by = []
     parse.unmetrical = False

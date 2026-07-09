@@ -594,7 +594,7 @@ class TextModel(Entity):
             S_total = len(unbounded_mask)
             rank_of = np.full(S_total, -1, dtype=np.int32)
             if len(unb_idx) > 0:
-                ub_sorted = unb_idx[np.argsort(pl._scores)]
+                ub_sorted = pl._order(unb_idx, pl._scores)
                 rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
                 best_idx = int(ub_sorted[0])
             else:
@@ -603,9 +603,9 @@ class TextModel(Entity):
             if mode == 'best':
                 parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
             elif mode == 'unbounded':
-                parse_indices = unb_idx[np.argsort(pl._scores)]
+                parse_indices = pl._order(unb_idx, pl._scores)
             else:
-                parse_indices = np.argsort(all_scores)
+                parse_indices = pl._order(np.arange(len(all_scores)), all_scores)
 
             P = len(parse_indices)
             if P == 0:

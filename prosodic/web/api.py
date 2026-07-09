@@ -306,6 +306,11 @@ def _render_slot(slot):
     return f'<span class="{classes}">{txt}</span>'
 
 
+# Separator drawn between feet in a rendered parse (see render_parse_html). Inline
+# style so it renders identically in the app and in standalone HTML exports.
+FOOT_SEP = '<span class="foot-sep" style="color:#b7b7c2;margin:0 2px;font-weight:400;">|</span>'
+
+
 def render_parse_html(parse, line=None):
     """Render a parse as HTML with meter/stress/violation CSS classes.
 
@@ -347,6 +352,20 @@ def render_parse_html(parse, line=None):
                 ordered_wt_ids.append(key)
             slots_by_wt[key].append(slot)
 
+    # Foot boundaries: draw a '|' AFTER the last slot of each foot (except the last),
+    # so anacrusis/feminine edges show as their own segments (w|…, …|w). Keyed to the
+    # slot OBJECT, not a flat index: a positional counter only advances on slots that
+    # map to a rendered wordtoken, so an unmapped slot (e.g. a pooled alt-pronunciation
+    # whose word_num isn't in the line) would shift every '|' one position. Computed
+    # from the DP delineation.
+    foot_bound_slots = set()
+    try:
+        for ft in parse.metrical_feet[:-1]:
+            if ft.slots:
+                foot_bound_slots.add(id(ft.slots[-1]))
+    except Exception:
+        pass
+
     # If we have a line with wordtokens (incl. punctuation), interleave
     if line is not None and hasattr(line, 'wordtokens'):
         parts = []
@@ -362,7 +381,10 @@ def render_parse_html(parse, line=None):
                 continue
             slots = slots_by_wt.get(id(wt))
             if slots:
-                parts.extend(_render_slot(s) for s in slots)
+                for s in slots:
+                    parts.append(_render_slot(s))
+                    if id(s) in foot_bound_slots:
+                        parts.append(FOOT_SEP)
             else:
                 parts.append(html.escape(stripped))
         return ''.join(parts)
@@ -372,7 +394,10 @@ def render_parse_html(parse, line=None):
     for i, key in enumerate(ordered_wt_ids):
         if i > 0:
             parts.append(' ')
-        parts.extend(_render_slot(s) for s in slots_by_wt[key])
+        for s in slots_by_wt[key]:
+            parts.append(_render_slot(s))
+            if id(s) in foot_bound_slots:
+                parts.append(FOOT_SEP)
     return ''.join(parts)
 
 
@@ -711,7 +736,7 @@ def _parse_and_build_rows(t, meter):
     """Parse lines + (for any long line) its lineparts. Return combined rows,
     sorted by line_num, rank. Returns (rows, num_lines, prose_mode_flag).
     """
-    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
+    from prosodic.parsing.vectorized import parse_batch_from_df, parse_units_from_df
 
     long_lnums = _long_line_nums(t)
     prose_mode = len(long_lnums) > 0
@@ -719,8 +744,9 @@ def _parse_and_build_rows(t, meter):
     # Pass 1: short lines via the entity-free DF path (parse_batch_from_df) — no
     # eager Syllable/Phoneme trees. render_parse_html and the render loop below
     # work on the resulting SyllData parses (grouped by word_num). Long lines are
-    # handled by their lineparts in Pass 2 (entity path — they aren't line-keyed
-    # in the syllable frame and would blow up the DF-path candidate space).
+    # handled by their lineparts in Pass 2 (also DF, via parse_units_from_df — each
+    # linepart is short, so its candidate space is small; the whole long line is what
+    # would blow up, and we never parse that).
     short_lines = [ln for ln in t.lines if ln.num not in long_lnums]
     if short_lines:
         meter.parse_unit = 'line'
@@ -753,7 +779,7 @@ def _parse_and_build_rows(t, meter):
         units_to_parse = [u for _, u in expanded]
         if units_to_parse:
             meter.parse_unit = 'linepart'
-            lp_results = parse_batch(units_to_parse, meter)
+            lp_results = parse_units_from_df(units_to_parse, t._syll_df, meter)
             for i, (ln, u) in enumerate(expanded):
                 long_lineparts_by_line.setdefault(ln, []).append((u, None))
             for i, (wt, pl) in enumerate(lp_results):
@@ -986,7 +1012,6 @@ async def parse_stream(req: dict):
     _check_size(text_str)
     timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_batch
     from prosodic.parsing.meter import Meter
 
     input_lines = text_str.split('\n')[:linelim]
@@ -1245,7 +1270,7 @@ async def parse_line(req: dict):
     _check_size(text_str)
     timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.vectorized import parse_units_from_df
     from prosodic.parsing.meter import Meter
     from prosodic.analysis import grid_data, phrasal_values, LEVEL_NAMES, LEVEL_PALETTE
     from prosodic.texts.phrasal_stress import tree_to_dict
@@ -1335,16 +1360,20 @@ async def parse_line(req: dict):
         is_long = bool(long_lnums)
 
         if not is_long:
-            # Normal single-line parse
-            results = parse_batch(text_lines, meter)
-            for i, (wt, pl) in enumerate(results):
-                pl.parent = wt
-                wt._parses = pl
-                text_lines[i]._parses = pl
+            # Normal single-line parse via the DF path (entity-free). Same pooling as
+            # the Parse table, and — unlike the entity path — it retains dominated
+            # cross-length parses as BOUNDED (see _pool_candidates), so an
+            # alt-pronunciation reading that scans a syllable longer (e.g. 3-syllable
+            # "temperate") still appears in the list. render_parse_html and the slot
+            # walk below both handle DF-path SyllData (via word_num), so no Syllable
+            # entities are built for this view. (First step toward retiring the
+            # duplicate entity parse path — see ROADMAP.)
+            from prosodic.parsing.vectorized import parse_batch_from_df
+            results = parse_batch_from_df(t._syll_df, meter)   # {line_num: LazyParseList}
             line = text_lines[0]
-            # Use the local parse result rather than re-reading line._parses, so a
-            # concurrent request on the same cached text can't swap it out mid-request.
-            first_pl = results[0][1] if results else None
+            first_pl = results.get(line.num)
+            if first_pl is None and results:
+                first_pl = next(iter(results.values()))
             parses = _build_parses_for_pl(first_pl, line)
             elapsed = time.time() - t0
             num_unbounded = sum(1 for p in parses if not p['is_bounded'])
@@ -1374,7 +1403,7 @@ async def parse_line(req: dict):
             units_to_parse = [u for u in expanded if u.num_sylls >= 2]
             pl_by_unit = {}
             if units_to_parse:
-                lp_results = parse_batch(units_to_parse, meter)
+                lp_results = parse_units_from_df(units_to_parse, t._syll_df, meter)
                 for i, (wt, pl) in enumerate(lp_results):
                     if pl is None:
                         continue

@@ -57,6 +57,25 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Parser
 
+- ✅ **Retired the duplicate entity parse path — one parser (DF) remains.** PR #176
+  → develop (2026-07-09). Deleted `parse_batch` + `_pool_combo_parses` +
+  `extract_features` + `_extract_features_hybrid` (~410 lines); every parser feature
+  now lives once, in `parse_batch_from_df` / `_pool_candidates`. `line.best_parse`
+  unifies with `text.parse()` (the mixed-N line-vs-text discrepancy is gone); a new
+  `parse_units_from_df` helper routes lineparts / syntax sub-splits / bare token lists
+  through DF by scoping the parent `syll_df` to each unit's `word_num`s. `Syllable`/
+  `Phoneme` entities untouched — only parse *slots* unify on `SyllData`. Verified:
+  `best_parse` byte-identical vs develop across all 2155 sonnet lines; 673 pass; web
+  green. Doc: `docs/methods/parse-path-unification.md`.
+  - **Ragged-bloat blocker: settled = accept it.** The dominated-length retention
+    (~10% of lines ragged, parses ~double there) is fine — the 468K antimetricality
+    reparse runs a few thousand lines at a time, so peak memory never bites.
+  - **Phase 2 (manual `Parse(line,"wsws")` → DF) deliberately NOT done** — it's a
+    reference constructor, not a duplicate parser; its entity slots are arguably a
+    feature. Left entity-based.
+  - **Before develop→master deploy:** re-run `cmp_prosodics` reparse parity
+    (`text.parse` is byte-identical, but `line.best_parse` now routes through DF).
+
 - ✅ **Ternary meter identification** — shipped 2026-07-06. The gap was
   indeed smaller than assumed: anapestic scansions were already in the
   candidate space and default weights already scan Byron/Browning
@@ -102,6 +121,23 @@ values for words with stress-ambiguous pronunciation variants).
   another pass, optimize `evaluate_constraints_batch` itself instead.
 
 ## Analysis & display
+
+- 🚧 **Foot delineation & headedness** — a derived foot layer (iamb/trochee/
+  anapest/dactyl) over the position scansion, on branch `feet-headedness`
+  (PR #175, not merged). Write-up + roadmap:
+  [`docs/methods/foot-parsing.md`](docs/methods/foot-parsing.md). Shipped on the
+  branch: a DP foot-parser (`analysis/feet.py`, one head per foot, spondee =
+  resolution, period-based size, catalexis), `Parse.metrical_feet`/`head`/
+  `feet_str`, `Line.metrical_parse`, and a regularity-ranked `best_parse`
+  (`_order` = score → period-k regularity → pseudo-feet → position, all cheap and
+  computed from the scansion, **deliberately decoupled** from the DP so best_parse
+  stays stable while feet evolve). Validated: 98% vs `meter_type`, 85% meter
+  recovery across 4 meters, 32%/51% vs the human `parse_human2` foot boundaries
+  (gap = the annotator's poem-meter conventions). **Next** (see the doc):
+  poem-meter-aware footing (head + size) + anacrusis — the biggest gap-closers —
+  then word/phrase boundaries. Foot-annotated corpora are essentially nonexistent
+  (only Haider's small set + `parse_human2` + classical quantitative), so this
+  fills a real derivation gap.
 
 - ✅ **Web app: combined grid + syntax tree in Line View** — shipped
   2026-07-06 (PR #155, then combined same day). `grid_plot()` redesigned

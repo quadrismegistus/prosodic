@@ -57,16 +57,24 @@ catalectic foot, a real beat that counts. A lone **`w`** is.
 **Headedness is an output, not an input.** Each foot's direction (rising/falling)
 is read from where its head sits; the line head is the *majority* direction; the
 meter's foot size is the majority foot length. Surfaced as `Parse.head`,
-`Parse.metrical_feet`, `Parse.feet_str`.
+`Parse.metrical_feet`, `Parse.feet_str`. The legacy per-parse foot properties
+(`Parse.feet`, `foot_counts`, `foot_sizes`, `nary_feet`, `is_rising`, `foot_type`,
+`is_iambic`/…) now **all derive from this DP delineation** — they used to pair
+metrical *positions* two-at-a-time (a binary-only view that couldn't express
+inversion/ternary/anacrusis).
 
-## 2. `Line.metrical_parse` — selecting the reading
+## 2. `Line.metrical_parse` — just `best_parse`, footed
 
-Among the co-optimal (equal-score) parses of a line, `metrical_parse` picks the
-one with the **fewest distinct full feet** (a regular line is metrically *uniform*
-— all iambs, all trochees), line-locally and meter-agnostically. This recovers the
-regular reading (`His tender heir…` → 5 iambs) even for a single line in isolation.
-`best_parse` tie-breaks *arbitrarily* among co-optimal parses; `metrical_parse`
-does not.
+`metrical_parse` returns **`best_parse`** (footed via `.metrical_feet`). It once
+selected a *different* co-optimal parse by foot uniformity (fewest distinct feet,
+then fewest feet), to rescue the regular reading from an arbitrarily-tie-broken
+`best_parse`. That's retired: `best_parse` is now the tuned, gold-validated scansion
+(§3), and the old fewest-feet rule carried a **ternary bias** — on ~6.3% of iambic
+sonnet lines it grabbed a dactyl/anapest misreading (unstressing line-final rhyme
+words to buy fewer feet). Footing `best_parse` directly matches-or-beats it on the
+foot gold with none of that, so `metrical_parse` survives only as the named accessor
+for "the reading we show feet for." Accessing `best_parse` never runs the foot DP;
+the DP fires only when feet are requested.
 
 ## 3. `best_parse` ranking — decoupled from the foot-parser
 

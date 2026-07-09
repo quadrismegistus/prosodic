@@ -503,56 +503,29 @@ class Parse(Entity):
 
     @property
     def is_rising(self) -> Optional[bool]:
-        """
-        Check if the parse has a rising rhythm.
-
-        Returns:
-            Optional[bool]: True if rising, False if falling, None if undetermined.
-        """
-        if not self.positions:
-            return
-        # return not self.positions[0].is_prom
-        try:
-            if self.nary_feet == 3:
-                if self.slots[3].is_prom:
-                    return False  # swws
-                else:
-                    return True  # wssw
-            elif self.nary_feet == 2:
-                if self.slots[3].is_prom:
-                    return True  # wsws
-                else:
-                    return False  # swsw
-        except (IndexError, AttributeError):
-            pass
-        return not self.positions[0].is_prom
+        """Rising (iamb/anapest) vs falling (trochee/dactyl) rhythm, read from the DP
+        foot delineation's head direction (`metrical_feet`/`head`), not the old
+        4th-syllable heuristic."""
+        if not self.slots:
+            return None
+        return self.head.direction == "rising"
 
     @property
     def nary_feet(self) -> int:
-        """
-        Get the n-ary foot type of the parse.
-
-        Returns:
-            int: The n-ary foot type (2 for binary, 3 for ternary, etc.).
-        """
-        return int(np.median(self.foot_sizes))
+        """Dominant foot size (2 = binary, 3 = ternary): the median over the REAL
+        (disyllabic+) feet from the DP delineation — lone-syllable edge feet (bare
+        `s`, extrametrical `w`) are excluded so an anacrusis/feminine edge doesn't
+        drag it toward 1."""
+        sizes = [n for n in self.foot_sizes if n > 1]
+        return int(np.median(sizes)) if sizes else 2
 
     @property
     def feet(self) -> List[str]:
-        """
-        Get the list of feet in the parse.
-
-        Returns:
-            List[str]: List of feet as strings.
-        """
-        if self.num_positions == 1:
-            feet = [self.positions[0].meter_str]
-        else:
-            feet = []
-            for i in range(1, self.num_positions, 2):
-                pos1, pos2 = self.positions[i - 1], self.positions[i]
-                feet.append(pos1.meter_str + pos2.meter_str)
-        return feet
+        """Foot patterns (`'ws'`, `'wws'`, `'sw'`, …) from the DP delineation
+        (`metrical_feet`). Was a naive position-pairing (2 positions = 1 foot) that
+        could not express inversions, ternary feet, or anacrusis; now the validated
+        syllable-based system (see analysis.feet)."""
+        return [ft.pattern for ft in self.metrical_feet]
 
     @property
     def metrical_feet(self):
@@ -579,13 +552,9 @@ class Parse(Entity):
 
     @property
     def foot_counts(self) -> Counter:
-        """
-        Get a counter of foot types in the parse.
-
-        Returns:
-            Counter: Counter of foot types.
-        """
-        return Counter(self.feet)
+        """Counter of foot LABELS (iamb/trochee/anapest/dactyl/…) from the DP
+        delineation."""
+        return Counter(ft.label for ft in self.metrical_feet)
 
     @property
     def foot_sizes(self) -> List[int]:

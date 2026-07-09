@@ -168,33 +168,16 @@ class Line(GridMethods, WordTokenList):
 
     @property
     def metrical_parse(self):
-        """Among the co-optimal (min-score, unbounded) parses, the one with the
-        most UNIFORM footing — fewest distinct foot types, then fewest feet.
-        best_parse merely tie-breaks arbitrarily among co-optimal parses (so it can
-        return a ragged reading when a clean one is equally optimal). A regular line
-        is metrically uniform (all iambs, all trochees, all anapests, …), so
-        preferring the fewest-distinct-feet co-optimal parse recovers the regular
-        scansion — LINE-LOCALLY, with no poem-level meter and no prior, and
-        meter-agnostically (it doesn't assume iambic). E.g. 'His tender heir might
-        bear his memory' -> 5 iambs even parsed in isolation."""
-        pl = self.parses
-        unb = list(pl.unbounded) if pl is not None else []
-        if not unb:
-            return self.best_parse
-        ms = min(p.score for p in unb)
-        ties = [p for p in unb if p.score == ms]
-        if len(ties) == 1:
-            return ties[0]
-        # count DISTINCT full feet — a trailing bare foot (catalectic/extrametrical
-        # stub, e.g. 'sw sw sw s' = 3 trochees + a stub) shouldn't inflate the
-        # distinctness of an otherwise-uniform line.
-        # distinct real-foot types (a lone-s `bare` is a catalectic form of the
-        # prevailing foot, not a new type; a lone-w `extrametrical` isn't a foot),
-        # then beat count — a `bare` s IS a beat and counts, an `extrametrical` w
-        # (anacrusis/feminine) is not a beat and doesn't.
-        return min(ties, key=lambda p: (len({ft.label for ft in p.metrical_feet
-                                              if ft.label not in ("bare", "extrametrical")}),
-                                        sum(1 for ft in p.metrical_feet if ft.label != "extrametrical")))
+        """The parse we foot for display: `best_parse`, footed via `.metrical_feet`.
+
+        Formerly this selected a *different* co-optimal parse by foot uniformity
+        (fewest distinct feet, then fewest feet). Retired: best_parse is now the
+        tuned, gold-validated scansion, while the old fewest-feet criterion had a
+        ternary bias — on ~6.3% of iambic sonnet lines it picked a dactyl/anapest
+        misreading (unstressing line-final rhyme words to buy fewer feet). Footing
+        best_parse directly matches-or-beats it against the foot gold with none of
+        that. Kept as a named accessor for 'the reading we show feet for'."""
+        return self.best_parse
 
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:

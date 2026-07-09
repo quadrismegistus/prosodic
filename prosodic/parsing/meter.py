@@ -244,14 +244,31 @@ class Meter(Entity):
                         yield pl
                     return
 
-        # fallback: Entity-based path (only if no syll_df anywhere — a hand-built entity)
+        # DF path for a bare WordTokenList (or any multi-unit entity, e.g. a token
+        # list spanning several lines): scope the parent text's syll_df to each parse
+        # unit. Its lines/lineparts live in that frame; if there is no parent frame at
+        # all (a hand-built token list), parse a fresh TextModel of its text.
+        # (retire-entity-parser: the entity parse_batch is gone.)
         parse_units = self.get_parse_units(text)
         if parse_units is None:
             log.warning(f"cannot parse {text}")
             return
-        from .vectorized import parse_batch
-        results = parse_batch(parse_units[:lim], self, syll_df=syll_df)
-        for wt, pl in results:
-            pl.parent = wt
-            wt._parses = pl
-            yield pl
+        units = list(parse_units)[:lim] if lim else list(parse_units)
+        parent_df = getattr(getattr(text, 'text', None), '_syll_df', None)
+        if parent_df is None and units:
+            parent_df = getattr(getattr(units[0], 'text', None), '_syll_df', None)
+        if parent_df is None:
+            from ..texts import TextModel
+            yield from self.parse_text_iter(
+                TextModel(getattr(text, 'txt', str(text))), force=force, lim=lim)
+            return
+        from .vectorized import parse_units_from_df
+        for unit, pl in parse_units_from_df(units, parent_df, self):
+            if pl is not None:
+                pl._text = getattr(unit, 'text', None) or text
+                pl.parent = unit
+                try:
+                    unit._parses = pl
+                except Exception:
+                    pass
+                yield pl

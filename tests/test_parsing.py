@@ -274,33 +274,23 @@ def test_vectorized_bounding():
     assert bp.meter_str == "-+-+-+-+-+"
 
 
-def test_entity_path_evaluates_all_constraints():
-    """Regression: parse_batch (the entity/web parse path) must evaluate every
-    constraint via the vectorized dispatch, agreeing with parse_batch_from_df.
-
-    Before the two paths were unified, parse_batch used a single-line evaluator
-    that hardcoded only 7 constraints, so clash/lapse/s_func/w_heavy/s_light/
-    word_foot were silently all-zero on the entity path (which every web
-    endpoint uses)."""
+def test_all_constraints_evaluated():
+    """Regression: the (single, DF) parse path must evaluate every constraint via the
+    vectorized dispatch — clash/s_func/w_heavy/word_foot must not be silently all-zero
+    (they were on the old single-line entity evaluator, since retired with the whole
+    entity parse path — see docs/methods/parse-path-unification.md)."""
     from prosodic.parsing.meter import Meter
-    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
+    from prosodic.parsing.vectorized import parse_batch_from_df
 
     m = Meter(constraints=["w_stress", "s_unstress", "clash", "s_func",
                            "w_heavy", "word_foot"])
     names = list(m.constraints.keys())
     line = "And dig deep trenches in thy beautys field"
-
-    ent_mass = parse_batch(TextModel(line).lines, m)[0][1]._all_viols.sum(axis=(0, 1))
-    by = {n: int(ent_mass[i]) for i, n in enumerate(names)}
-    # these previously-ignored constraints all fire on this line
-    for n in ["clash", "s_func", "w_heavy", "word_foot"]:
-        assert by[n] > 0, f"{n} not evaluated on the entity path (mass={by[n]})"
-
-    # entity path must agree with the DF path on constraint totals
     t = TextModel(line)
-    df_mass = list(parse_batch_from_df(t._syll_df, m).values())[0]._all_viols.sum(axis=(0, 1))
-    assert [int(x) for x in df_mass] == [int(x) for x in ent_mass], \
-        "DF and entity paths disagree on constraint totals"
+    mass = list(parse_batch_from_df(t._syll_df, m).values())[0]._all_viols.sum(axis=(0, 1))
+    by = {n: int(mass[i]) for i, n in enumerate(names)}
+    for n in ["clash", "s_func", "w_heavy", "word_foot"]:
+        assert by[n] > 0, f"{n} not evaluated (mass={by[n]})"
 
 
 def _reference_bounding(viol_sums):
@@ -386,35 +376,6 @@ def test_bounding_tiled_equals_reference():
     assert Lc * Ti * Tj * 14 * 8 <= V.BOUNDING_MEM_BUDGET
     # small problems are not tiled (single-shot, identical to the old path)
     assert V._bounding_block_sizes(3, 20, 6, bytes_per_elem=8) == (3, 20, 20)
-
-
-def test_df_and_entity_paths_agree_on_ambiguous_lines():
-    """The DF/vector path (text.parse) must explore the full cartesian product
-    of pronunciation variants, like the entity path, so it finds the true best
-    parse on ambiguous lines. Regression for AUDIT C9/M3: the DF path used to
-    build only 'diagonal' form combos and returned worse-than-optimal parses on
-    ~18% of Shakespeare lines (once missing a perfect parse, reporting 3 viols)."""
-    from prosodic.parsing.meter import Meter
-    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
-    lines = [
-        "More than that tongue that more hath more express'd.",
-        "Shall I compare thee to a summers day",
-        "When forty winters shall besiege thy brow",
-        "That thereby beautys rose might never die",
-    ]
-    t = TextModel("\n".join(lines))
-    m = Meter()
-    df = parse_batch_from_df(t._syll_df, m)
-    ent = {(wt[0].line_num if len(wt) else None): pl
-           for wt, pl in parse_batch(t.lines, m)
-           if pl is not None and hasattr(pl, "_all_viols")}
-    for ln, dpl in df.items():
-        epl = ent.get(ln)
-        assert epl is not None, f"line {ln} missing from entity path"
-        assert abs(dpl.best_parse.score - epl.best_parse.score) < 1e-9, (
-            f"line {ln}: DF best score {dpl.best_parse.score} != "
-            f"entity {epl.best_parse.score} — DF under-explored variants"
-        )
 
 
 def test_df_path_finds_optimal_on_ambiguous_line():

@@ -960,11 +960,9 @@ def test_decode_permalink_bad_json():
 def test_render_parse_html_no_line_fallback():
     # render_parse_html(parse) with no line falls back to space-joining slots.
     from prosodic.web.api import render_parse_html
-    from prosodic.parsing.vectorized import parse_batch
-    from prosodic.parsing.meter import Meter
     from prosodic.imports import TextModel
     t = TextModel('To be or not to be')
-    _wt, pl = parse_batch(t.lines, Meter())[0]
+    pl = t.lines[0].parses   # DF path
     html_out = render_parse_html(pl.best_parse)   # no `line` argument
     assert 'mtr_s' in html_out and 'mtr_w' in html_out
     assert '<span' in html_out

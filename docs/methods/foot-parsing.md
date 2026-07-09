@@ -169,16 +169,23 @@ so it isn't even cleanly winnable from the label.
 
 The foot-parser is **decoupled from `best_parse`**, so it can be made as rich as
 needed without destabilizing anything. Against the hand-tagged gold it is already at
-97.5%; remaining work, in priority:
+97.5%. Remaining work:
 
-1. **Poem-meter head, to break the ternary rising/falling tie** — the *only* real
-   residual (§4). Detect the poem head via the period/phase machinery and, among
-   equal-cost edge variants, prefer anacrusis in falling meters / feminine in rising.
-   Threading exists (`foot_parse` takes `pref_size`/`pref_head` in the un-merged
-   poem-bias branch); the blocker is that these are line-local calls with no poem
-   context, plus the gold's labels contradict its hand-footing on exactly these lines.
-2. **Phrase boundaries** (`linepart_num` / syntax) — where inversions cluster; ties
-   back to the caesura analysis.
+1. **Phrase boundaries** (`linepart_num` / syntax) — where inversions cluster; ties
+   back to the caesura analysis. Still line-scoped (a line's own syntax), so it fits
+   the design below.
+
+**Deliberately *not* done — poem-level footing.** The one real residual (the ternary
+rising/falling tie, §4) needs the *poem's* head to break — anacrusis in falling
+meters, feminine in rising. The hooks exist (`foot_parse` takes `pref_size`/
+`pref_head`; feeding `meter_type` in would likely resolve most of it), and it stays
+un-merged on purpose. **Prosodic is line-scoped by design — to a fault:** every unit
+(parse, scansion, `best_parse`, footing) is computed from a single line in isolation,
+with no cross-line or poem-level state. Wiring a poem→line dependency into footing
+would breach that consistency to recover ~2% of ternary lines, so it stays an
+*accepted limitation*, not a planned feature. (If it's ever wanted, it should be an
+opt-in `pref_head=` argument the caller supplies, never an implicit poem lookup, so
+the line-local default is preserved.)
 
 **Done, and recorded as negative results so they aren't re-tried:**
 - ✅ **Anacrusis + feminine ending** — headless extrametrical edges (`w|…`, `…|w`),

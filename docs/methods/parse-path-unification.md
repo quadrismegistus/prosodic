@@ -82,21 +82,29 @@ bridge — the full unification. Keep the public signature.
   against a slot/pooling regression).
 - No perf regression on the Shakespeare sonnets profile.
 
-## Progress (order corrected per the spike finding)
+## Progress — **Phase 1 COMPLETE (entity parser retired)**
 - [x] Step 0 — Line View single-line branch → DF path (`api.py`, merged in #175).
 - [x] Audit + this doc.
-- [x] **`Parse.concat` DF-safe** — `Parse.__init__` takes `slot_units` from `children`
-      (positions) when supplied and skips the resolved-wordtokens assert; `concat`
-      concats wordtokens only when all constituents carry them, else uses the context
-      / None. Manual `Parse(text, scansion)` path unchanged.
-- [x] **`Meter.parse_text` `Line`/`LinePart` case → DF** — reuses the parent text's
-      `_syll_df` scoped to the unit. **`line.best_parse` now uses `SyllData` slots and
-      unifies with `text.parse()`** (temperate reports `[9,10]` both ways). Fixed a
-      `LazyParseList.stats` double-`line_num` (index vs column) surfaced by it.
-- [ ] 1a — **bare `WordTokenList.parse()`** still hits the entity fallback (no parent
-      `_syll_df`). Build a syll_df for it (or from its text). Narrow; rare.
-- [ ] 1a — web linepart branches (`api.py:784`, `1409`) → DF (linepart-scoped syll_df).
-- [ ] 1a — `api.py:1017` endpoint → DF.
-- [ ] 1b — `ParseSlot.wordform`/`.syll` DF-safe (no real callers — low risk).
-- [ ] 1c — delete `parse_batch` + `_pool_combo_parses` (blocked on the above callers).
-- [ ] Phase 2 — `Parse(line, scansion)` → DF (removes the last entity slots).
+- [x] `Parse.concat` DF-safe — `Parse.__init__` takes `slot_units` from `children`
+      when supplied and skips the resolved-wordtokens assert; `concat` uses the context
+      / None when constituents don't carry wordtokens.
+- [x] `Meter.parse_text` `Line`/`LinePart` case → DF — **`line.best_parse` now uses
+      `SyllData` slots and unifies with `text.parse()`** (temperate `[9,10]` both ways).
+- [x] `parse_units_from_df` helper — parses any `WordTokenList` unit via DF by scoping
+      the parent `syll_df` to its `word_num`s (a synthetic group id per unit).
+- [x] web linepart branches (streaming + `parse_line`) → DF; `api.py` has no `parse_batch`.
+- [x] `Meter` bare-`WordTokenList` fallback → DF (via `parse_units_from_df`, with a
+      fresh-`TextModel` path for a parentless list).
+- [x] `ParseSlot.wordform` DF-safe (`None` off the DF path; had no callers).
+- [x] **DELETE `parse_batch` + `_pool_combo_parses` + `extract_features` +
+      `_extract_features_hybrid`** (~410 lines). One parser (`parse_batch_from_df` /
+      `_pool_candidates`) remains. 673 tests pass; web + `best_parse` unchanged.
+
+## Phase 2 — `Parse(line, "wsws")` → DF: **judgment call, not a clear win**
+The manual constructor still builds *entity* slots (`SyllData` everywhere else). But it
+is **not a duplicate parser** — it hand-builds ONE parse from a *given* scansion, so
+there is no maintenance-drift hazard, and its entity slots are arguably a *feature* (a
+reference/hand parse with full phonology access). Routing it through DF churns ~10
+tests for purity alone. **Recommend leaving it entity-based** unless we specifically
+want zero entity slots anywhere; the "two parsers" problem it was chasing is already
+solved.

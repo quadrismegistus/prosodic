@@ -289,17 +289,24 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # pooled LazyParseList per length; a single length is the common case.
     surv_Ns = sorted({N_of[rank] for (rank, i) in pool_unb},
                      key=lambda N: (N != N_of[0], N))   # canonical combo's N first
-    if len(surv_Ns) == 1:
+    # A length whose every parse was cross-bounded by a shorter/other length has no
+    # unbounded survivor and would otherwise vanish entirely. Keep such lengths as
+    # BOUNDED — e.g. the 3-syllable "temperate" that scans a syllable longer and loses
+    # — so the dominated alt-pronunciation reading still appears (Line View can then
+    # show WHY it isn't on top). They're bounded, so num_parses (an unbounded count)
+    # is untouched; best_parse and the unbounded set are unchanged.
+    all_Ns = {N_of[rank] for rank in range(len(candidates))}
+    extra_Ns = sorted(all_Ns - set(surv_Ns), key=lambda N: (N != N_of[0], N))
+    if len(surv_Ns) == 1 and not extra_Ns:
         return build_for_N(surv_Ns[0])
 
-    # Survivors span multiple syllable counts (e.g. "fire" 1~2). A single
-    # (P, N, C) array can't hold both lengths, so concatenate each length's
-    # pooled scansions into a RAGGED LazyParseList (per-scansion viols/meter_vals
-    # of different N). The unbounded set thus keeps co-optimal parses of BOTH
-    # lengths — matching v1. Cross-length domination is already in pool_unb, so
-    # each sub-list's mask is correct.
+    # Multiple lengths: a single (P, N, C) array can't hold them, so concatenate each
+    # length's pooled scansions into a RAGGED LazyParseList. Surviving lengths keep
+    # their co-optimal parses unbounded (matching v1); dominated `extra_Ns` come back
+    # all-bounded (build_for_N marks them so, since none are in pool_unb). Cross-length
+    # domination is already in pool_unb, so each sub-list's mask is correct.
     scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
-    for N in surv_Ns:
+    for N in list(surv_Ns) + extra_Ns:
         sub = build_for_N(N, full_ok=False)
         sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
         for i in range(len(sub._all_scansions)):

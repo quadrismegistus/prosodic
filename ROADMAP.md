@@ -57,6 +57,46 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Parser
 
+- 🎯 **Retire the duplicate entity parse path — unify on the DF path.** The parser
+  has TWO implementations of the same thing: the **DF path** (`parse_batch_from_df`
+  + `_pool_candidates`, entity-free, `SyllData` slots) and the **entity path**
+  (`parse_batch` + `_pool_combo_parses`, real `Syllable` entities). They must be
+  kept in lockstep and have already drifted: the mixed-N variant-pooling lives fully
+  in `_pool_candidates` (ragged, retains dominated cross-length parses as bounded),
+  while `_pool_combo_parses` `np.stack`s into one rectangular array — it silently
+  drops dominated lengths and would crash outright on a co-optimal longer reading.
+  Every parser feature is built twice; the entity pooler is the one that lags.
+
+  **Why it's now removable.** The entity path's only original justification was
+  rendering (walk `slot → wordtoken` for word boundaries), and that's gone:
+  `render_parse_html` falls back to the `word_num → WordToken` map for `SyllData`
+  slots, the Parse table already runs on the DF path, `Foot`/`metrical_feet` are
+  duck-typed (`SyllData` works), and Line View's single-line branch was just moved
+  to the DF path (shows dominated readings, 675 pass) as the proof + first step.
+
+  **Plan (own PR, medium-risk / high-payoff):**
+  1. **Audit** every `parse_batch(` caller and every entity-chain assumption —
+     `slot.unit.parent`, `parse.wordtokens is not None`, `Parse.concat`. Grep +
+     confirm the DF path covers each (render / feet / grid / phrasal / violations
+     all already accept `SyllData`).
+  2. **Migrate the stragglers:** Line View's *linepart* branch (parse lineparts via
+     a linepart-scoped `syll_df`), and any direct `parse_batch(text.lines, meter)`.
+  3. **`Parse(line, "wsws")`** — route manual construction through the DF machinery
+     (build/reuse the line's `_syll_df`) instead of the entity path, per the
+     unification. Keep the public signature.
+  4. For the few genuine entity-chain needs, expose a `SyllData`-compatible accessor
+     (the `word_num` bridge render already uses).
+  5. **Delete** `parse_batch` + `_pool_combo_parses`; single path = DF.
+  6. **Verify:** full suite + a Playwright web spot-check + `cmp_prosodics` parity
+     (best_parse byte-identical) + no perf regression.
+
+  **Blocker to settle first:** the DF pooler's dominated-length retention currently
+  keeps each losing length's *full* scansion space, so ~10% of sonnet lines go
+  ragged and parses ~double on them. Fine for Line View; corpus-wide (the 468K-line
+  antimetricality reparse) it's a real cost. Decide before unifying: restrict bulk
+  `text.parse()` to best-per-length (keep full only for the interactive view), or
+  accept it. Line View wants all bounded scansions; bulk analysis does not.
+
 - ✅ **Ternary meter identification** — shipped 2026-07-06. The gap was
   indeed smaller than assumed: anapestic scansions were already in the
   candidate space and default weights already scan Byron/Browning

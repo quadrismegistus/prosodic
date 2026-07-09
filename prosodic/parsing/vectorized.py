@@ -1462,10 +1462,20 @@ class LazyParseList:
         # form_idx / stress. Stays numpy — no Entity construction.
         self._sylls_by_scansion = sylls_by_scansion
         self._syll_row_idx_by_scansion = syll_row_idx_by_scansion
-        # scansion encoding, shape (S, N) each — lazily recomputed if missing
+        # scansion encoding, shape (S, N) each
         self._meter_vals = meter_vals
         self._position_ids = position_ids
         self._position_sizes = position_sizes
+        # Parity: some construction paths (pooling; the entity path) don't pass the
+        # encoding. Compute it once here from the scansion strings so the regularity
+        # tie-break — and get_parses_df — work on every LazyParseList (DF and entity
+        # alike), not just where it happened to be supplied. Cached in
+        # encode_scansions; a position like 'ss' spans two syllables, so N is the
+        # sum of position lengths.
+        if self._meter_vals is None and not self._ragged and self._all_scansions:
+            nsylls = sum(len(p) for p in self._all_scansions[0])
+            self._meter_vals, self._position_ids, self._position_sizes = \
+                encode_scansions(self._all_scansions, nsylls)
         self._built_parses = {}  # cache: scansion index -> Parse
         self._best_idx = None
         self._bound_init = True

@@ -67,7 +67,7 @@ differs from the regular reading on **23%** — so the tie-break is pervasive, n
 corner case. The shared comparator `LazyParseList._order` ranks by:
 
 ```
-(score,  period-k regularity,  distinct pseudo-feet,  stable position)
+(score,  period-k regularity,  distinct pseudo-feet,  fewest ss,  fewest ww,  position)
 ```
 
 routed through *every* ranking site (`best_parse`, `unbounded`, `parse_rank`,
@@ -86,10 +86,25 @@ while the foot layer keeps evolving. The foot-parser is the higher-fidelity view
 | unique **bigrams** | 86% | but binary-biased (2 bigrams for iamb, 3 for anapest) — broke ternary detection (Browning) |
 | **period-k** self-similarity | 80% | meter-agnostic (iamb period-2, anapest period-3 both score maximal); **secondary key** |
 | **pseudo-feet** (cut after each strong-run) | 77% alone | cheap, deterministic, foot-flavored; as **tertiary** resolves 39% of residual ties |
+| **fewest `ss`** (resolutions), then **fewest `ww`** (dips) | 90% | quaternary/quinary; among parses that differ only in *where* a doubled position sits, prefer the fewest resolutions (a resolution crams two stresses into one beat — more marked than a dip). `ss` primary matters: `ss`-then-`ww` = 90%, `ww`-then-`ss` = 27%. `ww` is redundant *after* `ss` on the sonnets but principled. |
 
-Residual ties cascade: **52% → 7%** (after period-k) **→ 4%** (after pseudo-feet)
-→ the rest fall to the stable position order, so the sort is fully deterministic.
-`_meter_vals` is computed in `__init__` so the entity and DF paths agree.
+Residual ties cascade: **52% → 7%** (period-k) **→ 4%** (pseudo-feet) **→ 1.4%**
+(fewest-`ss` breaks 59 of the last 90) → the rest fall to the stable position order,
+so the sort is fully deterministic. Every key is a pure scansion statistic (no
+foot-parser), so `best_parse` stays a **93.1%** proxy for the foot-based
+`metrical_parse` without coupling to the DP. `_meter_vals` is computed in
+`__init__` so the entity and DF paths agree.
+
+**One precedence note.** `reg`/`pf` fire *before* `ss`/`ww`, so where a genuine
+initial-inversion line has a resolution reading with a cleaner alternating *tail*
+(e.g. *"Pity the world…"* → `sswswswsws`, treating "Pity" as a disyllabic strong),
+period-k prefers it over the linguistically-truer dip `swwswswsws` ("ty" weak).
+Putting `ss` first *does* recover the dip, but drops overall foot-agreement to
+89.5% — it over-prefers dips elsewhere. The two readings are **co-optimal on
+score** (the grammar can't separate them) *and* tie in `metrical_feet` (both 2
+distinct feet, 5 feet), so the real fix is deeper — a constraint that penalises
+stressing a lexically-unstressed syllable, or word-boundary-aware footing (§5),
+not tie-break precedence.
 
 ## 4. Validation
 
@@ -141,7 +156,7 @@ independent of generation order too.
 ## Files
 
 - `analysis/feet.py` — `foot_parse` (DP), `head_of`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`.
-- `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`.
+- `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`, `_doubled_keys`.
 - `parsing/parses.py` — `Parse.metrical_feet`, `Parse.head`, `Parse.feet_str`.
 - `texts/lines.py` — `Line.metrical_parse`.
 - `scripts/` — `foot_parse.py`, `foot_headedness_demo.py`, `foot_examples.py`, `inversion_map.py`, `caesura_test.py`.

@@ -1589,14 +1589,42 @@ class LazyParseList:
         self._reg_cache = bc
         return bc
 
+    def _foot_uniqueness(self, idx):
+        """(distinct full feet, num feet) for one scansion — the higher-fidelity
+        foot-based regularity key. Runs the DP foot-parser on the scansion's prom
+        array (no Parse object). Used only to break residual (same score AND same
+        period-k regularity) ties, i.e. ~7% of lines."""
+        from ..analysis.feet import foot_parse, FOOT_LABELS
+        proms = np.asarray(self._meter_vals[idx], dtype=bool).ravel()
+        spans = foot_parse(proms)
+        s = "".join("s" if p else "w" for p in proms)
+        labels = {FOOT_LABELS.get(s[a:b], s[a:b]) for a, b in spans}
+        labels.discard("bare")
+        return (len(labels), len(spans))
+
     def _order(self, idxs, scores):
-        """The shared parse comparator: sort scansion indices by score ascending,
-        then by metrical regularity (period-2/3 self-similarity, meter-agnostic).
-        Applied everywhere parses are ranked so best_parse / unbounded / parse_rank
-        / get_parses_df all break co-optimal ties the same way (toward the regular
-        reading)."""
-        key = self._regularity_key()[idxs]
-        return idxs[np.lexsort((np.arange(len(idxs)), key, np.asarray(scores)))]
+        """The shared parse comparator, applied everywhere parses are ranked so
+        best_parse / unbounded / parse_rank / get_parses_df all break co-optimal
+        ties the same way. Sort by (1) score, (2) metrical regularity (period-2/3
+        self-similarity — cheap, vectorized, meter-agnostic), then break any
+        residual same-score-same-regularity ties by (3) the foot-based
+        fewest-distinct-feet key, computed ONLY within those tied groups (~7% of
+        lines) so the DP foot-parse cost is paid only where the cheap key runs out."""
+        scores = np.asarray(scores)
+        reg = self._regularity_key()[idxs]
+        order = np.lexsort((np.arange(len(idxs)), reg, scores))   # (score, reg, position)
+        sidx, ssc, sreg = idxs[order], scores[order], reg[order]
+        n, i = len(sidx), 0
+        while i < n:
+            j = i + 1
+            while j < n and ssc[j] == ssc[i] and sreg[j] == sreg[i]:
+                j += 1
+            if j - i > 1 and self._meter_vals is not None:         # residual tie group
+                grp = sidx[i:j]
+                fk = [self._foot_uniqueness(int(g)) for g in grp]
+                sidx[i:j] = grp[sorted(range(len(grp)), key=lambda k: fk[k])]
+            i = j
+        return sidx
 
     @property
     def best_parse(self):

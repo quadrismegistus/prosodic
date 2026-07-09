@@ -420,6 +420,27 @@ def test_line_best_parse_matches_text_parse():
             f"line {ln.num} num_words: line-path {bp.num_words} != text.parse {nw}"
 
 
+def test_dominated_length_shows_best_pronunciation():
+    """A FULLY-dominated syllable length (every parse cross-bounded by a shorter
+    reading) is kept as a bounded reference row; it must show each meter's OWN best
+    pronunciation, not just the canonical base combo. Regression: the 10-syllable
+    (ws×5) reading of "Thou art more lovely and more temperate" — dominated by the
+    9-syllable elided winner — used to freeze every function word at its default form,
+    so `art` printed unstressed (a spurious 3rd s_unstress, score 3). It should promote
+    `art` (a stressed form the lexicon has), scoring 2 (only `and` + `ate`), consistent
+    with how the winning length is treated. best_parse / num_parses are unaffected."""
+    t = TextModel("Thou art more lovely and more temperate")
+    line = t.lines[0]
+    assert line.best_parse.meter_str == "-+-+-+-+-"          # 9-syll winner unchanged
+    ws5 = [p for p in list(line.parses.unbounded) + list(line.parses.bounded)
+           if p.meter_str == "-+-+-+-+-+"]
+    assert ws5, "the 10-syllable (ws×5) reading should appear as a bounded reference row"
+    p = ws5[0]
+    stresses = [bool(slot.unit.is_stressed) for pos in p.positions for slot in pos.children]
+    assert stresses[1], "art (2nd syllable) must be promoted in the dominated ws×5 reading"
+    assert p.score == 2.0, "with art promoted, only `and` + `ate` violate (not a 3rd on art)"
+
+
 def test_pool_forms_pools_pronunciation_variants():
     """pool_forms=True (default) reports scansions optimal under ANY pronunciation
     of an ambiguous word — Prosodic's in-situ variant resolution — not just the

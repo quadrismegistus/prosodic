@@ -103,7 +103,7 @@ class Parse(Entity):
             scansion = get_iambic_parse(len(self.slot_units))
         if type(scansion) == str:
             scansion = split_scansion(scansion)
-        self.scansion = copy(scansion)
+        self.scansion_positions = copy(scansion)
 
         self.is_bounded = is_bounded
         self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
@@ -119,7 +119,7 @@ class Parse(Entity):
         self.children = ParsePositionList() if not children else children
         self.children.parent = self
         if not self.children:
-            for mpos_str in self.scansion:
+            for mpos_str in self.scansion_positions:
                 self.extend(mpos_str)
         self.init()
 
@@ -268,7 +268,7 @@ class Parse(Entity):
                 children=wordtokens_limited,
                 parent=parses[0].wordtokens.parent,
             )
-        scansion = [x for parse in parses for x in parse.scansion]
+        scansion = [x for parse in parses for x in parse.scansion_positions]
 
         parse = Parse(
             wordtokens=wordtokens,
@@ -727,6 +727,21 @@ class Parse(Entity):
             for mpos in self.positions
             for slot in mpos.slots
         )
+
+    @property
+    def scansion(self) -> str:
+        """Per-syllable metrical scansion in **w/s** (weak/strong POSITION), e.g.
+        `'wswswswsws'` — the same information as `meter_str` (`+`→`s`, `-`→`w`).
+        Cheap: does NOT run the foot parser. (`scansion_positions` is the
+        per-POSITION list form `['s','ww','s',…]`, disyllabic positions grouped.)"""
+        return "".join(self.scansion_positions)
+
+    @property
+    def footed_scansion(self) -> str:
+        """`scansion` cut into feet by the DP, `|`-delimited — e.g. `'wws|wws|wws|w'`
+        (the foot-gold format). Runs the foot parser (see `metrical_feet`); `feet_str`
+        is the annotated `(w s)…` form with `*` substitution marks."""
+        return "|".join(self.feet)
 
     @property
     def meter_ints(self, word_sep: str = "") -> tuple:

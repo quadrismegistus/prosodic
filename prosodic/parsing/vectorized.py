@@ -2047,7 +2047,7 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
     parse.wordtokens = wordtokens
     parse.wordforms = wordforms
     parse.slot_units = sylls
-    parse.scansion = list(scansion)
+    parse.scansion_positions = list(scansion)
     parse.is_bounded = False
     parse.bounded_by = []
     parse.unmetrical = False

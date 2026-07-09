@@ -67,7 +67,7 @@ differs from the regular reading on **23%** — so the tie-break is pervasive, n
 corner case. The shared comparator `LazyParseList._order` ranks by:
 
 ```
-(score,  period-k regularity,  distinct pseudo-feet,  fewest ss,  fewest ww,  position)
+(score,  fewest ss,  period-k regularity,  distinct pseudo-feet,  fewest ww,  position)
 ```
 
 routed through *every* ranking site (`best_parse`, `unbounded`, `parse_rank`,
@@ -81,30 +81,41 @@ while the foot layer keeps evolving. The foot-parser is the higher-fidelity view
 
 ### Sort-key exploration
 
-| key | agreement w/ foot-based pick | notes |
-|---|---|---|
-| unique **bigrams** | 86% | but binary-biased (2 bigrams for iamb, 3 for anapest) — broke ternary detection (Browning) |
-| **period-k** self-similarity | 80% | meter-agnostic (iamb period-2, anapest period-3 both score maximal); **secondary key** |
-| **pseudo-feet** (cut after each strong-run) | 77% alone | cheap, deterministic, foot-flavored; as **tertiary** resolves 39% of residual ties |
-| **fewest `ss`** (resolutions), then **fewest `ww`** (dips) | 90% | quaternary/quinary; among parses that differ only in *where* a doubled position sits, prefer the fewest resolutions (a resolution crams two stresses into one beat — more marked than a dip). `ss` primary matters: `ss`-then-`ww` = 90%, `ww`-then-`ss` = 27%. `ww` is redundant *after* `ss` on the sonnets but principled. |
+Every key is a pure scansion statistic (no foot-parser call), so `best_parse` stays
+decoupled from the churning DP. In order of discovery:
 
-Residual ties cascade: **52% → 7%** (period-k) **→ 4%** (pseudo-feet) **→ 1.4%**
-(fewest-`ss` breaks 59 of the last 90) → the rest fall to the stable position order,
-so the sort is fully deterministic. Every key is a pure scansion statistic (no
-foot-parser), so `best_parse` stays a **93.1%** proxy for the foot-based
-`metrical_parse` without coupling to the DP. `_meter_vals` is computed in
-`__init__` so the entity and DF paths agree.
+| key | notes |
+|---|---|
+| unique **bigrams** | 86% match to a foot pick, but binary-biased (2 bigrams for iamb, 3 for anapest) — broke ternary detection (Browning). Dropped. |
+| **period-k** self-similarity | meter-agnostic (iamb period-2, anapest period-3 both maximal); secondary key. |
+| **pseudo-feet** (cut after each strong-run) | cheap, deterministic, foot-flavored; resolves ~39% of residual ties. |
+| **fewest `ss`** (resolutions) | **primary tie-break** (right after score) — see below. |
+| **fewest `ww`** (dips) | last key; putting it *early* costs ~7 pts (`ss,ww`-first = 49.6% vs human). |
 
-**One precedence note.** `reg`/`pf` fire *before* `ss`/`ww`, so where a genuine
-initial-inversion line has a resolution reading with a cleaner alternating *tail*
-(e.g. *"Pity the world…"* → `sswswswsws`, treating "Pity" as a disyllabic strong),
-period-k prefers it over the linguistically-truer dip `swwswswsws` ("ty" weak).
-Putting `ss` first *does* recover the dip, but drops overall foot-agreement to
-89.5% — it over-prefers dips elsewhere. The two readings are **co-optimal on
-score** (the grammar can't separate them) *and* tie in `metrical_feet` (both 2
-distinct feet, 5 feet), so the real fix is deeper — a constraint that penalises
-stressing a lexically-unstressed syllable, or word-boundary-aware footing (§5),
-not tie-break precedence.
+**Why `ss` is the primary tie-break, validated against humans.** Ranked against the
+human per-syllable scansions in the litlab tagged sample (1597 comparable lines, 4
+meters), `ss`-first exact-matches **57.1%** vs **56.3%** for a regularity-first
+order — +1% on iambic/trochaic/dactylic, tied on anapestic, never worse. (This
+briefly looked *worse* — 89.5% vs 93.1% — but only against `metrical_parse` as the
+yardstick, and `metrical_parse` is itself wrong on these ties, so that metric was
+rewarding the wrong pick. Against real humans, `ss`-first wins.) A resolution crams
+two stresses into one beat — the most marked departure from `wsws…` — so minimising
+it *first* is the right markedness ordering.
+
+This is what fixes forced initial inversions **under uniform weights** (every
+constraint weight is 1; we do not hand-tune). *"Pity the world, or else this glutton
+be"* is a genuine 1–1 tie: the dip `swwswswsws` puts `{ty, the}` in one weak
+position → a single `unres_across` (an across-word disyllabic weak may hold only
+function words, and "ty" is content-word material); the resolution `sswswswsws` puts
+`{Pi, ty}` in one strong position → a single `s_unstress` (unstressed "ty" under a
+beat). Both score 1.0 — the grammar cannot separate them, and reweighting to force
+it shifts 27% of sonnet parses (not viable). `ss`-first selects the truer dip
+`(s w*)(w s)(w s)(w s)(w s)` = trochaic inversion + 4 iambs; regularity-first took
+the spondaic `(s s)(w s)…`, stressing "ty", for its cleaner *tail*.
+
+The full order (score → ss → period-k → pseudo-feet → ww → stable position) is
+fully deterministic. `_meter_vals` is computed in `__init__` so the entity and DF
+paths agree.
 
 ## 4. Validation
 

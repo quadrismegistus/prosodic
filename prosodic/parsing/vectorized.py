@@ -1663,19 +1663,25 @@ class LazyParseList:
 
     def _order(self, idxs, scores):
         """The shared parse comparator: sort scansion indices by (score, then
-        period-k regularity, distinct pseudo-feet, fewest resolutions `ss`, fewest
+        fewest resolutions `ss`, period-k regularity, distinct pseudo-feet, fewest
         dips `ww`), with a stable position fallback for a fully deterministic order.
+        `ss` is the PRIMARY tie-break (after score): among co-optimal parses a
+        resolution — two stresses crammed into one beat — is the most marked
+        departure from `wsws…`, so minimising resolutions first best matches human
+        scansion (57.1% vs 56.3% for a regularity-first order on the litlab tagged
+        sample; +1% on iambic/trochaic/dactylic, tied on anapestic). It also fixes
+        forced initial inversions like 'Pity the world' — reg-first preferred the
+        resolution `(ss)(ws)…` (stressing 'ty') for its cleaner tail; ss-first takes
+        the truer dip `(sw*)(ws)…`. `ww` stays LAST (putting it early costs ~7pts).
         Every key is cheap and computed from the scansion — NOT the DP foot-parser —
-        so best_parse stays stable (web, parsed_df, meter_type, save/load,
-        cmp_prosodics read it) while the foot layer keeps evolving, yet the ss/ww
-        keys make the tie-break pick match the foot reading ~90% of the time.
-        Applied everywhere parses are ranked so best_parse / unbounded / parse_rank /
-        get_parses_df break ties the same way."""
+        so best_parse stays decoupled from the churning foot layer (web, parsed_df,
+        meter_type, save/load, cmp_prosodics read it). Applied everywhere parses are
+        ranked so best_parse / unbounded / parse_rank / get_parses_df agree."""
         reg = self._regularity_key()[idxs]
         pf = self._pseudo_foot_key()[idxs]
         ss, ww = self._doubled_keys()
         ss, ww = ss[idxs], ww[idxs]
-        return idxs[np.lexsort((np.arange(len(idxs)), ww, ss, pf, reg, np.asarray(scores)))]
+        return idxs[np.lexsort((np.arange(len(idxs)), ww, pf, reg, ss, np.asarray(scores)))]
 
     @property
     def best_parse(self):

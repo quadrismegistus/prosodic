@@ -25,12 +25,18 @@ FOOT_LABELS = {
 MIDWORD = 0.1  # tiebreak only: a foot boundary that splits a word costs this much
 
 
-def _foot_cost(lead, head_len, trail):
+def _foot_cost(lead, head_len, trail, is_last=False, pref_size=2):
     """Cost of a foot = `lead` weaks + a strong-run head (`head_len` syllables,
     one beat) + `trail` weaks. One head per foot always; a disyllabic head is a
-    strong resolution, not two beats."""
+    strong resolution, not two beats. A bare foot (a lone head) is degenerate
+    MID-line but legitimate at the LINE END — that's catalexis (a truncated final
+    foot), so it's cheap there, not awful. `pref_size` is the line's dominant foot
+    size (from period self-similarity): feet of that size are free, so a genuinely
+    ternary line isn't broken into cheaper binary feet."""
     size = lead + head_len + trail
-    c = {1: 10.0, 2: 0.0, 3: 1.0}.get(size, 4.0 + size)  # degenerate awful, binary best
+    if size == 1:
+        return 0.5 if is_last else 10.0                  # catalexis vs mid-line degeneracy
+    c = 0.0 if size == pref_size else (1.0 if size in (2, 3) else 4.0 + size)
     if lead > 0 and trail > 0:                            # head is medial (amphibrach/cretic)
         c += 2.0
     return c
@@ -79,6 +85,13 @@ def foot_parse(proms, word_starts=None):
     mild boundary tiebreak. Returns (start, end) foot spans covering [0, len)."""
     proms = [bool(p) for p in proms]
     n = len(proms)
+    # dominant foot size from period self-similarity (dactyl/anapest repeat with
+    # period 3, iamb/trochee with period 2) — prefer it so the cost doesn't break a
+    # genuinely-ternary line into cheaper binary feet (the binary bias the litlab
+    # parse_human2 validation exposed).
+    def _sim(k):
+        return sum(proms[i] == proms[i - k] for i in range(k, n)) / (n - k) if n > k else 0.0
+    pref_size = 3 if _sim(3) > _sim(2) else 2
     ws = word_starts or set()
     runs, i = [], 0                                  # maximal strong runs = heads
     while i < n:
@@ -98,7 +111,7 @@ def foot_parse(proms, word_starts=None):
     g = [runs[0][0]] + [runs[k][0] - runs[k - 1][1] for k in range(1, m)] + [n - runs[-1][1]]
 
     def cost(lead, k, trail):
-        c = _foot_cost(lead, hlen[k], trail)
+        c = _foot_cost(lead, hlen[k], trail, is_last=(k == m - 1), pref_size=pref_size)
         start = runs[k][0] - lead
         if start > 0 and start not in ws:            # foot begins mid-word
             c += MIDWORD

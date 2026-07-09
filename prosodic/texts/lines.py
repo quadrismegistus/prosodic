@@ -188,8 +188,13 @@ class Line(GridMethods, WordTokenList):
         # count DISTINCT full feet — a trailing bare foot (catalectic/extrametrical
         # stub, e.g. 'sw sw sw s' = 3 trochees + a stub) shouldn't inflate the
         # distinctness of an otherwise-uniform line.
-        return min(ties, key=lambda p: (len({ft.label for ft in p.metrical_feet if ft.label != "bare"}),
-                                        len(p.metrical_feet)))
+        # distinct real-foot types (a lone-s `bare` is a catalectic form of the
+        # prevailing foot, not a new type; a lone-w `extrametrical` isn't a foot),
+        # then beat count — a `bare` s IS a beat and counts, an `extrametrical` w
+        # (anacrusis/feminine) is not a beat and doesn't.
+        return min(ties, key=lambda p: (len({ft.label for ft in p.metrical_feet
+                                              if ft.label not in ("bare", "extrametrical")}),
+                                        sum(1 for ft in p.metrical_feet if ft.label != "extrametrical")))
 
     @cache
     def rime_distance(self, line: 'Line', max_dist=RHYME_MAX_DIST) -> float:

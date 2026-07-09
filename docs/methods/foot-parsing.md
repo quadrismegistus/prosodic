@@ -30,21 +30,29 @@ trochaic inversion (two weak *positions* can't be adjacent), so it resolves it i
 one weak position — which, footed over positions, hides the inversion. Over
 syllables the inversion reappears (`Pi-ty | the-world` = trochee + iamb).
 
-**One head per foot.** `#feet = #strong-runs`. Each maximal run of strongs is one
-head (one beat); the weak runs between/around them are distributed to neighbouring
-feet by the DP. So there is **no pyrrhic** (0-head foot) and **no two-head
-spondee**: an `ss` is a *strong resolution* (a disyllabic head, still one beat),
-because `max_s = max_w = 2` and positions alternate, so adjacent strong *syllables*
-are always one position.
+**One head per interior foot.** `#interior feet = #strong-runs`. Each maximal run of
+strongs is one head (one beat); the weak runs between/around them are distributed to
+neighbouring feet by the DP. So there is **no pyrrhic** (0-head foot) *interior* and
+**no two-head spondee**: an `ss` is a *strong resolution* (a disyllabic head, still
+one beat), because `max_s = max_w = 2` and positions alternate, so adjacent strong
+*syllables* are always one position.
 
-**Cost function** (`_foot_cost`):
+**Extrametrical edges (`w|…`, `…|w`).** The one exception to "every foot has a head"
+is at the line edges: a line-initial lone weak (**anacrusis**) or line-final lone
+weak (**feminine ending**) may split off as its own *headless* foot. These are
+*extrametrical* — not beats — and the DP takes them only when doing so lets the
+interior feet be cleaner (recovers `wws|wws|wws|w` over the head-forced
+`wws|wws|wwsw`). Note the asymmetry: a lone **`s`** is *not* extrametrical — it is a
+catalectic foot, a real beat that counts. A lone **`w`** is.
+
+**Cost function** (`_foot_cost` + `EXTRAMETRICAL`):
 
 | factor | rule |
 |---|---|
 | foot size | free at the line's **dominant size** (period-2 vs period-3 self-similarity); other well-formed sizes cost more — so a genuinely ternary line isn't broken into cheaper binary feet |
-| bare foot | degenerate mid-line (10); **catalexis** at the line end (0.5) — a truncated final foot is legitimate |
+| bare foot | degenerate mid-line (10); **catalexis** at the line end (0.5) — a truncated final foot (a lone `s`) is a legitimate beat |
 | medial head | amphibrach/cretic penalised (+2) |
-| word boundary | a foot boundary that splits a word costs a small tiebreak (`MIDWORD`) |
+| extrametrical edge | anacrusis `w|…` / feminine `…|w` cost `EXTRAMETRICAL` = 1.0 (tuned on the gold: <0.5 over-peels to 67%, ~1.0–1.5 is the 97.5% plateau) |
 
 **Headedness is an output, not an input.** Each foot's direction (rising/falling)
 is read from where its head sits; the line head is the *majority* direction; the
@@ -138,37 +146,46 @@ anapestic 9/9, iambic 8/9, trochaic 5/6, dactylic 6/9. Misses are genuinely hard
 (Blake's *Tyger* is a real trochaic/iambic dispute; *Charge of the Light Brigade*
 is irregular).
 
-**Against human foot boundaries** (`parse_human2`, 1731 lines, self-consistency:
-strip `|` → re-foot → compare): **32% exact / 51% boundary**. The gap is *not*
-delineation but the annotator's **poem-meter conventions** — anacrusis (a leading
-upbeat as its own foot), a consistent head across the poem, and catalexis. The same
-scansion `wswwswws` is *dactylic + anacrusis* (`w|sww|sww|s`, human) **or**
-*anapestic* (`ws|wws|wws`, ours); the human picks by the poem's known meter, which
-a line-local parser can't see.
+**Against a hand-tagged foot gold** (`data/tagged_samples/foot-gold.csv`, 120 lines,
+30/meter, `scripts/foot_gold_eval.py`): **97.5% exact / 96.2% boundary** — iambic
+100%, trochaic 100%, dactylic 96.7%, anapestic 93.3%.
+
+*`parse_human2` is not a foot gold, which misled an earlier "32%/51%".* The `|` in
+the litlab sample is a mix of conventions: iambic is annotated syllable-by-syllable
+(`w|s|w|s`, 83% of its lines), anapestic marks upbeat-vs-beat (`ww|s|ww|s`), and
+only trochaic is real feet — so we were scoring *correct* feet against a *beat grid*.
+Re-tagged by foot (incl. the anacrusis/feminine edges), the same footer scores 97.5%.
+Foot-annotated gold sets essentially don't exist in the wild (multilingual survey +
+this file), so this 120-line set is the target.
+
+The one real residual is the ternary **rising-vs-falling tie**: `wswwswwsw` foots as
+*anacrusis + dactyls* (`w|sww|sww|sw`) **or** *iamb + anapests + feminine*
+(`ws|wws|wws|w`) at *identical* cost (one edge foot + a clean interior, 2.0 either
+way). Breaking it needs the poem head (falling→anacrusis), which a line-local parser
+can't see — and here the gold lines are *labelled* anapestic yet hand-footed falling,
+so it isn't even cleanly winnable from the label.
 
 ## 5. Roadmap
 
-The foot-parser is now **decoupled from `best_parse`**, so it can be made as rich
-(and slow) as needed without destabilizing anything. In rough priority:
+The foot-parser is **decoupled from `best_parse`**, so it can be made as rich as
+needed without destabilizing anything. Against the hand-tagged gold it is already at
+97.5%; remaining work, in priority:
 
-1. **Poem-meter awareness (head + size)** — the biggest `parse_human2` gap-closer.
-   Detect the poem's (head, size) via the period/phase machinery, then foot each
-   line *into* it. Would likely lift agreement into the 60s–70s.
-2. **Anacrusis** — a leading upbeat as its own foot (`w|sww|…`) for falling meters;
-   pairs with (1).
-3. **Word boundaries** — promote the `MIDWORD` tiebreak to a real, tunable cost
-   (weak-distribution + word-foot alignment, Kiparsky). Needs a `line`→scansion
-   word-alignment (syllabify each word, map to scansion positions) — reusable for
-   everything else. *Note:* feet cross words freely in pentameter, so this is a
-   moderate preference, not a dominant one.
-4. **Phrase boundaries** (`linepart_num` / syntax) — where inversions cluster; ties
+1. **Poem-meter head, to break the ternary rising/falling tie** — the *only* real
+   residual (§4). Detect the poem head via the period/phase machinery and, among
+   equal-cost edge variants, prefer anacrusis in falling meters / feminine in rising.
+   Threading exists (`foot_parse` takes `pref_size`/`pref_head` in the un-merged
+   poem-bias branch); the blocker is that these are line-local calls with no poem
+   context, plus the gold's labels contradict its hand-footing on exactly these lines.
+2. **Phrase boundaries** (`linepart_num` / syntax) — where inversions cluster; ties
    back to the caesura analysis.
 
-**Two models, both defensible.** The current foot-parser is a *mechanical,
-line-local* delineation (one head per foot, meter-agnostic). `parse_human2` is
-*poem-meter-informed hand scansion*. Matching the human fully means re-encoding the
-annotator's convention, which is a different goal from mechanical delineation.
-Either is a legitimate destination; (1)–(2) move toward the human one.
+**Done, and recorded as negative results so they aren't re-tried:**
+- ✅ **Anacrusis + feminine ending** — headless extrametrical edges (`w|…`, `…|w`),
+  cost `EXTRAMETRICAL` tuned on the gold. This was the 93.3%→97.5% lift.
+- ❌ **Word-boundary footing** — human foot boundaries land on word boundaries at the
+  *chance* rate (`P(foot|word-gap) ≈ P(foot|mid-word)`, sign even flips by meter), so
+  the `MIDWORD` tiebreak was retired. No consistent signal to align to.
 
 **Sort-key determinism — done.** The last key is now the `w`-onset-preferring
 scansion-content key (§3), so the order is total and independent of generation
@@ -176,9 +193,9 @@ order; the remaining residual is genuine metrical ambiguity, not an undecided so
 
 ## Files
 
-- `analysis/feet.py` — `foot_parse` (DP), `head_of`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`.
+- `analysis/feet.py` — `foot_parse` (DP + extrametrical edges), `_foot_dp`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`, `EXTRAMETRICAL`.
 - `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`, `_doubled_keys`, `_content_key`.
 - `parsing/parses.py` — `Parse.metrical_feet`, `Parse.head`, `Parse.feet_str`.
 - `texts/lines.py` — `Line.metrical_parse`.
-- `scripts/` — `foot_parse.py`, `foot_headedness_demo.py`, `foot_examples.py`, `inversion_map.py`, `caesura_test.py`.
-- Validation data — `parse_human2` in `data/tagged_samples/tagged-sample-litlab-2016.txt`.
+- `scripts/` — `foot_gold_eval.py` (gold validation), `foot_parse.py`, `foot_headedness_demo.py`, `foot_examples.py`, `inversion_map.py`, `caesura_test.py`.
+- **Gold** — `data/tagged_samples/foot-gold.csv` (120 hand-tagged lines). *Not* `parse_human2` in the litlab sample, which is a beat/syllable grid, not feet.

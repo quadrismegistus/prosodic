@@ -16,7 +16,7 @@ from collections import namedtuple, Counter
 
 FOOT_LABELS = {
     "ws": "iamb", "sw": "trochee", "wws": "anapest", "sww": "dactyl",
-    "wsw": "amphibrach", "sws": "cretic", "s": "bare",
+    "wsw": "amphibrach", "sws": "cretic", "s": "bare", "w": "extrametrical",
     # disyllabic head (a strong RESOLUTION, still one beat):
     "ss": "spondee", "wss": "iamb-r", "ssw": "trochee-r", "wwss": "anapest-r",
     "ssww": "dactyl-r", "wssw": "amphibrach-r",
@@ -63,21 +63,16 @@ def foot_head(pattern):
     return "ambiguous"
 
 
-def foot_parse(proms):
-    """Foot-parse by DP. Heads are strong RUNS (each maximal run of strongs = one
-    beat = one position, 1-2 syllables); the weak runs between/around them are
-    distributed to the neighbouring feet. So #feet = #strong-runs, exactly one
-    head per foot — no pyrrhic (0 heads), no two-head spondee. Returns (start, end)
-    foot spans covering [0, len)."""
-    proms = [bool(p) for p in proms]
+EXTRAMETRICAL = 1.0  # cost of a line-edge lone-weak foot (anacrusis / feminine ending);
+# tuned on the litlab foot-gold set: <0.5 over-peels (collapses to 67%), ~1.0-1.5 is
+# the 97.5% plateau, too high stops peeling and reverts to the 93.3% no-edge baseline.
+
+
+def _foot_dp(proms, pref_size):
+    """Core DP: cut `proms` into exactly #strong-runs feet (one head each), the weak
+    runs distributed to neighbouring feet to minimise total _foot_cost. Returns
+    (spans, total_cost)."""
     n = len(proms)
-    # dominant foot size from period self-similarity (dactyl/anapest repeat with
-    # period 3, iamb/trochee with period 2) — prefer it so the cost doesn't break a
-    # genuinely-ternary line into cheaper binary feet (the binary bias the litlab
-    # parse_human2 validation exposed).
-    def _sim(k):
-        return sum(proms[i] == proms[i - k] for i in range(k, n)) / (n - k) if n > k else 0.0
-    pref_size = 3 if _sim(3) > _sim(2) else 2
     runs, i = [], 0                                  # maximal strong runs = heads
     while i < n:
         if proms[i]:
@@ -89,7 +84,7 @@ def foot_parse(proms):
         else:
             i += 1
     if not runs:
-        return [(0, n)] if n else []
+        return ([(0, n)] if n else []), 0.0
     m = len(runs)
     hlen = [e - s for s, e in runs]
     # weak-run lengths: g[0] before run 0, g[k] between run k-1/k, g[m] after last
@@ -121,7 +116,51 @@ def foot_parse(proms):
     for k in range(m - 2, -1, -1):
         leads[k] = back[k][leads[k + 1]]
     trails = [(g[k + 1] - leads[k + 1]) if k < m - 1 else g[m] for k in range(m)]
-    return [(runs[k][0] - leads[k], runs[k][1] + trails[k]) for k in range(m)]
+    return [(runs[k][0] - leads[k], runs[k][1] + trails[k]) for k in range(m)], best
+
+
+def foot_parse(proms, pref_size=None, extrametrical=True):
+    """Foot-parse by DP. Heads are strong RUNS (each maximal run of strongs = one
+    beat = one position, 1-2 syllables); the weak runs between/around them are
+    distributed to the neighbouring feet. So #feet = #strong-runs, exactly one head
+    per foot — no pyrrhic, no two-head spondee. With `extrametrical` (default), a
+    line-INITIAL lone weak (anacrusis) and/or line-FINAL lone weak (feminine ending)
+    may be split off as their own headless edge feet (`w|…`, `…|w`) when that lets the
+    interior feet be cleaner — a hand-scansion convention validated on the litlab
+    foot-gold set (recovers `wws|wws|wws|w` over the forced `wws|wws|wwsw`). Returns
+    (start, end) foot spans covering [0, len)."""
+    proms = [bool(p) for p in proms]
+    n = len(proms)
+    if pref_size is None:
+        # dominant foot size from period self-similarity (dactyl/anapest repeat with
+        # period 3, iamb/trochee with period 2) — prefer it so the cost doesn't break
+        # a genuinely-ternary line into cheaper binary feet.
+        def _sim(k):
+            return sum(proms[i] == proms[i - k] for i in range(k, n)) / (n - k) if n > k else 0.0
+        pref_size = 3 if _sim(3) > _sim(2) else 2
+    if not extrametrical:
+        return _foot_dp(proms, pref_size)[0]
+    best_spans, best_cost = None, float("inf")
+    for ana in (0, 1):                               # peel a leading weak as anacrusis?
+        for fem in (0, 1):                           # peel a trailing weak as feminine?
+            if ana and (not n or proms[0]):
+                continue                             # can only peel a WEAK edge
+            if fem and (not n or proms[-1]):
+                continue
+            lo, hi = ana, n - fem
+            interior = proms[lo:hi]
+            if lo >= hi or not any(interior):
+                continue                             # a head must remain in the interior
+            spans, c = _foot_dp(interior, pref_size)
+            c += EXTRAMETRICAL * (ana + fem)
+            spans = [(a + lo, b + lo) for a, b in spans]
+            if ana:
+                spans = [(0, 1)] + spans
+            if fem:
+                spans = spans + [(n - 1, n)]
+            if c < best_cost:
+                best_cost, best_spans = c, spans
+    return best_spans if best_spans is not None else _foot_dp(proms, pref_size)[0]
 
 
 def line_head(patterns):

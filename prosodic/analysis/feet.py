@@ -5,8 +5,7 @@ Footing is a SEGMENTATION problem: cut the per-syllable s/w string into feet,
 minimizing a small cost. Foot size AND headedness both fall out of the cut — no
 per-line k or head is assumed. Solved exactly by DP over syllable positions, so a
 foot may have one head (iamb/trochee/anapest/dactyl), two (spondee), or zero
-(pyrrhic) — the latter two as costed substitutions. A mild tiebreak prefers foot
-boundaries that fall on word boundaries.
+(pyrrhic) — the latter two as costed substitutions.
 
 Headedness is then read OUT: a foot is rising/falling by where its head sits; the
 line head is the majority direction of its feet; the meter's foot size is the
@@ -22,7 +21,6 @@ FOOT_LABELS = {
     "ss": "spondee", "wss": "iamb-r", "ssw": "trochee-r", "wwss": "anapest-r",
     "ssww": "dactyl-r", "wssw": "amphibrach-r",
 }
-MIDWORD = 0.1  # tiebreak only: a foot boundary that splits a word costs this much
 
 
 def _foot_cost(lead, head_len, trail, is_last=False, pref_size=2):
@@ -52,18 +50,6 @@ def slot_proms(slots):
     return [bool(s.is_prom) for s in slots]
 
 
-def slot_word_starts(slots):
-    """Indices of slots that begin a word (for the boundary tiebreak)."""
-    out = set()
-    prev = object()
-    for i, s in enumerate(slots):
-        wn = getattr(s.unit, "word_num", i)
-        if i == 0 or wn != prev:
-            out.add(i)
-        prev = wn
-    return out
-
-
 def foot_head(pattern):
     """Direction of a foot from where its strong(s) sit: strong-last -> 'rising',
     strong-first -> 'falling', all-weak/all-strong -> 'none', else 'ambiguous'."""
@@ -77,12 +63,12 @@ def foot_head(pattern):
     return "ambiguous"
 
 
-def foot_parse(proms, word_starts=None):
+def foot_parse(proms):
     """Foot-parse by DP. Heads are strong RUNS (each maximal run of strongs = one
     beat = one position, 1-2 syllables); the weak runs between/around them are
     distributed to the neighbouring feet. So #feet = #strong-runs, exactly one
-    head per foot — no pyrrhic (0 heads), no two-head spondee. word_starts gives a
-    mild boundary tiebreak. Returns (start, end) foot spans covering [0, len)."""
+    head per foot — no pyrrhic (0 heads), no two-head spondee. Returns (start, end)
+    foot spans covering [0, len)."""
     proms = [bool(p) for p in proms]
     n = len(proms)
     # dominant foot size from period self-similarity (dactyl/anapest repeat with
@@ -92,7 +78,6 @@ def foot_parse(proms, word_starts=None):
     def _sim(k):
         return sum(proms[i] == proms[i - k] for i in range(k, n)) / (n - k) if n > k else 0.0
     pref_size = 3 if _sim(3) > _sim(2) else 2
-    ws = word_starts or set()
     runs, i = [], 0                                  # maximal strong runs = heads
     while i < n:
         if proms[i]:
@@ -111,11 +96,7 @@ def foot_parse(proms, word_starts=None):
     g = [runs[0][0]] + [runs[k][0] - runs[k - 1][1] for k in range(1, m)] + [n - runs[-1][1]]
 
     def cost(lead, k, trail):
-        c = _foot_cost(lead, hlen[k], trail, is_last=(k == m - 1), pref_size=pref_size)
-        start = runs[k][0] - lead
-        if start > 0 and start not in ws:            # foot begins mid-word
-            c += MIDWORD
-        return c
+        return _foot_cost(lead, hlen[k], trail, is_last=(k == m - 1), pref_size=pref_size)
 
     INF = float("inf")
     dp = {g[0]: (0.0, None)}                          # foot 0's leading weaks are fixed = g[0]
@@ -153,12 +134,10 @@ def line_head(patterns):
     return Head("rising" if r >= f else "falling", abs(r - f) / (r + f))
 
 
-def parse_feet(slots, word_starts=None, head=None):
+def parse_feet(slots, head=None):
     """Foot-parse `slots` (variable size + headedness) into labelled Foot objects.
     A foot is `is_substituted` when its direction disagrees with the line head."""
-    if word_starts is None:
-        word_starts = slot_word_starts(slots)
-    spans = foot_parse(slot_proms(slots), word_starts)
+    spans = foot_parse(slot_proms(slots))
     patterns = ["".join("s" if slots[k].is_prom else "w" for k in range(a, b)) for a, b in spans]
     if head is None:
         head = line_head(patterns).direction

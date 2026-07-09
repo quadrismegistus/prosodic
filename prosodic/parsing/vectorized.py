@@ -1859,10 +1859,13 @@ class LazyParseList:
     def stats(self, **kwargs):
         from .parselists import ParseList
         df = ParseList(self.data, parse_unit=self.parse_unit, parent=self.parent).stats(**kwargs)
-        # inject unit num (e.g. line_num) for DF-path results
+        # inject unit num (e.g. line_num) for DF-path results — but not if it's
+        # already present as a column OR in the index (ParseList.stats sets it as the
+        # index via setindex; a double would break a downstream reset_index).
         unit_num = getattr(self, '_unit_num', None)
-        if unit_num is not None and self.parse_unit + '_num' not in df.columns:
-            df.insert(0, self.parse_unit + '_num', unit_num)
+        col = self.parse_unit + '_num'
+        if unit_num is not None and col not in df.columns and col not in (df.index.names or []):
+            df.insert(0, col, unit_num)
         return df
 
     def to_html(self, as_str=False, css=None, **kwargs):

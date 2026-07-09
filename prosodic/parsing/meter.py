@@ -219,7 +219,32 @@ class Meter(Entity):
                 yield pl
             return
 
-        # fallback: Entity-based path (when _syll_df not available)
+        # A single Line/LinePart entity has no _syll_df of its own: reuse its parent
+        # text's, scoped to this unit, so single-unit parsing (line.parse /
+        # line.best_parse) goes through the SAME DF path as text.parse() rather than
+        # the entity parser. Unifies the two — line.best_parse now matches text.parse()
+        # (was a real discrepancy: line-level dropped dominated cross-length readings).
+        # (retire-entity-parser: replaces the Entity fallback for the common case.)
+        if df_col and getattr(text, 'num', None) is not None:
+            parent = getattr(text, 'text', None)
+            parent_df = getattr(parent, '_syll_df', None)
+            if parent_df is not None and len(parent_df) > 0:
+                sub = parent_df[parent_df[df_col] == text.num]
+                if len(sub) > 0:
+                    from .vectorized import parse_batch_from_df
+                    res = parse_batch_from_df(sub, self, line_col=df_col)
+                    for ln in sorted(res.keys()):
+                        pl = res[ln]
+                        # hand the list its unit's wordtokens (context for scope/key/
+                        # render); slots stay SyllData — not per-syllable entities.
+                        pl.wordtokens = getattr(text, 'wordtokens', None)
+                        pl._text = parent
+                        pl.parent = text
+                        text._parses = pl
+                        yield pl
+                    return
+
+        # fallback: Entity-based path (only if no syll_df anywhere — a hand-built entity)
         parse_units = self.get_parse_units(text)
         if parse_units is None:
             log.warning(f"cannot parse {text}")

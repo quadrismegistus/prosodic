@@ -84,13 +84,21 @@ class Parse(Entity):
         self.position_constraints = meter.position_constraint_funcs
         self.constraint_weights = meter.constraints
 
-        # wordforms
+        # wordforms / slot_units
         if isinstance(wordtokens, str):
             wordtokens = next(TextModel(wordtokens).wordtokens.iter_wordtoken_matrix())
-        assert wordtokens.num_with_forms == wordtokens.num_wordforms
-        self.wordtokens = wordtokens
-        self.wordforms = wordtokens.wordforms
-        self.slot_units = [syll for wf in self.wordforms for syll in wf]
+        if children:
+            # Slots are already positioned (a DF-built parse or Parse.concat): take
+            # slot_units straight from the positions and do NOT require resolved entity
+            # wordtokens — a DF parse carries none. (retire-entity-parser)
+            self.wordtokens = wordtokens
+            self.wordforms = getattr(wordtokens, 'wordforms', None) if wordtokens is not None else None
+            self.slot_units = [slot.unit for mpos in children for slot in mpos.children]
+        else:
+            assert wordtokens.num_with_forms == wordtokens.num_wordforms
+            self.wordtokens = wordtokens
+            self.wordforms = wordtokens.wordforms
+            self.slot_units = [syll for wf in self.wordforms for syll in wf]
 
         # self.parent = parent if parent is not None else wordtokens
         self.parent = None # wait for parselist
@@ -258,16 +266,19 @@ class Parse(Entity):
             [mpos for parse in parses for mpos in parse.positions],
             parent=parses[0].parent,
         )
-        wordtokens_limited = [wt for parse in parses for wt in parse.wordtokens]
-        if wordtokens is not None:
-            wordtokens = wordtokens.copy()
+        # Aggregate wordtokens. If every constituent carries them (entity parses),
+        # reconstruct by concatenation as before. Otherwise (a DF parse's SyllData
+        # slots carry no resolved WordTokenList) use the explicit context — the parent
+        # line, itself a WordTokenList — or None; downstream (render/scope/key)
+        # tolerates None via the slots' word_num. (retire-entity-parser)
+        if all(getattr(p, 'wordtokens', None) is not None for p in parses):
+            wordtokens_limited = [wt for parse in parses for wt in parse.wordtokens]
+            base = wordtokens if wordtokens is not None else parses[0].wordtokens
+            wordtokens = base.copy()
             wordtokens.children = wordtokens_limited
-        else:
-            wordtokens_cls = type(wordtokens) if wordtokens is not None else WordTokenList
-            wordtokens = wordtokens_cls(
-                children=wordtokens_limited,
-                parent=parses[0].wordtokens.parent,
-            )
+        elif wordtokens is not None:
+            wordtokens = wordtokens.copy()
+        # else: wordtokens stays None
         scansion = [x for parse in parses for x in parse.scansion_positions]
 
         parse = Parse(

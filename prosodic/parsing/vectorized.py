@@ -82,7 +82,7 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     if not pool_unb:
         return get_lpl(0)
 
-    def build_for_N(N, full_ok=True):
+    def build_for_N(N, full_ok=True, full_forms=False):
         """Pooled LazyParseList over the combos whose scansions have N syllables
         (they share a scansion space): combo-base + overlay, exactly as the
         single-N path. `pool_unb` already reflects cross-N domination. `full_ok`
@@ -90,7 +90,17 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         set); the mixed-N caller passes full_ok=False so every length goes through
         the same dedup-by-meter-string overlay, keeping the ragged list's
         per-length representation symmetric (bounded reporting / sylls_by_scansion
-        set on every length, not just the overlaid ones)."""
+        set on every length, not just the overlaid ones).
+
+        `full_forms=True` (passed for DOMINATED lengths only): also overlay
+        cross-N-BOUNDED parses, so each meter string gets its within-length
+        MIN-SCORE pronunciation rather than only the base (canonical) combo's forms.
+        Without it, a dominated length (no unbounded members) shows every function
+        word at its default form — e.g. the 10-syll `(ws)×5` of "Thou art…" reports
+        `art` unstressed (a spurious extra `s_unstress`) even though promoting it
+        (a form the lexicon has) is that reading's own optimum. The sort key keeps
+        unbounded < bounded then min-score, so surviving lengths are unaffected and
+        num_parses / best_parse never move (dominated lengths stay all-bounded)."""
         group = sorted(r for r in range(len(candidates)) if N_of[r] == N)
         base = group[0]
         pool_unb_N = {(r, i) for (r, i) in pool_unb if N_of[r] == N}
@@ -107,11 +117,12 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         for rank in group[1:]:
             for i in np.where(candidates[rank][1])[0]:
                 i = int(i)
-                if (rank, i) not in pool_unb:
-                    continue
+                bounded = (rank, i) not in pool_unb
+                if bounded and not full_forms:
+                    continue                           # surviving length: unbounded overlay only
                 lr = get_lpl(rank)
                 ms = _pool_meter_str(lr, i)
-                sk = (False, float(lr._all_scores[i]), rank, i)
+                sk = (bounded, float(lr._all_scores[i]), rank, i)
                 cur = best_rep.get(ms)
                 if cur is None or sk < cur[0]:
                     best_rep[ms] = (sk, rank, i)
@@ -153,8 +164,12 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # all-bounded (build_for_N marks them so, since none are in pool_unb). Cross-length
     # domination is already in pool_unb, so each sub-list's mask is correct.
     scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
+    extra_set = set(extra_Ns)
     for N in list(surv_Ns) + extra_Ns:
-        sub = build_for_N(N, full_ok=False)
+        # dominated lengths get full_forms=True so their reference readings show each
+        # meter's own best pronunciation (promotable function words promoted), not the
+        # canonical-only base combo. Surviving lengths keep the fast unbounded overlay.
+        sub = build_for_N(N, full_ok=False, full_forms=(N in extra_set))
         sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
         for i in range(len(sub._all_scansions)):
             scans.append(sub._all_scansions[i])

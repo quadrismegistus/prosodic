@@ -306,6 +306,11 @@ def _render_slot(slot):
     return f'<span class="{classes}">{txt}</span>'
 
 
+# Separator drawn between feet in a rendered parse (see render_parse_html). Inline
+# style so it renders identically in the app and in standalone HTML exports.
+FOOT_SEP = '<span class="foot-sep" style="color:#b7b7c2;margin:0 2px;font-weight:400;">|</span>'
+
+
 def render_parse_html(parse, line=None):
     """Render a parse as HTML with meter/stress/violation CSS classes.
 
@@ -347,9 +352,23 @@ def render_parse_html(parse, line=None):
                 ordered_wt_ids.append(key)
             slots_by_wt[key].append(slot)
 
+    # Foot boundaries: the flat syllable index AFTER which each foot ends (except
+    # the last), so a '|' can be drawn between feet — anacrusis/feminine edges show
+    # as their own segments (w|…, …|w). Computed from the DP delineation.
+    foot_bounds = set()
+    try:
+        feet = parse.metrical_feet
+        cum = 0
+        for ft in feet[:-1]:
+            cum += len(ft.slots)
+            foot_bounds.add(cum - 1)
+    except Exception:
+        pass
+
     # If we have a line with wordtokens (incl. punctuation), interleave
     if line is not None and hasattr(line, 'wordtokens'):
         parts = []
+        si = 0
         for wt in line.wordtokens:
             txt = wt.txt
             # preserve any leading whitespace from the original tokenization
@@ -362,17 +381,26 @@ def render_parse_html(parse, line=None):
                 continue
             slots = slots_by_wt.get(id(wt))
             if slots:
-                parts.extend(_render_slot(s) for s in slots)
+                for s in slots:
+                    parts.append(_render_slot(s))
+                    if si in foot_bounds:
+                        parts.append(FOOT_SEP)
+                    si += 1
             else:
                 parts.append(html.escape(stripped))
         return ''.join(parts)
 
     # Fallback: just join by word boundary using slot-side parents
     parts = []
+    si = 0
     for i, key in enumerate(ordered_wt_ids):
         if i > 0:
             parts.append(' ')
-        parts.extend(_render_slot(s) for s in slots_by_wt[key])
+        for s in slots_by_wt[key]:
+            parts.append(_render_slot(s))
+            if si in foot_bounds:
+                parts.append(FOOT_SEP)
+            si += 1
     return ''.join(parts)
 
 
@@ -1335,16 +1363,20 @@ async def parse_line(req: dict):
         is_long = bool(long_lnums)
 
         if not is_long:
-            # Normal single-line parse
-            results = parse_batch(text_lines, meter)
-            for i, (wt, pl) in enumerate(results):
-                pl.parent = wt
-                wt._parses = pl
-                text_lines[i]._parses = pl
+            # Normal single-line parse via the DF path (entity-free). Same pooling as
+            # the Parse table, and — unlike the entity path — it retains dominated
+            # cross-length parses as BOUNDED (see _pool_candidates), so an
+            # alt-pronunciation reading that scans a syllable longer (e.g. 3-syllable
+            # "temperate") still appears in the list. render_parse_html and the slot
+            # walk below both handle DF-path SyllData (via word_num), so no Syllable
+            # entities are built for this view. (First step toward retiring the
+            # duplicate entity parse path — see ROADMAP.)
+            from prosodic.parsing.vectorized import parse_batch_from_df
+            results = parse_batch_from_df(t._syll_df, meter)   # {line_num: LazyParseList}
             line = text_lines[0]
-            # Use the local parse result rather than re-reading line._parses, so a
-            # concurrent request on the same cached text can't swap it out mid-request.
-            first_pl = results[0][1] if results else None
+            first_pl = results.get(line.num)
+            if first_pl is None and results:
+                first_pl = next(iter(results.values()))
             parses = _build_parses_for_pl(first_pl, line)
             elapsed = time.time() - t0
             num_unbounded = sum(1 for p in parses if not p['is_bounded'])

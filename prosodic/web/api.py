@@ -739,7 +739,7 @@ def _parse_and_build_rows(t, meter):
     """Parse lines + (for any long line) its lineparts. Return combined rows,
     sorted by line_num, rank. Returns (rows, num_lines, prose_mode_flag).
     """
-    from prosodic.parsing.vectorized import parse_batch, parse_batch_from_df
+    from prosodic.parsing.vectorized import parse_batch_from_df, parse_units_from_df
 
     long_lnums = _long_line_nums(t)
     prose_mode = len(long_lnums) > 0
@@ -747,8 +747,9 @@ def _parse_and_build_rows(t, meter):
     # Pass 1: short lines via the entity-free DF path (parse_batch_from_df) — no
     # eager Syllable/Phoneme trees. render_parse_html and the render loop below
     # work on the resulting SyllData parses (grouped by word_num). Long lines are
-    # handled by their lineparts in Pass 2 (entity path — they aren't line-keyed
-    # in the syllable frame and would blow up the DF-path candidate space).
+    # handled by their lineparts in Pass 2 (also DF, via parse_units_from_df — each
+    # linepart is short, so its candidate space is small; the whole long line is what
+    # would blow up, and we never parse that).
     short_lines = [ln for ln in t.lines if ln.num not in long_lnums]
     if short_lines:
         meter.parse_unit = 'line'
@@ -781,7 +782,7 @@ def _parse_and_build_rows(t, meter):
         units_to_parse = [u for _, u in expanded]
         if units_to_parse:
             meter.parse_unit = 'linepart'
-            lp_results = parse_batch(units_to_parse, meter)
+            lp_results = parse_units_from_df(units_to_parse, t._syll_df, meter)
             for i, (ln, u) in enumerate(expanded):
                 long_lineparts_by_line.setdefault(ln, []).append((u, None))
             for i, (wt, pl) in enumerate(lp_results):
@@ -1014,7 +1015,7 @@ async def parse_stream(req: dict):
     _check_size(text_str)
     timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.vectorized import parse_units_from_df
     from prosodic.parsing.meter import Meter
 
     input_lines = text_str.split('\n')[:linelim]
@@ -1273,7 +1274,7 @@ async def parse_line(req: dict):
     _check_size(text_str)
     timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_batch
+    from prosodic.parsing.vectorized import parse_units_from_df
     from prosodic.parsing.meter import Meter
     from prosodic.analysis import grid_data, phrasal_values, LEVEL_NAMES, LEVEL_PALETTE
     from prosodic.texts.phrasal_stress import tree_to_dict
@@ -1406,7 +1407,7 @@ async def parse_line(req: dict):
             units_to_parse = [u for u in expanded if u.num_sylls >= 2]
             pl_by_unit = {}
             if units_to_parse:
-                lp_results = parse_batch(units_to_parse, meter)
+                lp_results = parse_units_from_df(units_to_parse, t._syll_df, meter)
                 for i, (wt, pl) in enumerate(lp_results):
                     if pl is None:
                         continue

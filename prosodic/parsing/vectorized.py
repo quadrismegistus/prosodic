@@ -690,6 +690,38 @@ def parse_batch_from_df(syll_df, meter, line_col='line_num'):
     return results
 
 
+def parse_units_from_df(units, syll_df, meter):
+    """Parse arbitrary parse units (WordTokenLists — lineparts, syntax sub-splits) via
+    the DF path, without the entity `parse_batch`. Each unit's syllables are scoped out
+    of `syll_df` by its wordtokens' `word_num` (== SyllData.word_num) and tagged with a
+    synthetic group id, so sub-units that share a `linepart_num` still parse
+    separately. Returns [(unit, LazyParseList|None)] parallel to `units`.
+    (retire-entity-parser)"""
+    import pandas as pd
+    frames, kept = [], []
+    for i, unit in enumerate(units):
+        wnums = {getattr(wt, 'num', None) for wt in unit if not getattr(wt, 'is_punc', False)}
+        wnums.discard(None)
+        sub = syll_df[syll_df['word_num'].isin(wnums)]
+        if len(sub) == 0:
+            continue
+        sub = sub.copy()
+        sub['_unit_idx'] = i
+        frames.append(sub)
+        kept.append(i)
+    out = [(u, None) for u in units]
+    if not frames:
+        return out
+    results = parse_batch_from_df(pd.concat(frames, ignore_index=True), meter, line_col='_unit_idx')
+    for i in kept:
+        pl = results.get(i)
+        if pl is not None:
+            pl.wordtokens = units[i]      # unit context for render / scope / key
+            pl.parent = units[i]
+            out[i] = (units[i], pl)
+    return out
+
+
 def parse_batch(parse_units, meter, syll_df=None):
     """Parse all units in a single batched operation.
 

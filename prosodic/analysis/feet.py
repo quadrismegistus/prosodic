@@ -40,7 +40,92 @@ def _foot_cost(lead, head_len, trail, is_last=False, pref_size=2):
     return c
 
 Head = namedtuple("Head", ["direction", "confidence"])
-Foot = namedtuple("Foot", ["pattern", "label", "head", "is_substituted", "slots", "sylls"])
+
+
+class Foot:
+    """A metrical foot: a VIEW grouping the syllables it spans (iamb/trochee/anapest/
+    dactyl/spondee/bare/extrametrical). NOT a tree entity — a syllable keeps its one
+    real parent (its WordForm) — so a Foot is an orthogonal grouping over a parse.
+    **Iterating a Foot yields its syllable units**, duck-typed (`SyllData` on the DF
+    path, `Syllable` on the entity path), so accessing feet never forces entity
+    construction.
+
+    Attributes: `pattern` ('wws'), `label` ('anapest'), `head` ('rising'/'falling'/
+    'none'/'ambiguous'), `is_substituted` (inverts the line head), `slots`
+    (ParseSlots), `sylls`/`syllables` (the syllable units)."""
+
+    __slots__ = ("pattern", "label", "head", "is_substituted", "slots", "sylls")
+
+    def __init__(self, pattern, label, head, is_substituted, slots, sylls):
+        self.pattern = pattern
+        self.label = label
+        self.head = head
+        self.is_substituted = is_substituted
+        self.slots = slots
+        self.sylls = sylls
+
+    @property
+    def syllables(self):
+        """The syllable units the foot spans (SyllData or Syllable, duck-typed)."""
+        return self.sylls
+
+    @property
+    def scansion(self) -> str:
+        """The foot's w/s pattern, e.g. `'wws'`."""
+        return self.pattern
+
+    @property
+    def txt(self) -> str:
+        """The foot's text — its syllables joined."""
+        return "".join(getattr(s, "txt", "") or "" for s in self.sylls)
+
+    def to_html(self) -> str:
+        """The foot as a labelled bracket of syllable spans (mtr_/str_ classes
+        matching the web app); `*` in the title marks a substitution."""
+        inner = "".join(
+            f'<span class="mtr_{"s" if s.is_prom else "w"} '
+            f'str_{"s" if getattr(s.unit, "is_stressed", False) else "w"}">'
+            f'{getattr(s.unit, "txt", "")}</span>'
+            for s in self.slots
+        )
+        cls = "foot foot_sub" if self.is_substituted else "foot"
+        return f'<span class="{cls}" title="{self.label}{"*" if self.is_substituted else ""}">{inner}</span>'
+
+    def __iter__(self):
+        return iter(self.sylls)
+
+    def __len__(self):
+        return len(self.pattern)
+
+    def __str__(self):
+        return self.pattern + ("*" if self.is_substituted else "")
+
+    def __repr__(self):
+        return f"Foot({self.label}={self.pattern}{'*' if self.is_substituted else ''})"
+
+
+class FootList(list):
+    """A list of `Foot` with display helpers. `metrical_feet` returns this."""
+
+    @property
+    def labels(self):
+        return [ft.label for ft in self]
+
+    @property
+    def patterns(self):
+        return [ft.pattern for ft in self]
+
+    @property
+    def footed_scansion(self) -> str:
+        """The feet as a pipe-delimited w/s string, e.g. `'wws|wws|wws|w'`."""
+        return "|".join(ft.pattern for ft in self)
+
+    def to_html(self) -> str:
+        return "".join(ft.to_html() for ft in self)
+
+    def __str__(self):
+        """`'(w s)(w w s)(s w*)…'` — `*` marks a foot inverting the line head."""
+        return foot_str(self)
 
 
 def slot_proms(slots):
@@ -180,7 +265,7 @@ def parse_feet(slots, head=None):
     patterns = ["".join("s" if slots[k].is_prom else "w" for k in range(a, b)) for a, b in spans]
     if head is None:
         head = line_head(patterns).direction
-    feet = []
+    feet = FootList()
     for (a, b), pat in zip(spans, patterns):
         fh = foot_head(pat)
         chunk = slots[a:b]

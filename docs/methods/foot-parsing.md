@@ -206,9 +206,33 @@ the line-local default is preserved.)
 scansion-content key (§3), so the order is total and independent of generation
 order; the remaining residual is genuine metrical ambiguity, not an undecided sort.
 
+## Accessing feet (API)
+
+Foot the parse you show elsewhere — `line.best_parse` (`metrical_parse` is an alias):
+
+```python
+p = line.best_parse
+p.scansion          # 'swwswswsws'      per-syllable w/s (no foot parse)
+p.footed_scansion   # 'sw|ws|ws|ws|ws'  cut into feet (gold format)
+p.feet_str          # '(s w*)(w s)…'    annotated, '*' = substitution
+p.metrical_feet     # FootList[Foot]
+for foot in p.metrical_feet:
+    foot.label      # 'trochee'   foot.pattern 'sw'   foot.head 'falling'
+    foot.is_substituted           # inverts the line head
+    for syll in foot:             # a Foot is a VIEW — iterating yields its syllables
+        ...                       # duck-typed (SyllData/Syllable), no entity forced
+    foot.to_html()
+```
+
+`Foot` is a view over the parse slots, **not** a tree entity (a syllable keeps its
+`WordForm` parent). The per-parse foot properties (`feet`, `foot_counts`, `nary_feet`,
+`is_rising`, `foot_type`, …) all derive from this. `w/s` throughout, matching the gold;
+`meter_str`/`stress_str` remain the `+/-` forms.
+
 ## Files
 
-- `analysis/feet.py` — `foot_parse` (DP + extrametrical edges), `_foot_dp`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`, `EXTRAMETRICAL`.
+- `analysis/feet.py` — `Foot` (view class), `FootList`, `foot_parse` (DP + extrametrical edges), `_foot_dp`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`, `EXTRAMETRICAL`.
+- `parsing/parses.py` — `Parse.scansion` (w/s), `.footed_scansion`, `.metrical_feet` (→ `FootList`), `.feet`/`foot_counts`/`nary_feet`/`is_rising`/`foot_type` (all DP-derived), `.scansion_positions` (per-position list).
 - `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`, `_doubled_keys`, `_content_key`.
 - `parsing/parses.py` — `Parse.metrical_feet`, `Parse.head`, `Parse.feet_str`.
 - `texts/lines.py` — `Line.metrical_parse`.

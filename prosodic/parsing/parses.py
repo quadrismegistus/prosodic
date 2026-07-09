@@ -529,10 +529,11 @@ class Parse(Entity):
 
     @property
     def metrical_feet(self):
-        """Syllables foot-parsed by DP (variable size AND headedness — no per-line
-        k or head assumed), each labelled (iamb/trochee/anapest/spondee/…) and
-        flagged `is_substituted` when it inverts the line head. Traditional-scansion
-        companion to `feet`; see analysis.feet.parse_feet."""
+        """The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable
+        size AND headedness, one head per foot + extrametrical edges). Each `Foot` is a
+        VIEW over its syllables — iterate it to get them (duck-typed, no entity forced)
+        — with `.label`/`.pattern`/`.head`/`.is_substituted`/`.to_html()`. See
+        analysis.feet.parse_feet."""
         from ..analysis.feet import parse_feet
         return parse_feet(self.slots)
 

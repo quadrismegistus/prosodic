@@ -85,13 +85,18 @@ bridge — the full unification. Keep the public signature.
 ## Progress (order corrected per the spike finding)
 - [x] Step 0 — Line View single-line branch → DF path (`api.py`, merged in #175).
 - [x] Audit + this doc.
-- [ ] **1b-first — `Parse.concat` DF-safe** (rebuild from `SyllData`/`form_idx`, or
-      relax `num_with_forms==num_wordforms` for DF parses). The blocker for the line
-      migration; also `Parse.scope`/`.key` None-safe (or hand the line's wordtokens).
-- [ ] 1a — `Meter.parse_text` `Line`/`LinePart` case → DF (lands *with* 1b; spike
-      shows it otherwise unifies `line.best_parse` correctly, 672/675).
-- [ ] 1a — web linepart branches → DF (linepart-scoped syll_df).
+- [x] **`Parse.concat` DF-safe** — `Parse.__init__` takes `slot_units` from `children`
+      (positions) when supplied and skips the resolved-wordtokens assert; `concat`
+      concats wordtokens only when all constituents carry them, else uses the context
+      / None. Manual `Parse(text, scansion)` path unchanged.
+- [x] **`Meter.parse_text` `Line`/`LinePart` case → DF** — reuses the parent text's
+      `_syll_df` scoped to the unit. **`line.best_parse` now uses `SyllData` slots and
+      unifies with `text.parse()`** (temperate reports `[9,10]` both ways). Fixed a
+      `LazyParseList.stats` double-`line_num` (index vs column) surfaced by it.
+- [ ] 1a — **bare `WordTokenList.parse()`** still hits the entity fallback (no parent
+      `_syll_df`). Build a syll_df for it (or from its text). Narrow; rare.
+- [ ] 1a — web linepart branches (`api.py:784`, `1409`) → DF (linepart-scoped syll_df).
 - [ ] 1a — `api.py:1017` endpoint → DF.
 - [ ] 1b — `ParseSlot.wordform`/`.syll` DF-safe (no real callers — low risk).
-- [ ] 1c — delete `parse_batch` + `_pool_combo_parses`.
+- [ ] 1c — delete `parse_batch` + `_pool_combo_parses` (blocked on the above callers).
 - [ ] Phase 2 — `Parse(line, scansion)` → DF (removes the last entity slots).

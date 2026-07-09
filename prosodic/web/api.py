@@ -352,23 +352,23 @@ def render_parse_html(parse, line=None):
                 ordered_wt_ids.append(key)
             slots_by_wt[key].append(slot)
 
-    # Foot boundaries: the flat syllable index AFTER which each foot ends (except
-    # the last), so a '|' can be drawn between feet — anacrusis/feminine edges show
-    # as their own segments (w|…, …|w). Computed from the DP delineation.
-    foot_bounds = set()
+    # Foot boundaries: draw a '|' AFTER the last slot of each foot (except the last),
+    # so anacrusis/feminine edges show as their own segments (w|…, …|w). Keyed to the
+    # slot OBJECT, not a flat index: a positional counter only advances on slots that
+    # map to a rendered wordtoken, so an unmapped slot (e.g. a pooled alt-pronunciation
+    # whose word_num isn't in the line) would shift every '|' one position. Computed
+    # from the DP delineation.
+    foot_bound_slots = set()
     try:
-        feet = parse.metrical_feet
-        cum = 0
-        for ft in feet[:-1]:
-            cum += len(ft.slots)
-            foot_bounds.add(cum - 1)
+        for ft in parse.metrical_feet[:-1]:
+            if ft.slots:
+                foot_bound_slots.add(id(ft.slots[-1]))
     except Exception:
         pass
 
     # If we have a line with wordtokens (incl. punctuation), interleave
     if line is not None and hasattr(line, 'wordtokens'):
         parts = []
-        si = 0
         for wt in line.wordtokens:
             txt = wt.txt
             # preserve any leading whitespace from the original tokenization
@@ -383,24 +383,21 @@ def render_parse_html(parse, line=None):
             if slots:
                 for s in slots:
                     parts.append(_render_slot(s))
-                    if si in foot_bounds:
+                    if id(s) in foot_bound_slots:
                         parts.append(FOOT_SEP)
-                    si += 1
             else:
                 parts.append(html.escape(stripped))
         return ''.join(parts)
 
     # Fallback: just join by word boundary using slot-side parents
     parts = []
-    si = 0
     for i, key in enumerate(ordered_wt_ids):
         if i > 0:
             parts.append(' ')
         for s in slots_by_wt[key]:
             parts.append(_render_slot(s))
-            if si in foot_bounds:
+            if id(s) in foot_bound_slots:
                 parts.append(FOOT_SEP)
-            si += 1
     return ''.join(parts)
 
 

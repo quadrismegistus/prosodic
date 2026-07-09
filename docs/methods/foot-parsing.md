@@ -185,14 +185,14 @@ needed without destabilizing anything. Against the hand-tagged gold it is alread
 
 **Deliberately *not* done — poem-level footing.** The one real residual (the ternary
 rising/falling tie, §4) needs the *poem's* head to break — anacrusis in falling
-meters, feminine in rising. The hooks exist (`foot_parse` takes `pref_size`/
-`pref_head`; feeding `meter_type` in would likely resolve most of it), and it stays
+meters, feminine in rising. The hooks exist (`foot_parse` takes `pref_size`, and
+`parse_feet` takes `head`; feeding `meter_type` in would likely resolve most of it), and it stays
 un-merged on purpose. **Prosodic is line-scoped by design — to a fault:** every unit
 (parse, scansion, `best_parse`, footing) is computed from a single line in isolation,
 with no cross-line or poem-level state. Wiring a poem→line dependency into footing
 would breach that consistency to recover ~2% of ternary lines, so it stays an
 *accepted limitation*, not a planned feature. (If it's ever wanted, it should be an
-opt-in `pref_head=` argument the caller supplies, never an implicit poem lookup, so
+opt-in `parse_feet(head=…)` argument the caller supplies, never an implicit poem lookup, so
 the line-local default is preserved.)
 
 **Done, and recorded as negative results so they aren't re-tried:**

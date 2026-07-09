@@ -1244,6 +1244,9 @@ class LazyParseList:
         bc = getattr(self, "_pf_cache", None)
         if bc is not None:
             return bc
+        # Kept as a pure-Python per-row string scan on purpose: the scansions are ~10
+        # elements, and numpy per-row segmentation (flatnonzero/concatenate/tobytes) is
+        # ~2x SLOWER here — per-call dispatch overhead dominates on tiny arrays.
         def _one(mv):
             s = "".join("s" if v else "w" for v in np.asarray(mv, dtype=bool))
             feet, start, i, n = [], 0, 0, len(s)
@@ -1280,18 +1283,28 @@ class LazyParseList:
         bc = getattr(self, "_dbl_cache", None)
         if bc is not None:
             return bc
-        def _one(mv):
-            a = np.asarray(mv, dtype=bool)
-            if a.size < 2:
-                return (0, 0)
-            return (int((a[1:] & a[:-1]).sum()), int((~a[1:] & ~a[:-1]).sum()))
         if self._meter_vals is None:
             n = len(self._all_scores)
             bc = (np.zeros(n, dtype=np.int16), np.zeros(n, dtype=np.int16))
-        else:
+        elif getattr(self, "_ragged", False):
+            def _one(mv):
+                a = np.asarray(mv, dtype=bool)
+                if a.size < 2:
+                    return (0, 0)
+                return (int((a[1:] & a[:-1]).sum()), int((~a[1:] & ~a[:-1]).sum()))
             pairs = [_one(mv) for mv in self._meter_vals]
             bc = (np.asarray([p[0] for p in pairs], dtype=np.int16),
                   np.asarray([p[1] for p in pairs], dtype=np.int16))
+        else:
+            # rectangular (S, N): one vectorized pass, not S Python iterations
+            a = np.asarray(self._meter_vals, dtype=bool)
+            if a.ndim < 2 or a.shape[1] < 2:
+                n = a.shape[0] if a.ndim >= 1 else len(self._all_scores)
+                bc = (np.zeros(n, dtype=np.int16), np.zeros(n, dtype=np.int16))
+            else:
+                ss = (a[:, 1:] & a[:, :-1]).sum(axis=1).astype(np.int16)
+                ww = (~a[:, 1:] & ~a[:, :-1]).sum(axis=1).astype(np.int16)
+                bc = (ss, ww)
         self._dbl_cache = bc
         return bc
 
@@ -1311,15 +1324,24 @@ class LazyParseList:
         bc = getattr(self, "_content_cache", None)
         if bc is not None:
             return bc
-        def _one(mv):
-            a = np.asarray(mv, dtype=bool)
-            if a.size == 0:
-                return 0.0
-            return float(np.dot(a.astype(np.float64), 0.5 ** (1 + np.arange(a.size))))
         if self._meter_vals is None:
             bc = np.zeros(len(self._all_scores), dtype=np.float64)
-        else:
+        elif getattr(self, "_ragged", False):
+            def _one(mv):
+                a = np.asarray(mv, dtype=bool)
+                if a.size == 0:
+                    return 0.0
+                return float(np.dot(a.astype(np.float64), 0.5 ** (1 + np.arange(a.size))))
             bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float64)
+        else:
+            # rectangular (S, N): one matmul with the dyadic weight vector
+            a = np.asarray(self._meter_vals, dtype=np.float64)
+            if a.ndim < 2 or a.shape[1] == 0:
+                bc = np.zeros(a.shape[0] if a.ndim >= 1 else len(self._all_scores),
+                              dtype=np.float64)
+            else:
+                w = 0.5 ** (1 + np.arange(a.shape[1], dtype=np.float64))
+                bc = a @ w
         self._content_cache = bc
         return bc
 
@@ -1352,7 +1374,18 @@ class LazyParseList:
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
-            self._best_idx = int(self._order(self._unbounded_indices, self._scores)[0])
+            scores = self._scores
+            # Fast path: a strictly-unique minimum score needs NO tie-break — the
+            # comparator's primary (exact-score) key already decides it, so
+            # best_parse == argmin. This restores the O(S) argmin that the tie-break
+            # cascade otherwise replaced with a full eager key-materialization +
+            # lexsort on EVERY best_parse (~half of lines have a unique min; the
+            # comparator was ~3600x slower than argmin here). Identical result: when
+            # the min is unique, _order(...)[0] IS that argmin parse.
+            if int(np.isclose(scores, scores.min()).sum()) == 1:
+                self._best_idx = int(self._unbounded_indices[int(scores.argmin())])
+            else:
+                self._best_idx = int(self._order(self._unbounded_indices, scores)[0])
         bp = self._get_parse(self._best_idx, rank=1)
         if bp is not None:
             bp.num_cooptimal = self.num_cooptimal

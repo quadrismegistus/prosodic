@@ -523,10 +523,12 @@ class Parse(Entity):
     def is_rising(self) -> Optional[bool]:
         """Rising (iamb/anapest) vs falling (trochee/dactyl) rhythm, read from the DP
         foot delineation's head direction (`metrical_feet`/`head`), not the old
-        4th-syllable heuristic."""
+        4th-syllable heuristic. `None` when the line has no directional feet (all
+        spondaic/pyrrhic) — an honest 'unknown' rather than a false 'rising'."""
         if not self.slots:
             return None
-        return self.head.direction == "rising"
+        d = self.head.direction
+        return (d == "rising") if d in ("rising", "falling") else None
 
     @property
     def nary_feet(self) -> int:
@@ -545,13 +547,15 @@ class Parse(Entity):
         syllable-based system (see analysis.feet)."""
         return [ft.pattern for ft in self.metrical_feet]
 
-    @property
+    @cached_property
     def metrical_feet(self):
         """The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable
         size AND headedness, one head per foot + extrametrical edges). Each `Foot` is a
         VIEW over its syllables — iterate it to get them (duck-typed, no entity forced)
         — with `.label`/`.pattern`/`.head`/`.is_substituted`/`.to_html()`. See
-        analysis.feet.parse_feet."""
+        analysis.feet.parse_feet. Cached: `feet`/`head`/`feet_str`/`foot_counts`/
+        `foot_sizes`/`nary_feet`/`is_rising`/`footed_scansion`/`foot_type` all funnel
+        through it (foot_type twice), so one DP per parse, not 4-6."""
         from ..analysis.feet import parse_feet
         return parse_feet(self.slots)
 
@@ -597,17 +601,18 @@ class Parse(Entity):
 
     @property
     def foot_type(self) -> str:
-        """
-        Get the foot type of the parse.
-
-        Returns:
-            str: The foot type (e.g., "iambic", "trochaic", etc.).
-        """
+        """The metrical foot type ("iambic"/"trochaic"/"anapestic"/"dactylic"), or ""
+        when the line has no clear rising/falling direction, or its dominant real-foot
+        size isn't binary/ternary (e.g. a resolution-heavy line with median size 4).
+        Those are defined 'no standard type' cases — returned as "" WITHOUT an error
+        log, which previously fired as spurious noise on legitimate input."""
+        ir = self.is_rising
+        if ir is None:
+            return ""
         if self.nary_feet == 2:
-            return "iambic" if self.is_rising else "trochaic"
-        elif self.nary_feet == 3:
-            return "anapestic" if self.is_rising else "dactylic"
-        log.error(f"foot type? {self.nary_feet}")
+            return "iambic" if ir else "trochaic"
+        if self.nary_feet == 3:
+            return "anapestic" if ir else "dactylic"
         return ""
 
     @property
@@ -760,7 +765,7 @@ class Parse(Entity):
         """`scansion` cut into feet by the DP, `|`-delimited — e.g. `'wws|wws|wws|w'`
         (the foot-gold format). Runs the foot parser (see `metrical_feet`); `feet_str`
         is the annotated `(w s)…` form with `*` substitution marks."""
-        return "|".join(self.feet)
+        return self.metrical_feet.footed_scansion
 
     @property
     def meter_ints(self, word_sep: str = "") -> tuple:

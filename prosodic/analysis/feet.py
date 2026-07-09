@@ -254,7 +254,11 @@ def line_head(patterns):
     d = Counter(foot_head(p) for p in patterns)
     r, f = d.get("rising", 0), d.get("falling", 0)
     if r + f == 0:
-        return Head("rising", 0.0)
+        # no directional feet (all spondaic/pyrrhic/lone): honest "none", NOT a
+        # false "rising" — so Parse.is_rising can report unknown rather than a
+        # phantom iamb. ("none" ⇒ no foot is marked substituted, since none is
+        # directional anyway.)
+        return Head("none", 0.0)
     return Head("rising" if r >= f else "falling", abs(r - f) / (r + f))
 
 

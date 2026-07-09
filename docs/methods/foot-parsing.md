@@ -67,7 +67,7 @@ differs from the regular reading on **23%** — so the tie-break is pervasive, n
 corner case. The shared comparator `LazyParseList._order` ranks by:
 
 ```
-(score,  fewest ss,  period-k regularity,  distinct pseudo-feet,  fewest ww,  position)
+(score,  fewest ss,  period-k regularity,  distinct pseudo-feet,  fewest ww,  scansion-content [w-onset])
 ```
 
 routed through *every* ranking site (`best_parse`, `unbounded`, `parse_rank`,
@@ -113,9 +113,19 @@ it shifts 27% of sonnet parses (not viable). `ss`-first selects the truer dip
 `(s w*)(w s)(w s)(w s)(w s)` = trochaic inversion + 4 iambs; regularity-first took
 the spondaic `(s s)(w s)…`, stressing "ty", for its cleaner *tail*.
 
-The full order (score → ss → period-k → pseudo-feet → ww → stable position) is
-fully deterministic. `_meter_vals` is computed in `__init__` so the entity and DF
-paths agree.
+**Fully determinative, honestly.** The last key is the **scansion-content key**
+(`_content_key`), not the old generation-order position: a binary fraction of the
+scansion with the first syllable most significant and `w`=0/`s`=1, so ascending
+order prefers a **`w`-onset** (unmarked weak start) over an initial inversion, and
+breaks toward `w` at the earliest diverging position. This drops the sonnet residual
+(parses tied on *every* prior key) from ~35 lines falling to enumeration order to
+**0** — the winner is now a fixed function of the scansions, refactor-proof, not an
+accident of how candidates were enumerated. It does *not* make those genuinely
+co-equal readings *meaningfully* distinct (~29 of the 35 differ only in where an
+equally-cross-word dip sits — real ambiguity, no signal left); it just makes the
+forced last-resort a canonical `w`-leaning convention rather than a fragile one. The
+full order (score → ss → period-k → pseudo-feet → ww → content) is total.
+`_meter_vals` is computed in `__init__` so the entity and DF paths agree.
 
 ## 4. Validation
 
@@ -160,14 +170,14 @@ line-local* delineation (one head per foot, meter-agnostic). `parse_human2` is
 annotator's convention, which is a different goal from mechanical delineation.
 Either is a legitimate destination; (1)–(2) move toward the human one.
 
-**Sort-key determinism (optional):** the position fallback is deterministic given
-the (deterministic) candidate order; a scansion-content final key would make it
-independent of generation order too.
+**Sort-key determinism — done.** The last key is now the `w`-onset-preferring
+scansion-content key (§3), so the order is total and independent of generation
+order; the remaining residual is genuine metrical ambiguity, not an undecided sort.
 
 ## Files
 
 - `analysis/feet.py` — `foot_parse` (DP), `head_of`, `line_head`, `parse_feet`, `foot_str`, `_foot_cost`.
-- `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`, `_doubled_keys`.
+- `parsing/vectorized.py` — `LazyParseList._order` (comparator), `_regularity_key`, `_pseudo_foot_key`, `_doubled_keys`, `_content_key`.
 - `parsing/parses.py` — `Parse.metrical_feet`, `Parse.head`, `Parse.feet_str`.
 - `texts/lines.py` — `Line.metrical_parse`.
 - `scripts/` — `foot_parse.py`, `foot_headedness_demo.py`, `foot_examples.py`, `inversion_map.py`, `caesura_test.py`.

@@ -1661,10 +1661,39 @@ class LazyParseList:
         self._dbl_cache = bc
         return bc
 
+    def _content_key(self):
+        """Final tie-break: a canonical value read from the SCANSION ITSELF, so among
+        parses that tie on every meaningful key the winner is a fixed function of the
+        scansions — refactor-proof — rather than an accident of enumeration order (the
+        old `np.arange` position fallback). Encoded as a binary fraction with the
+        FIRST syllable most significant and `w`=0 / `s`=1, so ascending order (a) puts
+        a `w`-initial parse (leading 0, < 0.5) before an `s`-initial one — preferring
+        the unmarked weak onset over an initial inversion among genuine ties — and (b)
+        more generally breaks toward `w` at the earliest position the tied scansions
+        diverge. Ragged-safe (any N); distinct same-N scansions get distinct (dyadic,
+        exact) keys, so it fully determines the order except for the vanishingly rare
+        ragged prefix-collision, which still falls through to the stable `arange`.
+        Cached."""
+        bc = getattr(self, "_content_cache", None)
+        if bc is not None:
+            return bc
+        def _one(mv):
+            a = np.asarray(mv, dtype=bool)
+            if a.size == 0:
+                return 0.0
+            return float(np.dot(a.astype(np.float64), 0.5 ** (1 + np.arange(a.size))))
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.float64)
+        else:
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float64)
+        self._content_cache = bc
+        return bc
+
     def _order(self, idxs, scores):
         """The shared parse comparator: sort scansion indices by (score, then
         fewest resolutions `ss`, period-k regularity, distinct pseudo-feet, fewest
-        dips `ww`), with a stable position fallback for a fully deterministic order.
+        dips `ww`, then the scansion-content key — canonical, `w`-onset-preferring),
+        with `arange` only as a vanishing deep safety, for a fully deterministic order.
         `ss` is the PRIMARY tie-break (after score): among co-optimal parses a
         resolution — two stresses crammed into one beat — is the most marked
         departure from `wsws…`, so minimising resolutions first best matches human
@@ -1681,7 +1710,8 @@ class LazyParseList:
         pf = self._pseudo_foot_key()[idxs]
         ss, ww = self._doubled_keys()
         ss, ww = ss[idxs], ww[idxs]
-        return idxs[np.lexsort((np.arange(len(idxs)), ww, pf, reg, ss, np.asarray(scores)))]
+        content = self._content_key()[idxs]
+        return idxs[np.lexsort((np.arange(len(idxs)), content, ww, pf, reg, ss, np.asarray(scores)))]
 
     @property
     def best_parse(self):

@@ -103,7 +103,7 @@ class Parse(Entity):
             scansion = get_iambic_parse(len(self.slot_units))
         if type(scansion) == str:
             scansion = split_scansion(scansion)
-        self.scansion = copy(scansion)
+        self.scansion_positions = copy(scansion)
 
         self.is_bounded = is_bounded
         self.bounded_by = [] if not bounded_by else [x for x in bounded_by]
@@ -119,7 +119,7 @@ class Parse(Entity):
         self.children = ParsePositionList() if not children else children
         self.children.parent = self
         if not self.children:
-            for mpos_str in self.scansion:
+            for mpos_str in self.scansion_positions:
                 self.extend(mpos_str)
         self.init()
 
@@ -268,7 +268,7 @@ class Parse(Entity):
                 children=wordtokens_limited,
                 parent=parses[0].wordtokens.parent,
             )
-        scansion = [x for parse in parses for x in parse.scansion]
+        scansion = [x for parse in parses for x in parse.scansion_positions]
 
         parse = Parse(
             wordtokens=wordtokens,
@@ -503,66 +503,59 @@ class Parse(Entity):
 
     @property
     def is_rising(self) -> Optional[bool]:
-        """
-        Check if the parse has a rising rhythm.
-
-        Returns:
-            Optional[bool]: True if rising, False if falling, None if undetermined.
-        """
-        if not self.positions:
-            return
-        # return not self.positions[0].is_prom
-        try:
-            if self.nary_feet == 3:
-                if self.slots[3].is_prom:
-                    return False  # swws
-                else:
-                    return True  # wssw
-            elif self.nary_feet == 2:
-                if self.slots[3].is_prom:
-                    return True  # wsws
-                else:
-                    return False  # swsw
-        except (IndexError, AttributeError):
-            pass
-        return not self.positions[0].is_prom
+        """Rising (iamb/anapest) vs falling (trochee/dactyl) rhythm, read from the DP
+        foot delineation's head direction (`metrical_feet`/`head`), not the old
+        4th-syllable heuristic."""
+        if not self.slots:
+            return None
+        return self.head.direction == "rising"
 
     @property
     def nary_feet(self) -> int:
-        """
-        Get the n-ary foot type of the parse.
-
-        Returns:
-            int: The n-ary foot type (2 for binary, 3 for ternary, etc.).
-        """
-        return int(np.median(self.foot_sizes))
+        """Dominant foot size (2 = binary, 3 = ternary): the median over the REAL
+        (disyllabic+) feet from the DP delineation — lone-syllable edge feet (bare
+        `s`, extrametrical `w`) are excluded so an anacrusis/feminine edge doesn't
+        drag it toward 1."""
+        sizes = [n for n in self.foot_sizes if n > 1]
+        return int(np.median(sizes)) if sizes else 2
 
     @property
     def feet(self) -> List[str]:
-        """
-        Get the list of feet in the parse.
+        """Foot patterns (`'ws'`, `'wws'`, `'sw'`, …) from the DP delineation
+        (`metrical_feet`). Was a naive position-pairing (2 positions = 1 foot) that
+        could not express inversions, ternary feet, or anacrusis; now the validated
+        syllable-based system (see analysis.feet)."""
+        return [ft.pattern for ft in self.metrical_feet]
 
-        Returns:
-            List[str]: List of feet as strings.
-        """
-        if self.num_positions == 1:
-            feet = [self.positions[0].meter_str]
-        else:
-            feet = []
-            for i in range(1, self.num_positions, 2):
-                pos1, pos2 = self.positions[i - 1], self.positions[i]
-                feet.append(pos1.meter_str + pos2.meter_str)
-        return feet
+    @property
+    def metrical_feet(self):
+        """The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable
+        size AND headedness, one head per foot + extrametrical edges). Each `Foot` is a
+        VIEW over its syllables — iterate it to get them (duck-typed, no entity forced)
+        — with `.label`/`.pattern`/`.head`/`.is_substituted`/`.to_html()`. See
+        analysis.feet.parse_feet."""
+        from ..analysis.feet import parse_feet
+        return parse_feet(self.slots)
+
+    @property
+    def head(self):
+        """Headedness of this line = majority direction of its feet (rising =
+        iamb/anapest, falling = trochee/dactyl), read OUT of the foot-parse rather
+        than assumed. Returns Head(direction, confidence); see analysis.feet."""
+        from ..analysis.feet import line_head
+        return line_head([ft.pattern for ft in self.metrical_feet])
+
+    @property
+    def feet_str(self) -> str:
+        """'(w s)(w w s)(s w*)…' — '*' marks a foot that inverts the line head."""
+        from ..analysis.feet import foot_str
+        return foot_str(self.metrical_feet)
 
     @property
     def foot_counts(self) -> Counter:
-        """
-        Get a counter of foot types in the parse.
-
-        Returns:
-            Counter: Counter of foot types.
-        """
-        return Counter(self.feet)
+        """Counter of foot LABELS (iamb/trochee/anapest/dactyl/…) from the DP
+        delineation."""
+        return Counter(ft.label for ft in self.metrical_feet)
 
     @property
     def foot_sizes(self) -> List[int]:
@@ -735,6 +728,21 @@ class Parse(Entity):
             for mpos in self.positions
             for slot in mpos.slots
         )
+
+    @property
+    def scansion(self) -> str:
+        """Per-syllable metrical scansion in **w/s** (weak/strong POSITION), e.g.
+        `'wswswswsws'` — the same information as `meter_str` (`+`→`s`, `-`→`w`).
+        Cheap: does NOT run the foot parser. (`scansion_positions` is the
+        per-POSITION list form `['s','ww','s',…]`, disyllabic positions grouped.)"""
+        return "".join(self.scansion_positions)
+
+    @property
+    def footed_scansion(self) -> str:
+        """`scansion` cut into feet by the DP, `|`-delimited — e.g. `'wws|wws|wws|w'`
+        (the foot-gold format). Runs the foot parser (see `metrical_feet`); `feet_str`
+        is the annotated `(w s)…` form with `*` substitution marks."""
+        return "|".join(self.feet)
 
     @property
     def meter_ints(self, word_sep: str = "") -> tuple:

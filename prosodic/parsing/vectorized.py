@@ -289,17 +289,24 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # pooled LazyParseList per length; a single length is the common case.
     surv_Ns = sorted({N_of[rank] for (rank, i) in pool_unb},
                      key=lambda N: (N != N_of[0], N))   # canonical combo's N first
-    if len(surv_Ns) == 1:
+    # A length whose every parse was cross-bounded by a shorter/other length has no
+    # unbounded survivor and would otherwise vanish entirely. Keep such lengths as
+    # BOUNDED — e.g. the 3-syllable "temperate" that scans a syllable longer and loses
+    # — so the dominated alt-pronunciation reading still appears (Line View can then
+    # show WHY it isn't on top). They're bounded, so num_parses (an unbounded count)
+    # is untouched; best_parse and the unbounded set are unchanged.
+    all_Ns = {N_of[rank] for rank in range(len(candidates))}
+    extra_Ns = sorted(all_Ns - set(surv_Ns), key=lambda N: (N != N_of[0], N))
+    if len(surv_Ns) == 1 and not extra_Ns:
         return build_for_N(surv_Ns[0])
 
-    # Survivors span multiple syllable counts (e.g. "fire" 1~2). A single
-    # (P, N, C) array can't hold both lengths, so concatenate each length's
-    # pooled scansions into a RAGGED LazyParseList (per-scansion viols/meter_vals
-    # of different N). The unbounded set thus keeps co-optimal parses of BOTH
-    # lengths — matching v1. Cross-length domination is already in pool_unb, so
-    # each sub-list's mask is correct.
+    # Multiple lengths: a single (P, N, C) array can't hold them, so concatenate each
+    # length's pooled scansions into a RAGGED LazyParseList. Surviving lengths keep
+    # their co-optimal parses unbounded (matching v1); dominated `extra_Ns` come back
+    # all-bounded (build_for_N marks them so, since none are in pool_unb). Cross-length
+    # domination is already in pool_unb, so each sub-list's mask is correct.
     scans, viols, mv, pi, ps, sylls_by, rowidx_by, unb = [], [], [], [], [], [], [], []
-    for N in surv_Ns:
+    for N in list(surv_Ns) + extra_Ns:
         sub = build_for_N(N, full_ok=False)
         sbs, rbs = sub._sylls_by_scansion, sub._syll_row_idx_by_scansion
         for i in range(len(sub._all_scansions)):
@@ -1462,10 +1469,20 @@ class LazyParseList:
         # form_idx / stress. Stays numpy — no Entity construction.
         self._sylls_by_scansion = sylls_by_scansion
         self._syll_row_idx_by_scansion = syll_row_idx_by_scansion
-        # scansion encoding, shape (S, N) each — lazily recomputed if missing
+        # scansion encoding, shape (S, N) each
         self._meter_vals = meter_vals
         self._position_ids = position_ids
         self._position_sizes = position_sizes
+        # Parity: some construction paths (pooling; the entity path) don't pass the
+        # encoding. Compute it once here from the scansion strings so the regularity
+        # tie-break — and get_parses_df — work on every LazyParseList (DF and entity
+        # alike), not just where it happened to be supplied. Cached in
+        # encode_scansions; a position like 'ss' spans two syllables, so N is the
+        # sum of position lengths.
+        if self._meter_vals is None and not self._ragged and self._all_scansions:
+            nsylls = sum(len(p) for p in self._all_scansions[0])
+            self._meter_vals, self._position_ids, self._position_sizes = \
+                encode_scansions(self._all_scansions, nsylls)
         self._built_parses = {}  # cache: scansion index -> Parse
         self._best_idx = None
         self._bound_init = True
@@ -1556,13 +1573,159 @@ class LazyParseList:
             meters = {self._get_parse(int(i)).meter_str for i in coopt_idx}
         return len(meters)
 
+    def _regularity_key(self):
+        """Per-scansion IRREGULARITY (lower = more regular): 1 minus the best
+        period-k (k in {2,3}) self-similarity of the s/w string. A pure iamb
+        (period 2) OR a pure anapest (period 3) -> ~0; a ragged line -> higher. A
+        cheap, vectorized, meter-AGNOSTIC proxy for foot regularity — unlike a raw
+        bigram count it does NOT favour binary over ternary (which would break
+        anapestic/dactylic detection). Cached; no DP, no Parse objects."""
+        bc = getattr(self, "_reg_cache", None)
+        if bc is not None:
+            return bc
+        def _one(a):
+            a = np.asarray(a, dtype=np.int8).ravel()
+            best = 0.0
+            for k in (2, 3):
+                if a.size > k:
+                    best = max(best, float((a[k:] == a[:-k]).mean()))
+            return 1.0 - best
+        if getattr(self, "_ragged", False):
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float32)
+        else:
+            mv = self._meter_vals
+            if mv is None or getattr(mv, "ndim", 0) < 2 or mv.shape[1] < 3:
+                bc = np.zeros(len(self._all_scores), dtype=np.float32)
+            else:
+                a = mv.astype(np.int8)
+                best = np.zeros(a.shape[0], dtype=np.float32)
+                for k in (2, 3):
+                    if a.shape[1] > k:
+                        best = np.maximum(best, (a[:, k:] == a[:, :-k]).mean(axis=1))
+                bc = (1.0 - best).astype(np.float32)
+        self._reg_cache = bc
+        return bc
+
+    def _pseudo_foot_key(self):
+        """Per-scansion count of distinct 'pseudo-feet' — segments cut after each
+        strong-run (rising pseudo-feet), e.g. 'wswwswwsw' -> ws|wws|wws|w -> 3
+        distinct. A cheap, deterministic, foot-FLAVORED regularity signal (a regular
+        line has few distinct pseudo-feet) computed straight from the scansion — no
+        DP, no foot-parser — so, unlike the real foot key, it does NOT couple
+        best_parse to the evolving foot layer. Cached; used as the tertiary sort key
+        to break residual (same score + same period-k) ties deterministically."""
+        bc = getattr(self, "_pf_cache", None)
+        if bc is not None:
+            return bc
+        def _one(mv):
+            s = "".join("s" if v else "w" for v in np.asarray(mv, dtype=bool))
+            feet, start, i, n = [], 0, 0, len(s)
+            while i < n:
+                if s[i] == "s":
+                    j = i
+                    while j < n and s[j] == "s":
+                        j += 1
+                    feet.append(s[start:j]); start = i = j
+                else:
+                    i += 1
+            if start < n:
+                feet.append(s[start:])
+            return len(set(feet))
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.int16)
+        else:
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.int16)
+        self._pf_cache = bc
+        return bc
+
+    def _doubled_keys(self):
+        """Per-scansion counts of doubled positions, `(#ss, #ww)` — resolutions
+        (two strong syllables in one beat) and dips (two weaks in one position).
+        Parses tied on (score, period-k, pseudo-feet) — which on the sonnets differ
+        ONLY in WHERE a resolution or a dip sits — are then ranked fewest-ss, then
+        fewest-ww: a resolution crams two stresses into one beat, so it's the more
+        marked departure from pure `wsws…` alternation than a dip is. Pure scansion
+        statistics (no foot-parser), yet the resulting pick matches the DP foot
+        reading ~90% of the time — best_parse tracks the foot layer without coupling
+        to it. On the sonnets fewest-ss breaks 59 of 90 residual ties; fewest-ww is
+        a redundant-but-principled tiebreak after it. Cached; quaternary/quinary
+        sort keys."""
+        bc = getattr(self, "_dbl_cache", None)
+        if bc is not None:
+            return bc
+        def _one(mv):
+            a = np.asarray(mv, dtype=bool)
+            if a.size < 2:
+                return (0, 0)
+            return (int((a[1:] & a[:-1]).sum()), int((~a[1:] & ~a[:-1]).sum()))
+        if self._meter_vals is None:
+            n = len(self._all_scores)
+            bc = (np.zeros(n, dtype=np.int16), np.zeros(n, dtype=np.int16))
+        else:
+            pairs = [_one(mv) for mv in self._meter_vals]
+            bc = (np.asarray([p[0] for p in pairs], dtype=np.int16),
+                  np.asarray([p[1] for p in pairs], dtype=np.int16))
+        self._dbl_cache = bc
+        return bc
+
+    def _content_key(self):
+        """Final tie-break: a canonical value read from the SCANSION ITSELF, so among
+        parses that tie on every meaningful key the winner is a fixed function of the
+        scansions — refactor-proof — rather than an accident of enumeration order (the
+        old `np.arange` position fallback). Encoded as a binary fraction with the
+        FIRST syllable most significant and `w`=0 / `s`=1, so ascending order (a) puts
+        a `w`-initial parse (leading 0, < 0.5) before an `s`-initial one — preferring
+        the unmarked weak onset over an initial inversion among genuine ties — and (b)
+        more generally breaks toward `w` at the earliest position the tied scansions
+        diverge. Ragged-safe (any N); distinct same-N scansions get distinct (dyadic,
+        exact) keys, so it fully determines the order except for the vanishingly rare
+        ragged prefix-collision, which still falls through to the stable `arange`.
+        Cached."""
+        bc = getattr(self, "_content_cache", None)
+        if bc is not None:
+            return bc
+        def _one(mv):
+            a = np.asarray(mv, dtype=bool)
+            if a.size == 0:
+                return 0.0
+            return float(np.dot(a.astype(np.float64), 0.5 ** (1 + np.arange(a.size))))
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.float64)
+        else:
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.float64)
+        self._content_cache = bc
+        return bc
+
+    def _order(self, idxs, scores):
+        """The shared parse comparator: sort scansion indices by (score, then
+        fewest resolutions `ss`, period-k regularity, distinct pseudo-feet, fewest
+        dips `ww`, then the scansion-content key — canonical, `w`-onset-preferring),
+        with `arange` only as a vanishing deep safety, for a fully deterministic order.
+        `ss` is the PRIMARY tie-break (after score): among co-optimal parses a
+        resolution — two stresses crammed into one beat — is the most marked
+        departure from `wsws…`, so minimising resolutions first best matches human
+        scansion (57.1% vs 56.3% for a regularity-first order on the litlab tagged
+        sample; +1% on iambic/trochaic/dactylic, tied on anapestic). It also fixes
+        forced initial inversions like 'Pity the world' — reg-first preferred the
+        resolution `(ss)(ws)…` (stressing 'ty') for its cleaner tail; ss-first takes
+        the truer dip `(sw*)(ws)…`. `ww` stays LAST (putting it early costs ~7pts).
+        Every key is cheap and computed from the scansion — NOT the DP foot-parser —
+        so best_parse stays decoupled from the churning foot layer (web, parsed_df,
+        meter_type, save/load, cmp_prosodics read it). Applied everywhere parses are
+        ranked so best_parse / unbounded / parse_rank / get_parses_df agree."""
+        reg = self._regularity_key()[idxs]
+        pf = self._pseudo_foot_key()[idxs]
+        ss, ww = self._doubled_keys()
+        ss, ww = ss[idxs], ww[idxs]
+        content = self._content_key()[idxs]
+        return idxs[np.lexsort((np.arange(len(idxs)), content, ww, pf, reg, ss, np.asarray(scores)))]
+
     @property
     def best_parse(self):
         if len(self._unbounded_indices) == 0:
             return None
         if self._best_idx is None:
-            # best among unbounded
-            self._best_idx = int(self._unbounded_indices[self._scores.argmin()])
+            self._best_idx = int(self._order(self._unbounded_indices, self._scores)[0])
         bp = self._get_parse(self._best_idx, rank=1)
         if bp is not None:
             bp.num_cooptimal = self.num_cooptimal
@@ -1579,7 +1742,7 @@ class LazyParseList:
     def unbounded(self):
         """Unbounded parses sorted by score (best first)."""
         from .parselists import ParseList
-        sorted_idx = self._unbounded_indices[np.argsort(self._scores)]
+        sorted_idx = self._order(self._unbounded_indices, self._scores)
         return ParseList(
             [self._get_parse(int(i)) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent,
@@ -1590,7 +1753,7 @@ class LazyParseList:
         from .parselists import ParseList
         bounded_indices = np.where(~self._unbounded_mask)[0]
         bounded_scores = self._all_scores[bounded_indices]
-        sorted_idx = bounded_indices[np.argsort(bounded_scores)]
+        sorted_idx = self._order(bounded_indices, bounded_scores)
         return ParseList(
             [self._get_parse(int(i), is_bounded=True) for i in sorted_idx],
             parse_unit=self.parse_unit, parent=self.parent, show_bounded=True,
@@ -1599,13 +1762,13 @@ class LazyParseList:
     @property
     def data(self):
         """All parses sorted by score ascending (best first); bounded and unbounded interleaved by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         return [self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
                 for i in sorted_idx]
 
     def __iter__(self):
         """Iterate all parses sorted by score."""
-        sorted_idx = np.argsort(self._all_scores)
+        sorted_idx = self._order(np.arange(len(self._all_scores)), self._all_scores)
         for i in sorted_idx:
             yield self._get_parse(int(i), is_bounded=not self._unbounded_mask[i])
 
@@ -1762,7 +1925,7 @@ class LazyParseList:
         unb_idx = self._unbounded_indices
         rank_of = np.full(len(unbounded_mask), -1, dtype=np.int32)
         if len(unb_idx) > 0:
-            ub_sorted = unb_idx[np.argsort(self._scores)]
+            ub_sorted = self._order(unb_idx, self._scores)
             rank_of[ub_sorted] = np.arange(1, len(ub_sorted) + 1, dtype=np.int32)
             best_idx = int(ub_sorted[0])
         else:
@@ -1770,9 +1933,9 @@ class LazyParseList:
         if mode == 'best':
             parse_indices = np.array([best_idx], dtype=np.int64) if best_idx >= 0 else np.empty(0, dtype=np.int64)
         elif mode == 'unbounded':
-            parse_indices = unb_idx[np.argsort(self._scores)]
+            parse_indices = self._order(unb_idx, self._scores)
         else:
-            parse_indices = np.argsort(all_scores)
+            parse_indices = self._order(np.arange(len(all_scores)), all_scores)
         P = len(parse_indices)
         if P == 0:
             return pd.DataFrame()
@@ -1891,7 +2054,7 @@ def _build_single_parse(idx, scansion, viols, constraint_index, constraint_names
     parse.wordtokens = wordtokens
     parse.wordforms = wordforms
     parse.slot_units = sylls
-    parse.scansion = list(scansion)
+    parse.scansion_positions = list(scansion)
     parse.is_bounded = False
     parse.bounded_by = []
     parse.unmetrical = False

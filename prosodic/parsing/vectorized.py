@@ -1599,18 +1599,49 @@ class LazyParseList:
         self._reg_cache = bc
         return bc
 
+    def _pseudo_foot_key(self):
+        """Per-scansion count of distinct 'pseudo-feet' — segments cut after each
+        strong-run (rising pseudo-feet), e.g. 'wswwswwsw' -> ws|wws|wws|w -> 3
+        distinct. A cheap, deterministic, foot-FLAVORED regularity signal (a regular
+        line has few distinct pseudo-feet) computed straight from the scansion — no
+        DP, no foot-parser — so, unlike the real foot key, it does NOT couple
+        best_parse to the evolving foot layer. Cached; used as the tertiary sort key
+        to break residual (same score + same period-k) ties deterministically."""
+        bc = getattr(self, "_pf_cache", None)
+        if bc is not None:
+            return bc
+        def _one(mv):
+            s = "".join("s" if v else "w" for v in np.asarray(mv, dtype=bool))
+            feet, start, i, n = [], 0, 0, len(s)
+            while i < n:
+                if s[i] == "s":
+                    j = i
+                    while j < n and s[j] == "s":
+                        j += 1
+                    feet.append(s[start:j]); start = i = j
+                else:
+                    i += 1
+            if start < n:
+                feet.append(s[start:])
+            return len(set(feet))
+        if self._meter_vals is None:
+            bc = np.zeros(len(self._all_scores), dtype=np.int16)
+        else:
+            bc = np.asarray([_one(mv) for mv in self._meter_vals], dtype=np.int16)
+        self._pf_cache = bc
+        return bc
+
     def _order(self, idxs, scores):
         """The shared parse comparator: sort scansion indices by (score, then
-        period-k metrical regularity — cheap, vectorized, meter-agnostic), with a
-        stable position fallback. Applied everywhere parses are ranked so best_parse
-        / unbounded / parse_rank / get_parses_df break co-optimal ties the same way.
-
-        Deliberately does NOT depend on the foot-parser: best_parse must stay stable
-        (web, parsed_df, meter_type, save/load, cmp_prosodics all read it) while the
-        foot layer keeps evolving. Feet are the higher-fidelity view in
-        metrical_feet; they are intentionally kept out of the core ranking."""
+        period-k regularity, then distinct pseudo-feet), with a stable position
+        fallback for a fully deterministic order. All three keys are cheap and
+        computed from the scansion — NOT the DP foot-parser — so best_parse stays
+        stable (web, parsed_df, meter_type, save/load, cmp_prosodics read it) while
+        the foot layer keeps evolving. Applied everywhere parses are ranked so
+        best_parse / unbounded / parse_rank / get_parses_df break ties the same way."""
         reg = self._regularity_key()[idxs]
-        return idxs[np.lexsort((np.arange(len(idxs)), reg, np.asarray(scores)))]
+        pf = self._pseudo_foot_key()[idxs]
+        return idxs[np.lexsort((np.arange(len(idxs)), pf, reg, np.asarray(scores)))]
 
     @property
     def best_parse(self):

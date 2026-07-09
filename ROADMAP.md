@@ -103,6 +103,23 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Analysis & display
 
+- 🚧 **Foot delineation & headedness** — a derived foot layer (iamb/trochee/
+  anapest/dactyl) over the position scansion, on branch `feet-headedness`
+  (PR #175, not merged). Write-up + roadmap:
+  [`docs/methods/foot-parsing.md`](docs/methods/foot-parsing.md). Shipped on the
+  branch: a DP foot-parser (`analysis/feet.py`, one head per foot, spondee =
+  resolution, period-based size, catalexis), `Parse.metrical_feet`/`head`/
+  `feet_str`, `Line.metrical_parse`, and a regularity-ranked `best_parse`
+  (`_order` = score → period-k regularity → pseudo-feet → position, all cheap and
+  computed from the scansion, **deliberately decoupled** from the DP so best_parse
+  stays stable while feet evolve). Validated: 98% vs `meter_type`, 85% meter
+  recovery across 4 meters, 32%/51% vs the human `parse_human2` foot boundaries
+  (gap = the annotator's poem-meter conventions). **Next** (see the doc):
+  poem-meter-aware footing (head + size) + anacrusis — the biggest gap-closers —
+  then word/phrase boundaries. Foot-annotated corpora are essentially nonexistent
+  (only Haider's small set + `parse_human2` + classical quantitative), so this
+  fills a real derivation gap.
+
 - ✅ **Web app: combined grid + syntax tree in Line View** — shipped
   2026-07-06 (PR #155, then combined same day). `grid_plot()` redesigned
   first (boxes filled by prominence level, not star marks —

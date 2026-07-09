@@ -385,6 +385,41 @@ def test_df_path_finds_optimal_on_ambiguous_line():
     assert t.parse()[0].best_parse.score == 0
 
 
+def test_line_best_parse_matches_text_parse():
+    """The single-line parse path (Meter.parse_text_iter -> parse_units_from_df, used by
+    line.best_parse WITHOUT a prior text.parse()) must agree with the batch text.parse()
+    path on meter_str, score, AND num_words — the unification this branch delivers.
+    Regression guard for two real bugs: (a) num_words inflated to the pronunciation-
+    variant count on the line path (11 for an 8-word line, because wordforms was the raw
+    multi-variant token list); (b) Meter.parse_text_iter scoping the wrong syll_df rows
+    for a single unit. Uses variant-heavy + mixed-N lines so the paths can actually
+    diverge."""
+    lines = [
+        "Shall I compare thee to a summers day",     # 'summers' etc. have variants
+        "When forty winters shall besiege thy brow",
+        "That thereby beautys rose might never die",
+        "Thou art more lovely and more temperate",   # mixed-N (temperate 3~4 sylls)
+    ]
+    src = "\n".join(lines)
+    # batch path: text.parse() (LazyParseList carries wordtokens=None)
+    tb = TextModel(src)
+    tb.parse()
+    batch = {ln.num: (ln.best_parse.meter_str, round(ln.best_parse.score, 6),
+                      ln.best_parse.num_words) for ln in tb.lines}
+    # single-line path: fresh text, access line.best_parse with NO prior text.parse()
+    tl = TextModel(src)
+    for ln in tl.lines:
+        bp = ln.best_parse
+        assert bp is not None, f"line {ln.num}: no best_parse on the single-line path"
+        ms, sc, nw = batch[ln.num]
+        assert bp.meter_str == ms, \
+            f"line {ln.num} meter_str: line-path {bp.meter_str!r} != text.parse {ms!r}"
+        assert round(bp.score, 6) == sc, \
+            f"line {ln.num} score: line-path {bp.score} != text.parse {sc}"
+        assert bp.num_words == nw, \
+            f"line {ln.num} num_words: line-path {bp.num_words} != text.parse {nw}"
+
+
 def test_pool_forms_pools_pronunciation_variants():
     """pool_forms=True (default) reports scansions optimal under ANY pronunciation
     of an ambiguous word — Prosodic's in-situ variant resolution — not just the

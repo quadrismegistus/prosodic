@@ -480,12 +480,19 @@ class Parse(Entity):
         Returns:
             int: Number of words.
         """
+        # Prefer counting distinct word_num across the slots. On the DF/line parse
+        # path `self.wordforms` is the RAW WordTokenList, whose length is the
+        # pronunciation-VARIANT count (e.g. "summers" contributes >1 form), not the
+        # word count — trusting it over-counts (line.best_parse reported 11 for an
+        # 8-word line). SyllData slots carry word_num, so the distinct-word_num set is
+        # exactly one-per-non-punc-wordtoken. Entity-path parses (Syllable slots, no
+        # word_num) fall back to wordforms, which there is resolved 1-per-word.
+        units = self.slot_units
+        if units and hasattr(units[0], "word_num"):
+            return len({s.word_num for s in units})
         if self.wordforms is not None:
             return len(self.wordforms)
-        # DF path (no wordform entities): SyllData carries word_num, so the word
-        # count is the number of distinct word_num across the parse's slots — same
-        # set as one wordform per non-punc wordtoken, no entity needed.
-        return len({s.word_num for s in self.slot_units}) if self.slot_units else 0
+        return 0
 
     @property
     def num_peaks(self) -> int:

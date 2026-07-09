@@ -141,7 +141,9 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     # show WHY it isn't on top). They're bounded, so num_parses (an unbounded count)
     # is untouched; best_parse and the unbounded set are unchanged.
     all_Ns = {N_of[rank] for rank in range(len(candidates))}
-    extra_Ns = sorted(all_Ns - set(surv_Ns), key=lambda N: (N != N_of[0], N))
+    # (No canonical-first key here, unlike surv_Ns above: N_of[0] is always an unbounded
+    # survivor, so it's never in extra_Ns — the key would be a no-op. Plain ascending.)
+    extra_Ns = sorted(all_Ns - set(surv_Ns))
     if len(surv_Ns) == 1 and not extra_Ns:
         return build_for_N(surv_Ns[0])
 

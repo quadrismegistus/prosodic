@@ -220,29 +220,26 @@ class Meter(Entity):
             return
 
         # A single Line/LinePart entity has no _syll_df of its own: reuse its parent
-        # text's, scoped to this unit, so single-unit parsing (line.parse /
-        # line.best_parse) goes through the SAME DF path as text.parse() rather than
-        # the entity parser. Unifies the two — line.best_parse now matches text.parse()
-        # (was a real discrepancy: line-level dropped dominated cross-length readings).
-        # (retire-entity-parser: replaces the Entity fallback for the common case.)
-        if df_col and getattr(text, 'num', None) is not None:
-            parent = getattr(text, 'text', None)
-            parent_df = getattr(parent, '_syll_df', None)
-            if parent_df is not None and len(parent_df) > 0:
-                sub = parent_df[parent_df[df_col] == text.num]
-                if len(sub) > 0:
-                    from .vectorized import parse_batch_from_df
-                    res = parse_batch_from_df(sub, self, line_col=df_col)
-                    for ln in sorted(res.keys()):
-                        pl = res[ln]
-                        # hand the list its unit's wordtokens (context for scope/key/
-                        # render); slots stay SyllData — not per-syllable entities.
-                        pl.wordtokens = getattr(text, 'wordtokens', None)
-                        pl._text = parent
-                        pl.parent = text
-                        text._parses = pl
-                        yield pl
-                    return
+        # text's, scoped to this unit BY ITS OWN word_nums via parse_units_from_df — the
+        # SAME helper the linepart / token-list paths use, so single-unit parsing (line.
+        # parse / line.best_parse) can't drift from them and goes through the SAME DF path
+        # as text.parse() rather than the entity parser. Scoping is entity-agnostic
+        # (word_num, NOT a df_col derived from meter.parse_unit, which can disagree with
+        # this entity's type and select the wrong rows). Unifies line.best_parse with
+        # text.parse() (was a real discrepancy: line-level dropped dominated cross-length
+        # readings). (retire-entity-parser)
+        parent = getattr(text, 'text', None)
+        parent_df = getattr(parent, '_syll_df', None)
+        if getattr(text, 'num', None) is not None and parent_df is not None and len(parent_df) > 0:
+            from .vectorized import parse_units_from_df
+            (_unit, pl), = parse_units_from_df([text], parent_df, self)
+            if pl is not None:
+                # parse_units_from_df already set pl.wordtokens = pl.parent = text
+                # (for a Line, text is text.wordtokens); slots stay SyllData.
+                pl._text = parent
+                text._parses = pl
+                yield pl
+                return
 
         # DF path for a bare WordTokenList (or any multi-unit entity, e.g. a token
         # list spanning several lines): scope the parent text's syll_df to each parse

@@ -1015,7 +1015,6 @@ async def parse_stream(req: dict):
     _check_size(text_str)
     timeout = _clamp_timeout(req)
 
-    from prosodic.parsing.vectorized import parse_units_from_df
     from prosodic.parsing.meter import Meter
 
     input_lines = text_str.split('\n')[:linelim]

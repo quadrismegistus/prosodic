@@ -142,6 +142,14 @@ V2_INIT = 5.29
 V2_PARSE = 72.97
 V2_SYNTAX = 160.20  # stanza constituency + depparse, 522 sentences
 
+# v1.3.8 reference timings (cmp_prosodics harness, same machine, measured
+# 2026-07-10: whole-sonnets Text + parse, dict warm). NOTE the shape of the
+# history: v1's pruned branch-and-bound was ~2x FASTER than the 2024 v2
+# rewrite; the oft-quoted "78s legacy" number is v2, not v1.
+V1_INIT = 1.4
+V1_PARSE = 36.6
+V1_SYNTAX = None  # v1 had no syntax/phrasal-stress layer
+
 
 def format_markdown(results, meta):
     """Format results as a comparison table."""
@@ -155,32 +163,36 @@ def format_markdown(results, meta):
 
     rows = []
 
-    def row(step, v2, v3):
+    def row(step, v1, v2, v3):
         speedup = f"{v2/v3:.0f}x" if v2 and v3 and v3 > 0 else "—"
+        v1s = f"{v1:.2f}s" if v1 else "—"
         v2s = f"{v2:.2f}s" if v2 else "—"
         v3s = f"{v3:.2f}s" if v3 else "—"
-        return f"| {step} | {v2s} | {v3s} | {speedup} |"
+        return f"| {step} | {v1s} | {v2s} | {v3s} | {speedup} |"
 
-    rows.append(row("Init (tokenize + pronunciations + entities)", V2_INIT, init_v3))
-    rows.append(row("Parse (CPU)", V2_PARSE, parse_cpu_v3))
+    rows.append(row("Init (tokenize + pronunciations + entities)", V1_INIT, V2_INIT, init_v3))
+    rows.append(row("Parse (CPU)", V1_PARSE, V2_PARSE, parse_cpu_v3))
     if parse_gpu_v3:
-        rows.append(row("Parse (GPU)", V2_PARSE, parse_gpu_v3))
+        rows.append(row("Parse (GPU)", V1_PARSE, V2_PARSE, parse_gpu_v3))
+    e2e_v1 = V1_INIT + V1_PARSE
     e2e_v2 = V2_INIT + V2_PARSE
-    rows.append(row("**End-to-end (CPU)**", e2e_v2, init_v3 + parse_cpu_v3))
+    rows.append(row("**End-to-end (CPU)**", e2e_v1, e2e_v2, init_v3 + parse_cpu_v3))
     if parse_gpu_v3:
-        rows.append(row("**End-to-end (GPU)**", e2e_v2, init_v3 + parse_gpu_v3))
+        rows.append(row("**End-to-end (GPU)**", e2e_v1, e2e_v2, init_v3 + parse_gpu_v3))
     init_only = r.get("init", 0)
     if parse_gpu_v3:
         batch_total = init_only + parse_gpu_v3
-        rows.append(row("**DF-only (no entities, GPU)**", e2e_v2, batch_total))
+        rows.append(row("**DF-only (no entities, GPU)**", e2e_v1, e2e_v2, batch_total))
     if syntax_overhead is not None:
         syntax_v3 = r.get("syntax_init", 0)
-        rows.append(row("Syntax (dep parse)", V2_SYNTAX, syntax_v3))
+        rows.append(row("Syntax (dep parse)", V1_SYNTAX, V2_SYNTAX, syntax_v3))
 
     lines = [
-        f"Shakespeare sonnets ({n} lines). `python -m prosodic.profiling`\n",
-        "| Step | v2 | v3 | Speedup |",
-        "|---|---|---|---|",
+        f"Shakespeare sonnets ({n} lines). `python -m prosodic.profiling`",
+        "(v1.3.8 measured via the cmp_prosodics harness, same machine; "
+        "speedup column = v3 over v2.)\n",
+        "| Step | v1 | v2 | v3 | v3 vs v2 |",
+        "|---|---|---|---|---|",
         *rows,
     ]
 

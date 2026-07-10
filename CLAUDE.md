@@ -302,15 +302,20 @@ The `_syll_df`-backed canonical syllable count is essential for line/syllable sc
 
 Run `python -m prosodic.profiling` to regenerate.
 
-| Step | v2 | v3 | Speedup |
-|---|---|---|---|
-| Init (tokenize + pronunciations + entities) | 5.29s | 2.2s | 2x |
-| Parse (CPU) | 72.97s | 6.4s | 11x |
-| Parse (GPU) | 72.97s | 4.1s | 18x |
-| **End-to-end (CPU)** | **78.3s** | **8.6s** | **9x** |
-| **End-to-end (GPU)** | **78.3s** | **6.3s** | **12x** |
-| **DF-only (no entities, GPU)** | **78.3s** | **5.1s** | **15x** |
-| Syntax (dep parse) | 160.2s | 3.3s | 49x |
+| Step | v1 (1.3.8) | v2 | v3 | v3 vs v2 |
+|---|---|---|---|---|
+| Init (tokenize + pronunciations + entities) | 1.4s | 5.29s | 2.2s | 2x |
+| Parse (CPU) | 36.6s | 72.97s | 6.4s | 11x |
+| Parse (GPU) | 36.6s | 72.97s | 4.1s | 18x |
+| **End-to-end (CPU)** | **38.0s** | **78.3s** | **8.6s** | **9x** |
+| **End-to-end (GPU)** | **38.0s** | **78.3s** | **6.3s** | **12x** |
+| **DF-only (no entities, GPU)** | **38.0s** | **78.3s** | **5.1s** | **15x** |
+| Syntax (dep parse) | — | 160.2s | 3.3s | 49x |
+
+v1 measured 2026-07-10 via the `cmp_prosodics` harness (same machine, whole-sonnets
+Text + parse, dict warm; `v1_3_8/profile_v1_sonnets.py` there). Note the shape of the
+history: **v1's pruned branch-and-bound was ~2× faster than the 2024 v2 rewrite** —
+the oft-quoted "78s legacy" figure is v2, not v1. v3 is ~9× v1, ~18× v2 on parse (GPU).
 
 An earlier revision of this table showed Parse at 1.9s — that predates the v1-semantics
 restoration (PRs #164–169): variant pooling × verse elision means ~89% of sonnet lines

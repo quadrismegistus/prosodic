@@ -118,7 +118,6 @@ class MaxEntTrainer:
         self._constraint_names = None  # expanded names (with zone suffixes)
         self._base_constraint_names = None  # original constraint names
         self._weights = None
-        self._n_skipped_ragged = 0  # ragged (mixed-N) lines dropped from training
         self._n_skipped_empty = 0   # oversized/empty lines with no viols matrix
 
     def _parse_text(self, text_input, lang=DEFAULT_LANG):
@@ -170,7 +169,6 @@ class MaxEntTrainer:
         self._line_data = []
         self._base_constraint_names = None
         n_unmatched = 0
-        self._n_skipped_ragged = 0
         self._n_skipped_empty = 0
 
         # first pass: collect raw data and find max syllable count for zone naming
@@ -183,14 +181,26 @@ class MaxEntTrainer:
 
             # Oversized/empty lines come back as a bare ParseList([]) with no
             # violation matrix — skip them instead of crashing on _all_viols.
-            # Ragged (mixed-syllable-count pool_forms) lines have a per-scansion
-            # viols LIST, not a fixed-width array — skip them too (rare). Count
-            # each skip reason so the drop is surfaced in the warning below
-            # rather than vanishing silently. Check _ragged first: a ragged
-            # line's _all_viols is a list with no .shape.
+            # Check _ragged first: a ragged line's _all_viols is a LIST of
+            # per-scansion (N_k, C) arrays with no .shape.
             viols = getattr(lpl, "_all_viols", None)
             if getattr(lpl, "_ragged", False):
-                self._n_skipped_ragged += 1
+                # Mixed-N (ragged) line: candidates differ in syllable count
+                # (elision / pronunciation variants). TRAINABLE: MaxEnt consumes
+                # the N axis immediately — zone_split collapses every candidate to
+                # a (C*Z) feature vector whose names are N-independent (only the
+                # zone boundaries shift with each row's own N) — so mixed-N
+                # candidates stack into the ordinary (S, C*Z) softmax. The second
+                # pass zone-splits these per-row. (Previously skipped wholesale,
+                # which dropped exactly the elision lines from every gold set —
+                # 12/120 of the foot gold.)
+                if not viols:
+                    self._n_skipped_empty += 1
+                    continue
+                if self._base_constraint_names is None:
+                    self._base_constraint_names = list(lpl._constraint_names)
+                max_nsylls = max(max_nsylls, max(v.shape[0] for v in viols))
+                raw_entries.append((line_text, lpl))
                 continue
             if viols is None or viols.shape[0] == 0:
                 self._n_skipped_empty += 1
@@ -213,7 +223,18 @@ class MaxEntTrainer:
 
         # second pass: zone-split and pad to consistent feature dimension
         for line_text, lpl in raw_entries:
-            viols_sum = self._zone_split(lpl._all_viols)  # (S, C*Z_local)
+            if getattr(lpl, "_ragged", False):
+                # Mixed-N: zone-split each (N_k, C) row by its OWN length (the same
+                # per-row split the ragged scoring path uses), then stack. Rows can
+                # differ in width only under zones="foot" (Z grows with N) — right-
+                # pad to the widest; the shared n_features pad below does the rest.
+                per = [self._zone_split(v[None])[0] for v in lpl._all_viols]
+                width = max(p.shape[0] for p in per)
+                viols_sum = np.zeros((len(per), width), dtype=np.float64)
+                for j, p in enumerate(per):
+                    viols_sum[j, :p.shape[0]] = p
+            else:
+                viols_sum = self._zone_split(lpl._all_viols)  # (S, C*Z_local)
             n_scansions = viols_sum.shape[0]
 
             # pad if this line has fewer zones than the max
@@ -254,11 +275,6 @@ class MaxEntTrainer:
             warn_parts.append(
                 f"{n_total - n_matched}/{n_total} lines had no matching "
                 f"scansion among parser candidates (syllable count mismatch?)"
-            )
-        if self._n_skipped_ragged:
-            warn_parts.append(
-                f"{self._n_skipped_ragged} line(s) skipped as "
-                f"ragged/mixed-syllable-count and not trained"
             )
         if warn_parts:
             log.warning("; ".join(warn_parts))

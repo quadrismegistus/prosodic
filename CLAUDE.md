@@ -305,22 +305,26 @@ Run `python -m prosodic.profiling` to regenerate.
 | Step | v2 | v3 | Speedup |
 |---|---|---|---|
 | Init (tokenize + pronunciations + entities) | 5.29s | 2.2s | 2x |
-| Parse (CPU) | 72.97s | 6.8s | 11x |
-| Parse (GPU) | 72.97s | 5.2s | 14x |
-| **End-to-end (CPU)** | **78.3s** | **9.0s** | **9x** |
-| **End-to-end (GPU)** | **78.3s** | **7.5s** | **11x** |
-| **DF-only (no entities, GPU)** | **78.3s** | **6.2s** | **13x** |
+| Parse (CPU) | 72.97s | 6.4s | 11x |
+| Parse (GPU) | 72.97s | 4.1s | 18x |
+| **End-to-end (CPU)** | **78.3s** | **8.6s** | **9x** |
+| **End-to-end (GPU)** | **78.3s** | **6.3s** | **12x** |
+| **DF-only (no entities, GPU)** | **78.3s** | **5.1s** | **15x** |
 | Syntax (dep parse) | 160.2s | 3.3s | 49x |
 
 An earlier revision of this table showed Parse at 1.9s — that predates the v1-semantics
 restoration (PRs #164–169): variant pooling × verse elision means ~89% of sonnet lines
 now carry multiple pronunciation combos (mean 9/line), each evaluated and cross-bounded,
 plus mixed-N dominated-length retention. That ~3× is purchased semantics (parity ρ
-0.9475 vs the 2020 v1 data), not regression. The pooling layer itself is vectorized
-(index-aligned overlay in `build_for_N` — same-N combos share one scansion enumeration,
-so dedup-by-meter-string ≡ per-index argmin, verified byte-identical; was 4.0s of
-Python loops, now 1.8s). GPU beats CPU again at this workload — the elite pre-screen
-note that once favored CPU flipped back when pooling re-inflated the kernel's input.
+0.9475 vs the 2020 v1 data), not regression. Two vectorization passes clawed most of it
+back, each verified byte-identical by a full before/after dump diff: (1) the pooling
+overlay (`build_for_N`) — same-N combos share one scansion enumeration, so
+dedup-by-meter-string ≡ per-index argmin (was 4.0s of Python loops, now 1.8s); (2) the
+elite bounding pre-screen runs on the torch device when available
+(`_elite_screen_torch`, 15x over numpy on MPS — the pooled combos push its input to
+~15K rows/call; any sound screen yields the same final mask by transitivity of
+dominance). GPU beats CPU again at this workload — the old "CPU edges out GPU" note
+flipped back when pooling re-inflated the kernels' inputs.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

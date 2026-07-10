@@ -141,16 +141,6 @@ class ParseSlot(Entity):
         return getattr(parent, 'parent', None) if parent is not None else None
 
     @property
-    def syll(self) -> "Syllable":
-        """
-        The syllable associated with this slot.
-
-        Returns:
-            The syllable associated with this slot.
-        """
-        return self.unit
-
-    @property
     def is_stressed(self) -> bool:
         """
         Whether the syllable is stressed.

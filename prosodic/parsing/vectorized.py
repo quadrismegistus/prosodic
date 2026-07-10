@@ -862,37 +862,10 @@ def _zone_split_batch(viols_4d, zones):
     return out
 
 
-def compute_bounding(viols, constraint_index, zones=None):
-    """Compute harmonic bounding: mark scansions dominated by others.
-
-    With `zones` set, dominance is computed on the zone-split (S, C*Z) counts
-    so it matches zone-aware scoring; otherwise on the flat (S, C) sums.
-    """
-    if zones is not None:
-        from .maxent import zone_split
-        return _bound_viol_sums(zone_split(viols, zones))
-    v = viols.sum(axis=1)  # (S, C)
-    return _bound_viol_sums(v)
-
-
-def _bound_viol_sums(v):
-    """Bound a single (S, C) violation-sum matrix. Returns (S,) bool mask."""
-    S = v.shape[0]
-    if S <= 1:
-        return np.ones(S, dtype=bool)
-
-    # fast path: if any scansion has 0 on all constraints, it bounds everything else
-    totals = v.sum(axis=1)  # (S,)
-    perfect = totals == 0
-    if perfect.any():
-        # perfect scansions are unbounded; everything with >0 total is bounded
-        # but among perfect scansions, none bounds another (all equal)
-        return perfect
-
-    device = get_device()
-    if device is not None:
-        return _compute_bounding_torch(v, device)
-    return _compute_bounding_numpy(v)
+# (The old single-line `compute_bounding`/`_bound_viol_sums` wrappers were removed:
+# zero callers — everything bounds through `compute_bounding_batch`. The per-line
+# `_compute_bounding_numpy`/`_compute_bounding_torch` kernels remain: they're the
+# exact reference implementations, exercised directly by the differential tests.)
 
 
 # Elite pre-screen for bounding. Most candidates are dominated by one of the

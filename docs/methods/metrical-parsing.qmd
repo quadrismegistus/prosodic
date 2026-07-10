@@ -73,7 +73,11 @@ constraint is one decorated function with a vectorized lambda.
 
 **Scoring is Harmonic Grammar**: a parse's score is the weighted sum of
 its violations (all weights 1.0 by default; settable per constraint;
-learnable by MaxEnt). Lower is better; `best_parse` is the argmin.
+learnable by MaxEnt). Lower is better; `best_parse` is the minimum-score
+parse, with co-optimal ties broken by a deterministic pure-scansion cascade
+(fewest resolutions `ss` → period-k regularity → pseudo-feet → fewest `ww` →
+a `w`-onset content key) — see [Foot parsing](foot-parsing.qmd) §3; a strictly
+unique minimum short-circuits to a plain argmin.
 
 **Harmonic bounding** (Samek-Lodovici & Prince 1999) prunes candidates
 that cannot win *under any weighting*: scansion *i* bounds scansion *j*
@@ -89,8 +93,11 @@ any candidate an elite dominates is eliminated (on the sonnets, ~3
 survivors of ~180 remain); the exact O(S²) pairwise kernel then runs only
 on the survivors. This is exact, not approximate — dominance is
 transitive, so any dominator of a survivor must itself survive the screen.
-It made CPU parsing as fast as GPU, so a GPU is no longer needed for
-parsing.
+The screen itself also runs on the torch device when one is available
+(MPS/CUDA; ~15× over numpy — pronunciation-variant pooling inflates its
+input to ~15K rows per call), with the numpy screen as the CPU fallback.
+GPU parsing is currently the faster path again; CPU remains fully
+supported and byte-identical.
 
 ## The vectorized implementation
 
@@ -115,7 +122,8 @@ lines at once* in numpy, without constructing entity objects:
    producing the `(L, S)` unbounded mask. Perfect-parse lines short-cut.
 5. **Lazy results**: violations, scansions, and masks are stored in a
    `LazyParseList`; `Parse` objects are built only on access
-   (`best_parse` builds exactly one, via argmin — no sorting).
+   (`best_parse` builds exactly one — argmin when the minimum score is
+   unique, else the deterministic tie-break cascade).
 6. **Pronunciation ambiguity**: words with multiple wordforms produce the
    full cartesian product of per-word choices (capped at
    `MAX_FORM_COMBOS=4096`). With `pool_forms` (default on), the parses of
@@ -127,23 +135,31 @@ lines at once* in numpy, without constructing entity objects:
    violation arrays, so no `Parse`/`Entity` objects are built.
 
 Performance (Shakespeare's sonnets, 2,155 lines): the parser evaluates in
-~1.9 s on CPU — 38× faster than the v2 branch-and-bound parser's ~73 s —
-and the full pipeline runs end-to-end in ~4.0 s (20×). With the elite
-pre-screen, CPU parsing is now as fast as GPU. `python -m
-prosodic.profiling` regenerates the numbers.
+~4.1 s on GPU / ~6.4 s CPU — 18×/11× faster than the 2024 v2 parser's
+~73 s — with the full pipeline end-to-end in ~6.3 s GPU / ~8.6 s CPU. For
+historical reference, v1.3.8's pruned branch-and-bound took ~36.6 s on the
+same machine (the oft-quoted "78 s legacy" figure was v2, which *regressed*
+2× against v1). An earlier ~1.9 s figure predates the v1-semantics
+restoration (full pronunciation-variant pooling × verse elision: ~89% of
+sonnet lines carry multiple pronunciation combos, each evaluated and
+cross-bounded — purchased semantics, since recouped ~2× by two
+byte-identical vectorization passes). `python -m prosodic.profiling`
+regenerates the numbers.
 
-## The entity path and the reference implementations
+## One parse path, and the reference implementations
 
-There are two ways a line gets parsed (see "Two Parse Paths" in
-`CLAUDE.md`), and both use the vectorized evaluator above:
-
-- **DF path** (`text.parse()` → `parse_batch_from_df`): works entirely
-  from `_syll_df`; parse slots hold lightweight `SyllData` stand-ins.
-  Fastest; no entity objects exist at all.
-- **Entity path** (`parse_batch(text.lines, meter)`): same tensors, but
-  slots hold real `Syllable` entities with parent chains — needed when
-  downstream code walks from a syllable back to its word (HTML rendering,
-  the web app).
+Since the entity batch parser was retired (see
+`docs/methods/parse-path-unification.md`), *all* parsing goes through the
+single vectorized DF path: `text.parse()` → `parse_batch_from_df` works
+entirely from `_syll_df`, and single lines / lineparts / arbitrary token
+lists route through `parse_units_from_df`, which scopes the parent frame
+by `word_num`. Parse slots hold lightweight `SyllData` stand-ins; no
+entity objects are built by parsing (the `Syllable`/`Phoneme` tree still
+exists and is built lazily on *access* — rendering bridges from a slot to
+its `WordToken` via `SyllData.word_num`). The one construction that still
+builds entity slots is the manual `Parse(line, "wsws")` reference
+constructor — a hand-built single parse from a *given* scansion, not a
+parser, and deliberately left entity-based.
 
 The truly *non-vectorized* code is the *reference implementations*: every
 constraint's decorated function body is an entity-based, per-position
@@ -202,6 +218,33 @@ positions ("the blue **wave** rolls **night**ly"), and cross-word
 disyllabic weak positions are the norm rather than a violation. The
 mirror image of iambic pentameter, where weak positions carry the
 regulation.
+
+### The by-meter weight signature (foot-gold study)
+
+Fitting MaxEnt separately per meter on the hand-tagged foot gold
+(`data/tagged_samples/foot-gold.csv`, 30 lines × 4 meters;
+`scripts/maxent_by_meter.py`, which also runs zone and partial-pooled
+variants) recovers the binary/ternary parameter empirically from the
+annotations alone:
+
+| constraint | iambic | trochaic | anapestic | dactylic |
+|---|---|---|---|---|
+| `w_peak` | 0.76 | 1.53 | 0.00 | 0.00 |
+| `w_stress` | 1.24 | 1.32 | 0.00 | 0.00 |
+| `s_unstress` | 1.63 | 0.12 | 3.48 | 2.65 |
+| `unres_across` | 2.27 | 2.85 | 0.45 | 0.16 |
+| `unres_within` | 1.82 | 2.53 | 0.13 | 0.45 |
+
+Binary meters weight the weak-position constraints; ternary meters zero
+them and put the highest weight of anyone on `s_unstress`. Splitting by
+line thirds adds a positional finding invisible in the flat fit: **the
+strict edge flips with headedness** — iambic locks its line-*final* beat
+(`w_stress` 0.41 → 0.95 → 1.56 across thirds) while trochaic locks its
+line-*initial* one (1.38 → 0.88 → 0.73), exact mirror gradients. (Caveat:
+a low weight means the gold does not *discriminate* from its rivals on
+that constraint, not that the grammar permits violations — so the
+`unres_within` ternary-strictness prediction, which the flat fit does not
+separate, needs the positional view rather than this table.)
 
 ## References
 

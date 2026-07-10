@@ -46,6 +46,8 @@ website:
             file: explorations/sonnets.qmd
           - text: "Prose rhythm"
             file: explorations/prose.qmd
+          - text: "The grammar of each meter"
+            file: explorations/meters.qmd
       - text: "Architecture"
         file: architecture.qmd
       - text: "Reference"

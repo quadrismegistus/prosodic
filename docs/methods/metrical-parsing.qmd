@@ -244,7 +244,9 @@ line-*initial* one (1.38 → 0.88 → 0.73), exact mirror gradients. (Caveat:
 a low weight means the gold does not *discriminate* from its rivals on
 that constraint, not that the grammar permits violations — so the
 `unres_within` ternary-strictness prediction, which the flat fit does not
-separate, needs the positional view rather than this table.)
+separate, needs the positional view rather than this table.) An
+executable version of this study, with figures:
+[The grammar of each meter](../explorations/meters.qmd).
 
 ## References
 

@@ -1,0 +1,181 @@
+---
+title: "The grammar of each meter"
+subtitle: "Learning each meter's constraint weights from hand-tagged scansions: binary vs. ternary, and where in the line each meter is strict"
+jupyter: python3
+---
+
+Prosodic's constraints are *violable*: a parse is scored by the weighted
+sum of its violations, and nothing in the machinery says iambic verse and
+anapestic verse must weight those constraints the same way. Metrical
+theory says they shouldn't — Hanson & Kiparsky (1996) characterize English
+binary and ternary meters as regulating *different positions* (weak vs.
+strong). This page tests that claim empirically, and by the shortest
+possible route: fit a [MaxEnt model](../methods/metrical-parsing.qmd) to
+hand-tagged scansions of each meter separately, and read each meter's
+grammar off the learned weights.
+
+Everything below is computed by the code shown, on data that ships with
+Prosodic; the site embeds one real frozen execution.
+
+## The gold standard
+
+`data/tagged_samples/foot-gold.csv`: 120 hand-tagged lines, 30 per meter,
+each with its per-syllable scansion (`w` = weak position, `s` = strong).
+
+```{python}
+#| label: setup
+import warnings
+from pathlib import Path
+warnings.filterwarnings('ignore')
+
+import pandas as pd
+import prosodic
+from prosodic.parsing.maxent import MaxEntTrainer
+
+_rel = Path('data') / 'tagged_samples' / 'foot-gold.csv'
+_root = next((p for p in [Path.cwd(), *Path.cwd().parents]
+              if (p / _rel).exists()), None)
+gold_fn = (str(_root / _rel) if _root else
+           'https://raw.githubusercontent.com/quadrismegistus/prosodic'
+           '/master/data/tagged_samples/foot-gold.csv')
+
+gold = pd.read_csv(gold_fn)
+METERS = ['iambic', 'trochaic', 'anapestic', 'dactylic']
+gold.meter.value_counts()
+```
+
+One line of each, with its annotation:
+
+```{python}
+#| label: examples
+for m in METERS:
+    r = gold[gold.meter == m].iloc[1]
+    print(f"{m:10s} {r.scansion:16s} {r.line}")
+```
+
+## Fit a grammar per meter
+
+`MaxEntTrainer` parses every line, matches the annotated scansion among
+the parser's candidates, and learns the constraint weights that make the
+annotation maximally probable (L-BFGS-B; Goldwater & Johnson 2003). The
+loader takes the CSV's `line`/`scansion` columns directly, and
+mixed-syllable-count lines — the gold's elisions, like *heav'n* and
+*trav'ling* — train like any others.
+
+```{python}
+#| label: fit-flat
+weights = {}
+for m in METERS:
+    tr = MaxEntTrainer(prosodic.Meter(), regularization=1.0)
+    tr.load_annotations(gold[gold.meter == m])
+    tr.train()
+    weights[m] = tr.learned_weights()
+
+W = pd.DataFrame(weights).round(2)
+W
+```
+
+```{python}
+#| label: fig-signature
+#| fig-cap: "Each meter's learned grammar. Binary meters (iambic, trochaic) weight the weak-position constraints; ternary meters (anapestic, dactylic) zero them and regulate the strong positions instead."
+from plotnine import (aes, element_text, facet_wrap, geom_col, ggplot,
+                      labs, scale_fill_brewer, theme, theme_minimal)
+
+d = (W.drop(index='foot_size')      # inert here: every gold line is well-formed
+       .reset_index(names='constraint')
+       .melt(id_vars='constraint', var_name='meter', value_name='weight'))
+d['meter'] = pd.Categorical(d.meter, METERS)
+d['constraint'] = pd.Categorical(d.constraint, W.drop(index='foot_size').index)
+
+(ggplot(d, aes('constraint', 'weight', fill='meter'))
+ + geom_col(position='dodge')
+ + scale_fill_brewer(type='qual', palette='Set2')
+ + labs(x='', y='learned weight')
+ + theme_minimal()
+ + theme(axis_text_x=element_text(rotation=30, ha='right'),
+         figure_size=(7.5, 3.2)))
+```
+
+The split is categorical, and it is Hanson & Kiparsky's parameter
+recovered from thirty lines per meter:
+
+- **Binary meters police the weak positions.** `w_stress` and `w_peak`
+  (no stress, no lexical peak, off the beat) carry real weight, and the
+  `unres_*` constraints (no two syllables sharing a position) are the
+  strictest of all — binary positions are monosyllabic.
+- **Ternary meters police the strong positions.** `w_stress` and `w_peak`
+  drop to zero — a stressed monosyllable sits freely inside an anapest's
+  double-weak dip ("the blue **wave** rolls **night**ly") — while
+  `s_unstress` (every beat must be stressed) becomes the heaviest weight
+  in any grammar, and disyllabic positions are of course tolerated.
+
+## Where in the line is each meter strict?
+
+Splitting each constraint's weight by line *thirds* (`zones=3`) asks a
+finer question: not just *which positions* a meter regulates, but *where
+along the line*.
+
+```{python}
+#| label: fit-zones
+rows = []
+for m in METERS:
+    tr = MaxEntTrainer(prosodic.Meter(), regularization=1.0, zones=3)
+    tr.load_annotations(gold[gold.meter == m])
+    tr.train()
+    for name, wt in tr.learned_weights().items():
+        base, z = name.rsplit('_z', 1)
+        if base in ('w_stress', 's_unstress'):
+            rows.append(dict(meter=m, constraint=base,
+                             zone=int(z), weight=wt))
+Z = pd.DataFrame(rows)
+Z.pivot_table(index=['constraint', 'zone'], columns='meter',
+              values='weight').round(2)[METERS]
+```
+
+```{python}
+#| label: fig-zones
+#| fig-cap: "Constraint weight across line thirds. The strict edge flips with headedness: iambic locks its line-final beat, trochaic its line-initial one."
+from plotnine import geom_line, geom_point, scale_x_continuous
+
+Z['meter'] = pd.Categorical(Z.meter, METERS)
+
+(ggplot(Z, aes('zone', 'weight', color='meter'))
+ + geom_line(size=1)
+ + geom_point(size=2)
+ + facet_wrap('~constraint')
+ + scale_x_continuous(breaks=[1, 2, 3],
+                      labels=['initial', 'medial', 'final'])
+ + scale_fill_brewer(type='qual', palette='Set2')
+ + labs(x='line third', y='learned weight')
+ + theme_minimal()
+ + theme(figure_size=(7.5, 3.2)))
+```
+
+The flat fit cannot see this: **the strict edge flips with headedness.**
+Iambic verse — rising, final-headed — enforces `w_stress` most strictly in
+its final third: the line may open with an inversion (*"**Pi**ty the
+world…"*), but its last beat is inviolable. Trochaic verse is the exact
+mirror: strictest at the opening, loose at the close (where feminine
+endings and truncations live). The ternary meters show the complementary
+picture in `s_unstress`: every beat must be stressed, *increasingly so
+toward the line's end*.
+
+Two cautions, in the spirit of reading a regression honestly. A *low*
+weight means the annotated parses don't *differ* from their competitors on
+that constraint — non-discriminative is not the same as permitted. And
+thirty lines per meter is a pilot's sample: the shape of the signature is
+robust (it survives a tenfold change in regularization), but individual
+decimals are not.
+
+## Reproducing and extending
+
+The full study lives in
+[`scripts/maxent_by_meter.py`](https://github.com/quadrismegistus/prosodic/blob/master/scripts/maxent_by_meter.py),
+which adds two analyses omitted here: a coverage audit of which gold lines
+train (all of them, since mixed-syllable-count elision lines were made
+trainable), and a **partial-pooled** joint model — one shared grammar plus
+per-meter deviations — where the binary/ternary split appears as
+opposite-signed deviations from the shared mean. Theory and the
+corresponding section: [Metrical
+parsing](../methods/metrical-parsing.qmd); the annotation format:
+[Foot parsing](../methods/foot-parsing.md).

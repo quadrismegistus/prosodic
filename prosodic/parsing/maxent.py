@@ -9,10 +9,12 @@ Based on Goldwater & Johnson (2003) and Bruce Hayes' MaxEnt OT framework.
 Usage:
     from prosodic.parsing.maxent import MaxEntTrainer
 
-    # annotations: list of (line_text, scansion_str, frequency)
-    # or a DataFrame with columns: text, scansion, frequency
+    # annotations: a CSV/TSV file path (delimiter sniffed, extra columns
+    # ignored — e.g. data/tagged_samples/foot-gold.csv loads directly),
+    # a list of (line_text, scansion[, frequency]) tuples or dicts,
+    # or a DataFrame with liberal columns (line|text, scansion, freq)
     trainer = MaxEntTrainer(meter)
-    trainer.load_annotations(annotations)
+    trainer.load_annotations('annotations.csv')
     trainer.train()
     trainer.report()
 
@@ -284,52 +286,83 @@ class MaxEntTrainer:
     @staticmethod
     def _normalize_annotation_columns(df):
         """Map liberal column names to canonical text/scansion/frequency and keep only
-        those. The text column may be named `text` or `line`/`line_text`; the target is
-        `scansion` (or `target`/`target_scansion`); an optional frequency column
-        (`frequency`/`freq`/`weight`/`count`) defaults to 1.0. Extra columns (meter,
-        poem, note, …) are ignored — so a gold CSV like data/tagged_samples/foot-gold.csv
-        loads directly."""
+        those. The line column may be named `line`/`line_text`/`text` — **`line` wins
+        when several are present** (in DH corpora `text` is often the WORK's title/id
+        while `line` holds the verse line; a warning names the loser). The target is
+        `scansion` (or `target`/`target_scansion`); an optional `frequency`/`freq`
+        column defaults to 1.0 (`weight`/`count` are deliberately NOT treated as
+        frequency — a syllable-`count` column would silently multiply long lines'
+        gradient mass). Rows with a blank line/scansion are dropped with a warning;
+        non-numeric or missing frequencies default to 1.0 with a warning. Extra columns
+        (meter, poem, note, …) are ignored — so a gold CSV like
+        data/tagged_samples/foot-gold.csv loads directly."""
         lower = {str(c).lower(): c for c in df.columns}
         def pick(*names):
-            for n in names:
-                if n in lower:
-                    return lower[n]
-            return None
-        tcol = pick("text", "line", "line_text")
+            found = [lower[n] for n in names if n in lower]
+            if len(found) > 1:
+                log.warning(
+                    f"annotation data has multiple candidate columns {found}; "
+                    f"using {found[0]!r}")
+            return found[0] if found else None
+        tcol = pick("line", "line_text", "text")
         scol = pick("scansion", "target", "target_scansion")
         if tcol is None or scol is None:
             raise ValueError(
-                "annotation data needs a text column (text/line) and a scansion "
-                f"column (scansion/target); got {list(df.columns)}")
-        fcol = pick("frequency", "freq", "weight", "count")
-        out = pd.DataFrame({"text": df[tcol].astype(str), "scansion": df[scol].astype(str)})
-        out["frequency"] = df[fcol].astype(float) if fcol else 1.0
-        return out
+                "annotation data needs a line column (line/text) and a scansion "
+                f"column (scansion/target); got {list(df.columns)} — if you loaded "
+                "from a file, check the delimiter was detected correctly")
+        out = pd.DataFrame({"text": df[tcol], "scansion": df[scol]})
+        # drop blank/missing rows BEFORE astype(str) — otherwise a NaN cell becomes
+        # the literal string 'nan' and silently trains as a one-word line
+        bad = (out["text"].isna() | out["scansion"].isna()
+               | (out["text"].astype(str).str.strip() == "")
+               | (out["scansion"].astype(str).str.strip() == ""))
+        if bad.any():
+            log.warning(f"dropping {int(bad.sum())} annotation row(s) with a "
+                        f"blank line/scansion cell")
+            out, df = out[~bad], df[~bad]
+        out["text"] = out["text"].astype(str)
+        out["scansion"] = out["scansion"].astype(str)
+        fcol = pick("frequency", "freq")
+        if fcol:
+            freqs = pd.to_numeric(df[fcol], errors="coerce")
+            n_bad = int(freqs.isna().sum())
+            if n_bad:
+                log.warning(f"{n_bad} missing/non-numeric value(s) in frequency "
+                            f"column {fcol!r}; defaulting those to 1.0")
+            out["frequency"] = freqs.fillna(1.0).astype(float)
+        else:
+            out["frequency"] = 1.0
+        return out.reset_index(drop=True)
 
     def load_annotations(self, data, lang=DEFAULT_LANG, text=None):
         """Load annotated scansion data and parse all lines.
 
         Args:
             data: one of —
-              * a CSV/TSV file **path** (str or Path) — read into a DataFrame (`.tsv`/
-                `.txt` → tab-separated, else comma);
+              * a CSV/TSV file **path** (str or Path) — the delimiter is sniffed
+                (comma, tab, semicolon), so a comma-separated `.txt` or a
+                tab-separated `.csv` both load;
               * a list of `(line_text, scansion)` or `(line_text, scansion, frequency)`
-                tuples (frequency defaults to 1.0);
+                tuples (frequency defaults to 1.0; extra trailing fields ignored),
+                or a list of dicts with liberal keys;
               * a DataFrame, columns matched liberally by
-                `_normalize_annotation_columns` (text|line, scansion, optional freq).
+                `_normalize_annotation_columns` (line|text, scansion, optional freq).
             lang: language code for parsing.
             text: optional pre-built TextModel (e.g. with syntax=True).
         """
-        import os
         if isinstance(data, (str, os.PathLike)):
-            sep = "\t" if str(data).endswith((".tsv", ".txt")) else ","
-            df = pd.read_csv(data, sep=sep)
+            # sniff the delimiter rather than guessing from the extension
+            df = pd.read_csv(data, sep=None, engine="python")
         elif isinstance(data, list):
-            rows = []
-            for r in data:
-                r = tuple(r)
-                rows.append(r if len(r) >= 3 else (r[0], r[1], 1.0))
-            df = pd.DataFrame(rows, columns=["text", "scansion", "frequency"])
+            if data and isinstance(data[0], dict):
+                df = pd.DataFrame(data)   # records: columns come from the dict keys
+            else:
+                rows = []
+                for r in data:
+                    r = tuple(r)[:3]      # extra trailing fields ignored, like the DF path
+                    rows.append(r if len(r) >= 3 else (r[0], r[1], 1.0))
+                df = pd.DataFrame(rows, columns=["text", "scansion", "frequency"])
         else:
             df = data.copy()
         df = self._normalize_annotation_columns(df)

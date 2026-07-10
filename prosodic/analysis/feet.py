@@ -52,7 +52,7 @@ class Foot:
 
     Attributes: `pattern` ('wws'), `label` ('anapest'), `head` ('rising'/'falling'/
     'none'/'ambiguous'), `is_substituted` (inverts the line head), `slots`
-    (ParseSlots), `sylls`/`syllables` (the syllable units)."""
+    (ParseSlots), `sylls` (the syllable units)."""
 
     __slots__ = ("pattern", "label", "head", "is_substituted", "slots", "sylls")
 

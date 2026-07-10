@@ -189,7 +189,8 @@ def format_markdown(results, meta):
 
     lines = [
         f"Shakespeare sonnets ({n} lines). `python -m prosodic.profiling`",
-        "(v1.3.8 measured via the cmp_prosodics harness, same machine; "
+        "(reference v1/v2 timings: Apple M-series, 2026-07, via the cmp_prosodics "
+        "harness; v3 columns are from THIS run on your machine; "
         "speedup column = v3 over v2.)\n",
         "| Step | v1 | v2 | v3 | v3 vs v2 |",
         "|---|---|---|---|---|",

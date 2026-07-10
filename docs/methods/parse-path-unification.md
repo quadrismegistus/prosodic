@@ -96,6 +96,8 @@ bridge — the full unification. Keep the public signature.
 - [x] `Meter` bare-`WordTokenList` fallback → DF (via `parse_units_from_df`, with a
       fresh-`TextModel` path for a parentless list).
 - [x] `ParseSlot.wordform` DF-safe (`None` off the DF path; had no callers).
+- [x] `ParseSlot.syll` (the other §1b entity-chain accessor) DELETED in the 3.10.0
+      audit — zero callers; `slot.unit` is the replacement.
 - [x] **DELETE `parse_batch` + `_pool_combo_parses` + `extract_features` +
       `_extract_features_hybrid`** (~410 lines). One parser (`parse_batch_from_df` /
       `_pool_candidates`) remains. 673 tests pass; web + `best_parse` unchanged.

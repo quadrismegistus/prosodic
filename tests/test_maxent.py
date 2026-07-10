@@ -272,6 +272,61 @@ def test_load_annotations_friendly_columns_and_path(tmp_path):
     assert len(tr3._annotations) == 1
 
 
+def test_load_annotations_robustness(tmp_path):
+    """Release-review regression guards for the liberal loader (each of these was a
+    verified defect): dict records, line-vs-text precedence, NaN frequency, long
+    tuples, blank cells, delimiter sniffing, and count-is-not-frequency."""
+    # (a) list of dicts — worked in 3.9.1; tuple(dict) yields KEYS and silently
+    # trained on the literal strings 'text'/'scansion'
+    tr = MaxEntTrainer(Meter(), regularization=10.0)
+    tr.load_annotations([{"text": LINE1, "scansion": IAMBIC, "frequency": 1.0}])
+    assert tr._annotations["text"].tolist() == [LINE1]
+    assert [ld for ld in tr._line_data if ld["observed"].sum() > 0]
+
+    # (b) `line` outranks `text` when both present (DH convention: text = work
+    # title/id, line = the verse line — training on titles converged to garbage)
+    df = pd.DataFrame({"text": ["Sonnet 18"], "line": [LINE1],
+                       "scansion": [IAMBIC]})
+    tr2 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr2.load_annotations(df)
+    assert tr2._annotations["text"].tolist() == [LINE1]
+
+    # (c) NaN frequency defaults to 1.0 (one blank cell used to poison the whole
+    # fit: observed never normalized, gradient NaN, all-zero weights, no error)
+    df3 = pd.DataFrame({"line": [LINE1, LINE2], "scansion": [IAMBIC, IAMBIC],
+                        "frequency": [1.0, float("nan")]})
+    tr3 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr3.load_annotations(df3)
+    assert tr3._annotations["frequency"].tolist() == [1.0, 1.0]
+    tr3.train()
+    assert tr3._train_params["converged"] is True
+
+    # (d) tuples longer than 3: extra trailing fields ignored, like the DF path
+    tr4 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr4.load_annotations([(LINE1, IAMBIC, 2.0, "iambic", "a note")])
+    assert tr4._annotations["frequency"].tolist() == [2.0]
+
+    # (e) a blank line cell is dropped, not trained as the literal string 'nan'
+    df5 = pd.DataFrame({"line": [LINE1, None], "scansion": [IAMBIC, IAMBIC]})
+    tr5 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr5.load_annotations(df5)
+    assert tr5._annotations["text"].tolist() == [LINE1]
+
+    # (f) comma-separated .txt path: delimiter is sniffed, not extension-guessed
+    fp = tmp_path / "gold.txt"
+    fp.write_text(f"line,scansion\n\"{LINE1}\",{IAMBIC}\n")
+    tr6 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr6.load_annotations(str(fp))
+    assert tr6._annotations["scansion"].tolist() == [IAMBIC]
+
+    # (g) a `count` column is NOT frequency (a syllable-count column would
+    # silently multiply long lines' gradient mass)
+    df7 = pd.DataFrame({"line": [LINE1], "scansion": [IAMBIC], "count": [12]})
+    tr7 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr7.load_annotations(df7)
+    assert tr7._annotations["frequency"].tolist() == [1.0]
+
+
 def test_load_annotations_with_prebuilt_text():
     # text= branch: annotations attach to a pre-built (e.g. syntax) TextModel
     # instead of re-parsing the unique annotation strings.

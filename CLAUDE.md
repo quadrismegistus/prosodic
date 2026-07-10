@@ -82,7 +82,7 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 **Parsing flow:** `TextModel.parse()` → `parse_batch_from_df(syll_df, meter)` → groups by line, extracts features from numpy arrays → `evaluate_constraints_batch()` broadcasts features against scansion matrices → `compute_bounding_batch()` on GPU → results stored by line_num, attached to Entity lines lazily.
 
-**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else. Non-perfect lines go through an **elite pre-screen** first: candidates dominated by one of the K=16 lowest-total candidates are eliminated in O(K·S) (mean ~3 survivors of ~180 on the sonnets), and the exact pairwise kernel runs only on the survivors. Exact by transitivity of dominance — byte-identical to full pairwise (tested). CPU parse is now ≈ GPU parse; the GPU is no longer needed for parsing.
+**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else. Non-perfect lines go through an **elite pre-screen** first: candidates dominated by one of the K=16 lowest-total candidates are eliminated in O(K·S) (mean ~3 survivors of ~180 on the sonnets), and the exact pairwise kernel runs only on the survivors. Exact by transitivity of dominance — byte-identical to full pairwise (tested). With pronunciation-variant pooling the kernels' inputs grew (~15K rows/call) and the GPU is again the faster path (the elite screen itself runs on the torch device when available — see the Performance table); CPU remains fully supported and byte-identical.
 
 ### MaxEnt Weight Learning (`parsing/maxent.py`)
 

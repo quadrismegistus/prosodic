@@ -75,11 +75,15 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
     pool_unb = set()
     pool_unb_arr = {}   # rank -> (S,) bool: cross-pool unbounded (same info as pool_unb)
     if fvecs:
-        fv = np.array(fvecs); zv = np.array(zvecs); nn = np.array(uN)
-        same_n = nn[:, None] == nn[None, :]
-        zdom = (zv[:, None, :] <= zv[None, :, :]).all(axis=2) & (zv[:, None, :] < zv[None, :, :]).any(axis=2)
+        fv = np.array(fvecs); nn = np.array(uN)
         fdom = (fv[:, None, :] <= fv[None, :, :]).all(axis=2) & (fv[:, None, :] < fv[None, :, :]).any(axis=2)
-        dom = np.where(same_n, zdom, fdom)
+        if bound_zones is None:
+            dom = fdom   # zone == flat identically; skip the doubled U^2*C broadcast
+        else:
+            zv = np.array(zvecs)
+            same_n = nn[:, None] == nn[None, :]
+            zdom = (zv[:, None, :] <= zv[None, :, :]).all(axis=2) & (zv[:, None, :] < zv[None, :, :]).any(axis=2)
+            dom = np.where(same_n, zdom, fdom)
         np.fill_diagonal(dom, False)
         alive = ~dom.any(axis=0)
         pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
@@ -130,6 +134,14 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         l0 = get_lpl(base)
         S = len(l0._all_scansions)
         R = len(group)
+        # cheap guard for the load-bearing invariant above: every same-N combo must
+        # carry the SAME enumeration object. If a future change filters candidates
+        # per-combo (or builds a second enumeration source), index alignment breaks
+        # and this fails loudly instead of silently mispooling.
+        base_scans = candidates[base][2]
+        assert all(candidates[r][2] is base_scans for r in group[1:]), (
+            "same-N combos must share one scansion enumeration "
+            "(index-aligned overlay invariant)")
         no_unb = np.zeros(S, dtype=bool)
         valid = np.zeros((R, S), dtype=bool)
         bounded = np.ones((R, S), dtype=np.int8)
@@ -851,12 +863,15 @@ def _zone_split_batch(viols_4d, zones):
     flat (L, S, C) sum, identical to the previous bounding input.
     """
     if zones is None:
-        return viols_4d.sum(axis=2)
+        # int16 directly: counts are tiny (<= ~36) and every bounding kernel casts
+        # to int16 anyway — summing at int16 makes those casts no-op views and
+        # shrinks the (L, S, C) array 4x (~100MB/parse on large ambig batches)
+        return viols_4d.sum(axis=2, dtype=np.int16)
     from .maxent import zone_boundaries
     L, S, N, C = viols_4d.shape
     boundaries = zone_boundaries(zones, N)
     Z = len(boundaries)
-    out = np.zeros((L, S, C * Z), dtype=np.int64)
+    out = np.zeros((L, S, C * Z), dtype=np.int16)
     for z, (start, end) in enumerate(boundaries):
         out[:, :, z * C:(z + 1) * C] = viols_4d[:, :, start:end, :].sum(axis=2)
     return out
@@ -912,7 +927,7 @@ def _elite_screen_torch(viol_sums, device, K=BOUNDING_ELITE_K, budget=64_000_000
     v = torch.from_numpy(np.ascontiguousarray(viol_sums, dtype=np.int16)).to(device)
     L, S, C = v.shape
     k = min(K, S)
-    totals = v.to(torch.int32).sum(dim=2)                            # (L, S)
+    totals = v.sum(dim=2, dtype=torch.int32)                            # (L, S)
     idx = torch.topk(totals, k=k, dim=1, largest=False).indices      # (L, k)
     elite = torch.gather(v, 1, idx.unsqueeze(-1).expand(-1, -1, C))  # (L, k, C)
     block = max(1, budget // max(1, k * S * C))
@@ -967,6 +982,11 @@ def compute_bounding_batch(viol_sums):
     Returns:
         (L, S) bool — unbounded mask per line
     """
+    # Bounding is dominance on integer violation COUNTS (weights apply only at
+    # scoring). The torch kernels cast to int16, which is lossless for counts but
+    # would silently truncate real-valued input — enforce the invariant once here.
+    assert np.issubdtype(np.asarray(viol_sums).dtype, np.integer), (
+        "bounding operates on integer violation counts")
     L, S, C = viol_sums.shape
     if S <= 1:
         return np.ones((L, S), dtype=bool)

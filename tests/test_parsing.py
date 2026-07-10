@@ -378,6 +378,20 @@ def test_bounding_tiled_equals_reference():
     assert V._bounding_block_sizes(3, 20, 6, bytes_per_elem=8) == (3, 20, 20)
 
 
+def test_scansion_meter_string_bijection():
+    """The index-aligned pooling overlay (build_for_N) rests on the meter-string <->
+    scansion bijection within one enumeration: positions strictly alternate s/w, so a
+    per-syllable string's maximal runs recover its position split uniquely. Pin it —
+    if a future enumerator admits adjacent same-value positions (['w','w'] vs ['ww']),
+    this fails loudly instead of the pooler silently double-reporting meter strings."""
+    from prosodic.parsing.meter import Meter
+    m = Meter()
+    for n in range(2, 19):
+        scans = m.get_possible_scansions(n)
+        strings = ["".join(sc) for sc in scans]
+        assert len(strings) == len(set(strings)), f"duplicate meter string at N={n}"
+
+
 def test_elite_screen_torch_parity_on_cpu():
     """The torch elite pre-screen (`_elite_screen_torch`, normally dispatched only
     when a GPU device exists) must yield the SAME FINAL bounding mask as the numpy

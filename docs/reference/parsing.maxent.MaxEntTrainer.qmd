@@ -56,12 +56,14 @@ Load annotated scansion data and parse all lines.
 
 Args:
     data: one of —
-      * a CSV/TSV file **path** (str or Path) — read into a DataFrame (`.tsv`/
-        `.txt` → tab-separated, else comma);
+      * a CSV/TSV file **path** (str or Path) — the delimiter is sniffed
+        (comma, tab, semicolon), so a comma-separated `.txt` or a
+        tab-separated `.csv` both load;
       * a list of `(line_text, scansion)` or `(line_text, scansion, frequency)`
-        tuples (frequency defaults to 1.0);
+        tuples (frequency defaults to 1.0; extra trailing fields ignored),
+        or a list of dicts with liberal keys;
       * a DataFrame, columns matched liberally by
-        `_normalize_annotation_columns` (text|line, scansion, optional freq).
+        `_normalize_annotation_columns` (line|text, scansion, optional freq).
     lang: language code for parsing.
     text: optional pre-built TextModel (e.g. with syntax=True).
 

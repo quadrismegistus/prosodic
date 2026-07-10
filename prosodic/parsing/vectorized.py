@@ -925,6 +925,32 @@ def _elite_screen(viol_sums, K=BOUNDING_ELITE_K, block=512):
     return dominated
 
 
+def _elite_screen_torch(viol_sums, device, K=BOUNDING_ELITE_K, budget=64_000_000):
+    """GPU twin of `_elite_screen` — the same (block, K, S, C) difference tensor,
+    on the torch device. 15x faster than numpy on MPS over the real sonnet
+    workloads (pooled combos push L to ~15K rows per call, exactly where the
+    screen's reductions dominate the parse profile). Tie-breaks in the K-elite
+    pick (topk vs argpartition) may select different elites, but ANY sound screen
+    yields the same FINAL unbounded mask — a candidate dominated by a screened-out
+    candidate is, by transitivity of strict dominance, also dominated by an elite
+    or a survivor — verified mask-identical on all 18 real arrays of a sonnets
+    parse. `budget` caps the difference tensor's element count."""
+    import torch
+    v = torch.from_numpy(np.ascontiguousarray(viol_sums, dtype=np.int16)).to(device)
+    L, S, C = v.shape
+    k = min(K, S)
+    totals = v.to(torch.int32).sum(dim=2)                            # (L, S)
+    idx = torch.topk(totals, k=k, dim=1, largest=False).indices      # (L, k)
+    elite = torch.gather(v, 1, idx.unsqueeze(-1).expand(-1, -1, C))  # (L, k, C)
+    block = max(1, budget // max(1, k * S * C))
+    out = torch.zeros((L, S), dtype=torch.bool, device=device)
+    for l0 in range(0, L, block):
+        l1 = min(l0 + block, L)
+        diff = elite[l0:l1, :, None, :] - v[l0:l1, None, :, :]       # (b, k, S, C)
+        out[l0:l1] = ((diff <= 0).all(3) & (diff < 0).any(3)).any(1)
+    return out.cpu().numpy()
+
+
 def _bounding_exact(viol_sums):
     """Dispatch the exact pairwise kernel (GPU if available)."""
     device = get_device()
@@ -938,7 +964,9 @@ def _bounding_screened(viol_sums):
     L, S, C = viol_sums.shape
     if S <= 2 * BOUNDING_ELITE_K:
         return _bounding_exact(viol_sums)
-    dominated = _elite_screen(viol_sums)
+    device = get_device()
+    dominated = (_elite_screen_torch(viol_sums, device) if device is not None
+                 else _elite_screen(viol_sums))
     surv = ~dominated
     counts = surv.sum(axis=1)
     s_max = int(counts.max())

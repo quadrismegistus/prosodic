@@ -76,7 +76,7 @@ its violations (all weights 1.0 by default; settable per constraint;
 learnable by MaxEnt). Lower is better; `best_parse` is the minimum-score
 parse, with co-optimal ties broken by a deterministic pure-scansion cascade
 (fewest resolutions `ss` → period-k regularity → pseudo-feet → fewest `ww` →
-a `w`-onset content key) — see [Foot parsing](foot-parsing.qmd) §3; a strictly
+a `w`-onset content key) — see [Foot parsing](foot-parsing.md) §3; a strictly
 unique minimum short-circuits to a plain argmin.
 
 **Harmonic bounding** (Samek-Lodovici & Prince 1999) prunes candidates
@@ -244,7 +244,9 @@ line-*initial* one (1.38 → 0.88 → 0.73), exact mirror gradients. (Caveat:
 a low weight means the gold does not *discriminate* from its rivals on
 that constraint, not that the grammar permits violations — so the
 `unres_within` ternary-strictness prediction, which the flat fit does not
-separate, needs the positional view rather than this table.)
+separate, needs the positional view rather than this table.) An
+executable version of this study, with figures:
+[The grammar of each meter](../explorations/meters.qmd).
 
 ## References
 

@@ -26,6 +26,10 @@ website:
         menu:
           - text: "Metrical parsing"
             file: methods/metrical-parsing.qmd
+          - text: "Foot parsing"
+            file: methods/foot-parsing.md
+          - text: "Rhyme detection"
+            file: methods/rhyme.qmd
           - text: "Phrasal stress"
             file: methods/phrasal-stress.qmd
           - text: "Constituency backend (experimental)"
@@ -42,6 +46,8 @@ website:
             file: explorations/sonnets.qmd
           - text: "Prose rhythm"
             file: explorations/prose.qmd
+          - text: "The grammar of each meter"
+            file: explorations/meters.qmd
       - text: "Architecture"
         file: architecture.qmd
       - text: "Reference"
@@ -93,6 +99,9 @@ quartodoc:
         - parsing.meter.Meter
         - parsing.parses.Parse
         - parsing.maxent.MaxEntTrainer
+        - analysis.feet.parse_feet
+        - analysis.feet.Foot
+        - analysis.feet.FootList
     - title: "Poem-level analysis"
       desc: >
         Higher-order form classification over a parsed text (surfaced as

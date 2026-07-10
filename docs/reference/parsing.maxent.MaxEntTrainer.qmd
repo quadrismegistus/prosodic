@@ -28,7 +28,7 @@ Args:
 | [apply_to_meter](#prosodic.parsing.maxent.MaxEntTrainer.apply_to_meter) | Set learned weights on the meter. |
 | [learned_weights](#prosodic.parsing.maxent.MaxEntTrainer.learned_weights) | Return learned weights as a dict {constraint_name: weight}. |
 | [load_annotations](#prosodic.parsing.maxent.MaxEntTrainer.load_annotations) | Load annotated scansion data and parse all lines. |
-| [load_text](#prosodic.parsing.maxent.MaxEntTrainer.load_text) | Load a text and assign a uniform target scansion to all lines. |
+| [load_text](#prosodic.parsing.maxent.MaxEntTrainer.load_text) | Load a text and assign a target scansion to all lines. |
 | [predict](#prosodic.parsing.maxent.MaxEntTrainer.predict) | Return a DataFrame with observed vs predicted frequencies per line. |
 | [report](#prosodic.parsing.maxent.MaxEntTrainer.report) | Print a summary of learned weights and predictions. |
 | [train](#prosodic.parsing.maxent.MaxEntTrainer.train) | Train constraint weights via L-BFGS-B optimization. |
@@ -55,8 +55,13 @@ representation) for compatibility with Meter.constraints.
 Load annotated scansion data and parse all lines.
 
 Args:
-    data: list of (line_text, scansion_str, frequency) tuples,
-          or a DataFrame with columns: text, scansion, frequency.
+    data: one of —
+      * a CSV/TSV file **path** (str or Path) — read into a DataFrame (`.tsv`/
+        `.txt` → tab-separated, else comma);
+      * a list of `(line_text, scansion)` or `(line_text, scansion, frequency)`
+        tuples (frequency defaults to 1.0);
+      * a DataFrame, columns matched liberally by
+        `_normalize_annotation_columns` (text|line, scansion, optional freq).
     lang: language code for parsing.
     text: optional pre-built TextModel (e.g. with syntax=True).
 
@@ -64,14 +69,20 @@ Args:
 
 `parsing.maxent.MaxEntTrainer.load_text(text, target_scansion, lang=DEFAULT_LANG)`
 
-Load a text and assign a uniform target scansion to all lines.
+Load a text and assign a target scansion to all lines.
 
-Lines whose syllable count doesn't match the target scansion length
+Lines whose syllable count doesn't match any target scansion length
 are skipped (with a warning).
 
 Args:
     text: a string, list of line strings, or TextModel.
-    target_scansion: e.g. "wswswswsws" for iambic pentameter.
+    target_scansion: a scansion string (e.g. "wswswswsws" for iambic
+        pentameter), or a list of them for meters whose line length
+        legitimately varies — e.g. ["wwswwswwswws", "wswwswwswws"]
+        for anapestic tetrameter with an optional iamb-initial foot.
+        Each line is assigned the target(s) whose length matches its
+        syllable count; two same-length targets that both match split
+        the observed frequency between them.
     lang: language code for parsing.
 
 ### predict { #prosodic.parsing.maxent.MaxEntTrainer.predict }

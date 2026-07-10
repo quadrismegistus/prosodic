@@ -55,19 +55,19 @@ print(sonnet.summary())
 
       #st    #ln  parse        rhyme      #feet    #syll    #parse
     -----  -----  -----------  -------  -------  -------  --------
-        1      1  -+-+-+-+-+   a              5       10         1
+        1      1  -+-+-+-+-+   a              5       10         2
         1      2  -+-+-+-+-+   b              5       10         1
         1      3  -+-+-+-+-+   a              5       10         3
         1      4  -+-+-+-+-+   b              5       10         1
-        1      5  -+-+-+-+-+   -              5       10         4
+        1      5  -+-+-+-+-+   -              5       10         8
         1      6  -+-+-+-+-+   c              5       10         1
-        1      7  -+--++-+-+   -              4       10         6
-        1      8  +-+-+-+-+-+  c              6       11         2
-        1      9  -+-+-+-+--   -              4       10         3
-        1     10  -+-+-+-+--   d              4       10         6
-        1     11  -+-+-+-+-+   -              5       10         2
-        1     12  -+-+-+-+-+   d              5       10         1
-        1     13  -+-+-+-+-+   e              5       10         2
+        1      7  +-+-++-+-+   -              5       10         7
+        1      8  +-+-+-+-+-+  c              6       11         3
+        1      9  -+-+-+-+-+   -              5       10         3
+        1     10  -+-+-+-+-+   d              5       10         6
+        1     11  -+-+-+-+-+   -              5       10         3
+        1     12  -+-+-+-+-+   d              5       10         2
+        1     13  -+-+-+-+-+   e              5       10         1
         1     14  -+-+-+-+-+   e              5       10         3
     
     
@@ -236,8 +236,8 @@ print(f"is_rising: {bp.is_rising}")
 ↓
 
     meter:     -+-+-+-+-+    (- = weak, + = strong)
-    stress:    ---+---+-+    (- = unstressed, + = stressed)
-    score:     2.0    (sum of weighted constraint violations)
+    stress:    -+-+---+-+    (- = unstressed, + = stressed)
+    score:     1.0    (sum of weighted constraint violations)
     feet:      ['ws', 'ws', 'ws', 'ws', 'ws']
     foot_type: iambic    (per-parse classification)
     is_rising: True
@@ -250,7 +250,9 @@ for p in line.parses.unbounded:
 
 ↓
 
-    -+-+-+-+-+  score=2.0
+    -+-+-+-+-+  score=1.0
+    -+-++--+-+  score=1.0
+    -+--+--+-+  score=3.0
 
 ```python
 # parse the full sonnet
@@ -262,11 +264,11 @@ for line in sonnet.lines[:6]:
 
 ↓
 
-    L 1  -+-+-+-+-+  score=1.0  ambig=1
+    L 1  -+-+-+-+-+  score=1.0  ambig=2
     L 2  -+-+-+-+-+  score=1.0  ambig=1
     L 3  -+-+-+-+-+  score=2.0  ambig=3
     L 4  -+-+-+-+-+  score=0.0  ambig=1
-    L 5  -+-+-+-+-+  score=2.0  ambig=4
+    L 5  -+-+-+-+-+  score=2.0  ambig=8
     L 6  -+-+-+-+-+  score=0.0  ambig=1
 
 ## The metrical grid
@@ -286,6 +288,37 @@ print(sonnet.line1.grid_str())
     when IN the CHRO ni CLE of WA sted TIME
     w    s  w   s    w  s*  w  s  w    s
 
+## Feet
+
+Prosodic parses **positions** (weak/strong), not feet — but a derived *foot layer* groups a parse's syllables into classical feet (iamb, trochee, anapest, dactyl, …) via a dynamic program with extrametrical edge handling, validated at 97.5% exact against a hand-tagged gold. `parse.scansion` is the per-syllable `w`/`s` string; `footed_scansion` cuts it at foot boundaries; `metrical_feet` returns first-class `Foot` objects (a `*` in `feet_str` marks a foot that inverts the line's head — a substitution). See [the foot-parsing write-up](docs/methods/foot-parsing.md).
+
+```python
+bp = prosodic.Text("Pity the world, or else this glutton be").line1.best_parse
+print(f"scansion:        {bp.scansion}")
+print(f"footed_scansion: {bp.footed_scansion}")
+print(f"feet_str:        {bp.feet_str}   (* = substituted foot)")
+```
+
+↓
+
+    scansion:        swwswswsws
+    footed_scansion: sw|ws|ws|ws|ws
+    feet_str:        (s w*)(w s)(w s)(w s)(w s)   (* = substituted foot)
+
+```python
+# metrical_feet: first-class Foot objects (label, pattern, headedness)
+for ft in bp.metrical_feet:
+    print(f"{ft.label:10s} {ft.pattern:4s} head={ft.head:8s} substituted={ft.is_substituted}")
+```
+
+↓
+
+    trochee    sw   head=falling  substituted=True
+    iamb       ws   head=rising   substituted=False
+    iamb       ws   head=rising   substituted=False
+    iamb       ws   head=rising   substituted=False
+    iamb       ws   head=rising   substituted=False
+
 ## The parsed DataFrame
 
 Per-syllable parse results across the whole text — useful for analysis, plotting, or export.
@@ -298,16 +331,16 @@ sonnet.parsed_df.head(10)
 
 |    |   line_num |   word_num |   form_idx |   syll_idx |   line_syll_idx |   parse_idx |   parse_rank |   parse_score | is_best   | is_bounded   | ...   |   pos_size | meter_val   | syll_txt   | syll_ipa   | is_stressed   |   *w_peak |   *w_stress |   *s_unstress |   *unres_across |   *unres_within |
 |---:|-----------:|-----------:|-----------:|-----------:|----------------:|------------:|-------------:|--------------:|:----------|:-------------|:------|-----------:|:------------|:-----------|:-----------|:--------------|----------:|------------:|--------------:|----------------:|----------------:|
-|  0 |          1 |          1 |          0 |          0 |               0 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | When       | wɛn        | False         |         0 |           0 |             0 |               0 |               0 |
-|  1 |          1 |          2 |          1 |          0 |               1 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | in         | 'ɪn        | True          |         0 |           0 |             0 |               0 |               0 |
-|  2 |          1 |          3 |          0 |          0 |               2 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | the        | ðə         | False         |         0 |           0 |             0 |               0 |               0 |
-|  3 |          1 |          4 |          0 |          0 |               3 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | chro       | 'krɑ       | True          |         0 |           0 |             0 |               0 |               0 |
-|  4 |          1 |          4 |          0 |          1 |               4 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | ni         | nɪ         | False         |         0 |           0 |             0 |               0 |               0 |
-|  5 |          1 |          4 |          0 |          2 |               5 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | cle        | kəl        | False         |         0 |           0 |             1 |               0 |               0 |
-|  6 |          1 |          5 |          0 |          0 |               6 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | of         | ʌv         | False         |         0 |           0 |             0 |               0 |               0 |
-|  7 |          1 |          6 |          0 |          0 |               7 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | wa         | 'weɪ       | True          |         0 |           0 |             0 |               0 |               0 |
-|  8 |          1 |          6 |          0 |          1 |               8 |           1 |            1 |             1 | True      | False        | ...   |          1 | w           | sted       | stəd       | False         |         0 |           0 |             0 |               0 |               0 |
-|  9 |          1 |          7 |          0 |          0 |               9 |           1 |            1 |             1 | True      | False        | ...   |          1 | s           | time       | 'taɪm      | True          |         0 |           0 |             0 |               0 |               0 |
+|  0 |          1 |          1 |          0 |          0 |               0 |           0 |            1 |             1 | True      | False        | ...   |          1 | w           | When       | wɛn        | False         |         0 |           0 |             0 |               0 |               0 |
+|  1 |          1 |          2 |          1 |          0 |               1 |           0 |            1 |             1 | True      | False        | ...   |          1 | s           | in         | 'ɪn        | True          |         0 |           0 |             0 |               0 |               0 |
+|  2 |          1 |          3 |          0 |          0 |               2 |           0 |            1 |             1 | True      | False        | ...   |          1 | w           | the        | ðə         | False         |         0 |           0 |             0 |               0 |               0 |
+|  3 |          1 |          4 |          0 |          0 |               3 |           0 |            1 |             1 | True      | False        | ...   |          1 | s           | chro       | 'krɑ       | True          |         0 |           0 |             0 |               0 |               0 |
+|  4 |          1 |          4 |          0 |          1 |               4 |           0 |            1 |             1 | True      | False        | ...   |          1 | w           | ni         | nɪ         | False         |         0 |           0 |             0 |               0 |               0 |
+|  5 |          1 |          4 |          0 |          2 |               5 |           0 |            1 |             1 | True      | False        | ...   |          1 | s           | cle        | kəl        | False         |         0 |           0 |             1 |               0 |               0 |
+|  6 |          1 |          5 |          0 |          0 |               6 |           0 |            1 |             1 | True      | False        | ...   |          1 | w           | of         | ʌv         | False         |         0 |           0 |             0 |               0 |               0 |
+|  7 |          1 |          6 |          0 |          0 |               7 |           0 |            1 |             1 | True      | False        | ...   |          1 | s           | wa         | 'weɪ       | True          |         0 |           0 |             0 |               0 |               0 |
+|  8 |          1 |          6 |          0 |          1 |               8 |           0 |            1 |             1 | True      | False        | ...   |          1 | w           | sted       | stəd       | False         |         0 |           0 |             0 |               0 |               0 |
+|  9 |          1 |          7 |          0 |          0 |               9 |           0 |            1 |             1 | True      | False        | ...   |          1 | s           | time       | 'taɪm      | True          |         0 |           0 |             0 |               0 |               0 |
 *10 rows × 21 columns*
 ```python
 # every column you might want for analysis
@@ -353,7 +386,7 @@ print(strict)
 
 ↓
 
-    Meter(constraints={'w_peak': 1.0, 'w_stress': 1.0, 's_unstress': 1.0, 'foot_size': 1.0}, max_s=1, max_w=1, resolve_optionality=True, parse_unit='line')
+    Meter(constraints={'w_peak': 1.0, 'w_stress': 1.0, 's_unstress': 1.0, 'foot_size': 1.0}, max_s=1, max_w=1, resolve_optionality=True, pool_forms=True, parse_unit='line')
 
 ```python
 # parse with a custom meter
@@ -577,14 +610,33 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
 ↓
 
     top learned weights (zone × constraint):
-      +5.069  unres_within_z3
-      +4.701  unres_across_z3
-      +4.281  unres_across_z2
-      +4.190  unres_within_z2
-      +3.449  s_unstress_z1
-      +3.043  w_stress_z3
-      +2.840  unres_across_z1
-      +1.726  w_stress_z2
+      +5.939  unres_across_z2
+      +5.106  unres_within_z3
+      +4.257  unres_across_z3
+      +3.975  unres_within_z2
+      +3.652  s_unstress_z1
+      +2.766  w_stress_z3
+      +2.263  unres_across_z1
+      +1.500  w_stress_z1
+
+```python
+# or learn from hand-annotated scansions — a CSV with line/scansion columns
+# (extra columns ignored; mixed-syllable-count elision lines train too)
+from prosodic.parsing.maxent import MaxEntTrainer
+trainer = MaxEntTrainer(prosodic.Meter())
+trainer.load_annotations('data/tagged_samples/foot-gold.csv')
+trainer.train()
+{k: round(v, 2) for k, v in trainer.learned_weights().items()}
+```
+
+↓
+
+    {'w_peak': 0.51,
+     'w_stress': 0.67,
+     's_unstress': 2.13,
+     'unres_across': 1.42,
+     'unres_within': 1.5,
+     'foot_size': 0.0}
 
 ## Phrasal stress (optional)
 
@@ -605,12 +657,12 @@ print(phrasal.line1.grid_str())
 ↓
 
                                          *
-                *              *         *
-                *              *         *
-                *              *         *
+                                         *
+          *     *              *         *
+          *     *              *         *
     *     * *   *    *    *  * *   *     *
     shall I com PARE thee TO a SUM mer's DAY
-    w     s* w   s    w    s* w s   w     s
+    w     s w   s    w    s* w s   w     s
 
 ```python
 # the gradient phrasal columns (one value per word, broadcast onto its syllables)
@@ -622,16 +674,16 @@ phrasal.df[phrasal.df.form_idx == 0][cols]
 
 |    | word_txt   | syll_text   | is_stressed   |   pstress |   tstress |
 |---:|:-----------|:------------|:--------------|----------:|----------:|
-|  0 | Shall      | Shall       | False         |  0        |  0.285714 |
-|  2 | I          | I           | False         |  0.333333 |  0        |
-|  3 | compare    | com         | False         |  0        |  0.571429 |
-|  4 | compare    | pare        | True          |  0        |  0.571429 |
-|  5 | thee       | thee        | False         |  0.333333 |  0        |
-|  6 | to         | to          | False         |  0        |  0.285714 |
-|  7 | a          | a           | False         |  0        |  0.142857 |
-|  8 | summer's   | sum         | True          |  0        |  0.571429 |
-|  9 | summer's   | mer's       | False         |  0        |  0.571429 |
-| 10 | day        | day         | True          |  1        |  1        |
+|  0 | Shall      | Shall       | False         |  0        |  0.583333 |
+|  2 | I          | I           | False         |  0.333333 |  0.416667 |
+|  4 | compare    | com         | False         |  0        |  0.75     |
+|  5 | compare    | pare        | True          |  0        |  0.75     |
+|  6 | thee       | thee        | False         |  0.333333 |  0.416667 |
+|  8 | to         | to          | False         |  0        |  0.583333 |
+|  9 | a          | a           | False         |  0        |  0        |
+| 10 | summer's   | sum         | True          |  1        |  0.5      |
+| 11 | summer's   | mer's       | False         |  1        |  0.5      |
+| 12 | day        | day         | True          |  1        |  1        |
 ## Save and load
 
 Parquet-backed save/load preserves the syllable DataFrame and any computed parse results — no need to re-parse on reload.
@@ -695,6 +747,8 @@ print(result.weights, result.accuracy)
 
 - [Metrical parsing](docs/methods/metrical-parsing.qmd): generative-metrics background, the constraint-based model, harmonic bounding, and the vectorized parser
 - [Phrasal stress](docs/methods/phrasal-stress.qmd): the Nuclear Stress Rule, Dozat's MetricalTree, and our dependency-projection port (`pstress`/`tstress`)
+- [Foot parsing](docs/methods/foot-parsing.md): the DP foot delineation (extrametrical edges, headedness), the deterministic `best_parse` tie-break, and the hand-tagged foot gold
+- [Rhyme detection](docs/methods/rhyme.qmd): feature-edit distance on IPA rimes, the 2-D (nucleus, coda) bands, and the Walker (1775) calibration
 
 **Source**:
 

@@ -195,6 +195,19 @@ md("""## The metrical grid
 code("""# Hayes-style metrical grid of the best parse (lexical rows only)
 print(sonnet.line1.grid_str())""")
 
+md("""## Feet
+
+Prosodic parses **positions** (weak/strong), not feet — but a derived *foot layer* groups a parse's syllables into classical feet (iamb, trochee, anapest, dactyl, …) via a dynamic program with extrametrical edge handling, validated at 97.5% exact against a hand-tagged gold. `parse.scansion` is the per-syllable `w`/`s` string; `footed_scansion` cuts it at foot boundaries; `metrical_feet` returns first-class `Foot` objects (a `*` in `feet_str` marks a foot that inverts the line's head — a substitution). See [the foot-parsing write-up](docs/methods/foot-parsing.md).""")
+
+code("""bp = prosodic.Text("Pity the world, or else this glutton be").line1.best_parse
+print(f"scansion:        {bp.scansion}")
+print(f"footed_scansion: {bp.footed_scansion}")
+print(f"feet_str:        {bp.feet_str}   (* = substituted foot)")""")
+
+code("""# metrical_feet: first-class Foot objects (label, pattern, headedness)
+for ft in bp.metrical_feet:
+    print(f"{ft.label:10s} {ft.pattern:4s} head={ft.head:8s} substituted={ft.is_substituted}")""")
+
 md("""## The parsed DataFrame
 
 Per-syllable parse results across the whole text — useful for analysis, plotting, or export.""")
@@ -311,6 +324,14 @@ print('top learned weights (zone × constraint):')
 for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
     print(f"  {w:+.3f}  {name}")""")
 
+code("""# or learn from hand-annotated scansions — a CSV with line/scansion columns
+# (extra columns ignored; mixed-syllable-count elision lines train too)
+from prosodic.parsing.maxent import MaxEntTrainer
+trainer = MaxEntTrainer(prosodic.Meter())
+trainer.load_annotations('data/tagged_samples/foot-gold.csv')
+trainer.train()
+{k: round(v, 2) for k, v in trainer.learned_weights().items()}""")
+
 md("""## Phrasal stress (optional)
 
 With `syntax=True`, Prosodic runs spaCy's dependency parser to compute sentence-level prominence per word (Liberman & Prince 1977). It adds two kinds of column to the syllable DataFrame:
@@ -389,6 +410,8 @@ md("""## Further reading
 
 - [Metrical parsing](docs/methods/metrical-parsing.qmd): generative-metrics background, the constraint-based model, harmonic bounding, and the vectorized parser
 - [Phrasal stress](docs/methods/phrasal-stress.qmd): the Nuclear Stress Rule, Dozat's MetricalTree, and our dependency-projection port (`pstress`/`tstress`)
+- [Foot parsing](docs/methods/foot-parsing.md): the DP foot delineation (extrametrical edges, headedness), the deterministic `best_parse` tie-break, and the hand-tagged foot gold
+- [Rhyme detection](docs/methods/rhyme.qmd): feature-edit distance on IPA rimes, the 2-D (nucleus, coda) bands, and the Walker (1775) calibration
 
 **Source**:
 

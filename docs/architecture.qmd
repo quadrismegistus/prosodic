@@ -47,20 +47,20 @@ Because construction is lazy, batch workflows that only need parse results
 (via `text.parse()` and `text.parsed_df`) never pay for the ~hundreds of
 thousands of entity objects a full tree would allocate.
 
-## Two parse paths
+## One parse path
 
-There are two ways parsing happens, and it matters which one you are in:
-
-1. **DataFrame path** (`text.parse()`) — works entirely from `_syll_df`;
-   parse slots hold lightweight `SyllData` stand-ins with no parent chain.
-   Fastest; used for batch processing, `text.parsed_df`, and `text.save()`.
-2. **Entity path** (`parse_batch(text.lines, meter)`) — the same tensors,
-   but parse slots hold real `Syllable` entities with parent chains, so you
-   can walk from a syllable back to its word. Needed for HTML rendering and
-   the web app.
-
-Both paths share the same exhaustive vectorized evaluator; see
-[Metrical parsing](methods/metrical-parsing.qmd) for how it works.
+All parsing goes through a single vectorized path working entirely from
+`_syll_df`: `text.parse()` batches whole texts (`parse_batch_from_df`),
+and single lines, lineparts, and arbitrary token lists route through
+`parse_units_from_df`, which scopes the parent frame by `word_num` — so
+`line.best_parse` and `text.parse()` always agree. Parse slots hold
+lightweight `SyllData` stand-ins; rendering and the web app bridge from a
+slot to its `WordToken` via `SyllData.word_num` rather than a parent
+chain. (A second, entity-based parser existed through v3.9 and was
+retired; the one construction that still builds entity slots is the
+manual `Parse(line, "wsws")` reference constructor.) See
+[Metrical parsing](methods/metrical-parsing.qmd) for how the evaluator
+works.
 
 ## Parsing pipeline
 

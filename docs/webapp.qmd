@@ -21,11 +21,17 @@ prosodic web --dev               # auto-reload backend + frontend on change
 
 ## The five tabs
 
-- **Parse** — text input and corpus dropdown; sortable, paginated results.
-  Long/prose lines fall back to phrase-level parsing automatically. Export
-  the table as CSV, TSV, or JSON.
+- **Parse** — text input and corpus dropdown; sortable, paginated results
+  with foot boundaries drawn into each scansion. Long/prose lines fall back
+  to phrase-level parsing automatically (with syntax-aware sub-splitting
+  when phrasal stress is on). Export the table as CSV, TSV, or JSON.
 - **Line** — single-line scansion detail: every candidate scansion shown
-  with per-position violations, bounded parses grayed out.
+  with per-position violations, bounded parses grayed out (including
+  dominated alternative-pronunciation readings, each at its own best
+  pronunciation — so you can see *why* a reading isn't on top). Clicking a
+  candidate renders a combined Liberman & Prince-style figure: the metrical
+  grid stacked over the syllables, with the syntax tree hanging beneath
+  when `syntax` is enabled.
 - **Meter** — configure constraints, weights, and position widths.
 - **MaxEnt** — upload annotated data (or a target scansion) and learn
   constraint weights; learned zone weights feed back into the Parse tab.

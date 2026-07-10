@@ -21,40 +21,18 @@
 | Name | Description |
 | --- | --- |
 | [linepart_parses](#prosodic.texts.lines.Line.linepart_parses) | LazyParseList per linepart for this line. Populated by the prose |
+| [metrical_parse](#prosodic.texts.lines.Line.metrical_parse) | The parse we foot for display: `best_parse`, footed via `.metrical_feet`. |
 | [num_sylls](#prosodic.texts.lines.Line.num_sylls) | Get the number of syllables in the line. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| [grid_df](#prosodic.texts.lines.Line.grid_df) | Metrical grid of the best parse as a per-syllable DataFrame. |
-| [grid_plot](#prosodic.texts.lines.Line.grid_plot) | Metrical grid of the best parse as a plotnine figure. |
-| [grid_str](#prosodic.texts.lines.Line.grid_str) | Hayes-style metrical grid of the best parse as monospace text. |
 | [rime_distance](#prosodic.texts.lines.Line.rime_distance) | Calculate the rime distance between this line and another line. |
+| [rime_type](#prosodic.texts.lines.Line.rime_type) | Classify the end-rhyme between this line and another as |
 | [stats](#prosodic.texts.lines.Line.stats) | Get statistics for the line's parses. |
 | [stats_d](#prosodic.texts.lines.Line.stats_d) | Get statistics for the line's parses as a dictionary. |
 | [to_html](#prosodic.texts.lines.Line.to_html) | Generate an HTML representation of the Line. |
-
-### grid_df { #prosodic.texts.lines.Line.grid_df }
-
-`texts.lines.Line.grid_df(**kwargs)`
-
-Metrical grid of the best parse as a per-syllable DataFrame.
-
-### grid_plot { #prosodic.texts.lines.Line.grid_plot }
-
-`texts.lines.Line.grid_plot(**kwargs)`
-
-Metrical grid of the best parse as a plotnine figure.
-
-### grid_str { #prosodic.texts.lines.Line.grid_str }
-
-`texts.lines.Line.grid_str(**kwargs)`
-
-Hayes-style metrical grid of the best parse as monospace text.
-
-With ``syntax=True`` on the text, phrasal-prominence rows extend
-the grid above the word level (nuclear stress = tallest column).
 
 ### rime_distance { #prosodic.texts.lines.Line.rime_distance }
 
@@ -67,6 +45,15 @@ Args:
 
 Returns:
     float: The rime distance between the two lines.
+
+### rime_type { #prosodic.texts.lines.Line.rime_type }
+
+`texts.lines.Line.rime_type(line, **kwargs)`
+
+Classify the end-rhyme between this line and another as
+'perfect', 'slant', 'assonance', or None (2-D Walker-calibrated
+nucleus/coda regions; see WordForm.rime_type for the taxonomy
+and threshold kwargs).
 
 ### stats { #prosodic.texts.lines.Line.stats }
 

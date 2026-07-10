@@ -12,9 +12,10 @@ from prosodic.analysis.feet import foot_parse, FOOT_LABELS
 def parse(scansion):
     proms = [c == "s" for c in scansion.lower() if c in "sw"]
     s = "".join("s" if p else "w" for p in proms)
-    # disable the word-boundary tiebreak here (no word info): mark every position
-    # a "word start" so no boundary is penalized -> shows the pure foot-cost result.
-    spans = foot_parse(proms, word_starts=set(range(len(s))))
+    # (the word-boundary tiebreak was retired as a null result — human foot
+    # boundaries hit word boundaries at chance rate; see foot-parsing.md §"negative
+    # results" — so this is the pure foot-cost result.)
+    spans = foot_parse(proms)
     feet = [s[a:b] for a, b in spans]
     return "|".join(feet), feet
 

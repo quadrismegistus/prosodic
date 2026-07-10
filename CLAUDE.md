@@ -82,7 +82,7 @@ The parser is always vectorized and exhaustive — it evaluates ALL possible sca
 
 **Parsing flow:** `TextModel.parse()` → `parse_batch_from_df(syll_df, meter)` → groups by line, extracts features from numpy arrays → `evaluate_constraints_batch()` broadcasts features against scansion matrices → `compute_bounding_batch()` on GPU → results stored by line_num, attached to Entity lines lazily.
 
-**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else. Non-perfect lines go through an **elite pre-screen** first: candidates dominated by one of the K=16 lowest-total candidates are eliminated in O(K·S) (mean ~3 survivors of ~180 on the sonnets), and the exact pairwise kernel runs only on the survivors. Exact by transitivity of dominance — byte-identical to full pairwise (tested). CPU parse is now ≈ GPU parse; the GPU is no longer needed for parsing.
+**Bounding optimization:** Lines with a perfect parse (0 violations) skip the O(S²) pairwise comparison entirely — the perfect scansion bounds everything else. Non-perfect lines go through an **elite pre-screen** first: candidates dominated by one of the K=16 lowest-total candidates are eliminated in O(K·S) (mean ~3 survivors of ~180 on the sonnets), and the exact pairwise kernel runs only on the survivors. Exact by transitivity of dominance — byte-identical to full pairwise (tested). With pronunciation-variant pooling the kernels' inputs grew (~15K rows/call) and the GPU is again the faster path (the elite screen itself runs on the torch device when available — see the Performance table); CPU remains fully supported and byte-identical.
 
 ### MaxEnt Weight Learning (`parsing/maxent.py`)
 
@@ -145,7 +145,7 @@ Optional phrasal prominence (Liberman & Prince 1977) from `TextModel("...", synt
 
 - **English** (`langs/english/`): Uses CMU pronunciation dictionary (2700/3206 Shakespeare words) + espeak TTS fallback (506 words, ~1.4s cold). `get_word()` cached via `@functools.cache`.
 - **Verse elision** (`langs/english/english.py`, `EnglishLanguage.use_elision`, default on): 12 English synaeresis rules (`ELISION_RULES`, ported from v1's `add_elisions`) add a reduced-syllable pronunciation variant — flower→flour, heaven→heav'n, fire→fi'r, seven→sev'n, opening→op'ning, gardener→gard'ner, etc. Each rule maps a 2-syllable IPA sequence (`.` = syllable boundary) to its 1-syllable form; applied in `LanguageModel.get_sylls_ipa_ll` after formatting (base language elides nothing). It's an OPTION, not a forcing: `pool_forms` uses the elided reading only where it scans better ("sweet as love which overflows her bow'r" → clean pentameter). Because elided variants differ in syllable count, they exercise **mixed-N pooling** (below).
-- **Mixed-syllable-count pooling**: when a word's variants differ in syllable count (fire 1~2, flower 1~2), `pool_forms` cross-bounds unbounded parses ACROSS lengths (the bounding vector is N-independent) and keeps co-optimal parses of **all** lengths — matching v1. A single `(P,N,C)` array can't hold varying-length scansions, so mixed-N results use a **ragged `LazyParseList`**: `_all_viols` is a *list* of per-scansion `(N_k,C)` arrays (with `_meter_vals`/`_position_ids`/`_position_sizes` parallel lists) and `_ragged=True`. The fast rectangular path is untouched for same-length lines; only per-scansion consumers special-case ragged — `_build_single_parse` takes the per-parse 2D viols slice, `get_parses_df` uses `_ragged_chunk` (each parse reports its own pronunciation's `form_idx`), and MaxEnt skips ragged lines. ~5% of lines are ragged; ~1.3× no-pool.
+- **Mixed-syllable-count pooling**: when a word's variants differ in syllable count (fire 1~2, flower 1~2), `pool_forms` cross-bounds unbounded parses ACROSS lengths (the bounding vector is N-independent) and keeps co-optimal parses of **all** lengths — matching v1. A single `(P,N,C)` array can't hold varying-length scansions, so mixed-N results use a **ragged `LazyParseList`**: `_all_viols` is a *list* of per-scansion `(N_k,C)` arrays (with `_meter_vals`/`_position_ids`/`_position_sizes` parallel lists) and `_ragged=True`. The fast rectangular path is untouched for same-length lines; only per-scansion consumers special-case ragged — `_build_single_parse` takes the per-parse 2D viols slice, `get_parses_df` uses `_ragged_chunk` (each parse reports its own pronunciation's `form_idx`), and **MaxEnt trains on ragged lines** (each candidate zone-splits by its own N into the shared `(C×Z)` feature space — PR #181; the wholesale skip used to drop exactly the elision lines, 12/120 of the foot gold). ~5% of lines are ragged; ~1.3× no-pool.
 - **Finnish** (`langs/finnish/`): Custom stress, weight, and sonority rules.
 - **German** (`langs/german/`): espeak-driven — espeak-ng's German lexical stress is highly reliable (validated on prefix/compound/loanword classes, `tests/test_german.py`), so no rule engine; `german.tsv` overrides the one systematic miss (-ur loanwords: Natur), `unstressed_words.txt`/`ambig_stress_words.txt` mark function words. Schiller Blankvers corpus at `corpora/corppoetry_de/`; 20/30 monologue lines scan strict iambic at defaults.
 - **TTS syllabifier** (`langs.py syllabify_ipa`): espeak tokens are aligned to panphon segs per-token — diphthongs (`aʊ`) and affricates (`dʒ`) are one espeak token but two panphon segs, and the old naive zip shifted every boundary flag after the first such token (wrong counts/weights for TTS-fallback words in all languages). Rules: vocalic token = first-seg flag + forced boundary between adjacent nuclei; consonantal token = any-seg flag splits before the token. Differentially verified over all 5294 cached English TTS words.
@@ -302,17 +302,34 @@ The `_syll_df`-backed canonical syllable count is essential for line/syllable sc
 
 Run `python -m prosodic.profiling` to regenerate.
 
-| Step | v2 | v3 | Speedup |
-|---|---|---|---|
-| Init (tokenize + pronunciations + entities) | 5.29s | 2.1s | 3x |
-| Parse (CPU) | 72.97s | 1.9s | 38x |
-| Parse (GPU) | 72.97s | 2.2s | 33x |
-| **End-to-end (CPU)** | **78.3s** | **4.0s** | **20x** |
-| **End-to-end (GPU)** | **78.3s** | **4.3s** | **18x** |
-| **DF-only (no entities, GPU)** | **78.3s** | **3.1s** | **25x** |
-| Syntax (dep parse) | 160.2s | 2.4s | 67x |
+| Step | v1 (1.3.8) | v2 | v3 | v3 vs v2 |
+|---|---|---|---|---|
+| Init (tokenize + pronunciations + entities) | 1.4s | 5.29s | 2.2s | 2x |
+| Parse (CPU) | 36.6s | 72.97s | 6.4s | 11x |
+| Parse (GPU) | 36.6s | 72.97s | 4.1s | 18x |
+| **End-to-end (CPU)** | **38.0s** | **78.3s** | **8.6s** | **9x** |
+| **End-to-end (GPU)** | **38.0s** | **78.3s** | **6.3s** | **12x** |
+| **DF-only (no entities, GPU)** | **38.0s** | **78.3s** | **5.1s** | **15x** |
+| Syntax (dep parse) | — | 160.2s | 3.3s | 49x |
 
-CPU now edges out GPU: the elite bounding pre-screen shrinks the exact kernel's workload below the point where GPU transfer overhead pays off.
+v1 measured 2026-07-10 via the `cmp_prosodics` harness (same machine, whole-sonnets
+Text + parse, dict warm; `v1_3_8/profile_v1_sonnets.py` there). Note the shape of the
+history: **v1's pruned branch-and-bound was ~2× faster than the 2024 v2 rewrite** —
+the oft-quoted "78s legacy" figure is v2, not v1. v3 is ~9× v1, ~18× v2 on parse (GPU).
+
+An earlier revision of this table showed Parse at 1.9s — that predates the v1-semantics
+restoration (PRs #164–169): variant pooling × verse elision means ~89% of sonnet lines
+now carry multiple pronunciation combos (mean 9/line), each evaluated and cross-bounded,
+plus mixed-N dominated-length retention. That ~3× is purchased semantics (parity ρ
+0.9475 vs the 2020 v1 data), not regression. Two vectorization passes clawed most of it
+back, each verified byte-identical by a full before/after dump diff: (1) the pooling
+overlay (`build_for_N`) — same-N combos share one scansion enumeration, so
+dedup-by-meter-string ≡ per-index argmin (was 4.0s of Python loops, now 1.8s); (2) the
+elite bounding pre-screen runs on the torch device when available
+(`_elite_screen_torch`, 15x over numpy on MPS — the pooled combos push its input to
+~15K rows/call; any sound screen yields the same final mask by transitivity of
+dominance). GPU beats CPU again at this workload — the old "CPU edges out GPU" note
+flipped back when pooling re-inflated the kernels' inputs.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

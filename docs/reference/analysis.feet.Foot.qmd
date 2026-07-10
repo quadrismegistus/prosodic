@@ -1,0 +1,33 @@
+# analysis.feet.Foot { #prosodic.analysis.feet.Foot }
+
+`analysis.feet.Foot(self, pattern, label, head, is_substituted, slots, sylls)`
+
+A metrical foot: a VIEW grouping the syllables it spans (iamb/trochee/anapest/
+dactyl/spondee/bare/extrametrical). NOT a tree entity — a syllable keeps its one
+real parent (its WordForm) — so a Foot is an orthogonal grouping over a parse.
+**Iterating a Foot yields its syllable units**, duck-typed (`SyllData` from the
+parser, `Syllable` from a manual `Parse(line, scansion)`), so accessing feet never forces entity
+construction.
+
+Attributes: `pattern` ('wws'), `label` ('anapest'), `head` ('rising'/'falling'/
+'none'/'ambiguous'), `is_substituted` (inverts the line head), `slots`
+(ParseSlots), `sylls` (the syllable units).
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [txt](#prosodic.analysis.feet.Foot.txt) | The foot's text — its syllables joined. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [to_html](#prosodic.analysis.feet.Foot.to_html) | The foot as a labelled bracket of syllable spans (mtr_/str_ classes |
+
+### to_html { #prosodic.analysis.feet.Foot.to_html }
+
+`analysis.feet.Foot.to_html()`
+
+The foot as a labelled bracket of syllable spans (mtr_/str_ classes
+matching the web app); `*` in the title marks a substitution.

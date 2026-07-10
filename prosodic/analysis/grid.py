@@ -40,7 +40,7 @@ LEVEL_PALETTE = [LEVEL_COLORS[LEVEL_NAMES[h]] for h in sorted(LEVEL_NAMES)]
 
 def _find_word_num(unit):
     """Resolve a parse unit's word_num: direct attr (DF path's SyllData) or
-    walk the parent chain to the containing WordToken (entity path)."""
+    walk the parent chain to the containing WordToken (manual Parse(line, scansion) slots)."""
     wn = getattr(unit, "word_num", None)
     if wn is not None:
         return int(wn)
@@ -118,7 +118,7 @@ def phrasal_values(parse, text, col=None) -> Optional[List]:
     the grid column existed). Reads the column computed by ``syntax=True`` from
     the text's syllable DataFrame and maps it onto the parse's syllables via
     word identity (SyllData.word_num on the DF path; the wordtoken parent chain
-    on the entity path). None if the requested column is absent.
+    for manual-Parse Syllable slots). None if the requested column is absent.
     """
     df = getattr(text, "_syll_df", None)
     if df is None:

@@ -9,10 +9,12 @@ Based on Goldwater & Johnson (2003) and Bruce Hayes' MaxEnt OT framework.
 Usage:
     from prosodic.parsing.maxent import MaxEntTrainer
 
-    # annotations: list of (line_text, scansion_str, frequency)
-    # or a DataFrame with columns: text, scansion, frequency
+    # annotations: a CSV/TSV file path (delimiter sniffed, extra columns
+    # ignored — e.g. data/tagged_samples/foot-gold.csv loads directly),
+    # a list of (line_text, scansion[, frequency]) tuples or dicts,
+    # or a DataFrame with liberal columns (line|text, scansion, freq)
     trainer = MaxEntTrainer(meter)
-    trainer.load_annotations(annotations)
+    trainer.load_annotations('annotations.csv')
     trainer.train()
     trainer.report()
 
@@ -118,7 +120,6 @@ class MaxEntTrainer:
         self._constraint_names = None  # expanded names (with zone suffixes)
         self._base_constraint_names = None  # original constraint names
         self._weights = None
-        self._n_skipped_ragged = 0  # ragged (mixed-N) lines dropped from training
         self._n_skipped_empty = 0   # oversized/empty lines with no viols matrix
 
     def _parse_text(self, text_input, lang=DEFAULT_LANG):
@@ -170,7 +171,6 @@ class MaxEntTrainer:
         self._line_data = []
         self._base_constraint_names = None
         n_unmatched = 0
-        self._n_skipped_ragged = 0
         self._n_skipped_empty = 0
 
         # first pass: collect raw data and find max syllable count for zone naming
@@ -183,14 +183,26 @@ class MaxEntTrainer:
 
             # Oversized/empty lines come back as a bare ParseList([]) with no
             # violation matrix — skip them instead of crashing on _all_viols.
-            # Ragged (mixed-syllable-count pool_forms) lines have a per-scansion
-            # viols LIST, not a fixed-width array — skip them too (rare). Count
-            # each skip reason so the drop is surfaced in the warning below
-            # rather than vanishing silently. Check _ragged first: a ragged
-            # line's _all_viols is a list with no .shape.
+            # Check _ragged first: a ragged line's _all_viols is a LIST of
+            # per-scansion (N_k, C) arrays with no .shape.
             viols = getattr(lpl, "_all_viols", None)
             if getattr(lpl, "_ragged", False):
-                self._n_skipped_ragged += 1
+                # Mixed-N (ragged) line: candidates differ in syllable count
+                # (elision / pronunciation variants). TRAINABLE: MaxEnt consumes
+                # the N axis immediately — zone_split collapses every candidate to
+                # a (C*Z) feature vector whose names are N-independent (only the
+                # zone boundaries shift with each row's own N) — so mixed-N
+                # candidates stack into the ordinary (S, C*Z) softmax. The second
+                # pass zone-splits these per-row. (Previously skipped wholesale,
+                # which dropped exactly the elision lines from every gold set —
+                # 12/120 of the foot gold.)
+                if not viols:
+                    self._n_skipped_empty += 1
+                    continue
+                if self._base_constraint_names is None:
+                    self._base_constraint_names = list(lpl._constraint_names)
+                max_nsylls = max(max_nsylls, max(v.shape[0] for v in viols))
+                raw_entries.append((line_text, lpl))
                 continue
             if viols is None or viols.shape[0] == 0:
                 self._n_skipped_empty += 1
@@ -213,7 +225,18 @@ class MaxEntTrainer:
 
         # second pass: zone-split and pad to consistent feature dimension
         for line_text, lpl in raw_entries:
-            viols_sum = self._zone_split(lpl._all_viols)  # (S, C*Z_local)
+            if getattr(lpl, "_ragged", False):
+                # Mixed-N: zone-split each (N_k, C) row by its OWN length (the same
+                # per-row split the ragged scoring path uses), then stack. Rows can
+                # differ in width only under zones="foot" (Z grows with N) — right-
+                # pad to the widest; the shared n_features pad below does the rest.
+                per = [self._zone_split(v[None])[0] for v in lpl._all_viols]
+                width = max(p.shape[0] for p in per)
+                viols_sum = np.zeros((len(per), width), dtype=np.float64)
+                for j, p in enumerate(per):
+                    viols_sum[j, :p.shape[0]] = p
+            else:
+                viols_sum = self._zone_split(lpl._all_viols)  # (S, C*Z_local)
             n_scansions = viols_sum.shape[0]
 
             # pad if this line has fewer zones than the max
@@ -255,29 +278,94 @@ class MaxEntTrainer:
                 f"{n_total - n_matched}/{n_total} lines had no matching "
                 f"scansion among parser candidates (syllable count mismatch?)"
             )
-        if self._n_skipped_ragged:
-            warn_parts.append(
-                f"{self._n_skipped_ragged} line(s) skipped as "
-                f"ragged/mixed-syllable-count and not trained"
-            )
         if warn_parts:
             log.warning("; ".join(warn_parts))
 
         self._weights = np.zeros(n_features, dtype=np.float64)
 
+    @staticmethod
+    def _normalize_annotation_columns(df):
+        """Map liberal column names to canonical text/scansion/frequency and keep only
+        those. The line column may be named `line`/`line_text`/`text` — **`line` wins
+        when several are present** (in DH corpora `text` is often the WORK's title/id
+        while `line` holds the verse line; a warning names the loser). The target is
+        `scansion` (or `target`/`target_scansion`); an optional `frequency`/`freq`
+        column defaults to 1.0 (`weight`/`count` are deliberately NOT treated as
+        frequency — a syllable-`count` column would silently multiply long lines'
+        gradient mass). Rows with a blank line/scansion are dropped with a warning;
+        non-numeric or missing frequencies default to 1.0 with a warning. Extra columns
+        (meter, poem, note, …) are ignored — so a gold CSV like
+        data/tagged_samples/foot-gold.csv loads directly."""
+        lower = {str(c).lower(): c for c in df.columns}
+        def pick(*names):
+            found = [lower[n] for n in names if n in lower]
+            if len(found) > 1:
+                log.warning(
+                    f"annotation data has multiple candidate columns {found}; "
+                    f"using {found[0]!r}")
+            return found[0] if found else None
+        tcol = pick("line", "line_text", "text")
+        scol = pick("scansion", "target", "target_scansion")
+        if tcol is None or scol is None:
+            raise ValueError(
+                "annotation data needs a line column (line/text) and a scansion "
+                f"column (scansion/target); got {list(df.columns)} — if you loaded "
+                "from a file, check the delimiter was detected correctly")
+        out = pd.DataFrame({"text": df[tcol], "scansion": df[scol]})
+        # drop blank/missing rows BEFORE astype(str) — otherwise a NaN cell becomes
+        # the literal string 'nan' and silently trains as a one-word line
+        bad = (out["text"].isna() | out["scansion"].isna()
+               | (out["text"].astype(str).str.strip() == "")
+               | (out["scansion"].astype(str).str.strip() == ""))
+        if bad.any():
+            log.warning(f"dropping {int(bad.sum())} annotation row(s) with a "
+                        f"blank line/scansion cell")
+            out, df = out[~bad], df[~bad]
+        out["text"] = out["text"].astype(str)
+        out["scansion"] = out["scansion"].astype(str)
+        fcol = pick("frequency", "freq")
+        if fcol:
+            freqs = pd.to_numeric(df[fcol], errors="coerce")
+            n_bad = int(freqs.isna().sum())
+            if n_bad:
+                log.warning(f"{n_bad} missing/non-numeric value(s) in frequency "
+                            f"column {fcol!r}; defaulting those to 1.0")
+            out["frequency"] = freqs.fillna(1.0).astype(float)
+        else:
+            out["frequency"] = 1.0
+        return out.reset_index(drop=True)
+
     def load_annotations(self, data, lang=DEFAULT_LANG, text=None):
         """Load annotated scansion data and parse all lines.
 
         Args:
-            data: list of (line_text, scansion_str, frequency) tuples,
-                  or a DataFrame with columns: text, scansion, frequency.
+            data: one of —
+              * a CSV/TSV file **path** (str or Path) — the delimiter is sniffed
+                (comma, tab, semicolon), so a comma-separated `.txt` or a
+                tab-separated `.csv` both load;
+              * a list of `(line_text, scansion)` or `(line_text, scansion, frequency)`
+                tuples (frequency defaults to 1.0; extra trailing fields ignored),
+                or a list of dicts with liberal keys;
+              * a DataFrame, columns matched liberally by
+                `_normalize_annotation_columns` (line|text, scansion, optional freq).
             lang: language code for parsing.
             text: optional pre-built TextModel (e.g. with syntax=True).
         """
-        if isinstance(data, list):
-            df = pd.DataFrame(data, columns=["text", "scansion", "frequency"])
+        if isinstance(data, (str, os.PathLike)):
+            # sniff the delimiter rather than guessing from the extension
+            df = pd.read_csv(data, sep=None, engine="python")
+        elif isinstance(data, list):
+            if data and isinstance(data[0], dict):
+                df = pd.DataFrame(data)   # records: columns come from the dict keys
+            else:
+                rows = []
+                for r in data:
+                    r = tuple(r)[:3]      # extra trailing fields ignored, like the DF path
+                    rows.append(r if len(r) >= 3 else (r[0], r[1], 1.0))
+                df = pd.DataFrame(rows, columns=["text", "scansion", "frequency"])
         else:
             df = data.copy()
+        df = self._normalize_annotation_columns(df)
         self._annotations = df
 
         if text is not None:

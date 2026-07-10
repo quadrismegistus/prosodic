@@ -14,7 +14,7 @@ A class that represents a text structure, comprised of WordTokens.
 
 | Name | Description |
 | --- | --- |
-| [get_parsed_df](#prosodic.texts.texts.TextModel.get_parsed_df) | Alias for get_parses_df(mode=..., **meter_kwargs). |
+| [get_parsed_df](#prosodic.texts.texts.TextModel.get_parsed_df) | Alias for get_parses_df(mode=..., by=..., **meter_kwargs). |
 | [get_parses_df](#prosodic.texts.texts.TextModel.get_parses_df) | Parse and return results as a DataFrame. No entity construction. |
 | [line_num_sylls](#prosodic.texts.texts.TextModel.line_num_sylls) | Canonical per-line syllable counts: dict of line_num -> int. |
 | [line_scheme](#prosodic.texts.texts.TextModel.line_scheme) | Repeating beat-length template (e.g. invariable pentameter). |
@@ -25,29 +25,38 @@ A class that represents a text structure, comprised of WordTokens.
 | [save](#prosodic.texts.texts.TextModel.save) | Save text + syllable DF + parse results to parquet files. |
 | [summary](#prosodic.texts.texts.TextModel.summary) | Tabular per-line summary + estimated schema. Returns a string. |
 | [syllable_scheme](#prosodic.texts.texts.TextModel.syllable_scheme) | Repeating syllable-length template (canonical sylls, form_idx==0). |
+| [syntax_trees](#prosodic.texts.texts.TextModel.syntax_trees) | nltk.Tree projections per sentence, preterminals labeled with |
 
 ### get_parsed_df { #prosodic.texts.texts.TextModel.get_parsed_df }
 
-`texts.texts.TextModel.get_parsed_df(mode='unbounded', **meter_kwargs)`
+`texts.texts.TextModel.get_parsed_df(mode='unbounded', by='syll', **meter_kwargs)`
 
-Alias for get_parses_df(mode=..., **meter_kwargs).
+Alias for get_parses_df(mode=..., by=..., **meter_kwargs).
 
 ### get_parses_df { #prosodic.texts.texts.TextModel.get_parses_df }
 
-`texts.texts.TextModel.get_parses_df(mode='unbounded', **meter_kwargs)`
+`texts.texts.TextModel.get_parses_df(mode='unbounded', by='syll', **meter_kwargs)`
 
 Parse and return results as a DataFrame. No entity construction.
 
 Args:
     mode: 'best', 'unbounded' (default), or 'all'.
+    by: 'syll' (default) — one row per (line, parse, syllable); or
+        'line' — one row per parse (the syllable axis collapsed), like
+        `line.parses.scansions.df`.
     **meter_kwargs: custom meter config (max_s, max_w, etc.)
 
-Returns a DataFrame with one row per (line, parse, syllable). Columns:
+With `by='syll'`, one row per (line, parse, syllable). Columns:
     line_num, word_num, form_idx, syll_idx (within-word, joins to _syll_df),
     line_syll_idx (position within line), parse_idx, parse_rank (1-indexed
     among unbounded, NA for bounded), parse_score, is_best, is_bounded,
     pos_idx, pos_size, meter_val, syll_txt, syll_ipa, is_stressed,
     plus one `*<constraint>` column per violation (int8).
+
+With `by='line'`, one row per parse. Columns:
+    line_num, parse_idx, parse_rank, parse_score, is_best, is_bounded,
+    num_sylls, num_viols, meter (the '+'/'-' scansion string), plus one
+    `*<constraint>` column per constraint, summed over the line's syllables.
 
 Implementation is vectorized: per-line chunks are built directly
 from the numpy (S, N, C) violation arrays without row-by-row Python loops.
@@ -137,3 +146,11 @@ Tabular per-line summary + estimated schema. Returns a string.
 `texts.texts.TextModel.syllable_scheme()`
 
 Repeating syllable-length template (canonical sylls, form_idx==0).
+
+### syntax_trees { #prosodic.texts.texts.TextModel.syntax_trees }
+
+`texts.texts.TextModel.syntax_trees(model=None)`
+
+nltk.Tree projections per sentence, preterminals labeled with
+tstress (see phrasal_stress.syntax_trees). Requires spaCy; with
+svgling installed, trees render as SVG in notebooks.

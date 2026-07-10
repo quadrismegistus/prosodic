@@ -16,6 +16,9 @@ website:
       - reference/parsing.meter.Meter.qmd
       - reference/parsing.parses.Parse.qmd
       - reference/parsing.maxent.MaxEntTrainer.qmd
+      - reference/analysis.feet.parse_feet.qmd
+      - reference/analysis.feet.Foot.qmd
+      - reference/analysis.feet.FootList.qmd
       section: Metrical parsing
     - contents:
       - reference/analysis.meter_type.classify_meter_type.qmd

@@ -1,0 +1,145 @@
+---
+title: "Rhyme detection"
+---
+
+Prosodic detects rhyme from **sound, not spelling**: two lines rhyme if
+their final **rimes** — everything from the last stressed vowel to the end
+of the line, including any unstressed tail — are phonologically close. The
+system is calibrated against a historical gold standard (Walker's 1775
+rhyming dictionary) and validated on real verse (the rhyme schemes of
+Shakespeare's sonnets), and it classifies pairs into the classical
+categories: **perfect** rhyme, **slant** rhyme (consonance), and
+**assonance**.
+
+## The distance: feature-weighted edit distance on IPA
+
+The primitive is `PhonemeList.feature_edit_distance`: a dynamic-programming
+alignment of two IPA segment sequences in which the substitution cost of
+two phonemes is their normalized articulatory-feature distance (via
+[panphon](https://github.com/dmort27/panphon)'s ~24 binary features).
+Identical segments cost 0; a voicing mismatch costs little; vowel vs.
+obstruent costs a lot. `WordForm.rime_distance(other)` applies this to the
+two words' rimes and normalizes to $[0, 1]$ — 0 is a perfect rhyme.
+
+A single scalar, however, **conflates two very different ways of
+half-rhyming**. Consider:
+
+| pair | nucleus distance | coda distance |
+|---|---|---|
+| *gone* / *alone* | 0.58 | **0.00** |
+| *day* / *night* | **0.08** | 1.00 |
+
+*gone/alone* share their entire coda and differ in the vowel — classic
+slant rhyme. *day/night* share (nearly) a vowel and nothing else —
+assonance at best. A scalar distance can score these pairs identically;
+poetically they are nothing alike.
+
+## The 2-D decomposition: (nucleus, coda)
+
+`WordForm.rime_distance_nc(other)` therefore splits the rime at the
+natural phonological joint: the **nucleus** (the leading vowel run of the
+rime) and the **coda** (everything after it, including the unstressed
+tail), and returns a separate feature-edit distance for each. Rhyme
+categories are **regions in this 2-D space**:
+
+| category | nucleus | coda |
+|---|---|---|
+| **perfect** | ≤ 0.05 | ≤ 0.15 |
+| **slant** (consonance) | free | ≤ 0.05 |
+| **assonance** | ≤ 0.05 | mismatch |
+| none | — | — |
+
+(Constants `RHYME_PERFECT_NUC_MAX` etc. in `prosodic/imports.py`.)
+
+The bands were **calibrated, not stipulated**: `scripts/rime_eval.py` fits
+them against Walker's dictionary, and the calibration *independently
+recovered the classical definition of consonance* — the slant region that
+best separates Walker's rhymes is "identical coda, vowel free," which is
+exactly what the handbooks say slant rhyme is. On Walker, the 2-D band
+classifier reaches macro-F1 **0.758** vs. **0.679** for the best 1-D
+scalar threshold.
+
+## The gold standard: Walker (1775)
+
+John Walker's *Rhyming Dictionary* (1775) indexes English words by their
+endings *as pronounced*, making it a labeled corpus of ~perfect rhyme
+pairs from the tradition itself (`data/walker5.csv`). It has limitations
+worth naming: it is a **historical** record (18th-century pronunciations
+license pairs a modern ear rejects), and it has **no assonance class** —
+so the assonance band is linguistically motivated but not
+Walker-validated.
+
+Per-feature analysis (`scripts/rime_feature_analysis.py`, logistic
+regression over Walker) localizes what each category is made of:
+
+- **slant vs. none is coda-only** — 0.920 cross-validated accuracy from
+  coda features alone;
+- within the coda, **manner features** (lateral, nasal, continuant,
+  voice) are determinative, while **place** (anterior, coronal) barely
+  matters — *time/thine* is a better slant pair than *time/tike*;
+- **perfect** rhyme additionally requires the vowels to match in
+  **rounding and length**.
+
+## Validation on real verse
+
+Calibrating on a dictionary risks learning the dictionary. The check
+(`rime_eval.py`, sonnet-scheme section) uses Shakespeare's sonnets, where
+the rhyme *scheme* supplies both positives (scheme-mate line pairs) and —
+crucially — **true negatives**: line pairs inside the same quatrain that
+the scheme does *not* link. On this task the 2-D bands score **F1 0.912
+at a false-positive rate of 0.041**; the 1-D scalar's FPR is 0.226 — five
+times as many spurious rhymes.
+
+## From pairs to schemes
+
+`text.rhyme_ids` groups lines into rhyme sets: candidate pairs within a
+±4-line window are gated by the band classifier (perfect or slant), ranked
+perfect-first then by nucleus distance; perfect pairs join their sets
+outright, slant pairs must be **mutual nearest neighbors**. Band-gating
+lifted sonnet-scheme detection from 137/154 to **149/154** Shakespearean
+(fixing e.g. Sonnet 106, whose quatrain rhymes on a slant pair).
+
+`text.rhyme_scheme` then matches the resulting rhyme-edge set against a
+catalog of 39 named forms (`analysis/data/rhyme_schemes.txt`: sonnet
+variants, couplet, ballad, sestet, …) by Jaccard similarity, and
+`text.is_sonnet` / `text.is_shakespearean_sonnet` combine scheme, line
+count, and syllable profile.
+
+## Negative results (recorded so they are not re-tried)
+
+- **Learned per-feature channel weights lose to uniform weights** under
+  the band classifier (Walker macro-F1 0.724 vs. 0.758): zero-weighting a
+  feature lets near-identity thresholds leak pairs that differ only on
+  that feature. `feature_edit_distance(weights=…)` remains available for
+  per-language or per-period experiments.
+- **A 48-dimensional multinomial classifier wins on Walker
+  cross-validation** (0.822) **but over-recalls on real verse** (FPR
+  0.186): it learns Walker's historical permissiveness rather than rhyme.
+  Simple calibrated bands generalize better than the stronger model.
+
+## Usage
+
+```python
+import prosodic
+
+sonnet = prosodic.Text(open("sonnet.txt").read())
+
+# pairwise: classification and gradient distances
+line1, line3 = sonnet.lines[0], sonnet.lines[2]
+line1.rime_type(line3)                  # 'perfect' | 'slant' | 'assonance' | None
+line1.rime_distance(line3)              # scalar in [0, 1]
+
+w1 = sonnet.line1.wordforms_nopunc[-1]  # word-level
+w2 = sonnet.lines[2].wordforms_nopunc[-1]
+w1.rime_distance_nc(w2)                 # (nucleus_dist, coda_dist)
+
+# poem-level
+sonnet.rhyme_ids                        # per-line rhyme-set ids, e.g. [1,2,1,2,3,...]
+sonnet.rhyme_scheme                     # {'name': 'Sonnet, Shakespearean', ...}
+sonnet.is_shakespearean_sonnet          # True/False
+```
+
+Recalibrate or re-validate with `python scripts/rime_eval.py` (Walker ROC
++ bands + the sonnet-scheme check) and `python
+scripts/rime_feature_analysis.py` (per-feature logistic regression;
+requires scikit-learn).

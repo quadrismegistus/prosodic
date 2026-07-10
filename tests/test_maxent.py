@@ -4,7 +4,7 @@ Targets the module's public surface and the previously-uncovered branches:
 the zone helpers ("initial" / "foot" / int N / invalid), the foot-zone
 padding path in _build_line_data, load_annotations (list / DataFrame /
 pre-built-TextModel), the train() no-data guard, predict() / report() /
-apply_to_meter(), and the ragged-skip (mixed-syllable-count) accounting +
+apply_to_meter(), mixed-N (ragged) line training +
 warning.
 
 Kept fast by training on 1-2 short lines with light regularization; the
@@ -248,6 +248,85 @@ def test_load_annotations_dataframe_input():
     assert tr._annotations is not df
 
 
+def test_load_annotations_friendly_columns_and_path(tmp_path):
+    # (a) DataFrame with `line` (not `text`), no frequency, extra columns -> normalized
+    df = pd.DataFrame({"meter": ["iambic"], "line": [LINE1], "scansion": [IAMBIC],
+                       "note": [""]})
+    tr = MaxEntTrainer(Meter(), regularization=10.0)
+    tr.load_annotations(df)
+    assert list(tr._annotations.columns) == ["text", "scansion", "frequency"]
+    assert tr._annotations["frequency"].tolist() == [1.0]
+    assert [ld for ld in tr._line_data if ld["observed"].sum() > 0]
+
+    # (b) a 2-tuple (text, scansion) with no frequency defaults to 1.0
+    tr2 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr2.load_annotations([(LINE1, IAMBIC)])
+    assert tr2._annotations["frequency"].tolist() == [1.0]
+
+    # (c) a CSV file path loads directly (line/scansion columns, extras ignored)
+    p = tmp_path / "ann.csv"
+    df.to_csv(p, index=False)
+    tr3 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr3.load_annotations(str(p))
+    assert list(tr3._annotations.columns) == ["text", "scansion", "frequency"]
+    assert len(tr3._annotations) == 1
+
+
+def test_load_annotations_robustness(tmp_path):
+    """Release-review regression guards for the liberal loader (each of these was a
+    verified defect): dict records, line-vs-text precedence, NaN frequency, long
+    tuples, blank cells, delimiter sniffing, and count-is-not-frequency."""
+    # (a) list of dicts — worked in 3.9.1; tuple(dict) yields KEYS and silently
+    # trained on the literal strings 'text'/'scansion'
+    tr = MaxEntTrainer(Meter(), regularization=10.0)
+    tr.load_annotations([{"text": LINE1, "scansion": IAMBIC, "frequency": 1.0}])
+    assert tr._annotations["text"].tolist() == [LINE1]
+    assert [ld for ld in tr._line_data if ld["observed"].sum() > 0]
+
+    # (b) `line` outranks `text` when both present (DH convention: text = work
+    # title/id, line = the verse line — training on titles converged to garbage)
+    df = pd.DataFrame({"text": ["Sonnet 18"], "line": [LINE1],
+                       "scansion": [IAMBIC]})
+    tr2 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr2.load_annotations(df)
+    assert tr2._annotations["text"].tolist() == [LINE1]
+
+    # (c) NaN frequency defaults to 1.0 (one blank cell used to poison the whole
+    # fit: observed never normalized, gradient NaN, all-zero weights, no error)
+    df3 = pd.DataFrame({"line": [LINE1, LINE2], "scansion": [IAMBIC, IAMBIC],
+                        "frequency": [1.0, float("nan")]})
+    tr3 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr3.load_annotations(df3)
+    assert tr3._annotations["frequency"].tolist() == [1.0, 1.0]
+    tr3.train()
+    assert tr3._train_params["converged"] is True
+
+    # (d) tuples longer than 3: extra trailing fields ignored, like the DF path
+    tr4 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr4.load_annotations([(LINE1, IAMBIC, 2.0, "iambic", "a note")])
+    assert tr4._annotations["frequency"].tolist() == [2.0]
+
+    # (e) a blank line cell is dropped, not trained as the literal string 'nan'
+    df5 = pd.DataFrame({"line": [LINE1, None], "scansion": [IAMBIC, IAMBIC]})
+    tr5 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr5.load_annotations(df5)
+    assert tr5._annotations["text"].tolist() == [LINE1]
+
+    # (f) comma-separated .txt path: delimiter is sniffed, not extension-guessed
+    fp = tmp_path / "gold.txt"
+    fp.write_text(f"line,scansion\n\"{LINE1}\",{IAMBIC}\n")
+    tr6 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr6.load_annotations(str(fp))
+    assert tr6._annotations["scansion"].tolist() == [IAMBIC]
+
+    # (g) a `count` column is NOT frequency (a syllable-count column would
+    # silently multiply long lines' gradient mass)
+    df7 = pd.DataFrame({"line": [LINE1], "scansion": [IAMBIC], "count": [12]})
+    tr7 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr7.load_annotations(df7)
+    assert tr7._annotations["frequency"].tolist() == [1.0]
+
+
 def test_load_annotations_with_prebuilt_text():
     # text= branch: annotations attach to a pre-built (e.g. syntax) TextModel
     # instead of re-parsing the unique annotation strings.
@@ -310,25 +389,36 @@ def test_fit_zones_foot_pads_shorter_lines():
 
 
 # ---------------------------------------------------------------------------
-# Ragged (mixed-syllable-count) lines: skipped, counted, warned
+# Ragged (mixed-syllable-count) lines: trained, not skipped
 # ---------------------------------------------------------------------------
 
-def test_ragged_line_skipped_counted_and_warned(monkeypatch):
+def test_ragged_line_trains():
     # "fire"/"flower" carry an elided 1-syllable variant alongside the
     # 2-syllable one; a line built from them pools parses of different lengths
-    # and comes back ragged. Ragged lines can't be stacked into a fixed-width
-    # feature matrix, so they're dropped from training, counted, and surfaced.
-    captured = []
-    monkeypatch.setattr(
-        maxent_mod.log, "warning", lambda msg, *a, **k: captured.append(msg)
-    )
-
+    # and comes back ragged. MaxEnt consumes the syllable axis immediately
+    # (zone_split -> a (C*Z) feature vector whose names are N-independent), so
+    # each candidate zone-splits by its OWN length and mixed-N candidates stack
+    # into the ordinary softmax. Ragged lines used to be dropped wholesale,
+    # which excluded exactly the elision lines from every gold set (12/120 of
+    # the foot gold).
     tr = MaxEntTrainer(Meter(), regularization=10.0, zones=None)
     tr.load_text([LINE1, RAGGED], IAMBIC)
+    assert len(tr._line_data) == 2                   # BOTH lines kept
+    # the ragged line's candidates include multiple syllable counts, and its
+    # feature matrix is rectangular (stacked per-row zone splits)
+    ragged_ld = next(ld for ld in tr._line_data if ld["text"] == RAGGED)
+    lens = {len(s) for s in ragged_ld["scansions"]}
+    assert len(lens) > 1
+    assert ragged_ld["viols"].ndim == 2
+    tr.train()
+    assert tr._train_params["converged"] is True
 
-    assert tr._n_skipped_ragged >= 1                 # counter incremented
-    assert len(tr._line_data) == 1                   # only the clean line kept
-    assert any("ragged" in m for m in captured)      # warning surfaced
+    # same under zones (per-row boundaries shift with each candidate's N)
+    trz = MaxEntTrainer(Meter(), regularization=10.0, zones=3)
+    trz.load_text([LINE1, RAGGED], IAMBIC)
+    assert len(trz._line_data) == 2
+    trz.train()
+    assert trz._train_params["converged"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -346,7 +436,6 @@ def test_oversized_line_skipped_as_empty():
     tr = MaxEntTrainer(Meter(), regularization=10.0, zones=None)
     tr.load_text([LINE1, prose], IAMBIC)
     assert tr._n_skipped_empty == 1
-    assert tr._n_skipped_ragged == 0
     assert len(tr._line_data) == 1
     tr.train()  # still trainable on the surviving line
     assert tr._train_params["converged"] is True

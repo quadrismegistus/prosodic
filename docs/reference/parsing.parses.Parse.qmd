@@ -45,26 +45,30 @@ Args:
 | [ambig](#prosodic.parsing.parses.Parse.ambig) | Get the ambiguity score of the parse. |
 | [attrs](#prosodic.parsing.parses.Parse.attrs) | Get a dictionary of attributes for the parse. |
 | [average_position_size](#prosodic.parsing.parses.Parse.average_position_size) | Get the average size of metrical positions in the parse. |
-| [feet](#prosodic.parsing.parses.Parse.feet) | Get the list of feet in the parse. |
-| [foot_counts](#prosodic.parsing.parses.Parse.foot_counts) | Get a counter of foot types in the parse. |
+| [feet](#prosodic.parsing.parses.Parse.feet) | Foot patterns (`'ws'`, `'wws'`, `'sw'`, …) from the DP delineation |
+| [feet_str](#prosodic.parsing.parses.Parse.feet_str) | '(w s)(w w s)(s w*)…' — '*' marks a foot that inverts the line head. |
+| [foot_counts](#prosodic.parsing.parses.Parse.foot_counts) | Counter of foot LABELS (iamb/trochee/anapest/dactyl/…) from the DP |
 | [foot_sizes](#prosodic.parsing.parses.Parse.foot_sizes) | Get the sizes of feet in the parse. |
-| [foot_type](#prosodic.parsing.parses.Parse.foot_type) | Get the foot type of the parse. |
+| [foot_type](#prosodic.parsing.parses.Parse.foot_type) | The metrical foot type ("iambic"/"trochaic"/"anapestic"/"dactylic"), or "" |
+| [footed_scansion](#prosodic.parsing.parses.Parse.footed_scansion) | `scansion` cut into feet by the DP, `\|`-delimited — e.g. `'wws\|wws\|wws\|w'` |
+| [head](#prosodic.parsing.parses.Parse.head) | Headedness of this line = majority direction of its feet (rising = |
 | [html](#prosodic.parsing.parses.Parse.html) | Get an HTML representation of the parse. |
 | [is_anapestic](#prosodic.parsing.parses.Parse.is_anapestic) | Check if the parse is anapestic. |
 | [is_complete](#prosodic.parsing.parses.Parse.is_complete) | Check if the parse is complete. |
 | [is_dactylic](#prosodic.parsing.parses.Parse.is_dactylic) | Check if the parse is dactylic. |
 | [is_iambic](#prosodic.parsing.parses.Parse.is_iambic) | Check if the parse is iambic. |
-| [is_rising](#prosodic.parsing.parses.Parse.is_rising) | Check if the parse has a rising rhythm. |
+| [is_rising](#prosodic.parsing.parses.Parse.is_rising) | Rising (iamb/anapest) vs falling (trochee/dactyl) rhythm, read from the DP |
 | [is_trochaic](#prosodic.parsing.parses.Parse.is_trochaic) | Check if the parse is trochaic. |
 | [line_txt](#prosodic.parsing.parses.Parse.line_txt) | Get the text of the line associated with this parse. |
 | [meter_ints](#prosodic.parsing.parses.Parse.meter_ints) | Get the meter as a tuple of integers. |
 | [meter_str](#prosodic.parsing.parses.Parse.meter_str) | Get the meter string representation of the parse. |
-| [nary_feet](#prosodic.parsing.parses.Parse.nary_feet) | Get the n-ary foot type of the parse. |
+| [nary_feet](#prosodic.parsing.parses.Parse.nary_feet) | Dominant foot size (2 = binary, 3 = ternary): the median over the REAL |
 | [num_peaks](#prosodic.parsing.parses.Parse.num_peaks) | Get the number of metrical peaks in the parse. |
 | [num_positions](#prosodic.parsing.parses.Parse.num_positions) | Get the number of metrical positions in the parse. |
 | [num_stressed_sylls](#prosodic.parsing.parses.Parse.num_stressed_sylls) | Get the number of stressed syllables in the parse. |
 | [num_sylls](#prosodic.parsing.parses.Parse.num_sylls) | Get the total number of syllables in the parse. |
 | [num_words](#prosodic.parsing.parses.Parse.num_words) | Get the number of words in the parse. |
+| [scansion](#prosodic.parsing.parses.Parse.scansion) | Per-syllable metrical scansion in **w/s** (weak/strong POSITION), e.g. |
 | [slots](#prosodic.parsing.parses.Parse.slots) | Get all slots in the parse. |
 | [stress_ints](#prosodic.parsing.parses.Parse.stress_ints) | Get the stress pattern as a tuple of integers. |
 | [stress_str](#prosodic.parsing.parses.Parse.stress_str) | Get the stress string representation of the parse. |
@@ -84,6 +88,7 @@ Args:
 | [grid_plot](#prosodic.parsing.parses.Parse.grid_plot) | Metrical grid as a plotnine figure (see analysis.grid). |
 | [grid_str](#prosodic.parsing.parses.Parse.grid_str) | Hayes-style metrical grid as monospace text (see analysis.grid). |
 | [init](#prosodic.parsing.parses.Parse.init) | Initialize the parse positions. |
+| [metrical_feet](#prosodic.parsing.parses.Parse.metrical_feet) | The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable |
 | [score](#prosodic.parsing.parses.Parse.score) | Get the total score of the parse. |
 | [sort_key](#prosodic.parsing.parses.Parse.sort_key) | Get the sort key for this parse. |
 | [stats_d](#prosodic.parsing.parses.Parse.stats_d) | Get a dictionary of statistics for the parse. |
@@ -190,6 +195,18 @@ Hayes-style metrical grid as monospace text (see analysis.grid).
 `parsing.parses.Parse.init(force=False)`
 
 Initialize the parse positions.
+
+### metrical_feet { #prosodic.parsing.parses.Parse.metrical_feet }
+
+`parsing.parses.Parse.metrical_feet()`
+
+The parse's feet as a `FootList` of `Foot` objects (DP delineation: variable
+size AND headedness, one head per foot + extrametrical edges). Each `Foot` is a
+VIEW over its syllables — iterate it to get them (duck-typed, no entity forced)
+— with `.label`/`.pattern`/`.head`/`.is_substituted`/`.to_html()`. See
+analysis.feet.parse_feet. Cached: `feet`/`head`/`feet_str`/`foot_counts`/
+`foot_sizes`/`nary_feet`/`is_rising`/`footed_scansion`/`foot_type` all funnel
+through it (foot_type twice), so one DP per parse, not 4-6.
 
 ### score { #prosodic.parsing.parses.Parse.score }
 

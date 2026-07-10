@@ -1,8 +1,8 @@
-from typing import List, Tuple, Dict, Any, Iterator, Optional, Union
+from typing import List, Dict, Any
 from ..imports import *
 from .constraints import *
 from .constraint_utils import *
-from ..texts import TextModel, Line, Stanza
+from ..texts import TextModel, Line
 from .parselists import ParseList
 from .utils import *
 

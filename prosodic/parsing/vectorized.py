@@ -64,12 +64,16 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         if not len(ui):
             continue
         fsum = c[0][ui].sum(axis=1)                               # (len(ui), C) flat
-        zsum = _zone_split_batch(c[0][ui][None], bound_zones)[0]  # (len(ui), C[*Z]) zone
+        # unfitted meter (bound_zones None): zone == flat by definition — reuse
+        # fsum instead of a second per-combo sum (zdom then equals fdom exactly).
+        zsum = fsum if bound_zones is None else \
+            _zone_split_batch(c[0][ui][None], bound_zones)[0]     # (len(ui), C[*Z]) zone
         N = c[0].shape[1]
         for j, i in enumerate(ui):
             urank.append(rank); uidx.append(int(i))
             fvecs.append(fsum[j]); zvecs.append(zsum[j]); uN.append(N)
     pool_unb = set()
+    pool_unb_arr = {}   # rank -> (S,) bool: cross-pool unbounded (same info as pool_unb)
     if fvecs:
         fv = np.array(fvecs); zv = np.array(zvecs); nn = np.array(uN)
         same_n = nn[:, None] == nn[None, :]
@@ -79,6 +83,13 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         np.fill_diagonal(dom, False)
         alive = ~dom.any(axis=0)
         pool_unb = {(urank[k], uidx[k]) for k in range(len(urank)) if alive[k]}
+        for k in range(len(urank)):
+            if alive[k]:
+                arr = pool_unb_arr.get(urank[k])
+                if arr is None:
+                    arr = pool_unb_arr[urank[k]] = np.zeros(
+                        candidates[urank[k]][0].shape[0], dtype=bool)
+                arr[uidx[k]] = True
     if not pool_unb:
         return get_lpl(0)
 
@@ -106,35 +117,61 @@ def _pool_candidates(candidates, meter, ci_use, bound_zones, build_sylls, parse_
         pool_unb_N = {(r, i) for (r, i) in pool_unb if N_of[r] == N}
         if full_ok and pool_unb_N == {(base, int(i)) for i in np.where(candidates[base][1])[0]}:
             return get_lpl(base)                       # base combo accounts for all of N
+        # Same-N combos share ONE scansion enumeration (parse_batch_from_df hands the
+        # same scansions/meter_vals objects to every combo of a nsylls group), and
+        # meter string <-> scansion is a bijection within the enumeration (positions
+        # strictly alternate s/w, so a per-syllable string's maximal runs recover its
+        # position split uniquely). The old dedup-by-meter-string overlay is therefore
+        # an INDEX-ALIGNED argmin: for each candidate index, pick the winning combo by
+        # the SAME key as before — (bounded-in-pool, score, rank, index) — entirely in
+        # numpy. (Replaces a per-candidate Python loop building a string key per
+        # (combo, scansion): ~389K string joins + 2.7M get_lpl calls per sonnets
+        # parse, >1s. Verified byte-identical by a full before/after dump diff.)
         l0 = get_lpl(base)
-        best_rep = {}  # meter_str -> (sortkey, rank, scan_idx)
-        for i in range(l0._all_viols.shape[0]):
-            ms = _pool_meter_str(l0, i)
-            sk = ((base, i) not in pool_unb, float(l0._all_scores[i]), base, i)
-            cur = best_rep.get(ms)
-            if cur is None or sk < cur[0]:
-                best_rep[ms] = (sk, base, i)
-        for rank in group[1:]:
-            for i in np.where(candidates[rank][1])[0]:
-                i = int(i)
-                bounded = (rank, i) not in pool_unb
-                if bounded and not full_forms:
-                    continue                           # surviving length: unbounded overlay only
-                lr = get_lpl(rank)
-                ms = _pool_meter_str(lr, i)
-                sk = (bounded, float(lr._all_scores[i]), rank, i)
-                cur = best_rep.get(ms)
-                if cur is None or sk < cur[0]:
-                    best_rep[ms] = (sk, rank, i)
-        reps = sorted(best_rep.values(), key=lambda r: r[0])
-        scans = [get_lpl(rank)._all_scansions[i] for _, rank, i in reps]
-        viols = np.stack([get_lpl(rank)._all_viols[i] for _, rank, i in reps])
-        unb_mask = np.array([not sk[0] for sk, _, _ in reps], dtype=bool)
-        sylls_by = [get_lpl(rank)._sylls for _, rank, i in reps]
-        rowidx_by = [get_lpl(rank)._syll_row_idx for _, rank, i in reps]
-        mv = np.stack([get_lpl(rank)._meter_vals[i] for _, rank, i in reps])
-        pi = np.stack([get_lpl(rank)._position_ids[i] for _, rank, i in reps])
-        ps = np.stack([get_lpl(rank)._position_sizes[i] for _, rank, i in reps])
+        S = len(l0._all_scansions)
+        R = len(group)
+        no_unb = np.zeros(S, dtype=bool)
+        valid = np.zeros((R, S), dtype=bool)
+        bounded = np.ones((R, S), dtype=np.int8)
+        scores = np.full((R, S), np.inf, dtype=np.float64)
+        lpl_of = {}
+        for k, rank in enumerate(group):
+            cross_unb = pool_unb_arr.get(rank, no_unb)
+            if rank == base:
+                lpl_of[k] = l0
+                valid[k] = True
+            else:
+                within_unb = np.asarray(candidates[rank][1], dtype=bool)
+                elig = within_unb if full_forms else (within_unb & cross_unb)
+                if not elig.any():
+                    continue
+                lpl_of[k] = get_lpl(rank)
+                valid[k] = elig
+            bounded[k] = (~cross_unb).astype(np.int8)
+            scores[k] = np.asarray(lpl_of[k]._all_scores, dtype=np.float64)
+        # lexicographic min over the combo axis per candidate index
+        b_eff = np.where(valid, bounded, np.int8(2))
+        b_min = b_eff.min(axis=0)                            # (S,) 0/1 (base always valid)
+        tie_b = valid & (b_eff == b_min[None, :])
+        s_eff = np.where(tie_b, scores, np.inf)
+        s_min = s_eff.min(axis=0)                            # (S,)
+        win_k = (tie_b & (s_eff == s_min[None, :])).argmax(axis=0)   # first (lowest rank) winner
+        win_rank = np.asarray(group, dtype=np.int64)[win_k]
+        # final ordering: the same 4-tuple the old sorted(reps) used
+        order = np.lexsort((np.arange(S), win_rank, s_min, b_min))
+        viols = np.empty_like(np.asarray(l0._all_viols))
+        for k in np.unique(win_k):
+            m = win_k == k
+            viols[m] = np.asarray(lpl_of[k]._all_viols)[m]
+        viols = viols[order]
+        scans = [l0._all_scansions[i] for i in order]
+        unb_mask = (b_min == 0)[order]
+        mv = np.asarray(l0._meter_vals)[order]
+        pi = np.asarray(l0._position_ids)[order]
+        ps = np.asarray(l0._position_sizes)[order]
+        win_k_ord = win_k[order]
+        sylls_by = [lpl_of[k]._sylls for k in win_k_ord]
+        rowidx_by = [lpl_of[k]._syll_row_idx for k in win_k_ord]
         return LazyParseList(
             None, meter, scans, viols, ci_use, unb_mask, sylls_by[0], parse_unit=parse_unit,
             syll_row_idx=rowidx_by[0], meter_vals=mv, position_ids=pi, position_sizes=ps,
@@ -1159,7 +1196,18 @@ class LazyParseList:
             else:
                 constraint_weights = meter.constraints
                 weights = np.array([constraint_weights.get(c, 1) for c in self._constraint_names])
-                all_viols_sum = np.array([v.sum(axis=0) for v in viols]) if viols else np.zeros((0, len(weights)))
+                if viols:
+                    # one reduceat over the concatenated rows instead of a Python
+                    # .sum() per parse (ragged lines carry ~hundreds of parses; the
+                    # per-parse loop was ~1s / 164K calls on a sonnets parse).
+                    # int64 up-cast: reduceat does NOT promote int8 like sum() does.
+                    lens = np.fromiter((v.shape[0] for v in viols), dtype=np.int64,
+                                       count=len(viols))
+                    cat = np.concatenate(viols, axis=0).astype(np.int64)  # (sum N_k, C)
+                    starts = np.concatenate(([0], np.cumsum(lens)[:-1]))
+                    all_viols_sum = np.add.reduceat(cat, starts, axis=0)  # (S, C)
+                else:
+                    all_viols_sum = np.zeros((0, len(weights)))
                 self._all_scores = (all_viols_sum * weights[None, :]).sum(axis=1)  # (S,)
         elif zone_weights:
             # zone-aware scoring: split (S, N, C) -> (S, C*Z), weight with zone weights

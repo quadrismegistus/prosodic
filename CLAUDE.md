@@ -304,15 +304,23 @@ Run `python -m prosodic.profiling` to regenerate.
 
 | Step | v2 | v3 | Speedup |
 |---|---|---|---|
-| Init (tokenize + pronunciations + entities) | 5.29s | 2.1s | 3x |
-| Parse (CPU) | 72.97s | 1.9s | 38x |
-| Parse (GPU) | 72.97s | 2.2s | 33x |
-| **End-to-end (CPU)** | **78.3s** | **4.0s** | **20x** |
-| **End-to-end (GPU)** | **78.3s** | **4.3s** | **18x** |
-| **DF-only (no entities, GPU)** | **78.3s** | **3.1s** | **25x** |
-| Syntax (dep parse) | 160.2s | 2.4s | 67x |
+| Init (tokenize + pronunciations + entities) | 5.29s | 2.2s | 2x |
+| Parse (CPU) | 72.97s | 6.8s | 11x |
+| Parse (GPU) | 72.97s | 5.2s | 14x |
+| **End-to-end (CPU)** | **78.3s** | **9.0s** | **9x** |
+| **End-to-end (GPU)** | **78.3s** | **7.5s** | **11x** |
+| **DF-only (no entities, GPU)** | **78.3s** | **6.2s** | **13x** |
+| Syntax (dep parse) | 160.2s | 3.3s | 49x |
 
-CPU now edges out GPU: the elite bounding pre-screen shrinks the exact kernel's workload below the point where GPU transfer overhead pays off.
+An earlier revision of this table showed Parse at 1.9s — that predates the v1-semantics
+restoration (PRs #164–169): variant pooling × verse elision means ~89% of sonnet lines
+now carry multiple pronunciation combos (mean 9/line), each evaluated and cross-bounded,
+plus mixed-N dominated-length retention. That ~3× is purchased semantics (parity ρ
+0.9475 vs the 2020 v1 data), not regression. The pooling layer itself is vectorized
+(index-aligned overlay in `build_for_N` — same-N combos share one scansion enumeration,
+so dedup-by-meter-string ≡ per-index argmin, verified byte-identical; was 4.0s of
+Python loops, now 1.8s). GPU beats CPU again at this workload — the elite pre-screen
+note that once favored CPU flipped back when pooling re-inflated the kernel's input.
 
 **TTS pronunciation cache**: espeak results cached to `~/prosodic_data/data/{lang}_cache.tsv`. First run phonemizes ~671 words via espeak; subsequent runs load from cache. Cold init 1.9s → warm 0.56s.
 

@@ -159,6 +159,23 @@ for l in sonnet.lines[:6]:
           f"ambig={len(l.parses.unbounded)}")
 ```
 
+### Feet
+
+Prosodic parses **positions**, not feet — feet are a derived view: a DP
+groups the best parse's syllables into classical feet (with extrametrical
+edges), validated at 97.5% against a hand-tagged gold. A `*` marks a foot
+that inverts the line's head — a substitution. Theory:
+[Foot parsing](methods/foot-parsing.md).
+
+```{python}
+#| label: feet
+bp = prosodic.Text("Pity the world, or else this glutton be").line1.best_parse
+print(f"scansion:        {bp.scansion}")
+print(f"footed_scansion: {bp.footed_scansion}")
+print(f"feet_str:        {bp.feet_str}")
+print(f"foot labels:     {[ft.label for ft in bp.metrical_feet]}")
+```
+
 ### The metrical grid
 
 `grid_str()` draws the best parse as a Hayes-style grid — column height is

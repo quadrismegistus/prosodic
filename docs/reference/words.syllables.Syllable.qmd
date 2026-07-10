@@ -15,10 +15,11 @@ Attributes:
 | [coda](#prosodic.words.syllables.Syllable.coda) | Get the coda of the syllable. |
 | [has_consonant_ending](#prosodic.words.syllables.Syllable.has_consonant_ending) | Check if the syllable ends with a consonant. |
 | [has_dipthong](#prosodic.words.syllables.Syllable.has_dipthong) | Check if the syllable contains a diphthong. |
+| [has_long_vowel](#prosodic.words.syllables.Syllable.has_long_vowel) | Check if the syllable contains a long monophthong (iː, uː, ...). |
 | [is_heavy](#prosodic.words.syllables.Syllable.is_heavy) | Check if the syllable is heavy. |
 | [is_stressed](#prosodic.words.syllables.Syllable.is_stressed) | Check if the syllable is stressed. |
-| [is_strong](#prosodic.words.syllables.Syllable.is_strong) | Check if the syllable is strong. |
-| [is_weak](#prosodic.words.syllables.Syllable.is_weak) | Check if the syllable is weak. |
+| [is_strong](#prosodic.words.syllables.Syllable.is_strong) | Strong = a local prominence MAXIMUM within the word: more prominent than |
+| [is_weak](#prosodic.words.syllables.Syllable.is_weak) | Weak = a local prominence MINIMUM within the word: less prominent than a |
 | [nucleus](#prosodic.words.syllables.Syllable.nucleus) | Get the nucleus of the syllable. |
 | [num_vowels](#prosodic.words.syllables.Syllable.num_vowels) | Get the number of vowels in the syllable. |
 | [onset](#prosodic.words.syllables.Syllable.onset) | Get the onset of the syllable. |

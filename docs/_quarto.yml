@@ -26,6 +26,8 @@ website:
         menu:
           - text: "Metrical parsing"
             file: methods/metrical-parsing.qmd
+          - text: "Foot parsing"
+            file: methods/foot-parsing.md
           - text: "Phrasal stress"
             file: methods/phrasal-stress.qmd
           - text: "Constituency backend (experimental)"
@@ -93,6 +95,9 @@ quartodoc:
         - parsing.meter.Meter
         - parsing.parses.Parse
         - parsing.maxent.MaxEntTrainer
+        - analysis.feet.parse_feet
+        - analysis.feet.Foot
+        - analysis.feet.FootList
     - title: "Poem-level analysis"
       desc: >
         Higher-order form classification over a parsed text (surfaced as

@@ -1,0 +1,6 @@
+# analysis.feet.parse_feet { #prosodic.analysis.feet.parse_feet }
+
+`analysis.feet.parse_feet(slots, head=None)`
+
+Foot-parse `slots` (variable size + headedness) into labelled Foot objects.
+A foot is `is_substituted` when its direction disagrees with the line head.

@@ -195,6 +195,19 @@ md("""## The metrical grid
 code("""# Hayes-style metrical grid of the best parse (lexical rows only)
 print(sonnet.line1.grid_str())""")
 
+md("""## Feet
+
+Prosodic parses **positions** (weak/strong), not feet — but a derived *foot layer* groups a parse's syllables into classical feet (iamb, trochee, anapest, dactyl, …) via a dynamic program with extrametrical edge handling, validated at 97.5% exact against a hand-tagged gold. `parse.scansion` is the per-syllable `w`/`s` string; `footed_scansion` cuts it at foot boundaries; `metrical_feet` returns first-class `Foot` objects (a `*` in `feet_str` marks a foot that inverts the line's head — a substitution). See [the foot-parsing write-up](docs/methods/foot-parsing.md).""")
+
+code("""bp = prosodic.Text("Pity the world, or else this glutton be").line1.best_parse
+print(f"scansion:        {bp.scansion}")
+print(f"footed_scansion: {bp.footed_scansion}")
+print(f"feet_str:        {bp.feet_str}   (* = substituted foot)")""")
+
+code("""# metrical_feet: first-class Foot objects (label, pattern, headedness)
+for ft in bp.metrical_feet:
+    print(f"{ft.label:10s} {ft.pattern:4s} head={ft.head:8s} substituted={ft.is_substituted}")""")
+
 md("""## The parsed DataFrame
 
 Per-syllable parse results across the whole text — useful for analysis, plotting, or export.""")
@@ -389,6 +402,7 @@ md("""## Further reading
 
 - [Metrical parsing](docs/methods/metrical-parsing.qmd): generative-metrics background, the constraint-based model, harmonic bounding, and the vectorized parser
 - [Phrasal stress](docs/methods/phrasal-stress.qmd): the Nuclear Stress Rule, Dozat's MetricalTree, and our dependency-projection port (`pstress`/`tstress`)
+- [Foot parsing](docs/methods/foot-parsing.md): the DP foot delineation (extrametrical edges, headedness), the deterministic `best_parse` tie-break, and the hand-tagged foot gold
 
 **Source**:
 

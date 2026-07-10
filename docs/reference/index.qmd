@@ -26,6 +26,9 @@ The exhaustive, vectorized constraint-based parser and its MaxEnt weight learner
 | [parsing.meter.Meter](parsing.meter.Meter.qmd#prosodic.parsing.meter.Meter) | A metrical parsing system using vectorized numpy constraint evaluation. |
 | [parsing.parses.Parse](parsing.parses.Parse.qmd#prosodic.parsing.parses.Parse) | Represents a metrical parse of a line of text. |
 | [parsing.maxent.MaxEntTrainer](parsing.maxent.MaxEntTrainer.qmd#prosodic.parsing.maxent.MaxEntTrainer) | Learns constraint weights from annotated scansion data. |
+| [analysis.feet.parse_feet](analysis.feet.parse_feet.qmd#prosodic.analysis.feet.parse_feet) | Foot-parse `slots` (variable size + headedness) into labelled Foot objects. |
+| [analysis.feet.Foot](analysis.feet.Foot.qmd#prosodic.analysis.feet.Foot) | A metrical foot: a VIEW grouping the syllables it spans (iamb/trochee/anapest/ |
+| [analysis.feet.FootList](analysis.feet.FootList.qmd#prosodic.analysis.feet.FootList) | A list of `Foot` with display helpers. `metrical_feet` returns this. |
 
 ## Poem-level analysis
 

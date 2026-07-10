@@ -1,0 +1,11 @@
+# analysis.feet.FootList { #prosodic.analysis.feet.FootList }
+
+`analysis.feet.FootList()`
+
+A list of `Foot` with display helpers. `metrical_feet` returns this.
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [footed_scansion](#prosodic.analysis.feet.FootList.footed_scansion) | The feet as a pipe-delimited w/s string, e.g. `'wws\|wws\|wws\|w'`. |

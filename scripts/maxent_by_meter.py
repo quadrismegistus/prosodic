@@ -72,21 +72,22 @@ def run_zones(df, reg):
 
 
 def run_unmatched(df):
-    print("\n=== C. DROPPED/UNMATCHED — which gold lines MaxEnt can't use, and why ===")
+    print("\n=== C. COVERAGE — gold lines used per meter (mixed-N lines now train) ===")
     for m in METERS:
         g = df[df.meter == m]
         tr = _trainer(g, reg=1.0)
         used, in_data = _matched(tr)
-        ragged = tr._n_skipped_ragged + tr._n_skipped_empty
-        not_cand = in_data - used                      # in _line_data but gold != a candidate
-        print(f"  {m:10s}: {used}/30 used   ({ragged} dropped ragged/mixed-N, "
+        n_unique = g["line"].nunique()                  # duplicate lines fold (freq sums)
+        dropped = n_unique - in_data                    # oversized/empty only, now
+        not_cand = in_data - used                       # in _line_data but gold != a candidate
+        print(f"  {m:10s}: {used}/{n_unique} unique lines used   ({dropped} dropped, "
               f"{not_cand} gold not among candidate scansions)")
-        # name the ragged (mixed-N, usually elision) lines
+        # name the mixed-N (elision) lines — previously skipped, now trained
         for _, r in g.iterrows():
             t = TextModel(r["line"])
             if t.lines and getattr(t.lines[0].parses, "_ragged", False):
                 note = f"  ({r['note']})" if isinstance(r.get("note"), str) else ""
-                print(f"        ragged: {r['line'][:50]!r}{note}")
+                print(f"        mixed-N (trained): {r['line'][:50]!r}{note}")
 
 
 def run_joint(df, reg, tau):

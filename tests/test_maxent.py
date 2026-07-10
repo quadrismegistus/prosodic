@@ -4,7 +4,7 @@ Targets the module's public surface and the previously-uncovered branches:
 the zone helpers ("initial" / "foot" / int N / invalid), the foot-zone
 padding path in _build_line_data, load_annotations (list / DataFrame /
 pre-built-TextModel), the train() no-data guard, predict() / report() /
-apply_to_meter(), and the ragged-skip (mixed-syllable-count) accounting +
+apply_to_meter(), mixed-N (ragged) line training +
 warning.
 
 Kept fast by training on 1-2 short lines with light regularization; the
@@ -334,25 +334,36 @@ def test_fit_zones_foot_pads_shorter_lines():
 
 
 # ---------------------------------------------------------------------------
-# Ragged (mixed-syllable-count) lines: skipped, counted, warned
+# Ragged (mixed-syllable-count) lines: trained, not skipped
 # ---------------------------------------------------------------------------
 
-def test_ragged_line_skipped_counted_and_warned(monkeypatch):
+def test_ragged_line_trains():
     # "fire"/"flower" carry an elided 1-syllable variant alongside the
     # 2-syllable one; a line built from them pools parses of different lengths
-    # and comes back ragged. Ragged lines can't be stacked into a fixed-width
-    # feature matrix, so they're dropped from training, counted, and surfaced.
-    captured = []
-    monkeypatch.setattr(
-        maxent_mod.log, "warning", lambda msg, *a, **k: captured.append(msg)
-    )
-
+    # and comes back ragged. MaxEnt consumes the syllable axis immediately
+    # (zone_split -> a (C*Z) feature vector whose names are N-independent), so
+    # each candidate zone-splits by its OWN length and mixed-N candidates stack
+    # into the ordinary softmax. Ragged lines used to be dropped wholesale,
+    # which excluded exactly the elision lines from every gold set (12/120 of
+    # the foot gold).
     tr = MaxEntTrainer(Meter(), regularization=10.0, zones=None)
     tr.load_text([LINE1, RAGGED], IAMBIC)
+    assert len(tr._line_data) == 2                   # BOTH lines kept
+    # the ragged line's candidates include multiple syllable counts, and its
+    # feature matrix is rectangular (stacked per-row zone splits)
+    ragged_ld = next(ld for ld in tr._line_data if ld["text"] == RAGGED)
+    lens = {len(s) for s in ragged_ld["scansions"]}
+    assert len(lens) > 1
+    assert ragged_ld["viols"].ndim == 2
+    tr.train()
+    assert tr._train_params["converged"] is True
 
-    assert tr._n_skipped_ragged >= 1                 # counter incremented
-    assert len(tr._line_data) == 1                   # only the clean line kept
-    assert any("ragged" in m for m in captured)      # warning surfaced
+    # same under zones (per-row boundaries shift with each candidate's N)
+    trz = MaxEntTrainer(Meter(), regularization=10.0, zones=3)
+    trz.load_text([LINE1, RAGGED], IAMBIC)
+    assert len(trz._line_data) == 2
+    trz.train()
+    assert trz._train_params["converged"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -370,7 +381,6 @@ def test_oversized_line_skipped_as_empty():
     tr = MaxEntTrainer(Meter(), regularization=10.0, zones=None)
     tr.load_text([LINE1, prose], IAMBIC)
     assert tr._n_skipped_empty == 1
-    assert tr._n_skipped_ragged == 0
     assert len(tr._line_data) == 1
     tr.train()  # still trainable on the surviving line
     assert tr._train_params["converged"] is True

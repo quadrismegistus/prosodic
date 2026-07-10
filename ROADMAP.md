@@ -122,22 +122,43 @@ values for words with stress-ambiguous pronunciation variants).
 
 ## Analysis & display
 
-- 🚧 **Foot delineation & headedness** — a derived foot layer (iamb/trochee/
-  anapest/dactyl) over the position scansion, on branch `feet-headedness`
-  (PR #175, not merged). Write-up + roadmap:
-  [`docs/methods/foot-parsing.md`](docs/methods/foot-parsing.md). Shipped on the
-  branch: a DP foot-parser (`analysis/feet.py`, one head per foot, spondee =
-  resolution, period-based size, catalexis), `Parse.metrical_feet`/`head`/
-  `feet_str`, `Line.metrical_parse`, and a regularity-ranked `best_parse`
-  (`_order` = score → period-k regularity → pseudo-feet → position, all cheap and
-  computed from the scansion, **deliberately decoupled** from the DP so best_parse
-  stays stable while feet evolve). Validated: 98% vs `meter_type`, 85% meter
-  recovery across 4 meters, 32%/51% vs the human `parse_human2` foot boundaries
-  (gap = the annotator's poem-meter conventions). **Next** (see the doc):
-  poem-meter-aware footing (head + size) + anacrusis — the biggest gap-closers —
-  then word/phrase boundaries. Foot-annotated corpora are essentially nonexistent
-  (only Haider's small set + `parse_human2` + classical quantitative), so this
-  fills a real derivation gap.
+- ✅ **Foot delineation & headedness** — shipped (PR #175, merged 2026-07-09;
+  deployed in 3.9.0). Write-up: [`docs/methods/foot-parsing.md`](docs/methods/foot-parsing.md).
+  What shipped: the DP foot-parser (`analysis/feet.py`: one head per interior
+  foot, spondee = resolution, period-based size, catalexis, **extrametrical
+  edges** — anacrusis/feminine, the 93.3%→97.5% lift), first-class `Foot`/
+  `FootList` view classes, `Parse.metrical_feet`/`head`/`feet_str`/`scansion`/
+  `footed_scansion`, `Line.metrical_parse` (= `best_parse`), and the
+  deterministic `best_parse` tie-break (`_order` = score → fewest-ss → period-k
+  → pseudo-feet → fewest-ww → w-onset content key, all pure scansion
+  statistics, **deliberately decoupled** from the DP so best_parse stays stable
+  while feet evolve). **Validated: 97.5% exact / 96.2% boundary vs the
+  hand-tagged gold** (`data/tagged_samples/foot-gold.csv`,
+  `scripts/foot_gold_eval.py`). (An earlier 32%/51% figure was scored against
+  `parse_human2`, which is a beat grid, NOT a foot gold — foot-parsing.md §4.)
+  Outcomes recorded: anacrusis ✅ done; word-boundary footing ❌ null result
+  (retired); poem-level footing = deliberate non-goal (line-scoped by design).
+  Remaining open idea: phrase boundaries (`linepart_num`/syntax).
+  Foot-annotated corpora are essentially nonexistent (only Haider's small set +
+  classical quantitative), so this fills a real derivation gap.
+- ✅ **MaxEnt: mixed-N training + friendlier loading + by-meter study** (PRs
+  #180, #181, merged 2026-07-10). Ragged (mixed-syllable-count) lines now train
+  — each candidate zone-splits by its own N into the shared `(C×Z)` feature
+  space — recovering exactly the elision lines the old wholesale skip dropped
+  (12/120 of the foot gold → **120/120**). `load_annotations` accepts a CSV
+  path / 2-tuples / liberal DataFrame columns. `scripts/maxent_by_meter.py`
+  runs the by-meter study: binary meters weight the weak-position constraints,
+  ternary meters zero those and weight `s_unstress` (Hanson & Kiparsky's
+  parameter recovered empirically); zones show **the strict edge flips with
+  headedness** (iambic locks its line-FINAL beat, trochaic its line-INITIAL).
+- ✅ **Parse ~2× faster, byte-identical** (PRs #182, #183, merged 2026-07-10).
+  (1) Pooling overlay vectorized: same-N combos share one scansion enumeration,
+  so `build_for_N`'s dedup-by-meter-string ≡ index-aligned argmin (pure numpy;
+  pooling layer 4.0s→1.8s). (2) Elite bounding pre-screen on the torch device
+  (`_elite_screen_torch`, 15× over numpy on MPS). Both gated on a full
+  before/after dump diff (2239 lines × every field byte-identical). Sonnets
+  parse 6.5s → **4.1s GPU** / 6.4s CPU; for reference v1=36.6s, v2=73s (v1's
+  B&B was 2× faster than the v2 rewrite — the "78s legacy" figure was v2).
 
 - ✅ **Web app: combined grid + syntax tree in Line View** — shipped
   2026-07-06 (PR #155, then combined same day). `grid_plot()` redesigned

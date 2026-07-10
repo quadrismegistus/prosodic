@@ -14,7 +14,7 @@ def parse(scansion):
     s = "".join("s" if p else "w" for p in proms)
     # disable the word-boundary tiebreak here (no word info): mark every position
     # a "word start" so no boundary is penalized -> shows the pure foot-cost result.
-    spans = foot_parse(proms, word_starts=set(range(len(s))))
+    spans = foot_parse(proms)
     feet = [s[a:b] for a, b in spans]
     return "|".join(feet), feet
 

@@ -378,6 +378,48 @@ def test_bounding_tiled_equals_reference():
     assert V._bounding_block_sizes(3, 20, 6, bytes_per_elem=8) == (3, 20, 20)
 
 
+def test_elite_screen_torch_parity_on_cpu():
+    """The torch elite pre-screen (`_elite_screen_torch`, normally dispatched only
+    when a GPU device exists) must yield the SAME FINAL bounding mask as the numpy
+    screen. GPU-less CI never exercises the torch code path via dispatch, so run it
+    explicitly on torch's CPU device — same kernel code (topk/gather/blocked diff
+    tensor), no GPU needed. The screens themselves may legitimately differ (topk vs
+    argpartition tie-breaks pick different K-elites), but any sound screen gives an
+    identical final mask by transitivity of strict dominance — so we compare the
+    final `_bounding_screened`-equivalent output, plus a sanity subset check on the
+    screens (everything torch marks dominated must be truly dominated)."""
+    import pytest
+    torch = pytest.importorskip("torch")
+    import numpy as np
+    from prosodic.parsing import vectorized as V
+
+    rng = np.random.default_rng(0)
+    dev = torch.device("cpu")
+    K = V.BOUNDING_ELITE_K
+    for L, S, C, hi in [(7, 3 * K, 6, 3), (3, 120, 6, 2), (2, 80, 4, 1)]:
+        arr = rng.integers(0, hi + 1, size=(L, S, C)).astype(np.int16)
+        ref_mask = V._compute_bounding_batch_numpy(arr.copy())   # exact reference
+        dom_np = V._elite_screen(arr.copy())
+        dom_t = V._elite_screen_torch(arr.copy(), dev)
+        # soundness: every candidate either screen eliminates is truly dominated
+        truly_dominated = ~ref_mask
+        for dom in (dom_np, dom_t):
+            assert not (dom & ~truly_dominated).any(), "screen eliminated an unbounded candidate"
+        # final-mask equality: exact kernel over each screen's survivors == reference
+        for dom in (dom_np, dom_t):
+            surv = ~dom
+            counts = surv.sum(axis=1)
+            s_max = int(counts.max())
+            order = np.argsort(~surv, axis=1, kind="stable")[:, :s_max]
+            gathered = np.take_along_axis(arr.astype(np.int16), order[:, :, None], axis=1).copy()
+            pad = np.arange(s_max)[None, :] >= counts[:, None]
+            gathered[pad] = V._BOUNDING_PAD
+            unb_small = V._compute_bounding_batch_numpy(gathered) & ~pad
+            result = np.zeros((L, S), dtype=bool)
+            np.put_along_axis(result, order, unb_small, axis=1)
+            assert np.array_equal(result, ref_mask), "screened final mask != exact reference"
+
+
 def test_df_path_finds_optimal_on_ambiguous_line():
     # A perfect (0-violation) parse of this line exists only in a non-diagonal
     # pronunciation combination; the DF path must find it.

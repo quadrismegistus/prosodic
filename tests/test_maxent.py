@@ -248,6 +248,30 @@ def test_load_annotations_dataframe_input():
     assert tr._annotations is not df
 
 
+def test_load_annotations_friendly_columns_and_path(tmp_path):
+    # (a) DataFrame with `line` (not `text`), no frequency, extra columns -> normalized
+    df = pd.DataFrame({"meter": ["iambic"], "line": [LINE1], "scansion": [IAMBIC],
+                       "note": [""]})
+    tr = MaxEntTrainer(Meter(), regularization=10.0)
+    tr.load_annotations(df)
+    assert list(tr._annotations.columns) == ["text", "scansion", "frequency"]
+    assert tr._annotations["frequency"].tolist() == [1.0]
+    assert [ld for ld in tr._line_data if ld["observed"].sum() > 0]
+
+    # (b) a 2-tuple (text, scansion) with no frequency defaults to 1.0
+    tr2 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr2.load_annotations([(LINE1, IAMBIC)])
+    assert tr2._annotations["frequency"].tolist() == [1.0]
+
+    # (c) a CSV file path loads directly (line/scansion columns, extras ignored)
+    p = tmp_path / "ann.csv"
+    df.to_csv(p, index=False)
+    tr3 = MaxEntTrainer(Meter(), regularization=10.0)
+    tr3.load_annotations(str(p))
+    assert list(tr3._annotations.columns) == ["text", "scansion", "frequency"]
+    assert len(tr3._annotations) == 1
+
+
 def test_load_annotations_with_prebuilt_text():
     # text= branch: annotations attach to a pre-built (e.g. syntax) TextModel
     # instead of re-parsing the unique annotation strings.

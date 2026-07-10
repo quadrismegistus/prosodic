@@ -265,19 +265,58 @@ class MaxEntTrainer:
 
         self._weights = np.zeros(n_features, dtype=np.float64)
 
+    @staticmethod
+    def _normalize_annotation_columns(df):
+        """Map liberal column names to canonical text/scansion/frequency and keep only
+        those. The text column may be named `text` or `line`/`line_text`; the target is
+        `scansion` (or `target`/`target_scansion`); an optional frequency column
+        (`frequency`/`freq`/`weight`/`count`) defaults to 1.0. Extra columns (meter,
+        poem, note, …) are ignored — so a gold CSV like data/tagged_samples/foot-gold.csv
+        loads directly."""
+        lower = {str(c).lower(): c for c in df.columns}
+        def pick(*names):
+            for n in names:
+                if n in lower:
+                    return lower[n]
+            return None
+        tcol = pick("text", "line", "line_text")
+        scol = pick("scansion", "target", "target_scansion")
+        if tcol is None or scol is None:
+            raise ValueError(
+                "annotation data needs a text column (text/line) and a scansion "
+                f"column (scansion/target); got {list(df.columns)}")
+        fcol = pick("frequency", "freq", "weight", "count")
+        out = pd.DataFrame({"text": df[tcol].astype(str), "scansion": df[scol].astype(str)})
+        out["frequency"] = df[fcol].astype(float) if fcol else 1.0
+        return out
+
     def load_annotations(self, data, lang=DEFAULT_LANG, text=None):
         """Load annotated scansion data and parse all lines.
 
         Args:
-            data: list of (line_text, scansion_str, frequency) tuples,
-                  or a DataFrame with columns: text, scansion, frequency.
+            data: one of —
+              * a CSV/TSV file **path** (str or Path) — read into a DataFrame (`.tsv`/
+                `.txt` → tab-separated, else comma);
+              * a list of `(line_text, scansion)` or `(line_text, scansion, frequency)`
+                tuples (frequency defaults to 1.0);
+              * a DataFrame, columns matched liberally by
+                `_normalize_annotation_columns` (text|line, scansion, optional freq).
             lang: language code for parsing.
             text: optional pre-built TextModel (e.g. with syntax=True).
         """
-        if isinstance(data, list):
-            df = pd.DataFrame(data, columns=["text", "scansion", "frequency"])
+        import os
+        if isinstance(data, (str, os.PathLike)):
+            sep = "\t" if str(data).endswith((".tsv", ".txt")) else ","
+            df = pd.read_csv(data, sep=sep)
+        elif isinstance(data, list):
+            rows = []
+            for r in data:
+                r = tuple(r)
+                rows.append(r if len(r) >= 3 else (r[0], r[1], 1.0))
+            df = pd.DataFrame(rows, columns=["text", "scansion", "frequency"])
         else:
             df = data.copy()
+        df = self._normalize_annotation_columns(df)
         self._annotations = df
 
         if text is not None:

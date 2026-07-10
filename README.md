@@ -619,6 +619,25 @@ for name, w in sorted(meter.zone_weights.items(), key=lambda x: -abs(x[1]))[:8]:
       +2.263  unres_across_z1
       +1.500  w_stress_z1
 
+```python
+# or learn from hand-annotated scansions — a CSV with line/scansion columns
+# (extra columns ignored; mixed-syllable-count elision lines train too)
+from prosodic.parsing.maxent import MaxEntTrainer
+trainer = MaxEntTrainer(prosodic.Meter())
+trainer.load_annotations('data/tagged_samples/foot-gold.csv')
+trainer.train()
+{k: round(v, 2) for k, v in trainer.learned_weights().items()}
+```
+
+↓
+
+    {'w_peak': 0.51,
+     'w_stress': 0.67,
+     's_unstress': 2.13,
+     'unres_across': 1.42,
+     'unres_within': 1.5,
+     'foot_size': 0.0}
+
 ## Phrasal stress (optional)
 
 With `syntax=True`, Prosodic runs spaCy's dependency parser to compute sentence-level prominence per word (Liberman & Prince 1977). It adds two kinds of column to the syllable DataFrame:
@@ -729,6 +748,7 @@ print(result.weights, result.accuracy)
 - [Metrical parsing](docs/methods/metrical-parsing.qmd): generative-metrics background, the constraint-based model, harmonic bounding, and the vectorized parser
 - [Phrasal stress](docs/methods/phrasal-stress.qmd): the Nuclear Stress Rule, Dozat's MetricalTree, and our dependency-projection port (`pstress`/`tstress`)
 - [Foot parsing](docs/methods/foot-parsing.md): the DP foot delineation (extrametrical edges, headedness), the deterministic `best_parse` tie-break, and the hand-tagged foot gold
+- [Rhyme detection](docs/methods/rhyme.qmd): feature-edit distance on IPA rimes, the 2-D (nucleus, coda) bands, and the Walker (1775) calibration
 
 **Source**:
 

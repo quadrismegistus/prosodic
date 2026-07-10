@@ -76,7 +76,7 @@ its violations (all weights 1.0 by default; settable per constraint;
 learnable by MaxEnt). Lower is better; `best_parse` is the minimum-score
 parse, with co-optimal ties broken by a deterministic pure-scansion cascade
 (fewest resolutions `ss` → period-k regularity → pseudo-feet → fewest `ww` →
-a `w`-onset content key) — see [Foot parsing](foot-parsing.qmd) §3; a strictly
+a `w`-onset content key) — see [Foot parsing](foot-parsing.md) §3; a strictly
 unique minimum short-circuits to a plain argmin.
 
 **Harmonic bounding** (Samek-Lodovici & Prince 1999) prunes candidates

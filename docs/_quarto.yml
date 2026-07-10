@@ -28,6 +28,8 @@ website:
             file: methods/metrical-parsing.qmd
           - text: "Foot parsing"
             file: methods/foot-parsing.md
+          - text: "Rhyme detection"
+            file: methods/rhyme.qmd
           - text: "Phrasal stress"
             file: methods/phrasal-stress.qmd
           - text: "Constituency backend (experimental)"

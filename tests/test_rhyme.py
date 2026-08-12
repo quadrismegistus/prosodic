@@ -127,6 +127,32 @@ def test_rime_distance_nc():
     assert (dn, dc) == (0.0, 0.0)
 
 
+def test_two_open_syllables_are_not_a_slant_rhyme():
+    """The slant band is coda identity with the nucleus left free — the consonance
+    of love/prove, where a shared consonant is what licenses ignoring the vowel.
+    Two vowel-final words share no coda to be identical about, so granting them
+    that licence made every open syllable a half-rhyme of every other, however far
+    apart the vowels: away/tree sits at a nucleus distance of 0.72."""
+    for first, second in [
+        ("away", "tree"),
+        ("day", "see"),
+        ("so", "me"),
+        ("through", "play"),
+        ("blue", "free"),
+    ]:
+        pair = f"{first}/{second}"
+        assert _wf(first).rime_distance_nc(_wf(second))[1] == 0.0, pair
+        assert _wf(first).rime_type(_wf(second)) is None, pair
+
+    # What the band is for is untouched, because those pairs have a coda to share.
+    assert _wf("love").rime_type(_wf("prove")) == "slant"
+    assert _wf("gone").rime_type(_wf("alone")) == "slant"
+    # And open syllables that do rhyme were never the slant band's business: they
+    # match on the nucleus, which is the perfect band.
+    assert _wf("day").rime_type(_wf("may")) == "perfect"
+    assert _wf("tree").rime_type(_wf("free")) == "perfect"
+
+
 def test_glides_are_onsets_not_nuclei():
     """A glide is [-cons] exactly as every vowel is, so classifying phonemes by
     `cons` made /w/ and /j/ vowels: "warm" put its own onset in the nucleus and

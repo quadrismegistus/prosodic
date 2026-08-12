@@ -16,6 +16,33 @@ RHYME_FEATS = {
     'voi'
 }
 
+def phoneme_is_vowel(feats: Dict[str, Any]) -> Optional[bool]:
+    """
+    Determine from a phoneme's features whether it is a vowel.
+
+    The test is syllabicity, not consonantality. The glides /w/ and /j/ are
+    [-cons] exactly as every vowel is, and only [-syl] tells them apart, so
+    asking `cons` counted them as vowels: the onset of "warm" or "yes" was read
+    as part of the nucleus, and so carried into the rime.
+
+    Two feature schemas reach this function. Panphon's vectors spell the feature
+    `syl`; the ipa_info fallback, used for the symbols panphon has no vector for
+    (the affricates /ʧ/ and /ʤ/), spells it `syll`. Both are truthy-positive for
+    a nucleus, so one comparison serves.
+
+    Args:
+        feats (Dict[str, Any]): The phoneme's features.
+
+    Returns:
+        Optional[bool]: True if vowel, False if consonant, None if undetermined.
+    """
+    for key in ("syl", "syll"):
+        value = feats.get(key)
+        if value is not None:
+            return value > 0
+    return None
+
+
 class Phoneme(Entity):
     """
     Represents a phoneme with various attributes.
@@ -50,15 +77,8 @@ class Phoneme(Entity):
         Returns:
             Optional[bool]: True if vowel, False if consonant, None if undetermined.
         """
-        cons = self.feats.get('cons')
-        if cons is None:
-            return None
-        if cons > 0:
-            return False
-        if cons < 1:
-            return True
-        return None
-    
+        return phoneme_is_vowel(self.feats)
+
     @property
     def is_cons(self):
         return not self.is_vowel

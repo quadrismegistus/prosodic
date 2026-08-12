@@ -7,7 +7,7 @@ One row per syllable, with all features needed by the vectorized parser.
 import numpy as np
 from ..imports import *
 from ..words.syllables import _parse_ipa_cached
-from ..words.phonemes import get_phoneme_feats
+from ..words.phonemes import get_phoneme_feats, phoneme_is_vowel
 
 # Experiment flag (default off = phonological weight for all syllables). When
 # True, function-word syllables are forced is_heavy=False, matching Prosodic v1's
@@ -19,12 +19,12 @@ FUNCTIONWORD_LIGHT = False
 
 
 def _phone_is_vowel(phone_txt):
-    """Check if a phone is a vowel using cached panphon features."""
-    feats = get_phoneme_feats(phone_txt)
-    cons = feats.get('cons')
-    if cons is None:
-        return None
-    return cons < 1
+    """Check if a phone is a vowel using cached panphon features.
+
+    Defers to Phoneme.is_vowel's rule rather than restating it, so the two parse
+    paths cannot drift on what counts as a nucleus.
+    """
+    return phoneme_is_vowel(get_phoneme_feats(phone_txt))
 
 
 def _phone_is_long(phone_txt):

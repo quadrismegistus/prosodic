@@ -407,13 +407,29 @@ class LanguageModel:
         sylls = [format_syll(syll) for syll in sylls]
         osylls = []
         osyll = []
+
+        def has_nucleus(chars):
+            """Does this run of characters contain a syllable nucleus?
+
+            Segment before testing. A syllabic consonant is ONE panphon
+            segment whose nucleus-hood lives in a combining mark, so walking
+            raw characters reads espeak's /n̩/ ("glutton" ɡlʌ.ʔn̩) as a plain
+            /n/, finds no nucleus, and merges the syllable into its
+            neighbour -- glutton comes back as one syllable, not glut|ton.
+            """
+            from ..words.syllables import _parse_ipa_cached
+            return any(
+                Phoneme(txt=phon).is_vowel
+                for phon in _parse_ipa_cached("".join(chars))
+            )
+
         for syll in sylls:
             osyll.extend([sx for sx in syll])
-            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
+            if has_nucleus(osyll):
                 osylls.append("".join(osyll))
                 osyll = []
         if osyll:
-            if any(Phoneme(txt=ph).is_vowel for ph in osyll if ph.isalpha()):
+            if has_nucleus(osyll):
                 osylls.append("".join(osyll))
             elif osylls:
                 osylls[-1] += "".join(osyll)

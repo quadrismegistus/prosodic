@@ -2,9 +2,20 @@ from . import *
 
 _ipa_phone_cache = {}
 
+# Combining marks that carry phonological content rather than prosodic
+# annotation, and so must survive the strip below. `isalpha()` is False for
+# every combining mark (category Mn), so an unqualified filter silently
+# deletes the syllabicity diacritic: panphon then reads the syllabic /n̩/ of
+# "glutton" as a plain [-syl] /n/ and the syllable has no nucleus at all.
+# Harmless while `is_vowel` tested [-cons] (the glottal stop of espeak's
+# ʔn̩ supplied a spurious nucleus), load-bearing once it tests [+syl].
+# Stress marks and the syllable dot are still dropped -- that is the point.
+_PHON_COMBINING = "\u0329\u030d"  # combining vertical line below / above
+
+
 def _parse_ipa_cached(ipa):
     """Cache gruut_ipa Pronunciation.from_string() results."""
-    sipa = "".join(x for x in ipa if x.isalpha())
+    sipa = "".join(x for x in ipa if x.isalpha() or x in _PHON_COMBINING)
     if sipa in _ipa_phone_cache:
         return _ipa_phone_cache[sipa]
     from gruut_ipa import Pronunciation

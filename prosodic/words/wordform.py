@@ -182,6 +182,17 @@ class WordForm(Entity):
             return np.nan
         return dist
 
+    def _has_coda(self) -> bool:
+        """Whether the rime closes on a consonant.
+
+        The slant band is coda identity with the nucleus left free, which is the
+        consonance of love/prove and gone/alone. Two open syllables share no coda
+        to be identical about, so without this they collect that licence for free
+        and any vowel-final word half-rhymes any other: away/tree, so/me.
+        """
+        rime = self.rime
+        return bool(rime) and not all(p.is_vowel for p in rime)
+
     @cache
     def rime_distance_nc(self, wordform: "WordForm"):
         """Decompose rime distance into (nucleus, coda) components.
@@ -262,7 +273,7 @@ class WordForm(Entity):
             return None
         if dn <= perfect_nuc_max and dc <= perfect_coda_max:
             return "perfect"
-        if dc <= slant_coda_max:
+        if dc <= slant_coda_max and self._has_coda() and wordform._has_coda():
             return "slant"
         if dn <= assonance_nuc_max:
             return "assonance"

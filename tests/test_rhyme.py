@@ -127,6 +127,71 @@ def test_rime_distance_nc():
     assert (dn, dc) == (0.0, 0.0)
 
 
+def test_two_open_syllables_are_not_a_slant_rhyme():
+    """The slant band is coda identity with the nucleus left free — the consonance
+    of love/prove, where a shared consonant is what licenses ignoring the vowel.
+    Two vowel-final words share no coda to be identical about, so granting them
+    that licence made every open syllable a half-rhyme of every other, however far
+    apart the vowels: away/tree sits at a nucleus distance of 0.72."""
+    for first, second in [
+        ("away", "tree"),
+        ("day", "see"),
+        ("so", "me"),
+        ("through", "play"),
+        ("blue", "free"),
+    ]:
+        pair = f"{first}/{second}"
+        assert _wf(first).rime_distance_nc(_wf(second))[1] == 0.0, pair
+        assert _wf(first).rime_type(_wf(second)) is None, pair
+
+    # What the band is for is untouched, because those pairs have a coda to share.
+    assert _wf("love").rime_type(_wf("prove")) == "slant"
+    assert _wf("gone").rime_type(_wf("alone")) == "slant"
+    # And open syllables that do rhyme were never the slant band's business: they
+    # match on the nucleus, which is the perfect band.
+    assert _wf("day").rime_type(_wf("may")) == "perfect"
+    assert _wf("tree").rime_type(_wf("free")) == "perfect"
+
+
+def test_glides_are_onsets_not_nuclei():
+    """A glide is [-cons] exactly as every vowel is, so classifying phonemes by
+    `cons` made /w/ and /j/ vowels: "warm" put its own onset in the nucleus and
+    carried it into the rime. Syllabicity is what separates the two."""
+    warm = _wf("warm")
+    syll = warm.syllables[0]
+    phons = list(syll.rime)  # accessing .rime is what annotates onset/rime
+    assert [p.txt for p in syll.children] == ["w", "ɔː", "r", "m"]
+    assert syll.children[0].is_vowel is False, "/w/ is a glide, not a vowel"
+    assert syll.children[0].is_onset, "/w/ opens the syllable"
+    assert [p.txt for p in phons] == ["ɔː", "r", "m"], "rime excludes the onset"
+    assert phons[0].is_nucleus and phons[-1].is_coda
+
+
+def test_glide_onset_does_not_demote_a_perfect_rhyme():
+    """What the misclassification cost: with half the nucleus apparently missing,
+    every perfect rhyme with a glide on one side came back 'slant'."""
+    for first, second in [
+        ("warm", "storm"),
+        ("way", "day"),
+        ("win", "sin"),
+        ("young", "sung"),
+        ("wing", "sing"),
+        ("yearn", "burn"),
+    ]:
+        pair = f"{first}/{second}"
+        assert _wf(first).rime_type(_wf(second)) == "perfect", pair
+        assert _wf(first).rime_distance_nc(_wf(second)) == (0.0, 0.0), pair
+
+
+def test_glides_do_not_make_a_diphthong():
+    """Syllable weight reads the same classification, so a glide counted as a
+    vowel also invented diphthongs: /wʌn/ and /mjə/ have one vowel each, and an
+    open short /mjə/ is light."""
+    assert _wf("one").syllables[0].has_dipthong is False
+    assert _wf("way").syllables[0].has_dipthong is True, "/eɪ/ is a real diphthong"
+    assert [s.weight for s in _wf("accumulate").syllables] == ["L", "H", "L", "H"]
+
+
 def test_line_rime_type():
     t = TextModel(
         "Shall I compare thee to a summer's day?\n"

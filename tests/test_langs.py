@@ -357,6 +357,35 @@ def test_syllabify_ipa_token_seg_alignment():
     assert len(en.syllabify_ipa("ˈaʊ f ʃ t ˌeː ə n")) == 3  # aufstehen
 
 
+def test_syllabify_ipa_syllabic_consonant_is_a_nucleus():
+    """espeak writes the -en class with a syllabic n: glutton is 'ɡ l ˈʌ ʔ n̩'.
+    That /n̩/ is the second syllable's ONLY nucleus, so anything that fails to
+    read it as one merges the syllable into its neighbour and glutton comes
+    back as one syllable.
+
+    Two ways it has gone wrong, both fixed and both guarded here: panphon is
+    only told about the syllabicity if _parse_ipa_cached stops stripping the
+    combining mark (isalpha() is False for category Mn), and the grouping must
+    segment before testing rather than walking raw characters, or the mark is
+    read as a bare /n/.
+
+    Deliberately calls syllabify_ipa directly rather than going through a
+    TextModel. Word-level results are cached to ~/prosodic_data, so once a
+    developer's cache holds these words pre-syllabified this code path stops
+    running locally and the regression is invisible until CI -- which is
+    exactly how it shipped. Raw IPA in, no espeak and no cache."""
+    en = Language('en')
+    assert en.syllabify_ipa("ɡ l ˈʌ ʔ n̩") == ["'ɡlʌ", "ʔn̩"]        # glutton
+    assert en.syllabify_ipa("θ ɹ ˈɛ ʔ n̩ d") == ["'θɹɛ", "ʔn̩d"]     # threatened
+    assert en.syllabify_ipa("h ˈeɪ s ʔ n̩ d") == ["'heɪ", "sʔn̩d"]   # hastened
+    assert en.syllabify_ipa("l ˈaɪ ʔ n̩ z") == ["'laɪ", "ʔn̩z"]      # lightens
+    # and the syllabic consonant must survive segmentation as ONE phoneme
+    from prosodic.words.syllables import _parse_ipa_cached
+    assert _parse_ipa_cached("ʔn̩") == ("ʔ", "n̩")
+    from prosodic.words.phonemes import get_phoneme_feats
+    assert get_phoneme_feats("n̩").get("syl") == 1, "/n̩/ is [+syl]"
+
+
 # ---------------------------------------------------------------------------
 # LanguageModel pronunciation-layer internals (langs.py coverage)
 # ---------------------------------------------------------------------------

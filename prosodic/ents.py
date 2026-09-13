@@ -513,6 +513,26 @@ class Entity(UserList):
         return WordFormList([wf for wf in self.wordforms_first if not wf.is_punc], parent=self)
 
     @cached_property
+    def final_wordforms(self):
+        """Every pronunciation of the last non-punctuation word.
+
+        ``wordforms_nopunc`` keeps only ``wforms[0]`` per word, which is right
+        for a single canonical reading but wrong for end-rhyme: a homograph's
+        reading is SELECTED by what it rhymes with. "wind" is /wɪnd/ against
+        "sinned" and /waɪnd/ against "mind", and picking one in advance makes
+        the other rhyme undetectable. This is the same doctrine ``pool_forms``
+        already applies to meter -- resolve the word-form in situ -- so hand
+        the rhyme comparison the candidates and let it choose.
+        """
+        from .words import WordFormList
+
+        for wfl in reversed(self.wordforms_all):
+            kept = [wf for wf in wfl if not wf.is_punc]
+            if kept:
+                return WordFormList(kept, parent=self)
+        return WordFormList([], parent=self)
+
+    @cached_property
     def wordforms_all(self):
         from .words import WordFormList
 

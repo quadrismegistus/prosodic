@@ -358,3 +358,37 @@ class WordFormList(EntityList):
         """
         # return self.sort_key==other.sort_key
         return self is other
+
+
+# Strength order for picking among competing readings of the same two words.
+_RIME_BAND_RANK = {"perfect": 0, "slant": 1, "assonance": 2}
+
+
+def best_rime_type(wordforms1, wordforms2, **kwargs):
+    """Strongest rime relation over every pair of readings, and its (dn, dc).
+
+    A homograph's reading is selected by what it rhymes with, so comparing
+    only the first pronunciation of each side makes half of them invisible:
+    "wind"/"sinned" needs /wɪnd/ while "wind"/"mind" needs /waɪnd/, and
+    english.tsv can hold both. Ranks perfect > slant > assonance, breaking
+    ties on dn + dc, and returns (band, dn, dc) so a caller can build its
+    sort key from the same pair this chose rather than recomputing against
+    a different reading.
+
+    Returns (None, nan, nan) when no pair is related at all.
+    """
+    best = None
+    for wf1 in wordforms1:
+        for wf2 in wordforms2:
+            band = wf1.rime_type(wf2, **kwargs)
+            if band is None:
+                continue
+            dn, dc = wf1.rime_distance_nc(wf2)
+            if dn != dn or dc != dc:  # nan
+                continue
+            key = (_RIME_BAND_RANK[band], float(dn) + float(dc))
+            if best is None or key < best[0]:
+                best = (key, band, float(dn), float(dc))
+    if best is None:
+        return (None, np.nan, np.nan)
+    return (best[1], best[2], best[3])

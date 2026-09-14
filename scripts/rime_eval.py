@@ -310,7 +310,15 @@ def main():
 
 
 def compute_decomposed(pairs, label, max_pairs=4000):
-    """(nucleus, coda) distance tuples via WordForm.rime_distance_nc."""
+    """(nucleus, coda, both-have-a-coda) triples via rime_distance_nc.
+
+    The third field carries the one part of ``rime_type`` that a (dn, dc)
+    region cannot express: the slant band additionally requires BOTH words to
+    close on a consonant, since coda identity is what licenses ignoring the
+    nucleus and two open syllables have no coda to be identical about. Kept
+    alongside the distances so ``report_two_dim`` can score what actually
+    ships, not merely the region that approximates it.
+    """
     import math
     rng = random.Random(7)
     if len(pairs) > max_pairs:
@@ -330,77 +338,131 @@ def compute_decomposed(pairs, label, max_pairs=4000):
         if math.isnan(dn) or math.isnan(dc):
             skipped += 1
             continue
-        out.append((float(dn), float(dc)))
+        try:
+            coda_ok = bool(wf1._has_coda() and wf2._has_coda())
+        except AttributeError:  # older prosodic without the guard
+            coda_ok = True
+        out.append((float(dn), float(dc), coda_ok))
     print(f"  {label:8s} n={len(out):5d}  (skipped {skipped})",
           file=sys.stderr)
     return out
+
+
+def _macro_f1(all_pts, predict):
+    """Macro-F1 over the three gold classes for an arbitrary predictor."""
+    f1s = {}
+    for cls in ("perfect", "slant", "none"):
+        tp = fp = fn = 0
+        for dn, dc, coda_ok, gold in all_pts:
+            pred = predict(dn, dc, coda_ok)
+            if pred == cls and gold == cls:
+                tp += 1
+            elif pred == cls:
+                fp += 1
+            elif gold == cls:
+                fn += 1
+        p = tp / (tp + fp) if tp + fp else 0.0
+        r = tp / (tp + fn) if tp + fn else 0.0
+        f1s[cls] = 2 * p * r / (p + r) if p + r else 0.0
+    return sum(f1s.values()) / 3, f1s
+
+
+def _region_predictor(a, b, c, dcap, use_coda_guard=False):
+    """perfect if dn<=a and dc<=b; slant if dc<=c and dn<=dcap; else none."""
+    def predict(dn, dc, coda_ok):
+        if dn <= a and dc <= b:
+            return "perfect"
+        if dc <= c and dn <= dcap and (coda_ok or not use_coda_guard):
+            return "slant"
+        return "none"
+    return predict
 
 
 def report_two_dim(nc_perfect, nc_near, nc_cross):
     """Grid-search the 2-D (nucleus, coda) region classifier:
     perfect if dn<=a and dc<=b; slant if dc<=c and dn<=dcap; else none.
     This is the calibration behind WordForm.rime_type (imports.py
-    RHYME_PERFECT_NUC_MAX etc.)."""
+    RHYME_PERFECT_NUC_MAX etc.).
+
+    Two things keep the grid honest about what ships. (1) ``dcap`` must be
+    allowed to be UNBOUNDED: rime_type puts no ceiling on the slant band's
+    nucleus at all, so a grid starting at 0.4 cannot express the shipped
+    configuration and its "suggested constants" line was recommending
+    against a region it had never scored (issue #190). (2) the shipped
+    predictor also carries the empty-coda guard, which no (dn, dc) region
+    can express, so it is scored separately below.
+    """
     import itertools
+    from prosodic.imports import (RHYME_PERFECT_NUC_MAX, RHYME_PERFECT_CODA_MAX,
+                                  RHYME_SLANT_CODA_MAX)
     print("=" * 70)
     print("2-D (nucleus, coda) band calibration")
     print("=" * 70)
     data = {"perfect": nc_perfect, "slant": nc_near, "none": nc_cross}
-    all_pts = [(dn, dc, g) for g, ds in data.items() for dn, dc in ds]
+    all_pts = [(dn, dc, ck, g) for g, ds in data.items() for dn, dc, ck in ds]
+    inf = float("inf")
     grid_a = [0.0, 0.05, 0.1, 0.15, 0.2]
     grid_b = [0.0, 0.05, 0.1, 0.15, 0.2]
     grid_c = [0.0, 0.05, 0.1, 0.15, 0.2, 0.3]
-    grid_d = [0.4, 0.5, 0.6, 0.7, 0.8, 1.0]
+    grid_d = [0.4, 0.5, 0.6, 0.7, 0.8, 1.0, inf]
     best = None
     for a, b, c, dcap in itertools.product(grid_a, grid_b, grid_c, grid_d):
-        f1s = {}
-        for cls in ("perfect", "slant", "none"):
-            tp = fp = fn = 0
-            for dn, dc, gold in all_pts:
-                if dn <= a and dc <= b:
-                    pred = "perfect"
-                elif dc <= c and dn <= dcap:
-                    pred = "slant"
-                else:
-                    pred = "none"
-                if pred == cls and gold == cls:
-                    tp += 1
-                elif pred == cls:
-                    fp += 1
-                elif gold == cls:
-                    fn += 1
-            p = tp / (tp + fp) if tp + fp else 0.0
-            r = tp / (tp + fn) if tp + fn else 0.0
-            f1s[cls] = 2 * p * r / (p + r) if p + r else 0.0
-        macro = sum(f1s.values()) / 3
+        macro, f1s = _macro_f1(all_pts, _region_predictor(a, b, c, dcap))
         if best is None or macro > best[0]:
             best = (macro, (a, b, c, dcap), f1s)
     macro, (a, b, c, dcap), f1s = best
+    cap_str = "unbounded" if dcap == inf else f"{dcap}"
     print(f"  best regions: perfect(dn<={a}, dc<={b})  "
-          f"slant(dc<={c}, dn<={dcap})")
+          f"slant(dc<={c}, dn<={cap_str})")
     print(f"  macro-F1: {macro:.3f}")
     for cls in ("perfect", "slant", "none"):
         print(f"    F1({cls}): {f1s[cls]:.3f}")
     print()
 
-    def pred(dn, dc):
-        if dn <= a and dc <= b:
-            return "perfect"
-        if dc <= c and dn <= dcap:
-            return "slant"
-        return "none"
+    # What actually ships, scored on the same points. The region row isolates
+    # the bands; the rime_type row adds the empty-coda guard. Compare these to
+    # the optimum above before proposing any change to imports.py: a gap inside
+    # a couple of thousandths is noise, not a reason to recalibrate.
+    ship_region = _region_predictor(RHYME_PERFECT_NUC_MAX, RHYME_PERFECT_CODA_MAX,
+                                    RHYME_SLANT_CODA_MAX, inf)
+    ship_full = _region_predictor(RHYME_PERFECT_NUC_MAX, RHYME_PERFECT_CODA_MAX,
+                                  RHYME_SLANT_CODA_MAX, inf, use_coda_guard=True)
+    m_region, _ = _macro_f1(all_pts, ship_region)
+    m_full, _ = _macro_f1(all_pts, ship_full)
+    print(f"  shipped constants: perfect(dn<={RHYME_PERFECT_NUC_MAX}, "
+          f"dc<={RHYME_PERFECT_CODA_MAX})  slant(dc<={RHYME_SLANT_CODA_MAX}, "
+          f"dn<=unbounded)")
+    print(f"    macro-F1 as a bare region:        {m_region:.3f}  "
+          f"({m_region - macro:+.3f} vs optimum)")
+    print(f"    macro-F1 as shipped (+coda guard): {m_full:.3f}  "
+          f"({m_full - macro:+.3f} vs optimum)")
+    print()
 
-    print("  confusion (rows=gold, cols=pred):")
+    pred = _region_predictor(a, b, c, dcap)
+
+    print("  confusion at the optimum (rows=gold, cols=pred):")
     print(f"  {'':10s} {'perfect':>8s} {'slant':>8s} {'none':>8s}")
     for name, ds in data.items():
         row = {cl: 0 for cl in ("perfect", "slant", "none")}
-        for dn, dc in ds:
-            row[pred(dn, dc)] += 1
+        for dn, dc, coda_ok in ds:
+            row[pred(dn, dc, coda_ok)] += 1
         print(f"  {name:10s} {row['perfect']:8d} {row['slant']:8d} "
               f"{row['none']:8d}")
     print()
-    print(f"  suggested constants: RHYME_PERFECT_NUC_MAX = {a}, "
-          f"RHYME_PERFECT_CODA_MAX = {b}, RHYME_SLANT_CODA_MAX = {c}")
+    # Judge the CONSTANTS against the bare region, not against the guarded
+    # predictor: the grid contains no coda guard, so comparing m_full to it
+    # charges the constants for a deliberate decision taken elsewhere. The
+    # guard trades Walker recall for real-verse precision on purpose -- it
+    # costs macro-F1 here while improving the sonnet-scheme numbers below.
+    if abs(m_region - macro) < 0.005:
+        print("  suggested constants: KEEP THE CURRENT ONES -- they sit within "
+              f"{abs(m_region - macro):.3f} macro-F1 of the optimum,")
+        print("  which is noise. Do not recalibrate on a difference this size.")
+    else:
+        print(f"  suggested constants: RHYME_PERFECT_NUC_MAX = {a}, "
+              f"RHYME_PERFECT_CODA_MAX = {b}, RHYME_SLANT_CODA_MAX = {c}")
+    print(f"  (the coda guard's {m_full - m_region:+.3f} is a deliberate trade, "
+          "not a calibration error -- see the sonnet-scheme section.)")
     print()
 
 

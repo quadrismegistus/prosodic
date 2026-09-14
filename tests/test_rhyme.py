@@ -192,6 +192,53 @@ def test_glides_do_not_make_a_diphthong():
     assert [s.weight for s in _wf("accumulate").syllables] == ["L", "H", "L", "H"]
 
 
+def test_homograph_rhymes_on_the_reading_the_partner_calls_for():
+    """A homograph's pronunciation is SELECTED by what it rhymes with, so
+    comparing only the first reading of each side makes half its rhymes
+    invisible: "wind" is /wɪnd/ against "sinned" and /waɪnd/ against "mind",
+    and either choice made in advance loses the other. Same doctrine
+    pool_forms already applies to meter -- resolve the word-form in situ.
+
+    Needs both halves of the fix: english.tsv must CARRY the second reading
+    (it held only one for every vowel-quality homograph), and the rhyme
+    comparison must TRY it (wordforms_nopunc keeps only wforms[0])."""
+    def L(s):
+        return TextModel(s).line1
+
+    both_ways = [
+        ("A rushing wind", "A heart that sinned", "A quiet mind"),
+        ("He drew his bow", "The winds that blow", "A lowing cow"),
+        ("The book I read", "The prayers she said", "A slender reed"),
+    ]
+    for base, reading_a, reading_b in both_ways:
+        assert L(base).rime_type(L(reading_a)) == "perfect", f"{base} / {reading_a}"
+        assert L(base).rime_type(L(reading_b)) == "perfect", f"{base} / {reading_b}"
+
+    # the readings are actually present in the lexicon, both of them
+    for word, ipas in [
+        ("wind", {"'waɪnd", "'wɪnd"}),
+        ("bow", {"'baʊ", "'boʊ"}),
+        ("read", {"'rɛd", "'riːd"}),
+        ("live", {"'laɪv", "'lɪv"}),
+        ("tear", {"'tɛr", "'tɪr"}),
+    ]:
+        got = {wf.ipa for wf in TextModel(word).wordtokens[0].wordtype.children}
+        assert ipas <= got, f"{word}: {got}"
+
+
+def test_best_rime_type_picks_the_strongest_band():
+    """Ranks perfect > slant > assonance across every pair of readings."""
+    from prosodic.words.wordform import best_rime_type
+
+    def wfs(w):
+        return TextModel(w).wordtokens[0].wordtype.children
+
+    band, dn, dc = best_rime_type(wfs("wind"), wfs("mind"))
+    assert band == "perfect" and dn == 0.0 and dc == 0.0
+    # no relation at all on any pairing
+    assert best_rime_type(wfs("wind"), wfs("orange"))[0] is None
+
+
 def test_line_rime_type():
     t = TextModel(
         "Shall I compare thee to a summer's day?\n"

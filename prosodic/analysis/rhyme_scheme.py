@@ -14,6 +14,8 @@ from importlib.resources import files
 from itertools import product
 from typing import List, Optional, Tuple
 
+from ..words.wordform import best_rime_type
+
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
 
 
@@ -156,8 +158,9 @@ def compute_rhyme_ids(text, max_dist: Optional[float] = None,
     use_bands = max_dist is None
 
     def endwf(line):
-        wfs = line.wordforms_nopunc
-        return wfs[-1] if wfs else None
+        """All readings of the line's final word (see Entity.final_wordforms)."""
+        wfs = line.final_wordforms
+        return wfs if wfs else None
 
     # Pairwise sort keys within window (symmetric). Band mode: key =
     # (0, dn + dc) for perfect, (1, dn) for slant, None otherwise.
@@ -171,12 +174,12 @@ def compute_rhyme_ids(text, max_dist: Optional[float] = None,
                 a, b = endwf(lines[i]), endwf(lines[j])
                 if a is None or b is None:
                     continue
-                band = a.rime_type(b)
+                # One call picks the reading AND reports its distances, so
+                # the sort key comes from the same pair the band came from.
+                band, dn, dc = best_rime_type(a, b)
                 if band == "perfect":
-                    dn, dc = a.rime_distance_nc(b)
                     key = (0, dn + dc)
                 elif band == "slant":
-                    dn, dc = a.rime_distance_nc(b)
                     key = (1, dn)
                 else:
                     key = None

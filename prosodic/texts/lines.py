@@ -190,20 +190,29 @@ class Line(GridMethods, WordTokenList):
         Returns:
             float: The rime distance between the two lines.
         """
-        if not self.wordforms_nopunc or not line.wordforms_nopunc:
+        mine, theirs = self.final_wordforms, line.final_wordforms
+        if not mine or not theirs:
             return np.nan
-        return self.wordforms_nopunc[-1].rime_distance(line.wordforms_nopunc[-1], max_dist=max_dist)
+        # Best over every pair of readings: a homograph rhymes on whichever
+        # of its pronunciations the partner calls for (see final_wordforms).
+        dists = [
+            d for wf1 in mine for wf2 in theirs
+            for d in [wf1.rime_distance(wf2, max_dist=max_dist)]
+            if d is not None and not np.isnan(d)
+        ]
+        return min(dists) if dists else np.nan
 
     def rime_type(self, line: 'Line', **kwargs):
         """Classify the end-rhyme between this line and another as
         'perfect', 'slant', 'assonance', or None (2-D Walker-calibrated
         nucleus/coda regions; see WordForm.rime_type for the taxonomy
         and threshold kwargs)."""
-        if not self.wordforms_nopunc or not line.wordforms_nopunc:
+        from ..words.wordform import best_rime_type
+
+        mine, theirs = self.final_wordforms, line.final_wordforms
+        if not mine or not theirs:
             return None
-        return self.wordforms_nopunc[-1].rime_type(
-            line.wordforms_nopunc[-1], **kwargs
-        )
+        return best_rime_type(mine, theirs, **kwargs)[0]
 
     @property
     def parts(self):

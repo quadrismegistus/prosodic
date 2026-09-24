@@ -549,6 +549,23 @@ def tree_to_dict(tree):
     return convert(tree)
 
 
+def _squash_ws(text):
+    """Collapse whitespace runs to one space and drop leading whitespace.
+    Returns ``(squashed, orig)`` where ``orig[k]`` is the original offset of
+    squashed char ``k`` (plus a final end sentinel)."""
+    out, orig = [], []
+    prev_ws = True                        # True → leading whitespace dropped
+    for i, ch in enumerate(text):
+        ws = ch.isspace()
+        if ws and prev_ws:
+            continue
+        out.append(" " if ws else ch)
+        orig.append(i)
+        prev_ws = ws
+    orig.append(len(text))
+    return "".join(out), orig
+
+
 def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
     """Per-word phrasal-stress dicts from spaCy, one prosodic sentence at a time.
 
@@ -589,10 +606,14 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
         if free:
             text, spans = _ref_text_spans(raw)
             # newlines (verse line breaks) confuse the parser; punctuation does
-            # not. Flatten \n/\r to spaces — same length, so spans stay valid.
-            text = text.replace("\n", " ").replace("\r", " ")
+            # not. Squash every whitespace run (\n, paragraph breaks, the
+            # leading space of a non-initial sentence) to at most one space:
+            # spaCy makes a SPACE token of leading/extra whitespace, which then
+            # out-overlapped the first word (" It" → SPACE) and stood in as its
+            # host. `orig` maps squashed char offsets back into `spans`.
+            text, orig = _squash_ws(text)
             docs.append(text)
-            metas.append(('free', wns, isp, spans))
+            metas.append(('free', wns, isp, spans, orig))
         else:
             parse_words = [raw[i].strip() for i in content]
             spaces = [True] * len(parse_words)
@@ -630,9 +651,9 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
         # and would inflate its cumulative stress (Call me Ishmael. → Call ties
         # Ishmael). Punct tokens are leaves, so every content head is content;
         # reindexing over the kept tokens is exact.
-        _, wns, isp, spans = meta
+        _, wns, isp, spans, orig = meta
         punct_wns = {wns[i] for i in range(len(wns)) if isp[i]}
-        keep = [i for i in range(n) if not doc[i].is_punct]
+        keep = [i for i in range(n) if not (doc[i].is_punct or doc[i].is_space)]
         newidx = {old: k for k, old in enumerate(keep)}
         kheads = np.array([newidx.get(heads[i], -1) for i in keep], dtype=np.int32)
         kn = len(keep)
@@ -641,7 +662,7 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
         tok_wn = []
         for i in keep:
             t = doc[i]
-            a, b = t.idx, t.idx + len(t.text)
+            a, b = orig[t.idx], orig[t.idx + len(t.text) - 1] + 1
             best, bo = -1, 0
             for j, (rs, re) in enumerate(spans):
                 ov = min(b, re) - max(a, rs)

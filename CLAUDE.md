@@ -121,6 +121,10 @@ Optional phrasal prominence (Liberman & Prince 1977) from `TextModel("...", synt
 
 **spaCy tokenization (default `spacy_free=True`)**: parse the full sentence text WITH punctuation (so clitics split — `beauty's`→`beauty`+`'s`→`poss` not `compound`, fixing a real possessive bug — and clauses attach), but flatten newlines to spaces first (verse line breaks, not punctuation, confuse a dep parser) and DROP punctuation before the gradient (a sentence-final period attaches to the root and would inflate its cumulative stress). `spacy_free=False` = legacy pre-tokenized path.
 
+**Raw parse (`keep_parse=True`, implies `syntax=True`)**: keeps the parse the stress is derived from (otherwise discarded) as word-level `_syll_df` columns: `dep`, `pos` (UPOS), `tag` (PTB), `head_num` (head's `word_num`, −1 = root, climbing past same-word clitic pieces), `dep_depth` (word-level, root = 0); Stanza adds `lp_depth` (depth in the binary L&P tree). Label sets are engine-specific (spaCy ClearNLP vs Stanza UD) — compare within an engine. Built for corpus-level style comparison (e.g. base vs aligned LLM prose).
+
+**spaCy whitespace**: sentence text is whitespace-squashed (`_squash_ws`, with an offset map back to spans) before parsing. Previously the leading space of every non-initial sentence became a spaCy `SPACE` token that out-overlapped the first word and stood in as its host — wrong parse + stress for sentence-initial words, and a spurious node in the tree (18.5% of sonnet words' `tstress` changed on the fix, ρ 0.94 old/new; results computed before it, e.g. `phrasal-stress-scansion.qmd`, used the buggy values).
+
 **Sentence scoping**: both engines group by prosodic `sent_num`; Stanza runs `tokenize_no_ssplit=True` so 1 prosodic sentence = 1 tree, same normalization unit as spaCy.
 
 **Tree export**: `text.syntax_trees()` is engine-aware — dep-projection `nltk.Tree` (preterminals `TAG/tstress`) under spaCy, faithful L&P binary s/w tree (`R`/`s`/`w` nodes, `role/tstress` leaves, via `lp_nltk_trees`) under stanza. `import svgling` renders either.

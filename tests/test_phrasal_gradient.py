@@ -467,3 +467,56 @@ def test_tree_and_grid_stress_stanza():
     assert gg["mat"] == 1.0 and min(gg.values()) == 0.0
     # function words tie low in the grid (coarse), content words above them
     assert gg["the"] < gg["cat"]
+
+
+# ------------------------------------------- keep_parse (raw parse columns)
+
+def _keep_parse_words(txt, **kw):
+    pytest.importorskip("spacy")
+    try:
+        t = TextModel(txt, keep_parse=True, **kw)
+    except OSError:
+        pytest.skip("spaCy model en_core_web_sm not installed")
+    return {r.word_txt.strip(): r for _, r in _content(t).iterrows()}, t
+
+
+def test_keep_parse_columns_spacy():
+    w, t = _keep_parse_words("The old man walked slowly. It was a cold morning.")
+    assert t._syntax                                   # keep_parse implies syntax
+    for c in ("dep", "pos", "tag", "head_num", "dep_depth"):
+        assert c in t._syll_df.columns
+    assert w["walked"].head_num == -1 and w["walked"].dep_depth == 0
+    assert w["man"].head_num == w["walked"].word_num and w["man"].dep == "nsubj"
+    assert w["The"].dep_depth == 2                     # The → man → walked
+    punc = t._syll_df[t._syll_df.is_punc.astype(bool)]
+    assert punc["dep"].isna().all() and punc["head_num"].isna().all()
+    assert "dep" not in _syntax_text("the cat sat")._syll_df.columns
+
+
+def test_keep_parse_requires_syntax():
+    with pytest.raises(ValueError):
+        TextModel("the cat sat", syntax=False, keep_parse=True)
+
+
+def test_spacy_sentence_initial_word_not_a_space_token():
+    # regression: a non-initial sentence's text starts with whitespace, which
+    # spaCy made a SPACE token that out-overlapped (and stood in for) the
+    # first word — "It" got SPACE's parse and a bogus stress.
+    w, _ = _keep_parse_words("The man walked. It was cold.\n\nThe  sea was calm.")
+    assert w["It"].pos == "PRON" and w["It"].dep == "nsubj"
+    assert all(r.pos != "SPACE" for r in w.values())
+
+
+def test_keep_parse_columns_stanza():
+    pytest.importorskip("stanza")
+    try:
+        t = TextModel("The old man walked slowly.", keep_parse=True,
+                      syntax_model="stanza")
+    except Exception as e:
+        pytest.skip(f"stanza unavailable: {e}")
+    w = {r.word_txt.strip(): r for _, r in _content(t).iterrows()}
+    assert w["walked"].dep == "root" and w["walked"].head_num == -1
+    assert w["man"].dep == "nsubj"                     # UD labels
+    assert "lp_depth" in t._syll_df.columns
+    # [[The [old man]] [walked slowly]]
+    assert [w[x].lp_depth for x in ("The", "old", "man", "walked")] == [2, 3, 3, 2]

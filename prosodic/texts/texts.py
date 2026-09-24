@@ -108,6 +108,7 @@ class TextModel(Entity):
         tokens_df: Optional[pd.DataFrame] = None,
         syntax: Optional[bool] = None,
         syntax_model: Optional[str] = None,
+        keep_parse: bool = False,
         **kwargs,
     ):
         if isinstance(children, str):
@@ -126,9 +127,13 @@ class TextModel(Entity):
             )
         lang = lang if lang else detect_lang(txt)
 
-        # syntax options
-        self._syntax = syntax if syntax is not None else DEFAULT_SYNTAX
+        # syntax options. keep_parse keeps the raw dependency parse (dep/pos/
+        # tag/head_num/dep_depth columns) and so implies syntax=True.
+        if keep_parse and syntax is False:
+            raise ValueError("keep_parse=True requires syntax (got syntax=False)")
+        self._syntax = syntax if syntax is not None else (keep_parse or DEFAULT_SYNTAX)
         self._syntax_model = syntax_model or DEFAULT_SYNTAX_MODEL
+        self._keep_parse = keep_parse
 
         # store for lazy construction
         self._token_dicts = None
@@ -161,7 +166,7 @@ class TextModel(Entity):
             # with syntax_model="stanza", the faithful constituency backend
             if self._syntax:
                 add_phrasal_stress(self._syll_df, model=self._syntax_model,
-                                   text=self._txt)
+                                   text=self._txt, keep_parse=keep_parse)
 
             # DON'T build Entity children yet — defer to first access
 
@@ -863,6 +868,7 @@ class TextModel(Entity):
         obj._linepart_parse_results = {}
         obj._syntax = DEFAULT_SYNTAX
         obj._syntax_model = DEFAULT_SYNTAX_MODEL
+        obj._keep_parse = False
         obj._parses = None
         obj._attrs = {'lang': meta.get('lang', DEFAULT_LANG)}
         obj._num = None

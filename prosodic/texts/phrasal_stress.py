@@ -549,6 +549,61 @@ def tree_to_dict(tree):
     return convert(tree)
 
 
+# Raw-parse columns written by ``keep_parse=True`` (word-level, broadcast to
+# syllables). Label sets are engine-specific: spaCy's English models use
+# ClearNLP deps (``nsubj``, ``prep``, ``pobj``, ``poss``…), Stanza uses UD
+# (``nsubj``, ``case``, ``obl``, ``nmod:poss``…) — compare within an engine.
+PARSE_COLS_STR = ('dep', 'pos', 'tag')
+PARSE_COLS_INT = ('head_num', 'dep_depth')
+
+
+def _host_parse(i, wn, heads, deps, pos, xpos, tok_wn):
+    """Raw parse of word ``wn`` from its host token ``i``.
+
+    ``head_num`` is the ``word_num`` of the syntactic head, climbing past
+    sub-word pieces of the same word (``I'm``: ``I`` → ``'m`` is the same
+    word, so climb on) — -1 at the root, None if the head aligns to no word.
+    """
+    h = heads[i]
+    while h >= 0 and tok_wn[h] == wn:
+        h = heads[h]
+    return {'dep': str(deps[i]), 'pos': str(pos[i]), 'tag': str(xpos[i]),
+            'head_num': -1 if h < 0 else tok_wn[h]}
+
+
+def _word_depths(parse_by_word):
+    """Word-level dependency depth (root = 0) from ``head_num`` chains.
+    Computed over words, not tokens, so a clitic piece adds no level."""
+    depth = {}
+    for wn in parse_by_word:
+        k, cur, seen = 0, wn, set()
+        while True:
+            h = parse_by_word.get(cur, {}).get('head_num')
+            if h is None or h < 0 or h in seen or h not in parse_by_word:
+                break
+            seen.add(cur)
+            cur, k = h, k + 1
+        depth[wn] = k
+    return depth
+
+
+def add_parse_columns(syll_df, parse_by_word, extra_int=()):
+    """Broadcast word-level raw-parse dicts onto ``syll_df`` rows (in place).
+    Words absent from ``parse_by_word`` (punctuation) get NA."""
+    depths = _word_depths(parse_by_word)
+    for wn, d in parse_by_word.items():
+        d['dep_depth'] = depths[wn]
+    for c in PARSE_COLS_STR:
+        syll_df[c] = syll_df['word_num'].map(
+            {wn: d.get(c) for wn, d in parse_by_word.items()}
+        ).astype(pd.StringDtype())
+    for c in PARSE_COLS_INT + tuple(extra_int):
+        syll_df[c] = syll_df['word_num'].map(
+            {wn: d.get(c) for wn, d in parse_by_word.items()}
+        ).astype(pd.Int32Dtype())
+    return syll_df
+
+
 def _squash_ws(text):
     """Collapse whitespace runs to one space and drop leading whitespace.
     Returns ``(squashed, orig)`` where ``orig[k]`` is the original offset of
@@ -566,7 +621,8 @@ def _squash_ws(text):
     return "".join(out), orig
 
 
-def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
+def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True,
+                            parse_out=None):
     """Per-word phrasal-stress dicts from spaCy, one prosodic sentence at a time.
 
     ``free=True`` (default): reconstruct the sentence text from the unstripped
@@ -585,6 +641,8 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
     punctuation excluded (``beauty's`` stays merged → mis-tagged ``compound``).
 
     Returns ``(stress, pstress, tstress, pstrength)`` dicts keyed by word_num.
+    If ``parse_out`` is a dict, it is filled with each word's raw parse
+    (``{word_num: {dep, pos, tag, head_num}}``, see :func:`_host_parse`).
     """
     from spacy.tokens import Doc
     from ..analysis.metrical_lp import _ref_text_spans
@@ -640,6 +698,9 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
                               dtype=np.int32)
             ps, ts, gs, pstr = _mt_gradient(heads, words, xpos, deps, nsylls, n)
             for i, wn in enumerate(parse_wns):
+                if parse_out is not None:
+                    parse_out[wn] = _host_parse(i, wn, heads, deps, pos, xpos,
+                                                parse_wns)
                 S[wn] = int(stress[i])
                 P[wn], T[wn], G[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(gs[i]), _f(pstr[i])
             for wn in punc_wns:
@@ -678,6 +739,9 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
             if wn is None or wn in seen or wn in punct_wns:
                 continue
             seen.add(wn)
+            if parse_out is not None:
+                parse_out[wn] = _host_parse(i, wn, kheads, kdeps, kpos, kxpos,
+                                            tok_wn)
             S[wn] = int(stress[i])
             P[wn], T[wn], G[wn], PS[wn] = _f(ps[i]), _f(ts[i]), _f(gs[i]), _f(pstr[i])
         for wn in wns:
@@ -687,7 +751,7 @@ def _spacy_gradient_by_word(word_df, nsyll_by_word, nlp, free=True):
 
 
 def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
-                       spacy_free=True):
+                       spacy_free=True, keep_parse=False):
     """Add phrasal_stress column to syll_df.
 
     Groups words by sentence, runs spaCy dep parsing, computes L&P
@@ -705,6 +769,12 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
     back to prosodic ``word_num`` by char offset. ``spacy_free=False`` is the
     legacy path (pre-tokenized merged Docs), kept for comparison.
 
+    ``keep_parse=True`` also keeps the raw parse the stress is derived from
+    (otherwise discarded), as word-level columns broadcast to syllables:
+    ``dep``, ``pos`` (UPOS), ``tag`` (PTB), ``head_num`` (the head's
+    ``word_num``; -1 = root) and ``dep_depth`` (root = 0). The stanza backend
+    adds ``lp_depth`` (the word's depth in the binary L&P tree).
+
     Args:
         syll_df: DataFrame with word_num, sent_num, word_txt, is_punc columns
         model: spaCy model name
@@ -714,7 +784,7 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
     """
     if model == "stanza":
         from ..analysis.metrical_lp import add_phrasal_stress_stanza
-        return add_phrasal_stress_stanza(syll_df, text)
+        return add_phrasal_stress_stanza(syll_df, text, keep_parse=keep_parse)
 
     if syll_df.empty:
         syll_df['phrasal_stress'] = pd.array([], dtype=pd.Int32Dtype())
@@ -722,6 +792,8 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
         syll_df['tstress'] = pd.array([], dtype=pd.Float64Dtype())
         syll_df['gstress'] = pd.array([], dtype=pd.Float64Dtype())
         syll_df['pstrength'] = pd.array([], dtype=pd.Float64Dtype())
+        if keep_parse:
+            add_parse_columns(syll_df, {})
         return syll_df
 
     nlp = _get_nlp(model)
@@ -735,9 +807,10 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
         .groupby('word_num').size().to_dict()
     )
 
+    parse_by_word = {} if keep_parse else None
     (stress_by_word, pstress_by_word, tstress_by_word, gstress_by_word,
      pstrength_by_word) = _spacy_gradient_by_word(
-        word_df, nsyll_by_word, nlp, free=spacy_free)
+        word_df, nsyll_by_word, nlp, free=spacy_free, parse_out=parse_by_word)
 
     # broadcast to syllable rows
     syll_df['phrasal_stress'] = syll_df['word_num'].map(stress_by_word).astype(pd.Int32Dtype())
@@ -745,4 +818,6 @@ def add_phrasal_stress(syll_df, model="en_core_web_sm", text=None,
     syll_df['tstress'] = syll_df['word_num'].map(tstress_by_word).astype(pd.Float64Dtype())
     syll_df['gstress'] = syll_df['word_num'].map(gstress_by_word).astype(pd.Float64Dtype())
     syll_df['pstrength'] = syll_df['word_num'].map(pstrength_by_word).astype(pd.Float64Dtype())
+    if keep_parse:
+        add_parse_columns(syll_df, parse_by_word)
     return syll_df

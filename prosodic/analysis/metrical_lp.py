@@ -828,7 +828,7 @@ def lp_word_stress(tree: LPTree) -> dict:
     return out
 
 
-def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
+def _lp_trees_by_sentence(syll_df, lang: str = "en", parse_out=None) -> dict:
     """Build faithful ``LPTree``(s) per PROSODIC sentence, keyed by ``sent_num``.
 
     Grouping by prosodic ``sent_num`` (rather than Stanza's own segmentation)
@@ -839,7 +839,9 @@ def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
     spaces (harmless for Stanza, uniform with spaCy), and all sentences are
     batch-parsed (and cached) in one Stanza call. Returns
     ``{sent_num: [LPTree, ...]}`` — usually one tree per sentence, more only
-    if Stanza splits it further."""
+    if Stanza splits it further. If ``parse_out`` is a dict, it is filled with
+    each word's raw UD dependency parse (``{word_num: {dep, pos, tag,
+    head_num}}``) from the same Stanza call."""
     wdf = (syll_df[syll_df["form_idx"].isin([0, -1])]
            .drop_duplicates("word_num").sort_values("word_num"))
     texts, metas = [], []
@@ -859,6 +861,8 @@ def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
     for doc, (sent_num, spans, labels, isp, wns) in zip(docs, metas):
         trees = []
         for sent in doc.sentences:
+            if parse_out is not None:
+                _stanza_host_parse(sent, spans, isp, wns, parse_out)
             tok = _build_tok(sent, labels, isp, wns, spans, True)
             r = _convert_constituency(sent.constituency, {"i": 0, "tok": tok})
             if r and r.get("kind") == "word":
@@ -867,27 +871,71 @@ def _lp_trees_by_sentence(syll_df, lang: str = "en") -> dict:
     return out
 
 
-def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
+def _stanza_host_parse(sent, spans, isp, wns, parse_out):
+    """Fill ``parse_out`` with each reference word's UD parse, read off its
+    host (first) Stanza word — same convention as the spaCy path."""
+    from ..texts.phrasal_stress import _host_parse
+
+    idx = _align_stanza(sent, spans)
+    tok_wn = [wns[r] if r >= 0 and not isp[r] else None for r in idx]
+    words = sent.words
+    heads = [(w.head or 0) - 1 for w in words]          # 1-based → -1 = root
+    deps = [w.deprel or "" for w in words]
+    upos = [w.upos or "" for w in words]
+    xpos = [w.xpos or "" for w in words]
+    for i, wn in enumerate(tok_wn):
+        if wn is None or wn in parse_out:
+            continue
+        parse_out[wn] = _host_parse(i, wn, heads, deps, upos, xpos, tok_wn)
+
+
+def _leaf_depths(tree: LPTree) -> dict:
+    """``{word_num: depth}`` of each leaf in the binary L&P tree (root = 0)."""
+    out = {}
+
+    def walk(node, d):
+        if node.is_leaf:
+            if node.word_num is not None:
+                out[node.word_num] = d
+            return
+        walk(node.left, d + 1)
+        walk(node.right, d + 1)
+
+    walk(tree, 0)
+    return out
+
+
+def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en",
+                              keep_parse: bool = False):
     """Stanza-constituency backend for ``syntax=True``: write the four
     phrasal-stress columns from the faithful L&P tree, grouped by prosodic
     ``sent_num`` (same sentence units as the spaCy path). ``text`` is unused
-    (reconstructed from ``syll_df``). Modifies ``syll_df`` in place."""
+    (reconstructed from ``syll_df``). Modifies ``syll_df`` in place.
+    ``keep_parse=True`` adds the raw-parse columns (UD labels) plus
+    ``lp_depth`` — see :func:`prosodic.texts.phrasal_stress.add_phrasal_stress`."""
     import pandas as pd
+    from ..texts.phrasal_stress import add_parse_columns
 
     cols_f = ("pstress", "tstress", "gstress", "pstrength")
     if syll_df.empty:
         syll_df["phrasal_stress"] = pd.array([], dtype=pd.Int32Dtype())
         for c in cols_f:
             syll_df[c] = pd.array([], dtype=pd.Float64Dtype())
+        if keep_parse:
+            add_parse_columns(syll_df, {}, extra_int=("lp_depth",))
         return syll_df
 
     ref_wordnums = [int(x) for x in
                     syll_df[syll_df["form_idx"].isin([0, -1])]
                     .drop_duplicates("word_num")["word_num"]]
     values = {}
-    for trees in _lp_trees_by_sentence(syll_df, lang).values():
+    parse_by_word = {} if keep_parse else None
+    for trees in _lp_trees_by_sentence(syll_df, lang, parse_out=parse_by_word).values():
         for tree in trees:
             values.update(lp_word_stress(tree))
+            if keep_parse:
+                for wn, d in _leaf_depths(tree).items():
+                    parse_by_word.setdefault(wn, {})["lp_depth"] = d
 
     def col(key):
         return {wn: (values[wn][key] if wn in values else None)
@@ -897,6 +945,8 @@ def add_phrasal_stress_stanza(syll_df, text=None, lang: str = "en"):
         col("phrasal_stress")).astype(pd.Int32Dtype())
     for c in cols_f:
         syll_df[c] = syll_df["word_num"].map(col(c)).astype(pd.Float64Dtype())
+    if keep_parse:
+        add_parse_columns(syll_df, parse_by_word, extra_int=("lp_depth",))
     return syll_df
 
 
